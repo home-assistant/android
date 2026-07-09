@@ -118,7 +118,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorUpdater.kt"
-            line="370"
+            line="421"
             column="9"/>
     </issue>
 

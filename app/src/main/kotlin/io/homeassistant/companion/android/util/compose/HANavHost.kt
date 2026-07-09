@@ -129,6 +129,10 @@ internal fun HANavHost(
                 },
                 onShowSnackbar = onShowSnackbar,
                 onShowServerSwitcher = { onServerSelected -> showServerSwitcher(activity, onServerSelected) },
+                onLaunchApp = { packageName -> navController.launchAppOrStore(packageName, onShowSnackbar) },
+                onLaunchIntent = { intentUri -> navController.launchIntentUri(intentUri, onShowSnackbar) },
+                onOpenSecuritySettings = { navController.openSecuritySettings(onShowSnackbar) },
+                onUpdateWebView = { navController.updateSystemWebView(onShowSnackbar) },
                 onRequestFullscreen = onRequestFullscreen,
                 onPipReadinessChanged = onPipReadinessChanged,
             )

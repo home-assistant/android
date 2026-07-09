@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,6 +20,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ge
 import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_SYNC
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
@@ -56,14 +58,33 @@ fun interface SensorSettingsIntentProvider {
  * Runs sensor updates and reconciles sensor registrations with each configured server.
  */
 @Singleton
-class SensorUpdater @Inject constructor(
-    @ApplicationContext private val context: Context,
+class SensorUpdater @VisibleForTesting internal constructor(
+    private val context: Context,
     private val serverManager: ServerManager,
     private val sensorRepository: SensorRepository,
     private val appVersionProvider: AppVersionProvider,
     private val managers: Set<@JvmSuppressWildcards SensorManager>,
     private val sensorSettingsIntentProvider: SensorSettingsIntentProvider,
+    private val notificationManager: NotificationManager?,
 ) {
+
+    @Inject
+    constructor(
+        @ApplicationContext context: Context,
+        serverManager: ServerManager,
+        sensorRepository: SensorRepository,
+        appVersionProvider: AppVersionProvider,
+        managers: Set<@JvmSuppressWildcards SensorManager>,
+        sensorSettingsIntentProvider: SensorSettingsIntentProvider,
+    ) : this(
+        context,
+        serverManager,
+        sensorRepository,
+        appVersionProvider,
+        managers,
+        sensorSettingsIntentProvider,
+        context.getSystemService(),
+    )
 
     /**
      * Requests an update from every manager that has a sensor and then syncs all servers in
@@ -176,6 +197,13 @@ class SensorUpdater @Inject constructor(
         val currentHAversion = integrationRepository.getHomeAssistantVersion()
         val supportsDisabledSensors = integrationRepository.isHomeAssistantVersionAtLeast(2022, 6, 0)
         val serverIsTrusted = integrationRepository.isTrusted()
+
+        suspend fun persistRegistration(updated: Sensor): Sensor {
+            val persisted = updated.copy(coreRegistration = currentHAversion, appRegistration = appVersion)
+            sensorRepository.update(persisted)
+            return persisted
+        }
+
         val coreSensorStatus: Map<String, Boolean>? =
             if (supportsDisabledSensors && (serverIsTrusted || sensorRepository.getEnabledCount() > 0)) {
                 config.entities
@@ -194,21 +222,14 @@ class SensorUpdater @Inject constructor(
             val hasSensor = manager.hasSensor()
 
             manager.getAvailableSensors().forEach sensorForEach@{ basicSensor ->
-                val fullSensor = sensorRepository.getFull(basicSensor.id, server.id).toSensorWithAttributes()
-                val sensor = fullSensor?.sensor ?: return@sensorForEach
+                val hasPermission = manager.checkPermission(basicSensor.id)
+                var fullSensor = loadSensorReconcilingPermission(basicSensor, server, hasPermission)
+                    ?: return@sensorForEach
+                val sensor = fullSensor.sensor
                 val sensorCoreEnabled = coreSensorStatus?.get(basicSensor.id)
                 val canBeRegistered = hasSensor &&
                     basicSensor.type.isNotBlank() &&
                     basicSensor.statelessIcon.isNotBlank()
-                val hasPermission = manager.checkPermission(basicSensor.id)
-
-                // A sensor enabled in the database but missing its runtime permission isn't really
-                // enabled. Persist that so the reconciliation below unregisters it on the server instead
-                // of leaving a stale entity behind.
-                if (sensor.enabled && !hasPermission) {
-                    sensor.enabled = false
-                    sensorRepository.update(sensor)
-                }
 
                 // Register sensor and/or update the sensor enabled state. Priority is:
                 // 1. There is a new sensor or change in enabled state according to the app
@@ -228,10 +249,10 @@ class SensorUpdater @Inject constructor(
                     // - sensor is registered according to database, but core >=2022.6 doesn't know about it
                     try {
                         registerSensor(fullSensor, basicSensor)
-                        sensor.registered = sensor.enabled
-                        sensor.coreRegistration = currentHAversion
-                        sensor.appRegistration = appVersion
-                        sensorRepository.update(sensor)
+                        fullSensor =
+                            fullSensor.copy(sensor = persistRegistration(sensor.copy(registered = sensor.enabled)))
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Issue registering sensor ${basicSensor.id}")
                     }
@@ -245,17 +266,21 @@ class SensorUpdater @Inject constructor(
                     // the app, if the sensor can be registered, on core >= 2022.6 and server trusted.
                     // If the server isn't trusted, update registered state to match app.
                     try {
-                        if (!serverIsTrusted) { // Core changed, but app doesn't trust server so 'override'
+                        // Core changed, but app doesn't trust server so 'override'
+                        val sensorUpdated = if (!serverIsTrusted) {
                             registerSensor(fullSensor, basicSensor)
+                            sensor
                         } else if (sensorCoreEnabled) { // App disabled, should enable
                             if (hasPermission) {
-                                sensor.enabled = true
-                                sensor.registered = true
+                                sensor.copy(
+                                    enabled = true,
+                                    registered = true,
+                                )
                             } else {
                                 // Can't enable due to missing permission(s), 'override' core and notify user
                                 registerSensor(fullSensor, basicSensor)
 
-                                context.getSystemService<NotificationManager>()?.let { notificationManager ->
+                                notificationManager?.let { notificationManager ->
                                     createNotificationChannel()
                                     val notificationId = "$CHANNEL_SENSOR_SYNC-${basicSensor.id}".hashCode()
                                     val notificationIntent =
@@ -271,15 +296,16 @@ class SensorUpdater @Inject constructor(
                                         .build()
                                     notificationManager.notify(notificationId, notification)
                                 }
+                                sensor
                             }
                         } else { // App enabled, should disable
-                            sensor.enabled = false
-                            sensor.registered = false
+                            sensor.copy(
+                                enabled = false,
+                                registered = false,
+                            )
                         }
 
-                        sensor.coreRegistration = currentHAversion
-                        sensor.appRegistration = appVersion
-                        sensorRepository.update(sensor)
+                        fullSensor = fullSensor.copy(sensor = persistRegistration(sensorUpdated))
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
@@ -295,10 +321,8 @@ class SensorUpdater @Inject constructor(
                     // core >= 2022.6, and app or core version change is detected
                     try {
                         registerSensor(fullSensor, basicSensor)
-                        sensor.registered = sensor.enabled
-                        sensor.coreRegistration = currentHAversion
-                        sensor.appRegistration = appVersion
-                        sensorRepository.update(sensor)
+                        fullSensor =
+                            fullSensor.copy(sensor = persistRegistration(sensor.copy(registered = sensor.enabled)))
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
@@ -314,10 +338,16 @@ class SensorUpdater @Inject constructor(
                     }
                 }
 
+                // Read from the (possibly re-registered) fullSensor so a sensor registered/enabled above
+                // has its fresh state sent in this same pass rather than being deferred to the next one.
+                val reconciledSensor = fullSensor.sensor
                 if (canBeRegistered &&
-                    sensor.enabled &&
-                    sensor.registered != null &&
-                    (sensor.state != sensor.lastSentState || sensor.icon != sensor.lastSentIcon)
+                    reconciledSensor.enabled &&
+                    reconciledSensor.registered != null &&
+                    (
+                        reconciledSensor.state != reconciledSensor.lastSentState ||
+                            reconciledSensor.icon != reconciledSensor.lastSentIcon
+                        )
                 ) {
                     enabledRegistrations.add(fullSensor.toSensorRegistration(basicSensor))
                 }
@@ -351,10 +381,13 @@ class SensorUpdater @Inject constructor(
                 enabledRegistrations.forEach {
                     val sensor = sensorRepository.get(it.uniqueId, it.serverId)
                     if (sensor != null) {
-                        sensor.registered = null
-                        sensor.lastSentState = null
-                        sensor.lastSentIcon = null
-                        sensorRepository.update(sensor)
+                        sensorRepository.update(
+                            sensor.copy(
+                                registered = null,
+                                lastSentState = null,
+                                lastSentIcon = null,
+                            ),
+                        )
                     }
                 }
             }
@@ -362,6 +395,24 @@ class SensorUpdater @Inject constructor(
             Timber.d("Nothing to update for server ${server.id} (${server.friendlyName})")
         }
         return success
+    }
+
+    private suspend fun loadSensorReconcilingPermission(
+        basicSensor: SensorManager.BasicSensor,
+        server: Server,
+        hasPermission: Boolean,
+    ): SensorWithAttributes? {
+        val fullSensor = sensorRepository.getFull(basicSensor.id, server.id).toSensorWithAttributes() ?: return null
+
+        // A sensor enabled in the database but missing its runtime permission isn't really
+        // enabled. Persist that so the reconciliation below unregisters it on the server instead
+        // of leaving a stale entity behind.
+        if (fullSensor.sensor.enabled && !hasPermission) {
+            val disabled = fullSensor.copy(sensor = fullSensor.sensor.copy(enabled = false))
+            sensorRepository.update(disabled.sensor)
+            return disabled
+        }
+        return fullSensor
     }
 
     private suspend fun registerSensor(fullSensor: SensorWithAttributes, basicSensor: SensorManager.BasicSensor) {
@@ -375,14 +426,14 @@ class SensorUpdater @Inject constructor(
 
     private fun createNotificationChannel() {
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-            val notificationManager = context.getSystemService<NotificationManager>() ?: return
-            if (notificationManager.getNotificationChannel(CHANNEL_SENSOR_SYNC) == null) {
+            val manager = notificationManager ?: return
+            if (manager.getNotificationChannel(CHANNEL_SENSOR_SYNC) == null) {
                 val notificationChannel = NotificationChannel(
                     CHANNEL_SENSOR_SYNC,
                     CHANNEL_SENSOR_SYNC,
                     NotificationManager.IMPORTANCE_DEFAULT,
                 )
-                notificationManager.createNotificationChannel(notificationChannel)
+                manager.createNotificationChannel(notificationChannel)
             }
         }
     }

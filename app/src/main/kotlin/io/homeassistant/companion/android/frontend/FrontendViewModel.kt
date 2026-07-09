@@ -14,6 +14,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -25,8 +27,10 @@ import io.homeassistant.companion.android.frontend.barcode.FrontendBarcodeScanne
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
+import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.NavigateToMessage
@@ -44,6 +48,7 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandler
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
@@ -53,6 +58,7 @@ import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
@@ -82,6 +88,7 @@ val CONNECTION_TIMEOUT = 10.seconds
 
 private const val APP_PREFIX = "app://"
 private const val INTENT_PREFIX = "intent:"
+private const val SECURITY_ALERT_URL = "https://www.home-assistant.io/latest-security-alert/"
 
 /**
  * URLs that must NOT trigger the "always show first view on app start" navigation.
@@ -103,7 +110,7 @@ private val FIRST_VIEW_EXCLUDED_URL_REGEX =
 @HiltViewModel
 internal class FrontendViewModel @VisibleForTesting constructor(
     initialServerId: Int,
-    initialPath: String?,
+    initialTarget: FrontendTarget,
     webViewClientFactory: HAWebViewClientFactory,
     private val frontendBusObserver: FrontendBusObserver,
     private val externalBusRepository: FrontendExternalBusRepository,
@@ -122,6 +129,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
+    @NamedKeyChain private val keyChainRepository: KeyChainRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -146,9 +154,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
         matterThreadHandler: FrontendMatterThreadHandler,
+        @NamedKeyChain keyChainRepository: KeyChainRepository,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
-        initialPath = savedStateHandle.toRoute<FrontendRoute>().path,
+        initialTarget = savedStateHandle.toRoute<FrontendRoute>().target,
         webViewClientFactory = webViewClientFactory,
         frontendBusObserver = frontendBusObserver,
         externalBusRepository = externalBusRepository,
@@ -167,12 +176,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler = improvHandler,
         barcodeScannerHandler = barcodeScannerHandler,
         matterThreadHandler = matterThreadHandler,
+        keyChainRepository = keyChainRepository,
     )
 
     /**
      * Manages the frontend view state with protection against transitions out of unrecoverable states.
      *
-     * Once a [FrontendConnectionError.UnrecoverableError] is set, the current state is
+     * Once a [FrontendConnectionError.Unrecoverable] is set, the current state is
      * fundamentally broken and no state transition can recover from it. All subsequent
      * [update] calls are ignored to prevent URL emissions, message results, or timeouts
      * from hiding the error screen.
@@ -186,13 +196,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         /**
          * Updates the view state using the given [transform] function.
          *
-         * If the current state is an [FrontendConnectionError] with an [FrontendConnectionError.UnrecoverableError],
+         * If the current state is an [FrontendConnectionError] with an [FrontendConnectionError.Unrecoverable],
          * the update is silently ignored because the state cannot be recovered.
          */
         fun update(transform: (FrontendViewState) -> FrontendViewState) {
             _state.update { currentState ->
                 if (currentState is FrontendViewState.Error &&
-                    currentState.error is FrontendConnectionError.UnrecoverableError
+                    currentState.error is FrontendConnectionError.Unrecoverable
                 ) {
                     Timber.w("Ignoring state transition: unrecoverable error present")
                     return
@@ -205,7 +215,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val _viewState = ViewStateManager(
         FrontendViewState.LoadServer(
             serverId = initialServerId,
-            path = initialPath,
+            target = initialTarget,
         ),
     )
     val viewState: StateFlow<FrontendViewState> = _viewState
@@ -288,6 +298,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /** Job tracking the zoom settings flow collection - restarted on each page load. */
     private var zoomObserverJob: Job? = null
+
+    /**
+     * Entity whose more-info dialog must be opened via JavaScript once the page finishes loading.
+     * Set for servers older than HA 2025.6 (see [UrlLoadResult.Success.moreInfoEntityId]) and
+     * cleared after it is dispatched in [onPageFinished].
+     */
+    private var pendingMoreInfoEntityId: String? = null
 
     /**
      * The user's "Autoplay video" preference.
@@ -381,7 +398,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 when (event) {
                     is FrontendImprovHandler.Event.ReloadAtPath -> {
                         _viewState.update {
-                            FrontendViewState.LoadServer(serverId = event.serverId, path = event.path)
+                            FrontendViewState.LoadServer(
+                                serverId = event.serverId,
+                                target = FrontendTarget.Path(event.path),
+                            )
                         }
                     }
                 }
@@ -471,18 +491,46 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
+     * Handles a tap on a recovery action of the connection-error screen (see `errorActions`).
+     */
+    fun onErrorAction(intent: ErrorActionIntent) {
+        when (intent) {
+            ErrorActionIntent.RemoveServerAndRelaunch -> viewModelScope.launch {
+                serverManager.removeServer(_viewState.value.serverId)
+                _events.emit(FrontendEvent.Relaunch)
+            }
+
+            ErrorActionIntent.ClearKeychainAndRelaunch -> viewModelScope.launch {
+                keyChainRepository.clear()
+                _events.emit(FrontendEvent.Relaunch)
+            }
+
+            ErrorActionIntent.GoToSettings -> _events.tryEmit(FrontendEvent.NavigateToSettings)
+
+            ErrorActionIntent.OpenSecuritySettings -> _events.tryEmit(FrontendEvent.OpenSecuritySettings)
+
+            ErrorActionIntent.UpdateWebView -> _events.tryEmit(FrontendEvent.UpdateWebView)
+
+            ErrorActionIntent.Refresh -> onRetry()
+
+            ErrorActionIntent.Wait -> _viewState.update { state ->
+                if (state is FrontendViewState.Error) {
+                    FrontendViewState.Loading(serverId = state.serverId, url = state.url)
+                } else {
+                    state
+                }
+            }
+        }
+    }
+
+    /**
      * Called when the system WebView fails to initialize.
      *
-     * Transitions to [FrontendViewState.Error] with a [FrontendConnectionError.UnrecoverableError.WebViewCreationError]
+     * Transitions to [FrontendViewState.Error] with a [FrontendConnectionError.Unrecoverable.WebViewCreationError]
      * so the error screen is displayed with guidance to update the system WebView.
      */
     fun onWebViewCreationFailed(throwable: Throwable) {
-        onError(
-            FrontendConnectionError.UnrecoverableError.WebViewCreationError(
-                message = commonR.string.webview_creation_failed,
-                throwable = throwable,
-            ),
-        )
+        onError(FrontendConnectionError.Unrecoverable.WebViewCreationError(throwable = throwable))
     }
 
     fun onShowSecurityLevelScreen() {
@@ -682,19 +730,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /**
      * Waits the [CONNECTION_TIMEOUT] in [FrontendViewState.Loading] and emits an
-     * [FrontendConnectionError.UnreachableError] if the WebView has not finished loading by then.
+     * [FrontendConnectionError.ExternalBusTimeout] if the frontend has not completed its external-bus
+     * handshake (transitioned to [FrontendViewState.Content]) by then.
      */
     private suspend fun watchLoadingTimeout(state: FrontendViewState) {
         if (state !is FrontendViewState.Loading) return
         delay(CONNECTION_TIMEOUT)
         if (_viewState.value is FrontendViewState.Loading) {
-            onError(
-                FrontendConnectionError.UnreachableError(
-                    message = commonR.string.webview_error_TIMEOUT,
-                    errorDetails = "",
-                    rawErrorType = "ConnectionTimeout",
-                ),
-            )
+            onError(FrontendConnectionError.ExternalBusTimeout)
         }
     }
 
@@ -703,14 +746,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         urlFlowJob = viewModelScope.launch {
             permissionManager.checkLocalNetworkPermission()
             val currentState = _viewState.value
-            val path = when (currentState) {
-                is FrontendViewState.LoadServer -> currentState.path
-                is FrontendViewState.Loading -> currentState.path
-                else -> null
+            val target = when (currentState) {
+                is FrontendViewState.LoadServer -> currentState.target
+                is FrontendViewState.Loading -> currentState.target
+                else -> FrontendTarget.Default
             }
             urlManager.serverUrlFlow(
                 serverId = currentState.serverId,
-                path = path,
+                target = target,
             ).collect { result ->
                 handleUrlResult(result)
             }
@@ -871,18 +914,19 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private fun handleUrlResult(result: UrlLoadResult) {
         when (result) {
             is UrlLoadResult.Success -> {
+                pendingMoreInfoEntityId = result.moreInfoEntityId
                 _viewState.update {
                     FrontendViewState.Loading(
                         serverId = result.serverId,
                         url = result.url,
-                        path = null,
+                        target = FrontendTarget.Default,
                     )
                 }
             }
 
             is UrlLoadResult.ServerNotFound -> {
                 onError(
-                    FrontendConnectionError.UnreachableError(
+                    FrontendConnectionError.Unreachable(
                         message = commonR.string.error_connection_failed,
                         errorDetails = "Server not found",
                         rawErrorType = "ServerNotFound",
@@ -892,7 +936,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.SessionNotConnected -> {
                 onError(
-                    FrontendConnectionError.AuthenticationError(
+                    FrontendConnectionError.AuthRevoked(
                         message = commonR.string.error_connection_failed,
                         errorDetails = "Session not authenticated",
                         rawErrorType = "SessionNotConnected",
@@ -916,7 +960,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.NoUrlAvailable -> {
                 onError(
-                    FrontendConnectionError.UnreachableError(
+                    FrontendConnectionError.Unreachable(
                         message = commonR.string.error_connection_failed,
                         errorDetails = "No URL available",
                         rawErrorType = "NoUrlAvailable",
@@ -975,15 +1019,63 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     private fun onError(error: FrontendConnectionError) {
-        _viewState.update { currentState ->
-            FrontendViewState.Error(
-                serverId = currentState.serverId,
-                url = currentState.url,
-                error = error,
-            )
+        // Resolve the connection type so the error screen can label the "Refresh" action, then
+        // build the recovery actions for the screen to render.
+        viewModelScope.launch {
+            val serverId = _viewState.value.serverId
+            val isInternal = resolveIsInternalConnection(serverId)
+            val actions = errorActions(error, isInternalConnection = isInternal)
+            _viewState.update { currentState ->
+                FrontendViewState.Error(
+                    serverId = currentState.serverId,
+                    url = currentState.url,
+                    error = error,
+                    actions = actions,
+                )
+            }
         }
         // Automatically run connectivity checks when an error occurs
         runConnectivityChecks()
+    }
+
+    private suspend fun resolveIsInternalConnection(serverId: Int): Boolean = try {
+        // requiresUrl = true so we only report (and offer to force) "internal" when an internal URL
+        // actually exists to load. Matches legacy WebViewActivity's isInternal() call.
+        serverManager.connectionStateProvider(serverId).isInternal(requiresUrl = true)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.w(e, "Unable to resolve connection type for the error screen")
+        false
+    }
+
+    /**
+     * Warns the user via a snackbar when the connected server runs a version that predates the
+     * security fixes (and the server still asks clients to notify). Ports the legacy
+     * `checkSecurityVersion`; the working frontend is never blocked.
+     */
+    private suspend fun checkSecurityVersion(serverId: Int) {
+        val shouldWarn = try {
+            val integrationRepository = serverManager.integrationRepository(serverId)
+            !integrationRepository.isHomeAssistantVersionAtLeast(2021, 1, 5) &&
+                integrationRepository.shouldNotifySecurityWarning()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Unable to check server security version")
+            false
+        }
+        if (shouldWarn) {
+            _events.emit(
+                FrontendEvent.ShowSnackbar(
+                    messageResId = commonR.string.security_vulnerably_message,
+                    action = FrontendEvent.ShowSnackbar.Action(
+                        labelResId = commonR.string.security_vulnerably_view,
+                        event = FrontendEvent.OpenExternalLink(SECURITY_ALERT_URL.toUri()),
+                    ),
+                ),
+            )
+        }
     }
 
     /**
@@ -998,6 +1090,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     private fun onPageFinished(url: String?) {
         viewModelScope.launch { applySafeAreaInsetsIfHandled() }
+
+        // Open the more-info dialog for an older-server deep link now that the frontend has loaded.
+        pendingMoreInfoEntityId?.let { entityId ->
+            pendingMoreInfoEntityId = null
+            viewModelScope.launch { _webViewActions.emit(WebViewAction.OpenMoreInfo(entityId)) }
+        }
 
         zoomObserverJob?.cancel()
         zoomObserverJob = viewModelScope.launch {
@@ -1042,6 +1140,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         if (wasLoading) {
             // Remove any previous navigation
             _webViewActions.emit(WebViewAction.ClearHistory())
+            checkSecurityVersion(_viewState.value.serverId)
         }
         permissionManager.checkNotificationPermission(_viewState.value.serverId)
         viewModelScope.launch { updateThemeColors() }

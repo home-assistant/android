@@ -34,11 +34,12 @@ import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.verify
 import org.junit.After
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
@@ -152,6 +153,8 @@ class LaunchActivityTest {
     fun `Given showWhenLocked is true when launched then activity is shown over the lock screen`() {
         val intent = LaunchActivity.newInstance(ApplicationProvider.getApplicationContext(), showWhenLocked = true)
 
+        assertEquals(Intent.ACTION_MAIN, intent.action)
+
         ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
             scenario.onActivity { activity ->
                 assertTrue(shadowOf(activity).showWhenLocked)
@@ -162,6 +165,8 @@ class LaunchActivityTest {
     @Test
     fun `Given showWhenLocked is false when launched then activity is not shown over the lock screen`() {
         val intent = LaunchActivity.newInstance(ApplicationProvider.getApplicationContext(), showWhenLocked = false)
+
+        assertEquals(Intent.ACTION_MAIN, intent.action)
 
         ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
             scenario.onActivity { activity ->

@@ -35,9 +35,15 @@ dependencies {
     compileOnly(libs.kotlin.stdlib)
     compileOnly(libs.lint.api)
     testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.vintage.engine)
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.jupiter.params)
+    testImplementation(libs.junit.platform.launcher)
     testImplementation(libs.lint.tests)
     testImplementation(libs.lint.checks)
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }
 
 dependencyLocking {

@@ -52,7 +52,7 @@ abstract class AppSensorModule {
     abstract fun bindLastAppSensorManager(impl: LastAppSensorManager): SensorManager
 
     @Binds @IntoSet
-    abstract fun bindNotificationSensorManager(impl: NotificationSensorManager): SensorManager
+    abstract fun bindNotificationSensorManager(impl: NotificationListenerSensorManager): SensorManager
 
     @Binds @IntoSet
     abstract fun bindQuestSensorManager(impl: QuestSensorManager): SensorManager

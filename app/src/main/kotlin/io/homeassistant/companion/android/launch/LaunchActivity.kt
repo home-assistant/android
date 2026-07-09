@@ -45,6 +45,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.ChangeLog
@@ -124,11 +125,11 @@ class LaunchActivity : AppCompatActivity() {
         data class OpenInvitation(val serverUrl: String) : DeepLink
 
         /**
-         * Navigates to a specific path within the webview.
-         * @property path The path to navigate to within the Home Assistant interface.
+         * Navigates to a specific [target] within the frontend.
+         * @property target The frontend destination to open.
          * @property serverId The ID of the server to use for navigation.
          */
-        data class NavigateTo(val path: String?, val serverId: Int) : DeepLink
+        data class NavigateTo(val target: FrontendTarget, val serverId: Int) : DeepLink
 
         /**
          * Opens the Wear OS device onboarding flow.
@@ -148,7 +149,7 @@ class LaunchActivity : AppCompatActivity() {
          *   apps cannot reach the alias and therefore cannot opt into this behavior.
          */
         fun newInstance(context: Context, deepLink: DeepLink? = null, showWhenLocked: Boolean = false): Intent {
-            return Intent().apply {
+            return Intent(Intent.ACTION_MAIN).apply {
                 component = if (showWhenLocked) {
                     ComponentName(context, LOCK_SCREEN_ALIAS_CLASS)
                 } else {

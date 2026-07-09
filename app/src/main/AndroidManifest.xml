@@ -319,7 +319,10 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".sensors.NotificationSensorListenerService"
+        <!-- The class name must stay `NotificationSensorManager` for backward compatibility: Android ties the
+             user's granted notification-listener access to this service's component name, so renaming it would
+             silently revoke access for existing users, forcing them to grant it again. -->
+        <service android:name=".sensors.NotificationSensorManager"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
             <intent-filter>

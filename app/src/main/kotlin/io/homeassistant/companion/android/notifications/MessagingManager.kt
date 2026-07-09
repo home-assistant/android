@@ -83,11 +83,13 @@ import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeSetting
 import io.homeassistant.companion.android.sensors.LocationSensorReceiver
-import io.homeassistant.companion.android.sensors.NotificationSensorListenerService
+import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
@@ -98,7 +100,6 @@ import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
 import java.net.URL
 import java.net.URLDecoder
@@ -1697,7 +1698,7 @@ class MessagingManager @Inject constructor(
         val otherApp = needsPackage || UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             }
 
             uri.startsWith(APP_PREFIX) -> {
@@ -1717,7 +1718,7 @@ class MessagingManager @Inject constructor(
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
                     SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NotificationHistory)
                 } else {
-                    WebViewActivity.newInstance(context, null, serverId)
+                    context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
                 }
             }
 
@@ -1732,9 +1733,9 @@ class MessagingManager @Inject constructor(
             }
 
             else -> {
-                WebViewActivity.newInstance(context, uri, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(uri), serverId)
             }
-        } ?: WebViewActivity.newInstance(context, null, serverId)
+        } ?: context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!otherApp) {
@@ -1856,7 +1857,7 @@ class MessagingManager @Inject constructor(
         val mediaList = mediaSessionManager.getActiveSessions(
             ComponentName(
                 context,
-                NotificationSensorListenerService::class.java,
+                NotificationSensorManager::class.java,
             ),
         )
         var hasCorrectPackage = false
@@ -1999,9 +2000,9 @@ class MessagingManager @Inject constructor(
         try {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val intent = if (title.isNullOrEmpty()) {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             } else {
-                WebViewActivity.newInstance(context, title, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
             }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -2060,29 +2061,25 @@ class MessagingManager @Inject constructor(
         when (mode.uppercase()) {
             WebsocketSetting.NEVER.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.NEVER
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.NEVER))
                 }
             }
 
             WebsocketSetting.ALWAYS.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.ALWAYS
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.ALWAYS))
                 }
             }
 
             WebsocketSetting.HOME_WIFI.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.HOME_WIFI
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.HOME_WIFI))
                 }
             }
 
             WebsocketSetting.SCREEN_ON.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.SCREEN_ON
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.SCREEN_ON))
                 }
             }
         }

@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -42,8 +43,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -62,6 +68,9 @@ class SensorDetailViewModel @Inject constructor(
 
     companion object {
         private const val SENSOR_SETTING_TRANS_KEY_PREFIX = "sensor_setting_"
+
+        // Keep the database-backed flows hot briefly across config changes before stopping collection.
+        private val STOP_TIMEOUT = 500.milliseconds
 
         data class PermissionsDialog(val serverId: Int?, val permissions: Array<String>? = null)
         data class LocationPermissionsDialog(
@@ -109,15 +118,24 @@ class SensorDetailViewModel @Inject constructor(
             ?.find { it.id == sensorId }
     }
 
-    /** A list of all sensors (for each server) with states */
-    var sensors by mutableStateOf<List<SensorWithAttributes>>(emptyList())
-        private set
+    /** A list of all sensors (for each server) with states, kept in sync with the database. */
+    val sensors: StateFlow<List<SensorWithAttributes>> =
+        sensorRepository.getFullFlow(sensorId)
+            .map { it.toSensorsWithAttributes() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT), emptyList())
 
-    /** A sensor for displaying the main state in the UI */
-    var sensor by mutableStateOf<SensorWithAttributes?>(null)
-        private set
+    /** A sensor for displaying the main state in the UI. */
+    val sensor: StateFlow<SensorWithAttributes?> =
+        sensors
+            .map { list -> list.maxByOrNull { it.sensor.enabled } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT), null)
+
     private var sensorCheckedEnabled = false
-    val sensorSettings = sensorRepository.getSettingsFlow(sensorId).collectAsState()
+
+    /** The sensor's settings, kept in sync with the database. */
+    val sensorSettings: StateFlow<List<SensorSetting>> =
+        sensorRepository.getSettingsFlow(sensorId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT), emptyList())
     var sensorSettingsDialog by mutableStateOf<SettingDialogState?>(null)
         private set
 
@@ -161,24 +179,20 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     init {
-        val sensorFlow = sensorRepository.getFullFlow(sensorId)
         viewModelScope.launch {
             serverNames = serverManager.servers().associate { it.id to it.friendlyName }
+        }
+        viewModelScope.launch {
+            // Drive the one-time permission reconciliation and the multi-server expand state off the
+            // sensor list so both stay in sync with the database.
+            sensors.collect { currentSensors ->
+                if (!sensorCheckedEnabled) checkSensorEnabled(currentSensors)
 
-            sensorFlow.collect { map ->
-                sensors = map.toSensorsWithAttributes()
-                sensor = map.toSensorsWithAttributes().maxByOrNull { it.sensor.enabled }
-                if (!sensorCheckedEnabled) checkSensorEnabled(sensors)
-
-                val expandable =
-                    sensors.size > 1 && (sensors.all { it.sensor.enabled } || sensors.all { !it.sensor.enabled })
+                val expandable = currentSensors.size > 1 &&
+                    (currentSensors.all { it.sensor.enabled } || currentSensors.all { !it.sensor.enabled })
                 _serversShowExpand.emit(expandable)
                 if (!expandable) {
-                    if (sensors.size == 1) {
-                        _serversDoExpand.emit(false)
-                    } else {
-                        _serversDoExpand.emit(true)
-                    }
+                    _serversDoExpand.emit(currentSensors.size != 1)
                 }
             }
         }
@@ -604,6 +618,4 @@ class SensorDetailViewModel @Inject constructor(
         }
         return state
     }
-
-    private fun <T> Flow<List<T>>.collectAsState(): State<List<T>> = collectAsState(initial = emptyList())
 }

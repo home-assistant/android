@@ -148,7 +148,7 @@ class ConnectionViewModelTest {
             advanceUntilIdle()
             assertNull(urlFlow.awaitItem())
 
-            errorFlow.awaitFrontendError<FrontendConnectionError.UnreachableError>(
+            errorFlow.awaitFrontendError<FrontendConnectionError.Unreachable>(
                 commonR.string.connection_screen_malformed_url,
                 "Expected URL scheme 'http' or 'https' but no scheme was found for not_a_...",
                 IllegalArgumentException::class,
@@ -564,7 +564,7 @@ class ConnectionViewModelTest {
         advanceUntilIdle()
 
         // Then
-        assertTrue(viewModel.errorFlow.value is FrontendConnectionError.UnreachableError)
+        assertTrue(viewModel.errorFlow.value is FrontendConnectionError.Unreachable)
         verify(exactly = 1) { connectivityCheckRepository.runChecks(rawUrl) }
         assertEquals(1, connectivityFlow.subscriptionCount.value)
     }
@@ -621,7 +621,7 @@ class ConnectionViewModelTest {
         // Then
         val error = viewModel.errorFlow.value
         assertNotNull(error)
-        assertTrue(error is FrontendConnectionError.UnrecoverableError.WebViewCreationError)
+        assertTrue(error is FrontendConnectionError.Unrecoverable.WebViewCreationError)
         assertEquals(commonR.string.webview_creation_failed, error.message)
         assertEquals("dlopen failed: libwebviewchromium.so is 32-bit", error.errorDetails)
         assertEquals("class java.lang.UnsatisfiedLinkError", error.rawErrorType)

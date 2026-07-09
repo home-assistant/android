@@ -137,50 +137,48 @@ class HAWebViewClient internal constructor(
         Timber.e("onReceivedError: $errorDetails")
 
         val frontendConnectionError = when (error?.errorCode) {
-            ERROR_FAILED_SSL_HANDSHAKE -> FrontendConnectionError.AuthenticationError(
+            ERROR_FAILED_SSL_HANDSHAKE -> FrontendConnectionError.SslError(
                 message = commonR.string.webview_error_FAILED_SSL_HANDSHAKE,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_AUTHENTICATION -> FrontendConnectionError.AuthenticationError(
+            ERROR_AUTHENTICATION -> FrontendConnectionError.AuthRevoked(
                 message = commonR.string.webview_error_AUTHENTICATION,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_PROXY_AUTHENTICATION -> FrontendConnectionError.AuthenticationError(
+            ERROR_PROXY_AUTHENTICATION -> FrontendConnectionError.AuthRevoked(
                 message = commonR.string.webview_error_PROXY_AUTHENTICATION,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_UNSUPPORTED_AUTH_SCHEME -> FrontendConnectionError.AuthenticationError(
+            ERROR_UNSUPPORTED_AUTH_SCHEME -> FrontendConnectionError.AuthRevoked(
                 message = commonR.string.webview_error_AUTH_SCHEME,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_HOST_LOOKUP -> FrontendConnectionError.UnreachableError(
+            ERROR_HOST_LOOKUP -> FrontendConnectionError.Unreachable(
                 message = commonR.string.webview_error_HOST_LOOKUP,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_TIMEOUT -> FrontendConnectionError.UnreachableError(
-                message = commonR.string.webview_error_TIMEOUT,
+            ERROR_TIMEOUT -> FrontendConnectionError.Timeout(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_CONNECT -> FrontendConnectionError.UnreachableError(
+            ERROR_CONNECT -> FrontendConnectionError.Unreachable(
                 message = commonR.string.webview_error_CONNECT,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            else -> FrontendConnectionError.UnknownError(
-                message = commonR.string.connection_error_unknown_error,
+            else -> FrontendConnectionError.Unknown(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
@@ -206,20 +204,17 @@ class HAWebViewClient internal constructor(
         Timber.e("onReceivedHttpError: $errorDetails")
 
         val frontendConnectionError = when {
-            isTLSClientAuthNeeded && !isCertificateChainValid -> FrontendConnectionError.AuthenticationError(
-                message = commonR.string.tls_cert_expired_message,
+            isTLSClientAuthNeeded && !isCertificateChainValid -> FrontendConnectionError.TlsCertExpired(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
-            isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> FrontendConnectionError.AuthenticationError(
-                message = commonR.string.tls_cert_not_found_message,
+            isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> FrontendConnectionError.TlsCertNotFound(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
-            else -> FrontendConnectionError.UnknownError(
-                message = commonR.string.connection_error_unknown_error,
+            else -> FrontendConnectionError.Unknown(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
@@ -241,7 +236,7 @@ class HAWebViewClient internal constructor(
             else -> commonR.string.error_ssl
         }
         onFrontendError(
-            FrontendConnectionError.AuthenticationError(
+            FrontendConnectionError.SslError(
                 message = messageRes,
                 errorDetails = error.toString(),
                 rawErrorType = SslError::class.toString(),
