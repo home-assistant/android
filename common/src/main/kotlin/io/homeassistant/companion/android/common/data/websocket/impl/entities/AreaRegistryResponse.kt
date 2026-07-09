@@ -7,6 +7,6 @@ data class AreaRegistryResponse(
     val areaId: String,
     val name: String,
     val picture: String? = null,
-    /** Floor this area belongs to. Only sent by Home Assistant 2024.3 or later. */
+    /** Only sent by Home Assistant 2024.3 or later. */
     val floorId: String? = null,
 )
