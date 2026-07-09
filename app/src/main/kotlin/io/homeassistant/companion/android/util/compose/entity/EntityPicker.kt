@@ -59,7 +59,6 @@ import io.homeassistant.companion.android.common.compose.composable.HAFilledButt
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HASearchField
-import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.consumeSheetScrollFling
 import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
@@ -240,7 +239,6 @@ internal fun EntityPicker(
     var isExpanded by remember { mutableStateOf(isExpanded) }
     var searchQuery by remember { mutableStateOf("") }
 
-<<<<<<< HEAD
     val bottomSheetState = rememberHAModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
