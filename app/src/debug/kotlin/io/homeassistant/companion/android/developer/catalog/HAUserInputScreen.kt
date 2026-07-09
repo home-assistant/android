@@ -24,9 +24,11 @@ import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
+import io.homeassistant.companion.android.common.compose.composable.HASearchField
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.RadioOption
+import io.homeassistant.companion.android.common.compose.composable.rememberSearchFieldState
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedDropdownKey
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -58,6 +60,7 @@ private fun LazyListScope.input() {
             var value4 by remember { mutableStateOf("") }
             var value5 by remember { mutableStateOf("error") }
             var value6 by remember { mutableStateOf("super secret") }
+            val searchState = rememberSearchFieldState()
             CatalogRow {
                 HATextField(
                     value = value1,
@@ -174,6 +177,7 @@ private fun LazyListScope.input() {
                         )
                     },
                 )
+                HASearchField(state = searchState)
             }
         }
     }
