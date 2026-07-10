@@ -1,9 +1,9 @@
 package io.homeassistant.companion.android.settings.qs.ui
 
-import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -58,15 +57,10 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.icondialog.IconDialog
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
-
-@VisibleForTesting
-const val MANAGE_TILES_VIBRATE_SWITCH_TAG = "manage_tiles_vibrate_switch"
-
-@VisibleForTesting
-const val MANAGE_TILES_AUTH_SWITCH_TAG = "manage_tiles_auth_switch"
 
 @Composable
 internal fun ManageTilesScreen(viewModel: ManageTilesViewModel, modifier: Modifier = Modifier) {
@@ -82,13 +76,16 @@ internal fun ManageTilesScreen(viewModel: ManageTilesViewModel, modifier: Modifi
     }
 
     if (showIconDialog) {
-        IconDialog(
-            onSelect = { icon ->
-                viewModel.selectIcon(icon)
-                showIconDialog = false
-            },
-            onDismissRequest = { showIconDialog = false },
-        )
+        // TODO Migrate IconDialog to Material 3 https://github.com/home-assistant/android/issues/7156
+        HomeAssistantAppTheme {
+            IconDialog(
+                onSelect = { icon ->
+                    viewModel.selectIcon(icon)
+                    showIconDialog = false
+                },
+                onDismissRequest = { showIconDialog = false },
+            )
+        }
     }
 
     ManageTilesContent(
@@ -158,7 +155,7 @@ internal fun ManageTilesContent(
                     items = state.serversDropdownItems,
                     selectedKey = state.selectedServerId,
                     onItemSelected = onServerSelected,
-                    label = "${stringResource(R.string.tile_server)}*",
+                    label = stringResource(R.string.tile_server),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -177,7 +174,9 @@ internal fun ManageTilesContent(
                 text = stringResource(state.submitButtonLabel),
                 onClick = onSubmit,
                 enabled = submitEnabled,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally),
             )
         }
     }
@@ -209,7 +208,7 @@ private fun ColumnScope.TileLabelContent(
     HATextField(
         value = state.tileLabel,
         onValueChange = onTileLabelChange,
-        label = { Text(text = "${stringResource(R.string.tile_label)}*") },
+        label = { Text(text = stringResource(R.string.tile_label)) },
         maxLines = 1,
         modifier = Modifier.fillMaxWidth(),
     )
@@ -236,11 +235,11 @@ private fun ColumnScope.TileConfigContent(
     onAuthRequiredChange: (Boolean) -> Unit,
 ) {
     EntityPicker(
-        entities = state.sortedEntities,
+        entities = state.entities,
         selectedEntityId = state.selectedEntityId,
         onEntitySelectedId = onEntitySelectedId,
         onEntityCleared = onEntityCleared,
-        addButtonText = "${stringResource(R.string.tile_entity)}*",
+        addButtonText = stringResource(R.string.tile_entity),
         entityRegistry = state.entityRegistry,
         deviceRegistry = state.deviceRegistry,
         areaRegistry = state.areaRegistry,
@@ -257,14 +256,12 @@ private fun ColumnScope.TileConfigContent(
         label = stringResource(R.string.tile_vibrate),
         checked = state.selectedShouldVibrate,
         onCheckedChange = onShouldVibrateChange,
-        switchTestTag = MANAGE_TILES_VIBRATE_SWITCH_TAG,
     )
 
     LabeledSwitchRow(
         label = stringResource(R.string.tile_auth_required),
         checked = state.tileAuthRequired,
         onCheckedChange = onAuthRequiredChange,
-        switchTestTag = MANAGE_TILES_AUTH_SWITCH_TAG,
     )
 }
 
@@ -294,11 +291,11 @@ private fun TileIconRow(
             HAIconButton(
                 icon = Icons.AutoMirrored.Filled.Undo,
                 onClick = onResetIcon,
-                contentDescription = stringResource(R.string.tile_reset_icon),
+                contentDescription = stringResource(R.string.undo),
             )
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .border(HABorderWidth.S, colorScheme.colorBorderNeutralQuiet, buttonShape)
                 .clip(buttonShape)
@@ -331,12 +328,10 @@ private fun LabeledSwitchRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    switchTestTag: String = "",
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(HARadius.XL))
             .clickable(role = Role.Switch) { onCheckedChange(!checked) },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -348,7 +343,6 @@ private fun LabeledSwitchRow(
         HASwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            modifier = Modifier.testTag(switchTestTag),
         )
     }
 }
@@ -423,7 +417,6 @@ private val previewState = ManageTilesState(
         HADropdownItem(key = "tile_2", label = "Tile 2"),
     ),
     selectedTileId = "tile_1",
-    servers = emptyList(),
     selectedServerId = 0,
     tileLabel = "",
     tileSubtitle = "",

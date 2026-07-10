@@ -945,12 +945,12 @@
     <string name="tile_add">Add tile</string>
     <string name="tile_added">Tile added</string>
     <string name="tile_data_missing">You need to set up the tile before using it</string>
-    <string name="tile_entity">Select an entity to toggle or call</string>
-    <string name="tile_label">Tile label</string>
+    <string name="tile_entity">Select an entity to toggle or call*</string>
+    <string name="tile_label">Tile label*</string>
     <string name="tile_not_setup">Requires setup</string>
     <string name="tile_required_field_hint">* Indicates a required field</string>
     <string name="tile_save">Update tile data</string>
-    <string name="tile_server">Select a server</string>
+    <string name="tile_server">Select a server*</string>
     <string name="tile_subtitle">Tile subtitle</string>
     <string name="tile_updated">Tile data updated</string>
     <string name="tiles">Tiles</string>
@@ -1083,8 +1083,6 @@
     <string name="enable_change_log_popup">Show change log after updating</string>
     <string name="enable_change_log_popup_summary">Allow the change log dialog to automatically appear when the app is updated</string>
     <string name="tile_icon">Tile icon</string>
-    <string name="tile_reset_icon">Reset icon</string>
-    <string name="tile_icon_original">Use entity icon</string>
     <string name="tile_select">Select a tile to edit</string>
     <string name="tile_fetch_entity_error">Cannot fetch entity</string>
     <string name="shortcut_pinned">Pinned shortcuts</string>
