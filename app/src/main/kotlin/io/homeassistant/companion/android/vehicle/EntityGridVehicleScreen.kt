@@ -65,6 +65,10 @@ class EntityGridVehicleScreen(
     var entities: List<Entity> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
 
+    // Index the registry by entity ID so each grid item can look up its options (such as the
+    // sensor display precision) without scanning the whole registry on every render
+    private val entityRegistryOptions = entityRegistry?.associate { it.entityId to it.options }
+
     init {
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -160,7 +164,7 @@ class EntityGridVehicleScreen(
                 GridItem.Builder()
                     .setLoading(false)
                     .setTitle(entity.friendlyName.ifEmpty { entity.entityId })
-                    .setText(entity.friendlyState(carContext))
+                    .setText(entity.friendlyState(carContext, options = entityRegistryOptions?.get(entity.entityId)))
 
             if (entity.isExecuting()) {
                 gridItem.setLoading(entity.isExecuting())
