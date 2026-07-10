@@ -9,13 +9,11 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
-import io.homeassistant.companion.android.database.server.Server
 
 @Stable
 internal data class ManageTilesState(
     val selectedTileId: String = "",
-    val servers: List<Server> = emptyList(),
-    val sortedEntities: List<Entity> = emptyList(),
+    val entities: List<Entity> = emptyList(),
     val entityRegistry: List<EntityRegistryResponse> = emptyList(),
     val deviceRegistry: List<DeviceRegistryResponse> = emptyList(),
     val areaRegistry: List<AreaRegistryResponse> = emptyList(),
@@ -32,12 +30,12 @@ internal data class ManageTilesState(
     val tileSlotsDropdownItems: List<HADropdownItem<String>> = emptyList(),
     val serversDropdownItems: List<HADropdownItem<Int>> = emptyList(),
 ) {
-    val showServerSelector = servers.size > 1 ||
-        servers.none { server -> server.id == selectedServerId }
+    val showServerSelector = serversDropdownItems.size > 1 ||
+        serversDropdownItems.none { server -> server.key == selectedServerId }
 
     val showResetIcon = selectedIconId != null && selectedEntityId.isNotBlank()
 
     val submitEnabled = tileLabel.isNotBlank() &&
-        servers.any { it.id == selectedServerId } &&
-        sortedEntities.any { it.entityId == selectedEntityId }
+        serversDropdownItems.any { it.key == selectedServerId } &&
+        entities.any { it.entityId == selectedEntityId }
 }

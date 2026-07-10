@@ -75,8 +75,8 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -157,6 +157,8 @@ internal class ManageTilesViewModel @Inject constructor(
     private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
     var tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
 
+    private var loadEntitiesJob: Job? = null
+
     init {
         // Initialize fields based on the tile_1 TileEntity
         savedStateHandle.get<String>("id")?.let { id ->
@@ -172,7 +174,6 @@ internal class ManageTilesViewModel @Inject constructor(
             val loadedServers = serverManager.servers()
             _state.update {
                 it.copy(
-                    servers = loadedServers,
                     serversDropdownItems = loadedServers.map { server ->
                         HADropdownItem(key = server.id, label = server.friendlyName)
                     },
@@ -218,24 +219,28 @@ internal class ManageTilesViewModel @Inject constructor(
             val previousEntityId = _state.value.selectedEntityId
             _state.update { it.copy(selectedServerId = serverId) }
             loadEntities(serverId)
-            val resetEntity = _state.value.sortedEntities.none { it.entityId == previousEntityId }
+            val resetEntity = _state.value.entities.none { it.entityId == previousEntityId }
             selectEntityId(if (resetEntity) "" else previousEntityId)
         }
     }
 
-    private suspend fun loadEntities(serverId: Int) = coroutineScope {
-        val entitiesDeferred = async { loadEntitiesForServer(serverId) }
-        val entityRegistryDeferred = async { loadEntityRegistry(serverId) }
-        val deviceRegistryDeferred = async { loadDeviceRegistry(serverId) }
-        val areaRegistryDeferred = async { loadAreaRegistry(serverId) }
-        _state.update {
-            it.copy(
-                sortedEntities = entitiesDeferred.await(),
-                entityRegistry = entityRegistryDeferred.await(),
-                deviceRegistry = deviceRegistryDeferred.await(),
-                areaRegistry = areaRegistryDeferred.await(),
-            )
+    private suspend fun loadEntities(serverId: Int) {
+        loadEntitiesJob?.cancel()
+        loadEntitiesJob = viewModelScope.launch {
+            val entitiesDeferred = async { loadEntitiesForServer(serverId) }
+            val entityRegistryDeferred = async { loadEntityRegistry(serverId) }
+            val deviceRegistryDeferred = async { loadDeviceRegistry(serverId) }
+            val areaRegistryDeferred = async { loadAreaRegistry(serverId) }
+            _state.update {
+                it.copy(
+                    entities = entitiesDeferred.await(),
+                    entityRegistry = entityRegistryDeferred.await(),
+                    deviceRegistry = deviceRegistryDeferred.await(),
+                    areaRegistry = areaRegistryDeferred.await(),
+                )
+            }
         }
+        loadEntitiesJob?.join()
     }
 
     fun selectEntityId(entityId: String) {
@@ -244,10 +249,16 @@ internal class ManageTilesViewModel @Inject constructor(
     }
 
     fun selectIcon(icon: IIcon?) {
-        _state.update {
-            val resolvedIcon =
-                icon ?: it.sortedEntities.firstOrNull { entity -> entity.entityId == it.selectedEntityId }?.getIcon(app)
-            it.copy(selectedIconId = icon?.mdiName, selectedIcon = resolvedIcon)
+        if (icon != null) {
+            _state.update { it.copy(selectedIconId = icon.mdiName, selectedIcon = icon) }
+            return
+        }
+        viewModelScope.launch(Dispatchers.Default) {
+            val current = _state.value
+            val resolvedIcon = current.entities
+                .firstOrNull { it.entityId == current.selectedEntityId }
+                ?.getIcon(app)
+            _state.update { it.copy(selectedIconId = null, selectedIcon = resolvedIcon) }
         }
     }
 
@@ -329,8 +340,10 @@ internal class ManageTilesViewModel @Inject constructor(
     fun setAuthRequired(value: Boolean) = _state.update { it.copy(tileAuthRequired = value) }
 
     private suspend fun loadEntitiesForServer(serverId: Int): List<Entity> = try {
-        serverManager.integrationRepository(serverId).getEntities().orEmpty()
-            .filter(Entity::isUsableInTile)
+        val entities = serverManager.integrationRepository(serverId).getEntities().orEmpty()
+        withContext(Dispatchers.Default) {
+            entities.filter(Entity::isUsableInTile)
+        }
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
