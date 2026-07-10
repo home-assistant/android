@@ -82,31 +82,49 @@ fun ServerChooser(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
     ) {
-        LazyColumn {
-            item {
-                Text(
-                    text = stringResource(commonR.string.server_select),
-                    style = HATextStyle.HeadlineMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = HADimens.SPACE4, vertical = HADimens.SPACE2),
-                )
-            }
+        ServerChooserContent(
+            items = items,
+            onServerSelected = onServerSelected,
+        )
+    }
+}
 
-            itemsIndexed(items, key = { _, item -> item.serverId }) { index, item ->
-                ServerChooserRow(item = item, onServerSelected = onServerSelected)
-                if (index < items.lastIndex) {
-                    HAHorizontalDivider(modifier = Modifier.padding(start = DIVIDER_START_INSET, end = HADimens.SPACE4))
-                }
+/**
+ * Content of the server chooser sheet.
+ *
+ * Renders the list only, without its own modal-sheet frame, so callers can provide the
+ * appropriate sheet container.
+ */
+@Composable
+fun ServerChooserContent(
+    items: List<ServerChooserItem>,
+    onServerSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(modifier = modifier) {
+        item {
+            Text(
+                text = stringResource(commonR.string.server_select),
+                style = HATextStyle.HeadlineMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = HADimens.SPACE4, vertical = HADimens.SPACE2),
+            )
+        }
+
+        itemsIndexed(items, key = { _, item -> item.serverId }) { index, item ->
+            ServerChooserRow(item = item, onServerSelected = onServerSelected)
+            if (index < items.lastIndex) {
+                HAHorizontalDivider(modifier = Modifier.padding(start = DIVIDER_START_INSET, end = HADimens.SPACE4))
             }
-            item {
-                Spacer(
-                    modifier = Modifier
-                        .height(HADimens.SPACE6)
-                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
-                )
-            }
+        }
+        item {
+            Spacer(
+                modifier = Modifier
+                    .height(HADimens.SPACE6)
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+            )
         }
     }
 }
