@@ -6,7 +6,9 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.admin.DevicePolicyManager
 import android.bluetooth.BluetoothManager
+import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -96,6 +98,8 @@ import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
+import io.homeassistant.companion.android.util.ScreenOffAdminReceiver
+import io.homeassistant.companion.android.util.ScreenOffHelper
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
@@ -131,6 +135,7 @@ class MessagingManager @Inject constructor(
     private val settingsDao: SettingsDao,
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
+    private val screenOffHelper: ScreenOffHelper,
     private val permissionRequestMediator: PermissionRequestMediator,
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
@@ -186,6 +191,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_SCREEN_ON = "command_screen_on"
+        const val COMMAND_SCREEN_OFF = "command_screen_off"
         const val COMMAND_MEDIA = "command_media"
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
@@ -247,6 +253,7 @@ class MessagingManager @Inject constructor(
             COMMAND_ACTIVITY,
             COMMAND_WEBVIEW,
             COMMAND_SCREEN_ON,
+            COMMAND_SCREEN_OFF,
             COMMAND_MEDIA,
             DeviceCommandData.COMMAND_UPDATE_SENSORS,
             COMMAND_LAUNCH_APP,
@@ -543,7 +550,7 @@ class MessagingManager @Inject constructor(
                             handleDeviceCommands(jsonData)
                         }
 
-                        COMMAND_SCREEN_ON -> {
+                        COMMAND_SCREEN_ON, COMMAND_SCREEN_OFF -> {
                             handleDeviceCommands(jsonData)
                         }
 
@@ -838,7 +845,19 @@ class MessagingManager @Inject constructor(
                     "HomeAssistant::NotificationScreenOnWakeLock",
                 )
                 wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
+                // Restore the screen off state while the wake lock is held so the device cannot
+                // suspend before the screen is back on
+                screenOffHelper.turnScreenOn()
                 wakeLock?.release()
+            }
+
+            COMMAND_SCREEN_OFF -> {
+                if (!screenOffHelper.canTurnScreenOff()) {
+                    notifyMissingPermission(type = message, serverId = serverId)
+                } else if (!screenOffHelper.turnScreenOff()) {
+                    Timber.d("Unable to turn the screen off, posting notification to device")
+                    sendNotification(data)
+                }
             }
 
             COMMAND_MEDIA -> {
@@ -1801,6 +1820,25 @@ class MessagingManager @Inject constructor(
         context.startActivity(intent)
     }
 
+    private fun requestDeviceAdminPermission() {
+        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+            .putExtra(
+                DevicePolicyManager.EXTRA_DEVICE_ADMIN,
+                ComponentName(context, ScreenOffAdminReceiver::class.java),
+            )
+            .putExtra(
+                DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                context.getString(commonR.string.screen_off_admin_description),
+            )
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        try {
+            context.startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            // Some devices, like Android Automotive, have no device admin settings
+            Timber.w(e, "Unable to open the device admin activation screen")
+        }
+    }
+
     private fun requestNotificationPermission() {
         val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -2129,6 +2167,8 @@ class MessagingManager @Inject constructor(
                     } else {
                         when (type) {
                             COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> requestSystemAlertPermission()
+
+                            COMMAND_SCREEN_OFF -> requestDeviceAdminPermission()
 
                             COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> requestDNDPermission()
 
