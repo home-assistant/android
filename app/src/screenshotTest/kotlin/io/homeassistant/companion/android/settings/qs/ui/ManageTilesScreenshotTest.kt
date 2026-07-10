@@ -8,10 +8,6 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
@@ -51,10 +47,6 @@ class ManageTilesScreenshotTest {
                 snackbarHostState = remember { SnackbarHostState() },
                 state = addTileState.copy(
                     selectedTileId = addTileState.tileSlotsDropdownItems[1].key,
-                    servers = listOf(
-                        fakeServer(id = 1, name = "Home"),
-                        fakeServer(id = 2, name = "Vacation home"),
-                    ),
                     serversDropdownItems = listOf(
                         HADropdownItem(key = 1, label = "Home"),
                         HADropdownItem(key = 2, label = "Vacation home"),
@@ -110,23 +102,12 @@ class ManageTilesScreenshotTest {
     }
 
     private companion object {
-        fun fakeServer(id: Int, name: String) = Server(
-            id = id,
-            _name = name,
-            connection = ServerConnectionInfo(externalUrl = "https://example.com"),
-            session = ServerSessionInfo(),
-            user = ServerUserInfo(),
-        )
-
         val addTileState = ManageTilesState(
             tileSlotsDropdownItems = listOf(
                 HADropdownItem(key = "tile_1", label = "Tile 1"),
                 HADropdownItem(key = "tile_2", label = "Tile 2"),
             ),
             selectedTileId = "tile_1",
-            servers = listOf(
-                fakeServer(id = 1, name = "Home"),
-            ),
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
             tileLabel = "",

@@ -8,7 +8,6 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -19,15 +18,11 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
-import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -48,7 +43,7 @@ class ManageTilesTest {
         composeTestRule.apply {
             testScreen(addTileState) {
                 onNodeWithText(activity.getString(commonR.string.tile_server)).assertDoesNotExist()
-                onNodeWithContentDescription(activity.getString(commonR.string.tile_reset_icon)).assertDoesNotExist()
+                onNodeWithContentDescription(activity.getString(commonR.string.undo)).assertDoesNotExist()
                 onNodeWithText(activity.getString(commonR.string.tile_subtitle)).performScrollTo().assertIsDisplayed()
                 onNodeWithText(activity.getString(commonR.string.tile_add)).performScrollTo().assertIsNotEnabled()
             }
@@ -60,7 +55,7 @@ class ManageTilesTest {
         composeTestRule.apply {
             testScreen(multipleServersState, submitEnabled = true) {
                 onNodeWithText(activity.getString(commonR.string.tile_server), substring = true).performScrollTo().assertIsDisplayed()
-                onNodeWithContentDescription(activity.getString(commonR.string.tile_reset_icon)).performScrollTo().assertIsDisplayed()
+                onNodeWithContentDescription(activity.getString(commonR.string.undo)).performScrollTo().assertIsDisplayed()
                 onNodeWithText(activity.getString(commonR.string.tile_save)).performScrollTo().assertIsEnabled()
             }
         }
@@ -90,7 +85,7 @@ class ManageTilesTest {
     fun `Given screen when toggling vibrate switch then onShouldVibrateChange is triggered`() {
         composeTestRule.apply {
             testScreen(addTileState) {
-                onNodeWithTag(MANAGE_TILES_VIBRATE_SWITCH_TAG).performScrollTo().performClick()
+                onNodeWithText(activity.getString(commonR.string.tile_vibrate)).performScrollTo().performClick()
                 assertEquals(true, shouldVibrate)
             }
         }
@@ -100,7 +95,7 @@ class ManageTilesTest {
     fun `Given screen when toggling auth switch then onAuthRequiredChange is triggered`() {
         composeTestRule.apply {
             testScreen(addTileState) {
-                onNodeWithTag(MANAGE_TILES_AUTH_SWITCH_TAG).performScrollTo().performClick()
+                onNodeWithText(activity.getString(commonR.string.tile_auth_required)).performScrollTo().performClick()
                 assertEquals(true, authRequired)
             }
         }
@@ -120,7 +115,7 @@ class ManageTilesTest {
     fun `Given reset icon shown when clicking reset then onResetIcon is triggered`() {
         composeTestRule.apply {
             testScreen(multipleServersState) {
-                onNodeWithContentDescription(activity.getString(commonR.string.tile_reset_icon)).performScrollTo().performClick()
+                onNodeWithContentDescription(activity.getString(commonR.string.undo)).performScrollTo().performClick()
                 assertTrue(iconReset)
             }
         }
@@ -179,21 +174,12 @@ class ManageTilesTest {
     }
 
     private companion object {
-        fun fakeServer(id: Int, name: String) = Server(
-            id = id,
-            _name = name,
-            connection = ServerConnectionInfo(externalUrl = "https://example.com"),
-            session = ServerSessionInfo(),
-            user = ServerUserInfo(),
-        )
-
         val addTileState = ManageTilesState(
             tileSlotsDropdownItems = listOf(
                 HADropdownItem(key = "tile_1", label = "Tile 1"),
                 HADropdownItem(key = "tile_2", label = "Tile 2"),
             ),
             selectedTileId = "tile_1",
-            servers = listOf(fakeServer(id = 1, name = "Home")),
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
             tileLabel = "",
@@ -208,10 +194,6 @@ class ManageTilesTest {
         )
 
         val multipleServersState = addTileState.copy(
-            servers = listOf(
-                fakeServer(id = 1, name = "Home"),
-                fakeServer(id = 2, name = "Vacation home"),
-            ),
             serversDropdownItems = listOf(
                 HADropdownItem(key = 1, label = "Home"),
                 HADropdownItem(key = 2, label = "Vacation home"),

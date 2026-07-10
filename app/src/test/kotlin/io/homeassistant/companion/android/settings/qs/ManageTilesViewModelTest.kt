@@ -10,6 +10,8 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.server.Server
@@ -23,17 +25,19 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [Build.VERSION_CODES.S])
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -104,7 +108,10 @@ class ManageTilesViewModelTest {
         advanceUntilIdle()
 
         assertEquals(viewModel.slots[0].id, viewModel.state.value.selectedTileId)
-        assertTrue(viewModel.slots.isNotEmpty())
+        assertEquals(
+            application.resources.getStringArray(R.array.tile_ids).size,
+            viewModel.slots.size,
+        )
     }
 
     @Test
@@ -399,5 +406,47 @@ class ManageTilesViewModelTest {
         advanceUntilIdle()
 
         assertEquals("", viewModel.state.value.tileSubtitle)
+    }
+
+    @Test
+    fun `Given a fast server switch while the first server is still loading when the slower response resolves then it does not overwrite the newer server's registry`() = runTest {
+        // The first server responds slowly (simulates a slow network) with a registry entry that must
+        // never reach the final state, while the second (newer) server responds quickly with the entry
+        // that is expected to win. Without cancelling the stale in-flight load, the slow response would
+        // resolve last and clobber the fresh one. This uses the entity registry (rather than the entity
+        // list itself) because loading entities involves a Dispatchers.Default hop that is not
+        // deterministic under the test dispatcher's virtual clock, while the registry loaders run
+        // entirely on the (virtual-time controlled) calling dispatcher.
+        val staleWebSocket: WebSocketRepository = mockk()
+        val freshWebSocket: WebSocketRepository = mockk()
+        coEvery { serverManager.webSocketRepository(1) } returns staleWebSocket
+        coEvery { serverManager.webSocketRepository(2) } returns freshWebSocket
+        coEvery { staleWebSocket.getEntityRegistry() } coAnswers {
+            delay(100)
+            listOf(EntityRegistryResponse(entityId = "light.stale"))
+        }
+        coEvery { staleWebSocket.getDeviceRegistry() } returns emptyList()
+        coEvery { staleWebSocket.getAreaRegistry() } returns emptyList()
+        coEvery { freshWebSocket.getEntityRegistry() } coAnswers {
+            delay(10)
+            listOf(EntityRegistryResponse(entityId = "light.fresh"))
+        }
+        coEvery { freshWebSocket.getDeviceRegistry() } returns emptyList()
+        coEvery { freshWebSocket.getAreaRegistry() } returns emptyList()
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        turbineScope {
+            val states = viewModel.state.testIn(backgroundScope)
+
+            viewModel.selectServerId(1)
+            viewModel.selectServerId(2)
+            advanceUntilIdle()
+
+            val finalRegistryIds = states.expectMostRecentItem().entityRegistry.map { it.entityId }
+            assertEquals(listOf("light.fresh"), finalRegistryIds)
+            states.cancelAndConsumeRemainingEvents()
+        }
     }
 }
