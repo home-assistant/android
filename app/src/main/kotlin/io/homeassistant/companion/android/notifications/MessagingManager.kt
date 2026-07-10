@@ -6,9 +6,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.admin.DevicePolicyManager
 import android.bluetooth.BluetoothManager
-import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -98,7 +96,7 @@ import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
-import io.homeassistant.companion.android.util.ScreenOffAdminReceiver
+import io.homeassistant.companion.android.util.ScreenOffAdminRequestActivity
 import io.homeassistant.companion.android.util.ScreenOffHelper
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
@@ -845,8 +843,7 @@ class MessagingManager @Inject constructor(
                     "HomeAssistant::NotificationScreenOnWakeLock",
                 )
                 wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
-                // Restore the screen off state while the wake lock is held so the device cannot
-                // suspend before the screen is back on
+                // Released while the wake lock is held so the device cannot suspend meanwhile
                 screenOffHelper.turnScreenOn()
                 wakeLock?.release()
             }
@@ -1821,22 +1818,10 @@ class MessagingManager @Inject constructor(
     }
 
     private fun requestDeviceAdminPermission() {
-        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-            .putExtra(
-                DevicePolicyManager.EXTRA_DEVICE_ADMIN,
-                ComponentName(context, ScreenOffAdminReceiver::class.java),
-            )
-            .putExtra(
-                DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                context.getString(commonR.string.screen_off_admin_description),
-            )
+        // The activation screen only opens from an activity, see ScreenOffAdminRequestActivity
+        val intent = Intent(context, ScreenOffAdminRequestActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        try {
-            context.startActivity(intent)
-        } catch (e: ActivityNotFoundException) {
-            // Some devices, like Android Automotive, have no device admin settings
-            Timber.w(e, "Unable to open the device admin activation screen")
-        }
+        context.startActivity(intent)
     }
 
     private fun requestNotificationPermission() {

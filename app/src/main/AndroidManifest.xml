@@ -393,6 +393,13 @@
             </intent-filter>
         </receiver>
 
+        <!--Transparent activity that opens the device admin activation screen for the
+        command_screen_off notification command (see ScreenOffAdminRequestActivity).-->
+        <activity
+            android:name=".util.ScreenOffAdminRequestActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <activity android:name=".launch.link.LinkActivity"
             android:exported="true"
             android:launchMode="singleTask">

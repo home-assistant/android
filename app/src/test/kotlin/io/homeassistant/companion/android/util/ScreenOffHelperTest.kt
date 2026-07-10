@@ -4,8 +4,12 @@ import android.app.Application
 import android.app.KeyguardManager
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -94,6 +98,22 @@ class ScreenOffHelperTest {
         assertFalse(helper.turnScreenOn())
 
         assertFalse(helper.isScreenOff)
+    }
+
+    @Test
+    fun `Given device admin deactivated in between when turning screen off then the wake lock is released`() {
+        val devicePolicyManager = mockk<DevicePolicyManager> {
+            every { lockNow() } throws SecurityException("Device admin was deactivated")
+        }
+        val context = object : ContextWrapper(application) {
+            override fun getSystemService(name: String): Any? = if (name == Context.DEVICE_POLICY_SERVICE) devicePolicyManager else super.getSystemService(name)
+        }
+        val helper = ScreenOffHelper(context)
+
+        assertFalse(helper.turnScreenOff())
+
+        assertFalse(helper.isScreenOff)
+        assertFalse(ShadowPowerManager.getLatestWakeLock().isHeld)
     }
 
     @Test

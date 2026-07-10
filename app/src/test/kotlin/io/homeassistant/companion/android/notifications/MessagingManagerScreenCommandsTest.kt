@@ -1,18 +1,22 @@
 package io.homeassistant.companion.android.notifications
 
+import android.app.ActivityManager
 import android.app.Application
 import android.os.Looper
+import android.os.Process
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.util.ScreenOffAdminRequestActivity
 import io.homeassistant.companion.android.util.ScreenOffHelper
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -88,5 +92,24 @@ class MessagingManagerScreenCommandsTest {
         handleMessage(MessagingManager.COMMAND_SCREEN_ON)
 
         verify(exactly = 1) { screenOffHelper.turnScreenOn() }
+    }
+
+    @Test
+    fun `Given the app in the foreground when screen off is not possible then the device admin activation is opened`() {
+        every { screenOffHelper.canTurnScreenOff() } returns false
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val processInfo = ActivityManager.RunningAppProcessInfo(
+            application.applicationInfo.processName,
+            Process.myPid(),
+            null,
+        ).apply { importance = ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND }
+        shadowOf(application.getSystemService(ActivityManager::class.java)).setProcesses(listOf(processInfo))
+
+        handleMessage(MessagingManager.COMMAND_SCREEN_OFF)
+
+        assertEquals(
+            ScreenOffAdminRequestActivity::class.java.name,
+            shadowOf(application).nextStartedActivity?.component?.className,
+        )
     }
 }

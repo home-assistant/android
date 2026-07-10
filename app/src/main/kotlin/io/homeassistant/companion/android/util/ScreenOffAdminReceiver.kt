@@ -3,33 +3,18 @@ package io.homeassistant.companion.android.util
 import android.app.admin.DeviceAdminReceiver
 import android.content.Context
 import android.content.Intent
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
-/**
- * Device admin holding only the force lock policy so [ScreenOffHelper] can cut the display power.
- * The app opens the system's activation screen for it when the screen off command is used while
- * it is not active.
- */
+/** Device admin holding the force lock policy so [ScreenOffHelper] can cut the display power. */
+@AndroidEntryPoint
 class ScreenOffAdminReceiver : DeviceAdminReceiver() {
 
-    @EntryPoint
-    @InstallIn(SingletonComponent::class)
-    interface ScreenOffAdminEntryPoint {
-        fun screenOffHelper(): ScreenOffHelper
-    }
+    @Inject
+    lateinit var screenOffHelper: ScreenOffHelper
 
-    /**
-     * Turns the screen back on when the user deactivates the device admin, otherwise the wake lock
-     * held while the screen is off would never be released since the screen cannot be turned off
-     * anymore.
-     */
+    // Without this the wake lock held while the screen was off would never be released
     override fun onDisabled(context: Context, intent: Intent) {
-        EntryPointAccessors
-            .fromApplication(context.applicationContext, ScreenOffAdminEntryPoint::class.java)
-            .screenOffHelper()
-            .turnScreenOn()
+        screenOffHelper.turnScreenOn()
     }
 }

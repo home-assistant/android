@@ -6,6 +6,7 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.os.PowerManager
+import androidx.annotation.VisibleForTesting
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -15,11 +16,9 @@ import timber.log.Timber
 private const val SCREEN_OFF_WAKE_LOCK_TAG = "HomeAssistant::NotificationScreenOffWakeLock"
 
 /**
- * Turns the screen off for the screen off server command by cutting the display power with
- * [DevicePolicyManager.lockNow] while a [PowerManager.PARTIAL_WAKE_LOCK] keeps the device awake
- * and reachable by the server. This requires the user to activate [ScreenOffAdminReceiver] as
- * device admin, and the command is ignored when the device has a secure keyguard (PIN, pattern or
- * password) since turning the screen off would then lock the device behind credentials.
+ * Cuts the display power with [DevicePolicyManager.lockNow] while a partial wake lock keeps the
+ * device awake. Requires [ScreenOffAdminReceiver] active as device admin and no secure keyguard.
+ * All functions must be called from the main thread, the wake lock state is not synchronized.
  */
 @Singleton
 class ScreenOffHelper @Inject constructor(@ApplicationContext private val context: Context) {
@@ -32,6 +31,7 @@ class ScreenOffHelper @Inject constructor(@ApplicationContext private val contex
     private var screenOffWakeLock: PowerManager.WakeLock? = null
 
     /** Whether the screen is currently turned off by [turnScreenOff]. */
+    @VisibleForTesting
     internal val isScreenOff: Boolean
         get() = screenOffWakeLock != null
 
@@ -39,9 +39,6 @@ class ScreenOffHelper @Inject constructor(@ApplicationContext private val contex
     fun canTurnScreenOff(): Boolean = devicePolicyManager?.isAdminActive(adminComponent) == true
 
     /**
-     * Turns the screen off while the device stays awake, unlocked and connected. Calling it again
-     * while the screen is already off turns the display off again in case it was woken manually.
-     *
      * @return `true` if the screen was turned off, `false` when the device admin is not active or
      * a secure keyguard is set
      */
@@ -69,12 +66,7 @@ class ScreenOffHelper @Inject constructor(@ApplicationContext private val contex
         }
     }
 
-    /**
-     * Releases the wake lock held while the screen was off so the device can sleep normally
-     * again. Safe to call when the screen was not turned off.
-     *
-     * @return `true` if the screen was turned off before, `false` if there was nothing to do
-     */
+    /** @return `true` if the screen was turned off before, `false` if there was nothing to do */
     fun turnScreenOn(): Boolean {
         val wakeLock = screenOffWakeLock ?: return false
         screenOffWakeLock = null
