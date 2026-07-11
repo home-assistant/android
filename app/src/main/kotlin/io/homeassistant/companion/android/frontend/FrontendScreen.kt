@@ -59,6 +59,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -146,6 +147,8 @@ internal fun FrontendScreen(
     val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
     val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val improvScanRequested by viewModel.improvScanRequested.collectAsStateWithLifecycle()
+
+    FrontendVisibleLifecycleEffect(viewModel::setFrontendVisible)
 
     // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
     // state so it does not leak across configuration changes via the ViewModel.
@@ -422,6 +425,16 @@ internal fun WebViewStopLifecycleEffect(webView: WebView?) {
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+}
+
+/** Publishes whether the frontend is shown while the lifecycle is started. */
+@VisibleForTesting
+@Composable
+internal fun FrontendVisibleLifecycleEffect(setFrontendVisible: (Boolean) -> Unit) {
+    LifecycleStartEffect(setFrontendVisible) {
+        setFrontendVisible(true)
+        onStopOrDispose { setFrontendVisible(false) }
     }
 }
 

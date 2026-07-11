@@ -56,6 +56,8 @@ import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.ReloadRequestMediator
+import io.homeassistant.companion.android.util.WebViewNavigationMediator
 import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -129,6 +131,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
+    private val reloadRequestMediator: ReloadRequestMediator,
+    private val webViewNavigationMediator: WebViewNavigationMediator,
     @NamedKeyChain private val keyChainRepository: KeyChainRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
@@ -154,6 +158,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
         matterThreadHandler: FrontendMatterThreadHandler,
+        reloadRequestMediator: ReloadRequestMediator,
+        webViewNavigationMediator: WebViewNavigationMediator,
         @NamedKeyChain keyChainRepository: KeyChainRepository,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
@@ -176,6 +182,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler = improvHandler,
         barcodeScannerHandler = barcodeScannerHandler,
         matterThreadHandler = matterThreadHandler,
+        reloadRequestMediator = reloadRequestMediator,
+        webViewNavigationMediator = webViewNavigationMediator,
         keyChainRepository = keyChainRepository,
     )
 
@@ -306,6 +314,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     private var pendingMoreInfoEntityId: String? = null
 
+    private var isFrontendVisible = false
+
     /**
      * The user's "Autoplay video" preference.
      *
@@ -355,6 +365,25 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 releaseExoPlayerIfLeavingContent(state)
                 // Timeout watcher - cancels automatically when state changes from Loading
                 watchLoadingTimeout(state)
+            }
+        }
+
+        viewModelScope.launch {
+            reloadRequestMediator.eventFlow.collect {
+                _webViewActions.emit(WebViewAction.HardReload())
+            }
+        }
+
+        viewModelScope.launch {
+            // Requests are only made for servers supporting navigate, no version check is needed
+            webViewNavigationMediator.navigationRequests.collect { target ->
+                when (target) {
+                    is FrontendTarget.EntityMoreInfo -> _webViewActions.emit(
+                        WebViewAction.OpenMoreInfo(target.entityId),
+                    )
+                    is FrontendTarget.Path -> externalBusRepository.send(NavigateToMessage(path = target.path))
+                    FrontendTarget.Default -> externalBusRepository.send(NavigateToMessage(path = "/"))
+                }
             }
         }
 
@@ -543,6 +572,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         _viewState.update {
             FrontendViewState.LoadServer(serverId = serverId)
         }
+        if (isFrontendVisible) {
+            webViewNavigationMediator.setVisibleServer(serverId)
+        }
         loadServer()
     }
 
@@ -680,6 +712,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is GestureResult.NavigateToDefaultDashboard -> navigateToDefaultDashboard(_viewState.value.serverId)
             is GestureResult.Forwarded, is GestureResult.Ignored -> { /* no-op */ }
         }
+    }
+
+    /** Publishes the shown server while the frontend is visible so the webview command can act on it in place. */
+    fun setFrontendVisible(visible: Boolean) {
+        isFrontendVisible = visible
+        webViewNavigationMediator.setVisibleServer(_viewState.value.serverId.takeIf { visible })
     }
 
     /**

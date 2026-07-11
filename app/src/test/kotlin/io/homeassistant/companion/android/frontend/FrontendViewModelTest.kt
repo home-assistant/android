@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.NavigateToMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
@@ -59,6 +60,8 @@ import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.ReloadRequestMediator
+import io.homeassistant.companion.android.util.WebViewNavigationMediator
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.mockServer
 import io.mockk.clearMocks
@@ -143,6 +146,8 @@ class FrontendViewModelTest {
     private val matterThreadHandler: FrontendMatterThreadHandler = mockk(relaxed = true) {
         every { events } returns MutableSharedFlow()
     }
+    private val reloadRequestMediator = ReloadRequestMediator()
+    private val webViewNavigationMediator = WebViewNavigationMediator()
 
     private val improvUiStateFlow = MutableStateFlow<ImprovUIState?>(null)
     private val improvEventsFlow = MutableSharedFlow<FrontendImprovHandler.Event>(extraBufferCapacity = 1)
@@ -186,6 +191,8 @@ class FrontendViewModelTest {
             improvHandler = improvHandler,
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
             matterThreadHandler = matterThreadHandler,
+            reloadRequestMediator = reloadRequestMediator,
+            webViewNavigationMediator = webViewNavigationMediator,
             keyChainRepository = keyChainRepository,
         )
     }
@@ -843,6 +850,100 @@ class FrontendViewModelTest {
                 assertEquals(HapticType.Heavy, (awaitItem() as WebViewAction.Haptic).type)
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+        @Test
+        fun `Given reload requested when collected then webViewActions emits HardReload action`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                reloadRequestMediator.emitReloadRequestEvent()
+
+                assertTrue(awaitItem() is WebViewAction.HardReload)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a navigation request when made then the frontend navigates over the external bus`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            createViewModel()
+
+            webViewNavigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/cameras"))
+            advanceUntilIdle()
+
+            coVerify { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
+        }
+
+        @Test
+        fun `Given an entity navigation request when made then webViewActions emits OpenMoreInfo`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                webViewNavigationMediator.requestNavigation(FrontendTarget.EntityMoreInfo("sun.sun"))
+
+                assertEquals("sun.sun", (awaitItem() as WebViewAction.OpenMoreInfo).entityId)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given the frontend when it becomes visible then its server is published`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+
+            viewModel.setFrontendVisible(true)
+
+            assertEquals(serverId, webViewNavigationMediator.visibleServerId.value)
+        }
+
+        @Test
+        fun `Given a visible frontend when it is hidden then the published server is cleared`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            viewModel.setFrontendVisible(true)
+
+            viewModel.setFrontendVisible(false)
+
+            assertNull(webViewNavigationMediator.visibleServerId.value)
+        }
+
+        @Test
+        fun `Given a visible frontend when switching server then the new server is published`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            viewModel.setFrontendVisible(true)
+
+            viewModel.switchServer(serverId + 1)
+
+            assertEquals(serverId + 1, webViewNavigationMediator.visibleServerId.value)
+        }
+
+        @Test
+        fun `Given a hidden frontend when switching server then no server is published`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+
+            viewModel.switchServer(serverId + 1)
+
+            assertNull(webViewNavigationMediator.visibleServerId.value)
         }
 
         @Test

@@ -3,6 +3,7 @@
     tools:ignore="MissingDefaultResource">
     <release version="2026.7.2 - Main" versioncode="3">
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
+        <change>The command_webview notification command now navigates, opens the entity more info dialog, and reloads the frontend in place when it is already open, instead of relaunching the app</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.7.2 - Wear" versioncode="2">
@@ -11,6 +12,7 @@
     </release>
     <release version="2026.7.2 - Automotive" versioncode="1">
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
+        <change>The command_webview notification command now navigates, opens the entity more info dialog, and reloads the frontend in place when it is already open, instead of relaunching the app</change>
         <change>Bug fixes and dependency updates</change>
     </release>
 </changelog>

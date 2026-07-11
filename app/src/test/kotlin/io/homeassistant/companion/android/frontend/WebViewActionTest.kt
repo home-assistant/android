@@ -13,6 +13,7 @@ import io.mockk.mockkObject
 import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.verify
+import io.mockk.verifyOrder
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -65,6 +66,19 @@ class WebViewActionTest {
         action.run(webView)
 
         verify { webView.reload() }
+        assertTrue(action.result.isCompleted)
+    }
+
+    @Test
+    fun `Given HardReload when run then the cache is cleared before reloading and result completes`() = runTest {
+        val action = WebViewAction.HardReload()
+
+        action.run(webView)
+
+        verifyOrder {
+            webView.clearCache(true)
+            webView.reload()
+        }
         assertTrue(action.result.isCompleted)
     }
 

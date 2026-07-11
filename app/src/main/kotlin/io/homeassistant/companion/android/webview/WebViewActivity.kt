@@ -122,6 +122,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
+import io.homeassistant.companion.android.frontend.WebViewAction
 import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
@@ -132,6 +133,8 @@ import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.externalBusCallback
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge.Companion.isServerSupportingExternalAppV2
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget.Companion.toRawPath
 import io.homeassistant.companion.android.improv.ui.ImprovPermissionDialog
 import io.homeassistant.companion.android.improv.ui.ImprovSetupDialog
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -146,7 +149,9 @@ import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.homeassistant.companion.android.util.DataUriDownloadManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.OnSwipeListener
+import io.homeassistant.companion.android.util.ReloadRequestMediator
 import io.homeassistant.companion.android.util.TLSWebViewClient
+import io.homeassistant.companion.android.util.WebViewNavigationMediator
 import io.homeassistant.companion.android.util.applyInsets
 import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.util.compose.webview.BackAction
@@ -289,6 +294,12 @@ class WebViewActivity :
 
     @Inject
     lateinit var dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>
+
+    @Inject
+    lateinit var reloadRequestMediator: ReloadRequestMediator
+
+    @Inject
+    lateinit var webViewNavigationMediator: WebViewNavigationMediator
 
     private lateinit var webView: WebView
     private var loadedUrl: Uri? = null
@@ -812,6 +823,49 @@ class WebViewActivity :
         }
 
         lifecycleScope.launch {
+            // The cache is dropped so the page releases what it holds, like camera streams
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                reloadRequestMediator.eventFlow.collect {
+                    // Not while the page is still loading, dropping its files can wedge the load
+                    if (isConnected) {
+                        webView.clearCache(true)
+                    }
+                    webView.reload()
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            // Resumed rather than started so a stopping instance can never clear the server
+            // that the single foreground instance publishes
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                webViewNavigationMediator.setVisibleServer(serverManager.getServer()?.id)
+                try {
+                    webViewNavigationMediator.navigationRequests.collect { target ->
+                        val version = serverManager.getServer(presenter.getActiveServer())?.version
+                        // Before the frontend is connected, bus messages and events are silently lost
+                        when {
+                            target is FrontendTarget.EntityMoreInfo && isConnected ->
+                                WebViewAction.OpenMoreInfo(target.entityId).run(webView)
+                            target is FrontendTarget.EntityMoreInfo ->
+                                presenter.load(
+                                    lifecycle,
+                                    "/?more-info-entity-id=${target.entityId}",
+                                    isInternalOverride,
+                                )
+                            isConnected && NavigateTo.isAvailable(version) ->
+                                sendExternalBusMessage(NavigateTo(target.toRawPath() ?: "/"))
+                            else ->
+                                presenter.load(lifecycle, target.toRawPath() ?: "/", isInternalOverride)
+                        }
+                    }
+                } finally {
+                    webViewNavigationMediator.setVisibleServer(null)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
             if (presenter.isKeepScreenOnEnabled()) {
                 window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
@@ -1316,6 +1370,7 @@ class WebViewActivity :
                                     lifecycle,
                                     bundle.getInt(ServerChooserFragment.RESULT_SERVER),
                                 )
+                                webViewNavigationMediator.setVisibleServer(presenter.getActiveServer())
                             }
                         }
                         supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
@@ -2394,6 +2449,10 @@ class WebViewActivity :
             intent.extras?.getInt(EXTRA_SERVER)?.let {
                 lifecycleScope.launch {
                     presenter.setActiveServer(it)
+                    // Only publish while visible, otherwise the next start publishes it
+                    if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+                        webViewNavigationMediator.setVisibleServer(presenter.getActiveServer())
+                    }
                 }
                 intent.removeExtra(EXTRA_SERVER)
             }
