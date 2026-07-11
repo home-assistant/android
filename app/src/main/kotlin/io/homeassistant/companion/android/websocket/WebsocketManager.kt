@@ -137,7 +137,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         // play ping pong to ensure we have a connection and server changes are handled.
         do {
             delay(30000)
-        } while (jobs.values.any { it.isActive } && isActive && shouldWeRun() && manageServerJobs(jobs, this))
+        } while (isActive && shouldWeRun() && manageServerJobs(jobs, this))
 
         jobs.forEach { it.value.cancel() }
         jobs.clear()
@@ -176,9 +176,9 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
         val servers = serverManager.servers()
 
-        // Clean up...
-        jobs.filter { (serverId, _) ->
-            servers.none { it.id == serverId } || !shouldRunForServer(serverId)
+        // Clean up, including stopped jobs so they are started again below...
+        jobs.filter { (serverId, job) ->
+            servers.none { it.id == serverId } || !job.isActive || !shouldRunForServer(serverId)
         }
             .forEach { (serverId, job) ->
                 job.cancel()

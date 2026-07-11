@@ -1446,6 +1446,191 @@ misc
     }
 
     @Test
+    fun `Given an Active subscription When the server stays unavailable Then it retries until the server is back and resubscribes`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // The server becomes unavailable: the auth message cannot be sent anymore
+            every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } returns false
+            var connectionAttemptCount = 0
+            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+                connectionAttemptCount++
+                mockConnection
+            }
+            closeConnection()
+
+            // The first attempt after the delay fails, the subscription is kept and retries continue
+            advanceTimeBy(11.seconds)
+            runCurrent()
+            assertTrue(connectionAttemptCount >= 1, "Should have attempted to reconnect")
+            advanceTimeBy(30.seconds)
+            runCurrent()
+            assertTrue(connectionAttemptCount >= 3, "Should keep retrying while the server is unavailable")
+            assertTrue(
+                webSocketCore.activeMessages.any { it.value is ActiveMessage.Subscription },
+                "Subscription should still be tracked while retrying",
+            )
+
+            // The server is back, the next retry reconnects and resubscribes with a new ID
+            prepareAuthenticationAnswer()
+            var resubscribeId: Long? = null
+            every {
+                mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
+            } answers {
+                val id = checkNotNull(Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong())
+                resubscribeId = id
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$id,"type":"result","success":true,"result":{}}""",
+                )
+                true
+            }
+            advanceTimeBy(11.seconds)
+            runCurrent()
+
+            val newId = checkNotNull(resubscribeId) { "Subscription should have been re-registered" }
+            assertNotEquals(2L, newId)
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":$newId, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""",
+            )
+            assertEquals("light.bed_light", awaitItem().entityId)
+        }
+    }
+
+    @Test
+    fun `Given a resubscription rejected on a live connection Then it is retried until restored`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // The server rejects the first resubscription on the restored connection
+            var subscribeAttempts = 0
+            var lastSubscribeId: Long? = null
+            every {
+                mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
+            } answers {
+                val id = checkNotNull(Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong())
+                subscribeAttempts++
+                lastSubscribeId = id
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$id,"type":"result","success":${subscribeAttempts > 1},"result":{}}""",
+                )
+                true
+            }
+            closeConnection()
+
+            advanceTimeBy(11.seconds)
+            runCurrent()
+            assertEquals(1, subscribeAttempts, "First resubscription should have been attempted")
+            assertEquals(
+                1,
+                webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
+                "The rejected attempt should be dropped and the original kept for a retry",
+            )
+
+            // The retry happens on the live connection without another disconnection
+            advanceTimeBy(11.seconds)
+            runCurrent()
+            assertEquals(2, subscribeAttempts, "The rejected subscription should have been retried")
+
+            val newId = checkNotNull(lastSubscribeId)
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":$newId, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""",
+            )
+            assertEquals("light.bed_light", awaitItem().entityId)
+            assertEquals(
+                1,
+                webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
+                "Only the restored subscription should remain",
+            )
+        }
+    }
+
+    @Test
+    fun `Given a resubscription without acknowledgement When reconnecting again Then the subscription is restored`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // First reconnection: the subscribe request is sent but never acknowledged
+            every {
+                mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
+            } returns true
+            closeConnection()
+            advanceTimeBy(11.seconds)
+            runCurrent()
+
+            // Once the answer times out the subscription must be kept for the next reconnection
+            advanceTimeBy(31.seconds)
+            runCurrent()
+            assertTrue(
+                webSocketCore.activeMessages.any { it.value is ActiveMessage.Subscription },
+                "Subscription should be kept when the resubscription is not acknowledged",
+            )
+
+            // Second reconnection: the subscribe request is acknowledged and events flow again
+            var resubscribeId: Long? = null
+            every {
+                mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
+            } answers {
+                val id = checkNotNull(Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong())
+                resubscribeId = id
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$id,"type":"result","success":true,"result":{}}""",
+                )
+                true
+            }
+            closeConnection()
+            advanceTimeBy(11.seconds)
+            runCurrent()
+
+            val newId = checkNotNull(resubscribeId) { "Subscription should have been re-registered" }
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":$newId, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""",
+            )
+            assertEquals("light.bed_light", awaitItem().entityId)
+            assertEquals(
+                1,
+                webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
+                "Only the acknowledged subscription should remain",
+            )
+        }
+    }
+
+    @Test
     fun `Given pending simple messages When connection closes during URL change Then they complete with exception`() = runTest {
         val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
         setupServer(urlFlow = urlFlow, backgroundScope = backgroundScope)

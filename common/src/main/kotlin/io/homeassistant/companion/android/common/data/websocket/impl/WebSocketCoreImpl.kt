@@ -182,6 +182,9 @@ internal class WebSocketCoreImpl(
     @Volatile
     private var pendingCloseReason: WebSocketState.Closed.Reason? = null
 
+    /** The running subscription restore loop, replaced on each closing so only one runs at a time. */
+    private var reconnectJob: Job? = null
+
     /**
      * A [CompletableDeferred] that signals the establishment and authentication of a WebSocket connection.
      *
@@ -1036,38 +1039,65 @@ internal class WebSocketCoreImpl(
             val shouldAttemptReconnect = hasSubscriptions && wasActive
 
             if (shouldAttemptReconnect && wsScope.isActive) {
-                // Delay before reconnect unless URL changed
-                if (closeReason != WebSocketState.Closed.Reason.CHANGED_URL) {
-                    delay(DELAY_BEFORE_RECONNECT)
+                // A new closing takes over the restore loop with a fresh snapshot
+                reconnectJob?.cancel()
+                reconnectJob = wsScope.launch {
+                    // Delay before reconnect unless URL changed
+                    if (closeReason != WebSocketState.Closed.Reason.CHANGED_URL) {
+                        delay(DELAY_BEFORE_RECONNECT)
+                    }
+                    reconnectSubscriptions()
                 }
-                reconnectSubscriptions()
             }
         }
     }
 
     private suspend fun reconnectSubscriptions() {
-        if (connect()) {
-            Timber.d("Resubscribing to active subscriptions...")
-            activeMessages.filterValues { it is ActiveMessage.Subscription }.entries
-                .forEach { (oldId, oldActiveMessage) ->
-                    oldActiveMessage as ActiveMessage.Subscription
-                    activeMessages.remove(oldId)
-
-                    val response = sendMessage(
-                        Command.WithAnswer.Subscription(
-                            request = oldActiveMessage.request,
-                            eventFlow = oldActiveMessage.eventFlow,
-                            onEvent = oldActiveMessage.onEvent,
-                        ),
-                    )
-                    if (response == null || response.success != true) {
-                        Timber.e("Issue re-registering subscription with ${oldActiveMessage.request}")
-                    }
+        var toRestore: Set<Long> = activeMessages.filterValues { it is ActiveMessage.Subscription }.keys
+        while (toRestore.isNotEmpty()) {
+            if (connect()) {
+                toRestore = resubscribeActiveSubscriptions(toRestore)
+                if (toRestore.isEmpty()) return
+                Timber.w("${toRestore.size} subscriptions not restored, retrying in $DELAY_BEFORE_RECONNECT")
+            } else {
+                if (getConnectionState() == WebSocketState.ClosedAuth) {
+                    Timber.e("Authentication failed, not retrying to resubscribe to active subscriptions")
+                    return
                 }
-        } else {
-            // TODO https://github.com/home-assistant/android/issues/5259 handle re-connection gracefully or terminates the flows
-            Timber.w("Unable to reconnect, cannot resubscribe to active subscriptions")
+                Timber.w(
+                    "Unable to reconnect, retrying in $DELAY_BEFORE_RECONNECT to resubscribe to active subscriptions",
+                )
+            }
+            delay(DELAY_BEFORE_RECONNECT)
+            // Subscriptions closed while waiting no longer need to be restored
+            toRestore = toRestore.filterTo(mutableSetOf()) { activeMessages[it] is ActiveMessage.Subscription }
         }
+    }
+
+    /** @return the ids of the subscriptions that could not be restored and are kept for a retry */
+    private suspend fun resubscribeActiveSubscriptions(oldIds: Set<Long>): Set<Long> {
+        Timber.d("Resubscribing to active subscriptions...")
+        val failed = mutableSetOf<Long>()
+        oldIds.forEach { oldId ->
+            val oldActiveMessage = activeMessages[oldId] as? ActiveMessage.Subscription ?: return@forEach
+
+            val response = sendMessage(
+                Command.WithAnswer.Subscription(
+                    request = oldActiveMessage.request,
+                    eventFlow = oldActiveMessage.eventFlow,
+                    onEvent = oldActiveMessage.onEvent,
+                ),
+            )
+            if (response == null || response.success != true) {
+                failed += oldId
+                // Drop the rejected attempt, the kept original is retried instead
+                response?.id?.let { activeMessages.remove(it) }
+                Timber.e("Issue re-registering subscription with ${oldActiveMessage.request}")
+            } else {
+                activeMessages.remove(oldId)
+            }
+        }
+        return failed
     }
 
     private fun URL.toWebSocketURL(): String {
