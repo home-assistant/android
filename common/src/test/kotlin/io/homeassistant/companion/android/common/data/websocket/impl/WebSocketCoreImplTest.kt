@@ -1569,6 +1569,46 @@ misc
     }
 
     @Test
+    fun `Given a resubscription in flight When the subscription is closed Then no orphan entry remains`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // The resubscription is sent but stays unanswered, tracking a second in flight entry
+            every {
+                mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
+            } returns true
+            closeConnection()
+            advanceTimeBy(11.seconds)
+            runCurrent()
+            assertEquals(
+                2,
+                webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
+                "The kept original and the in flight attempt should both be tracked",
+            )
+
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        // Closing the subscription removes every entry tracked for the message
+        advanceUntilIdle()
+        assertEquals(
+            0,
+            webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
+            "No orphan subscription entry should remain after the flow is closed",
+        )
+    }
+
+    @Test
     fun `Given a resubscription without acknowledgement When reconnecting again Then the subscription is restored`() = runTest {
         setupServer(backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()

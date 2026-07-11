@@ -768,16 +768,18 @@ internal class WebSocketCoreImpl(
             awaitClose {
                 wsScope.launch {
                     eventSubscriptionMutex.withLock {
-                        findSubscription(subscribeMessage)
-                            ?.let {
-                                val subscription = it.key
-                                Timber.d("Unsubscribing from $subscribeMessage")
-                                // Unsubscribe must happen before removing from activeMessages to ensure
-                                // the server acknowledges before we stop handling events for this subscription
-                                unsubscribeEvents(subscription)
-                                channel.close()
-                                activeMessages.remove(subscription)
-                            }
+                        // Resubscribing briefly tracks two entries for the same message, remove
+                        // them all so no orphan keeps the connection alive
+                        var subscription = findSubscription(subscribeMessage)?.key
+                        while (subscription != null) {
+                            Timber.d("Unsubscribing from $subscribeMessage")
+                            // Unsubscribe must happen before removing from activeMessages to ensure
+                            // the server acknowledges before we stop handling events for this subscription
+                            unsubscribeEvents(subscription)
+                            activeMessages.remove(subscription)
+                            subscription = findSubscription(subscribeMessage)?.key
+                        }
+                        channel.close()
                     }
                     if (activeMessages.isEmpty()) {
                         Timber.i("No more subscriptions, closing connection.")
@@ -1025,28 +1027,26 @@ internal class WebSocketCoreImpl(
         if (connectionHolder.get() == null) return
 
         wsScope.launch {
-            val hasSubscriptions: Boolean
-
             connectedMutex.withLock {
-                val holder = connectionHolder.getAndSet(null)
+                // Another callback of the same closing already handled it
+                val holder = connectionHolder.getAndSet(null) ?: return@launch
                 // Cancel URL observer - connect() will recreate it if needed
-                holder?.urlObserverJob?.cancel()
+                holder.urlObserverJob.cancel()
 
                 cleanupClosingSocket()
-                hasSubscriptions = activeMessages.any { it.value is ActiveMessage.Subscription }
-            }
+                val hasSubscriptions = activeMessages.any { it.value is ActiveMessage.Subscription }
 
-            val shouldAttemptReconnect = hasSubscriptions && wasActive
-
-            if (shouldAttemptReconnect && wsScope.isActive) {
-                // A new closing takes over the restore loop with a fresh snapshot
-                reconnectJob?.cancel()
-                reconnectJob = wsScope.launch {
-                    // Delay before reconnect unless URL changed
-                    if (closeReason != WebSocketState.Closed.Reason.CHANGED_URL) {
-                        delay(DELAY_BEFORE_RECONNECT)
+                if (hasSubscriptions && wasActive && wsScope.isActive) {
+                    // A new closing takes over the restore loop with a fresh snapshot, replacing
+                    // the job under the lock so concurrent closings cannot start two loops
+                    reconnectJob?.cancel()
+                    reconnectJob = wsScope.launch {
+                        // Delay before reconnect unless URL changed
+                        if (closeReason != WebSocketState.Closed.Reason.CHANGED_URL) {
+                            delay(DELAY_BEFORE_RECONNECT)
+                        }
+                        reconnectSubscriptions()
                     }
-                    reconnectSubscriptions()
                 }
             }
         }
