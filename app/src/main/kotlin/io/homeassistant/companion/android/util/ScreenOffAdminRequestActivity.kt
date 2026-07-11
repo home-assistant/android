@@ -22,7 +22,12 @@ class ScreenOffAdminRequestActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState != null) return
+        if (savedInstanceState != null) {
+            // A recreated instance cannot count on a pending result to finish it, so leave
+            // instead of lingering transparently over the task
+            finish()
+            return
+        }
 
         val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
             .putExtra(
