@@ -129,14 +129,23 @@ class MessagingManagerWebViewCommandTest {
         verify(exactly = 0) { navigationMediator.requestNavigation(any()) }
     }
 
-    @Test
-    fun `Given an app settings path when receiving webview command then it does not navigate in place`() {
+    private fun assertCommandDoesNotNavigateInPlace(path: String) {
         visibleServerId.value = SERVER_ID
         ShadowSettings.setCanDrawOverlays(true)
 
-        handleWebViewCommand("settings://notification_history")
+        handleWebViewCommand(path)
 
         verify(exactly = 0) { navigationMediator.requestNavigation(any()) }
+    }
+
+    @Test
+    fun `Given an app settings path when receiving webview command then it does not navigate in place`() {
+        assertCommandDoesNotNavigateInPlace("settings://notification_history")
+    }
+
+    @Test
+    fun `Given an app launch path with surrounding spaces when receiving webview command then it does not navigate in place`() {
+        assertCommandDoesNotNavigateInPlace(" app://com.example.app ")
     }
 
     @Test
@@ -175,11 +184,20 @@ class MessagingManagerWebViewCommandTest {
 
     @Test
     fun `Given an absolute URL when receiving webview command then it does not navigate in place`() {
+        assertCommandDoesNotNavigateInPlace("https://example.com")
+    }
+
+    @Test
+    fun `Given an uppercase absolute URL with surrounding spaces when receiving webview command then it does not navigate in place`() {
+        assertCommandDoesNotNavigateInPlace(" HTTPS://example.com")
+    }
+
+    @Test
+    fun `Given a path with surrounding spaces when receiving webview command then it navigates to the trimmed path`() {
         visibleServerId.value = SERVER_ID
-        ShadowSettings.setCanDrawOverlays(true)
 
-        handleWebViewCommand("https://example.com")
+        handleWebViewCommand(" /lovelace/cameras ")
 
-        verify(exactly = 0) { navigationMediator.requestNavigation(any()) }
+        verify(exactly = 1) { navigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/cameras")) }
     }
 }

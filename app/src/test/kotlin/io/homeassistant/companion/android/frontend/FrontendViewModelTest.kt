@@ -852,8 +852,35 @@ class FrontendViewModelTest {
             }
         }
 
+        /** Overrides the bus observer with a flow the test can emit [FrontendHandlerEvent.Connected] on. */
+        private fun connectableMessageFlow(): MutableSharedFlow<FrontendHandlerEvent> {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            return messageFlow
+        }
+
         @Test
-        fun `Given reload requested when collected then webViewActions emits HardReload action`() = runTest {
+        fun `Given a connected frontend when reload requested then webViewActions emits HardReload action`() = runTest {
+            val messageFlow = connectableMessageFlow()
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+                skipItems(2) // The connection handshake: history clear and theme color read
+
+                reloadRequestMediator.emitReloadRequestEvent()
+
+                assertTrue(awaitItem() is WebViewAction.HardReload)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a loading frontend when reload requested then webViewActions emits a plain Reload action`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -863,17 +890,17 @@ class FrontendViewModelTest {
             viewModel.webViewActions.test {
                 reloadRequestMediator.emitReloadRequestEvent()
 
-                assertTrue(awaitItem() is WebViewAction.HardReload)
+                assertTrue(awaitItem() is WebViewAction.Reload)
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
         @Test
         fun `Given a navigation request when made then the frontend navigates over the external bus`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
+            val messageFlow = connectableMessageFlow()
             createViewModel()
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
 
             webViewNavigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/cameras"))
             advanceUntilIdle()
@@ -883,17 +910,52 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given an entity navigation request when made then webViewActions emits OpenMoreInfo`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
+            val messageFlow = connectableMessageFlow()
             val viewModel = createViewModel()
 
             viewModel.webViewActions.test {
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+                skipItems(2) // The connection handshake: history clear and theme color read
+
                 webViewNavigationMediator.requestNavigation(FrontendTarget.EntityMoreInfo("sun.sun"))
 
                 assertEquals("sun.sun", (awaitItem() as WebViewAction.OpenMoreInfo).entityId)
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+        @Test
+        fun `Given a loading frontend when a navigation request is made then it is delivered once connected`() = runTest {
+            val messageFlow = connectableMessageFlow()
+            createViewModel()
+
+            webViewNavigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/cameras"))
+            // Stay within the connection timeout so the frontend keeps loading
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            coVerify(exactly = 0) { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
+        }
+
+        @Test
+        fun `Given several navigation requests while loading when connected then only the latest is delivered`() = runTest {
+            val messageFlow = connectableMessageFlow()
+            createViewModel()
+
+            webViewNavigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/old"))
+            webViewNavigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/new"))
+            // Stay within the connection timeout so the frontend keeps loading
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { externalBusRepository.send(NavigateToMessage(path = "/lovelace/old")) }
+            coVerify(exactly = 1) { externalBusRepository.send(NavigateToMessage(path = "/lovelace/new")) }
         }
 
         @Test

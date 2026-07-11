@@ -40,6 +40,17 @@ class FrontendTargetTest {
         assertEquals(FrontendTarget.EntityMoreInfo("sun.sun"), FrontendTarget.fromRawPath(raw))
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = ["", "   "])
+    fun `Given a blank path when fromRawPath then maps to Default`(raw: String) {
+        assertEquals(FrontendTarget.Default, FrontendTarget.fromRawPath(raw))
+    }
+
+    @Test
+    fun `Given a path with surrounding spaces when fromRawPath then the path is trimmed`() {
+        assertEquals(FrontendTarget.Path("/lovelace/0"), FrontendTarget.fromRawPath(" /lovelace/0 "))
+    }
+
     @Test
     fun `Given a path only containing the entity prefix when fromRawPath then stays a Path`() {
         assertEquals(

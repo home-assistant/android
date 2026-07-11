@@ -850,7 +850,7 @@ class WebViewActivity :
                             target is FrontendTarget.EntityMoreInfo ->
                                 presenter.load(
                                     lifecycle,
-                                    "/?more-info-entity-id=${target.entityId}",
+                                    "/?more-info-entity-id=${Uri.encode(target.entityId)}",
                                     isInternalOverride,
                                 )
                             isConnected && NavigateTo.isAvailable(version) ->

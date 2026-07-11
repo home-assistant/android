@@ -826,13 +826,7 @@ class MessagingManager @Inject constructor(
                 when {
                     isReload && isFrontendVisible(serverId) -> reloadRequestMediator.emitReloadRequestEvent()
                     !isReload && canNavigateFrontendInApp(serverId = serverId, path = command) ->
-                        webViewNavigationMediator.requestNavigation(
-                            FrontendTarget.fromRawPath(
-                                command?.ifBlank {
-                                    null
-                                },
-                            ),
-                        )
+                        webViewNavigationMediator.requestNavigation(FrontendTarget.fromRawPath(command))
                     !Settings.canDrawOverlays(context) -> notifyMissingPermission(message, serverId)
                     // A fresh launch is already reloaded, so reload falls back to the default dashboard
                     else -> openWebview(title = command?.takeUnless { isReload }, data = data)
@@ -2025,24 +2019,16 @@ class MessagingManager @Inject constructor(
         if (!NavigateToMessage.isAvailable(serverManager.getServer(targetServerId)?.version)) {
             return false
         }
-        return path.isNullOrEmpty() ||
-            (
-                !path.startsWith(APP_PREFIX) &&
-                    !path.startsWith(INTENT_PREFIX) &&
-                    !path.startsWith(SETTINGS_PREFIX) &&
-                    !path.startsWith(DEEP_LINK_PREFIX) &&
-                    !UrlUtil.isAbsoluteUrl(path)
-                )
+        // Trimmed and matched ignoring case since the value is typed by hand
+        val target = path?.trim().orEmpty()
+        val launchPrefixes = listOf(APP_PREFIX, INTENT_PREFIX, SETTINGS_PREFIX, DEEP_LINK_PREFIX)
+        return launchPrefixes.none { target.startsWith(it, ignoreCase = true) } && !UrlUtil.isAbsoluteUrl(target)
     }
 
     private fun openWebview(title: String?, data: Map<String, String>) {
         try {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val intent = if (title.isNullOrEmpty()) {
-                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
-            } else {
-                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
-            }
+            val intent = context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             context.startActivity(intent)

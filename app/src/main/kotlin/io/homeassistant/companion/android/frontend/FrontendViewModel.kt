@@ -76,6 +76,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -370,13 +371,23 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
         viewModelScope.launch {
             reloadRequestMediator.eventFlow.collect {
-                _webViewActions.emit(WebViewAction.HardReload())
+                // Dropping the cache while the page is still loading can wedge the load
+                _webViewActions.emit(
+                    if (_viewState.value is FrontendViewState.Content) {
+                        WebViewAction.HardReload()
+                    } else {
+                        WebViewAction.Reload()
+                    },
+                )
             }
         }
 
         viewModelScope.launch {
-            // Requests are only made for servers supporting navigate, no version check is needed
-            webViewNavigationMediator.navigationRequests.collect { target ->
+            // Requests are only made for servers supporting navigate, no version check is needed.
+            // Bus messages sent before the frontend handshake are lost, so each request waits for
+            // it and only the latest request is kept while waiting
+            webViewNavigationMediator.navigationRequests.collectLatest { target ->
+                _viewState.first { it is FrontendViewState.Content }
                 when (target) {
                     is FrontendTarget.EntityMoreInfo -> _webViewActions.emit(
                         WebViewAction.OpenMoreInfo(target.entityId),
