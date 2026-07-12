@@ -1671,6 +1671,86 @@ misc
     }
 
     @Test
+    fun `Given an established connection When a ping is answered Then the connection is kept`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        every { mockConnection.send(match<String> { it.contains(""""type":"ping"""") }) } answers {
+            val id = checkNotNull(Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong())
+            webSocketListener.onMessage(mockConnection, """{"id":$id,"type":"pong"}""")
+            true
+        }
+
+        assertTrue(webSocketCore.ping())
+        verify(exactly = 0) { mockConnection.cancel() }
+    }
+
+    @Test
+    fun `Given an established connection When a ping goes unanswered Then it is cancelled and restored`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // The server went away without the TCP connection being reset (e.g. it restarted and
+            // its address moved): writes are still accepted but nothing ever answers
+            every { mockConnection.send(match<String> { it.contains(""""type":"ping"""") }) } returns true
+            mockCancelTriggersOnFailure()
+
+            val ping = async { webSocketCore.ping() }
+            advanceTimeBy(31.seconds)
+            runCurrent()
+            assertFalse(ping.await())
+            verify { mockConnection.cancel() }
+
+            // The close handling restores the subscription once the server answers again
+            prepareAuthenticationAnswer()
+            var resubscribeId: Long? = null
+            every {
+                mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
+            } answers {
+                val id = checkNotNull(Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong())
+                resubscribeId = id
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$id,"type":"result","success":true,"result":{}}""",
+                )
+                true
+            }
+            advanceTimeBy(11.seconds)
+            runCurrent()
+
+            val newId = checkNotNull(resubscribeId) { "Subscription should have been re-registered" }
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":$newId, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""",
+            )
+            assertEquals("light.bed_light", awaitItem().entityId)
+        }
+    }
+
+    @Test
+    fun `Given a failed ping When no connection was established Then nothing is cancelled`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+
+        // Never connected and the socket cannot even be created, so connecting fails without
+        // producing a connection for the failed ping to cancel
+        every { mockOkHttpClient.newWebSocket(any(), any()) } throws IllegalStateException()
+
+        assertFalse(webSocketCore.ping())
+        verify(exactly = 0) { mockConnection.cancel() }
+    }
+
+    @Test
     fun `Given pending simple messages When connection closes during URL change Then they complete with exception`() = runTest {
         val urlFlow = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
         setupServer(urlFlow = urlFlow, backgroundScope = backgroundScope)

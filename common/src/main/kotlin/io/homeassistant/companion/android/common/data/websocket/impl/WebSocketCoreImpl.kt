@@ -625,6 +625,26 @@ internal class WebSocketCoreImpl(
         }
     }
 
+    override suspend fun ping(): Boolean {
+        // Capture the connection this ping verifies, so a connection (re)established while
+        // waiting for the pong is never cancelled by mistake.
+        val holder = connectionHolder.get()
+        val response = sendMessage(mapOf("type" to "ping"))
+        if (response is PongSocketResponse) return true
+
+        if (holder != null && connectionHolder.get() === holder) {
+            // No pong on a connection that is believed to be established means the socket is
+            // half-open: the server went away without the TCP connection being reset, for
+            // example when it restarted and its address moved. OkHttp keeps buffering writes
+            // into such a socket without ever failing, so no close callback would fire on its
+            // own. Cancelling forces onFailure, which runs handleClosingSocket and lets the
+            // restore loop bring the connection and its subscriptions back.
+            Timber.w("No pong received on the established connection, cancelling it to trigger reconnection")
+            holder.webSocket.cancel()
+        }
+        return false
+    }
+
     override suspend fun <T : Any> subscribeTo(
         type: String,
         data: Map<String, Any?>,

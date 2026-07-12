@@ -52,6 +52,17 @@ internal interface WebSocketCore {
     suspend fun sendBytes(data: ByteArray): Boolean
 
     /**
+     * Sends an application-level ping and verifies that the connection is alive.
+     *
+     * If no pong is received while the connection is believed to be established, the connection is
+     * cancelled: this surfaces a silently dropped socket (e.g. the server restarted without the
+     * TCP connection being reset) to the close handling, which restores active subscriptions.
+     *
+     * @return `true` if a pong was received, `false` otherwise.
+     */
+    suspend fun ping(): Boolean
+
+    /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to
      * new messages. When there are no more listeners, the subscription will automatically be cancelled
      * using `unsubscribe_events`. If the subscription already exists, the existing Flow is returned.
