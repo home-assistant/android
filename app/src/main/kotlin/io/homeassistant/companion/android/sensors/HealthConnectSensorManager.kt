@@ -893,7 +893,7 @@ class HealthConnectSensorManager @Inject constructor(
         )
     }
 
-    /** @return Sleep duration based on the stages, excluding awake (in bed) and out of bed (assumed awake) */
+    /** @return Sleep duration based on the stages, excluding awake (+ in bed) and out of bed */
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     internal fun calculateSleepDurationInMinutes(stages: List<SleepSessionRecord.Stage>): Long = stages
         .filter {

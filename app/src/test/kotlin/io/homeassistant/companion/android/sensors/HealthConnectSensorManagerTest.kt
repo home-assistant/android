@@ -55,7 +55,7 @@ class HealthConnectSensorManagerTest {
     }
 
     @Test
-    fun `Given sleep with stages when duration calculated then ignores awake (in bed) and out of bed stages`() {
+    fun `Given sleep with stages when duration calculated then ignores awake (+ in bed) and out of bed stages`() {
         // Mock a sleep session with all possible stage types
         // Total duration: 12:00 AM-8:00 AM = 8 hours / 480 min
         // Asleep duration: 12:00 AM-4:00 AM + 5:00 AM-6:00 AM = 5 hours / 300 min
