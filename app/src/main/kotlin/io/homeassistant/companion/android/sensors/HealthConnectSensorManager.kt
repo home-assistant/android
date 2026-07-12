@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
+import androidx.annotation.VisibleForTesting
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.PermissionController
@@ -879,17 +880,7 @@ class HealthConnectSensorManager @Inject constructor(
             return
         }
         val lastSleepRecord = sleepRecords.records.last()
-        // Get duration based on the sleep stages, as some stages may be awake/out of bed (assumed awake).
-        // Don't convert to minutes until the end to avoid losing detail.
-        val sleepRecordDuration = lastSleepRecord.stages
-            .filter {
-                it.stage != SleepSessionRecord.STAGE_TYPE_AWAKE &&
-                    it.stage != SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED &&
-                    it.stage != SleepSessionRecord.STAGE_TYPE_OUT_OF_BED
-            }
-            .sumOf { Duration.between(it.startTime, it.endTime).seconds }
-            .toDuration(DurationUnit.SECONDS)
-            .inWholeMinutes
+        val sleepRecordDuration = calculateSleepDurationInMinutes(lastSleepRecord.stages)
         onSensorUpdated(
             sleepDuration,
             sleepRecordDuration,
@@ -901,6 +892,19 @@ class HealthConnectSensorManager @Inject constructor(
             ),
         )
     }
+
+    /** @return Sleep duration based on the stages, excluding awake/out of bed (assumed awake) */
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    internal fun calculateSleepDurationInMinutes(stages: List<SleepSessionRecord.Stage>): Long = stages
+        .filter {
+            it.stage != SleepSessionRecord.STAGE_TYPE_AWAKE &&
+                it.stage != SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED &&
+                it.stage != SleepSessionRecord.STAGE_TYPE_OUT_OF_BED
+        }
+        .sumOf { Duration.between(it.startTime, it.endTime).seconds }
+        .toDuration(DurationUnit.SECONDS)
+        // Don't convert to minutes until the end to avoid losing detail
+        .inWholeMinutes
 
     private suspend fun updateStepsSensor() {
         val healthConnectClient = getOrCreateHealthConnectClient() ?: return
