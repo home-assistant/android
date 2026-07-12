@@ -27,6 +27,7 @@ import io.mockk.verify
 import io.mockk.verifyOrder
 import java.io.IOException
 import kotlin.math.sin
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -1495,7 +1496,8 @@ misc
                 )
                 true
             }
-            advanceTimeBy(11.seconds)
+            // Advance past the largest possible backoff so the next scheduled attempt is reached
+            advanceTimeBy(2.minutes)
             runCurrent()
 
             val newId = checkNotNull(resubscribeId) { "Subscription should have been re-registered" }
@@ -1748,6 +1750,58 @@ misc
 
         assertFalse(webSocketCore.ping())
         verify(exactly = 0) { mockConnection.cancel() }
+    }
+
+    @Test
+    fun `Given an Active subscription When the server stays unavailable Then attempts back off up to a cap`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // The server becomes unavailable: the auth message cannot be sent anymore
+            every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } returns false
+            var connectionAttemptCount = 0
+            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+                connectionAttemptCount++
+                mockConnection
+            }
+            closeConnection()
+
+            // Attempts follow the backoff schedule: first after 10s, then spaced by
+            // 10s, 20s, 40s, 80s and finally capped at 120s
+            advanceTimeBy(11.seconds)
+            runCurrent()
+            assertEquals(1, connectionAttemptCount)
+            advanceTimeBy(10.seconds) // t=21s
+            runCurrent()
+            assertEquals(2, connectionAttemptCount)
+            advanceTimeBy(20.seconds) // t=41s
+            runCurrent()
+            assertEquals(3, connectionAttemptCount)
+            advanceTimeBy(40.seconds) // t=81s
+            runCurrent()
+            assertEquals(4, connectionAttemptCount)
+            advanceTimeBy(80.seconds) // t=161s
+            runCurrent()
+            assertEquals(5, connectionAttemptCount)
+            advanceTimeBy(120.seconds) // t=281s
+            runCurrent()
+            assertEquals(6, connectionAttemptCount)
+            advanceTimeBy(120.seconds) // t=401s, the delay no longer grows
+            runCurrent()
+            assertEquals(7, connectionAttemptCount)
+
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test

@@ -57,6 +57,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -98,6 +99,9 @@ import okio.ByteString.Companion.toByteString
 import timber.log.Timber
 
 private val DELAY_BEFORE_RECONNECT = 10.seconds
+
+/** Upper bound for the backoff between reconnection attempts while the server stays unreachable. */
+private val MAX_DELAY_BEFORE_RECONNECT = 2.minutes
 
 /**
  * Implementation of the [WebSocketCore] interface for managing WebSocket connections to a Home Assistant server.
@@ -1074,21 +1078,26 @@ internal class WebSocketCoreImpl(
 
     private suspend fun reconnectSubscriptions() {
         var toRestore: Set<Long> = activeMessages.filterValues { it is ActiveMessage.Subscription }.keys
+        var retryDelay = DELAY_BEFORE_RECONNECT
         while (toRestore.isNotEmpty()) {
             if (connect()) {
+                // The server is reachable again, restart the backoff
+                retryDelay = DELAY_BEFORE_RECONNECT
                 toRestore = resubscribeActiveSubscriptions(toRestore)
                 if (toRestore.isEmpty()) return
-                Timber.w("${toRestore.size} subscriptions not restored, retrying in $DELAY_BEFORE_RECONNECT")
+                Timber.w("${toRestore.size} subscriptions not restored, retrying in $retryDelay")
             } else {
                 if (getConnectionState() == WebSocketState.ClosedAuth) {
                     Timber.e("Authentication failed, not retrying to resubscribe to active subscriptions")
                     return
                 }
                 Timber.w(
-                    "Unable to reconnect, retrying in $DELAY_BEFORE_RECONNECT to resubscribe to active subscriptions",
+                    "Unable to reconnect, retrying in $retryDelay to resubscribe to active subscriptions",
                 )
             }
-            delay(DELAY_BEFORE_RECONNECT)
+            delay(retryDelay)
+            // Back off while the server stays unreachable so a long outage is not hammered
+            retryDelay = (retryDelay * 2).coerceAtMost(MAX_DELAY_BEFORE_RECONNECT)
             // Subscriptions closed while waiting no longer need to be restored
             toRestore = toRestore.filterTo(mutableSetOf()) { activeMessages[it] is ActiveMessage.Subscription }
         }
