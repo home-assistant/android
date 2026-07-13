@@ -280,6 +280,14 @@ class EntityTest {
         }
 
         @Test
+        fun `Given non-numeric sensor state with precision options when getting friendly state then precision is skipped`() {
+            val entity = createEntity(entityId = "sensor.status", state = "custom_state")
+            val options = EntityRegistryOptions(sensor = EntityRegistrySensorOptions(displayPrecision = 2))
+
+            assertEquals("Custom State", entity.friendlyState(context, options))
+        }
+
+        @Test
         fun `Given numeric non-sensor state with precision options when getting friendly state then precision is not applied`() {
             val entity = createEntity(entityId = "input_number.slider", state = "20.126456")
             val options = EntityRegistryOptions(sensor = EntityRegistrySensorOptions(displayPrecision = 2))
