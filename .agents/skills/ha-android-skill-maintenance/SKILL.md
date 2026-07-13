@@ -12,7 +12,7 @@ Use this skill to keep `AGENTS.md` and the project skills accurate as the codeba
 Surface a skill update — don't let the learning evaporate — when:
 
 - The user corrects behavior that a skill should have prevented, or gives guidance no skill covers.
-- The same review comment appears across PRs without a skill stating the rule (mechanism over reminder).
+- The user says a point keeps coming up in reviews, or asks you to mine review history, and no skill states the rule (mechanism over reminder).
 - A skill statement conflicts with the current code: renamed class, removed utility, changed workflow. Verify against the code before proposing the fix.
 - A convention gets decided in a PR discussion that the skills don't reflect yet.
 

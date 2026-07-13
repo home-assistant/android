@@ -12,7 +12,7 @@ Use this skill when writing, changing, or reviewing tests.
 ./gradlew validateDebugScreenshotTest   # Screenshot tests
 ```
 
-After an intentional UI change, update the reference screenshots (stored under `src/debug/screenshotTest/reference` in each module) with `./gradlew updateDebugScreenshotTest updateFullDebugScreenshotTest`. Rendering differs subtly between hosts, so if CI still fails on thresholds, a maintainer triggers the `Update Screenshots` workflow to regenerate them on the CI host — don't chase pixel diffs locally.
+After an intentional UI change, update the reference screenshots (stored under `src/screenshotTestFullDebug/reference` in `:app`, `src/screenshotTestDebug/reference` in `:common` and `:wear`) with `./gradlew updateDebugScreenshotTest updateFullDebugScreenshotTest`. Rendering differs subtly between hosts, so if CI still fails on thresholds, a maintainer triggers the `Update Screenshots` workflow to regenerate them on the CI host — don't chase pixel diffs locally.
 
 Known local false positive: `ServerDiscoveryScreenshotTest` (onboarding server discovery screen) fails local validation because of host rendering differences. Running validate and update locally is fine — just ignore this test's failures (CI is the source of truth), and after an update run, revert its regenerated reference images instead of including them in the change, unless the screen intentionally changed.
 

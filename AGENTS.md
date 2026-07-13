@@ -34,7 +34,6 @@ Detailed developer documentation lives at https://developers.home-assistant.io/d
 - All displayed strings go in the value files in `:common`, English only, accessed via `stringResource`.
 - Gate new features on the server version, for example `serverManager.getServer()?.version?.isAtLeast(2025, 6, 0) == true`.
 - Never use `System.currentTimeMillis`; inject `kotlin.time.Clock` through Hilt.
-- Avoid TODOs; when required, link a GitHub issue with a full URL: `// TODO Missing feature https://github.com/home-assistant/android/issues/404`.
 - When JetBrains IDE (Android Studio) capabilities are available to you, prefer them over raw text edits and grep: use Rename refactoring for renames, Find Usages for impact analysis, Safe Delete, and Change Signature. They understand Kotlin semantics across all Gradle modules, where plain text search misses generated code, XML references, and overloads.
 
 ## Project Skills
@@ -47,7 +46,8 @@ Detailed guidance lives in project skills under `.agents/skills/`. Load the matc
 - `ha-android-concurrency`: coroutines, dispatchers, thread safety, and lifecycle scoping.
 - `ha-android-logging-errors`: Timber, sensitive data, FailFast, and exception handling.
 - `ha-android-testing`: JUnit, MockK, Robolectric, Turbine, screenshot tests, and test naming.
-- `ha-android-review`: PR template, changelog, branch naming, and review checklist.
+- `ha-android-review`: reviewing a diff for correctness, style, convention adherence, and security.
+- `ha-android-committing`: finalizing a change — format, tests, changelog, branch naming, and pull requests.
 - `ha-android-skill-maintenance`: updating AGENTS.md or the skills when guidance is missing, stale, or corrected.
 
 ## Pull Requests

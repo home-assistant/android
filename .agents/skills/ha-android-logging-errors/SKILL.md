@@ -17,17 +17,9 @@ All logging goes through Timber (`import timber.log.Timber`). Timber logs are en
 - If building a log message requires heavy logic, only compute it when necessary. Don't log normal, expected behavior, and don't repeat a message already logged nearby.
 
 ```kotlin
-// Good - provides context
 Timber.e(exception, "Failed to load user dashboard for userId=$userId")
-
-// Good - sensitive() hides user data in release logs
+// sensitive() hides user data in release logs
 Timber.d("User logged in: userId=${sensitive(user.id)}")
-
-// Bad - no context
-Timber.e(exception)
-
-// Bad - leaks user data
-Timber.d("User logged in: ${user.email}")
 ```
 
 ## Exceptions

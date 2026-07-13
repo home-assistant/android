@@ -25,24 +25,6 @@ Dependencies point downward only. From `ui_architecture`:
 - **UseCase**: a single reusable stateless operation, `operator fun invoke(...)`, may depend on repositories only.
 - **Repository**: single source of truth for one data source (API, Room DAO, preferences). No UI concerns, and no repository → repository dependencies.
 
-```kotlin
-interface UserRepository {
-    suspend fun getUser(id: String): User
-}
-
-class UserRepositoryImpl @Inject constructor(
-    private val api: UserApi,
-    private val dao: UserDao,
-) : UserRepository { /* ... */ }
-
-class GetUserDashboardUseCase @Inject constructor(
-    private val userRepository: UserRepository,
-    private val statsRepository: StatsRepository,
-) {
-    suspend operator fun invoke(userId: String): Result<Dashboard> = TODO()
-}
-```
-
 Naming follows the block: `*Repository` + `*RepositoryImpl`, `*UseCase`, `*Manager`, `*Handler`, `*ViewModel`. DTOs are `*Data.kt`; domain models are named directly (`User.kt`).
 
 Only split a block into interface + `*Impl` when it buys something real: multiple implementations exist (per flavor, fake for tests when a mock won't do), or the contract is public while the implementation stays `internal` to its module and is bound through DI. Otherwise a simple injectable class is preferred — don't create the pair by reflex.
@@ -72,7 +54,7 @@ annotation class NamedKeyChain
 
 - Retrofit for the REST API, OkHttp for the WebSocket connection to Home Assistant Core.
 - All API interfaces live in the `data/` layer of `:common` and use `suspend` functions.
-- WebSocket repository methods must check `socketResponse.success` before decoding the result, consistently with the existing methods.
+- Check `socketResponse.success` before decoding its `result`, and return `null`/empty on failure so callers get a consistent "no data" instead of a decode exception on an error payload.
 - New features must not break usability on older servers — gate them on the server version:
 
 ```kotlin
