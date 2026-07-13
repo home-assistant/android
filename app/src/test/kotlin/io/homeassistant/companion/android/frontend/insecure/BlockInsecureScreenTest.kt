@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.webview.insecure
+package io.homeassistant.companion.android.frontend.insecure
 
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
@@ -17,7 +17,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
-import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import org.junit.Rule
@@ -43,12 +43,12 @@ class BlockInsecureScreenTest {
         composeTestRule.apply {
             testScreen(missingLocation = true, missingHomeSetup = false) {
                 // Verify the banner text is displayed
-                onNodeWithText(stringResource(commonR.string.block_insecure_missing_location))
+                onNodeWithText(stringResource(R.string.block_insecure_missing_location))
                     .performScrollTo()
                     .assertIsDisplayed()
 
                 // Click the enable location button
-                onNodeWithText(stringResource(commonR.string.block_insecure_action_enable_location))
+                onNodeWithText(stringResource(R.string.block_insecure_action_enable_location))
                     .performScrollTo()
                     .performClick()
 
@@ -62,12 +62,12 @@ class BlockInsecureScreenTest {
     fun `Given screen displayed with missing home setup when clicking fix then configure home network is triggered`() {
         composeTestRule.apply {
             testScreen(missingLocation = false, missingHomeSetup = true) {
-                onNodeWithText(stringResource(commonR.string.block_insecure_missing_home_setup))
+                onNodeWithText(stringResource(R.string.block_insecure_missing_home_setup))
                     .performScrollTo()
                     .assertIsDisplayed()
 
                 // Click the configure home network button
-                onNodeWithText(stringResource(commonR.string.block_insecure_action_configure_home))
+                onNodeWithText(stringResource(R.string.block_insecure_action_configure_home))
                     .performScrollTo()
                     .performClick()
 
@@ -80,7 +80,7 @@ class BlockInsecureScreenTest {
     fun `Given screen displayed when clicking open settings then open settings is triggered`() {
         composeTestRule.apply {
             testScreen(missingLocation = false, missingHomeSetup = false) {
-                onNodeWithText(stringResource(commonR.string.block_insecure_open_settings))
+                onNodeWithText(stringResource(R.string.block_insecure_open_settings))
                     .performScrollTo()
                     .assertIsDisplayed()
                     .performClick()
@@ -94,7 +94,7 @@ class BlockInsecureScreenTest {
     fun `Given screen displayed when clicking change security level then change security level is triggered`() {
         composeTestRule.apply {
             testScreen(missingLocation = false, missingHomeSetup = false) {
-                onNodeWithText(stringResource(commonR.string.block_insecure_change_security_level))
+                onNodeWithText(stringResource(R.string.block_insecure_change_security_level))
                     .performScrollTo()
                     .assertIsDisplayed()
                     .performClick()
@@ -108,10 +108,10 @@ class BlockInsecureScreenTest {
     fun `Given screen displayed with both missing location and home setup then both banners are shown`() {
         composeTestRule.apply {
             testScreen(missingLocation = true, missingHomeSetup = true) {
-                onNodeWithText(stringResource(commonR.string.block_insecure_missing_location))
+                onNodeWithText(stringResource(R.string.block_insecure_missing_location))
                     .performScrollTo()
                     .assertIsDisplayed()
-                onNodeWithText(stringResource(commonR.string.block_insecure_missing_home_setup))
+                onNodeWithText(stringResource(R.string.block_insecure_missing_home_setup))
                     .performScrollTo()
                     .assertIsDisplayed()
             }
@@ -122,9 +122,9 @@ class BlockInsecureScreenTest {
     fun `Given screen displayed with no missing then both banners are hidden`() {
         composeTestRule.apply {
             testScreen(missingLocation = false, missingHomeSetup = false) {
-                onNodeWithText(stringResource(commonR.string.block_insecure_missing_location))
+                onNodeWithText(stringResource(R.string.block_insecure_missing_location))
                     .assertIsNotDisplayed()
-                onNodeWithText(stringResource(commonR.string.block_insecure_missing_home_setup))
+                onNodeWithText(stringResource(R.string.block_insecure_missing_home_setup))
                     .assertIsNotDisplayed()
             }
         }
@@ -167,13 +167,13 @@ class BlockInsecureScreenTest {
                     )
                 }
             }
-            onNodeWithText(stringResource(commonR.string.block_insecure_title)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.block_insecure_content)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.block_insecure_title)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.block_insecure_content)).assertIsDisplayed()
 
-            onNodeWithContentDescription(stringResource(commonR.string.get_help)).assertIsDisplayed().performClick()
+            onNodeWithContentDescription(stringResource(R.string.get_help)).assertIsDisplayed().performClick()
             assertTrue(helpClicked)
 
-            onNodeWithContentDescription(stringResource(commonR.string.block_insecure_retry))
+            onNodeWithContentDescription(stringResource(R.string.block_insecure_retry))
                 .assertIsDisplayed()
                 .performClick()
             assertTrue(retryClicked)

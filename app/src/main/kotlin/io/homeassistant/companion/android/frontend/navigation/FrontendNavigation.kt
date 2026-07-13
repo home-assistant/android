@@ -14,10 +14,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
-import androidx.navigation.activity
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
-import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.frontend.FrontendScreen
@@ -29,17 +26,8 @@ import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.getActivity
-import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
-@Serializable
-internal data class FrontendActivityRoute(
-    // Override the serial name to match the name in WebViewActivity
-    @SerialName("server") val serverId: Int = SERVER_ID_ACTIVE,
-    val path: String? = null,
-)
 
 @Serializable
 internal data class FrontendRoute
@@ -53,8 +41,7 @@ internal data class FrontendRoute
  * generated kotlinx.serialization route serializer.
  */
 @VisibleForTesting constructor(
-    // TODO make this private when removing FrontendActivityRoute
-    val rawPath: String? = null,
+    private val rawPath: String? = null,
     val serverId: Int = SERVER_ID_ACTIVE,
 ) : HAStartDestinationRoute {
 
@@ -73,9 +60,6 @@ internal fun NavController.navigateToFrontend(
 
 /**
  * Registers the frontend/webview destination for the Home Assistant app.
- *
- * When [WIPFeature.USE_FRONTEND_V2] is enabled, uses the new Compose-based [FrontendScreen].
- * Otherwise, falls back to the legacy [WebViewActivity].
  *
  * @param navController The navigation controller
  * @param onOpenExternalLink Callback to open external links (required for V2)
@@ -107,83 +91,71 @@ internal fun NavGraphBuilder.frontendScreen(
     onRequestFullscreen: (Boolean) -> Unit = {},
     onPipReadinessChanged: (PipReadiness?) -> Unit = {},
 ) {
-    if (WIPFeature.USE_FRONTEND_V2) {
-        composable<FrontendRoute> {
-            val viewModel: FrontendViewModel = hiltViewModel()
+    composable<FrontendRoute> {
+        val viewModel: FrontendViewModel = hiltViewModel()
 
-            val nfcWriteLauncher = rememberLauncherForActivityResult(WriteNfcTag()) { messageId ->
-                viewModel.onNfcWriteCompleted(messageId)
-            }
-            val matterThreadIntentLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.StartIntentSenderForResult(),
-            ) { result -> viewModel.onMatterThreadIntentResult(result) }
-
-            FrontendEventHandler(
-                events = viewModel.events,
-                onShowSnackbar = onShowSnackbar,
-                onNavigateToSettings = onNavigateToSettings,
-                onRelaunch = {
-                    val context = navController.context
-                    // Clear the task so the relaunch starts from scratch and back can't return to
-                    // the pre-relaunch state (e.g. after removing the server or clearing credentials).
-                    context.startActivity(
-                        LaunchActivity.newInstance(context).apply {
-                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                        },
-                    )
-                    context.getActivity()?.finish()
-                },
-                onNavigateToAssist = { serverId, pipelineId, startListening ->
-                    navController.context.startActivity(
-                        AssistActivity.newInstance(
-                            context = navController.context,
-                            serverId = serverId,
-                            pipelineId = pipelineId,
-                            startListening = startListening,
-                        ),
-                    )
-                },
-                onOpenExternalLink = onOpenExternalLink,
-                onShowServerSwitcher = { onShowServerSwitcher(viewModel::switchServer) },
-                onNavigateToNfcWrite = { messageId, tagId ->
-                    nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
-                },
-                onLaunchMatterThreadIntent = { intentSender ->
-                    matterThreadIntentLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
-                },
-                onRequestFullscreen = onRequestFullscreen,
-                onNavigateToWidgetConfig = { entityId, widgetType ->
-                    val context = navController.context
-                    context.startActivity(widgetType.toConfigureIntent(context, entityId))
-                },
-                onLaunchApp = onLaunchApp,
-                onLaunchIntent = onLaunchIntent,
-                onOpenSecuritySettings = onOpenSecuritySettings,
-                onUpdateWebView = onUpdateWebView,
-            )
-
-            FrontendScreen(
-                viewModel = viewModel,
-                onOpenExternalLink = onOpenExternalLink,
-                onBlockInsecureHelpClick = onSecurityLevelHelpClick,
-                onOpenSettings = { onNavigateToSettings(null) },
-                onOpenLocationSettings = onOpenLocationSettings,
-                onConfigureHomeNetwork = onConfigureHomeNetwork,
-                onSecurityLevelHelpClick = onSecurityLevelHelpClick,
-                onShowSnackbar = onShowSnackbar,
-                onPipReadinessChanged = onPipReadinessChanged,
-            )
+        val nfcWriteLauncher = rememberLauncherForActivityResult(WriteNfcTag()) { messageId ->
+            viewModel.onNfcWriteCompleted(messageId)
         }
-    } else {
-        composable<FrontendRoute> {
-            val route = it.toRoute<FrontendRoute>()
-            navController.navigate(FrontendActivityRoute(route.serverId, route.rawPath))
-            navController.context.getActivity()?.finish()
-        }
+        val matterThreadIntentLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartIntentSenderForResult(),
+        ) { result -> viewModel.onMatterThreadIntentResult(result) }
 
-        activity<FrontendActivityRoute> {
-            activityClass = WebViewActivity::class
-        }
+        FrontendEventHandler(
+            events = viewModel.events,
+            onShowSnackbar = onShowSnackbar,
+            onNavigateToSettings = onNavigateToSettings,
+            onRelaunch = {
+                val context = navController.context
+                // Clear the task so the relaunch starts from scratch and back can't return to
+                // the pre-relaunch state (e.g. after removing the server or clearing credentials).
+                context.startActivity(
+                    LaunchActivity.newInstance(context).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    },
+                )
+                context.getActivity()?.finish()
+            },
+            onNavigateToAssist = { serverId, pipelineId, startListening ->
+                navController.context.startActivity(
+                    AssistActivity.newInstance(
+                        context = navController.context,
+                        serverId = serverId,
+                        pipelineId = pipelineId,
+                        startListening = startListening,
+                    ),
+                )
+            },
+            onOpenExternalLink = onOpenExternalLink,
+            onShowServerSwitcher = { onShowServerSwitcher(viewModel::switchServer) },
+            onNavigateToNfcWrite = { messageId, tagId ->
+                nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
+            },
+            onLaunchMatterThreadIntent = { intentSender ->
+                matterThreadIntentLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
+            },
+            onRequestFullscreen = onRequestFullscreen,
+            onNavigateToWidgetConfig = { entityId, widgetType ->
+                val context = navController.context
+                context.startActivity(widgetType.toConfigureIntent(context, entityId))
+            },
+            onLaunchApp = onLaunchApp,
+            onLaunchIntent = onLaunchIntent,
+            onOpenSecuritySettings = onOpenSecuritySettings,
+            onUpdateWebView = onUpdateWebView,
+        )
+
+        FrontendScreen(
+            viewModel = viewModel,
+            onOpenExternalLink = onOpenExternalLink,
+            onBlockInsecureHelpClick = onSecurityLevelHelpClick,
+            onOpenSettings = { onNavigateToSettings(null) },
+            onOpenLocationSettings = onOpenLocationSettings,
+            onConfigureHomeNetwork = onConfigureHomeNetwork,
+            onSecurityLevelHelpClick = onSecurityLevelHelpClick,
+            onShowSnackbar = onShowSnackbar,
+            onPipReadinessChanged = onPipReadinessChanged,
+        )
     }
 }
 

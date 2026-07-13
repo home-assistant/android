@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.webview.addto
+package io.homeassistant.companion.android.frontend.addto
 
 import android.content.Context
 import io.homeassistant.companion.android.common.R as commonR

@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
+import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
 import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.QuestUtil
@@ -81,6 +82,9 @@ open class HomeAssistantApplication : Application() {
     @Inject
     lateinit var settingsDao: SettingsDao
 
+    @Inject
+    lateinit var shortcutManager: HaShortcutManager
+
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
@@ -124,6 +128,7 @@ open class HomeAssistantApplication : Application() {
 
             languagesManager.applyCurrentLang()
             nightModeManager.applyCurrentNightMode()
+            shortcutManager.migrateLegacyShortcuts()
         }
 
         configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)

@@ -1,7 +1,7 @@
-package io.homeassistant.companion.android.webview.addto
+package io.homeassistant.companion.android.frontend.addto
 
 import android.content.Context
-import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.mockk.every
 import io.mockk.mockk
@@ -15,7 +15,7 @@ class EntityAddToActionTest {
     @Test
     fun `Given automotive context when testing AndroidAutoFavorite then return correct attributes`() {
         every { context.isAutomotive() } returns true
-        every { context.getString(commonR.string.add_to_android_auto_driving_favorite) } returns "Add to driving favorites"
+        every { context.getString(R.string.add_to_android_auto_driving_favorite) } returns "Add to driving favorites"
 
         val action = EntityAddToAction.AndroidAutoFavorite
 
@@ -28,7 +28,7 @@ class EntityAddToActionTest {
     @Test
     fun `Given non-automotive context when testing AndroidAutoFavorite then return correct attributes`() {
         every { context.isAutomotive() } returns false
-        every { context.getString(commonR.string.add_to_android_auto_favorite) } returns "hello"
+        every { context.getString(R.string.add_to_android_auto_favorite) } returns "hello"
 
         val action = EntityAddToAction.AndroidAutoFavorite
 
@@ -40,7 +40,7 @@ class EntityAddToActionTest {
 
     @Test
     fun `Given enabled Shortcut when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_shortcut) } returns "world"
+        every { context.getString(R.string.add_to_shortcut) } returns "world"
 
         val action = EntityAddToAction.Shortcut(enabled = true)
 
@@ -52,8 +52,8 @@ class EntityAddToActionTest {
 
     @Test
     fun `Given disabled Shortcut when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_shortcut) } returns "HA"
-        every { context.getString(commonR.string.add_to_shortcut_limit) } returns "OHF"
+        every { context.getString(R.string.add_to_shortcut) } returns "HA"
+        every { context.getString(R.string.add_to_shortcut_limit) } returns "OHF"
 
         val action = EntityAddToAction.Shortcut(enabled = false)
 
@@ -65,7 +65,7 @@ class EntityAddToActionTest {
 
     @Test
     fun `Given Tile when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_tile) } returns "dumb"
+        every { context.getString(R.string.add_to_tile) } returns "dumb"
 
         val action = EntityAddToAction.Tile
 
@@ -77,7 +77,7 @@ class EntityAddToActionTest {
 
     @Test
     fun `Given EntityWidget when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_entity_widget) } returns "Peter"
+        every { context.getString(R.string.add_to_entity_widget) } returns "Peter"
 
         val action = EntityAddToAction.EntityWidget
 
@@ -89,7 +89,7 @@ class EntityAddToActionTest {
 
     @Test
     fun `Given MediaPlayerWidget when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_media_player_widget) } returns "MP"
+        every { context.getString(R.string.add_to_media_player_widget) } returns "MP"
 
         val action = EntityAddToAction.MediaPlayerWidget
 
@@ -101,7 +101,7 @@ class EntityAddToActionTest {
 
     @Test
     fun `Given CameraWidget when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_camera_widget) } returns "Camera"
+        every { context.getString(R.string.add_to_camera_widget) } returns "Camera"
 
         val action = EntityAddToAction.CameraWidget
 
@@ -113,7 +113,7 @@ class EntityAddToActionTest {
 
     @Test
     fun `Given TodoWidget when testing attributes then return correct values`() {
-        every { context.getString(commonR.string.add_to_todo_widget) } returns "to-do"
+        every { context.getString(R.string.add_to_todo_widget) } returns "to-do"
 
         val action = EntityAddToAction.TodoWidget
 
@@ -126,7 +126,7 @@ class EntityAddToActionTest {
     @Test
     fun `Given enabled Watch when testing attributes then return correct values`() {
         val watchName = "Pixel Watch"
-        every { context.getString(commonR.string.add_to_watch_favorite, watchName) } returns "$watchName favorites"
+        every { context.getString(R.string.add_to_watch_favorite, watchName) } returns "$watchName favorites"
 
         val action = EntityAddToAction.Watch(name = watchName, enabled = true)
 
@@ -139,8 +139,8 @@ class EntityAddToActionTest {
     @Test
     fun `Given disabled Watch when testing attributes then return correct values`() {
         val watchName = "Pixel Watch"
-        every { context.getString(commonR.string.add_to_watch_favorite, watchName) } returns "Add to $watchName"
-        every { context.getString(commonR.string.add_to_watch_favorite_disconnected) } returns "Watch disconnected"
+        every { context.getString(R.string.add_to_watch_favorite, watchName) } returns "Add to $watchName"
+        every { context.getString(R.string.add_to_watch_favorite_disconnected) } returns "Watch disconnected"
 
         val action = EntityAddToAction.Watch(name = watchName, enabled = false)
 

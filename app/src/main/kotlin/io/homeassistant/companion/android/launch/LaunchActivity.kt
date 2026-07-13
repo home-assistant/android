@@ -37,7 +37,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
@@ -234,50 +233,42 @@ class LaunchActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (WIPFeature.USE_FRONTEND_V2) {
-            viewModel.refreshAppLockState()
-        }
+        viewModel.refreshAppLockState()
     }
 
     override fun onResume() {
         super.onResume()
-        if (WIPFeature.USE_FRONTEND_V2) {
-            SensorWorker.start(this)
-            lifecycleScope.launch {
-                WebsocketManager.start(this@LaunchActivity)
-                checkLocationDisabled()
-                checkLocalNetworkPermission()
-                changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
-            }
+        SensorWorker.start(this)
+        lifecycleScope.launch {
+            WebsocketManager.start(this@LaunchActivity)
+            checkLocationDisabled()
+            checkLocalNetworkPermission()
+            changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
         }
     }
 
     override fun onPause() {
         super.onPause()
-        if (!isFinishing && WIPFeature.USE_FRONTEND_V2) SensorReceiver.updateAllSensors(this)
+        if (!isFinishing) SensorReceiver.updateAllSensors(this)
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (WIPFeature.USE_FRONTEND_V2) {
-            viewModel.onAppPaused()
+        viewModel.onAppPaused()
 
-            if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) return
-            if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
-            val readiness = viewModel.pipReadiness.value ?: return
-            val params = PictureInPictureParams.Builder()
-                .setAspectRatio(readiness.aspectRatio)
-                .apply { readiness.sourceRect?.let(::setSourceRectHint) }
-                .build()
-            enterPictureInPictureMode(params)
-        }
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) return
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
+        val readiness = viewModel.pipReadiness.value ?: return
+        val params = PictureInPictureParams.Builder()
+            .setAspectRatio(readiness.aspectRatio)
+            .apply { readiness.sourceRect?.let(::setSourceRectHint) }
+            .build()
+        enterPictureInPictureMode(params)
     }
 
     override fun onStop() {
         super.onStop()
-        if (WIPFeature.USE_FRONTEND_V2) {
-            viewModel.onAppPaused()
-        }
+        viewModel.onAppPaused()
     }
 }
 
