@@ -42,13 +42,13 @@ import timber.log.Timber
 
 /**
  * Key used by WebViewActivity to store the server used in the shortcut within the Intent.
- * The value need to stay the same otherwise it's going to break shortcuts.
+ * This value cannot be changed, otherwise it's going to break shortcuts.
  */
 internal const val SHORTCUT_EXTRA_SERVER = "server"
 
 /**
  * Key used by WebViewActivity to store the path used in the shortcut within the Intent.
- * The value need to stay the same otherwise it's going to break shortcuts.
+ * This value cannot be changed, otherwise it's going to break shortcuts.
  */
 internal const val SHORTCUT_EXTRA_PATH = "path"
 private const val SHORTCUT_EXTRA_ICON_NAME = "iconName"
@@ -68,7 +68,8 @@ class HaShortcutManager @Inject constructor(
 ) {
 
     /**
-     * Builds a [ShortcutInfoCompat] that launches [path] on [serverId] through [LinkActivity].
+     * Builds a [ShortcutInfoCompat] that launches [path] on [serverId] through a
+     * `homeassistant://navigate` deep link.
      *
      * The launch destination lives in the intent data URI; `ShortcutInfo` serializes only the extras
      * into a [android.os.PersistableBundle], so the server id and raw path are kept as primitive
@@ -137,8 +138,8 @@ class HaShortcutManager @Inject constructor(
 
     /**
      * Migrates shortcuts created by older app versions (which launched `WebViewActivity` directly)
-     * to the current [LinkActivity] deep-link format, updating dynamic and pinned shortcuts in place
-     * while preserving their label, icon and target.
+     * to the current deep link format, updating dynamic and pinned shortcuts in place while
+     * preserving their label, icon and target.
      *
      * Best-effort and idempotent: shortcuts already pointing at the `homeassistant://` deep link are
      * skipped, so re-running does nothing. Safe to call on any API level (no-op below N_MR1).
