@@ -246,6 +246,7 @@ class EntityTest {
         @AfterEach
         fun tearDown() {
             Locale.setDefault(initialLocale)
+            SdkVersion.resetSdkInt()
         }
 
         @ParameterizedTest(name = "displayPrecision={0}, suggestedDisplayPrecision={1} -> {2}")
