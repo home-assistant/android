@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.util
 
-import android.util.DisplayMetrics
 import android.view.View
-import android.webkit.WebView
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -10,10 +8,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.core.util.TypedValueCompat.pxToDp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsCompat.Type.displayCutout
@@ -21,8 +17,6 @@ import androidx.core.view.WindowInsetsCompat.Type.ime
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.updatePadding
 import androidx.preference.PreferenceFragmentCompat
-import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
-import timber.log.Timber
 
 operator fun PaddingValues.plus(that: PaddingValues): PaddingValues = object : PaddingValues {
     override fun calculateBottomPadding(): Dp = this@plus.calculateBottomPadding() + that.calculateBottomPadding()
@@ -106,32 +100,4 @@ fun View.applySafeDrawingInsets(
 
         if (consumeInsets) WindowInsetsCompat.CONSUMED else windowInsets
     }
-}
-
-/**
- * Applies safe area insets to the WebView by setting CSS custom properties.
- * These properties are used by the Home Assistant frontend for edge-to-edge display.
- */
-fun WebView.applyInsets(
-    insets: WindowInsets,
-    density: Density,
-    displayMetrics: DisplayMetrics,
-    layoutDirection: LayoutDirection,
-) {
-    val safeInsetTop = pxToDp(insets.getTop(density).toFloat(), displayMetrics)
-    val safeInsetRight = pxToDp(insets.getRight(density, layoutDirection).toFloat(), displayMetrics)
-    val safeInsetBottom = pxToDp(insets.getBottom(density).toFloat(), displayMetrics)
-    val safeInsetLeft = pxToDp(insets.getLeft(density, layoutDirection).toFloat(), displayMetrics)
-    val safeAreaJs = """
-                        document.documentElement.style.setProperty('--app-safe-area-inset-top', '${safeInsetTop}px');
-                        document.documentElement.style.setProperty('--app-safe-area-inset-bottom', '${safeInsetBottom}px');
-                        document.documentElement.style.setProperty('--app-safe-area-inset-left', '${safeInsetLeft}px');
-                        document.documentElement.style.setProperty('--app-safe-area-inset-right', '${safeInsetRight}px');
-    """.trimIndent()
-    Timber.d("Safe area is $safeAreaJs")
-
-    // No externalBus alternative: safe area must be set as early as possible, even before the
-    // frontend is ready to receive messages.
-    @OptIn(EvaluateJavascriptUsage::class)
-    evaluateJavascript(safeAreaJs, null)
 }

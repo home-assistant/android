@@ -204,7 +204,7 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given improv scan JSON then parses to ImprovScanMessage`() {
+    fun `Given Improv scan JSON then parses to ImprovScanMessage`() {
         val json = """{"type":"improv/scan","id":50}"""
 
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
@@ -214,7 +214,7 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given improv scan JSON without id then parses to ImprovScanMessage with null id`() {
+    fun `Given Improv scan JSON without id then parses to ImprovScanMessage with null id`() {
         val json = """{"type":"improv/scan"}"""
 
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
@@ -224,7 +224,7 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given improv configure_device JSON then parses to ImprovConfigureDeviceMessage with name`() {
+    fun `Given Improv configure_device JSON then parses to ImprovConfigureDeviceMessage with name`() {
         val json = """{"type":"improv/configure_device","id":51,"payload":{"name":"Smart Plug"}}"""
 
         val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
@@ -272,5 +272,104 @@ class IncomingExternalBusMessageTest {
         assertEquals(21, addToMessage.id)
         assertEquals("light.living_room", addToMessage.payload.entityId)
         assertEquals("dGVzdA==", addToMessage.payload.appPayload)
+    }
+
+    @Test
+    fun `Given Matter commission JSON then parses to MatterCommissionMessage`() {
+        val json = """{"type":"matter/commission","id":60}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(MatterCommissionMessage::class.java, message)
+        assertEquals(60, (message as MatterCommissionMessage).id)
+    }
+
+    @Test
+    fun `Given Matter commission JSON without id then parses to MatterCommissionMessage with null id`() {
+        val json = """{"type":"matter/commission"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(MatterCommissionMessage::class.java, message)
+        assertNull((message as MatterCommissionMessage).id)
+    }
+
+    @Test
+    fun `Given Thread import_credentials JSON then parses to ThreadImportCredentialsMessage`() {
+        val json = """{"type":"thread/import_credentials","id":61}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ThreadImportCredentialsMessage::class.java, message)
+        assertEquals(61, (message as ThreadImportCredentialsMessage).id)
+    }
+
+    @Test
+    fun `Given Thread import_credentials JSON without id then parses to ThreadImportCredentialsMessage with null id`() {
+        val json = """{"type":"thread/import_credentials"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(ThreadImportCredentialsMessage::class.java, message)
+        assertNull((message as ThreadImportCredentialsMessage).id)
+    }
+
+    @Test
+    fun `Given bar_code scan JSON with full payload then parses to BarcodeScanMessage`() {
+        val json =
+            """{"type":"bar_code/scan","id":60,"payload":{"title":"Scan code","description":"Point the camera","alternative_option_label":"Enter manually"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        val scanMessage = assertInstanceOf(BarcodeScanMessage::class.java, message)
+        assertEquals(60, scanMessage.id)
+        assertEquals("Scan code", scanMessage.payload.title)
+        assertEquals("Point the camera", scanMessage.payload.description)
+        assertEquals("Enter manually", scanMessage.payload.alternativeOptionLabel)
+    }
+
+    @Test
+    fun `Given bar_code scan JSON without alternative_option_label then parses with null label`() {
+        val json =
+            """{"type":"bar_code/scan","id":61,"payload":{"title":"Scan code","description":"Point the camera"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        val scanMessage = assertInstanceOf(BarcodeScanMessage::class.java, message)
+        assertEquals(61, scanMessage.id)
+        assertEquals("Scan code", scanMessage.payload.title)
+        assertEquals("Point the camera", scanMessage.payload.description)
+        assertNull(scanMessage.payload.alternativeOptionLabel)
+    }
+
+    @Test
+    fun `Given bar_code notify JSON then parses to BarcodeNotifyMessage with message`() {
+        val json = """{"type":"bar_code/notify","id":62,"payload":{"message":"Code already paired"}}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        val notifyMessage = assertInstanceOf(BarcodeNotifyMessage::class.java, message)
+        assertEquals(62, notifyMessage.id)
+        assertEquals("Code already paired", notifyMessage.payload.message)
+    }
+
+    @Test
+    fun `Given bar_code close JSON with id then parses to BarcodeCloseMessage`() {
+        val json = """{"type":"bar_code/close","id":63}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(BarcodeCloseMessage::class.java, message)
+        assertEquals(63, message.id)
+    }
+
+    @Test
+    fun `Given bar_code close JSON without id then parses to BarcodeCloseMessage with null id`() {
+        val json = """{"type":"bar_code/close"}"""
+
+        val message = frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json)
+
+        assertInstanceOf(BarcodeCloseMessage::class.java, message)
+        assertNull(message.id)
     }
 }

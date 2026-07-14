@@ -71,12 +71,8 @@ class DeveloperSettingsPresenterImpl @Inject constructor(
             try {
                 when (
                     val syncResult = threadManager.syncPreferredDataset(
-                        context,
-                        serverId,
-                        false,
-                        CoroutineScope(
-                            coroutineContext + SupervisorJob(),
-                        ),
+                        serverId = serverId,
+                        scope = CoroutineScope(coroutineContext + SupervisorJob()),
                     )
                 ) {
                     is ThreadManager.SyncResult.ServerUnsupported ->

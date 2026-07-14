@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend
 import android.util.DisplayMetrics
 import android.webkit.ValueCallback
 import android.webkit.WebView
+import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.mockk.Runs
@@ -88,6 +89,25 @@ class WebViewActionTest {
         assertTrue(action.result.isCompleted)
     }
 
+    @Suppress("DEPRECATION")
+    @Test
+    fun `Given NavigateToDefaultPanelViaSidebar when run then evaluateJavascript is called and result completes`() = runTest {
+        val callbackSlot = slot<ValueCallback<String>>()
+        every { webView.evaluateJavascript(any(), capture(callbackSlot)) } just Runs
+        val action = WebViewAction.NavigateToDefaultPanelViaSidebar()
+
+        action.run(webView)
+
+        verify {
+            webView.evaluateJavascript(
+                match { it.contains("defaultPanel") && it.contains("ha-sidebar") },
+                any(),
+            )
+        }
+        callbackSlot.captured.onReceiveValue(null)
+        assertTrue(action.result.isCompleted)
+    }
+
     @Test
     fun `Given EvaluateScript when run then evaluateJavascript is called and result completes with callback value`() = runTest {
         val callbackSlot = slot<ValueCallback<String>>()
@@ -113,6 +133,51 @@ class WebViewActionTest {
 
         callbackSlot.captured.onReceiveValue(null)
         assertEquals(null, action.result.await())
+    }
+
+    @Test
+    fun `Given OpenMoreInfo when run then it dispatches hass-more-info for the entity`() = runTest {
+        val scriptSlot = slot<String>()
+        every { webView.evaluateJavascript(capture(scriptSlot), any()) } just Runs
+
+        WebViewAction.OpenMoreInfo("light.kitchen").run(webView)
+
+        val script = scriptSlot.captured
+        assertTrue(script.contains("hass-more-info"))
+        assertTrue(script.contains("\"light.kitchen\""))
+    }
+
+    @Test
+    fun `Given OpenMoreInfo with a hostile entity id when run then the value is JSON-escaped and cannot break out`() = runTest {
+        val scriptSlot = slot<String>()
+        every { webView.evaluateJavascript(capture(scriptSlot), any()) } just Runs
+
+        // Crafted to close the string/object and inject code if interpolated raw.
+        WebViewAction.OpenMoreInfo("""x"}});alert(1);//""").run(webView)
+
+        val script = scriptSlot.captured
+        // The embedded double quote must be backslash-escaped (proof of JSON encoding), so the
+        // payload stays inside the entityId string literal instead of becoming executable code.
+        assertTrue(script.contains("\\\""))
+    }
+
+    @Test
+    fun `Given ApplySafeAreaInsets when run then the safe area CSS properties are set`() = runTest {
+        val action = WebViewAction.ApplySafeAreaInsets(SafeAreaInsets(top = 10f, bottom = 20f, left = 5f, right = 8f))
+
+        action.run(webView)
+
+        verify {
+            webView.evaluateJavascript(
+                match {
+                    it.contains("--app-safe-area-inset-top', '10.0px'") &&
+                        it.contains("--app-safe-area-inset-bottom', '20.0px'") &&
+                        it.contains("--app-safe-area-inset-left', '5.0px'") &&
+                        it.contains("--app-safe-area-inset-right', '8.0px'")
+                },
+                null,
+            )
+        }
     }
 
     @Test

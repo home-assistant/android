@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend.dialog
 import android.content.Context
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
+import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 
@@ -39,12 +40,27 @@ internal class FrontendDialogManager @Inject constructor() {
      * Returns `true` if the user confirmed, `false` if they cancelled. The slot is freed
      * before returning, including on cancellation of the calling coroutine.
      */
-    suspend fun showJsConfirm(message: String): Boolean = queue.awaitResult { onResult ->
+    suspend fun showConfirm(message: String): Boolean = queue.awaitResult { onResult ->
         FrontendDialog.Confirm(
             message = message,
             onConfirm = { onResult(true) },
             onCancel = { onResult(false) },
         )
+    }
+
+    /**
+     * Shows an informational dialog with a single dismiss button and suspends until the user
+     * dismisses it. There is no result to return; callers use this purely to surface a message
+     * (e.g. the frontend's `bar_code/notify`). The slot is freed before returning, including on
+     * cancellation of the calling coroutine.
+     */
+    suspend fun showInformation(message: String) {
+        queue.awaitResult { onResult ->
+            FrontendDialog.Information(
+                message = message,
+                onDismiss = { onResult(Unit) },
+            )
+        }
     }
 
     /**
@@ -68,4 +84,23 @@ internal class FrontendDialogManager @Inject constructor() {
                 onCancel = { onResult(HttpAuthOutcome.Cancel) },
             )
         }
+
+    /**
+     * Shows the non-dismissable Matter/Thread progress dialog and suspends until the caller's
+     * coroutine is cancelled.
+     *
+     * The slot is freed by [SingleSlotQueue.awaitResult]'s cancellation handling.
+     */
+    suspend fun showMatterThreadProgress(): Nothing = queue.awaitResult { _ ->
+        FrontendDialog.MatterThreadProgressDialog
+    }
+
+    /**
+     * Shows a Matter/Thread terminal Dialog and suspends until the user dismisses it.
+     */
+    suspend fun showMatterThreadTerminal(terminal: MatterThreadTerminal.Dialog) {
+        queue.awaitResult { onResult ->
+            FrontendDialog.MatterThreadTerminalDialog(terminal = terminal, onDismiss = { onResult(Unit) })
+        }
+    }
 }

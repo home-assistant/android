@@ -3,21 +3,16 @@ package io.homeassistant.companion.android.common.data.prefs
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl.Companion.MIGRATION_PREF
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl.Companion.MIGRATION_VERSION
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
-@VisibleForTesting
-const val MIGRATION_PREF = "migration"
-
-@VisibleForTesting
-const val MIGRATION_VERSION = 1
 
 private const val PREF_VER = "version"
 private const val PREF_NIGHT_MODE_THEME = "theme"
@@ -57,12 +52,14 @@ private class LocalStorageWithMigration(
     private val localStorage: LocalStorage,
     private val integrationStorage: LocalStorage,
 ) {
-    private val migrationChecked = AtomicBoolean(false)
+    @Volatile
+    private var migrationChecked = false
     private val migrationMutex = Mutex()
 
     private suspend fun checkMigration() {
+        if (migrationChecked) return
         migrationMutex.withLock {
-            if (!migrationChecked.get()) {
+            if (!migrationChecked) {
                 val currentVersion = localStorage.getInt(MIGRATION_PREF)
                 if (currentVersion == null || currentVersion < 1) {
                     integrationStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)?.let {
@@ -92,7 +89,7 @@ private class LocalStorageWithMigration(
 
                     localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
                 }
-                migrationChecked.set(true)
+                migrationChecked = true
             }
         }
     }
@@ -108,7 +105,16 @@ internal class PrefsRepositoryImpl @Inject constructor(
     @NamedIntegrationStorage integrationStorage: LocalStorage,
 ) : PrefsRepository {
 
-    private val localStorage = LocalStorageWithMigration(localStorage, integrationStorage)
+    companion object {
+        @VisibleForTesting
+        const val MIGRATION_PREF = "migration"
+
+        @VisibleForTesting
+        const val MIGRATION_VERSION = 1
+    }
+
+    private val localStorage =
+        LocalStorageWithMigration(localStorage = localStorage, integrationStorage = integrationStorage)
 
     override suspend fun getAppVersion(): String? {
         return localStorage().getString(PREF_VER)

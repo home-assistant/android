@@ -1,10 +1,20 @@
 package io.homeassistant.companion.android.common.data.integration
 
-import dagger.assisted.AssistedFactory
+import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
+import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
+import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
+import io.homeassistant.companion.android.di.qualifiers.NamedModel
+import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
+import javax.inject.Inject
+import javax.inject.Provider
 import kotlinx.coroutines.flow.Flow
 
 interface IntegrationRepository {
@@ -86,7 +96,26 @@ interface IntegrationRepository {
     suspend fun setAskNotificationPermission(shouldAsk: Boolean)
 }
 
-@AssistedFactory
-internal interface IntegrationRepositoryFactory {
-    fun create(serverId: Int): IntegrationRepositoryImpl
+internal class IntegrationRepositoryFactory @Inject constructor(
+    private val integrationServiceProvider: SuspendProvider<IntegrationService>,
+    // Use a Provider to avoid a dependency circle since serverManager needs the factory
+    private val serverManagerProvider: Provider<ServerManager>,
+    @NamedIntegrationStorage private val localStorage: LocalStorage,
+    @NamedManufacturer private val manufacturer: String,
+    @NamedModel private val model: String,
+    @NamedOsVersion private val osVersion: String,
+    @NamedDeviceId private val deviceId: String,
+) {
+    suspend fun create(serverId: Int): IntegrationRepositoryImpl {
+        return IntegrationRepositoryImpl(
+            integrationService = integrationServiceProvider(),
+            serverManager = serverManagerProvider.get(),
+            serverId = serverId,
+            localStorage = localStorage,
+            manufacturer = manufacturer,
+            model = model,
+            osVersion = osVersion,
+            deviceId = deviceId,
+        )
+    }
 }

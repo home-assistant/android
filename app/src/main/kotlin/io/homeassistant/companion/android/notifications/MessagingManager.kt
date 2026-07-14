@@ -66,20 +66,29 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
+import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeSetting
+import io.homeassistant.companion.android.sensors.LocationSensorReceiver
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -91,7 +100,6 @@ import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
 import java.net.URL
 import java.net.URLDecoder
@@ -107,7 +115,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -116,17 +123,18 @@ import timber.log.Timber
 
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
-    private val okHttpClient: OkHttpClient,
+    private val okHttpClientProvider: SuspendProvider<OkHttpClient>,
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
-    private val sensorDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val settingsDao: SettingsDao,
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
     private val permissionRequestMediator: PermissionRequestMediator,
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
+    private val bluetoothSensorManager: BluetoothSensorManager,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -260,6 +268,7 @@ class MessagingManager @Inject constructor(
             NotificationData.CALL_STREAM,
             NotificationData.SYSTEM_STREAM,
             NotificationData.DTMF_STREAM,
+            NotificationData.ASSISTANT_STREAM,
         )
         val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
         val MEDIA_COMMANDS = listOf(
@@ -333,9 +342,11 @@ class MessagingManager @Inject constructor(
                 val serverForWebhook = serverManager.getServer(webhookId = webhookId)
                 if (serverForWebhook == null) {
                     Timber.w(
-                        "Received notification with webhook ID ${sensitive(
-                            webhookId,
-                        )} but no matching server, ignoring",
+                        "Received notification with webhook ID ${
+                            sensitive(
+                                webhookId,
+                            )
+                        } but no matching server, ignoring",
                     )
                     return@launch
                 }
@@ -446,13 +457,13 @@ class MessagingManager @Inject constructor(
                         }
 
                         DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                            if (!commandBleTransmitter(context, jsonData, sensorDao)) {
+                            if (!commandBleTransmitter(jsonData, sensorRepository, bluetoothSensorManager)) {
                                 sendNotification(jsonData)
                             }
                         }
 
                         DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-                            if (!commandBeaconMonitor(context, jsonData)) {
+                            if (!commandBeaconMonitor(jsonData, bluetoothSensorManager)) {
                                 sendNotification(jsonData)
                             }
                         }
@@ -736,6 +747,7 @@ class MessagingManager @Inject constructor(
                         audioManager!!,
                         data[NotificationData.MEDIA_STREAM].toString(),
                         command!!.toInt(),
+                        serverId,
                     )
                 }
             }
@@ -764,15 +776,16 @@ class MessagingManager @Inject constructor(
 
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
-                    DeviceCommandData.TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
-                    DeviceCommandData.TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
-                    FORCE_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
-                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(
-                        context,
+                    DeviceCommandData.TURN_OFF -> sensorRepository.setHighAccuracyModeSetting(false)
+                    DeviceCommandData.TURN_ON,
+                    FORCE_ON,
+                    -> sensorRepository.setHighAccuracyModeSetting(true)
+
+                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> sensorRepository.setHighAccuracyModeIntervalSetting(
                         data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt(),
                     )
                 }
-                val intent = Intent(context, LocationSensorManager::class.java)
+                val intent = Intent(context, LocationSensorReceiver::class.java)
                 intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY
                 intent.putExtra("command", command)
                 context.sendBroadcast(intent)
@@ -885,7 +898,7 @@ class MessagingManager @Inject constructor(
 
                 if (enabled && !defaultAssistantManager.isDefaultAssistant()) {
                     Timber.w("Cannot enable wake word: app is not the default assistant")
-                    notifyMissingPermission(message, serverId)
+                    notifyDefaultAssistant(command = message, serverId = serverId)
                     return
                 }
 
@@ -1305,7 +1318,7 @@ class MessagingManager @Inject constructor(
         builder.setAutoCancel(!sticky)
     }
 
-    private fun handleSubject(builder: NotificationCompat.Builder, data: Map<String, String>) {
+    private suspend fun handleSubject(builder: NotificationCompat.Builder, data: Map<String, String>) {
         val subject = data[SUBJECT]
         if (!subject.isNullOrBlank()) {
             builder.setContentText(prepareText(subject))
@@ -1391,9 +1404,9 @@ class MessagingManager @Inject constructor(
                 }
             }.build()
 
-            val response = okHttpClient.newCall(request).execute()
-            image = BitmapFactory.decodeStream(response.body?.byteStream())
-            response.close()
+            okHttpClientProvider().newCall(request).execute().use {
+                image = BitmapFactory.decodeStream(it.body.byteStream())
+            }
         } catch (e: Exception) {
             Timber.e(e, "Couldn't download image for notification")
         }
@@ -1427,11 +1440,10 @@ class MessagingManager @Inject constructor(
                     }
                 }.build()
 
-                val response = okHttpClient.newCall(request).execute()
-                val bytes = response.body?.bytes() ?: return@withContext null
-                file.writeBytes(bytes)
-
-                response.close()
+                okHttpClientProvider().newCall(request).execute().use {
+                    val bytes = it.body.bytes()
+                    file.writeBytes(bytes)
+                }
             } catch (e: Exception) {
                 Timber.e(e, "Couldn't download image for notification")
             }
@@ -1504,15 +1516,15 @@ class MessagingManager @Inject constructor(
                             )
                         }
                     }.build()
-                    val response = okHttpClient.newCall(request).execute()
-
                     if (!videoFile.exists()) {
                         videoFile.parentFile?.mkdirs()
                         videoFile.createNewFile()
                     }
-                    response.body.source().use { source ->
-                        videoFile.sink().use { sink ->
-                            source.readAll(sink)
+                    okHttpClientProvider().newCall(request).execute().use {
+                        it.body.source().use { source ->
+                            videoFile.sink().use { sink ->
+                                source.readAll(sink)
+                            }
                         }
                     }
 
@@ -1618,14 +1630,18 @@ class MessagingManager @Inject constructor(
                     )
                 }
 
+                val authenticationRequired = data["action_${i}_authenticationRequired"]?.toBoolean() == true
                 when {
                     notificationAction.key == URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
-                            builder.addAction(
+                            val action = NotificationCompat.Action.Builder(
                                 commonR.drawable.ic_globe,
                                 notificationAction.title,
                                 createOpenUriPendingIntent(notificationAction.uri, data),
                             )
+                                .setAuthenticationRequired(authenticationRequired)
+                                .build()
+                            builder.addAction(action)
                         }
                     }
 
@@ -1647,6 +1663,7 @@ class MessagingManager @Inject constructor(
                         )
                             .addRemoteInput(remoteInput)
                             .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
                             .build()
                         builder.addAction(action)
                     }
@@ -1659,11 +1676,14 @@ class MessagingManager @Inject constructor(
                             PendingIntent.FLAG_IMMUTABLE,
                         )
                         val action = NotificationCompat.Action.Builder(
-                            commonR.drawable.ic_stat_ic_notification,
+                            // Intentionally use no icon so Android Auto / heads-up notifications show the action
+                            // title instead of replacing it with an icon
+                            null,
                             notificationAction.title,
                             actionPendingIntent,
                         )
                             .setShowsUserInterface(false)
+                            .setAuthenticationRequired(authenticationRequired)
                             .build()
                         builder.addAction(action)
                     }
@@ -1678,7 +1698,7 @@ class MessagingManager @Inject constructor(
         val otherApp = needsPackage || UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             }
 
             uri.startsWith(APP_PREFIX) -> {
@@ -1687,7 +1707,7 @@ class MessagingManager @Inject constructor(
 
             uri.startsWith(INTENT_PREFIX) -> {
                 try {
-                    Intent.parseUri(uri, Intent.URI_INTENT_SCHEME)
+                    context.parseExternalIntentUri(uri)
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to parse intent URI")
                     null
@@ -1698,7 +1718,7 @@ class MessagingManager @Inject constructor(
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
                     SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NotificationHistory)
                 } else {
-                    WebViewActivity.newInstance(context, null, serverId)
+                    context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
                 }
             }
 
@@ -1713,9 +1733,9 @@ class MessagingManager @Inject constructor(
             }
 
             else -> {
-                WebViewActivity.newInstance(context, uri, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(uri), serverId)
             }
-        } ?: WebViewActivity.newInstance(context, null, serverId)
+        } ?: context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!otherApp) {
@@ -1788,10 +1808,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun navigateAppDetails() {
-        val intent = Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            "package:${context.packageName}".toUri(),
-        )
+        val intent = context.createSystemAppSettingsIntent()
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
@@ -1809,17 +1826,15 @@ class MessagingManager @Inject constructor(
 
     private fun requestCameraPermission() = requestRuntimePermission(Manifest.permission.CAMERA)
 
-    private fun requestMicPermission() {
-        if (defaultAssistantManager.isDefaultAssistant()) {
-            requestRuntimePermission(Manifest.permission.RECORD_AUDIO)
-        } else {
-            context.startActivity(
-                defaultAssistantManager.getSetDefaultAssistantIntent().apply {
-                    flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK
-                },
-            )
-        }
+    private fun requestMicPermission() = requestRuntimePermission(Manifest.permission.RECORD_AUDIO)
+
+    private fun requestSetDefaultAssistant() {
+        context.startActivity(
+            defaultAssistantManager.getSetDefaultAssistantIntent().apply {
+                flags =
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+            },
+        )
     }
 
     private fun getKeyEvent(key: String): Int {
@@ -1895,7 +1910,7 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int) {
+    private suspend fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int, serverId: String) {
         when (stream) {
             NotificationData.ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume, audioManager)
             NotificationData.MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume, audioManager)
@@ -1909,7 +1924,18 @@ class MessagingManager @Inject constructor(
             NotificationData.CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
             NotificationData.SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
             NotificationData.DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
-            else -> Timber.d("Skipping command due to invalid channel stream")
+            NotificationData.ASSISTANT_STREAM -> if (SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
+                if (!defaultAssistantManager.isDefaultAssistant()) {
+                    Timber.w("Cannot control assistant volume: app is not the default assistant")
+                    notifyDefaultAssistant(command = "$COMMAND_VOLUME_LEVEL($stream)", serverId = serverId)
+                    return
+                }
+                adjustVolumeStream(AudioManager.STREAM_ASSISTANT, volume, audioManager)
+            } else {
+                Timber.w("Cannot control assistant volume: Not supported by the current version of Android")
+            }
+
+            else -> Timber.d("Skipping command due to invalid channel stream ($stream)")
         }
     }
 
@@ -1974,9 +2000,9 @@ class MessagingManager @Inject constructor(
         try {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val intent = if (title.isNullOrEmpty()) {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             } else {
-                WebViewActivity.newInstance(context, title, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
             }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -2035,29 +2061,25 @@ class MessagingManager @Inject constructor(
         when (mode.uppercase()) {
             WebsocketSetting.NEVER.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.NEVER
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.NEVER))
                 }
             }
 
             WebsocketSetting.ALWAYS.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.ALWAYS
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.ALWAYS))
                 }
             }
 
             WebsocketSetting.HOME_WIFI.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.HOME_WIFI
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.HOME_WIFI))
                 }
             }
 
             WebsocketSetting.SCREEN_ON.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.SCREEN_ON
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.SCREEN_ON))
                 }
             }
         }
@@ -2091,7 +2113,7 @@ class MessagingManager @Inject constructor(
         return success
     }
 
-    private fun notifyMissingPermission(type: String, serverId: String) {
+    private suspend fun notifyMissingPermission(type: String, serverId: String) {
         val appManager =
             context.getSystemService<ActivityManager>()
         val currentProcess = appManager?.runningAppProcesses
@@ -2103,9 +2125,7 @@ class MessagingManager @Inject constructor(
                             NotificationData.MESSAGE to context.getString(commonR.string.missing_command_permission),
                             THIS_SERVER_ID to serverId,
                         )
-                        runBlocking {
-                            sendNotification(data)
-                        }
+                        sendNotification(data)
                     } else {
                         when (type) {
                             COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> requestSystemAlertPermission()
@@ -2129,9 +2149,33 @@ class MessagingManager @Inject constructor(
                             COMMAND_AUTO_SCREEN_BRIGHTNESS,
                             COMMAND_SCREEN_OFF_TIMEOUT,
                             -> requestWriteSystemPermission()
+
                             COMMAND_FLASHLIGHT -> requestCameraPermission()
                             COMMAND_WAKE_WORD_DETECTION -> requestMicPermission()
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun notifyDefaultAssistant(command: String, serverId: String) {
+        val appManager = context.getSystemService<ActivityManager>()
+        val currentProcess = appManager?.runningAppProcesses
+        if (currentProcess != null) {
+            for (item in currentProcess) {
+                if (context.applicationInfo.processName == item.processName) {
+                    if (item.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                        val data = mutableMapOf(
+                            NotificationData.MESSAGE to context.getString(
+                                commonR.string.default_assistant_required,
+                                command,
+                            ),
+                            THIS_SERVER_ID to serverId,
+                        )
+                        sendNotification(data)
+                    } else {
+                        requestSetDefaultAssistant()
                     }
                 }
             }

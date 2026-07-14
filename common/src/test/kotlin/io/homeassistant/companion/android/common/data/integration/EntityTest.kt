@@ -5,20 +5,28 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityRemoved
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistrySensorOptions
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.mockk.mockk
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.util.Locale
 import kotlinx.serialization.json.JsonPrimitive
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
+
+private const val TEST_SDK_VERSION = 26 // O
 
 class EntityTest {
 
@@ -219,6 +227,84 @@ class EntityTest {
 
             assertEquals(baseDateTime, result.lastChanged)
             assertEquals(newDateTime, result.lastUpdated)
+        }
+    }
+
+    @Nested
+    inner class FriendlyState {
+        private val context = mockk<Context>(relaxed = true)
+        private lateinit var initialLocale: Locale
+
+        @BeforeEach
+        fun setUp() {
+            initialLocale = Locale.getDefault()
+            // The precision formatting uses the default locale, pin it so assertions are stable
+            Locale.setDefault(Locale.US)
+            SdkVersion.sdkInt = TEST_SDK_VERSION
+        }
+
+        @AfterEach
+        fun tearDown() {
+            Locale.setDefault(initialLocale)
+            SdkVersion.resetSdkInt()
+        }
+
+        @ParameterizedTest(name = "displayPrecision={0}, suggestedDisplayPrecision={1} -> {2}")
+        @CsvSource(
+            "2, , 20.13",
+            "0, , 20",
+            ", 1, 20.1",
+            "3, 1, 20.126",
+        )
+        fun `Given numeric sensor state with precision options when getting friendly state then state is rounded with display precision taking priority`(
+            displayPrecision: Int?,
+            suggestedDisplayPrecision: Int?,
+            expected: String,
+        ) {
+            val entity = createEntity(entityId = "sensor.temperature", state = "20.126456")
+            val options = EntityRegistryOptions(
+                sensor = EntityRegistrySensorOptions(
+                    displayPrecision = displayPrecision,
+                    suggestedDisplayPrecision = suggestedDisplayPrecision,
+                ),
+            )
+
+            assertEquals(expected, entity.friendlyState(context, options))
+        }
+
+        @Test
+        fun `Given numeric sensor state without registry options when getting friendly state then state is unchanged`() {
+            val entity = createEntity(entityId = "sensor.temperature", state = "20.126456")
+
+            assertEquals("20.126456", entity.friendlyState(context))
+        }
+
+        @Test
+        fun `Given non-numeric sensor state with precision options when getting friendly state then precision is skipped`() {
+            val entity = createEntity(entityId = "sensor.status", state = "custom_state")
+            val options = EntityRegistryOptions(sensor = EntityRegistrySensorOptions(displayPrecision = 2))
+
+            assertEquals("Custom State", entity.friendlyState(context, options))
+        }
+
+        @Test
+        fun `Given numeric non-sensor state with precision options when getting friendly state then precision is not applied`() {
+            val entity = createEntity(entityId = "input_number.slider", state = "20.126456")
+            val options = EntityRegistryOptions(sensor = EntityRegistrySensorOptions(displayPrecision = 2))
+
+            assertEquals("20.126456", entity.friendlyState(context, options))
+        }
+
+        @Test
+        fun `Given numeric sensor state with precision options when appending unit of measurement then rounded state includes unit`() {
+            val entity = createEntity(
+                entityId = "sensor.temperature",
+                state = "20.126456",
+                attributes = mapOf("unit_of_measurement" to "°C"),
+            )
+            val options = EntityRegistryOptions(sensor = EntityRegistrySensorOptions(displayPrecision = 2))
+
+            assertEquals("20.13 °C", entity.friendlyState(context, options, appendUnitOfMeasurement = true))
         }
     }
 }

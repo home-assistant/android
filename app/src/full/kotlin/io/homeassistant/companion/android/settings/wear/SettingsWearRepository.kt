@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.servers.tryOnUrls
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonPrimitive
@@ -62,8 +63,8 @@ data class WearServer(
  * credentials without requiring a persisted server in the app's database.
  */
 class SettingsWearRepository @Inject constructor(
-    private val authenticationService: AuthenticationService,
-    private val integrationService: IntegrationService,
+    private val authenticationServiceProvider: SuspendProvider<AuthenticationService>,
+    private val integrationServiceProvider: SuspendProvider<IntegrationService>,
 ) {
 
     /**
@@ -77,7 +78,7 @@ class SettingsWearRepository @Inject constructor(
      */
     suspend fun registerRefreshToken(server: WearServer, refreshToken: String): WearServer {
         return tryOnUrls(server.getBaseUrls(), "refresh_token") {
-            val response = authenticationService.refreshToken(
+            val response = authenticationServiceProvider().refreshToken(
                 it.newBuilder().addPathSegments(SEGMENT_AUTH_TOKEN).build(),
                 AuthenticationService.GRANT_TYPE_REFRESH,
                 refreshToken,
@@ -108,7 +109,7 @@ class SettingsWearRepository @Inject constructor(
             wearServer.getWebhookUrls(),
             "render_template",
         ) { url ->
-            integrationService.getTemplate(
+            integrationServiceProvider().getTemplate(
                 url,
                 RenderTemplateIntegrationRequest(
                     mapOf("template" to Template(template, emptyMap())),
@@ -136,7 +137,7 @@ class SettingsWearRepository @Inject constructor(
 
         return try {
             tryOnUrls(wearServer.getBaseUrls(), "get_entities") { url ->
-                integrationService.getStates(
+                integrationServiceProvider().getStates(
                     url.newBuilder().addPathSegments("api/states").build(),
                     "Bearer ${wearServer.accessToken}",
                 )

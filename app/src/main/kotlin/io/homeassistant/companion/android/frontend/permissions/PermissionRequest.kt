@@ -7,8 +7,9 @@ import androidx.annotation.RequiresApi
 /**
  * An Android runtime permission request enqueued in [PermissionManager].
  *
- * Subclasses fall into one of three categories the UI dispatches on:
- * - [Notification] — the bottom-sheet prompt, allow/deny + dismiss-without-answering
+ * Subclasses fall into one of four categories the UI dispatches on:
+ * - [Notification] — bottom-sheet prompt + (on Allow) system dialog, allow/deny + dismiss
+ * - [Improv] — optional rationale bottom sheet + system multi-permission dialog
  * - [SinglePermission] — a single Android permission requested via the system dialog
  * - [MultiplePermissions] — several Android permissions requested at once via the system dialog
  *
@@ -43,6 +44,37 @@ internal sealed interface PermissionRequest {
      */
     class WebView(androidPermissions: List<String>, override val onResult: (Map<String, Boolean>) -> Unit) :
         MultiplePermissions(permissions = androidPermissions)
+
+    /**
+     * Bluetooth + Location runtime permissions for the Improv Wi-Fi onboarding flow. The UI owns
+     * both stages: when [showRationale] is `true` a rationale UI is shown first and
+     * Continue triggers the system dialog; when `false` the system dialog launches directly with
+     * no UI. Either path resolves via [onResult]; only the rationale-skip path uses [onDismiss].
+     *
+     * Modelled as its own top-level category (not [MultiplePermissions]) because of that two-stage
+     * UI ownership.
+     *
+     * @param permissions The Android runtime permissions to request. The [needsBluetooth] /
+     *   [needsLocation] flags shown on the rationale are derived from this list.
+     * @param showRationale Whether to render the rationale UI before the system dialog.
+     *   [PermissionManager] flips this to `false` once the displayed-count cap is reached.
+     * @param onResult Called by the UI with the system dialog's grant map after the user
+     *   responded (whether they granted or denied).
+     * @param onDismiss Called by the UI only when the user skips/dismisses the rationale without
+     *   reaching the system dialog. Never fires when [showRationale] is `false`.
+     */
+    class Improv(
+        override val permissions: List<String>,
+        val showRationale: Boolean,
+        val onResult: (Map<String, Boolean>) -> Unit,
+        val onDismiss: () -> Unit,
+    ) : PermissionRequest {
+        /** `true` when [permissions] mentions any Bluetooth runtime permission. */
+        val needsBluetooth: Boolean = permissions.any { it.contains("BLUETOOTH", ignoreCase = true) }
+
+        /** `true` when [permissions] includes [Manifest.permission.ACCESS_FINE_LOCATION]. */
+        val needsLocation: Boolean = permissions.any { it == Manifest.permission.ACCESS_FINE_LOCATION }
+    }
 
     /** A request for [Manifest.permission.WRITE_EXTERNAL_STORAGE]. */
     class ExternalStorage(override val onResult: (Boolean) -> Unit) :

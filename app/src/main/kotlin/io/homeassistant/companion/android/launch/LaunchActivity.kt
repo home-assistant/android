@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import android.view.ViewTreeObserver
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -16,6 +17,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult.ActionPerformed
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -35,16 +37,16 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
@@ -115,11 +117,18 @@ class LaunchActivity : AppCompatActivity() {
         ) : DeepLink
 
         /**
-         * Navigates to a specific path within the webview.
-         * @property path The path to navigate to within the Home Assistant interface.
+         * Opens the onboarding flow from an invitation link.
+         *
+         * @property serverUrl The Home Assistant server URL the invitation wants to connect to.
+         */
+        data class OpenInvitation(val serverUrl: String) : DeepLink
+
+        /**
+         * Navigates to a specific [target] within the frontend.
+         * @property target The frontend destination to open.
          * @property serverId The ID of the server to use for navigation.
          */
-        data class NavigateTo(val path: String?, val serverId: Int) : DeepLink
+        data class NavigateTo(val target: FrontendTarget, val serverId: Int) : DeepLink
 
         /**
          * Opens the Wear OS device onboarding flow.
@@ -139,7 +148,7 @@ class LaunchActivity : AppCompatActivity() {
          *   apps cannot reach the alias and therefore cannot opt into this behavior.
          */
         fun newInstance(context: Context, deepLink: DeepLink? = null, showWhenLocked: Boolean = false): Intent {
-            return Intent().apply {
+            return Intent(Intent.ACTION_MAIN).apply {
                 component = if (showWhenLocked) {
                     ComponentName(context, LOCK_SCREEN_ALIAS_CLASS)
                 } else {
@@ -224,50 +233,42 @@ class LaunchActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (WIPFeature.USE_FRONTEND_V2) {
-            viewModel.refreshAppLockState()
-        }
+        viewModel.refreshAppLockState()
     }
 
     override fun onResume() {
         super.onResume()
-        if (WIPFeature.USE_FRONTEND_V2) {
-            SensorWorker.start(this)
-            lifecycleScope.launch {
-                WebsocketManager.start(this@LaunchActivity)
-                checkLocationDisabled()
-                checkLocalNetworkPermission()
-                changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
-            }
+        SensorWorker.start(this)
+        lifecycleScope.launch {
+            WebsocketManager.start(this@LaunchActivity)
+            checkLocationDisabled()
+            checkLocalNetworkPermission()
+            changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
         }
     }
 
     override fun onPause() {
         super.onPause()
-        if (!isFinishing && WIPFeature.USE_FRONTEND_V2) SensorReceiver.updateAllSensors(this)
+        if (!isFinishing) SensorReceiver.updateAllSensors(this)
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (WIPFeature.USE_FRONTEND_V2) {
-            viewModel.onAppPaused()
+        viewModel.onAppPaused()
 
-            if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) return
-            if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
-            val readiness = viewModel.pipReadiness.value ?: return
-            val params = PictureInPictureParams.Builder()
-                .setAspectRatio(readiness.aspectRatio)
-                .apply { readiness.sourceRect?.let(::setSourceRectHint) }
-                .build()
-            enterPictureInPictureMode(params)
-        }
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) return
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return
+        val readiness = viewModel.pipReadiness.value ?: return
+        val params = PictureInPictureParams.Builder()
+            .setAspectRatio(readiness.aspectRatio)
+            .apply { readiness.sourceRect?.let(::setSourceRectHint) }
+            .build()
+        enterPictureInPictureMode(params)
     }
 
     override fun onStop() {
         super.onStop()
-        if (WIPFeature.USE_FRONTEND_V2) {
-            viewModel.onAppPaused()
-        }
+        viewModel.onAppPaused()
     }
 }
 
@@ -301,14 +302,38 @@ private fun AppLockEffect(isAppLocked: Boolean, onAuthSucceeded: () -> Unit) {
 private fun FullscreenEffect(isFullScreen: Boolean) {
     val view = LocalView.current
     val window = LocalActivity.current?.window ?: return
-    LaunchedEffect(isFullScreen) {
-        val controller = WindowInsetsControllerCompat(window, view)
-        if (isFullScreen) {
-            controller.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            controller.hide(systemBars())
-        } else {
-            controller.show(systemBars())
+    val controller = remember(window, view) { WindowInsetsControllerCompat(window, view) }
+
+    // Applies the state immediately (the effect re-runs whenever [isFullScreen] changes) and,
+    // while fullscreen, re-applies it every time the window regains focus. The system can
+    // transiently restore the system bars when focus is lost — a dialog, the notification
+    // shade, or the recents switcher — so re-hiding on focus regain keeps the frontend in
+    // fullscreen.
+    DisposableEffect(view, isFullScreen) {
+        fun applyFullscreen() {
+            if (isFullScreen) {
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                controller.hide(systemBars())
+            } else {
+                controller.show(systemBars())
+            }
+        }
+
+        applyFullscreen()
+
+        val focusListener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
+            // Only re-hide on focus regain while fullscreen. Outside fullscreen the bars are
+            // already shown, so reacting to every focus change here would be redundant work.
+            if (hasFocus && isFullScreen) {
+                applyFullscreen()
+            }
+        }
+        val viewTreeObserver = view.viewTreeObserver
+
+        viewTreeObserver.addOnWindowFocusChangeListener(focusListener)
+        onDispose {
+            viewTreeObserver.removeOnWindowFocusChangeListener(focusListener)
         }
     }
 }

@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.content.Context
 import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
@@ -26,6 +28,7 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.testing.TestNavHostController
 import androidx.navigation.toRoute
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -85,6 +88,10 @@ import org.robolectric.annotation.Config
 
 private const val WEAR_NAME = "super_ha_wear"
 private const val VALID_PASSWORD = "1234"
+
+// Robolectric leaves Settings.Secure.ANDROID_ID null, but the integration graph injects it as a
+// non-null @NamedDeviceId, so we seed a value to avoid a null-from-@Provides crash during DI.
+private const val FAKE_ANDROID_ID = "robolectric-android-id"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -152,6 +159,11 @@ internal class WearOnboardingNavigationTest {
 
     @Before
     fun setup() {
+        Settings.Secure.putString(
+            ApplicationProvider.getApplicationContext<Context>().contentResolver,
+            Settings.Secure.ANDROID_ID,
+            FAKE_ANDROID_ID,
+        )
         mockkStatic(NavController::navigateToUri)
         coEvery { any<NavController>().navigateToUri(any(), any()) } just Runs
     }

@@ -7,22 +7,33 @@ import android.os.BatteryManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import java.math.RoundingMode
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.floor
 import timber.log.Timber
 
-class BatterySensorManager : SensorManager {
+@Singleton
+class BatterySensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
 
     companion object {
         private const val SETTING_BATTERY_CURRENT_DIVISOR = "battery_current_divisor"
         private const val DEFAULT_BATTERY_CURRENT_DIVISOR = 1000000
         private const val SETTING_BATTERY_VOLTAGE_DIVISOR = "battery_voltage_divisor"
         private const val DEFAULT_BATTERY_VOLTAGE_DIVISOR = 1000
-        private val batteryLevel = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val batteryLevel = SensorManager.BasicSensor(
             "battery_level",
             "sensor",
             commonR.string.basic_sensor_name_battery_level,
@@ -34,7 +45,9 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             enabledByDefault = true,
         )
-        private val batteryState = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val batteryState = SensorManager.BasicSensor(
             "battery_state",
             "sensor",
             commonR.string.basic_sensor_name_battery_state,
@@ -45,6 +58,8 @@ class BatterySensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             enabledByDefault = true,
         )
+
+        @ProvidesSensor
         val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
@@ -55,7 +70,9 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
-        private val chargerTypeState = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
             "sensor",
             commonR.string.basic_sensor_name_charger_type,
@@ -66,7 +83,9 @@ class BatterySensorManager : SensorManager {
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             enabledByDefault = true,
         )
-        private val batteryHealthState = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
             "sensor",
             commonR.string.basic_sensor_name_battery_health,
@@ -76,7 +95,8 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        private val batteryTemperature = SensorManager.BasicSensor(
+        @ProvidesSensor
+        internal val batteryTemperature = SensorManager.BasicSensor(
             "battery_temperature",
             "sensor",
             commonR.string.basic_sensor_name_battery_temperature,
@@ -88,7 +108,8 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        private val batteryPower = SensorManager.BasicSensor(
+        @ProvidesSensor
+        internal val batteryPower = SensorManager.BasicSensor(
             "battery_power",
             "sensor",
             commonR.string.basic_sensor_name_battery_power,
@@ -100,7 +121,8 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        private val remainingChargeTime = SensorManager.BasicSensor(
+        @ProvidesSensor
+        internal val remainingChargeTime = SensorManager.BasicSensor(
             "remaining_charge_time",
             "sensor",
             commonR.string.basic_sensor_name_remaining_charge_time,
@@ -111,7 +133,8 @@ class BatterySensorManager : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
-        private val batteryCycles = SensorManager.BasicSensor(
+        @ProvidesSensor
+        internal val batteryCycles = SensorManager.BasicSensor(
             "battery_cycles",
             "sensor",
             commonR.string.basic_sensor_name_battery_cycles,
@@ -146,7 +169,7 @@ class BatterySensorManager : SensorManager {
         batteryPower,
     )
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             defaultSensorList.plus(listOf(remainingChargeTime, batteryCycles))
         } else if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
@@ -156,9 +179,9 @@ class BatterySensorManager : SensorManager {
         }
     }
 
-    override fun hasSensor(context: Context): Boolean {
+    override fun hasSensor(): Boolean {
         val intent = ContextCompat.registerReceiver(
-            context,
+            applicationContext,
             null,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED),
             ContextCompat.RECEIVER_NOT_EXPORTED,
@@ -166,30 +189,30 @@ class BatterySensorManager : SensorManager {
         return intent?.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) == true
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate() {
         val intent = ContextCompat.registerReceiver(
-            context,
+            applicationContext,
             null,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED),
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
         if (intent != null) {
-            updateBatteryLevel(context, intent)
-            updateBatteryState(context, intent)
-            updateIsCharging(context, intent)
-            updateChargerType(context, intent)
-            updateBatteryHealth(context, intent)
-            updateBatteryTemperature(context, intent)
-            updateBatteryPower(context, intent)
+            updateBatteryLevel(intent)
+            updateBatteryState(intent)
+            updateIsCharging(intent)
+            updateChargerType(intent)
+            updateBatteryHealth(intent)
+            updateBatteryTemperature(intent)
+            updateBatteryPower(intent)
             if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
-                updateRemainingChargeTime(context)
+                updateRemainingChargeTime()
             }
             if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
-                updateBatteryCycles(context, intent)
+                updateBatteryCycles(intent)
             }
         }
     }
@@ -200,8 +223,8 @@ class BatterySensorManager : SensorManager {
         return (level.toFloat() / scale.toFloat() * 100.0f).toInt()
     }
 
-    private suspend fun updateBatteryLevel(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryLevel)) {
+    private suspend fun updateBatteryLevel(intent: Intent) {
+        if (!isEnabled(batteryLevel)) {
             return
         }
 
@@ -224,7 +247,6 @@ class BatterySensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             batteryLevel,
             percentage,
             icon,
@@ -232,8 +254,8 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateBatteryState(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryState)) {
+    private suspend fun updateBatteryState(intent: Intent) {
+        if (!isEnabled(batteryState)) {
             return
         }
 
@@ -247,7 +269,6 @@ class BatterySensorManager : SensorManager {
             else -> "mdi:battery-unknown"
         }
         onSensorUpdated(
-            context,
             batteryState,
             chargingStatus,
             icon,
@@ -257,8 +278,8 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateIsCharging(context: Context, intent: Intent) {
-        if (!isEnabled(context, isChargingState)) {
+    private suspend fun updateIsCharging(intent: Intent) {
+        if (!isEnabled(isChargingState)) {
             return
         }
 
@@ -266,7 +287,6 @@ class BatterySensorManager : SensorManager {
 
         val icon = if (isCharging) "mdi:power-plug" else "mdi:power-plug-off"
         onSensorUpdated(
-            context,
             isChargingState,
             isCharging,
             icon,
@@ -274,8 +294,8 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateChargerType(context: Context, intent: Intent) {
-        if (!isEnabled(context, chargerTypeState)) {
+    private suspend fun updateChargerType(intent: Intent) {
+        if (!isEnabled(chargerTypeState)) {
             return
         }
 
@@ -288,7 +308,6 @@ class BatterySensorManager : SensorManager {
             else -> "mdi:battery"
         }
         onSensorUpdated(
-            context,
             chargerTypeState,
             chargerType,
             icon,
@@ -298,8 +317,8 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateBatteryHealth(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryHealthState)) {
+    private suspend fun updateBatteryHealth(intent: Intent) {
+        if (!isEnabled(batteryHealthState)) {
             return
         }
 
@@ -310,7 +329,6 @@ class BatterySensorManager : SensorManager {
             else -> "mdi:battery-alert"
         }
         onSensorUpdated(
-            context,
             batteryHealthState,
             batteryHealth,
             icon,
@@ -320,15 +338,14 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateBatteryTemperature(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryTemperature)) {
+    private suspend fun updateBatteryTemperature(intent: Intent) {
+        if (!isEnabled(batteryTemperature)) {
             return
         }
 
         val batteryTemp = getBatteryTemperature(intent)
 
         onSensorUpdated(
-            context,
             batteryTemperature,
             batteryTemp,
             batteryTemperature.statelessIcon,
@@ -336,14 +353,14 @@ class BatterySensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateBatteryPower(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryPower)) {
+    private suspend fun updateBatteryPower(intent: Intent) {
+        if (!isEnabled(batteryPower)) {
             return
         }
 
-        val voltage = getBatteryVolts(context, intent)
-        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
-        val current = getBatteryCurrent(context, batteryManager)
+        val voltage = getBatteryVolts(intent)
+        val batteryManager = applicationContext.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        val current = getBatteryCurrent(batteryManager)
         var wattage: Float? = null
         var icon = batteryPower.statelessIcon
         if (voltage == null || current == null) {
@@ -354,7 +371,6 @@ class BatterySensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             batteryPower,
             wattage?.toBigDecimal()?.setScale(2, RoundingMode.HALF_UP) ?: STATE_UNAVAILABLE,
             icon,
@@ -366,12 +382,12 @@ class BatterySensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    private suspend fun updateRemainingChargeTime(context: Context) {
-        if (!isEnabled(context, remainingChargeTime)) {
+    private suspend fun updateRemainingChargeTime() {
+        if (!isEnabled(remainingChargeTime)) {
             return
         }
 
-        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        val batteryManager = applicationContext.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val chargeTime = batteryManager.computeChargeTimeRemaining()
         val remainingCharge = if (chargeTime >= 0) {
             chargeTime.toFloat() / 60000f
@@ -380,7 +396,6 @@ class BatterySensorManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             remainingChargeTime,
             if (chargeTime >= 0) {
                 floor(remainingCharge as Float).toInt()
@@ -393,15 +408,14 @@ class BatterySensorManager : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    private suspend fun updateBatteryCycles(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryCycles)) {
+    private suspend fun updateBatteryCycles(intent: Intent) {
+        if (!isEnabled(batteryCycles)) {
             return
         }
 
         val cycles = intent.getIntExtra(BatteryManager.EXTRA_CYCLE_COUNT, -1)
 
         onSensorUpdated(
-            context,
             batteryCycles,
             if (cycles != -1) cycles else STATE_UNAVAILABLE,
             batteryCycles.statelessIcon,
@@ -445,14 +459,13 @@ class BatterySensorManager : SensorManager {
         return intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10f
     }
 
-    private suspend fun getBatteryCurrent(context: Context, batteryManager: BatteryManager): Float? {
+    private suspend fun getBatteryCurrent(batteryManager: BatteryManager): Float? {
         val current = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
         return if (
             (SdkVersion.isAtLeast(Build.VERSION_CODES.P) && current != Int.MIN_VALUE) ||
             current != 0
         ) {
             val dividerSetting = getNumberSetting(
-                context,
                 batteryPower,
                 SETTING_BATTERY_CURRENT_DIVISOR,
                 DEFAULT_BATTERY_CURRENT_DIVISOR,
@@ -463,11 +476,10 @@ class BatterySensorManager : SensorManager {
         }
     }
 
-    private suspend fun getBatteryVolts(context: Context, intent: Intent): Float? {
+    private suspend fun getBatteryVolts(intent: Intent): Float? {
         val voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0)
         return if (voltage != 0) {
             val dividerSetting = getNumberSetting(
-                context,
                 batteryPower,
                 SETTING_BATTERY_VOLTAGE_DIVISOR,
                 DEFAULT_BATTERY_VOLTAGE_DIVISOR,

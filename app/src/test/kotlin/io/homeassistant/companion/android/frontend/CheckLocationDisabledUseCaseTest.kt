@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.os.Build
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -11,7 +12,6 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
-import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -37,21 +37,21 @@ class CheckLocationDisabledUseCaseTest {
     fun setUp() {
         SdkVersion.sdkInt = Build.VERSION_CODES.M
         mockkObject(DisabledLocationHandler)
-        mockkObject(SensorReceiver)
-        every { SensorReceiver.MANAGERS } returns emptyList()
         every { DisabledLocationHandler.removeLocationDisabledWarning(any()) } just runs
         every { DisabledLocationHandler.showLocationDisabledNotification(any(), any()) } just runs
-        useCase = CheckLocationDisabledUseCase(
-            context = context,
-            serverManager = serverManager,
-        )
+        useCase = buildUseCase()
     }
 
     @AfterEach
     fun tearDown() {
         unmockkObject(DisabledLocationHandler)
-        unmockkObject(SensorReceiver)
     }
+
+    private fun buildUseCase(managers: Set<SensorManager> = emptySet()) = CheckLocationDisabledUseCase(
+        context = context,
+        serverManager = serverManager,
+        managers = managers,
+    )
 
     @Test
     fun `Given location is enabled when invoked then removes warning`() = runTest {
@@ -85,10 +85,10 @@ class CheckLocationDisabledUseCaseTest {
 
         every { DisabledLocationHandler.isLocationEnabled(context) } returns false
         coEvery { serverManager.getServer(any<Int>()) } returns serverWithSsids(emptyList())
-        every { SensorReceiver.MANAGERS } returns listOf(sensorManager)
-        coEvery { sensorManager.getAvailableSensors(context) } returns listOf(locationSensor)
-        coEvery { sensorManager.isEnabled(context, locationSensor) } returns true
-        every { sensorManager.requiredPermissions(context, "test_sensor") } returns arrayOf(
+        useCase = buildUseCase(setOf(sensorManager))
+        coEvery { sensorManager.getAvailableSensors() } returns listOf(locationSensor)
+        coEvery { sensorManager.isEnabled(locationSensor) } returns true
+        every { sensorManager.requiredPermissions("test_sensor") } returns arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
         )
 
@@ -120,10 +120,10 @@ class CheckLocationDisabledUseCaseTest {
 
         every { DisabledLocationHandler.isLocationEnabled(context) } returns false
         coEvery { serverManager.getServer(any<Int>()) } returns serverWithSsids(emptyList())
-        every { SensorReceiver.MANAGERS } returns listOf(sensorManager)
-        coEvery { sensorManager.getAvailableSensors(context) } returns listOf(nonLocationSensor)
-        coEvery { sensorManager.isEnabled(context, nonLocationSensor) } returns true
-        every { sensorManager.requiredPermissions(context, "battery_sensor") } returns emptyArray()
+        useCase = buildUseCase(setOf(sensorManager))
+        coEvery { sensorManager.getAvailableSensors() } returns listOf(nonLocationSensor)
+        coEvery { sensorManager.isEnabled(nonLocationSensor) } returns true
+        every { sensorManager.requiredPermissions("battery_sensor") } returns emptyArray()
 
         useCase()
 
@@ -141,9 +141,9 @@ class CheckLocationDisabledUseCaseTest {
 
         every { DisabledLocationHandler.isLocationEnabled(context) } returns false
         coEvery { serverManager.getServer(any<Int>()) } returns serverWithSsids(emptyList())
-        every { SensorReceiver.MANAGERS } returns listOf(sensorManager)
-        coEvery { sensorManager.getAvailableSensors(context) } returns listOf(locationSensor)
-        coEvery { sensorManager.isEnabled(context, locationSensor) } returns false
+        useCase = buildUseCase(setOf(sensorManager))
+        coEvery { sensorManager.getAvailableSensors() } returns listOf(locationSensor)
+        coEvery { sensorManager.isEnabled(locationSensor) } returns false
 
         useCase()
 

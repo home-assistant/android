@@ -22,7 +22,7 @@ data class SensorSetting(
     @ColumnInfo(name = "name")
     val name: String,
     @ColumnInfo(name = "value")
-    var value: String,
+    val value: String,
     /** Indicates the data type of the `value`. */
     @ColumnInfo(name = "value_type")
     val valueType: SensorSettingType,

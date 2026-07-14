@@ -497,9 +497,12 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 }
             }
             composable(route = SCREEN_MANAGE_SENSORS) {
-                SensorsView(onClickSensorManager = {
-                    swipeDismissableNavController.navigate("$SCREEN_SINGLE_SENSOR_MANAGER/${it.id()}")
-                })
+                SensorsView(
+                    allManagers = mainViewModel.sensorManagers,
+                    onClickSensorManager = {
+                        swipeDismissableNavController.navigate("$SCREEN_SINGLE_SENSOR_MANAGER/${it.id()}")
+                    },
+                )
             }
             composable(
                 route = "$SCREEN_SINGLE_SENSOR_MANAGER/{$ARG_SCREEN_SENSOR_MANAGER_ID}",
@@ -514,7 +517,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
             ) { backStackEntry ->
                 val sensorManagerId =
                     backStackEntry.arguments?.getString(ARG_SCREEN_SENSOR_MANAGER_ID)
-                val sensorManager = getSensorManagers().first { sensorManager ->
+                val sensorManager = getSensorManagers(mainViewModel.sensorManagers).first { sensorManager ->
                     sensorManager.id() == sensorManagerId
                 }
                 mainViewModel.updateAllSensors(sensorManager)

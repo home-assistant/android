@@ -4,6 +4,8 @@ import androidx.core.net.toUri
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -143,7 +145,7 @@ class LinkHandlerTest {
         val uri = "https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F".toUri()
 
         val result = handler.handleLink(uri)
-        assertEquals(LinkDestination.Webview("_my_redirect/supervisor_add_addon_repository?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F&mobile=1", ServerManager.SERVER_ID_ACTIVE), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("_my_redirect/supervisor_add_addon_repository?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F&mobile=1"), ServerManager.SERVER_ID_ACTIVE), result)
     }
 
     @Test
@@ -189,7 +191,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview("homeassistant://navigate/lovelace/dashboard", 1), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard"), 1), result)
     }
 
     @Test
@@ -202,7 +204,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=default".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview("homeassistant://navigate/lovelace/dashboard?server=default", 1), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=default"), 1), result)
     }
 
     @Test
@@ -215,7 +217,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview("homeassistant://navigate/lovelace/dashboard?server=", 1), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server="), 1), result)
     }
 
     @Test
@@ -235,7 +237,37 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=Office".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview("homeassistant://navigate/lovelace/dashboard?server=Office", 2), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=Office"), 2), result)
+    }
+
+    @Test
+    fun `Given navigate deep link with server_id param when invoking handleLink then returns Webview with that server`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = "homeassistant://navigate/lovelace/dashboard?server_id=2".toUri()
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server_id=2"), 2), result)
+    }
+
+    @Test
+    fun `Given navigate deep link with root more-info-entity-id when invoking handleLink then returns the entity target`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = "homeassistant://navigate/?more-info-entity-id=light.kitchen&server_id=2".toUri()
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.EntityMoreInfo("light.kitchen"), 2), result)
+    }
+
+    @Test
+    fun `Given a navigate deep link built for an entity when invoking handleLink then it round-trips to the entity target`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = navigateDeepLinkUri(FrontendTarget.EntityMoreInfo("light.kitchen"), serverId = 2)
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.EntityMoreInfo("light.kitchen"), 2), result)
     }
 
     @Test
@@ -255,7 +287,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=office".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview("homeassistant://navigate/lovelace/dashboard?server=office", 2), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=office"), 2), result)
     }
 
     @Test
@@ -271,7 +303,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=NonExisting".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview("homeassistant://navigate/lovelace/dashboard?server=NonExisting", ServerManager.SERVER_ID_ACTIVE), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=NonExisting"), ServerManager.SERVER_ID_ACTIVE), result)
     }
 
     /*
@@ -280,7 +312,7 @@ class LinkHandlerTest {
     @Test
     fun `Given redirect URI with multiple registered servers when invoking handleLink then returns ServerPicker`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.servers() } returns listOf(
+        val servers = listOf<Server>(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -290,12 +322,18 @@ class LinkHandlerTest {
                 coEvery { id } returns 2
             },
         )
+        coEvery { serverManager.servers() } returns servers
         val uri = "https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F".toUri()
 
         val result = handler.handleLink(uri)
 
         assertEquals(
-            LinkDestination.ServerPicker("_my_redirect/supervisor_add_addon_repository?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F&mobile=1"),
+            LinkDestination.ServerPicker(
+                FrontendTarget.Path(
+                    "_my_redirect/supervisor_add_addon_repository?repository_url=https%3A%2F%2Fgithub.com%2Fhome-assistant%2Fandroid%2F&mobile=1",
+                ),
+                servers,
+            ),
             result,
         )
     }
@@ -303,7 +341,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with non-existing server name and multiple servers when invoking handleLink then returns ServerPicker`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.servers() } returns listOf(
+        val servers = listOf<Server>(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -313,18 +351,22 @@ class LinkHandlerTest {
                 coEvery { id } returns 2
             },
         )
+        coEvery { serverManager.servers() } returns servers
 
         val uri = "homeassistant://navigate/lovelace/dashboard?server=NonExisting".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.ServerPicker("homeassistant://navigate/lovelace/dashboard?server=NonExisting"), result)
+        assertEquals(
+            LinkDestination.ServerPicker(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=NonExisting"), servers),
+            result,
+        )
     }
 
     @Test
     fun `Given navigate deep link with no default server and multiple servers when invoking handleLink then returns ServerPicker`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.getServer() } returns null
-        coEvery { serverManager.servers() } returns listOf(
+        val servers = listOf<Server>(
             mockk {
                 coEvery { friendlyName } returns "Home"
                 coEvery { id } returns 1
@@ -334,10 +376,11 @@ class LinkHandlerTest {
                 coEvery { id } returns 2
             },
         )
+        coEvery { serverManager.servers() } returns servers
 
         val uri = "homeassistant://navigate/lovelace/dashboard".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.ServerPicker("homeassistant://navigate/lovelace/dashboard"), result)
+        assertEquals(LinkDestination.ServerPicker(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard"), servers), result)
     }
 }

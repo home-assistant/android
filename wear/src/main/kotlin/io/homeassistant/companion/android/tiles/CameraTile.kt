@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.home.HomeActivity
@@ -63,7 +64,7 @@ class CameraTile : TileService() {
     lateinit var wearPrefsRepository: WearPrefsRepository
 
     @Inject
-    lateinit var okHttpClient: OkHttpClient
+    lateinit var okHttpClientProvider: SuspendProvider<OkHttpClient>
 
     @Inject
     lateinit var cameraTileDao: CameraTileDao
@@ -141,7 +142,7 @@ class CameraTile : TileService() {
                             requestParams.deviceConfiguration.screenHeightDp *
                                 requestParams.deviceConfiguration.screenDensity
                         withContext(Dispatchers.IO) {
-                            val response = okHttpClient.newCall(Request.Builder().url(url).build()).execute()
+                            val response = okHttpClientProvider().newCall(Request.Builder().url(url).build()).execute()
                             byteArray = response.body.byteStream().readBytes()
                             var bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                             if (bitmap.width > maxWidth || bitmap.height > maxHeight) {

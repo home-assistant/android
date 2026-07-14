@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.homeassistant.android.flavor)
-    alias(libs.plugins.google.services)
     alias(libs.plugins.homeassistant.android.dependencies)
     alias(libs.plugins.kotlin.parcelize)
 }
@@ -93,9 +92,12 @@ android {
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:app` module.
     implementation(libs.car.automotive)
+    ksp(project(":provides-sensor-processor"))
 }
 
-// Disable to fix memory leak and be compatible with the configuration cache.
-googleServices {
-    disableVersionCheck = true
+ksp {
+    // `:automotive` reuses `:app/src/main` sources, including AppProvidesSensorModule which references
+    // GeneratedProvidesSensorApp — so this module must generate that same object (suffix "app"), not
+    // an "automotive"-suffixed one. The two are never on the same classpath, so there's no collision.
+    arg("providesSensorModuleSuffix", "app")
 }

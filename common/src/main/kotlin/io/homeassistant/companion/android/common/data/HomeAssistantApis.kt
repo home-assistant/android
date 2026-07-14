@@ -11,6 +11,10 @@ import io.homeassistant.companion.android.di.OkHttpConfigurator
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -40,7 +44,38 @@ class HomeAssistantApis @Inject constructor(
         private const val READ_TIMEOUT = 30L
     }
 
-    private fun configureOkHttpClient(builder: OkHttpClient.Builder): OkHttpClient.Builder {
+    private val okHttpMutex = Mutex()
+    private val retrofitMutex = Mutex()
+
+    @Volatile
+    private var okHttpClient: OkHttpClient? = null
+
+    @Volatile
+    private var retrofit: Retrofit? = null
+
+    suspend fun getOkHttpClient(): OkHttpClient {
+        return okHttpClient ?: okHttpMutex.withLock {
+            okHttpClient ?: configureOkHttpClient().build().also { okHttpClient = it }
+        }
+    }
+
+    suspend fun getRetrofit(): Retrofit {
+        return retrofit ?: retrofitMutex.withLock {
+            retrofit ?: Retrofit
+                .Builder()
+                .addConverterFactory(
+                    kotlinJsonMapper.asConverterFactory(
+                        "application/json; charset=UTF-8".toMediaType(),
+                    ),
+                )
+                .client(getOkHttpClient())
+                .baseUrl(LOCAL_HOST)
+                .build().also { retrofit = it }
+        }
+    }
+
+    private suspend fun configureOkHttpClient(): OkHttpClient.Builder = withContext(Dispatchers.Default) {
+        val builder = OkHttpClient.Builder()
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(
                 HttpLoggingInterceptor().apply {
@@ -79,21 +114,6 @@ class HomeAssistantApis @Inject constructor(
             it(builder)
         }
 
-        return builder
-    }
-
-    val okHttpClient by lazy { configureOkHttpClient(OkHttpClient.Builder()).build() }
-
-    val retrofit: Retrofit by lazy {
-        Retrofit
-            .Builder()
-            .addConverterFactory(
-                kotlinJsonMapper.asConverterFactory(
-                    "application/json; charset=UTF-8".toMediaType(),
-                ),
-            )
-            .client(okHttpClient)
-            .baseUrl(LOCAL_HOST)
-            .build()
+        return@withContext builder
     }
 }

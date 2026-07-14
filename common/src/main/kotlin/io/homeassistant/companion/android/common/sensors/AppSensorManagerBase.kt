@@ -9,14 +9,22 @@ import android.os.Process
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import java.math.RoundingMode
+import javax.inject.Singleton
 import timber.log.Timber
 
-abstract class AppSensorManagerBase : SensorManager {
+@Singleton
+abstract class AppSensorManagerBase(
+    override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         private const val GB = 1000000000
 
+        @ProvidesSensor
         val currentVersion = SensorManager.BasicSensor(
             "current_version",
             "sensor",
@@ -27,6 +35,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_rx_gb = SensorManager.BasicSensor(
             "app_rx_gb",
             "sensor",
@@ -39,6 +48,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_tx_gb = SensorManager.BasicSensor(
             "app_tx_gb",
             "sensor",
@@ -51,6 +61,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_memory = SensorManager.BasicSensor(
             "app_memory",
             "sensor",
@@ -63,6 +74,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_inactive = SensorManager.BasicSensor(
             "app_inactive",
             "binary_sensor",
@@ -73,6 +85,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_standby_bucket = SensorManager.BasicSensor(
             "app_standby_bucket",
             "sensor",
@@ -84,6 +97,7 @@ abstract class AppSensorManagerBase : SensorManager {
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
+        @ProvidesSensor
         val app_importance = SensorManager.BasicSensor(
             "app_importance",
             "sensor",
@@ -99,7 +113,7 @@ abstract class AppSensorManagerBase : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_app_sensor
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return when {
             (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) ->
                 listOf(
@@ -123,35 +137,34 @@ abstract class AppSensorManagerBase : SensorManager {
         }
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
+    override suspend fun requestSensorUpdate() {
         val myUid = Process.myUid()
-        updateCurrentVersion(context)
-        updateAppMemory(context)
-        updateAppRxGb(context, myUid)
-        updateAppTxGb(context, myUid)
-        updateImportanceCheck(context)
-        val usageStatsManager = context.getSystemService<UsageStatsManager>()!!
-        updateAppInactive(context, usageStatsManager)
+        updateCurrentVersion()
+        updateAppMemory()
+        updateAppRxGb(myUid)
+        updateAppTxGb(myUid)
+        updateImportanceCheck()
+        val usageStatsManager = applicationContext.getSystemService<UsageStatsManager>()!!
+        updateAppInactive(usageStatsManager)
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
-            updateAppStandbyBucket(context, usageStatsManager)
+            updateAppStandbyBucket(usageStatsManager)
         }
     }
 
     abstract fun getCurrentVersion(): String
 
-    private suspend fun updateCurrentVersion(context: Context) {
-        if (!isEnabled(context, currentVersion)) {
+    private suspend fun updateCurrentVersion() {
+        if (!isEnabled(currentVersion)) {
             return
         }
 
         val state = getCurrentVersion()
 
         onSensorUpdated(
-            context,
             currentVersion,
             state,
             currentVersion.statelessIcon,
@@ -159,8 +172,8 @@ abstract class AppSensorManagerBase : SensorManager {
         )
     }
 
-    private suspend fun updateAppRxGb(context: Context, appUid: Int) {
-        if (!isEnabled(context, app_rx_gb)) {
+    private suspend fun updateAppRxGb(appUid: Int) {
+        if (!isEnabled(app_rx_gb)) {
             return
         }
 
@@ -172,7 +185,6 @@ abstract class AppSensorManagerBase : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             app_rx_gb,
             appRx.toBigDecimal().setScale(4, RoundingMode.HALF_EVEN),
             app_rx_gb.statelessIcon,
@@ -180,8 +192,8 @@ abstract class AppSensorManagerBase : SensorManager {
         )
     }
 
-    private suspend fun updateAppTxGb(context: Context, appUid: Int) {
-        if (!isEnabled(context, app_tx_gb)) {
+    private suspend fun updateAppTxGb(appUid: Int) {
+        if (!isEnabled(app_tx_gb)) {
             return
         }
 
@@ -193,7 +205,6 @@ abstract class AppSensorManagerBase : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             app_tx_gb,
             appTx.toBigDecimal().setScale(4, RoundingMode.HALF_EVEN),
             app_tx_gb.statelessIcon,
@@ -201,8 +212,8 @@ abstract class AppSensorManagerBase : SensorManager {
         )
     }
 
-    private suspend fun updateAppMemory(context: Context) {
-        if (!isEnabled(context, app_memory)) {
+    private suspend fun updateAppMemory() {
+        if (!isEnabled(app_memory)) {
             return
         }
 
@@ -212,7 +223,6 @@ abstract class AppSensorManagerBase : SensorManager {
         val usedSize = totalSize - freeSize
 
         onSensorUpdated(
-            context,
             app_memory,
             usedSize.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             app_memory.statelessIcon,
@@ -223,17 +233,16 @@ abstract class AppSensorManagerBase : SensorManager {
         )
     }
 
-    private suspend fun updateAppInactive(context: Context, usageStatsManager: UsageStatsManager) {
-        if (!isEnabled(context, app_inactive)) {
+    private suspend fun updateAppInactive(usageStatsManager: UsageStatsManager) {
+        if (!isEnabled(app_inactive)) {
             return
         }
 
-        val isAppInactive = usageStatsManager.isAppInactive(context.packageName)
+        val isAppInactive = usageStatsManager.isAppInactive(applicationContext.packageName)
 
         val icon = if (isAppInactive) "mdi:timer-off-outline" else "mdi:timer-outline"
 
         onSensorUpdated(
-            context,
             app_inactive,
             isAppInactive,
             icon,
@@ -242,8 +251,8 @@ abstract class AppSensorManagerBase : SensorManager {
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    private suspend fun updateAppStandbyBucket(context: Context, usageStatsManager: UsageStatsManager) {
-        if (!isEnabled(context, app_standby_bucket)) {
+    private suspend fun updateAppStandbyBucket(usageStatsManager: UsageStatsManager) {
+        if (!isEnabled(app_standby_bucket)) {
             return
         }
 
@@ -257,7 +266,6 @@ abstract class AppSensorManagerBase : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             app_standby_bucket,
             appStandbyBucket,
             app_standby_bucket.statelessIcon,
@@ -267,17 +275,17 @@ abstract class AppSensorManagerBase : SensorManager {
         )
     }
 
-    private suspend fun updateImportanceCheck(context: Context) {
-        if (!isEnabled(context, app_importance)) {
+    private suspend fun updateImportanceCheck() {
+        if (!isEnabled(app_importance)) {
             return
         }
 
-        val appManager = context.getSystemService<ActivityManager>()!!
+        val appManager = applicationContext.getSystemService<ActivityManager>()!!
         val currentProcess = appManager.runningAppProcesses
         var importance = "not_running"
         if (currentProcess != null) {
             for (item in currentProcess) {
-                if (context.applicationInfo.processName == item.processName) {
+                if (applicationContext.applicationInfo.processName == item.processName) {
                     importance = when (item.importance) {
                         ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED -> {
                             "cached"
@@ -313,7 +321,6 @@ abstract class AppSensorManagerBase : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             app_importance,
             importance,
             app_importance.statelessIcon,

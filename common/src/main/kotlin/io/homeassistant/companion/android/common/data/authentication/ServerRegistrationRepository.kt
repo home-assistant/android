@@ -15,8 +15,8 @@ import timber.log.Timber
  * codes.
  */
 class ServerRegistrationRepository @Inject constructor(
-    private val authenticationService: AuthenticationService,
-    @param:NamedInstallId private val installId: SuspendProvider<String>,
+    private val authenticationServiceProvider: SuspendProvider<AuthenticationService>,
+    @param:NamedInstallId private val installIdProvider: SuspendProvider<String>,
 ) {
 
     /**
@@ -35,7 +35,7 @@ class ServerRegistrationRepository @Inject constructor(
         allowInsecureConnection: Boolean?,
     ): TemporaryServer? {
         return url.toHttpUrlOrNull()?.let { httpUrl ->
-            authenticationService.getToken(
+            authenticationServiceProvider().getToken(
                 httpUrl.newBuilder().addPathSegments(SEGMENT_AUTH_TOKEN).build(),
                 AuthenticationService.GRANT_TYPE_CODE,
                 authorizationCode,
@@ -53,7 +53,7 @@ class ServerRegistrationRepository @Inject constructor(
                             refreshToken = it.refreshToken,
                             tokenExpiration = System.currentTimeMillis() / 1000 + it.expiresIn,
                             tokenType = it.tokenType,
-                            installId = installId(),
+                            installId = installIdProvider(),
                         ),
                     )
                 }

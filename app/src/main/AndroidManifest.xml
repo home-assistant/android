@@ -39,6 +39,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.MANAGE_ASSISTANT_AUDIO"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -318,6 +319,9 @@
             </intent-filter>
         </activity>
 
+        <!-- The class name must stay `NotificationSensorManager` for backward compatibility: Android ties the
+             user's granted notification-listener access to this service's component name, so renaming it would
+             silently revoke access for existing users, forcing them to grant it again. -->
         <service android:name=".sensors.NotificationSensorManager"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
@@ -345,7 +349,7 @@
             android:enabled="false" />
 
         <receiver
-            android:name=".sensors.LocationSensorManager"
+            android:name=".sensors.LocationSensorReceiver"
             android:enabled="true"
             android:exported="false" />
 
@@ -365,7 +369,7 @@
         </receiver>
 
         <receiver
-            android:name=".sensors.ActivitySensorManager"
+            android:name=".sensors.ActivitySensorReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -472,16 +476,14 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- Kept only for not-yet-migrated hardcoded links such as app shortcuts -->
         <activity
             android:name=".webview.WebViewActivity"
-            android:supportsPictureInPicture="true"
-            android:resizeableActivity="true"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode" />
+            android:exported="false" />
 
         <activity
             android:name=".settings.SettingsActivity"
-            android:parentActivityName=".webview.WebViewActivity"
+            android:parentActivityName=".launch.LaunchActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.HomeAssistant.Config" />
@@ -530,11 +532,6 @@
                 <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".barcode.BarcodeScannerActivity"
-            android:exported="false"
-            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <activity android:name=".assist.AssistActivity"
             android:exported="true"

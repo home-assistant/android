@@ -30,7 +30,7 @@ class SettingsWearRepositoryTest {
 
     private val authenticationService: AuthenticationService = mockk()
     private val integrationService: IntegrationService = mockk()
-    private val repository = SettingsWearRepository(authenticationService, integrationService)
+    private val repository = SettingsWearRepository({ authenticationService }, { integrationService })
 
     private fun createWearServer(
         externalUrl: String = "https://ha.local:8123",

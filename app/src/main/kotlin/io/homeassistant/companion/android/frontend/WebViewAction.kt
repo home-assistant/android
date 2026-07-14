@@ -1,12 +1,35 @@
 package io.homeassistant.companion.android.frontend
 
 import android.webkit.WebView
+import androidx.compose.ui.graphics.Color
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
+import androidx.core.graphics.toColorInt
+import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLORS_SCRIPT
+import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLOR_SPACER
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.util.compose.webview.settings
 import io.homeassistant.companion.android.util.sensitive
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.serialization.json.Json
 import timber.log.Timber
+
+/**
+ * Clicks the sidebar anchor of the frontend's default panel (read from `localStorage.defaultPanel`,
+ * falling back to the first sidebar item) and scrolls to the top. Used by
+ * [WebViewAction.NavigateToDefaultPanelViaSidebar].
+ */
+private const val DEFAULT_PANEL_SIDEBAR_CLICK_SCRIPT = """
+    var anchor = 'a:nth-child(1)';
+    var defaultPanel = window.localStorage.getItem('defaultPanel')?.replaceAll('"',"");
+    if(defaultPanel) anchor = 'a[href="/' + defaultPanel + '"]';
+    document.querySelector('body > home-assistant').shadowRoot.querySelector('home-assistant-main')
+                                                   .shadowRoot.querySelector('ha-sidebar')
+                                                   .shadowRoot.querySelector('paper-listbox > ' + anchor).click();
+    window.scrollTo(0, 0);
+"""
 
 /**
  * Actions that require direct interaction with the WebView.
@@ -73,6 +96,23 @@ sealed interface WebViewAction {
     }
 
     /**
+     * Navigates the frontend to its default panel by clicking the matching sidebar anchor.
+     */
+    @Deprecated(
+        "Legacy fallback for Home Assistant servers older than 2025.6 that lack the `navigate` " +
+            "external bus command. Prefer NavigateToMessage on supported servers; remove this once " +
+            "the minimum supported server version is 2025.6 or later.",
+    )
+    data class NavigateToDefaultPanelViaSidebar(
+        override val result: CompletableDeferred<Unit> = CompletableDeferred(),
+    ) : AwaitableAction<Unit> {
+        override fun run(webView: WebView) {
+            @OptIn(EvaluateJavascriptUsage::class)
+            webView.evaluateJavascript(DEFAULT_PANEL_SIDEBAR_CLICK_SCRIPT) { result.complete(Unit) }
+        }
+    }
+
+    /**
      * Evaluate a JavaScript script in the WebView, the result of the execution is
      * emitted through [result].
      */
@@ -86,6 +126,92 @@ sealed interface WebViewAction {
             webView.evaluateJavascript(script) { scriptResult ->
                 result.complete(scriptResult)
             }
+        }
+    }
+
+    /**
+     * Reads the frontend's current theme colors (status bar and page background) and completes
+     * [result] with the parsed [ThemeColors], or `null` when the frontend response is unreadable.
+     */
+    data class ReadThemeColors(override val result: CompletableDeferred<ThemeColors?> = CompletableDeferred()) :
+        AwaitableAction<ReadThemeColors.Companion.ThemeColors?> {
+        /**
+         * Opts into [EvaluateJavascriptUsage] because these values only exist as computed CSS custom
+         * properties in the frontend; no external bus message exposes them.
+         */
+        override fun run(webView: WebView) {
+            @OptIn(EvaluateJavascriptUsage::class)
+            webView.evaluateJavascript(THEME_COLORS_SCRIPT) { raw ->
+                result.complete(parse(raw))
+            }
+        }
+
+        companion object {
+            /**
+             * The frontend theme colors applied to the system chrome: [statusBarColor] from
+             * `--app-header-background-color` and [backgroundColor] from `--primary-background-color`. A `null`
+             * field means the corresponding token could not be parsed.
+             */
+            data class ThemeColors(val statusBarColor: Color?, val backgroundColor: Color?)
+
+            /** Separator used to join the two theme color tokens read from the frontend into a single string. */
+            private const val THEME_COLOR_SPACER = "-SPACER-"
+
+            /** Reads the computed value of the CSS custom property [property] from the document root. */
+            private fun computedStyleToken(property: String) =
+                "document.getElementsByTagName('html')[0].computedStyleMap().get('$property')[0]"
+
+            /**
+             * Reads the frontend theme tokens for the status bar (`--app-header-background-color`) and the
+             * page background (`--primary-background-color`) as a single string joined by [THEME_COLOR_SPACER].
+             */
+            private val THEME_COLORS_SCRIPT =
+                "[${computedStyleToken(
+                    "--app-header-background-color",
+                )},${computedStyleToken("--primary-background-color")}].join('$THEME_COLOR_SPACER')"
+
+            /** Matches the CSS `rgb(r, g, b)` notation the frontend emits for its computed theme tokens. */
+            private val RGB_REGEX = Regex("""rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)""")
+
+            /**
+             * Parses the [THEME_COLORS_SCRIPT] result into [ThemeColors]. Returns `null` when [raw]
+             * is absent or does not contain exactly two tokens.
+             */
+            private fun parse(raw: String?): ThemeColors? {
+                val tokens = raw?.trim('"')?.split(THEME_COLOR_SPACER)
+                if (tokens?.size != 2) return null
+                return ThemeColors(
+                    statusBarColor = tokens[0].trim().toWebViewColorOrNull(),
+                    backgroundColor = tokens[1].trim().toWebViewColorOrNull(),
+                )
+            }
+
+            /**
+             * Parses a color read from the frontend into a Compose [Color]. Returns `null` when
+             * - the value is not a valid `rgb()` triple in the 0-255 range
+             * - the value is not a valid hex color
+             * - the value is not a supported color name like `red`, `blue`, `fuchsia`, ...
+             */
+            private fun String.toWebViewColorOrNull(): Color? {
+                val match = RGB_REGEX.matchEntire(trim())
+                return if (match != null) {
+                    val (r, g, b) = match.destructured
+                    val red = r.toColorChannelOrNull() ?: return null
+                    val green = g.toColorChannelOrNull() ?: return null
+                    val blue = b.toColorChannelOrNull() ?: return null
+                    Color(red = red, green = green, blue = blue)
+                } else {
+                    try {
+                        val asInt = trim().toColorInt()
+                        Color(red = asInt.red, green = asInt.green, blue = asInt.blue)
+                    } catch (_: IllegalArgumentException) {
+                        null
+                    }
+                }
+            }
+
+            /** Parses a 0-255 color channel, returning `null` when out of range. */
+            private fun String.toColorChannelOrNull(): Int? = toIntOrNull()?.takeIf { it in 0..255 }
         }
     }
 
@@ -155,6 +281,57 @@ sealed interface WebViewAction {
             // is the only way to adjust these settings at runtime.
             @OptIn(EvaluateJavascriptUsage::class)
             webView.evaluateJavascript(viewportZoomScript(pinchToZoomEnabled)) {}
+        }
+    }
+
+    /**
+     * Opens the more-info dialog for [entityId] by dispatching the frontend's `hass-more-info`
+     * DOM event.
+     *
+     * Fallback for servers older than HA 2025.6, which ignore the `more-info-entity-id` URL query
+     * parameter. There is no external bus message to open more-info on those servers, so dispatching
+     * the frontend DOM event is the only option.
+     */
+    data class OpenMoreInfo(val entityId: String) : WebViewAction {
+        // [entityId] originates from server/registry data, so it is treated as untrusted: it is
+        // JSON-encoded (quotes/backslashes escaped) so it cannot break out of the JS string literal.
+        private fun moreInfoScript(entityId: String): String {
+            val entityIdJson = Json.encodeToString(entityId)
+            return """document.querySelector("home-assistant")""" +
+                """.dispatchEvent(new CustomEvent("hass-more-info", { detail: { entityId: $entityIdJson }}))"""
+        }
+
+        override fun run(webView: WebView) {
+            @OptIn(EvaluateJavascriptUsage::class)
+            webView.evaluateJavascript(moreInfoScript(entityId)) {}
+        }
+    }
+
+    /**
+     * Publishes the device safe-area [insets] to the frontend as `--app-safe-area-inset-*` CSS
+     * custom properties so it can lay its content out edge-to-edge.
+     */
+    data class ApplySafeAreaInsets(val insets: SafeAreaInsets) : WebViewAction {
+        /**
+         * Opts into [EvaluateJavascriptUsage] because the safe area must be set directly on the
+         * document root as early as possible, even before the frontend is ready to receive external
+         * bus messages; no external bus message exposes it.
+         */
+        override fun run(webView: WebView) {
+            @OptIn(EvaluateJavascriptUsage::class)
+            webView.evaluateJavascript(insets.toCssPropertiesScript(), null)
+        }
+
+        companion object {
+            /** Device safe-area insets in density-independent pixels, as reported to the frontend. */
+            data class SafeAreaInsets(val top: Float, val bottom: Float, val left: Float, val right: Float)
+
+            private fun SafeAreaInsets.toCssPropertiesScript(): String = """
+                document.documentElement.style.setProperty('--app-safe-area-inset-top', '${top}px');
+                document.documentElement.style.setProperty('--app-safe-area-inset-bottom', '${bottom}px');
+                document.documentElement.style.setProperty('--app-safe-area-inset-left', '${left}px');
+                document.documentElement.style.setProperty('--app-safe-area-inset-right', '${right}px');
+            """.trimIndent()
         }
     }
 }

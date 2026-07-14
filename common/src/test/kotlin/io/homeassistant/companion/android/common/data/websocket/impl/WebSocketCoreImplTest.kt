@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -867,7 +868,43 @@ shutdown()
 
         webSocketCore.shutdown()
 
+        // Wait for close() to be called
+        advanceUntilIdle()
+
         verify { mockConnection.close(1001, "Session removed from app.") }
+    }
+
+    @Test
+    fun `Given a shutdown connection When connect is invoked before onClosed Then it reconnects`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        every {
+            mockConnection.close(1001, "Session removed from app.")
+        } answers {
+            backgroundScope.launch {
+                // Simulate queue delay before onClosed is called after close
+                delay(100)
+                webSocketListener.onClosed(mockConnection, 1001, "Session removed from app.")
+            }
+            true
+        }
+
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+        // Should connect for the first time
+        verify(exactly = 1) { mockOkHttpClient.newWebSocket(any(), webSocketListener) }
+
+        advanceTimeBy(100)
+
+        webSocketCore.shutdown()
+        runCurrent()
+        verify(exactly = 1) { mockConnection.close(1001, "Session removed from app.") }
+
+        advanceTimeBy(50)
+
+        assertTrue(webSocketCore.connect())
+        advanceUntilIdle()
+        // Should connect again
+        verify(exactly = 2) { mockOkHttpClient.newWebSocket(any(), webSocketListener) }
     }
 
     /*

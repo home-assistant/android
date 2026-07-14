@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.dialog
 
+import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -15,10 +16,10 @@ import org.junit.jupiter.api.assertNull
 class FrontendDialogManagerTest {
 
     @Test
-    fun `Given JS confirm shown when user confirms then suspend returns true and slot clears`() = runTest {
+    fun `Given confirm shown when user confirms then suspend returns true and slot clears`() = runTest {
         val manager = FrontendDialogManager()
 
-        val outcome = async { manager.showJsConfirm("Are you sure?") }
+        val outcome = async { manager.showConfirm("Are you sure?") }
         advanceUntilIdle()
 
         val pending = assertInstanceOf(FrontendDialog.Confirm::class.java, manager.pendingDialog.value)
@@ -33,10 +34,10 @@ class FrontendDialogManagerTest {
     }
 
     @Test
-    fun `Given JS confirm shown when user cancels then suspend returns false and slot clears`() = runTest {
+    fun `Given confirm shown when user cancels then suspend returns false and slot clears`() = runTest {
         val manager = FrontendDialogManager()
 
-        val outcome = async { manager.showJsConfirm("Discard?") }
+        val outcome = async { manager.showConfirm("Discard?") }
         advanceUntilIdle()
         (manager.pendingDialog.value as FrontendDialog.Confirm).onCancel()
         advanceUntilIdle()
@@ -46,10 +47,10 @@ class FrontendDialogManagerTest {
     }
 
     @Test
-    fun `Given JS confirm in flight when scope cancels then slot is cleared`() = runTest {
+    fun `Given confirm in flight when scope cancels then slot is cleared`() = runTest {
         val manager = FrontendDialogManager()
 
-        val outcome = async { manager.showJsConfirm("Confirm?") }
+        val outcome = async { manager.showConfirm("Confirm?") }
         advanceUntilIdle()
         assertInstanceOf(FrontendDialog.Confirm::class.java, manager.pendingDialog.value)
 
@@ -63,9 +64,9 @@ class FrontendDialogManagerTest {
     fun `Given dialog shown when second show then it queues until first completes`() = runTest {
         val manager = FrontendDialogManager()
 
-        val first = async { manager.showJsConfirm("first") }
+        val first = async { manager.showConfirm("first") }
         advanceUntilIdle()
-        val second = async { manager.showJsConfirm("second") }
+        val second = async { manager.showConfirm("second") }
         advanceUntilIdle()
 
         assertEquals("first", (manager.pendingDialog.value as FrontendDialog.Confirm).message)
@@ -79,6 +80,24 @@ class FrontendDialogManagerTest {
         (manager.pendingDialog.value as FrontendDialog.Confirm).onCancel()
         advanceUntilIdle()
         assertEquals(false, second.await())
+    }
+
+    @Test
+    fun `Given information shown when user dismisses then suspend returns and slot clears`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showInformation("Already paired") }
+        advanceUntilIdle()
+
+        val pending = assertInstanceOf(FrontendDialog.Information::class.java, manager.pendingDialog.value)
+        assertEquals("Already paired", pending.message)
+        assertFalse(outcome.isCompleted)
+
+        pending.onDismiss()
+        advanceUntilIdle()
+
+        assertTrue(outcome.isCompleted)
+        assertNull(manager.pendingDialog.value)
     }
 
     @Test
@@ -131,5 +150,76 @@ class FrontendDialogManagerTest {
         pending.onCancel()
         advanceUntilIdle()
         outcome.await()
+    }
+
+    @Test
+    fun `Given showMatterThreadProgress when called then exposes the progress dialog and does not complete`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadProgress() }
+        advanceUntilIdle()
+
+        assertEquals(FrontendDialog.MatterThreadProgressDialog, manager.pendingDialog.value)
+        assertFalse(outcome.isCompleted)
+
+        outcome.cancel()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `Given showMatterThreadProgress in flight when caller is cancelled then slot is cleared`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadProgress() }
+        advanceUntilIdle()
+        assertEquals(FrontendDialog.MatterThreadProgressDialog, manager.pendingDialog.value)
+
+        outcome.cancel()
+        advanceUntilIdle()
+
+        assertNull(manager.pendingDialog.value)
+    }
+
+    @Test
+    fun `Given showMatterThreadTerminal when shown then exposes the terminal dialog carrying the variant`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset) }
+        advanceUntilIdle()
+
+        val pending = assertInstanceOf(FrontendDialog.MatterThreadTerminalDialog::class.java, manager.pendingDialog.value)
+        assertEquals(MatterThreadTerminal.Dialog.ThreadNoDataset, pending.terminal)
+        assertFalse(outcome.isCompleted)
+
+        pending.onDismiss()
+        advanceUntilIdle()
+        outcome.await()
+    }
+
+    @Test
+    fun `Given showMatterThreadTerminal shown when user dismisses then suspend returns and slot clears`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadTerminal(MatterThreadTerminal.Dialog.ThreadNotConnected) }
+        advanceUntilIdle()
+        (manager.pendingDialog.value as FrontendDialog.MatterThreadTerminalDialog).onDismiss()
+        advanceUntilIdle()
+
+        assertEquals(Unit, outcome.await())
+        assertNull(manager.pendingDialog.value)
+    }
+
+    @Test
+    fun `Given showMatterThreadTerminal in flight when caller is cancelled then slot is cleared`() = runTest {
+        val manager = FrontendDialogManager()
+
+        val outcome = async { manager.showMatterThreadTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset) }
+        advanceUntilIdle()
+        assertInstanceOf(FrontendDialog.MatterThreadTerminalDialog::class.java, manager.pendingDialog.value)
+
+        outcome.cancel()
+        advanceUntilIdle()
+
+        assertNull(manager.pendingDialog.value)
     }
 }
