@@ -2,7 +2,6 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.7.3 - Main" versioncode="3">
-        <change>Android Auto: entity states now use the sensor display precision configured on the server</change>
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
         <change>Bug fixes and dependency updates</change>
@@ -12,7 +11,6 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.7.3 - Automotive" versioncode="1">
-        <change>Android Auto: entity states now use the sensor display precision configured on the server</change>
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
         <change>Bug fixes and dependency updates</change>
