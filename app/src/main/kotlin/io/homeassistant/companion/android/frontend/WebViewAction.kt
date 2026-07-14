@@ -127,7 +127,8 @@ sealed interface WebViewAction {
             }
         }
         if (viewport != null) {
-            if ($enabled) {
+            let overrideZoom = $enabled;
+            if (overrideZoom) {
                 const ignoredBits = ['user-scalable', 'minimum-scale', 'maximum-scale'];
                 let elements = viewport['content'].split(',').filter(contentItem => {
                     return ignoredBits.every(ignoredBit => !contentItem.includes(ignoredBit));

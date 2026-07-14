@@ -126,7 +126,7 @@ class WebViewActionTest {
 
         verify { webView.settings.setSupportZoom(true) }
         verify { webView.settings.builtInZoomControls = true }
-        assertTrue(scriptSlot.captured.contains("user-scalable=yes"))
+        assertTrue(scriptSlot.captured.contains("let overrideZoom = true;"))
     }
 
     @Test
@@ -140,6 +140,6 @@ class WebViewActionTest {
 
         verify { webView.settings.setSupportZoom(false) }
         verify { webView.settings.builtInZoomControls = false }
-        assertTrue(scriptSlot.captured.contains("original_elements"))
+        assertTrue(scriptSlot.captured.contains("let overrideZoom = false;"))
     }
 }
