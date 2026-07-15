@@ -23,6 +23,12 @@ import kotlinx.coroutines.supervisorScope
 import timber.log.Timber
 
 /**
+ * Companion documentation for Thread credential management, linked from the HA → Phone store
+ * dialogs so users can read up on how Android's preferred Thread network behaves.
+ */
+private const val THREAD_DOCS_URL = "https://companion.home-assistant.io/docs/integrations/thread"
+
+/**
  * Coordinates the Matter commissioning and Thread credential export flows.
  * Sits between the external-bus handler events
  * ([io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent.StartMatterCommissioning],
@@ -232,7 +238,8 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         try {
             if (!threadManager.appSupportsThread()) {
                 dialogManager.showInformation(
-                    applicationContext.getString(commonR.string.thread_store_unsupported),
+                    message = applicationContext.getString(commonR.string.thread_store_unsupported),
+                    moreInfoUrl = THREAD_DOCS_URL,
                 )
                 return
             }
@@ -247,25 +254,38 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             val proceed = when (outcome) {
                 ThreadManager.PreflightOutcome.AlreadyPreferred -> {
                     dialogManager.showInformation(
-                        applicationContext.getString(commonR.string.thread_store_already_preferred, networkName),
+                        message = applicationContext.getString(
+                            commonR.string.thread_store_already_preferred,
+                            networkName,
+                        ),
+                        moreInfoUrl = THREAD_DOCS_URL,
                     )
                     return
                 }
                 is ThreadManager.PreflightOutcome.DifferentAppPreferred ->
                     dialogManager.showConfirm(
-                        applicationContext.getString(
+                        message = applicationContext.getString(
                             commonR.string.thread_store_different_preferred,
                             networkName,
                             outcome.networkName,
                         ),
+                        moreInfoUrl = THREAD_DOCS_URL,
                     )
                 ThreadManager.PreflightOutcome.LikelyToBecomePreferred ->
                     dialogManager.showConfirm(
-                        applicationContext.getString(commonR.string.thread_store_likely_preferred, networkName),
+                        message = applicationContext.getString(
+                            commonR.string.thread_store_likely_preferred,
+                            networkName,
+                        ),
+                        moreInfoUrl = THREAD_DOCS_URL,
                     )
                 ThreadManager.PreflightOutcome.Unknown ->
                     dialogManager.showConfirm(
-                        applicationContext.getString(commonR.string.thread_store_unknown_preferred, networkName),
+                        message = applicationContext.getString(
+                            commonR.string.thread_store_unknown_preferred,
+                            networkName,
+                        ),
+                        moreInfoUrl = THREAD_DOCS_URL,
                     )
             }
             if (!proceed) return
@@ -286,13 +306,14 @@ internal class FrontendMatterThreadHandler @Inject constructor(
                 Timber.w(e, "Thread store: failed to add credential '%s'", networkName)
                 applicationContext.getString(commonR.string.thread_store_failed, networkName, e.message ?: "")
             }
-            dialogManager.showInformation(resultMessage)
+            dialogManager.showInformation(message = resultMessage, moreInfoUrl = THREAD_DOCS_URL)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Unexpected error storing Thread credentials on the device")
             dialogManager.showInformation(
-                applicationContext.getString(commonR.string.thread_store_failed_unknown),
+                message = applicationContext.getString(commonR.string.thread_store_failed_unknown),
+                moreInfoUrl = THREAD_DOCS_URL,
             )
         } finally {
             inFlight.set(null)

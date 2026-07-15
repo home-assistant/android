@@ -100,9 +100,13 @@ interface ThreadManager {
         data class DifferentAppPreferred(val networkName: String) : PreflightOutcome()
 
         /**
-         * The device has no preferred Thread credential we can detect. Adding a credential is
-         * likely to make it the device-preferred one — used by Play Services when commissioning
-         * new Matter+Thread devices.
+         * The app has no credentials stored on this device. Adding a credential is likely to
+         * make it the device-preferred one (Play Services promotes the first credential added).
+         *
+         * This is a best-effort prediction: the API only exposes credentials owned by the
+         * calling app, so a preferred network owned by another app — or synced by Play Services
+         * from a Google border router set up with the user's account — is invisible here and
+         * would win over ours.
          */
         object LikelyToBecomePreferred : PreflightOutcome()
 
