@@ -16,7 +16,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
+import io.homeassistant.companion.android.settings.qs.tileSlots
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,8 +45,7 @@ class TilePreferenceActivity : BaseActivity() {
                 )?.let { component ->
                     try {
                         val tileClass = Class.forName(component.className)
-                        val tileMap = ManageTilesViewModel.idToTileService
-                        tileMap.filter { it.value == tileClass }.entries.firstOrNull()?.key?.let {
+                        tileSlots.firstOrNull { it.serviceClass == tileClass }?.id?.value?.let {
                             Timber.d("Tile ID for long press action: $it")
                             tileId = it
                         }

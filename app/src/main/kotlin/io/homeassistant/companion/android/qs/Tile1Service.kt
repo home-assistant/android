@@ -3,9 +3,12 @@ package io.homeassistant.companion.android.qs
 import android.os.Build
 import android.service.quicksettings.Tile
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.settings.qs.TileId
 
 @RequiresApi(Build.VERSION_CODES.N)
-class Tile1Service : TileExtensions() {
+internal class Tile1Service : TileExtensions() {
+
+    override val tileId: TileId = TILE_ID
 
     override fun getTile(): Tile? {
         return if (qsTile != null) {
@@ -15,11 +18,7 @@ class Tile1Service : TileExtensions() {
         }
     }
 
-    override fun getTileId(): String {
-        return TILE_ID
-    }
-
     companion object {
-        const val TILE_ID = "tile_1"
+        val TILE_ID = TileId("tile_1")
     }
 }
