@@ -488,8 +488,10 @@ private fun LoadedEntityList(
         dispatcher = dispatcher,
     )
 
-    if (filteredEntities.isNotEmpty()) {
-        LazyColumn(
+    when {
+        filteredEntities == null -> LoadingPlaceholder(placeholderModifier)
+        filteredEntities.isEmpty() -> EmptyResultPlaceholder(searchQuery, placeholderModifier)
+        else -> LazyColumn(
             modifier = modifier
                 .fillMaxWidth()
                 .testTag(ENTITY_LIST_TEST_TAG),
@@ -506,8 +508,6 @@ private fun LoadedEntityList(
                 HAHorizontalDivider(modifier = Modifier.padding(start = HADimens.SPACE12))
             }
         }
-    } else {
-        EmptyResultPlaceholder(searchQuery, placeholderModifier)
     }
 }
 

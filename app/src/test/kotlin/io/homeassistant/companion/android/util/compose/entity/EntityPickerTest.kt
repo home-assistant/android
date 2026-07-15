@@ -29,7 +29,10 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.mockk
 import io.mockk.verify
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -108,6 +111,7 @@ class EntityPickerTest {
         displayState: EntityDisplayState = EntityDisplayState.Loaded(createTestEntities()),
         selectedEntityId: String? = null,
         onSelectionChanged: (String?) -> Unit = {},
+        filterDispatcher: CoroutineContext = mainDispatcherRule.testDispatcher,
     ) {
         composeTestRule.setContent {
             TabletSizeContent {
@@ -117,7 +121,7 @@ class EntityPickerTest {
                         selectedEntityId = selectedEntityId,
                         onSelectionChanged = onSelectionChanged,
                         state = remember {
-                            EntityPickerState(isExpanded = true, dispatcher = mainDispatcherRule.testDispatcher)
+                            EntityPickerState(isExpanded = true, dispatcher = filterDispatcher)
                         },
                     )
                 }
@@ -248,8 +252,34 @@ class EntityPickerTest {
     fun `Given expanded picker with empty list when rendered then shows no entities message`() {
         setExpandedEntityPickerContent(displayState = EntityDisplayState.Loaded(emptyList()))
 
+        advanceTimeAndWaitForIdle()
+
         composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_no_entity_found))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun `Given expanded picker with entities when filtering not done yet then shows loading`() {
+        // Dedicated dispatcher with its own scheduler (otherwise it would share the main test
+        // dispatcher's scheduler) so the filtering does not progress until we advance it,
+        // keeping the "filtering in progress" state observable
+        val filterDispatcher = StandardTestDispatcher(TestCoroutineScheduler())
+        setExpandedEntityPickerContent(filterDispatcher = filterDispatcher)
+
+        // Before the filtering coroutines run, the picker must not claim there are no entities
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_no_entity_found))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithTag(ENTITY_PICKER_LOADING_TEST_TAG).assertIsDisplayed()
+
+        // Let the filtering complete: one round for the searchable fields mapping, one for the
+        // filtering itself, each resuming on the compose main dispatcher via waitForIdle
+        repeat(2) {
+            filterDispatcher.scheduler.advanceUntilIdle()
+            composeTestRule.waitForIdle()
+        }
+
+        composeTestRule.onNodeWithTag(ENTITY_PICKER_LOADING_TEST_TAG).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Bedroom Light").assertIsDisplayed()
     }
 
     @Test

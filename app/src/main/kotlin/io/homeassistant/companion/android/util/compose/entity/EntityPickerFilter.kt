@@ -69,30 +69,38 @@ internal data class EntityWithSearchFields(
  *
  * @param entities The list of entities to search through
  * @param searchQuery The search query string
- * @return A state holding the filtered and sorted list of entities
+ * @return A state holding the filtered and sorted list of entities, or `null` while the first
+ * filtering pass has not completed yet (callers should show a loading state instead of an
+ * empty result)
  */
 @Composable
 internal fun rememberFilteredEntities(
     entities: Collection<EntityDisplayItem>,
     searchQuery: String,
     dispatcher: CoroutineContext = Dispatchers.Default,
-): List<EntityDisplayItem> {
+): List<EntityDisplayItem>? {
     // Cache the entities with pre-computed searchable fields
-    // Computed on background to avoid blocking UI
-    var entitiesWithFields by remember { mutableStateOf<List<EntityWithSearchFields>>(emptyList()) }
+    // Computed on background to avoid blocking UI, null until the first computation completes
+    var entitiesWithFields by remember { mutableStateOf<List<EntityWithSearchFields>?>(null) }
 
     LaunchedEffect(entities) {
         entitiesWithFields = entities.mapToEntitiesWithFields(dispatcher)
     }
 
     // In inspection mode (previews/screenshots) the filtering LaunchedEffect below never runs,
-    // so seed with the input to render the list. In production it stays empty and is filled by
-    // the effect, avoiding a throwaway copy of a potentially large list on the compose thread.
+    // so seed with the input to render the list. In production it starts as null (filtering in
+    // progress) and is filled by the effect, avoiding a throwaway copy of a potentially large
+    // list on the compose thread.
     val isInspecting = LocalInspectionMode.current
-    var filteredEntities by remember { mutableStateOf(if (isInspecting) entities.toList() else emptyList()) }
+    var filteredEntities by remember {
+        mutableStateOf(if (isInspecting) entities.toList() else null)
+    }
 
-    LaunchedEffect(entitiesWithFields, searchQuery) {
-        filteredEntities = filterAndSortEntitiesOptimized(entitiesWithFields, searchQuery, dispatcher)
+    val fields = entitiesWithFields
+    if (fields != null) {
+        LaunchedEffect(entitiesWithFields, searchQuery) {
+            filteredEntities = filterAndSortEntitiesOptimized(fields, searchQuery, dispatcher)
+        }
     }
 
     return filteredEntities
