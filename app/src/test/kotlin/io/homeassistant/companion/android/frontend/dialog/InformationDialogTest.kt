@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.frontend.dialog
 
 import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -24,7 +23,7 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
-class SimpleConfirmDialogTest {
+class InformationDialogTest {
 
     @get:Rule(order = 1)
     val hiltRule = HiltAndroidRule(this)
@@ -33,43 +32,34 @@ class SimpleConfirmDialogTest {
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
-    fun `Given dialog shown then title message and buttons are displayed`() {
+    fun `Given dialog shown then title message and OK button are displayed`() {
         composeTestRule.apply {
             setContent {
-                SimpleConfirmDialog(
-                    FrontendDialog.Confirm(
-                        message = "Are you sure?",
-                        onConfirm = {},
-                        onCancel = {},
-                    ),
+                InformationDialog(
+                    FrontendDialog.Information(message = "Something happened", onDismiss = {}),
                 )
             }
 
             onNodeWithText(stringResource(commonR.string.app_name)).assertIsDisplayed()
-            onNodeWithText("Are you sure?").assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.ok)).assertIsDisplayed().assertIsEnabled()
-            onNodeWithText(stringResource(commonR.string.cancel)).assertIsDisplayed().assertIsEnabled()
+            onNodeWithText("Something happened").assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.ok)).assertIsDisplayed()
         }
     }
 
     @Test
-    fun `Given dialog shown when OK clicked then onConfirm is called`() {
-        var confirmCalled = false
+    fun `Given dialog shown when OK clicked then onDismiss is called`() {
+        var dismissed = false
 
         composeTestRule.apply {
             setContent {
-                SimpleConfirmDialog(
-                    FrontendDialog.Confirm(
-                        message = "Are you sure?",
-                        onConfirm = { confirmCalled = true },
-                        onCancel = {},
-                    ),
+                InformationDialog(
+                    FrontendDialog.Information(message = "Something happened", onDismiss = { dismissed = true }),
                 )
             }
 
             onNodeWithText(stringResource(commonR.string.ok)).performClick()
 
-            assertTrue(confirmCalled)
+            assertTrue(dismissed)
         }
     }
 
@@ -77,12 +67,8 @@ class SimpleConfirmDialogTest {
     fun `Given dialog without moreInfoUrl then Learn more is not displayed`() {
         composeTestRule.apply {
             setContent {
-                SimpleConfirmDialog(
-                    FrontendDialog.Confirm(
-                        message = "Are you sure?",
-                        onConfirm = {},
-                        onCancel = {},
-                    ),
+                InformationDialog(
+                    FrontendDialog.Information(message = "Something happened", onDismiss = {}),
                 )
             }
 
@@ -94,11 +80,10 @@ class SimpleConfirmDialogTest {
     fun `Given dialog with moreInfoUrl when Learn more clicked then URL opens and dialog stays`() {
         composeTestRule.apply {
             setContent {
-                SimpleConfirmDialog(
-                    FrontendDialog.Confirm(
-                        message = "Are you sure?",
-                        onConfirm = {},
-                        onCancel = {},
+                InformationDialog(
+                    FrontendDialog.Information(
+                        message = "Something happened",
+                        onDismiss = {},
                         moreInfoUrl = "https://example.com/docs",
                     ),
                 )
@@ -109,28 +94,7 @@ class SimpleConfirmDialogTest {
             val startedIntent = Shadows.shadowOf(activity).nextStartedActivity
             assertEquals(Intent.ACTION_VIEW, startedIntent.action)
             assertEquals("https://example.com/docs", startedIntent.data.toString())
-            onNodeWithText("Are you sure?").assertIsDisplayed()
-        }
-    }
-
-    @Test
-    fun `Given dialog shown when Cancel clicked then onCancel is called`() {
-        var cancelCalled = false
-
-        composeTestRule.apply {
-            setContent {
-                SimpleConfirmDialog(
-                    FrontendDialog.Confirm(
-                        message = "Are you sure?",
-                        onConfirm = {},
-                        onCancel = { cancelCalled = true },
-                    ),
-                )
-            }
-
-            onNodeWithText(stringResource(commonR.string.cancel)).performClick()
-
-            assertTrue(cancelCalled)
+            onNodeWithText("Something happened").assertIsDisplayed()
         }
     }
 }
