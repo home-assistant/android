@@ -7,6 +7,8 @@ include(
     ":lint",
     ":microwakeword",
     ":provides-sensor-processor",
+    ":webrtc-core",
+    ":webrtc-signaling-ha",
 )
 
 rootProject.name = "home-assistant-android"
