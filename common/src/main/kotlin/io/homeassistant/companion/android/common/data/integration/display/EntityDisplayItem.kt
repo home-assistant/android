@@ -11,10 +11,6 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 private const val CATEGORY_CONFIG = "config"
 private const val CATEGORY_DIAGNOSTIC = "diagnostic"
 
-/**
- * Category of an entity in the entity registry, used to separate primary entities from
- * configuration/diagnostic ones.
- */
 enum class EntityCategory {
     CONFIG,
     DIAGNOSTIC,

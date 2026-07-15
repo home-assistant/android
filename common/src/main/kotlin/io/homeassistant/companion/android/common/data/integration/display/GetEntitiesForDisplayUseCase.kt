@@ -147,7 +147,6 @@ class GetEntitiesForDisplayUseCase @Inject constructor(
         val classicEntry = snapshot.classicEntries?.get(entity.entityId)
 
         val device = (displayEntry?.deviceId ?: classicEntry?.deviceId)?.let { snapshot.devices[it] }
-        // The area set on the entity itself wins over the area inherited from its device
         val areaId = displayEntry?.areaId ?: classicEntry?.areaId ?: device?.areaId
         val area = areaId?.let { snapshot.areas[it] }
         val floor = area?.floorId?.let { snapshot.floors[it] }
