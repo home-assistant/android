@@ -306,34 +306,6 @@ sealed interface WebViewAction {
             webView.evaluateJavascript(moreInfoScript(entityId)) {}
         }
     }
-
-    /**
-     * Publishes the device safe-area [insets] to the frontend as `--app-safe-area-inset-*` CSS
-     * custom properties so it can lay its content out edge-to-edge.
-     */
-    data class ApplySafeAreaInsets(val insets: SafeAreaInsets) : WebViewAction {
-        /**
-         * Opts into [EvaluateJavascriptUsage] because the safe area must be set directly on the
-         * document root as early as possible, even before the frontend is ready to receive external
-         * bus messages; no external bus message exposes it.
-         */
-        override fun run(webView: WebView) {
-            @OptIn(EvaluateJavascriptUsage::class)
-            webView.evaluateJavascript(insets.toCssPropertiesScript(), null)
-        }
-
-        companion object {
-            /** Device safe-area insets in density-independent pixels, as reported to the frontend. */
-            data class SafeAreaInsets(val top: Float, val bottom: Float, val left: Float, val right: Float)
-
-            private fun SafeAreaInsets.toCssPropertiesScript(): String = """
-                document.documentElement.style.setProperty('--app-safe-area-inset-top', '${top}px');
-                document.documentElement.style.setProperty('--app-safe-area-inset-bottom', '${bottom}px');
-                document.documentElement.style.setProperty('--app-safe-area-inset-left', '${left}px');
-                document.documentElement.style.setProperty('--app-safe-area-inset-right', '${right}px');
-            """.trimIndent()
-        }
-    }
 }
 
 /** Gates direct JavaScript evaluation in the WebView behind an explicit opt-in. */

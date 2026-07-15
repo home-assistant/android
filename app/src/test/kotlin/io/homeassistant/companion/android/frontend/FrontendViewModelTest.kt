@@ -26,7 +26,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
-import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 import io.homeassistant.companion.android.frontend.auth.FrontendHttpAuthHandler
 import io.homeassistant.companion.android.frontend.barcode.FrontendBarcodeScannerHandler
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
@@ -1726,57 +1725,6 @@ class FrontendViewModelTest {
 
             val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
             assertFalse(state.serverHandleInsets)
-        }
-
-        @Test
-        fun `Given a server handling insets when safe area insets change then they are applied to the frontend`() = runTest {
-            val messageFlow = connectedMessageFlow()
-            coEvery { serverManager.getServer(serverId) } returns mockServer(
-                url = "https://example.com",
-                name = "test",
-                haVersion = HomeAssistantVersion(2026, 2, 0),
-                serverId = serverId,
-            )
-            val viewModel = createViewModel()
-            val insets = SafeAreaInsets(top = 10f, bottom = 20f, left = 5f, right = 8f)
-
-            viewModel.webViewActions.test {
-                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
-                advanceUntilIdle()
-                completeConnect(this@runTest, themeColors = null)
-
-                viewModel.onSafeAreaInsetsChanged(insets)
-                advanceUntilIdle()
-
-                assertEquals(insets, (awaitItem() as WebViewAction.ApplySafeAreaInsets).insets)
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-        @Test
-        fun `Given a server not handling insets when safe area insets change then nothing is applied`() = runTest {
-            val messageFlow = connectedMessageFlow()
-            coEvery { serverManager.getServer(serverId) } returns mockServer(
-                url = "https://example.com",
-                name = "test",
-                haVersion = HomeAssistantVersion(2025, 1, 1),
-                serverId = serverId,
-            )
-            val viewModel = createViewModel()
-
-            viewModel.webViewActions.test {
-                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
-                advanceUntilIdle()
-                completeConnect(this@runTest, themeColors = null)
-
-                viewModel.onSafeAreaInsetsChanged(SafeAreaInsets(top = 10f, bottom = 20f, left = 5f, right = 8f))
-                advanceUntilIdle()
-
-                expectNoEvents()
-                cancelAndIgnoreRemainingEvents()
-            }
         }
     }
 

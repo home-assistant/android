@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.frontend
 import android.util.DisplayMetrics
 import android.webkit.ValueCallback
 import android.webkit.WebView
-import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.mockk.Runs
@@ -159,25 +158,6 @@ class WebViewActionTest {
         // The embedded double quote must be backslash-escaped (proof of JSON encoding), so the
         // payload stays inside the entityId string literal instead of becoming executable code.
         assertTrue(script.contains("\\\""))
-    }
-
-    @Test
-    fun `Given ApplySafeAreaInsets when run then the safe area CSS properties are set`() = runTest {
-        val action = WebViewAction.ApplySafeAreaInsets(SafeAreaInsets(top = 10f, bottom = 20f, left = 5f, right = 8f))
-
-        action.run(webView)
-
-        verify {
-            webView.evaluateJavascript(
-                match {
-                    it.contains("--app-safe-area-inset-top', '10.0px'") &&
-                        it.contains("--app-safe-area-inset-bottom', '20.0px'") &&
-                        it.contains("--app-safe-area-inset-left', '5.0px'") &&
-                        it.contains("--app-safe-area-inset-right', '8.0px'")
-                },
-                null,
-            )
-        }
     }
 
     @Test
