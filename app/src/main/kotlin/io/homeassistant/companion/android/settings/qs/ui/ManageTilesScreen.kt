@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
-import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
@@ -155,7 +155,7 @@ internal fun ManageTilesContent(
                     items = state.serversDropdownItems,
                     selectedKey = state.selectedServerId,
                     onItemSelected = onServerSelected,
-                    label = stringResource(R.string.tile_server),
+                    label = stringResource(commonR.string.tile_server),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -193,14 +193,14 @@ private fun ColumnScope.TileLabelContent(
         items = state.tileSlotsDropdownItems,
         selectedKey = state.selectedTileId,
         onItemSelected = onTileSelected,
-        label = stringResource(R.string.tile_select),
+        label = stringResource(commonR.string.tile_select),
         modifier = Modifier.fillMaxWidth(),
     )
 
     HAHorizontalDivider()
 
     Text(
-        text = stringResource(R.string.tile_required_field_hint),
+        text = stringResource(commonR.string.tile_required_field_hint),
         style = HATextStyle.BodyMedium,
         color = LocalHAColorScheme.current.colorTextSecondary,
     )
@@ -208,7 +208,7 @@ private fun ColumnScope.TileLabelContent(
     HATextField(
         value = state.tileLabel,
         onValueChange = onTileLabelChange,
-        label = { Text(text = stringResource(R.string.tile_label)) },
+        label = { Text(text = stringResource(commonR.string.tile_label)) },
         maxLines = 1,
         modifier = Modifier.fillMaxWidth(),
     )
@@ -217,7 +217,7 @@ private fun ColumnScope.TileLabelContent(
         HATextField(
             value = state.tileSubtitle,
             onValueChange = onTileSubtitleChange,
-            label = { Text(text = stringResource(R.string.tile_subtitle)) },
+            label = { Text(text = stringResource(commonR.string.tile_subtitle)) },
             maxLines = 1,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -239,7 +239,7 @@ private fun ColumnScope.TileConfigContent(
         selectedEntityId = state.selectedEntityId,
         onEntitySelectedId = onEntitySelectedId,
         onEntityCleared = onEntityCleared,
-        addButtonText = stringResource(R.string.tile_entity),
+        addButtonText = stringResource(commonR.string.tile_entity),
         entityRegistry = state.entityRegistry,
         deviceRegistry = state.deviceRegistry,
         areaRegistry = state.areaRegistry,
@@ -253,13 +253,13 @@ private fun ColumnScope.TileConfigContent(
     )
 
     LabeledSwitchRow(
-        label = stringResource(R.string.tile_vibrate),
+        label = stringResource(commonR.string.tile_vibrate),
         checked = state.selectedShouldVibrate,
         onCheckedChange = onShouldVibrateChange,
     )
 
     LabeledSwitchRow(
-        label = stringResource(R.string.tile_auth_required),
+        label = stringResource(commonR.string.tile_auth_required),
         checked = state.tileAuthRequired,
         onCheckedChange = onAuthRequiredChange,
     )
@@ -273,7 +273,7 @@ private fun TileIconRow(
     onResetIcon: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val iconContentDescription = stringResource(R.string.tile_icon)
+    val iconContentDescription = stringResource(commonR.string.tile_icon)
     val colorScheme = LocalHAColorScheme.current
     val buttonShape = RoundedCornerShape(HARadius.Pill)
 
@@ -282,7 +282,7 @@ private fun TileIconRow(
         modifier = modifier.fillMaxWidth(),
     ) {
         Text(
-            text = stringResource(R.string.tile_icon),
+            text = stringResource(commonR.string.tile_icon),
             style = HATextStyle.Body,
             modifier = Modifier.padding(end = HADimens.SPACE2),
         )
@@ -291,7 +291,7 @@ private fun TileIconRow(
             HAIconButton(
                 icon = Icons.AutoMirrored.Filled.Undo,
                 onClick = onResetIcon,
-                contentDescription = stringResource(R.string.undo),
+                contentDescription = stringResource(commonR.string.undo),
             )
         }
         Box(
@@ -313,7 +313,7 @@ private fun TileIconRow(
                 )
             } else {
                 Text(
-                    text = stringResource(R.string.select),
+                    text = stringResource(commonR.string.select),
                     style = HATextStyle.Button,
                     color = colorScheme.colorOnPrimaryNormal,
                 )
@@ -382,7 +382,7 @@ private fun ManageTilesUpdatePreview() {
                 tileLabel = "Living room",
                 tileSubtitle = "Lights",
                 selectedEntityId = "light.living_room",
-                submitButtonLabel = R.string.tile_save,
+                submitButtonLabel = commonR.string.tile_save,
             ),
             onTileSelected = {},
             onServerSelected = {},
@@ -425,6 +425,6 @@ private val previewState = ManageTilesState(
     deviceRegistry = emptyList(),
     areaRegistry = emptyList(),
     selectedIcon = null,
-    submitButtonLabel = R.string.tile_add,
+    submitButtonLabel = commonR.string.tile_add,
     showSubtitle = true,
 )
