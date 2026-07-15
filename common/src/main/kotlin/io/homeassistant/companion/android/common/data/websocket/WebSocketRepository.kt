@@ -42,20 +42,17 @@ interface WebSocketRepository {
     suspend fun getEntityRegistry(): List<EntityRegistryResponse>?
 
     /**
-     * Returns a bandwidth-efficient version of the entity registry meant for display, using
-     * the `config/entity_registry/list_for_display` websocket command.
-     *
-     * The command requires Home Assistant 2023.3 or later; older servers reply with an error and this
-     * returns null.
-     * See [EntityRegistryDisplayResponse] for per-field availability.
+     * Return [EntityRegistryDisplayResponse], a bandwidth-efficient version of the
+     * entity registry meant for display.
+     * Requires Home Assistant 2023.3 or later. Some fields may require later
+     * versions of Home Assistant, see [EntityRegistryDisplayEntry].
      */
     suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse?
     suspend fun getEntityRegistryFor(entityId: String): EntityRegistryResponse?
 
     /**
-     * Returns the floor registry using the `config/floor_registry/list` websocket command.
-     * Requires Home Assistant 2024.3 or later; older servers reply with an error and this
-     * returns null.
+     * Return the floor registry.
+     * Requires Home Assistant 2024.3 or later.
      */
     suspend fun getFloorRegistry(): List<FloorRegistryResponse>?
     suspend fun getServices(): List<DomainResponse>?
