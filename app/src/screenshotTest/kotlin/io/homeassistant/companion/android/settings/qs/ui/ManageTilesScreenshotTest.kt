@@ -47,6 +47,9 @@ class ManageTilesScreenshotTest {
                 snackbarHostState = remember { SnackbarHostState() },
                 state = addTileState.copy(
                     selectedTileId = TileId("tile_2"),
+                    tileSlotItems = addTileState.tileSlotItems.map {
+                        if (it.id == TileId("tile_2")) it.copy(label = "Living room") else it
+                    },
                     serversDropdownItems = listOf(
                         HADropdownItem(key = 1, label = "Home"),
                         HADropdownItem(key = 2, label = "Vacation home"),

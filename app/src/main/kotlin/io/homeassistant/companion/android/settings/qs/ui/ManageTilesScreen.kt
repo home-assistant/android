@@ -59,7 +59,6 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.settings.qs.TileId
-import io.homeassistant.companion.android.settings.qs.tileSlots
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.icondialog.IconDialog
@@ -191,7 +190,18 @@ private fun ColumnScope.TileLabelContent(
     onTileSubtitleChange: (String) -> Unit,
 ) {
     val res = LocalResources.current
-    val tiles = remember { tileSlots.map { HADropdownItem(key = it.id, label = res.getString(it.nameRes)) } }
+    val tiles = remember(state.tileSlotItems) {
+        state.tileSlotItems.map { slot ->
+            HADropdownItem(
+                key = slot.id,
+                label = res.getString(
+                    commonR.string.tile_slot_label,
+                    res.getString(slot.nameRes),
+                    slot.label ?: res.getString(commonR.string.not_set),
+                ),
+            )
+        }
+    }
 
     HADropdownMenu(
         items = tiles,

@@ -71,6 +71,7 @@ class ManageTilesViewModelTest {
         coEvery { tileDao.get(any()) } returns null
         coEvery { tileDao.getAll() } returns emptyList()
         coEvery { tileDao.add(any()) } returns 1L
+        every { tileDao.getAllFlow() } returns flowOf(emptyList())
         every { getEntitiesForDisplay(any(), any<(Entity) -> Boolean>()) } returns flowOf(EntityDisplayState.Loading)
     }
 
@@ -412,6 +413,25 @@ class ManageTilesViewModelTest {
         advanceUntilIdle()
 
         assertEquals("", viewModel.state.value.tileSubtitle)
+    }
+
+    @Test
+    fun `Given stored tiles when created then the slot items carry the labels of the configured tiles`() = runTest {
+        every { tileDao.getAllFlow() } returns flowOf(
+            listOf(
+                fakeTile(tileId = "tile_1", label = "Living Room"),
+                fakeTile(tileId = "tile_2", label = ""),
+            ),
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val slotItems = viewModel.state.value.tileSlotItems
+        assertEquals(tileSlots.size, slotItems.size)
+        assertEquals("Living Room", slotItems.first { it.id == TileId("tile_1") }.label)
+        // A blank label counts as not configured.
+        assertNull(slotItems.first { it.id == TileId("tile_2") }.label)
     }
 
     @Test

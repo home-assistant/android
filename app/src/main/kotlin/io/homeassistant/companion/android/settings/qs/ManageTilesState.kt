@@ -1,11 +1,21 @@
 package io.homeassistant.companion.android.settings.qs
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Stable
 import com.mikepenz.iconics.typeface.IIcon
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+
+/** A tile slot with the label of its configured tile, ready to be displayed in the slot picker. */
+internal data class TileSlotItem(val id: TileId, @StringRes val nameRes: Int, val label: String?) {
+    constructor(tileSlot: TileSlot, label: String? = null) : this(
+        id = tileSlot.id,
+        nameRes = tileSlot.nameRes,
+        label = label,
+    )
+}
 
 @Stable
 internal data class ManageTilesState(
@@ -21,6 +31,7 @@ internal data class ManageTilesState(
     val tileAuthRequired: Boolean = false,
     val showSubtitle: Boolean = false,
     val serversDropdownItems: List<HADropdownItem<Int>> = emptyList(),
+    val tileSlotItems: List<TileSlotItem> = tileSlots.map(::TileSlotItem),
 ) {
     val showServerSelector = serversDropdownItems.size > 1 ||
         serversDropdownItems.none { server -> server.key == selectedServerId }

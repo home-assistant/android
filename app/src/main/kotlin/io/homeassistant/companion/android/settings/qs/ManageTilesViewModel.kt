@@ -81,6 +81,14 @@ internal class ManageTilesViewModel @Inject constructor(
                 )
             }
         }
+
+        viewModelScope.launch {
+            tileDao.getAllFlow().collect { tiles ->
+                val labels = tiles.filter { it.label.isNotBlank() }.associate { TileId(it.tileId) to it.label }
+                val slotItems = tileSlots.map { TileSlotItem(tileSlot = it, label = labels[it.id]) }
+                _state.update { it.copy(tileSlotItems = slotItems) }
+            }
+        }
     }
 
     fun selectTile(id: TileId? = null) {
