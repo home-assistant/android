@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Scaffold
-import androidx.compose.material.SnackbarHost
-import androidx.compose.material.Text
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,7 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
@@ -65,20 +65,20 @@ fun LoadWearFavoritesSettings(
         }
     }
 
-    val scaffoldState = rememberScaffoldState()
+    val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect("snackbar") {
         events.onEach { message ->
-            scaffoldState.snackbarHostState.currentSnackbarData?.dismiss() // in case of rapid-fire events
-            scaffoldState.snackbarHostState.showSnackbar(message)
+            snackbarHostState.currentSnackbarData?.dismiss() // in case of rapid-fire events
+            snackbarHostState.showSnackbar(message)
         }.launchIn(this)
     }
 
     Scaffold(
         modifier = modifier,
-        scaffoldState = scaffoldState,
+        containerColor = LocalHAColorScheme.current.colorSurfaceDefault,
         snackbarHost = {
             SnackbarHost(
-                hostState = scaffoldState.snackbarHostState,
+                hostState = snackbarHostState,
                 modifier = Modifier.windowInsetsPadding(safeBottomWindowInsets()),
             )
         },
@@ -101,25 +101,23 @@ fun LoadWearFavoritesSettings(
                     text = stringResource(commonR.string.wear_set_favorites),
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 16.dp),
+                    color = LocalHAColorScheme.current.colorTextPrimary,
                 )
             }
             item {
-                // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6300
-                HATheme {
-                    EntityPicker(
-                        entities = validEntities,
-                        selectedEntityId = null,
-                        onEntityCleared = { /* Nothing */ },
-                        onEntitySelectedId = {
-                            settingsWearViewModel.onEntitySelected(true, it)
-                        },
-                        addButtonText = stringResource(commonR.string.add_favorite),
-                        modifier = Modifier.padding(all = 16.dp),
-                        // In order to have the info about the area/device/zone we need the websocket, it would
-                        // requires SettingsWearRepository to be able to use the WebSocket which is a significant
-                        // work.
-                    )
-                }
+                EntityPicker(
+                    entities = validEntities,
+                    selectedEntityId = null,
+                    onEntityCleared = { /* Nothing */ },
+                    onEntitySelectedId = {
+                        settingsWearViewModel.onEntitySelected(true, it)
+                    },
+                    addButtonText = stringResource(commonR.string.add_favorite),
+                    modifier = Modifier.padding(all = 16.dp),
+                    // In order to have the info about the area/device/zone we need the websocket, it would
+                    // requires SettingsWearRepository to be able to use the WebSocket which is a significant
+                    // work.
+                )
             }
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 val favoriteEntityID = favoriteEntities[index].replace("[", "").replace("]", "")

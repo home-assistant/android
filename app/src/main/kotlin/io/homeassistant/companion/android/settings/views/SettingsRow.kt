@@ -10,13 +10,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.contentColorFor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -24,6 +20,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 
 /**
  * A Composable that displays a typical Material Design clickable list item
@@ -48,12 +45,12 @@ fun SettingsRow(
                     asset = mdiIcon,
                     modifier = Modifier
                         .size(DefaultIconSize)
-                        .alpha(if (enabled) ContentAlpha.high else ContentAlpha.disabled),
+                        .alpha(if (enabled) 1f else 0.38f),
                     colorFilter = ColorFilter.tint(
                         if (enabled) {
-                            MaterialTheme.colors.primary
+                            LocalHAColorScheme.current.colorOnNeutralQuiet
                         } else {
-                            contentColorFor(backgroundColor = MaterialTheme.colors.background)
+                            LocalHAColorScheme.current.colorOnNeutralQuiet.copy(alpha = 0.38f)
                         },
                     ),
                 )
@@ -95,14 +92,14 @@ fun SettingsRow(
         ) {
             Text(
                 text = primaryText,
-                style = MaterialTheme.typography.body1,
+                style = MaterialTheme.typography.bodyLarge,
+                color = LocalHAColorScheme.current.colorTextPrimary,
             )
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                Text(
-                    text = secondaryText,
-                    style = MaterialTheme.typography.body2,
-                )
-            }
+            Text(
+                text = secondaryText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = LocalHAColorScheme.current.colorTextSecondary,
+            )
         }
     }
 }

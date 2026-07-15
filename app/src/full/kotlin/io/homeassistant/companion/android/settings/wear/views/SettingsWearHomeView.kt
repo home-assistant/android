@@ -2,15 +2,13 @@ package io.homeassistant.companion.android.settings.wear.views
 
 import android.content.Intent
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.IconButton
-import androidx.compose.material.TopAppBar
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.navigation.NavType
@@ -21,8 +19,10 @@ import androidx.navigation.navArgument
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HATopBar
+import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.safeTopWindowInsets
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/"
@@ -35,7 +35,7 @@ fun LoadSettingsHomeView(
     onStartBackClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    HomeAssistantAppTheme {
+    HATheme {
         val navController = rememberNavController()
         NavHost(
             navController = navController,
@@ -114,14 +114,14 @@ fun SettingsWearTopAppBar(
     docsLink: String? = null,
 ) {
     val context = LocalContext.current
-    TopAppBar(
+    HATopBar(
         title = title,
         modifier = modifier.windowInsetsPadding(safeTopWindowInsets()),
         navigationIcon = {
             IconButton(onClick = onBackClicked) {
                 Image(
                     asset = CommunityMaterial.Icon.cmd_arrow_left,
-                    colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
+                    colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnNeutralQuiet),
                 )
             }
         },
@@ -136,12 +136,12 @@ fun SettingsWearTopAppBar(
                     Image(
                         asset = CommunityMaterial.Icon2.cmd_help_circle_outline,
                         contentDescription = stringResource(commonR.string.help),
-                        colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
+                        colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnNeutralQuiet),
                     )
                 }
             }
         },
-        backgroundColor = colorResource(id = commonR.color.colorBackground),
-        contentColor = colorResource(id = commonR.color.colorOnBackground),
+        containerColor = LocalHAColorScheme.current.colorSurfaceDefault,
+        contentColor = LocalHAColorScheme.current.colorTextPrimary,
     )
 }

@@ -6,9 +6,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.settings.views.SettingsRow
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
@@ -31,6 +32,7 @@ fun SettingsWearTemplateTileList(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = LocalHAColorScheme.current.colorSurfaceDefault,
         topBar = {
             SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.template_tiles)) },
@@ -50,6 +52,7 @@ fun SettingsWearTemplateTileList(
                     text = stringResource(commonR.string.template_tile_no_tiles_yet),
                     modifier = Modifier
                         .padding(all = 16.dp),
+                    color = LocalHAColorScheme.current.colorTextPrimary,
                 )
             } else {
                 Row(
@@ -60,9 +63,9 @@ fun SettingsWearTemplateTileList(
                 ) {
                     Text(
                         text = stringResource(id = commonR.string.template_tile_configure),
-                        style = MaterialTheme.typography.body2,
+                        style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colors.primary,
+                        color = LocalHAColorScheme.current.colorOnNeutralQuiet,
                     )
                 }
 
