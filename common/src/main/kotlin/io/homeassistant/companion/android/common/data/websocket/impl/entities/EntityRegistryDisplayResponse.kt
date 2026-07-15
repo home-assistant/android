@@ -52,8 +52,8 @@ data class EntityRegistryDisplayEntry(
      */
     @SerialName("hn") val hasEntityName: Boolean = false,
     /**
-     * Server-resolved display name. Only a trustworthy display name on servers >= 2024.10
-     * where it is `name or original_name` (https://github.com/home-assistant/core/pull/125832).
+     * Server-resolved display name. Available since ome Assistant 2024.10
+     * (https://github.com/home-assistant/core/pull/125832).
      */
     @SerialName("en") val name: String? = null,
     /** Effective display precision, sensor domain only. */
