@@ -86,7 +86,7 @@ class ManageTilesViewModelTest {
     private fun fakeEntity(entityId: String) = Entity(
         entityId = entityId,
         state = "on",
-        attributes = emptyMap<String, Any?>(),
+        attributes = emptyMap(),
         lastChanged = LocalDateTime.now(),
         lastUpdated = LocalDateTime.now(),
     )
@@ -174,6 +174,31 @@ class ManageTilesViewModelTest {
         assertEquals(2, viewModel.state.value.selectedServerId)
         assertEquals("mdi:account", viewModel.state.value.customIcon?.mdiName)
         assertEquals(commonR.string.tile_save, viewModel.state.value.submitButtonLabel)
+    }
+
+    @Test
+    fun `Given a setup tile selected when selecting a slot without setup data then the tile fields are reset`() = runTest {
+        val setupTileId = tileSlots[0].id.value
+        coEvery { tileDao.get(setupTileId) } returns fakeTile(
+            dbId = 5,
+            tileId = setupTileId,
+            label = "Living Room",
+            subtitle = "sub",
+            entityId = "switch.lamp",
+            iconName = "mdi:account",
+        )
+
+        val viewModel = createViewModel()
+        viewModel.selectTile(tileSlots[0].id)
+        advanceUntilIdle()
+
+        viewModel.selectTile(tileSlots[1].id)
+        advanceUntilIdle()
+
+        assertEquals("", viewModel.state.value.tileLabel)
+        assertEquals("", viewModel.state.value.tileSubtitle)
+        assertNull(viewModel.state.value.selectedEntityId)
+        assertNull(viewModel.state.value.customIcon)
     }
 
     @Test

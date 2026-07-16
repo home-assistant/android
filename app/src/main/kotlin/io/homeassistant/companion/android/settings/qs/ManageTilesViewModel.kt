@@ -107,14 +107,10 @@ internal class ManageTilesViewModel @Inject constructor(
                     selectedServerId = serverId,
                     selectedShouldVibrate = entity?.shouldVibrate ?: false,
                     tileAuthRequired = entity?.authRequired ?: false,
-                    tileLabel = setupEntity?.label ?: it.tileLabel,
-                    tileSubtitle = if (setupEntity != null) setupEntity.subtitle.orEmpty() else it.tileSubtitle,
-                    selectedEntityId = setupEntity?.entityId ?: it.selectedEntityId,
-                    customIcon = if (setupEntity != null) {
-                        setupEntity.iconName?.let { name -> CommunityMaterial.getIconByMdiName(name) }
-                    } else {
-                        it.customIcon
-                    },
+                    tileLabel = setupEntity?.label.orEmpty(),
+                    tileSubtitle = setupEntity?.subtitle.orEmpty(),
+                    selectedEntityId = setupEntity?.entityId,
+                    customIcon = setupEntity?.iconName?.let { name -> CommunityMaterial.getIconByMdiName(name) },
                     submitButtonLabel = if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) ||
                         entity?.added == true
                     ) {
