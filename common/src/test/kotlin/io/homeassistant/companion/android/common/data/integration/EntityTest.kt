@@ -123,38 +123,35 @@ class EntityTest {
     inner class GetIcon {
         @Test
         fun `Given blank state and non-string state attribute when getting icon then does not throw`() {
-            val context = mockk<Context>()
             val entity = createEntity(
                 entityId = "sensor.test",
                 state = "",
                 attributes = mapOf("state" to 42),
             )
-            assertDoesNotThrow { entity.getIcon(context) }
+            assertDoesNotThrow { entity.getIcon() }
         }
 
         @ParameterizedTest
         @ValueSource(strings = ["mdi:", "mdi:abcdefgh"])
         fun `Given invalid mdi icon attribute when getting icon then returns fallback`(iconAttr: String) {
-            val context = mockk<Context>(relaxed = true)
             val entity = createEntity(
                 entityId = "sensor.test",
                 state = "42",
                 attributes = mapOf("icon" to iconAttr),
             )
-            val icon = entity.getIcon(context)
+            val icon = entity.getIcon()
             assertEquals(Icon.cmd_bookmark, icon)
         }
 
         @ParameterizedTest
         @ValueSource(strings = ["mdicustom:abcdefgh", "hue:bulb-filament"])
         fun `Given custom non-mdi icon attribute when getting icon then returns domain default`(iconAttr: String) {
-            val context = mockk<Context>()
             val entity = createEntity(
                 entityId = "sensor.test",
                 state = "42",
                 attributes = mapOf("icon" to iconAttr),
             )
-            val icon = entity.getIcon(context)
+            val icon = entity.getIcon()
             assertEquals(Icon.cmd_eye, icon)
         }
     }

@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.getIconByMdiName
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse
@@ -39,7 +40,6 @@ import io.homeassistant.companion.android.database.qs.numberedId
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.qs.TileId
 import io.homeassistant.companion.android.settings.qs.updateActiveTileServices
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -332,7 +332,7 @@ internal abstract class TileExtensions : TileService() {
             val iconDrawable = IconicsDrawable(context, icon)
             return iconDrawable.toBitmap()
         } else {
-            entity?.getIcon(context)?.let {
+            entity?.getIcon()?.let {
                 return IconicsDrawable(context, it).apply {
                     sizeDp = 48
                 }.toBitmap()

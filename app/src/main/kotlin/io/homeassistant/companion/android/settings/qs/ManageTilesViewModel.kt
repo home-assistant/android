@@ -20,6 +20,8 @@ import io.homeassistant.companion.android.common.data.integration.display.GetEnt
 import io.homeassistant.companion.android.common.data.integration.isUsableInTile
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse

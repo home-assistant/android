@@ -38,7 +38,7 @@ fun getIcon(icon: String?, domain: String, context: Context): IIcon {
         LocalDateTime.now(),
         LocalDateTime.now(),
     )
-    return simpleEntity.getIcon(context)
+    return simpleEntity.getIcon()
 }
 
 fun onEntityClickedFeedback(

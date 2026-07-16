@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
-import android.content.Context
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.LayoutDirection
 import com.mikepenz.iconics.typeface.IIcon
@@ -56,10 +55,10 @@ data class EntityDisplayItem(
          * area/floor/device names). Meant for callers that cannot reach the websocket API,
          * such as the Wear favorites settings screen, and for previews.
          */
-        fun from(entity: Entity, context: Context): EntityDisplayItem = EntityDisplayItem(
+        fun from(entity: Entity): EntityDisplayItem = EntityDisplayItem(
             entityId = entity.entityId,
             name = entity.friendlyName,
-            icon = entity.getIcon(context),
+            icon = entity.getIcon(),
         )
     }
 }

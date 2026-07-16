@@ -159,7 +159,7 @@ class EntityGridVehicleScreen(
                 Timber.i("Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
                 return@forEachIndexed
             }
-            val icon = entity.getIcon(carContext)
+            val icon = entity.getIcon()
             val gridItem =
                 GridItem.Builder()
                     .setLoading(false)

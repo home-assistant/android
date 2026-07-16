@@ -90,7 +90,7 @@ class MapVehicleScreen(
                     )
                     return@forEachIndexed
                 }
-                val icon = pair.first.getIcon(carContext)
+                val icon = pair.first.getIcon()
                 gridBuilder.addItem(
                     GridItem.Builder()
                         .setTitle(pair.first.friendlyName)
