@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.compose.composable
 
 import androidx.annotation.VisibleForTesting
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
@@ -14,7 +16,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import kotlin.time.Duration
@@ -88,6 +92,7 @@ fun HASearchField(
     leadingIcon: @Composable (() -> Unit)? = null,
 ) {
     val colorScheme = LocalHAColorScheme.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     // Debounced propagation of the raw text to the query. A new keystroke restarts the
     // effect, dropping the pending update, which is the coalescing expected from a search
@@ -116,6 +121,15 @@ fun HASearchField(
                 }
             }
         },
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Search,
+        ),
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                keyboardController?.hide()
+            },
+        ),
+        singleLine = true,
         modifier = modifier,
     )
 }
