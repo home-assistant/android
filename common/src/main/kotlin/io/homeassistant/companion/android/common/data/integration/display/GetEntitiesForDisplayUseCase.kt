@@ -55,7 +55,7 @@ private data class RegistrySnapshot(
 )
 
 /**
- * Adapter that resolves the display information (name, area, floor, device, icon, hidden,
+ * Use case that resolves the display information (name, area, floor, device, icon, hidden,
  * category, precision, labels) for the given entities, fetching the data from the right
  * source depending on the server version:
  * - servers >= 2024.10 use the bandwidth-efficient `config/entity_registry/list_for_display`
