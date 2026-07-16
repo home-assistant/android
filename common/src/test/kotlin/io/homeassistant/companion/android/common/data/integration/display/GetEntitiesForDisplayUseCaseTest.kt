@@ -168,7 +168,7 @@ class GetEntitiesForDisplayUseCaseTest {
 
     @Test
     fun `Given unknown server version when invoking then classic registry is used`() = runTest {
-        coEvery { serverManager.getServer(serverId) } returns null
+        givenServerVersion(null)
 
         useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 

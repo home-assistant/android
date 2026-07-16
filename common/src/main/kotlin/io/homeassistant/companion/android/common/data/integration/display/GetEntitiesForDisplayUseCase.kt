@@ -170,7 +170,13 @@ class GetEntitiesForDisplayUseCase @Inject constructor(
 
     private suspend fun fetchRegistrySnapshot(serverId: Int, version: HomeAssistantVersion?): RegistrySnapshot =
         coroutineScope {
-            val webSocketRepository = serverManager.webSocketRepository(serverId)
+            val webSocketRepository = try {
+                serverManager.webSocketRepository(serverId)
+            } catch (e: IllegalStateException) {
+                Timber.e(e, "Failed to get WebSocketRepository for server $serverId")
+                return@coroutineScope RegistrySnapshot()
+            }
+
             val devices = async {
                 fetchOrNull("device") { webSocketRepository.getDeviceRegistry() }
             }
