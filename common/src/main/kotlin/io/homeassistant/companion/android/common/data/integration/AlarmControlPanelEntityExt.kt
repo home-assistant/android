@@ -1,14 +1,18 @@
 package io.homeassistant.companion.android.common.data.integration
 
-import timber.log.Timber
+import androidx.annotation.VisibleForTesting
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 
-const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
+@VisibleForTesting
+internal const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
 
 private fun Entity.isAlarmControlPanelEntity(): Boolean {
-    return domain == "alarm_control_panel"
+    return domain == ALARM_CONTROL_PANEL_DOMAIN
 }
 
 private fun Entity.alarmHasNoCode(): Boolean {
+    // Retrieving the alarm entity code format to known if the alaram currently has code
+    // If code format cannot be retrieved, consider we have a code by default and actions are not applicable
     return isAlarmControlPanelEntity() && (attributes["code_format"] as? String)?.isNotEmpty() != true
 }
 
@@ -17,25 +21,20 @@ private fun Entity.alarmCanBeArmedWithoutCode(): Boolean {
 }
 
 private fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
-    return try {
-        if (!isAlarmControlPanelEntity()) {
-            return false
-        }
-
-        (attributes["supported_features"] as Number).toInt() and
-            ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
-    } catch (e: Exception) {
-        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsArmedAway")
-        false
+    if (!isAlarmControlPanelEntity()) {
+        return false
     }
+
+    return (attributes["supported_features"] as Int) and
+        ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
 }
 
 private fun Entity.alarmIsDisarmed(): Boolean {
     return isAlarmControlPanelEntity() && state == "disarmed"
 }
 
-private fun Entity.alarmCanBeArmedAway(): Boolean {
-    if(!isAlarmControlPanelEntity()) {
+private fun Entity.alarmCanBeArmedAwayWithoutCode(): Boolean {
+    if (!isAlarmControlPanelEntity()) {
         return false
     }
 
@@ -46,24 +45,24 @@ private fun Entity.alarmCanBeArmedAway(): Boolean {
     return alarmHasNoCode() || alarmCanBeArmedWithoutCode()
 }
 
-private fun Entity.alarmCanBeDisarmed(): Boolean {
+private fun Entity.alarmCanBeDisarmedWithoutCode(): Boolean {
     return isAlarmControlPanelEntity() && !alarmIsDisarmed() && alarmHasNoCode()
 }
 
 fun Entity.isAlarmActionable(): Boolean {
-    return isAlarmControlPanelEntity() && alarmCanBeDisarmed() || alarmCanBeArmedAway()
+    return isAlarmControlPanelEntity() && alarmCanBeDisarmedWithoutCode() || alarmCanBeArmedAwayWithoutCode()
 }
 
 fun Entity.getAlarmOnPressedAction(): String? {
-    if(!isAlarmControlPanelEntity()) {
+    if (!isAlarmControlPanelEntity()) {
         return null
     }
 
-    if (alarmCanBeDisarmed()) {
+    if (alarmCanBeDisarmedWithoutCode()) {
         return "alarm_disarm"
     }
 
-    if (alarmCanBeArmedAway()) {
+    if (alarmCanBeArmedAwayWithoutCode()) {
         return "alarm_arm_away"
     }
 

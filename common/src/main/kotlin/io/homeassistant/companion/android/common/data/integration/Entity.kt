@@ -156,7 +156,7 @@ object EntityExt {
     )
 
     val STATE_COLORED_DOMAINS = listOf(
-        "alarm_control_panel",
+        ALARM_CONTROL_PANEL_DOMAIN,
         "alert",
         "automation",
         "binary_sensor",
@@ -478,7 +478,7 @@ fun Entity.getIcon(context: Context): IIcon {
             }
         when (domain) {
             "air_quality" -> Icon.cmd_air_filter
-            "alarm_control_panel" -> when (compareState) {
+            ALARM_CONTROL_PANEL_DOMAIN -> when (compareState) {
                 "armed_away" -> Icon3.cmd_shield_lock
                 "armed_custom_bypass" -> Icon3.cmd_security
                 "armed_home" -> Icon3.cmd_shield_home
@@ -903,7 +903,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
             if (state == "unlocked") "lock" else "unlock"
         }
 
-        "alarm_control_panel" -> getAlarmOnPressedAction()
+        ALARM_CONTROL_PANEL_DOMAIN -> getAlarmOnPressedAction()
 
         in EntityExt.DOMAINS_PRESS -> "press"
         "fan",
@@ -919,7 +919,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
     }
 
     if (action == null) {
-        Timber.tag(EntityExt.TAG).w("No action returned when entity '%s' was pressed", entityId)
+        Timber.tag(EntityExt.TAG).w("No action called when entity '%s' was pressed", entityId)
         return
     }
 
@@ -1258,7 +1258,7 @@ fun Entity.isActive() = when {
     (domain in listOf("button", "input_button", "event", "scene")) -> state != "unavailable"
     (state == "unavailable" || state == "unknown") -> false
     (state == "off" && domain != "alert") -> false
-    (domain == "alarm_control_panel") -> state != "disarmed"
+    (domain == ALARM_CONTROL_PANEL_DOMAIN) -> state != "disarmed"
     (domain == "alert") -> state != "idle"
     (domain == "cover") -> state != "closed"
     (domain in listOf("device_tracker", PERSON_DOMAIN)) -> state != "not_home"
