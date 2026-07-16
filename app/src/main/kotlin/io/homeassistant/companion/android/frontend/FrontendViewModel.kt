@@ -744,7 +744,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
-     * Waits the [CONNECTION_TIMEOUT] and emits an [FrontendConnectionError.ExternalBusTimeout] if the
+     * Awaits the [CONNECTION_TIMEOUT] and emits a [FrontendConnectionError.ExternalBusTimeout] if the
      * frontend has not completed its external-bus handshake (left [FrontendViewState.Loading]) by then.
      */
     private suspend fun watchLoadingTimeout() {
