@@ -75,153 +75,115 @@ private fun Entity.stateResource(): Int? = when (domain) {
     "binary_sensor" -> {
         // https://github.com/home-assistant/core/blob/dev/homeassistant/components/binary_sensor/strings.json#L113
         when (attributes["device_class"]) {
-            "battery" -> if (state ==
-                "on"
-            ) {
+            "battery" -> if (state == "on") {
                 commonR.string.state_low
             } else {
                 commonR.string.state_normal
             }
 
-            "battery_charging" -> if (state ==
-                "on"
-            ) {
+            "battery_charging" -> if (state == "on") {
                 commonR.string.state_charging
             } else {
                 commonR.string.state_not_charging
             }
 
-            "cold" -> if (state ==
-                "on"
-            ) {
+            "cold" -> if (state == "on") {
                 commonR.string.state_cold
             } else {
                 commonR.string.state_off
             }
 
-            "connectivity" -> if (state ==
-                "on"
-            ) {
+            "connectivity" -> if (state == "on") {
                 commonR.string.state_connected
             } else {
                 commonR.string.state_disconnected
             }
 
-            "door", "window", "garage_door", "opening" -> if (state ==
-                "on"
-            ) {
+            "door", "window", "garage_door", "opening" -> if (state == "on") {
                 commonR.string.state_open
             } else {
                 commonR.string.state_closed
             }
 
-            "gas" -> if (state ==
-                "on"
-            ) {
+            "gas" -> if (state == "on") {
                 commonR.string.state_detected
             } else {
                 commonR.string.state_clear
             }
 
-            "heat" -> if (state ==
-                "on"
-            ) {
+            "heat" -> if (state == "on") {
                 commonR.string.state_hot
             } else {
                 commonR.string.state_off
             }
 
-            "light" -> if (state ==
-                "on"
-            ) {
+            "light" -> if (state == "on") {
                 commonR.string.state_light_detected
             } else {
                 commonR.string.state_no_light
             }
 
-            "lock" -> if (state ==
-                "on"
-            ) {
+            "lock" -> if (state == "on") {
                 commonR.string.state_unlocked
             } else {
                 commonR.string.state_locked
             }
 
-            "moisture" -> if (state ==
-                "on"
-            ) {
+            "moisture" -> if (state == "on") {
                 commonR.string.state_wet
             } else {
                 commonR.string.state_dry
             }
 
-            "moving" -> if (state ==
-                "on"
-            ) {
+            "moving" -> if (state == "on") {
                 commonR.string.state_moving
             } else {
                 commonR.string.state_not_moving
             }
 
-            "plug" -> if (state ==
-                "on"
-            ) {
+            "plug" -> if (state == "on") {
                 commonR.string.state_plugged_in
             } else {
                 commonR.string.state_unplugged
             }
 
-            "presence" -> if (state ==
-                "on"
-            ) {
+            "presence" -> if (state == "on") {
                 commonR.string.state_home
             } else {
                 commonR.string.state_not_home
             }
 
-            "problem" -> if (state ==
-                "on"
-            ) {
+            "problem" -> if (state == "on") {
                 commonR.string.state_problem
             } else {
                 commonR.string.state_ok
             }
 
-            "running" -> if (state ==
-                "on"
-            ) {
+            "running" -> if (state == "on") {
                 commonR.string.state_running
             } else {
                 commonR.string.state_not_running
             }
 
-            "safety" -> if (state ==
-                "on"
-            ) {
+            "safety" -> if (state == "on") {
                 commonR.string.state_unsafe
             } else {
                 commonR.string.state_safe
             }
 
-            "tamper" -> if (state ==
-                "on"
-            ) {
+            "tamper" -> if (state == "on") {
                 commonR.string.state_tampering_detected
             } else {
                 commonR.string.state_off
             }
 
-            "update" -> if (state ==
-                "on"
-            ) {
+            "update" -> if (state == "on") {
                 commonR.string.state_update_available
             } else {
                 commonR.string.state_up_to_date
             }
 
-            else -> if (state ==
-                "on"
-            ) {
+            else -> if (state == "on") {
                 commonR.string.state_on
             } else {
                 commonR.string.state_off

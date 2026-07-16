@@ -391,7 +391,6 @@ class GetEntitiesForDisplayUseCaseTest {
 
             val items = useCase(serverId = serverId, entities = listOf(lightEntity)).awaitLoaded()
 
-            // The domain default branch of Entity.getIcon does not touch the context
             assertEquals(lightEntity.getIcon(), items.single().icon)
         }
 
