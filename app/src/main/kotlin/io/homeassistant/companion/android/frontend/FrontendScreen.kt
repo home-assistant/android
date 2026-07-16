@@ -58,6 +58,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -192,6 +193,7 @@ internal fun FrontendScreen(
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
         onSafeAreaInsetsChanged = viewModel::onSafeAreaInsetsChanged,
+        onScreenStartedChanged = viewModel::onScreenStartedChanged,
         onGesture = viewModel::onGesture,
         onLeavingApp = viewModel::onLeavingApp,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
@@ -241,6 +243,7 @@ internal fun FrontendScreenContent(
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit = {},
+    onScreenStartedChanged: (Boolean) -> Unit = {},
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
     onLeavingApp: (String?) -> Unit = {},
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
@@ -278,6 +281,7 @@ internal fun FrontendScreenContent(
         statusBarColor = content?.statusBarColor ?: loadingSurfaceColor,
         navigationBarColor = content?.backgroundColor ?: loadingSurfaceColor,
         onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
+        onScreenStartedChanged = onScreenStartedChanged,
     )
 
     FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
@@ -361,6 +365,7 @@ private fun FrontendScreenEffects(
     statusBarColor: Color?,
     navigationBarColor: Color?,
     onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
+    onScreenStartedChanged: (Boolean) -> Unit,
 ) {
     SystemBarsAppearanceEffect(
         statusBarColor = statusBarColor,
@@ -368,6 +373,8 @@ private fun FrontendScreenEffects(
     )
 
     ReportSafeAreaInsetsEffect(onSafeAreaInsetsChanged = onSafeAreaInsetsChanged)
+
+    ReportScreenStartedEffect(onScreenStartedChanged = onScreenStartedChanged)
 
     ImprovScanLifecycleEffect(
         scanRequested = improvScanRequested,
@@ -391,6 +398,14 @@ private fun FrontendScreenEffects(
     KeepScreenOnEffect(enabled = keepScreenOnEnabled)
 
     LeavingAppEffect(webView = webView, onLeavingApp = onLeavingApp)
+}
+
+@Composable
+private fun ReportScreenStartedEffect(onScreenStartedChanged: (Boolean) -> Unit) {
+    LifecycleStartEffect(Unit) {
+        onScreenStartedChanged(true)
+        onStopOrDispose { onScreenStartedChanged(false) }
+    }
 }
 
 /**

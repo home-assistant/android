@@ -72,6 +72,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -226,6 +227,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val _events = MutableSharedFlow<FrontendEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<FrontendEvent> = _events.asSharedFlow()
 
+    private val isScreenStarted = MutableStateFlow(true)
+
     private val _webViewActions = MutableSharedFlow<WebViewAction>(extraBufferCapacity = 1)
     val webViewActions: Flow<WebViewAction> = merge(_webViewActions, frontendBusObserver.webViewActions())
 
@@ -351,10 +354,18 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     init {
         viewModelScope.launch {
-            _viewState.collectLatest { state ->
+            _viewState.collect { state ->
                 releaseExoPlayerIfLeavingContent(state)
-                // Timeout watcher - cancels automatically when state changes from Loading
-                watchLoadingTimeout(state)
+            }
+        }
+
+        viewModelScope.launch {
+            // Timeout watcher - collectLatest cancels the countdown when the state leaves Loading
+            // or the screen stops, and restarts it from zero when watching resumes.
+            combine(_viewState, isScreenStarted) { state, screenStarted ->
+                state is FrontendViewState.Loading && screenStarted
+            }.collectLatest { watchTimeout ->
+                if (watchTimeout) watchLoadingTimeout()
             }
         }
 
@@ -482,6 +493,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = false))
             },
         )
+
+    fun onScreenStartedChanged(started: Boolean) {
+        isScreenStarted.value = started
+    }
 
     fun onRetry() {
         _viewState.update {
@@ -729,12 +744,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
-     * Waits the [CONNECTION_TIMEOUT] in [FrontendViewState.Loading] and emits an
-     * [FrontendConnectionError.ExternalBusTimeout] if the frontend has not completed its external-bus
-     * handshake (transitioned to [FrontendViewState.Content]) by then.
+     * Waits the [CONNECTION_TIMEOUT] and emits an [FrontendConnectionError.ExternalBusTimeout] if the
+     * frontend has not completed its external-bus handshake (left [FrontendViewState.Loading]) by then.
      */
-    private suspend fun watchLoadingTimeout(state: FrontendViewState) {
-        if (state !is FrontendViewState.Loading) return
+    private suspend fun watchLoadingTimeout() {
         delay(CONNECTION_TIMEOUT)
         if (_viewState.value is FrontendViewState.Loading) {
             onError(FrontendConnectionError.ExternalBusTimeout)
@@ -1119,15 +1132,23 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
-     * Transitions from [FrontendViewState.Loading] to [FrontendViewState.Content] once the frontend
-     * connects, clearing the intermediate navigation history and syncing the system bar colors to
+     * Whether the frontend may still complete its external-bus handshake: while [FrontendViewState.Loading],
+     * or showing an [FrontendConnectionError.ExternalBusTimeout] error, since the WebView keeps loading
+     * under the error overlay and a late handshake should dismiss it.
+     */
+    private fun FrontendViewState.isAwaitingConnection(): Boolean = this is FrontendViewState.Loading ||
+        (this is FrontendViewState.Error && error is FrontendConnectionError.ExternalBusTimeout)
+
+    /**
+     * Transitions to [FrontendViewState.Content] once the frontend connects (see [isAwaitingConnection]),
+     * clearing the intermediate navigation history and syncing the system bar colors to
      * the now-available frontend theme.
      */
     private suspend fun onConnected() {
-        val wasLoading = _viewState.value is FrontendViewState.Loading
+        val wasAwaitingConnection = _viewState.value.isAwaitingConnection()
         val serverHandleInsets = serverHandlesInsets(_viewState.value.serverId)
         _viewState.update { currentState ->
-            if (currentState is FrontendViewState.Loading) {
+            if (currentState.isAwaitingConnection()) {
                 FrontendViewState.Content(
                     serverId = currentState.serverId,
                     url = currentState.url,
@@ -1137,7 +1158,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 currentState
             }
         }
-        if (wasLoading) {
+        if (wasAwaitingConnection) {
             // Remove any previous navigation
             _webViewActions.emit(WebViewAction.ClearHistory())
             checkSecurityVersion(_viewState.value.serverId)
