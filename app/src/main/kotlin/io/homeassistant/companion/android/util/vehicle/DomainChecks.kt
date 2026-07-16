@@ -26,6 +26,7 @@ val MAP_DOMAINS = listOf(
 )
 
 val NOT_ACTIONABLE_DOMAINS = listOf(
+    "alarm_control_panel",
     "binary_sensor",
     "sensor",
 )
