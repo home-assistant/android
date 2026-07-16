@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -25,19 +26,31 @@ import io.homeassistant.companion.android.controls.HaControlsPanelActivity
 import io.homeassistant.companion.android.controls.HaControlsProviderService
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @HiltViewModel
-class ManageControlsViewModel @Inject constructor(
+class ManageControlsViewModel @VisibleForTesting constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
     private val application: Application,
+    private val backgroundDispatcher: CoroutineDispatcher,
 ) : AndroidViewModel(application) {
+
+    @Inject
+    constructor(
+        serverManager: ServerManager,
+        prefsRepository: PrefsRepository,
+        getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+        application: Application,
+    ) : this(serverManager, prefsRepository, getEntitiesForDisplay, application, Dispatchers.Default)
 
     var panelEnabled by mutableStateOf(false)
         private set
@@ -95,9 +108,11 @@ class ManageControlsViewModel @Inject constructor(
                     // and leave the server out of the list, like the previous behavior.
                     val displayState = getEntitiesForDisplay(server.id) { it.domain in supportedDomains }.last()
                     if (displayState is EntityDisplayState.Loaded) {
-                        entitiesList[server.id] = displayState.entities
-                            .filterNot { it.isHidden }
-                            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+                        entitiesList[server.id] = withContext(backgroundDispatcher) {
+                            displayState.entities
+                                .filterNot { it.isHidden }
+                                .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+                        }
                     }
                 }
             }.awaitAll()

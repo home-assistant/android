@@ -75,6 +75,7 @@ class ManageControlsViewModelTest {
         prefsRepository = prefsRepository,
         getEntitiesForDisplay = getEntitiesForDisplay,
         application = application,
+        backgroundDispatcher = mainDispatcherRule.testDispatcher,
     )
 
     @Test
