@@ -66,7 +66,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
         .distinctUntilChanged()
         .flatMapLatest { serverId ->
             if (serverManager.isRegistered()) {
-                getEntitiesForDisplay(serverId = serverId) { it.domain == TODO_DOMAIN }
+                getEntitiesForDisplay.snapshot(serverId = serverId) { it.domain == TODO_DOMAIN }
             } else {
                 Timber.w("No server registered")
                 flowOf(EntityDisplayState.Loaded(emptyList()))

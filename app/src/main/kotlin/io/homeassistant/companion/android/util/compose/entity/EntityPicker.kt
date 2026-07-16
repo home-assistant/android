@@ -226,7 +226,7 @@ fun rememberEntityDisplayState(entities: List<Entity>): EntityDisplayState {
     // Conversion runs on a background dispatcher to avoid ANRs on large entity lists
     LaunchedEffect(entities) {
         displayState = withContext(Dispatchers.Default) {
-            EntityDisplayState.Loaded(entities.map(EntityDisplayItem::from))
+            EntityDisplayState.Loaded(entities.map(::EntityDisplayItem))
         }
     }
     return displayState

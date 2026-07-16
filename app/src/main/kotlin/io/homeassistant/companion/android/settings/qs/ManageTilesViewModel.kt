@@ -171,7 +171,7 @@ internal class ManageTilesViewModel @Inject constructor(
     private fun loadEntities(serverId: Int) {
         loadEntitiesJob?.cancel()
         loadEntitiesJob = viewModelScope.launch {
-            getEntitiesForDisplay(serverId) { it.isUsableInTile() }.collect { state ->
+            getEntitiesForDisplay.snapshot(serverId) { it.isUsableInTile() }.collect { state ->
                 _state.update { it.copy(entityDisplayState = state) }
             }
         }
