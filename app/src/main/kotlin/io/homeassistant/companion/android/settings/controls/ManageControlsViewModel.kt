@@ -15,7 +15,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -23,17 +25,17 @@ import io.homeassistant.companion.android.controls.HaControlsPanelActivity
 import io.homeassistant.companion.android.controls.HaControlsProviderService
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @HiltViewModel
 class ManageControlsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
+    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
     private val application: Application,
 ) : AndroidViewModel(application) {
 
@@ -48,7 +50,7 @@ class ManageControlsViewModel @Inject constructor(
     var entitiesLoaded by mutableStateOf(false)
         private set
 
-    val entitiesList = mutableStateMapOf<Int, List<Entity>>()
+    val entitiesList = mutableStateMapOf<Int, List<EntityDisplayItem>>()
 
     var panelSetting by mutableStateOf<Pair<String?, Int>?>(null)
         private set
@@ -86,24 +88,16 @@ class ManageControlsViewModel @Inject constructor(
 
             defaultServerId = serverManager.getServer()?.id ?: 0
 
+            val supportedDomains = HaControlsProviderService.getSupportedDomains()
             servers.map { server ->
                 async {
-                    val entities = try {
-                        serverManager.integrationRepository(server.id).getEntities()
-                            ?.filter { it.domain in HaControlsProviderService.getSupportedDomains() }
-                            ?.sortedWith(
-                                compareBy(String.CASE_INSENSITIVE_ORDER) {
-                                    it.attributes["friendly_name"].toString()
-                                },
-                            )
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Failed to get entities")
-                        null
-                    }
-                    if (entities != null) {
-                        entitiesList[server.id] = entities
+                    // The flow completes with a terminal state after Loading, failures surface as Error
+                    // and leave the server out of the list, like the previous behavior.
+                    val displayState = getEntitiesForDisplay(server.id) { it.domain in supportedDomains }.last()
+                    if (displayState is EntityDisplayState.Loaded) {
+                        entitiesList[server.id] = displayState.entities
+                            .filterNot { it.isHidden }
+                            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
                     }
                 }
             }.awaitAll()

@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -56,13 +57,11 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.getEntityDomainString
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
@@ -72,7 +71,7 @@ fun ManageControlsView(
     authSetting: ControlsAuthRequiredSetting,
     authRequiredList: List<String>,
     entitiesLoaded: Boolean,
-    entitiesList: Map<Int, List<Entity>>,
+    entitiesList: Map<Int, List<EntityDisplayItem>>,
     panelSetting: Pair<String?, Int>?,
     serversList: List<Server>,
     structureEnabled: Boolean,
@@ -202,8 +201,7 @@ fun ManageControlsView(
                     }) { index ->
                         val entity = entitiesList[selectedServer]?.get(index) ?: return@items
                         ManageControlsEntity(
-                            entityName = entity.friendlyName,
-                            entityDomain = entity.domain,
+                            entity = entity,
                             selected = (
                                 authSetting == ControlsAuthRequiredSetting.NONE ||
                                     (
@@ -305,8 +303,7 @@ fun ManageControlsView(
 
 @Composable
 fun ManageControlsEntity(
-    entityName: String,
-    entityDomain: String,
+    entity: EntityDisplayItem,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -324,15 +321,25 @@ fun ManageControlsEntity(
             // Handled by parent Row clickable modifier
             onCheckedChange = null,
         )
+        Image(
+            asset = entity.icon,
+            contentDescription = null,
+            modifier = Modifier
+                .padding(end = 16.dp)
+                .size(24.dp),
+            colorFilter = ColorFilter.tint(LocalContentColor.current),
+        )
         Column(
             modifier = Modifier.weight(1f),
         ) {
-            Text(text = entityName, style = MaterialTheme.typography.body1)
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                Text(
-                    text = getEntityDomainString(entityDomain),
-                    style = MaterialTheme.typography.body2,
-                )
+            Text(text = entity.name, style = MaterialTheme.typography.body1)
+            entity.subtitle(LocalLayoutDirection.current)?.let {
+                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.body2,
+                    )
+                }
             }
         }
     }
