@@ -158,6 +158,13 @@ class EntityPickerTest {
         ),
     )
 
+    private fun createHiddenTestEntity() = EntityDisplayItem(
+        entityId = "light.attic",
+        name = "Attic Light",
+        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        isHidden = true,
+    )
+
     @Test
     fun `Given no selection when rendered then shows add entity button`() {
         composeTestRule.setContent {
@@ -404,6 +411,47 @@ class EntityPickerTest {
         composeTestRule.onNodeWithText("Ceiling Fan").assertIsDisplayed() // Has "Bedroom" in area
         composeTestRule.onNode(hasText("Living Room Light")).assertDoesNotExist()
         composeTestRule.onNode(hasText("Temperature Sensor")).assertDoesNotExist()
+    }
+
+    @Test
+    fun `Given expanded picker with a hidden entity when rendered then it is not listed`() {
+        setExpandedEntityPickerContent(
+            displayState = EntityDisplayState.Loaded(createTestEntities() + createHiddenTestEntity()),
+        )
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_add_entity))
+            .assertIsDisplayed()
+            .performClick()
+
+        waitForInitialEntityLoad()
+
+        composeTestRule.onNodeWithText("Bedroom Light").assertIsDisplayed()
+        composeTestRule.onNode(hasText("Attic Light")).assertDoesNotExist()
+    }
+
+    @Test
+    fun `Given a search matching a hidden entity when rendered then it is listed`() {
+        setExpandedEntityPickerContent(
+            displayState = EntityDisplayState.Loaded(createTestEntities() + createHiddenTestEntity()),
+        )
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_add_entity))
+            .assertIsDisplayed()
+            .performClick()
+
+        waitForInitialEntityLoad()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.search))
+            .assertIsDisplayed()
+            .performTextInput("attic")
+
+        advanceTimeAndWaitForIdle()
+
+        composeTestRule.onNodeWithText("Attic Light").assertIsDisplayed()
     }
 
     @Test

@@ -1,10 +1,13 @@
 package io.homeassistant.companion.android.util.compose.entity
 
+import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +45,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -50,6 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mikepenz.iconics.compose.BuildConfig
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
@@ -248,7 +255,7 @@ private fun SelectedEntityChip(
         modifier = modifier,
     ) {
         if (entity != null) {
-            EntityContent(entity)
+            EntityContent(entity, showHiddenIndicator = false)
         } else {
             UnresolvedEntityContent(entityId = entityId, isError = isError)
         }
@@ -318,7 +325,7 @@ private fun SelectedEntityChipContainer(
 }
 
 @Composable
-private fun RowScope.EntityContent(entity: EntityDisplayItem) {
+private fun RowScope.EntityContent(entity: EntityDisplayItem, showHiddenIndicator: Boolean) {
     val colorScheme = LocalHAColorScheme.current
     Image(
         asset = entity.icon,
@@ -344,6 +351,13 @@ private fun RowScope.EntityContent(entity: EntityDisplayItem) {
                 modifier = Modifier.padding(top = HADimens.SPACE1),
             )
         }
+    }
+    if (showHiddenIndicator && entity.isHidden) {
+        Image(
+            asset = CommunityMaterial.Icon.cmd_eye_off,
+            colorFilter = ColorFilter.tint(colorScheme.colorOnNeutralQuiet),
+            modifier = Modifier.size(HADimens.SPACE4).align(Alignment.CenterVertically),
+        )
     }
 }
 
@@ -428,12 +442,18 @@ private fun EntityPickerContent(
     // content and leaves it at the default, so the placeholder is naturally sized.
     placeholderModifier: Modifier = Modifier,
 ) {
+    val searchFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        searchFocusRequester.requestFocus()
+    }
+
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
         HASearchField(
             state = searchState,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = HADimens.SPACE3),
+                .padding(horizontal = HADimens.SPACE3)
+                .focusRequester(searchFocusRequester),
         )
 
         when (displayState) {
@@ -553,17 +573,28 @@ private fun EmptyResultPlaceholder(searchQuery: String, modifier: Modifier = Mod
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun EntityListItem(entity: EntityDisplayItem, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(HADimens.SPACE16)
-            .clickable(onClick = onClick),
+            .then(
+                if (BuildConfig.DEBUG) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier.combinedClickable(
+                        onClick = onClick,
+                        onLongClick = { Toast.makeText(context, entity.entityId, Toast.LENGTH_LONG).show() },
+                    )
+                },
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
     ) {
-        EntityContent(entity)
+        EntityContent(entity, showHiddenIndicator = true)
     }
 }
 
