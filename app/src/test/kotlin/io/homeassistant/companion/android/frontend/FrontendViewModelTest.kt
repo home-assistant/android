@@ -803,15 +803,19 @@ class FrontendViewModelTest {
             )
 
             val viewModel = createViewModel()
+            fun assertHaptic(expected: HapticType, action: WebViewAction) {
+                val action = assertInstanceOf(WebViewAction.Haptic::class.java, action)
+                assertEquals(expected, action.type)
+            }
 
             viewModel.webViewActions.test {
                 messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Success))
                 messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Light))
                 messageFlow.emit(FrontendHandlerEvent.PerformHaptic(HapticType.Heavy))
 
-                assertEquals(HapticType.Success, (awaitItem() as WebViewAction.Haptic).type)
-                assertEquals(HapticType.Light, (awaitItem() as WebViewAction.Haptic).type)
-                assertEquals(HapticType.Heavy, (awaitItem() as WebViewAction.Haptic).type)
+                assertHaptic(HapticType.Success, awaitItem())
+                assertHaptic(HapticType.Light, awaitItem())
+                assertHaptic(HapticType.Heavy, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -1263,7 +1267,7 @@ class FrontendViewModelTest {
 
                 triggerPageFinished()
                 // Only the zoom action repeats; the more-info dialog must not be reopened.
-                assertTrue(awaitItem() is WebViewAction.ApplyZoom)
+                assertInstanceOf(WebViewAction.ApplyZoom::class.java, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
