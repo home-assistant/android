@@ -325,7 +325,7 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             val state = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
-            assertTrue(state.error is FrontendConnectionError.AuthRevoked)
+            assertInstanceOf(FrontendConnectionError.AuthRevoked::class.java, state.error)
         }
 
         @Test
@@ -338,7 +338,7 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             val state = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
-            assertTrue(state.error is FrontendConnectionError.Unreachable)
+            assertInstanceOf(FrontendConnectionError.Unreachable::class.java, state.error)
         }
 
         @Test
