@@ -623,6 +623,54 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given a server reporting the loaded event when connected then the loading screen stays until Loaded`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "t",
+                haVersion = HomeAssistantVersion(2026, 8, 0),
+                serverId = serverId,
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceTimeBy(1.seconds)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            messageFlow.emit(FrontendHandlerEvent.Loaded)
+            advanceUntilIdle()
+            assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+        }
+
+        @Test
+        fun `Given a server reporting the loaded event when Loaded never arrives then the content is shown after the timeout`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "t",
+                haVersion = HomeAssistantVersion(2026, 8, 0),
+                serverId = serverId,
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+
+            assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+        }
+
+        @Test
         fun `Given content when ShowBarcodeScanner then Content barcodeScanner is set`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
@@ -1172,6 +1220,32 @@ class FrontendViewModelTest {
             messageFlow.emit(FrontendHandlerEvent.Connected)
             advanceUntilIdle()
 
+            coVerify { permissionManager.checkNotificationPermission(serverId) }
+        }
+
+        @Test
+        fun `Given a server reporting the loaded event then checks notification permission only once Loaded`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "t",
+                haVersion = HomeAssistantVersion(2026, 8, 0),
+                serverId = serverId,
+            )
+
+            createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceTimeBy(1.seconds)
+            coVerify(exactly = 0) { permissionManager.checkNotificationPermission(any()) }
+
+            messageFlow.emit(FrontendHandlerEvent.Loaded)
+            advanceUntilIdle()
             coVerify { permissionManager.checkNotificationPermission(serverId) }
         }
     }

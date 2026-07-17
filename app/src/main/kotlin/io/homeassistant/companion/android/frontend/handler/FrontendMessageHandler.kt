@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAd
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizeMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerStopMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.FrontendLoaded
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDeviceMessage
@@ -161,6 +162,10 @@ class FrontendMessageHandler @Inject constructor(
                 } else {
                     FrontendHandlerEvent.Disconnected
                 }
+            }
+            is FrontendLoaded -> {
+                Timber.d("Frontend is loaded ready to be displayed")
+                FrontendHandlerEvent.Loaded
             }
 
             is ConfigGetMessage -> {

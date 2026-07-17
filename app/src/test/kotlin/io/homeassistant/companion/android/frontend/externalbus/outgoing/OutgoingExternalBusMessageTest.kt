@@ -23,7 +23,7 @@ class OutgoingExternalBusMessageTest {
             ),
         )
         assertEquals(
-            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true},"error":null}""",
+            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true,"hasSplashscreen":true},"error":null}""",
             json,
         )
     }
@@ -62,6 +62,7 @@ class OutgoingExternalBusMessageTest {
         assertTrue(config.downloadFileSupported)
         assertTrue(config.hasEntityAddTo)
         assertTrue(config.hasAssistSettings)
+        assertTrue(config.hasSplashscreen)
     }
 
     @Test

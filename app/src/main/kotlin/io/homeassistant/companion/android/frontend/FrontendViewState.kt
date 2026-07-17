@@ -51,6 +51,11 @@ sealed interface FrontendViewState {
         override val serverId: Int,
         override val url: String,
         val target: FrontendTarget = FrontendTarget.Default,
+        /**
+         * The external bus handshake completed but the loading screen is kept until the frontend
+         * reports it finished rendering (servers reporting the `loaded` event).
+         */
+        val connected: Boolean = false,
     ) : FrontendViewState
 
     /**
