@@ -36,7 +36,7 @@ import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @HiltViewModel
-class ManageShortcutsViewModel @Inject constructor(
+internal class ManageShortcutsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val shortcutManager: HaShortcutManager,
     application: Application,

@@ -50,7 +50,7 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-fun ManageShortcutsView(
+internal fun ManageShortcutsView(
     viewModel: ManageShortcutsViewModel,
     showIconDialog: (tag: String) -> Unit,
     modifier: Modifier = Modifier,

@@ -62,7 +62,7 @@ private const val SHORTCUT_EXTRA_ICON_ID = "iconId"
  * rewrites those to the current format so they keep working once `WebViewActivity` is removed.
  */
 @Singleton
-class HaShortcutManager @Inject constructor(
+internal class HaShortcutManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val iconDialogCompat: IconDialogCompat,
 ) {
