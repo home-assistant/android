@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.common.data.integration
 
 import java.time.LocalDateTime
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class AlarmControlPanelEntityExtTest {
 
