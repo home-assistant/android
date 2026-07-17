@@ -512,6 +512,13 @@ fun Entity.getIcon(): IIcon {
             "conversation" -> Icon3.cmd_microphone_message
             "cover" -> coverIcon(compareState, this)
             "counter" -> Icon.cmd_counter
+
+            DEVICE_TRACKER_DOMAIN, PERSON_DOMAIN -> if (compareState == "not_home") {
+                Icon.cmd_account_arrow_right
+            } else {
+                Icon.cmd_account
+            }
+
             "fan" -> if (compareState == "off") {
                 Icon2.cmd_fan_off
             } else {
@@ -636,12 +643,6 @@ fun Entity.getIcon(): IIcon {
             }
 
             "persistent_notification" -> Icon.cmd_bell
-            PERSON_DOMAIN -> if (compareState == "not_home") {
-                Icon.cmd_account_arrow_right
-            } else {
-                Icon.cmd_account
-            }
-            DEVICE_TRACKER_DOMAIN -> Icon.cmd_account
 
             "plant" -> Icon2.cmd_flower
             "proximity" -> Icon.cmd_apple_safari
