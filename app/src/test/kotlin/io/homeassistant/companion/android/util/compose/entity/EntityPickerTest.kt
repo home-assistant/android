@@ -4,9 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -452,6 +454,33 @@ class EntityPickerTest {
         advanceTimeAndWaitForIdle()
 
         composeTestRule.onNodeWithText("Attic Light").assertIsDisplayed()
+    }
+
+    @Test
+    fun `Given listed hidden and visible entities when rendered then only the hidden one has the hidden content description`() {
+        setExpandedEntityPickerContent(
+            displayState = EntityDisplayState.Loaded(createTestEntities() + createHiddenTestEntity()),
+        )
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_add_entity))
+            .assertIsDisplayed()
+            .performClick()
+
+        waitForInitialEntityLoad()
+
+        // "light" matches the hidden Attic Light as well as the visible lights
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.search))
+            .assertIsDisplayed()
+            .performTextInput("light")
+
+        advanceTimeAndWaitForIdle()
+
+        composeTestRule.onNodeWithText("Attic Light").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Bedroom Light").assertIsDisplayed()
+        composeTestRule.onAllNodesWithContentDescription(composeTestRule.stringResource(commonR.string.hidden_entity))
+            .assertCountEquals(1)
     }
 
     @Test

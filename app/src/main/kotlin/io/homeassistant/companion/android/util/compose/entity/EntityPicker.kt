@@ -56,9 +56,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.BuildConfig
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
@@ -356,7 +356,10 @@ private fun RowScope.EntityContent(entity: EntityDisplayItem, showHiddenIndicato
         Image(
             asset = CommunityMaterial.Icon.cmd_eye_off,
             colorFilter = ColorFilter.tint(colorScheme.colorOnNeutralQuiet),
-            modifier = Modifier.size(HADimens.SPACE4).align(Alignment.CenterVertically),
+            contentDescription = stringResource(commonR.string.hidden_entity),
+            modifier = Modifier
+                .size(HADimens.SPACE4)
+                .align(Alignment.CenterVertically),
         )
     }
 }
@@ -583,12 +586,12 @@ private fun EntityListItem(entity: EntityDisplayItem, onClick: () -> Unit, modif
             .height(HADimens.SPACE16)
             .then(
                 if (BuildConfig.DEBUG) {
-                    Modifier.clickable(onClick = onClick)
-                } else {
                     Modifier.combinedClickable(
                         onClick = onClick,
                         onLongClick = { Toast.makeText(context, entity.entityId, Toast.LENGTH_LONG).show() },
                     )
+                } else {
+                    Modifier.clickable(onClick = onClick)
                 },
             ),
         verticalAlignment = Alignment.CenterVertically,
