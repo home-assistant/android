@@ -278,6 +278,7 @@ private fun RowScope.UnresolvedEntityContent(entityId: String, isError: Boolean)
         style = HATextStyle.Body,
         color = colorScheme.colorTextPrimary,
         maxLines = 1,
+        textAlign = TextAlign.Start,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier.weight(1f),
     )
