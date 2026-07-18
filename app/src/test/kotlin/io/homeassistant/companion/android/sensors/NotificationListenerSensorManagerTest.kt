@@ -19,15 +19,18 @@ import org.junit.After
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
+import org.robolectric.ParameterizedRobolectricTestRunner
+import org.robolectric.ParameterizedRobolectricTestRunner.Parameters
 import org.robolectric.annotation.Config
 
 private const val SETTING_ALLOW_LIST = "notification_allow_list"
 private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(ParameterizedRobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
-class NotificationListenerSensorManagerTest {
+class NotificationListenerSensorManagerTest(
+    private val sensorId: String,
+) {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val sensorRepository: SensorRepository = mockk(relaxed = true)
@@ -43,16 +46,7 @@ class NotificationListenerSensorManagerTest {
     }
 
     @Test
-    fun `Given last notification enabled when requesting update then its settings are initialized`() {
-        assertSettingsInitialized(NotificationListenerSensorManager.lastNotification.id)
-    }
-
-    @Test
-    fun `Given last removed notification enabled when requesting update then its settings are initialized`() {
-        assertSettingsInitialized(NotificationListenerSensorManager.lastRemovedNotification.id)
-    }
-
-    private fun assertSettingsInitialized(sensorId: String) = runTest {
+    fun `Given notification sensor enabled when requesting update then its settings are initialized`() = runTest {
         prepareEnabledNotificationSensor(sensorId)
         coEvery { sensorRepository.getSettings(any()) } returns emptyList()
         val addedSettings = captureAddedSettings()
@@ -67,7 +61,6 @@ class NotificationListenerSensorManagerTest {
 
     @Test
     fun `Given custom allow list when requesting update then existing value is preserved`() = runTest {
-        val sensorId = NotificationListenerSensorManager.lastNotification.id
         val existingSetting = SensorSetting(
             sensorId = sensorId,
             name = SETTING_ALLOW_LIST,
@@ -90,6 +83,15 @@ class NotificationListenerSensorManagerTest {
                 ),
             ),
             addedSettings,
+        )
+    }
+
+    companion object {
+        @JvmStatic
+        @Parameters(name = "{0}")
+        fun sensorIds() = listOf(
+            NotificationListenerSensorManager.lastNotification.id,
+            NotificationListenerSensorManager.lastRemovedNotification.id,
         )
     }
 
