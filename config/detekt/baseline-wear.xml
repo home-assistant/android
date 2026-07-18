@@ -1,0 +1,201 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:ConversationViewModel.kt:ConversationViewModel$(onConversationVersion &amp;&amp; !onPipelineVersion &amp;&amp; config == null) || (onPipelineVersion &amp;&amp; config == null)</ID>
+    <ID>ComplexCondition:HealthServicesSensorManager.kt:HealthServicesSensorManager$!activityStateEnabled &amp;&amp; !dailyFloorEnabled &amp;&amp; !dailyDistanceEnabled &amp;&amp; !dailyCaloriesEnabled &amp;&amp; !dailyStepsEnabled</ID>
+    <ID>ComplexCondition:SensorUi.kt:it.key == Manifest.permission.ACCESS_FINE_LOCATION &amp;&amp; SdkVersion.isAtLeast(Build.VERSION_CODES.R) &amp;&amp; manager.requiredPermissions( basicSensor.id, ).contains(Manifest.permission.ACCESS_FINE_LOCATION) &amp;&amp; manager.requiredPermissions( basicSensor.id, ).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)</ID>
+    <ID>ComplexCondition:SensorUi.kt:it.key == Manifest.permission.BODY_SENSORS &amp;&amp; SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &amp;&amp; manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &amp;&amp; manager.requiredPermissions( basicSensor.id, ).contains(Manifest.permission.BODY_SENSORS_BACKGROUND)</ID>
+    <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$private suspend fun setPipeline: Boolean</ID>
+    <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
+    <ID>CyclomaticComplexMethod:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
+    <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private fun getActivityIcon: String</ID>
+    <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private suspend fun updateHealthServices</ID>
+    <ID>CyclomaticComplexMethod:MainView.kt:@Composable fun MainView</ID>
+    <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$fun handleMessage</ID>
+    <ID>CyclomaticComplexMethod:SensorUi.kt:@SuppressLint("InlinedApi") @Composable fun SensorUi</ID>
+    <ID>CyclomaticComplexMethod:ThermostatTile.kt:ThermostatTile$override fun onTileRequest: ListenableFuture&lt;Tile&gt;</ID>
+    <ID>CyclomaticComplexMethod:ThermostatTile.kt:ThermostatTile$private fun timeline: Timeline</ID>
+    <ID>CyclomaticComplexMethod:WearToggleChip.kt:WearToggleChip$@Composable fun entityToggleChipBackgroundColors: ToggleChipColors</ID>
+    <ID>CyclomaticComplexMethod:WearToggleChip.kt:WearToggleChipColors$override fun equals: Boolean</ID>
+    <ID>ForbiddenComment:MainViewModel.kt:MainViewModel$// TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments</ID>
+    <ID>FunctionNaming:ChooseEntityView.kt:@Composable fun ChooseEntityView</ID>
+    <ID>FunctionNaming:ChooseEntityView.kt:@Composable private fun ChooseEntityChip</ID>
+    <ID>FunctionNaming:ChooseEntityView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable fun ChooseEntityViewEmptyPreview</ID>
+    <ID>FunctionNaming:ChooseEntityView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable fun ChooseEntityViewWithDataPreview</ID>
+    <ID>FunctionNaming:ComplicationConfigMainView.kt:@Composable fun LoadConfigView</ID>
+    <ID>FunctionNaming:ComplicationConfigMainView.kt:@Composable fun MainConfigView</ID>
+    <ID>FunctionNaming:ComplicationConfigMainView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable fun PreviewMainConfigView</ID>
+    <ID>FunctionNaming:ConversationView.kt:@Composable fun ConversationPipelinesView</ID>
+    <ID>FunctionNaming:ConversationView.kt:@Composable fun ConversationResultView</ID>
+    <ID>FunctionNaming:ConversationView.kt:@Composable fun LoadAssistView</ID>
+    <ID>FunctionNaming:ConversationView.kt:@Composable fun SpeechBubble</ID>
+    <ID>FunctionNaming:ConversationView.kt:@Preview(device = WearDevices.SMALL_ROUND) @Composable fun PreviewSpeechBubble</ID>
+    <ID>FunctionNaming:DetailsPanelView.kt:@Composable fun BrightnessSlider</ID>
+    <ID>FunctionNaming:DetailsPanelView.kt:@Composable fun ColorTempSlider</ID>
+    <ID>FunctionNaming:DetailsPanelView.kt:@Composable fun DetailsPanelView</ID>
+    <ID>FunctionNaming:DetailsPanelView.kt:@Composable fun FanSpeedSlider</ID>
+    <ID>FunctionNaming:DetailsPanelView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewDetailsPaneViewEntityFanOn</ID>
+    <ID>FunctionNaming:DetailsPanelView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewDetailsPaneViewEntityLightOff</ID>
+    <ID>FunctionNaming:DetailsPanelView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewDetailsPaneViewEntityLightOn</ID>
+    <ID>FunctionNaming:EntityListView.kt:@Composable fun EntityViewList</ID>
+    <ID>FunctionNaming:EntityListView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewEntityListEmpty</ID>
+    <ID>FunctionNaming:EntityListView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewEntityListScenes</ID>
+    <ID>FunctionNaming:EntityListView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewEntityListView</ID>
+    <ID>FunctionNaming:EntityUi.kt:@Composable fun EntityUi</ID>
+    <ID>FunctionNaming:EntityUi.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewEntityUI</ID>
+    <ID>FunctionNaming:ExpandableListHeader.kt:@Composable fun &lt;K&gt; ExpandableListHeader</ID>
+    <ID>FunctionNaming:ExpandableListHeader.kt:@Composable fun ExpandableListHeader</ID>
+    <ID>FunctionNaming:ExpandableListHeader.kt:@Preview @Composable private fun PreviewExpandableListHeader</ID>
+    <ID>FunctionNaming:HomeView.kt:@Composable fun LoadHomePage</ID>
+    <ID>FunctionNaming:KeepScreenOn.kt:@Composable fun KeepScreenOn</ID>
+    <ID>FunctionNaming:ListHeader.kt:@Composable fun ListHeader</ID>
+    <ID>FunctionNaming:ListHeader.kt:@Preview @Composable private fun PreviewListHeader</ID>
+    <ID>FunctionNaming:MainView.kt:@Composable fun MainView</ID>
+    <ID>FunctionNaming:PhoneInstallView.kt:@Composable fun PhoneInstallView</ID>
+    <ID>FunctionNaming:PhoneInstallView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable fun PhoneInstallViewPreview</ID>
+    <ID>FunctionNaming:RefreshIntervalPickerView.kt:@Composable fun RefreshIntervalPickerView</ID>
+    <ID>FunctionNaming:RefreshIntervalPickerView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewRefreshIntervalPickerView</ID>
+    <ID>FunctionNaming:SelectCameraTileView.kt:@Composable fun SelectCameraTileView</ID>
+    <ID>FunctionNaming:SelectCameraTileView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSelectCameraTileViewEmpty</ID>
+    <ID>FunctionNaming:SelectCameraTileView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSelectCameraTileViewOne</ID>
+    <ID>FunctionNaming:SelectShortcutsTileView.kt:@Composable fun SelectShortcutsTileView</ID>
+    <ID>FunctionNaming:SelectShortcutsTileView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSelectShortcutsTileEmptyView</ID>
+    <ID>FunctionNaming:SelectShortcutsTileView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSelectShortcutsTileView</ID>
+    <ID>FunctionNaming:SelectTemplateTileView.kt:@Composable fun SelectTemplateTileView</ID>
+    <ID>FunctionNaming:SelectTemplateTileView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSelectTemplateTileEmptyView</ID>
+    <ID>FunctionNaming:SelectTemplateTileView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSelectTemplateTileView</ID>
+    <ID>FunctionNaming:SelectThermostatTileView.kt:@Composable fun SelectThermostatTileView</ID>
+    <ID>FunctionNaming:SelectThermostatTileView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSelectThermostatTileViewEmpty</ID>
+    <ID>FunctionNaming:SelectThermostatTileView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSelectThermostatTileViewOne</ID>
+    <ID>FunctionNaming:SensorManagerUi.kt:@Composable fun SensorManagerUi</ID>
+    <ID>FunctionNaming:SensorManagerUi.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSensorManagerUI</ID>
+    <ID>FunctionNaming:SensorUi.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSensorUI</ID>
+    <ID>FunctionNaming:SensorUi.kt:@SuppressLint("InlinedApi") @Composable fun SensorUi</ID>
+    <ID>FunctionNaming:SensorsView.kt:@Composable fun SensorsView</ID>
+    <ID>FunctionNaming:SensorsView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSensorsView</ID>
+    <ID>FunctionNaming:SetCameraTileView.kt:@Composable fun SetCameraTileView</ID>
+    <ID>FunctionNaming:SetFavoriteView.kt:@Composable fun SetFavoritesView</ID>
+    <ID>FunctionNaming:SetFavoriteView.kt:@Composable private fun FavoriteToggleChip</ID>
+    <ID>FunctionNaming:SetShortcutsTileView.kt:@Composable fun SetShortcutsTileView</ID>
+    <ID>FunctionNaming:SetShortcutsTileView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSetTileShortcutsView</ID>
+    <ID>FunctionNaming:SetThermostatTileView.kt:@Composable fun SetThermostatTileView</ID>
+    <ID>FunctionNaming:SettingsView.kt:@Composable fun SecondarySettingsChip</ID>
+    <ID>FunctionNaming:SettingsView.kt:@Composable fun SettingsView</ID>
+    <ID>FunctionNaming:SettingsView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewSettingsView</ID>
+    <ID>FunctionNaming:TemplateTileSettingsView.kt:@Composable fun TemplateTileSettingsView</ID>
+    <ID>FunctionNaming:TemplateTileSettingsView.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewTemplateTileSettingView</ID>
+    <ID>FunctionNaming:Theme.kt:@Composable fun WearAppTheme</ID>
+    <ID>FunctionNaming:ThemeLazyColumn.kt:@Composable fun ThemeLazyColumn</ID>
+    <ID>FunctionNaming:TimeText.kt:@Composable fun TimeText</ID>
+    <ID>FunctionNaming:TimeText.kt:@Preview(device = WearDevices.LARGE_ROUND) @Composable private fun PreviewTimeText</ID>
+    <ID>FunctionOnlyReturningConstant:ApplicationModule.kt:ApplicationModule$@Provides @Singleton @PushWebsocketSupport fun providesPushWebsocketSupport: Boolean</ID>
+    <ID>LongMethod:CameraTile.kt:CameraTile$override fun onTileResourcesRequest: ListenableFuture&lt;Resources&gt;</ID>
+    <ID>LongMethod:ChooseEntityView.kt:@Composable fun ChooseEntityView</ID>
+    <ID>LongMethod:ComplicationConfigMainView.kt:@Composable fun MainConfigView</ID>
+    <ID>LongMethod:ConversationView.kt:@Composable fun ConversationResultView</ID>
+    <ID>LongMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
+    <ID>LongMethod:DetailsPanelView.kt:@Composable fun ColorTempSlider</ID>
+    <ID>LongMethod:DetailsPanelView.kt:@Composable fun DetailsPanelView</ID>
+    <ID>LongMethod:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
+    <ID>LongMethod:EntityUi.kt:@Composable fun EntityUi</ID>
+    <ID>LongMethod:HomeAssistantApplication.kt:HomeAssistantApplication$override fun onCreate</ID>
+    <ID>LongMethod:HomeView.kt:@Composable fun LoadHomePage</ID>
+    <ID>LongMethod:MainView.kt:@Composable fun MainView</ID>
+    <ID>LongMethod:MainViewModel.kt:MainViewModel$private suspend fun updateEntityDomains</ID>
+    <ID>LongMethod:PhoneInstallView.kt:@Composable fun PhoneInstallView</ID>
+    <ID>LongMethod:PhoneSettingsListener.kt:PhoneSettingsListener$private fun login</ID>
+    <ID>LongMethod:SensorUi.kt:@SuppressLint("InlinedApi") @Composable fun SensorUi</ID>
+    <ID>LongMethod:SetThermostatTileView.kt:@Composable fun SetThermostatTileView</ID>
+    <ID>LongMethod:SettingsView.kt:@Composable fun SettingsView</ID>
+    <ID>LongMethod:ThermostatTile.kt:ThermostatTile$override fun onTileRequest: ListenableFuture&lt;Tile&gt;</ID>
+    <ID>LongMethod:ThermostatTile.kt:ThermostatTile$private fun timeline: Timeline</ID>
+    <ID>LongMethod:WearToggleChip.kt:WearToggleChip$@Composable fun entityToggleChipBackgroundColors: ToggleChipColors</ID>
+    <ID>LongMethod:WearToggleChip.kt:WearToggleChip$@Composable private fun defaultChipColors: WearToggleChipColors</ID>
+    <ID>MagicNumber:ColorTemperature.kt:0xffa6d1ff</ID>
+    <ID>MagicNumber:ConversationActivity.kt:ConversationActivity$3</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$16f</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$20f</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$24f</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$40f</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$8f</ID>
+    <ID>MagicNumber:ConversationViewModel.kt:ConversationViewModel$2023</ID>
+    <ID>MagicNumber:ConversationViewModel.kt:ConversationViewModel$5</ID>
+    <ID>MagicNumber:DetailsPanelView.kt:100</ID>
+    <ID>MagicNumber:DetailsPanelView.kt:255</ID>
+    <ID>MagicNumber:HealthServicesSensorManager.kt:HealthServicesSensorManager$1800000</ID>
+    <ID>MagicNumber:HeartRateSensorManager.kt:HeartRateSensorManager$10</ID>
+    <ID>MagicNumber:HeartRateSensorManager.kt:HeartRateSensorManager$60000</ID>
+    <ID>MagicNumber:MainViewModel.kt:MainViewModel$1000</ID>
+    <ID>MagicNumber:SelectShortcutsTileView.kt:1111</ID>
+    <ID>MagicNumber:SelectShortcutsTileView.kt:2222</ID>
+    <ID>MagicNumber:SelectShortcutsTileView.kt:7</ID>
+    <ID>MagicNumber:SelectTemplateTileView.kt:10</ID>
+    <ID>MagicNumber:SelectTemplateTileView.kt:1111</ID>
+    <ID>MagicNumber:SelectTemplateTileView.kt:20</ID>
+    <ID>MagicNumber:SelectTemplateTileView.kt:2222</ID>
+    <ID>MagicNumber:ServerListAdapter.kt:ServerListAdapter$3</ID>
+    <ID>MagicNumber:ServerListAdapter.kt:ServerListAdapter$4</ID>
+    <ID>MagicNumber:SetShortcutsTileView.kt:7</ID>
+    <ID>MagicNumber:ShortcutsTile.kt:ShortcutsTile$5</ID>
+    <ID>MagicNumber:ShortcutsTile.kt:ShortcutsTile$7</ID>
+    <ID>MagicNumber:TemplateTile.kt:TemplateTile$10</ID>
+    <ID>MagicNumber:TemplateTile.kt:TemplateTile$1_000</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$10f</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$180f</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$20f</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$30f</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$360f</ID>
+    <ID>MagicNumber:TileViews.kt:180f</ID>
+    <ID>MagicNumber:TileViews.kt:200</ID>
+    <ID>MagicNumber:TileViews.kt:24f</ID>
+    <ID>MagicNumber:TileViews.kt:3</ID>
+    <ID>MagicNumber:TileViews.kt:4</ID>
+    <ID>MaxLineLength:CameraTile.kt:CameraTile$"Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)"</ID>
+    <ID>MaxLineLength:HealthServicesSensorManager.kt:HealthServicesSensorManager$"${basicSensor.id} data index: $index with value: ${intervalDataPoint.value} end time: ${endTime.toEpochMilli()}"</ID>
+    <ID>MaxLineLength:HealthServicesSensorManager.kt:HealthServicesSensorManager.&lt;no name provided&gt;$"Data for ${dataType.name} index: $indexPoint with value: ${dataPoint.value} end time: ${endTime.toEpochMilli()}"</ID>
+    <ID>MaxLineLength:HealthServicesSensorManager.kt:HealthServicesSensorManager.&lt;no name provided&gt;$"Health services callback successfully registered for the following data types: ${passiveListenerConfig!!.dataTypes} User Activity Info: ${passiveListenerConfig!!.shouldUserActivityInfoBeRequested} Health Events: ${passiveListenerConfig!!.healthEventTypes}"</ID>
+    <ID>MaxLineLength:MainView.kt:// when we don't have the state of the entity, create a Chip from cache as we don't have the state yet</ID>
+    <ID>MaxLineLength:OnboardingActivity.kt:OnboardingActivity$"requestInstances: failed to request home assistant instances from ${node.id}: ${node.displayName}"</ID>
+    <ID>MaxLineLength:ShortcutsTile.kt:ShortcutsTile$*</ID>
+    <ID>MaxLineLength:TemplateTile.kt:TemplateTile$*</ID>
+    <ID>MaxLineLength:WearDnsTest.kt:WearDnsTest$val homeAssistantLocal2: InetAddress = InetAddress.getByAddress("homeassistant.local", byteArrayOf(192.toByte(), 168.toByte(), 0, 24))</ID>
+    <ID>MaxLineLength:WearDnsTest.kt:WearDnsTest$val homeAssistantLocal: InetAddress = InetAddress.getByAddress("homeassistant.local", byteArrayOf(192.toByte(), 168.toByte(), 0, 23))</ID>
+    <ID>NestedBlockDepth:TemplateTile.kt:TemplateTile$private fun parseHtml: LayoutElementBuilders.Spannable</ID>
+    <ID>ReturnCount:ColorTemperature.kt:fun getColorTemperature: Color</ID>
+    <ID>ReturnCount:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
+    <ID>ReturnCount:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
+    <ID>SwallowedException:MobileAppIntegrationPresenterImpl.kt:MobileAppIntegrationPresenterImpl$e: Exception</ID>
+    <ID>SwallowedException:WearDnsTest.kt:WearDnsTest$e: UnknownHostException</ID>
+    <ID>ThrowsCount:WearDns.kt:WearDns$private suspend fun attemptLookupViaMobile: List&lt;InetAddress&gt;</ID>
+    <ID>TooGenericExceptionCaught:ApplicationModule.kt:ApplicationModule$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:BedtimeModeSensorManager.kt:BedtimeModeSensorManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:CameraTile.kt:CameraTile$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ComplicationConfigViewModel.kt:ComplicationConfigViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ConversationViewModel.kt:ConversationViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:EntityStateDataSourceService.kt:EntityStateDataSourceService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:EntityStateDataSourceService.kt:EntityStateDataSourceService$t: Throwable</ID>
+    <ID>TooGenericExceptionCaught:FirebaseCloudMessagingService.kt:FirebaseCloudMessagingService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:HomeActivity.kt:HomeActivity$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:HomePresenterImpl.kt:HomePresenterImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MainViewModel.kt:MainViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ManualSetupPresenterImpl.kt:ManualSetupPresenterImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MobileAppIntegrationPresenterImpl.kt:MobileAppIntegrationPresenterImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:OnboardingActivity.kt:OnboardingActivity$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:OnboardingPresenterImpl.kt:OnboardingPresenterImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PhoneInstallActivity.kt:PhoneInstallActivity$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PhoneSettingsListener.kt:PhoneSettingsListener$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TemplateTile.kt:TemplateTile$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TheaterModeSensorManager.kt:TheaterModeSensorManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ThermostatTile.kt:ThermostatTile$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TileActionReceiver.kt:TileActionReceiver$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:WearDns.kt:WearDns$e2: Exception</ID>
+    <ID>TooManyFunctions:ConversationViewModel.kt:ConversationViewModel : AssistViewModelBase</ID>
+    <ID>TooManyFunctions:HomePresenter.kt:HomePresenter</ID>
+    <ID>TooManyFunctions:HomePresenterImpl.kt:HomePresenterImpl : HomePresenter</ID>
+    <ID>TooManyFunctions:MainViewModel.kt:MainViewModel : AndroidViewModel</ID>
+    <ID>TooManyFunctions:OnboardingActivity.kt:OnboardingActivity : AppCompatActivityOnboardingView</ID>
+    <ID>TooManyFunctions:PreviewSensorManager.kt:PreviewSensorRepository : SensorRepository</ID>
+    <ID>TooManyFunctions:PreviewSensorManager.kt:PreviewServerManager : ServerManager</ID>
+  </CurrentIssues>
+</SmellBaseline>

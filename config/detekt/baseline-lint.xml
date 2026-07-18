@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MaxLineLength:CoroutineDaoFunctionsIssueTest.kt:CoroutineDaoFunctionsIssueTest$fun</ID>
+    <ID>MaxLineLength:MissingSerializableAnnotationIssue.kt:DecodeFromStringStringVisitor$"$ISSUE_CLASS_NAME is outdated for $DECODE_FROM_STRING_METHOD_NAME please open an issue or update the lint rule."</ID>
+    <ID>MaxLineLength:MissingSerializableAnnotationIssue.kt:EncodeToStringVisitor$"$ISSUE_CLASS_NAME is outdated for $ENCODE_TO_STRING_METHOD_NAME please open an issue or update the lint rule."</ID>
+    <ID>MaxLineLength:MissingSerializableAnnotationIssue.kt:MissingSerializableAnnotationIssue.IssueDetector.&lt;no name provided&gt;$"Missing argument type in $ENCODE_TO_STRING_METHOD_NAME call, check $ISSUE_CLASS_NAME code."</ID>
+    <ID>MaxLineLength:MissingSerializableAnnotationIssue.kt:MissingSerializableAnnotationIssue.IssueDetector.&lt;no name provided&gt;$// In case of a Map&lt;String, Something&gt; we need to get the bound otherwise we cannot get the TypeClass</ID>
+    <ID>MaxLineLength:MissingSerializableAnnotationIssueTest.kt:MissingSerializableAnnotationIssueTest$fun</ID>
+    <ID>MaxLineLength:RoomEntityMutablePropertiesIssueTest.kt:RoomEntityMutablePropertiesIssueTest$fun</ID>
+    <ID>ReturnCount:EvaluateJavascriptDetector.kt:EvaluateJavascriptDetector.IssueDetector$private fun hasOptIn: Boolean</ID>
+    <ID>ReturnCount:MissingSerializableAnnotationIssue.kt:DecodeFromStringStringVisitor$private fun shouldSkipTypeArgumentCheck: Boolean</ID>
+    <ID>ReturnCount:MissingSerializableAnnotationIssue.kt:EncodeToStringVisitor$private fun getValueArgumentFromMultipleArgument: UExpression?</ID>
+    <ID>ReturnCount:MissingSerializableAnnotationIssue.kt:MissingSerializableAnnotationIssue.IssueDetector.&lt;no name provided&gt;$override fun visitCallExpression</ID>
+    <ID>ReturnCount:SdkVersionDetector.kt:SdkVersionDetector.IssueDetector$override fun visitReference</ID>
+  </CurrentIssues>
+</SmellBaseline>

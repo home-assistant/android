@@ -39,6 +39,7 @@ coreKtx = "1.19.0"
 core-splashscreen = "1.2.0"
 core-remoteviews = "1.1.0"
 cronet = "143.7445.0"
+detekt = "2.0.0-alpha.5"
 emojiJava = "5.1.1"
 firebase-bom = "34.16.0"
 firebaseAppdistributionGradle = "5.3.0"
@@ -111,6 +112,7 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }

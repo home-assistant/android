@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LoopWithTooManyJumpStatements:ProvidesSensorProcessor.kt:ProvidesSensorProcessor$for</ID>
+    <ID>MaxLineLength:ProvidesSensorProcessorTest.kt:ProvidesSensorProcessorTest$fun</ID>
+    <ID>MaxLineLength:ProvidesSensorProcessorTest.kt:ProvidesSensorProcessorTest$private</ID>
+    <ID>MaxLineLength:ProvidesSensorProcessorTest.kt:ProvidesSensorProcessorTest$private fun File.generatedFile: File</ID>
+    <ID>MaxLineLength:ProvidesSensorProcessorTest.kt:ProvidesSensorProcessorTest.RoundTwoSensorGeneratorProvider$override fun create: SymbolProcessor</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,0 +1,449 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$!isBtOn() || !bleTransmitterDevice.transmitRequested || (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting &amp;&amp; !isPermittedOnThisNetwork())</ID>
+    <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$bleTransmitterDevice.transmitRequested &amp;&amp; (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) &amp;&amp; (!bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisNetwork())</ID>
+    <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$bleTransmitterDevice.uuid != uuid || bleTransmitterDevice.major != major || bleTransmitterDevice.minor != minor || bleTransmitterDevice.transmitPowerSetting != transmitPower || bleTransmitterDevice.advertiseModeSetting != advertiseMode || bleTransmitterDevice.transmitRequested != transmitActive || bleTransmitterDevice.measuredPowerSetting != measuredPower || priorBluetoothStateEnabled != isBtOn() || bleTransmitterDevice.onlyTransmitOnHomeWifiSetting != homeWifiOnly</ID>
+    <ID>ComplexCondition:DatabaseMigration.kt:Migration16to17$( currentSensorId == "zone_background" || currentSensorId == "accurate_location" || currentSensorId == "location_background" ) &amp;&amp; currentSensorSettingName == "Minimum Accuracy"</ID>
+    <ID>ComplexCondition:Entity.kt:friendlyState == state &amp;&amp; canSupportPrecision() &amp;&amp; (options?.sensor?.displayPrecision != null || options?.sensor?.suggestedDisplayPrecision != null)</ID>
+    <ID>ComplexCondition:NotificationManagerExtensions.kt:isGroupSummary &amp;&amp; groupNotifications.size == 1 || !isGroupSummary &amp;&amp; groupNotifications.size == 2</ID>
+    <ID>ComplexCondition:SensorManager.kt:SensorManager$enabled &amp;&amp; !settingEnabled || !enabled &amp;&amp; settingEnabled</ID>
+    <ID>ComplexCondition:SensorUpdater.kt:SensorUpdater$canBeRegistered &amp;&amp; ( (sensor.registered == null &amp;&amp; (sensor.enabled || supportsDisabledSensors)) || (sensor.enabled != sensor.registered &amp;&amp; supportsDisabledSensors) || (sensor.registered != null &amp;&amp; coreSensorStatus != null &amp;&amp; sensorCoreEnabled == null) )</ID>
+    <ID>ComplexCondition:SensorUpdater.kt:SensorUpdater$canBeRegistered &amp;&amp; reconciledSensor.enabled &amp;&amp; reconciledSensor.registered != null &amp;&amp; ( reconciledSensor.state != reconciledSensor.lastSentState || reconciledSensor.icon != reconciledSensor.lastSentIcon )</ID>
+    <ID>ComplexCondition:SensorUpdater.kt:SensorUpdater$canBeRegistered &amp;&amp; serverIsReachable &amp;&amp; (sensor.enabled || supportsDisabledSensors) &amp;&amp; (appVersion != sensor.appRegistration || currentHAversion != sensor.coreRegistration)</ID>
+    <ID>ComplexCondition:SensorUpdater.kt:SensorUpdater$canBeRegistered &amp;&amp; supportsDisabledSensors &amp;&amp; sensorCoreEnabled != null &amp;&amp; sensorCoreEnabled != sensor.registered</ID>
+    <ID>ComplexCondition:TransmitterManager.kt:TransmitterManager$haTransmitter.major.toInt() &lt; 0 || haTransmitter.major.toInt() &gt; 65535 || haTransmitter.minor.toInt() &lt; 0 || haTransmitter.minor.toInt() &gt; 65535 || haTransmitter.measuredPowerSetting &gt;= 0</ID>
+    <ID>ConstructorParameterNaming:Server.kt:Server$@ColumnInfo(name = "_name") val _name: String</ID>
+    <ID>ConstructorParameterNaming:Server.kt:Server$@ColumnInfo(name = "_version") val _version: String? = null</ID>
+    <ID>ConstructorParameterNaming:SingleSlotQueue.kt:SingleSlotQueue$private val _state: MutableStateFlow&lt;T?&gt; = MutableStateFlow(null)</ID>
+    <ID>CyclomaticComplexMethod:AppSensorManagerBase.kt:AppSensorManagerBase$private suspend fun updateImportanceCheck</ID>
+    <ID>CyclomaticComplexMethod:AssistViewModelBase.kt:AssistViewModelBase$protected fun runAssistPipelineInternal</ID>
+    <ID>CyclomaticComplexMethod:AudioSensorManager.kt:AudioSensorManager$private suspend fun updateAudioState</ID>
+    <ID>CyclomaticComplexMethod:BluetoothSensorManager.kt:BluetoothSensorManager$private suspend fun updateBLESensor</ID>
+    <ID>CyclomaticComplexMethod:DatabaseMigration.kt:Migration16to17$@SuppressLint("Range") override fun migrate</ID>
+    <ID>CyclomaticComplexMethod:DatabaseMigration.kt:Migration37to38$fun onPostMigrate</ID>
+    <ID>CyclomaticComplexMethod:DeviceCommands.kt:private fun checkCommandFormat: Boolean</ID>
+    <ID>CyclomaticComplexMethod:DeviceCommands.kt:suspend fun commandBleTransmitter: Boolean</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:fun Entity.friendlyState: String</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:fun Entity.getIcon: IIcon</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:fun Entity.isActive</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:private fun binarySensorIcon: IIcon</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:private fun coverIcon: IIcon</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:private fun sensorIcon: IIcon</ID>
+    <ID>CyclomaticComplexMethod:GetEntitiesForDisplayUseCase.kt:GetEntitiesForDisplayUseCase$private fun resolveEntityDisplayItems: List&lt;EntityDisplayItem&gt;</ID>
+    <ID>CyclomaticComplexMethod:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$override suspend fun registerSensor</ID>
+    <ID>CyclomaticComplexMethod:NetworkSensorManager.kt:NetworkSensorManager$@SuppressLint("MissingPermission") private suspend fun updateNetworkType</ID>
+    <ID>CyclomaticComplexMethod:NotificationManagerExtensions.kt:fun cancelNotificationGroupIfNeeded: Boolean</ID>
+    <ID>CyclomaticComplexMethod:RegisterDeviceRequest.kt:RegisterDeviceRequestSerializer$override fun deserialize: RegisterDeviceRequest</ID>
+    <ID>CyclomaticComplexMethod:SensorManager.kt:SensorManager$suspend fun onSensorUpdated</ID>
+    <ID>CyclomaticComplexMethod:SensorReceiverBase.kt:SensorReceiverBase$override fun onReceive</ID>
+    <ID>CyclomaticComplexMethod:SensorRequest.kt:SensorRegistrationRequestSerializer$@OptIn(ExperimentalSerializationApi::class) override fun deserialize: SensorRegistrationRequest</ID>
+    <ID>CyclomaticComplexMethod:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
+    <ID>CyclomaticComplexMethod:SensorWithAttributes.kt:SensorWithAttributes$fun toSensorRegistration: SensorRegistration&lt;Any&gt;</ID>
+    <ID>CyclomaticComplexMethod:WearPrefsRepositoryImpl.kt:WearLocalStorageWithMigration$private suspend fun checkMigration</ID>
+    <ID>CyclomaticComplexMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
+    <ID>EmptyFunctionBlock:AssistViewModelBaseTest.kt:AssistViewModelBaseTest.&lt;no name provided&gt;${}</ID>
+    <ID>EmptyFunctionBlock:BroadcastReceiverExtTest.kt:BroadcastReceiverExtTest.&lt;no name provided&gt;${}</ID>
+    <ID>ExplicitItLambdaMultipleParameters:LastUpdateManager.kt:LastUpdateManager${ index, it -&gt; it.copy(name = "$INTENT_SETTING_PREFIX${index + 1}:") }</ID>
+    <ID>ForbiddenComment:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$// TODO: Send default locale of device with request.</ID>
+    <ID>FunctionNaming:HABanner.kt:@Composable fun HABanner</ID>
+    <ID>FunctionNaming:HABanner.kt:@Composable fun HAHint</ID>
+    <ID>FunctionNaming:HABanner.kt:@PreviewLightDark @Composable private fun HAHintPreview</ID>
+    <ID>FunctionNaming:HAButtons.kt:@Composable fun HAAccentButton</ID>
+    <ID>FunctionNaming:HAButtons.kt:@Composable fun HAFilledButton</ID>
+    <ID>FunctionNaming:HAButtons.kt:@Composable fun HAIconButton</ID>
+    <ID>FunctionNaming:HAButtons.kt:@Composable fun HAPlainButton</ID>
+    <ID>FunctionNaming:HAButtons.kt:@Composable private fun HABaseButton</ID>
+    <ID>FunctionNaming:HAButtons.kt:@Composable private fun RippleConfigurationLocalProvider</ID>
+    <ID>FunctionNaming:HAButtons.kt:@Composable private fun RowScope.ButtonContent</ID>
+    <ID>FunctionNaming:HAButtons.kt:@Composable private fun RowScope.ButtonDecorator</ID>
+    <ID>FunctionNaming:HACheckbox.kt:@Composable fun HACheckbox</ID>
+    <ID>FunctionNaming:HADetails.kt:@Composable fun HADetails</ID>
+    <ID>FunctionNaming:HADetails.kt:@Composable private fun ExpandableSectionTitle</ID>
+    <ID>FunctionNaming:HADetails.kt:@PreviewLightDark @Composable private fun HADetailsPreview_close</ID>
+    <ID>FunctionNaming:HADetails.kt:@PreviewLightDark @Composable private fun HADetailsPreview_open</ID>
+    <ID>FunctionNaming:HADropdownMenu.kt:@Composable @VisibleForTesting internal fun &lt;T&gt; HADropdownMenuInternal</ID>
+    <ID>FunctionNaming:HADropdownMenu.kt:@Composable fun &lt;T&gt; HADropdownMenu</ID>
+    <ID>FunctionNaming:HADropdownMenu.kt:@Composable private fun &lt;T&gt; DropdownPopupMenu</ID>
+    <ID>FunctionNaming:HADropdownMenu.kt:@Composable private fun DropdownField</ID>
+    <ID>FunctionNaming:HADropdownMenu.kt:@Preview @Composable private fun HADropdownMenuCollapsedPreview</ID>
+    <ID>FunctionNaming:HADropdownMenu.kt:@Preview @Composable private fun HADropdownMenuDisabledPreview</ID>
+    <ID>FunctionNaming:HADropdownMenu.kt:@Preview @Composable private fun HADropdownMenuNoLabelPreview</ID>
+    <ID>FunctionNaming:HADropdownMenu.kt:@Preview @Composable private fun HADropdownMenuSelectedPreview</ID>
+    <ID>FunctionNaming:HAHorizontalDivider.kt:@Composable fun HAHorizontalDivider</ID>
+    <ID>FunctionNaming:HALabel.kt:@Composable fun HALabel</ID>
+    <ID>FunctionNaming:HALabel.kt:@PreviewLightDark @Composable private fun HALabelPreview</ID>
+    <ID>FunctionNaming:HAModalBottomSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun HAModalBottomSheet</ID>
+    <ID>FunctionNaming:HAProgress.kt:@Composable fun HALoading</ID>
+    <ID>FunctionNaming:HAProgress.kt:@Composable fun HAProgress</ID>
+    <ID>FunctionNaming:HARadioGroup.kt:@Composable fun &lt;T&gt; HARadioGroup</ID>
+    <ID>FunctionNaming:HARadioGroup.kt:@Composable private fun HARadioButton</ID>
+    <ID>FunctionNaming:HASearchField.kt:@Composable fun HASearchField</ID>
+    <ID>FunctionNaming:HASettingsCard.kt:@Composable fun HASettingsCard</ID>
+    <ID>FunctionNaming:HASettingsCard.kt:@PreviewLightDark @Composable private fun HASettingsCardPreview</ID>
+    <ID>FunctionNaming:HASwitch.kt:@Composable fun HASwitch</ID>
+    <ID>FunctionNaming:HATextField.kt:@Composable fun HATextField</ID>
+    <ID>FunctionNaming:HATheme.kt:@Composable fun HATheme</ID>
+    <ID>FunctionNaming:HATheme.kt:@Composable fun HAThemeForPreview</ID>
+    <ID>FunctionNaming:HATopBar.kt:@Composable fun HATopBar</ID>
+    <ID>FunctionNaming:HATopBar.kt:@Composable fun HATopBarPlaceholder</ID>
+    <ID>FunctionNaming:HATopBar.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun HATopBar</ID>
+    <ID>FunctionOnlyReturningConstant:CommonTestModule.kt:CommonTestModule$@Provides @Singleton @PushWebsocketSupport fun providesPushWebsocketSupport: Boolean</ID>
+    <ID>LargeClass:JsonUtilTest.kt:JsonUtilTest</ID>
+    <ID>LargeClass:WebSocketCoreImpl.kt:WebSocketCoreImpl : WebSocketListenerWebSocketCore</ID>
+    <ID>LargeClass:WebSocketCoreImplTest.kt:WebSocketCoreImplTest</ID>
+    <ID>LongMethod:AssistViewModelBase.kt:AssistViewModelBase$protected fun runAssistPipelineInternal</ID>
+    <ID>LongMethod:BluetoothSensorManager.kt:BluetoothSensorManager$private suspend fun updateBLEDevice</ID>
+    <ID>LongMethod:BluetoothSensorManager.kt:BluetoothSensorManager$private suspend fun updateBeaconMonitoringDevice</ID>
+    <ID>LongMethod:DatabaseMigration.kt:Migration16to17$@SuppressLint("Range") override fun migrate</ID>
+    <ID>LongMethod:DatabaseMigration.kt:Migration37to38$fun onPostMigrate</ID>
+    <ID>LongMethod:DatabaseMigration.kt:Migration40to41$@SuppressLint("Range") override fun migrate</ID>
+    <ID>LongMethod:DeviceCommands.kt:suspend fun commandBleTransmitter: Boolean</ID>
+    <ID>LongMethod:Entity.kt:fun Entity.friendlyState: String</ID>
+    <ID>LongMethod:Entity.kt:fun Entity.getIcon: IIcon</ID>
+    <ID>LongMethod:Entity.kt:private fun sensorIcon: IIcon</ID>
+    <ID>LongMethod:HARadioGroup.kt:@Composable private fun HARadioButton</ID>
+    <ID>LongMethod:NotificationManagerExtensions.kt:fun cancelNotificationGroupIfNeeded: Boolean</ID>
+    <ID>LongMethod:SensorManager.kt:SensorManager$suspend fun onSensorUpdated</ID>
+    <ID>LongMethod:SensorReceiverBase.kt:SensorReceiverBase$override fun onReceive</ID>
+    <ID>LongMethod:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
+    <ID>LongMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
+    <ID>LoopWithTooManyJumpStatements:SensorRepositoryImpl.kt:SensorRepositoryImpl$for</ID>
+    <ID>MagicNumber:AppSensorManagerBase.kt:AppSensorManagerBase$3</ID>
+    <ID>MagicNumber:AppSensorManagerBase.kt:AppSensorManagerBase$4</ID>
+    <ID>MagicNumber:AuthenticationRepositoryImpl.kt:AuthenticationRepositoryImpl$2022</ID>
+    <ID>MagicNumber:AuthenticationRepositoryImpl.kt:AuthenticationRepositoryImpl$400</ID>
+    <ID>MagicNumber:AuthenticationRepositoryImpl.kt:AuthenticationRepositoryImpl$9</ID>
+    <ID>MagicNumber:BatterySensorManager.kt:BatterySensorManager$100.0f</ID>
+    <ID>MagicNumber:BatterySensorManager.kt:BatterySensorManager$10f</ID>
+    <ID>MagicNumber:CompressedEntity.kt:CompressedEntityState$1000</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:MIGRATION6to7$6</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:MIGRATION6to7$7</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:Migration16to17$16</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:Migration16to17$17</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:Migration37to38$37</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:Migration37to38$38</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:Migration40to41$40</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:Migration40to41$41</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:Migration9to10$10</ID>
+    <ID>MagicNumber:DatabaseMigration.kt:Migration9to10$9</ID>
+    <ID>MagicNumber:Entity.kt:0.01f</ID>
+    <ID>MagicNumber:Entity.kt:0.1f</ID>
+    <ID>MagicNumber:Entity.kt:10</ID>
+    <ID>MagicNumber:Entity.kt:20</ID>
+    <ID>MagicNumber:Entity.kt:30</ID>
+    <ID>MagicNumber:Entity.kt:40</ID>
+    <ID>MagicNumber:Entity.kt:5</ID>
+    <ID>MagicNumber:Entity.kt:50</ID>
+    <ID>MagicNumber:Entity.kt:60</ID>
+    <ID>MagicNumber:Entity.kt:70</ID>
+    <ID>MagicNumber:Entity.kt:80</ID>
+    <ID>MagicNumber:Entity.kt:90</ID>
+    <ID>MagicNumber:ExoPlayerExt.kt:30000</ID>
+    <ID>MagicNumber:ExoPlayerExt.kt:7</ID>
+    <ID>MagicNumber:ExoPlayerExt.kt:8.0f</ID>
+    <ID>MagicNumber:IBeaconMonitor.kt:IBeaconMonitor$0.5</ID>
+    <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$1000</ID>
+    <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$2023</ID>
+    <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$4</ID>
+    <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$5</ID>
+    <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$86400000</ID>
+    <ID>MagicNumber:IntervalToString.kt:60</ID>
+    <ID>MagicNumber:MonitoringManager.kt:MonitoringManager$444</ID>
+    <ID>MagicNumber:NetworkSensorManager.kt:NetworkSensorManager$0xFF</ID>
+    <ID>MagicNumber:NetworkSensorManager.kt:NetworkSensorManager$16</ID>
+    <ID>MagicNumber:NetworkSensorManager.kt:NetworkSensorManager$24</ID>
+    <ID>MagicNumber:NetworkSensorManager.kt:NetworkSensorManager$4</ID>
+    <ID>MagicNumber:NetworkSensorManager.kt:NetworkSensorManager$8</ID>
+    <ID>MagicNumber:PrefsRepositoryImpl.kt:PrefsRepositoryImpl$100</ID>
+    <ID>MagicNumber:RegisterDeviceRequest.kt:RegisterDeviceRequestSerializer$10</ID>
+    <ID>MagicNumber:RegisterDeviceRequest.kt:RegisterDeviceRequestSerializer$3</ID>
+    <ID>MagicNumber:RegisterDeviceRequest.kt:RegisterDeviceRequestSerializer$4</ID>
+    <ID>MagicNumber:RegisterDeviceRequest.kt:RegisterDeviceRequestSerializer$5</ID>
+    <ID>MagicNumber:RegisterDeviceRequest.kt:RegisterDeviceRequestSerializer$6</ID>
+    <ID>MagicNumber:RegisterDeviceRequest.kt:RegisterDeviceRequestSerializer$7</ID>
+    <ID>MagicNumber:RegisterDeviceRequest.kt:RegisterDeviceRequestSerializer$8</ID>
+    <ID>MagicNumber:RegisterDeviceRequest.kt:RegisterDeviceRequestSerializer$9</ID>
+    <ID>MagicNumber:SensorRequest.kt:SensorRegistrationRequestSerializer$10</ID>
+    <ID>MagicNumber:SensorRequest.kt:SensorRegistrationRequestSerializer$3</ID>
+    <ID>MagicNumber:SensorRequest.kt:SensorRegistrationRequestSerializer$4</ID>
+    <ID>MagicNumber:SensorRequest.kt:SensorRegistrationRequestSerializer$5</ID>
+    <ID>MagicNumber:SensorRequest.kt:SensorRegistrationRequestSerializer$6</ID>
+    <ID>MagicNumber:SensorRequest.kt:SensorRegistrationRequestSerializer$7</ID>
+    <ID>MagicNumber:SensorRequest.kt:SensorRegistrationRequestSerializer$8</ID>
+    <ID>MagicNumber:SensorRequest.kt:SensorRegistrationRequestSerializer$9</ID>
+    <ID>MagicNumber:SensorWorker.kt:SensorWorker$2022</ID>
+    <ID>MagicNumber:SensorWorker.kt:SensorWorker$6</ID>
+    <ID>MagicNumber:ServerSessionInfo.kt:ServerSessionInfo$1000</ID>
+    <ID>MagicNumber:StorageSensorManager.kt:StorageSensorManager$1024</ID>
+    <ID>MagicNumber:TrafficStatsManager.kt:TrafficStatsManager$3</ID>
+    <ID>MagicNumber:TransmitterManager.kt:TransmitterManager$65535</ID>
+    <ID>MagicNumber:UpdateLocationRequest.kt:UpdateLocationRequestSerializer$3</ID>
+    <ID>MagicNumber:UpdateLocationRequest.kt:UpdateLocationRequestSerializer$4</ID>
+    <ID>MagicNumber:UpdateLocationRequest.kt:UpdateLocationRequestSerializer$5</ID>
+    <ID>MagicNumber:UpdateLocationRequest.kt:UpdateLocationRequestSerializer$6</ID>
+    <ID>MagicNumber:UpdateLocationRequest.kt:UpdateLocationRequestSerializer$7</ID>
+    <ID>MagicNumber:VoiceAudioRecorder.kt:0xFF</ID>
+    <ID>MagicNumber:VoiceAudioRecorder.kt:8</ID>
+    <ID>MagicNumber:WebSocketCoreImpl.kt:WebSocketCoreImpl$1001</ID>
+    <ID>MatchingDeclarationName:DeviceCommands.kt:DeviceCommandData</ID>
+    <ID>MatchingDeclarationName:HARadioGroup.kt:RadioOption&lt;T&gt;</ID>
+    <ID>MatchingDeclarationName:NotificationFunctions.kt:NotificationData</ID>
+    <ID>MaxLineLength:AppVersion.kt:AppVersion$"Invalid app version: $value you should use `from` static function instead or follow this pattern \"BuildConfig.VERSION_NAME (BuildConfig.VERSION_CODE)\""</ID>
+    <ID>MaxLineLength:AppVersion.kt:AppVersion$*</ID>
+    <ID>MaxLineLength:AssistAudioFocusImplTest.kt:AssistAudioFocusImplTest$every { AudioManagerCompat.abandonAudioFocusRequest(any(), any()) } returns AudioManager.AUDIOFOCUS_REQUEST_GRANTED</ID>
+    <ID>MaxLineLength:AssistViewModelBaseTest.kt:AssistViewModelBaseTest$fun</ID>
+    <ID>MaxLineLength:AudioSensorManagerTest.kt:AudioSensorManagerTest$assertEquals("Expected lastSentIcon to be preserved (no force update)", AudioSensorManager.volMusic.statelessIcon, lastSentIcon)</ID>
+    <ID>MaxLineLength:AudioSensorManagerTest.kt:AudioSensorManagerTest$coEvery { sensorRepository.get(AudioSensorManager.volMusic.id) } returns listOf(volumeMusicSensor, volumeMusicSensorServer2)</ID>
+    <ID>MaxLineLength:AudioSensorManagerTest.kt:AudioSensorManagerTest$coEvery { sensorRepository.getFull(AudioSensorManager.volMusic.id) } returns mapOf(volumeMusicSensor to emptyList())</ID>
+    <ID>MaxLineLength:AudioSensorManagerTest.kt:AudioSensorManagerTest$fun</ID>
+    <ID>MaxLineLength:AudioUrlPlayerTest.kt:AudioUrlPlayerTest$every { AudioManagerCompat.abandonAudioFocusRequest(any(), capture(abandonRequestSlot)) } returns AudioManager.AUDIOFOCUS_REQUEST_GRANTED</ID>
+    <ID>MaxLineLength:AudioUrlPlayerTest.kt:AudioUrlPlayerTest$every { AudioManagerCompat.requestAudioFocus(any(), capture(focusRequestSlot)) } returns AudioManager.AUDIOFOCUS_REQUEST_GRANTED</ID>
+    <ID>MaxLineLength:AudioUrlPlayerTest.kt:AudioUrlPlayerTest$fun</ID>
+    <ID>MaxLineLength:BluetoothSensorManager.kt:BluetoothSensorManager$// transmit when BT is on, if we are not already transmitting, or details have changed, and we're permitted on this wifi network</ID>
+    <ID>MaxLineLength:BroadcastReceiverExtTest.kt:BroadcastReceiverExtTest$fun</ID>
+    <ID>MaxLineLength:BroadcastReceiverExtTest.kt:BroadcastReceiverExtTest$val scope = CoroutineScope(coroutineContext + SupervisorJob() + CoroutineExceptionHandler { _, throwable -&gt; caughtException = throwable })</ID>
+    <ID>MaxLineLength:CheckLocalNetworkPermissionUseCaseTest.kt:CheckLocalNetworkPermissionUseCaseTest$fun</ID>
+    <ID>MaxLineLength:CheckLocalNetworkPermissionUseCaseTest.kt:CheckLocalNetworkPermissionUseCaseTest$private</ID>
+    <ID>MaxLineLength:CommonTestModule.kt:CommonTestModule$fun</ID>
+    <ID>MaxLineLength:CompressedEntityTest.kt:CompressedEntityTest$assertEquals(CompressedEntityState(state = JsonPrimitive(state), lastChanged = lastChanged, lastUpdated = lastUpdated), kotlinJsonMapper.decodeFromString&lt;CompressedEntityState&gt;(rawData))</ID>
+    <ID>MaxLineLength:CompressedEntityTest.kt:CompressedEntityTest$val expected = CompressedEntityState(state = JsonPrimitive(state), attributes = attributes, lastChanged = lastChanged, lastUpdated = lastUpdated)</ID>
+    <ID>MaxLineLength:CompressedEntityTest.kt:CompressedEntityTest$val rawData = """{"s":"$state","lc":$lastChanged,"lu":$lastUpdated,"a":{"friendly_name":"${attributes["friendly_name"]}","icon":"${attributes["icon"]}"}}"""</ID>
+    <ID>MaxLineLength:ConnectivityCheckRepositoryImplTest.kt:ConnectivityCheckRepositoryImplTest$coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, "192.0.2.1")</ID>
+    <ID>MaxLineLength:ConnectivityCheckRepositoryImplTest.kt:ConnectivityCheckRepositoryImplTest$coEvery { checker.dns("example.com") } returns ConnectivityCheckResult.Success(commonR.string.connection_check_dns, ipAddresses)</ID>
+    <ID>MaxLineLength:ConnectivityCheckRepositoryImplTest.kt:ConnectivityCheckRepositoryImplTest$coEvery { checker.homeAssistant(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)</ID>
+    <ID>MaxLineLength:ConnectivityCheckRepositoryImplTest.kt:ConnectivityCheckRepositoryImplTest$coEvery { checker.port("example.com", 443) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "443")</ID>
+    <ID>MaxLineLength:ConnectivityCheckRepositoryImplTest.kt:ConnectivityCheckRepositoryImplTest$coEvery { checker.port("example.com", 8123) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_port, "8123")</ID>
+    <ID>MaxLineLength:ConnectivityCheckRepositoryImplTest.kt:ConnectivityCheckRepositoryImplTest$coEvery { checker.server(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)</ID>
+    <ID>MaxLineLength:ConnectivityCheckRepositoryImplTest.kt:ConnectivityCheckRepositoryImplTest$coEvery { checker.tls(testUrl) } returns ConnectivityCheckResult.Success(commonR.string.connection_check_tls_success)</ID>
+    <ID>MaxLineLength:ConnectivityCheckRepositoryImplTest.kt:ConnectivityCheckRepositoryImplTest$fun</ID>
+    <ID>MaxLineLength:ConnectivityCheckRepositoryImplTest.kt:ConnectivityCheckRepositoryImplTest$val haInProgressState = states.firstOrNull { it.homeAssistantVerification is ConnectivityCheckResult.InProgress }</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `icon_id` INTEGER NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `camera_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `mediaplayctrls_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, `label` TEXT, `showSkip` INTEGER NOT NULL, `showSeek` INTEGER NOT NULL, PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `notification_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `received` INTEGER NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL)"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tileId` TEXT NOT NULL, `icon_id` INTEGER, `entityId` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT)"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', PRIMARY KEY(`sensor_id`, `name`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `settings` (`id` INTEGER NOT NULL, `websocketSetting` TEXT NOT NULL, PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_id` TEXT, `label` TEXT, PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:&lt;no name provided&gt;$"CREATE TABLE IF NOT EXISTS `template_widgets` (`id` INTEGER NOT NULL, `template` TEXT NOT NULL, PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:MIGRATION6to7$"CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:MIGRATION6to7$"CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:Migration16to17$"CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', `entries` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT '1', PRIMARY KEY(`sensor_id`, `name`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:Migration37to38$"CREATE TABLE IF NOT EXISTS `_new_sensors` (`id` TEXT NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `enabled` INTEGER NOT NULL, `registered` INTEGER DEFAULT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT DEFAULT NULL, `last_sent_icon` TEXT DEFAULT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, `state_class` TEXT, `entity_category` TEXT, `core_registration` TEXT, `app_registration` TEXT, PRIMARY KEY(`id`, `server_id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:Migration37to38$"CREATE TABLE IF NOT EXISTS `servers` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `_name` TEXT NOT NULL, `name_override` TEXT, `_version` TEXT, `list_order` INTEGER NOT NULL, `device_name` TEXT, `external_url` TEXT NOT NULL, `internal_url` TEXT, `cloud_url` TEXT, `webhook_id` TEXT, `secret` TEXT, `cloudhook_url` TEXT, `use_cloud` INTEGER NOT NULL, `internal_ssids` TEXT NOT NULL, `prioritize_internal` INTEGER NOT NULL, `access_token` TEXT, `refresh_token` TEXT, `token_expiration` INTEGER, `token_type` TEXT, `install_id` TEXT)"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:Migration37to38$"INSERT INTO `_new_sensors` (`id`,`enabled`,`registered`,`state`,`last_sent_state`,`last_sent_icon`,`state_type`,`type`,`icon`,`name`,`device_class`,`unit_of_measurement`,`state_class`,`entity_category`,`core_registration`,`app_registration`) SELECT `id`,`enabled`,`registered`,`state`,`last_sent_state`,`last_sent_icon`,`state_type`,`type`,`icon`,`name`,`device_class`,`unit_of_measurement`,`state_class`,`entity_category`,`core_registration`,`app_registration` FROM `sensors`"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:Migration37to38$"SELECT * FROM `sensor_settings` WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:Migration37to38$"WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:Migration40to41$"CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:Migration40to41$"CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tile_id` TEXT NOT NULL, `added` INTEGER NOT NULL DEFAULT 1, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT, `entity_id` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT, `should_vibrate` INTEGER NOT NULL DEFAULT 0, `auth_required` INTEGER NOT NULL DEFAULT 0)"</ID>
+    <ID>MaxLineLength:DatabaseMigration.kt:Migration9to10$"CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))"</ID>
+    <ID>MaxLineLength:DefaultAssistAudioStrategyTest.kt:DefaultAssistAudioStrategyTest$every { AudioManagerCompat.abandonAudioFocusRequest(any(), any()) } returns AudioManager.AUDIOFOCUS_REQUEST_GRANTED</ID>
+    <ID>MaxLineLength:Entity.kt:"Entity $entityId has non-String state attribute: ${attributeState::class.simpleName}. Please open an issue on the relevant integration."</ID>
+    <ID>MaxLineLength:EntityTest.kt:EntityTest.FriendlyState$fun</ID>
+    <ID>MaxLineLength:FailFast.kt:FailFast$*</ID>
+    <ID>MaxLineLength:FlowUtilTest.kt:FlowUtilTest$fun</ID>
+    <ID>MaxLineLength:GetEntitiesForDisplayUseCase.kt:/** Minimum server version of the `config/floor_registry/list` command (https://github.com/home-assistant/core/pull/110741). */</ID>
+    <ID>MaxLineLength:HABanner.kt:*</ID>
+    <ID>MaxLineLength:HADetails.kt:*</ID>
+    <ID>MaxLineLength:HASearchFieldTest.kt:HASearchFieldTest$mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(SEARCH_FIELD_DEFAULT_DEBOUNCE.inWholeMilliseconds - 50)</ID>
+    <ID>MaxLineLength:HATextField.kt:*</ID>
+    <ID>MaxLineLength:IBeaconMonitor.kt:IBeaconMonitor$// beacon seen, make sure skippedUpdated=0, even if requireUpdate stays false (and beacons list is not replaced)</ID>
+    <ID>MaxLineLength:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$"isAppLocked(): $appLocked. (LockEnabled: $lockEnabled, appActive: $appActive, expireMillis: $sessionExpireMillis, currentMillis: $currentMillis)"</ID>
+    <ID>MaxLineLength:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$// We check if the result is a JsonPrimitive instead of a simple global toString to avoid rendering " around the string</ID>
+    <ID>MaxLineLength:IntegrationRepositoryImplTest.kt:IntegrationRepositoryImplTest$coEvery { integrationService.getTemplate(any(), any()) } returns JsonObject(mapOf("template" to JsonArray(expectedResult.map { JsonPrimitive(it) })))</ID>
+    <ID>MaxLineLength:IntegrationRepositoryImplTest.kt:IntegrationRepositoryImplTest$coEvery { integrationService.getTemplate(any(), any()) } returns JsonObject(mapOf("template" to JsonPrimitive(expectedResult)))</ID>
+    <ID>MaxLineLength:IntegrationRepositoryImplTest.kt:IntegrationRepositoryImplTest$fun</ID>
+    <ID>MaxLineLength:IntegrationRepositoryImplTest.kt:IntegrationRepositoryImplTest$repository = IntegrationRepositoryImpl(integrationService, serverManager, serverID, localStorage, "", "", "", "")</ID>
+    <ID>MaxLineLength:IntegrationRepositoryImplTest.kt:IntegrationRepositoryImplTest.UpdateRegistrationTests$fun</ID>
+    <ID>MaxLineLength:IntegrationRequestTest.kt:IntegrationRequestTest$"""{"type":"register_sensor","data":{"unique_id":"42","state":null,"type":"test","icon":"test","attributes":{}}}"""</ID>
+    <ID>MaxLineLength:IntegrationRequestTest.kt:IntegrationRequestTest$kotlinJsonMapper.encodeToString&lt;IntegrationRequest&gt;(CallServiceIntegrationRequest(ActionRequest(domain = "domain", service = "service", serviceData = emptyMap())))</ID>
+    <ID>MaxLineLength:IntegrationRequestTest.kt:IntegrationRequestTest$kotlinJsonMapper.encodeToString&lt;IntegrationRequest&gt;(FireEventIntegrationRequest(FireEventRequest("type", emptyMap())))</ID>
+    <ID>MaxLineLength:IntegrationRequestTest.kt:IntegrationRequestTest$kotlinJsonMapper.encodeToString&lt;IntegrationRequest&gt;(RegisterDeviceIntegrationRequest(RegisterDeviceRequest()))</ID>
+    <ID>MaxLineLength:IntegrationRequestTest.kt:IntegrationRequestTest$kotlinJsonMapper.encodeToString&lt;IntegrationRequest&gt;(RegisterSensorIntegrationRequest(SensorRegistrationRequest(uniqueId = "42", state = null, type = "test", icon = "test", attributes = emptyMap())))</ID>
+    <ID>MaxLineLength:IntegrationRequestTest.kt:IntegrationRequestTest$kotlinJsonMapper.encodeToString&lt;IntegrationRequest&gt;(UpdateLocationIntegrationRequest(UpdateLocationRequest()))</ID>
+    <ID>MaxLineLength:JsonUtil.kt:// explicitNulls = true // default is to print null values in the JSON send if you don't want this behavior you need a custom serializer</ID>
+    <ID>MaxLineLength:JsonUtilTest.kt:JsonUtilTest$"""{"key1":"value1","key2":true,"key3":1,"key4":9223372036854775807,"key5":1.0,"key6":null,"key7":[1,2,3],"key8":{"subkey1":"value1","subkey2":1,"subkey3":true},"key9":1.0,"key10":[4,5,6],"key11":{"str_value":"hello","int_value":1},"key12":1}""".trimIndent()</ID>
+    <ID>MaxLineLength:JsonUtilTest.kt:JsonUtilTest$assertEquals(""""2018-08-17T13:46:59.83836"""", kotlinJsonMapper.encodeToString(LocalDateTimeSerializer(), dateTime))</ID>
+    <ID>MaxLineLength:JsonUtilTest.kt:JsonUtilTest$fun</ID>
+    <ID>MaxLineLength:NetworkCapabilitiesChecker.kt:NetworkCapabilitiesChecker$*</ID>
+    <ID>MaxLineLength:NetworkChangeObserverImplTest.kt:NetworkChangeObserverImplTest$connectivityManager.registerNetworkCallback(any&lt;NetworkRequest&gt;(), any&lt;ConnectivityManager.NetworkCallback&gt;())</ID>
+    <ID>MaxLineLength:NetworkChangeObserverImplTest.kt:NetworkChangeObserverImplTest$verify { connectivityManager.registerNetworkCallback(any&lt;NetworkRequest&gt;(), any&lt;ConnectivityManager.NetworkCallback&gt;()) }</ID>
+    <ID>MaxLineLength:NetworkStatusMonitorImplTest.kt:NetworkStatusMonitorImplTest$coEvery { connectionStateProvider.getExternalUrl() } returns URL("http://192.168.1.100:8123")</ID>
+    <ID>MaxLineLength:NetworkStatusMonitorImplTest.kt:NetworkStatusMonitorImplTest$fun</ID>
+    <ID>MaxLineLength:NotificationManagerExtensions.kt:"Notification is inside of group \"$group\", but is the last one in the group. Try to cancel the group notification...."</ID>
+    <ID>MaxLineLength:NotificationManagerExtensions.kt:"Notification is the group summary \"$group\" with no notifications inside. Try to cancel this group summary notification..."</ID>
+    <ID>MaxLineLength:NotificationManagerExtensions.kt:// This group can't be canceled, but it will be canceled by canceling the last notification inside of the group</ID>
+    <ID>MaxLineLength:PlatformTestSupportJUnit4Test.kt:PlatformTestSupportJUnit4Test$fun</ID>
+    <ID>MaxLineLength:PlatformTestSupportJUnitJupiterTest.kt:PlatformTestSupportJUnitJupiterTest$fun</ID>
+    <ID>MaxLineLength:PrefsRepositoryImplTest.kt:PrefsRepositoryImplTest$fun</ID>
+    <ID>MaxLineLength:RegisterDeviceRequestTest.kt:RegisterDeviceRequestTest$"""{"app_id":"1","app_name":"2","app_version":"3 (3)","device_name":"4","manufacturer":"5","model":"6","os_name":"7","os_version":"8","supports_encryption":true,"app_data":{"1":"2","2":1,"3":"token"},"device_id":"3"}"""</ID>
+    <ID>MaxLineLength:RegisterDeviceRequestTest.kt:RegisterDeviceRequestTest$kotlinJsonMapper.decodeFromString&lt;RegisterDeviceRequest&gt;("""{"app_id":"1","app_name":"2","app_version":"3 (3)","device_name":"4","manufacturer":"5","model":"6","os_name":"7","os_version":"8","supports_encryption":true,"app_data":{"1":"2","2":1},"device_id":"3"}""")</ID>
+    <ID>MaxLineLength:ResyncRegistrationWorkerTest.kt:ResyncRegistrationWorkerTest$fun</ID>
+    <ID>MaxLineLength:SensorDao.kt:SensorDao$"SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id AND sensors.server_id = :serverId"</ID>
+    <ID>MaxLineLength:SensorDao.kt:SensorDao$"SELECT * FROM sensors LEFT JOIN sensor_attributes ON sensors.id = sensor_attributes.sensor_id WHERE sensors.id = :id"</ID>
+    <ID>MaxLineLength:SensorDao.kt:SensorDao$"UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId AND server_id = :serverId"</ID>
+    <ID>MaxLineLength:SensorManagerTest.kt:SensorManagerTest$fun</ID>
+    <ID>MaxLineLength:SensorRegistrationRequestTest.kt:SensorRegistrationRequestTest$"""{"unique_id":"1","state":"2","type":"3","icon":"4","attributes":{"1":"2","2":1},"device_class":null,"entity_category":null}"""</ID>
+    <ID>MaxLineLength:SensorRegistrationRequestTest.kt:SensorRegistrationRequestTest$"""{"unique_id":"1","state":"2","type":"3","icon":"4","attributes":{"1":"2","2":1},"name":"5","device_class":"6","unit_of_measurement":"7","state_class":"8","entity_category":"9","disabled":true}"""</ID>
+    <ID>MaxLineLength:SensorRegistrationRequestTest.kt:SensorRegistrationRequestTest$kotlinJsonMapper.decodeFromString&lt;SensorRegistrationRequest&gt;("""{"unique_id":"1","state":"2","type":"3","icon":"4","attributes":{"1":"2","2":1},"device_class":null,"entity_category":null}""")</ID>
+    <ID>MaxLineLength:SensorRegistrationRequestTest.kt:SensorRegistrationRequestTest$kotlinJsonMapper.decodeFromString&lt;SensorRegistrationRequest&gt;("""{"unique_id":"1","state":"2","type":"3","icon":"4","attributes":{"1":"2","2":1},"name":"5","device_class":"6","unit_of_measurement":"7","state_class":"8","entity_category":"9","disabled":true}""")</ID>
+    <ID>MaxLineLength:SensorRegistrationRequestTest.kt:SensorRegistrationRequestTest$kotlinJsonMapper.decodeFromString&lt;SensorRegistrationRequest&gt;("""{"unique_id":"1","state":"2","type":"3","icon":"4","attributes":{"1":"2","2":1}}""")</ID>
+    <ID>MaxLineLength:SensorRepositoryImplTest.kt:SensorRepositoryImplTest$fun</ID>
+    <ID>MaxLineLength:SensorUpdater.kt:SensorUpdater$"Server can't be reached, skipping other registrations for sensors due to version change"</ID>
+    <ID>MaxLineLength:SensorUpdaterNotificationTest.kt:SensorUpdaterNotificationTest$fun</ID>
+    <ID>MaxLineLength:SensorUpdaterNotificationTest.kt:SensorUpdaterNotificationTest$private</ID>
+    <ID>MaxLineLength:SensorUpdaterTest.kt:SensorUpdaterTest$fun</ID>
+    <ID>MaxLineLength:SensorUpdaterTest.kt:SensorUpdaterTest$val integrationRepository = stubbedIntegrationRepository(config(entities = coreEntities(disabled = false)), trusted = false)</ID>
+    <ID>MaxLineLength:SensorUpdaterTest.kt:SensorUpdaterTest$val integrationRepository = stubbedIntegrationRepository(config(entities = coreEntities(disabled = true)), trusted = false)</ID>
+    <ID>MaxLineLength:ServerConnectionInfoTest.kt:ServerConnectionInfoTest.HasHomeNetworkSetup$fun</ID>
+    <ID>MaxLineLength:ServerConnectionStateProviderImplTest.kt:ServerConnectionStateProviderImplTest.CanSafelySendCredentials$fun</ID>
+    <ID>MaxLineLength:ServerConnectionStateProviderImplTest.kt:ServerConnectionStateProviderImplTest.GetApiUrls$fun</ID>
+    <ID>MaxLineLength:ServerConnectionStateProviderImplTest.kt:ServerConnectionStateProviderImplTest.GetExternalUrl$fun</ID>
+    <ID>MaxLineLength:ServerConnectionStateProviderImplTest.kt:ServerConnectionStateProviderImplTest.IsInternal$fun</ID>
+    <ID>MaxLineLength:ServerConnectionStateProviderImplTest.kt:ServerConnectionStateProviderImplTest.UrlFlow$fun</ID>
+    <ID>MaxLineLength:ServerManagerImplTest.kt:ServerManagerImplTest.AuthenticationRepositoryTest$fun</ID>
+    <ID>MaxLineLength:ServerManagerImplTest.kt:ServerManagerImplTest.ConnectionStateProviderTest$fun</ID>
+    <ID>MaxLineLength:ServerManagerImplTest.kt:ServerManagerImplTest.GetServerByIdTest$fun</ID>
+    <ID>MaxLineLength:ServerManagerImplTest.kt:ServerManagerImplTest.IntegrationRepositoryTest$fun</ID>
+    <ID>MaxLineLength:ServerRegistrationRepositoryTest.kt:ServerRegistrationRepositoryTest$fun</ID>
+    <ID>MaxLineLength:ServerRegistrationRepositoryTest.kt:ServerRegistrationRepositoryTest$private var repository: ServerRegistrationRepository = ServerRegistrationRepository({ authenticationService }, installIdProvider)</ID>
+    <ID>MaxLineLength:SocketResponseTest.kt:SocketResponseTest$kotlinJsonMapper.decodeFromString&lt;SocketResponse&gt;("""{"type":"auth_required"}""") is AuthRequiredSocketResponse</ID>
+    <ID>MaxLineLength:SocketResponseTest.kt:SocketResponseTest$val response: SocketResponse = kotlinJsonMapper.decodeFromString("""{ "type":"super_type","key1":1,"key2": null}""")</ID>
+    <ID>MaxLineLength:TextToSpeechClient.kt:TextToSpeechClient$*</ID>
+    <ID>MaxLineLength:TodoWidgetEntityTest.kt:TodoWidgetEntityTest$fun</ID>
+    <ID>MaxLineLength:TodoWidgetEntityTest.kt:TodoWidgetEntityTest$latestUpdateData = TodoWidgetEntity.LastUpdateData("HA2", listOf(TodoWidgetEntity.TodoItem("345678", "what's up?", "complete")))</ID>
+    <ID>MaxLineLength:UpdateLocationRequestTest.kt:UpdateLocationRequestTest$"""{"gps":[1.0,2.0],"gps_accuracy":0,"location_name":"Test Location","in_zones":["home","work"],"speed":1,"altitude":2,"course":3,"vertical_accuracy":4}"""</ID>
+    <ID>MaxLineLength:UpdateLocationRequestTest.kt:UpdateLocationRequestTest$kotlinJsonMapper.decodeFromString&lt;UpdateLocationRequest&gt;("""{"gps":[1.0,2.0],"gps_accuracy":0,"location_name":"Test Location","in_zones":["home","work"],"speed":1,"altitude":2,"course":3,"vertical_accuracy":4}""")</ID>
+    <ID>MaxLineLength:UrlUtilTest.kt:UrlUtilTest$fun</ID>
+    <ID>MaxLineLength:VoiceAudioRecorder.kt:"AudioRecord at ${VOICE_SAMPLE_RATE}Hz failed to initialize current state ${recorder.state}, falling back to ${FALLBACK_SAMPLE_RATE}Hz"</ID>
+    <ID>MaxLineLength:VoiceAudioRecorderTest.kt:VoiceAudioRecorderTest.Audio recording lifecycle$fun</ID>
+    <ID>MaxLineLength:WearPrefsRepositoryImplTest.kt:WearPrefsRepositoryImplTest$assertEquals("""{"1":{"template":"template","refresh_interval":10},"2":{"template":"template2","refresh_interval":20}}""".trimIndent(), slot.captured)</ID>
+    <ID>MaxLineLength:WearPrefsRepositoryImplTest.kt:WearPrefsRepositoryImplTest$coEvery { localStorage.getString(PREF_TILE_TEMPLATES) } returns """{"1":{"template":"template","refresh_interval":10},"2":{"template":"template2","refresh_interval":20}}""".trimIndent()</ID>
+    <ID>MaxLineLength:WearPrefsRepositoryImplTest.kt:WearPrefsRepositoryImplTest$fun</ID>
+    <ID>MaxLineLength:WebSocketCore.kt:WebSocketCore$*</ID>
+    <ID>MaxLineLength:WebSocketCoreImpl.kt:WebSocketCoreImpl$*</ID>
+    <ID>MaxLineLength:WebSocketCoreImpl.kt:WebSocketCoreImpl$// Null is acceptable because a message could still arrive after unsubscribe like run-end in Assist pipeline</ID>
+    <ID>MaxLineLength:WebSocketCoreImpl.kt:WebSocketCoreImpl$// TODO https://github.com/home-assistant/android/issues/5259 handle re-connection gracefully or terminates the flows</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$"""{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}"""</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$// (reconnection itself is tested in `Given an Active subscription When disconnection occurs Then it re-sends a request to get events`)</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$// we are injecting a background scope to properly control it within the tests, the scope will close itself at the end of the test</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$assertEquals(expectedData.plus("type" to expectedType), (this as ActiveMessage.Subscription).request.message)</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$assertNotEquals((1..50).toList(), values, "Values should not be in sequential order - async execution should shuffle them")</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$assertTrue(subscriptionExistedDuringUnsubscribe, "Subscription should exist in activeMessages when unsubscribe is sent")</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$coVerify { mockConnection.send(match&lt;String&gt; { it.contains("unsubscribe_events") &amp;&amp; it.contains(""""id":2""") }) }</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$fun</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$val expectedMessageSent = kotlinJsonMapper.encodeToString&lt;Map&lt;String, Any&gt;&gt;(MapAnySerializer, request.plus("id" to 2))</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bathroom"}}}""")</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""")</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:28.265429+00:00", "data": {"entity_id":"light.kitchen"}}}""")</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$webSocketListener.onMessage(mockConnection, """{"id":4, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bathroom"}}}""")</ID>
+    <ID>MaxLineLength:WebSocketCoreImplTest.kt:WebSocketCoreImplTest$webSocketListener.onMessage(mockConnection, """{"id":42, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""")</ID>
+    <ID>MaxLineLength:WebSocketRepositoryImplTest.kt:WebSocketRepositoryImplTest.RegistryForDisplay$fun</ID>
+    <ID>NestedBlockDepth:DatabaseMigration.kt:Migration37to38$fun onPostMigrate</ID>
+    <ID>NestedBlockDepth:Entity.kt:fun Entity.getIcon: IIcon</ID>
+    <ID>NestedBlockDepth:NotificationManagerExtensions.kt:fun cancelNotificationGroupIfNeeded: Boolean</ID>
+    <ID>NestedBlockDepth:PhoneStateSensorManager.kt:PhoneStateSensorManager$@SuppressLint("MissingPermission") private suspend fun updateSimSensor</ID>
+    <ID>NestedBlockDepth:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
+    <ID>ReturnCount:AssistViewModelBase.kt:AssistViewModelBase$private fun handleError: Boolean</ID>
+    <ID>ReturnCount:AudioSensorManager.kt:AudioSensorManager$private suspend fun areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching: Boolean</ID>
+    <ID>ReturnCount:CheckLocalNetworkPermissionUseCase.kt:CheckLocalNetworkPermissionUseCase$suspend operator fun invoke: Boolean</ID>
+    <ID>ReturnCount:Entity.kt:fun Entity.getFanSteps: Int?</ID>
+    <ID>ReturnCount:Entity.kt:fun calculateNumStep: Int</ID>
+    <ID>ReturnCount:NetworkCapabilitiesChecker.kt:NetworkCapabilitiesChecker$private fun fallbackHasTransport: Boolean</ID>
+    <ID>ReturnCount:NotificationFunctions.kt:@RequiresApi(Build.VERSION_CODES.N) fun handleImportance: Int</ID>
+    <ID>ReturnCount:RegistriesDataHandler.kt:RegistriesDataHandler$fun getAreaForEntity: AreaRegistryResponse?</ID>
+    <ID>ReturnCount:SensorRepositoryImpl.kt:SensorRepositoryImpl$override suspend fun getFull: Map&lt;Sensor, List&lt;Attribute&gt;&gt;</ID>
+    <ID>ReturnCount:SensorUpdater.kt:SensorUpdater$private suspend fun loadSensorReconcilingPermission: SensorWithAttributes?</ID>
+    <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun canSafelySendCredentials: Boolean</ID>
+    <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun isInternal: Boolean</ID>
+    <ID>ReturnCount:SuspendLazy.kt:SuspendLazy$suspend fun get: T</ID>
+    <ID>ReturnCount:TLSHelper.kt:TLSHelper$private fun withUserInstalledCaFallback: X509TrustManager</ID>
+    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun attemptWebSocketConnection: ConnectionAttemptResult</ID>
+    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
+    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun sendMessage: RawMessageSocketResponse?</ID>
+    <ID>SerialVersionUIDInSerializableClass:NotificationItem.kt:NotificationItem : Serializable</ID>
+    <ID>SwallowedException:HomeAssistantApis.kt:HomeAssistantApis$e: Exception</ID>
+    <ID>SwallowedException:NetworkSensorManager.kt:NetworkSensorManager$e: NoSuchMethodException</ID>
+    <ID>SwallowedException:ServerManagerImplTest.kt:ServerManagerImplTest.AuthenticationRepositoryTest$e: IllegalStateException</ID>
+    <ID>SwallowedException:ServerManagerImplTest.kt:ServerManagerImplTest.ConnectionStateProviderTest$e: IllegalStateException</ID>
+    <ID>SwallowedException:ServerManagerImplTest.kt:ServerManagerImplTest.IntegrationRepositoryTest$e: IllegalStateException</ID>
+    <ID>SwallowedException:ServerManagerImplTest.kt:ServerManagerImplTest.WebSocketRepositoryTest$e: IllegalStateException</ID>
+    <ID>SwallowedException:TransmitterManager.kt:TransmitterManager$e: IllegalArgumentException</ID>
+    <ID>SwallowedException:UrlUtil.kt:UrlUtil$e: IllegalArgumentException</ID>
+    <ID>SwallowedException:UrlUtil.kt:e: UnknownHostException</ID>
+    <ID>ThrowsCount:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$private suspend fun maybeReregisterDeviceOnFailedUpdate</ID>
+    <ID>ThrowsCount:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
+    <ID>ThrowsCount:ServerConnectionStateProvider.kt:suspend fun &lt;T&gt; tryOnUrls: T</ID>
+    <ID>TooGenericExceptionCaught:AppSensorManagerBase.kt:AppSensorManagerBase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AssistAudioFocus.kt:AssistAudioFocusImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AssistViewModelBase.kt:AssistViewModelBase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AudioUrlPlayer.kt:AudioUrlPlayer$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:AudioUrlPlayer.kt:AudioUrlPlayer$e: RuntimeException</ID>
+    <ID>TooGenericExceptionCaught:BluetoothUtils.kt:BluetoothUtils$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DatabaseMigration.kt:&lt;no name provided&gt;$exception: Exception</ID>
+    <ID>TooGenericExceptionCaught:DatabaseMigration.kt:MIGRATION6to7$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DatabaseMigration.kt:Migration16to17$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DatabaseMigration.kt:Migration40to41$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DatabaseMigration.kt:Migration9to10$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DefaultConnectivityChecker.kt:DefaultConnectivityChecker$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DisplaySensorManager.kt:DisplaySensorManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:Entity.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FailFast.kt:FailFast$e: Throwable</ID>
+    <ID>TooGenericExceptionCaught:GetEntitiesForDisplayUseCase.kt:GetEntitiesForDisplayUseCase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:HomeAssistantApis.kt:HomeAssistantApis$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:KeyChainRepositoryImpl.kt:KeyChainRepositoryImpl$t: Throwable</ID>
+    <ID>TooGenericExceptionCaught:KeyStoreRepositoryImpl.kt:KeyStoreRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:LastRebootSensorManager.kt:LastRebootSensorManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NetworkStatusMonitor.kt:NetworkStatusMonitorImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NextAlarmManager.kt:NextAlarmManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NotificationDeleteReceiver.kt:NotificationDeleteReceiver$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NotificationFunctions.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PhoneStateSensorManager.kt:PhoneStateSensorManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ResyncRegistrationWorker.kt:ResyncRegistrationWorker$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SensorReceiverBase.kt:SensorReceiverBase$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SensorUpdater.kt:SensorUpdater$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ServerConnectionStateProvider.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TrafficStatsManager.kt:TrafficStatsManager$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:UrlUtil.kt:UrlUtil$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:WebSocketCoreImpl.kt:WebSocketCoreImpl$e: Exception</ID>
+    <ID>TooManyFunctions:AppDatabase.kt:AppDatabase : RoomDatabase</ID>
+    <ID>TooManyFunctions:AssistViewModelBase.kt:AssistViewModelBase : AndroidViewModel</ID>
+    <ID>TooManyFunctions:AudioSensorManager.kt:AudioSensorManager : SensorManager</ID>
+    <ID>TooManyFunctions:AuthenticationRepositoryImpl.kt:AuthenticationRepositoryImpl : AuthenticationRepository</ID>
+    <ID>TooManyFunctions:BatterySensorManager.kt:BatterySensorManager : SensorManager</ID>
+    <ID>TooManyFunctions:BluetoothSensorManager.kt:BluetoothSensorManager : SensorManager</ID>
+    <ID>TooManyFunctions:ContextExt.kt:io.homeassistant.companion.android.common.util.ContextExt.kt</ID>
+    <ID>TooManyFunctions:DataModule.kt:DataModule$Companion</ID>
+    <ID>TooManyFunctions:DatabaseModule.kt:DatabaseModule</ID>
+    <ID>TooManyFunctions:Entity.kt:io.homeassistant.companion.android.common.data.integration.Entity.kt</ID>
+    <ID>TooManyFunctions:HAButtons.kt:io.homeassistant.companion.android.common.compose.composable.HAButtons.kt</ID>
+    <ID>TooManyFunctions:IntegrationRepository.kt:IntegrationRepository</ID>
+    <ID>TooManyFunctions:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl : IntegrationRepository</ID>
+    <ID>TooManyFunctions:JsonUtil.kt:io.homeassistant.companion.android.common.util.JsonUtil.kt</ID>
+    <ID>TooManyFunctions:LocalStorage.kt:LocalStorage</ID>
+    <ID>TooManyFunctions:LocalStorageImpl.kt:LocalStorageImpl : LocalStorage</ID>
+    <ID>TooManyFunctions:NetworkSensorManager.kt:NetworkSensorManager : SensorManager</ID>
+    <ID>TooManyFunctions:NotificationFunctions.kt:io.homeassistant.companion.android.common.notifications.NotificationFunctions.kt</ID>
+    <ID>TooManyFunctions:PrefsRepository.kt:PrefsRepository</ID>
+    <ID>TooManyFunctions:PrefsRepositoryImpl.kt:PrefsRepositoryImpl : PrefsRepository</ID>
+    <ID>TooManyFunctions:SensorDao.kt:SensorDao</ID>
+    <ID>TooManyFunctions:SensorManager.kt:SensorManager</ID>
+    <ID>TooManyFunctions:SensorModule.kt:SensorModule</ID>
+    <ID>TooManyFunctions:SensorRepository.kt:SensorRepository</ID>
+    <ID>TooManyFunctions:SensorRepositoryImpl.kt:SensorRepositoryImpl : SensorRepository</ID>
+    <ID>TooManyFunctions:ServerManager.kt:ServerManager</ID>
+    <ID>TooManyFunctions:ServerManagerImpl.kt:ServerManagerImpl : ServerManager</ID>
+    <ID>TooManyFunctions:WearPrefsRepository.kt:WearPrefsRepository</ID>
+    <ID>TooManyFunctions:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl : WearPrefsRepository</ID>
+    <ID>TooManyFunctions:WebSocketCoreImpl.kt:WebSocketCoreImpl : WebSocketListenerWebSocketCore</ID>
+    <ID>TooManyFunctions:WebSocketRepository.kt:WebSocketRepository</ID>
+    <ID>TooManyFunctions:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl : WebSocketListenerWebSocketRepository</ID>
+    <ID>UnusedParameter:LastRebootSensorManager.kt:LastRebootSensorManager$applicationContext: Context</ID>
+    <ID>UnusedParameter:MonitoringManager.kt:MonitoringManager$context: Context</ID>
+  </CurrentIssues>
+</SmellBaseline>
