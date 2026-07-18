@@ -128,6 +128,7 @@ class NotificationListenerSensorManager @Inject constructor(
     }
 
     override suspend fun requestSensorUpdate() {
+        // Load settings to persist their defaults before the sensor detail screen observes them.
         listOf(lastNotification, lastRemovedNotification)
             .filter { isEnabled(it) }
             .forEach { getNotificationSettings(it) }

@@ -43,29 +43,24 @@ class NotificationListenerSensorManagerTest {
     }
 
     @Test
-    fun `Given last notification enabled when requesting update then its settings are initialized`() = runTest {
-        prepareEnabledNotificationSensor(NotificationListenerSensorManager.lastNotification.id)
-        coEvery { sensorRepository.getSettings(any()) } returns emptyList()
-        val addedSettings = captureAddedSettings()
-
-        manager.requestSensorUpdate()
-
-        assertEquals(
-            defaultSettings(NotificationListenerSensorManager.lastNotification.id),
-            addedSettings,
-        )
+    fun `Given last notification enabled when requesting update then its settings are initialized`() {
+        assertSettingsInitialized(NotificationListenerSensorManager.lastNotification.id)
     }
 
     @Test
-    fun `Given last removed notification enabled when requesting update then its settings are initialized`() = runTest {
-        prepareEnabledNotificationSensor(NotificationListenerSensorManager.lastRemovedNotification.id)
+    fun `Given last removed notification enabled when requesting update then its settings are initialized`() {
+        assertSettingsInitialized(NotificationListenerSensorManager.lastRemovedNotification.id)
+    }
+
+    private fun assertSettingsInitialized(sensorId: String) = runTest {
+        prepareEnabledNotificationSensor(sensorId)
         coEvery { sensorRepository.getSettings(any()) } returns emptyList()
         val addedSettings = captureAddedSettings()
 
         manager.requestSensorUpdate()
 
         assertEquals(
-            defaultSettings(NotificationListenerSensorManager.lastRemovedNotification.id),
+            defaultSettings(sensorId),
             addedSettings,
         )
     }
