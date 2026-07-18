@@ -2,8 +2,6 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
-import androidx.test.core.app.ApplicationProvider
-import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -15,24 +13,19 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.runner.RunWith
-import org.robolectric.ParameterizedRobolectricTestRunner
-import org.robolectric.ParameterizedRobolectricTestRunner.Parameters
-import org.robolectric.annotation.Config
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
 private const val SETTING_ALLOW_LIST = "notification_allow_list"
 private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
 
-@RunWith(ParameterizedRobolectricTestRunner::class)
-@Config(application = HiltTestApplication::class)
-class NotificationListenerSensorManagerTest(
-    private val sensorId: String,
-) {
+class NotificationListenerSensorManagerTest {
 
-    private val context: Context = ApplicationProvider.getApplicationContext()
+    private val context = mockk<Context> {
+        every { packageName } returns "io.homeassistant.companion.android"
+    }
     private val sensorRepository: SensorRepository = mockk(relaxed = true)
     private val manager = NotificationListenerSensorManager(
         context,
@@ -40,13 +33,16 @@ class NotificationListenerSensorManagerTest(
         mockk<ServerManager>(relaxed = true),
     )
 
-    @After
+    @AfterEach
     fun tearDown() {
         unmockkStatic(NotificationManagerCompat::class)
     }
 
-    @Test
-    fun `Given notification sensor enabled when requesting update then its settings are initialized`() = runTest {
+    @ParameterizedTest
+    @MethodSource("sensorIds")
+    fun `Given notification sensor enabled when requesting update then its settings are initialized`(
+        sensorId: String,
+    ) = runTest {
         prepareEnabledNotificationSensor(sensorId)
         coEvery { sensorRepository.getSettings(any()) } returns emptyList()
         val addedSettings = captureAddedSettings()
@@ -59,8 +55,11 @@ class NotificationListenerSensorManagerTest(
         )
     }
 
-    @Test
-    fun `Given custom allow list when requesting update then existing value is preserved`() = runTest {
+    @ParameterizedTest
+    @MethodSource("sensorIds")
+    fun `Given custom allow list when requesting update then existing value is preserved`(
+        sensorId: String,
+    ) = runTest {
         val existingSetting = SensorSetting(
             sensorId = sensorId,
             name = SETTING_ALLOW_LIST,
@@ -88,7 +87,6 @@ class NotificationListenerSensorManagerTest(
 
     companion object {
         @JvmStatic
-        @Parameters(name = "{0}")
         fun sensorIds() = listOf(
             NotificationListenerSensorManager.lastNotification.id,
             NotificationListenerSensorManager.lastRemovedNotification.id,
