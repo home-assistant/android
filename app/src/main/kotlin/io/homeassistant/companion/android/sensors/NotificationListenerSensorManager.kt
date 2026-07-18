@@ -128,6 +128,9 @@ class NotificationListenerSensorManager @Inject constructor(
     }
 
     override suspend fun requestSensorUpdate() {
+        listOf(lastNotification, lastRemovedNotification)
+            .filter { isEnabled(it) }
+            .forEach { getNotificationSettings(it) }
         updateMediaSession()
     }
 
@@ -145,22 +148,11 @@ class NotificationListenerSensorManager @Inject constructor(
                 return@launch
             }
 
-            val allowPackages = getSetting(
-                lastNotification,
-                SETTING_ALLOW_LIST,
-                SensorSettingType.LIST_APPS,
-                default = "",
-            ).split(", ").filter { it.isNotBlank() }
-
-            val disableAllowListRequirement = getToggleSetting(
-                lastNotification,
-                SETTING_DISABLE_ALLOW_LIST,
-                default = false,
-            )
+            val settings = getNotificationSettings(lastNotification)
 
             if (sbn.packageName == applicationContext.packageName ||
-                (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
-                (!disableAllowListRequirement && allowPackages.isEmpty())
+                (settings.allowPackages.isNotEmpty() && sbn.packageName !in settings.allowPackages) ||
+                (!settings.disableAllowListRequirement && settings.allowPackages.isEmpty())
             ) {
                 return@launch
             }
@@ -208,22 +200,11 @@ class NotificationListenerSensorManager @Inject constructor(
                 return@launch
             }
 
-            val allowPackages = getSetting(
-                lastRemovedNotification,
-                SETTING_ALLOW_LIST,
-                SensorSettingType.LIST_APPS,
-                default = "",
-            ).split(", ").filter { it.isNotBlank() }
-
-            val disableAllowListRequirement = getToggleSetting(
-                lastRemovedNotification,
-                SETTING_DISABLE_ALLOW_LIST,
-                default = false,
-            )
+            val settings = getNotificationSettings(lastRemovedNotification)
 
             if (sbn.packageName == applicationContext.packageName ||
-                (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
-                (!disableAllowListRequirement && allowPackages.isEmpty())
+                (settings.allowPackages.isNotEmpty() && sbn.packageName !in settings.allowPackages) ||
+                (!settings.disableAllowListRequirement && settings.allowPackages.isEmpty())
             ) {
                 return@launch
             }
@@ -359,6 +340,24 @@ class NotificationListenerSensorManager @Inject constructor(
             forceUpdate = primaryPlaybackState == "Playing",
         )
     }
+
+    private suspend fun getNotificationSettings(sensor: SensorManager.BasicSensor): NotificationSettings {
+        val allowPackages = getSetting(
+            sensor,
+            SETTING_ALLOW_LIST,
+            SensorSettingType.LIST_APPS,
+            default = "",
+        ).split(", ").filter { it.isNotBlank() }
+        val disableAllowListRequirement = getToggleSetting(
+            sensor,
+            SETTING_DISABLE_ALLOW_LIST,
+            default = false,
+        )
+
+        return NotificationSettings(allowPackages, disableAllowListRequirement)
+    }
+
+    private data class NotificationSettings(val allowPackages: List<String>, val disableAllowListRequirement: Boolean)
 
     private fun getPlaybackState(state: Int?): String {
         return mediaStates.getOrDefault(state ?: PlaybackState.STATE_NONE, STATE_UNKNOWN)
