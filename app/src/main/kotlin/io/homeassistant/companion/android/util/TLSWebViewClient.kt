@@ -51,10 +51,10 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
 
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
         Timber.d("onReceivedClientCertRequest invoked looking for cert in local storage or ask the user for it")
-        // Let the WebViewActivity know the endpoint requires TLS Client Auth
+        // Let the WebViewClient know the endpoint requires TLS Client Auth
         isTLSClientAuthNeeded = true
 
-        // Aim to obtain the private key for the whole lifecycle of the WebViewActivity
+        // Aim to obtain the private key for the whole lifecycle
         val activity = getActivity(view.context)
         if (activity != null) {
             // If the key is available, process the request

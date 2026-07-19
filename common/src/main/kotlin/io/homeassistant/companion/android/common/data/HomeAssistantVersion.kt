@@ -22,4 +22,7 @@ data class HomeAssistantVersion(val year: Int, val month: Int, val release: Int)
 
     fun isAtLeast(minYear: Int, minMonth: Int, minRelease: Int = 0): Boolean =
         year > minYear || (year == minYear && (month > minMonth || (month == minMonth && release >= minRelease)))
+
+    fun isAtLeast(min: HomeAssistantVersion): Boolean =
+        isAtLeast(minYear = min.year, minMonth = min.month, minRelease = min.release)
 }

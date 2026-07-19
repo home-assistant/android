@@ -31,7 +31,7 @@ class ManageShortcutsSettingsFragment : Fragment() {
         const val SHORTCUT_PREFIX = "shortcut"
     }
 
-    val viewModel: ManageShortcutsViewModel by viewModels()
+    internal val viewModel: ManageShortcutsViewModel by viewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {

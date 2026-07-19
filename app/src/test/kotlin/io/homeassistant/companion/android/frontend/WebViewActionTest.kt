@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
+import android.util.DisplayMetrics
 import android.webkit.ValueCallback
 import android.webkit.WebView
 import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
@@ -177,5 +178,33 @@ class WebViewActionTest {
                 null,
             )
         }
+    }
+
+    @Test
+    fun `Given ApplyZoom with pinchToZoomEnabled true when run then supportZoom and builtInZoomControls are enabled and viewport allows scaling`() = runTest {
+        every { webView.resources.displayMetrics } returns DisplayMetrics().apply { density = 1.0f }
+        val scriptSlot = slot<String>()
+        every { webView.evaluateJavascript(capture(scriptSlot), any()) } just Runs
+        val action = WebViewAction.ApplyZoom(zoomLevel = 100, pinchToZoomEnabled = true)
+
+        action.run(webView)
+
+        verify { webView.settings.setSupportZoom(true) }
+        verify { webView.settings.builtInZoomControls = true }
+        assertTrue(scriptSlot.captured.contains("let overrideZoom = true;"))
+    }
+
+    @Test
+    fun `Given ApplyZoom with pinchToZoomEnabled false when run then supportZoom and builtInZoomControls are disabled and viewport is restored`() = runTest {
+        every { webView.resources.displayMetrics } returns DisplayMetrics().apply { density = 1.0f }
+        val scriptSlot = slot<String>()
+        every { webView.evaluateJavascript(capture(scriptSlot), any()) } just Runs
+        val action = WebViewAction.ApplyZoom(zoomLevel = 100, pinchToZoomEnabled = false)
+
+        action.run(webView)
+
+        verify { webView.settings.setSupportZoom(false) }
+        verify { webView.settings.builtInZoomControls = false }
+        assertTrue(scriptSlot.captured.contains("let overrideZoom = false;"))
     }
 }

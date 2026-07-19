@@ -1,14 +1,7 @@
 package io.homeassistant.companion.android.settings.shortcuts.legacy
 
 import android.app.Application
-import android.content.Intent
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
-import android.graphics.drawable.AdaptiveIconDrawable
 import android.os.Build
-import android.util.TypedValue
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.MutableState
@@ -18,46 +11,32 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.drawable.IconCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.mikepenz.iconics.IconicsColor
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.IconicsSize
 import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.backgroundColor
-import com.mikepenz.iconics.utils.size
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.IconDialogCompat
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.homeassistant.companion.android.util.icondialog.mdiName
-import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
+import io.homeassistant.companion.android.settings.shortcuts.SHORTCUT_EXTRA_PATH
+import io.homeassistant.companion.android.settings.shortcuts.SHORTCUT_EXTRA_SERVER
 import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @HiltViewModel
-class ManageShortcutsViewModel @Inject constructor(
+internal class ManageShortcutsViewModel @Inject constructor(
     private val serverManager: ServerManager,
+    private val shortcutManager: HaShortcutManager,
+    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
     application: Application,
 ) : AndroidViewModel(application) {
 
@@ -74,18 +53,10 @@ class ManageShortcutsViewModel @Inject constructor(
 
     var servers by mutableStateOf(emptyList<Server>())
         private set
-    var entities = mutableStateMapOf<Int, List<Entity>>()
-        private set
-    var entityRegistry = mutableStateMapOf<Int, List<EntityRegistryResponse>>()
-        private set
-    var deviceRegistry = mutableStateMapOf<Int, List<DeviceRegistryResponse>>()
-        private set
-    var areaRegistry = mutableStateMapOf<Int, List<AreaRegistryResponse>>()
+    var displayEntities = mutableStateMapOf<Int, EntityDisplayState>()
         private set
 
     private suspend fun currentServerId() = serverManager.getServer()?.id ?: 0
-
-    private val iconIdToName: Map<Int, String> by lazy { IconDialogCompat(app.assets).loadAllIcons() }
 
     data class Shortcut(
         var id: MutableState<String?>,
@@ -125,44 +96,8 @@ class ManageShortcutsViewModel @Inject constructor(
             this@ManageShortcutsViewModel.servers = servers
             servers.forEach { server ->
                 launch {
-                    entities[server.id] = try {
-                        serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                            .sortedBy { it.entityId }
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load entities for server")
-                        emptyList()
-                    }
-                }
-                launch {
-                    entityRegistry[server.id] = try {
-                        serverManager.webSocketRepository(server.id).getEntityRegistry().orEmpty()
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load entity registry for server")
-                        emptyList()
-                    }
-                }
-                launch {
-                    deviceRegistry[server.id] = try {
-                        serverManager.webSocketRepository(server.id).getDeviceRegistry().orEmpty()
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load device registry for server")
-                        emptyList()
-                    }
-                }
-                launch {
-                    areaRegistry[server.id] = try {
-                        serverManager.webSocketRepository(server.id).getAreaRegistry().orEmpty()
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Couldn't load area registry for server")
-                        emptyList()
+                    getEntitiesForDisplay(serverId = server.id).collect { state ->
+                        displayEntities[server.id] = state
                     }
                 }
             }
@@ -192,26 +127,14 @@ class ManageShortcutsViewModel @Inject constructor(
         icon: IIcon?,
     ) {
         Timber.d("Attempt to add shortcut $shortcutId")
-        val intent = Intent(
-            WebViewActivity.newInstance(app, shortcutPath, serverId).addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK,
-            ),
+        val shortcut = shortcutManager.buildShortcutInfo(
+            shortcutId = shortcutId,
+            serverId = serverId,
+            label = shortcutLabel,
+            longLabel = shortcutDesc,
+            path = shortcutPath,
+            icon = icon,
         )
-        intent.action = shortcutPath
-        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-        intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-        icon?.let { intent.putExtra("iconName", icon.mdiName) }
-
-        val shortcut = ShortcutInfoCompat.Builder(app, shortcutId)
-            .setShortLabel(shortcutLabel)
-            .setLongLabel(shortcutDesc)
-            .setIcon(
-                icon?.toAdaptiveIcon()
-                    ?: // Use launcher icon that is an AdaptiveIcon so it gets themed properly by the system
-                    IconCompat.createWithResource(app, R.mipmap.ic_launcher),
-            )
-            .setIntent(intent)
-            .build()
 
         if (shortcutId.startsWith("shortcut")) {
             ShortcutManagerCompat.addDynamicShortcuts(app, listOf(shortcut))
@@ -250,41 +173,6 @@ class ManageShortcutsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Replicate an AdaptiveIcon from a [IIcon] by applying the right measure.
-     * It will output an [IconCompat] created with [IconCompat.createWithAdaptiveBitmap] to flag the [android.graphics.Bitmap]
-     * as AdaptiveIcon.
-     *
-     * @see [AdaptiveIconDrawable] for more the details.
-     */
-    private fun IIcon.toAdaptiveIcon(): IconCompat {
-        val iconDrawable = IconicsDrawable(app, this).apply {
-            size = IconicsSize.dp(48)
-            colorFilter = PorterDuffColorFilter(
-                ContextCompat.getColor(app, commonR.color.colorAccent),
-                PorterDuff.Mode.SRC_IN,
-            )
-            backgroundColor = IconicsColor.colorInt(Color.TRANSPARENT)
-        }
-
-        val adaptiveIconSize = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            108f,
-            app.resources.displayMetrics,
-        ).toInt()
-        val adaptiveBitmap = createBitmap(adaptiveIconSize, adaptiveIconSize)
-        val canvas = Canvas(adaptiveBitmap)
-        // Use the same color as the foreground of the launcher as background
-        canvas.drawColor(ContextCompat.getColor(app, R.color.ic_launcher_foreground))
-        // Calculate the position to draw the icon in the center
-        val x = (canvas.width - iconDrawable.intrinsicWidth) / 2f
-        val y = (canvas.height - iconDrawable.intrinsicHeight) / 2f
-        canvas.translate(x, y)
-        iconDrawable.draw(canvas)
-
-        return IconCompat.createWithAdaptiveBitmap(adaptiveBitmap)
-    }
-
     private fun updateDynamicShortcuts() {
         dynamicShortcuts =
             ShortcutManagerCompat.getShortcuts(app, ShortcutManagerCompat.FLAG_MATCH_DYNAMIC).sortedBy {
@@ -305,21 +193,11 @@ class ManageShortcutsViewModel @Inject constructor(
 
     private suspend fun Shortcut.setData(item: ShortcutInfoCompat) {
         val currentServerId = currentServerId()
-        serverId.value = item.intent.extras?.getInt("server", currentServerId) ?: currentServerId
+        serverId.value = item.intent.extras?.getInt(SHORTCUT_EXTRA_SERVER, currentServerId) ?: currentServerId
         label.value = item.shortLabel.toString()
         desc.value = item.longLabel.toString()
-        path.value = item.intent.action.toString()
-        selectedIcon.value = if (item.intent.extras?.containsKey("iconName") == true) {
-            item.intent.extras?.getString("iconName")?.let { CommunityMaterial.getIconByMdiName(it) }
-        } else if (item.intent.extras?.containsKey("iconId") == true) {
-            withContext(Dispatchers.IO) {
-                item.intent.extras?.getInt("iconId")?.takeIf { it != 0 }?.let {
-                    CommunityMaterial.getIconByMdiName("mdi:${iconIdToName.getValue(it)}")
-                }
-            }
-        } else {
-            null
-        }
+        path.value = item.intent.getStringExtra(SHORTCUT_EXTRA_PATH).orEmpty()
+        selectedIcon.value = shortcutManager.resolveIconFromIntent(item.intent)
         if (path.value.startsWith("entityId:")) {
             type.value = "entityId"
         } else {

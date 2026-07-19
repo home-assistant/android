@@ -37,6 +37,7 @@ import io.homeassistant.companion.android.database.qs.getHighestInUse
 import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.database.qs.numberedId
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.settings.qs.TileId
 import io.homeassistant.companion.android.settings.qs.updateActiveTileServices
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import javax.inject.Inject
@@ -51,11 +52,10 @@ import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.N)
 @AndroidEntryPoint
-abstract class TileExtensions : TileService() {
+internal abstract class TileExtensions : TileService() {
 
+    abstract val tileId: TileId
     abstract fun getTile(): Tile?
-
-    abstract fun getTileId(): String
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -71,44 +71,44 @@ abstract class TileExtensions : TileService() {
         super.onClick()
         getTile()?.let { tile ->
             mainScope.launch {
-                setTileData(getTileId(), tile)
-                tileClicked(getTileId(), tile, false)
+                setTileData(tile)
+                tileClicked(tile, isUnlock = false)
             }
         }
     }
 
     override fun onTileAdded() {
         super.onTileAdded()
-        Timber.d("Tile: ${getTileId()} added")
+        Timber.d("Tile: $tileId added")
         handleInject()
         getTile()?.let { tile ->
             mainScope.launch {
-                setTileData(getTileId(), tile)
+                setTileData(tile)
             }
         }
         mainScope.launch {
-            setTileAdded(getTileId(), true)
+            setTileAdded(added = true)
         }
     }
 
     override fun onTileRemoved() {
         super.onTileRemoved()
-        Timber.d("Tile: ${getTileId()} removed")
+        Timber.d("Tile: $tileId removed")
         handleInject()
         runBlocking {
-            setTileAdded(getTileId(), false)
+            setTileAdded(added = false)
         }
     }
 
     override fun onStartListening() {
         super.onStartListening()
-        Timber.d("Tile: ${getTileId()} is in view")
+        Timber.d("Tile: $tileId is in view")
         getTile()?.let { tile ->
             mainScope.launch {
-                setTileData(getTileId(), tile)
+                setTileData(tile)
             }
             stateUpdateJob = mainScope.launch {
-                val tileData = tileDao.get(getTileId())
+                val tileData = tileDao.get(tileId.value)
                 if (tileData != null &&
                     tileData.isSetup &&
                     tileData.entityId.split('.')[0] in toggleDomainsWithLock &&
@@ -131,7 +131,7 @@ abstract class TileExtensions : TileService() {
 
     override fun onStopListening() {
         super.onStopListening()
-        Timber.d("Tile: ${getTileId()} is no longer in view")
+        Timber.d("Tile: $tileId is no longer in view")
         stateUpdateJob?.cancel()
     }
 
@@ -140,10 +140,10 @@ abstract class TileExtensions : TileService() {
         mainScope.cancel()
     }
 
-    private suspend fun setTileData(tileId: String, tile: Tile): Boolean {
+    private suspend fun setTileData(tile: Tile): Boolean {
         Timber.d("Attempting to set tile data for tile ID: $tileId")
         val context = applicationContext
-        val tileData = tileDao.get(tileId)
+        val tileData = tileDao.get(tileId.value)
         try {
             return if (tileData != null && tileData.isSetup) {
                 tile.label = tileData.label
@@ -206,10 +206,10 @@ abstract class TileExtensions : TileService() {
         }
     }
 
-    private suspend fun tileClicked(tileId: String, tile: Tile, isUnlock: Boolean) {
+    private suspend fun tileClicked(tile: Tile, isUnlock: Boolean) {
         Timber.d("Click detected for tile ID: $tileId")
         val context = applicationContext
-        val tileData = tileDao.get(tileId)
+        val tileData = tileDao.get(tileId.value)
         val vm = getSystemService<Vibrator>()
         if (!isUnlock) {
             if (tileData?.shouldVibrate == true) {
@@ -222,13 +222,13 @@ abstract class TileExtensions : TileService() {
             }
             if (tileData?.authRequired == true && isSecure) {
                 unlockAndRun {
-                    mainScope.launch { tileClicked(tileId, tile, true) }
+                    mainScope.launch { tileClicked(tile, isUnlock = true) }
                 }
                 return
             }
         }
 
-        val hasTile = setTileData(tileId, tile)
+        val hasTile = setTileData(tile)
         val needsUpdate = tileData != null && tileData.entityId.split('.')[0] !in toggleDomainsWithLock
         if (hasTile) {
             if (tileData?.serverId == null || serverManager.getServer(tileData.serverId) == null) {
@@ -258,7 +258,7 @@ abstract class TileExtensions : TileService() {
             Timber.d("No tile data found for tile ID: $tileId")
             val tileSettingIntent = SettingsActivity.newInstance(
                 context,
-                SettingsActivity.Deeplink.QSTile(tileId),
+                SettingsActivity.Deeplink.QSTile(tileId.value),
             ).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
@@ -268,7 +268,7 @@ abstract class TileExtensions : TileService() {
                     this@TileExtensions,
                     PendingIntentActivityWrapper(
                         context,
-                        tileId.hashCode(),
+                        tileId.value.hashCode(),
                         tileSettingIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT,
                         false,
@@ -299,14 +299,14 @@ abstract class TileExtensions : TileService() {
         }
     }
 
-    private suspend fun setTileAdded(tileId: String, added: Boolean) {
-        tileDao.get(tileId)?.let {
+    private suspend fun setTileAdded(added: Boolean) {
+        tileDao.get(tileId.value)?.let {
             tileDao.add(it.copy(added = added))
         } ?: run {
             if (added) { // Store an empty tile in the database to track added
                 tileDao.add(
                     TileEntity(
-                        tileId = tileId,
+                        tileId = tileId.value,
                         added = true,
                         serverId = 0,
                         iconName = null,

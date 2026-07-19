@@ -24,8 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoViewModel
@@ -34,7 +33,6 @@ import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
-import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import sh.calvin.reorderable.ReorderableItem
@@ -57,15 +55,22 @@ fun AndroidAutoFavoritesSettings(
     var selectedServer by remember(defaultServer) { mutableIntStateOf(defaultServer) }
 
     val favoriteEntities = androidAutoViewModel.favoritesList.toList()
-    var validEntities by remember { mutableStateOf<List<Entity>>(emptyList()) }
-    LaunchedEffect(favoriteEntities.size, androidAutoViewModel.sortedEntities.size, selectedServer) {
-        validEntities = withContext(Dispatchers.IO) {
-            androidAutoViewModel.sortedEntities
-                .filter {
-                    !favoriteEntities.contains(AutoFavorite(selectedServer, it.entityId)) &&
-                        isVehicleDomain(it)
-                }
-                .toList()
+    val displayState = androidAutoViewModel.displayEntities
+    val loadedEntities = (displayState as? EntityDisplayState.Loaded)?.entities.orEmpty()
+    // The picker shows the entities not already in the favorites; build the filtered state off
+    // the main thread so its entity index is not computed on the compose thread.
+    var pickerDisplayState by remember { mutableStateOf<EntityDisplayState>(EntityDisplayState.Loading) }
+    LaunchedEffect(favoriteEntities.size, displayState, selectedServer) {
+        pickerDisplayState = when (displayState) {
+            is EntityDisplayState.Loading -> EntityDisplayState.Loading
+            is EntityDisplayState.Error -> EntityDisplayState.Error
+            is EntityDisplayState.Loaded -> withContext(Dispatchers.IO) {
+                EntityDisplayState.Loaded(
+                    displayState.entities.filter {
+                        !favoriteEntities.contains(AutoFavorite(selectedServer, it.entityId))
+                    },
+                )
+            }
         }
     }
 
@@ -107,47 +112,42 @@ fun AndroidAutoFavoritesSettings(
                 // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6302
                 HATheme {
                     EntityPicker(
-                        entities = validEntities,
+                        displayState = pickerDisplayState,
                         selectedEntityId = null,
-                        onEntityCleared = { /* Nothing */ },
-                        onEntitySelectedId = {
-                            androidAutoViewModel.onEntitySelected(true, it, selectedServer)
+                        onSelectionChanged = { entityId ->
+                            entityId?.let { androidAutoViewModel.onEntitySelected(true, it, selectedServer) }
                         },
                         addButtonText = stringResource(commonR.string.add_favorite),
-                        entityRegistry = androidAutoViewModel.entityRegistry,
-                        deviceRegistry = androidAutoViewModel.deviceRegistry,
-                        areaRegistry = androidAutoViewModel.areaRegistry,
                         modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                     )
                 }
             }
-            if (favoriteEntities.isNotEmpty() && androidAutoViewModel.sortedEntities.isNotEmpty()) {
+            if (favoriteEntities.isNotEmpty() && loadedEntities.isNotEmpty()) {
                 items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                     val favoriteEntity = favoriteEntities[index]
-                    androidAutoViewModel.sortedEntities.firstOrNull {
-                        it.entityId == favoriteEntity.entityId &&
-                            favoriteEntity.serverId == selectedServer
-                    }?.let {
-                        ReorderableItem(
-                            state = reorderState,
-                            key = favoriteEntities[index],
-                        ) { isDragging ->
-                            FavoriteEntityRow(
-                                entityName = it.friendlyName,
-                                entityId = it.entityId,
-                                onClick = {
-                                    androidAutoViewModel.onEntitySelected(
-                                        false,
-                                        it.entityId,
-                                        selectedServer,
-                                    )
-                                },
-                                checked = true,
-                                draggable = true,
-                                isDragging = isDragging,
-                            )
+                    (displayState as? EntityDisplayState.Loaded)
+                        ?.takeIf { favoriteEntity.serverId == selectedServer }
+                        ?.entity(favoriteEntity.entityId)
+                        ?.let {
+                            ReorderableItem(
+                                state = reorderState,
+                                key = favoriteEntities[index],
+                            ) { isDragging ->
+                                FavoriteEntityRow(
+                                    entity = it,
+                                    onClick = {
+                                        androidAutoViewModel.onEntitySelected(
+                                            false,
+                                            it.entityId,
+                                            selectedServer,
+                                        )
+                                    },
+                                    checked = true,
+                                    draggable = true,
+                                    isDragging = isDragging,
+                                )
+                            }
                         }
-                    }
                 }
             }
         }

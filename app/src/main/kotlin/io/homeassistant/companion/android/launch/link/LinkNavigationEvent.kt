@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.launch.link
 
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+
 /**
  * One-shot navigation events.
  */
@@ -10,6 +12,6 @@ sealed interface LinkNavigationEvent {
     /** Start the server onboarding flow for [serverUrl]. */
     data class OpenInvitation(val serverUrl: String) : LinkNavigationEvent
 
-    /** Navigate the WebView at [path] on the server identified by [serverId]. */
-    data class NavigateToWebView(val path: String, val serverId: Int) : LinkNavigationEvent
+    /** Open the frontend at [target] on the server identified by [serverId]. */
+    data class NavigateToWebView(val target: FrontendTarget, val serverId: Int) : LinkNavigationEvent
 }
