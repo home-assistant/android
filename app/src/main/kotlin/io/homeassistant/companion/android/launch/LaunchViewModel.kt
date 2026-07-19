@@ -24,8 +24,6 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -34,7 +32,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
@@ -149,13 +146,14 @@ internal class LaunchViewModel @VisibleForTesting constructor(
      */
     val pipReadiness: StateFlow<PipReadiness?> = _pipReadiness.asStateFlow()
 
-    private val _newDeepLinks = Channel<LaunchActivity.DeepLink>(capacity = Channel.BUFFERED)
+    private val _newDeepLink = MutableStateFlow<LaunchActivity.DeepLink?>(null)
 
     /**
-     * Deep links delivered through [LaunchActivity.onNewIntent] while the activity is already
-     * running, buffered until the UI collects them.
+     * The latest deep link delivered through [LaunchActivity.onNewIntent] while the activity is
+     * already running, or `null` once handled. Conflated on purpose: commands arriving while none
+     * can be applied yet keep only the most recent one.
      */
-    val newDeepLinks: Flow<LaunchActivity.DeepLink> = _newDeepLinks.receiveAsFlow()
+    val newDeepLink: StateFlow<LaunchActivity.DeepLink?> = _newDeepLink.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -215,9 +213,38 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         _pipReadiness.value = readiness
     }
 
-    /** Queues a deep link received while the activity is already running. */
+    /** Keeps the latest deep link received while the activity is already running. */
     fun onNewDeepLink(deepLink: LaunchActivity.DeepLink) {
-        _newDeepLinks.trySend(deepLink)
+        _newDeepLink.value = deepLink
+    }
+
+    /** Marks the current [newDeepLink] as applied. */
+    fun onNewDeepLinkHandled() {
+        _newDeepLink.value = null
+    }
+
+    /**
+     * The destination a [deepLink] received while the activity is already running navigates to
+     * when no frontend is shown, applying the same Automotive policy as a launch: the dedicated
+     * Automotive UI is never replaced by the WebView. Returns `null` for deep links only
+     * supported at launch.
+     */
+    fun newDeepLinkDestination(deepLink: LaunchActivity.DeepLink): HAStartDestinationRoute? = when (deepLink) {
+        is LaunchActivity.DeepLink.NavigateTo ->
+            if (shouldNavigateToAutomotive) {
+                AutomotiveRoute
+            } else {
+                FrontendRoute(deepLink.target, deepLink.serverId)
+            }
+
+        is LaunchActivity.DeepLink.ReloadFrontend ->
+            if (shouldNavigateToAutomotive) {
+                AutomotiveRoute
+            } else {
+                FrontendRoute(FrontendTarget.Default, deepLink.serverId)
+            }
+
+        else -> null
     }
 
     private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {

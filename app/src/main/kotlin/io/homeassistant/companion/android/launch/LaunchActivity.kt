@@ -36,6 +36,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import dev.chrisbanes.haze.hazeSource
@@ -50,7 +51,6 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.FrontendViewModel
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
-import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.ChangeLog
@@ -62,7 +62,7 @@ import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import javax.inject.Inject
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import timber.log.Timber
@@ -221,7 +221,7 @@ class LaunchActivity : AppCompatActivity() {
 
                 NewDeepLinkEffect(
                     navController = navController,
-                    newDeepLinks = viewModel.newDeepLinks,
+                    viewModel = viewModel,
                 )
 
                 HAApp(
@@ -301,32 +301,46 @@ class LaunchActivity : AppCompatActivity() {
  * Applies deep links delivered to the already running [LaunchActivity] through
  * [LaunchActivity.onNewIntent], so the webview notification command can act on an open frontend
  * without restarting the app. A frontend shown on top handles its deep link in place through its
- * [FrontendViewModel]; otherwise the frontend is opened at the requested destination. Other deep
- * links are ignored since their entry points always start a fresh activity.
+ * [FrontendViewModel]; otherwise the destination resolved by the [viewModel] is opened, keeping
+ * the same Automotive policy as a launch. Deep links are held until the navigation graph exists
+ * ([LaunchUiState.Ready]) and only the latest one is kept while waiting. Other deep links are
+ * ignored since their entry points always start a fresh activity.
  */
 @Composable
-private fun NewDeepLinkEffect(navController: NavController, newDeepLinks: Flow<LaunchActivity.DeepLink>) {
+private fun NewDeepLinkEffect(navController: NavController, viewModel: LaunchViewModel) {
     val currentEntry by navController.currentBackStackEntryAsState()
     val frontendEntry = currentEntry?.takeIf { it.destination.hasRoute<FrontendRoute>() }
     val frontendViewModel: FrontendViewModel? =
         frontendEntry?.let { hiltViewModel(viewModelStoreOwner = it) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isReady = uiState is LaunchUiState.Ready
 
-    LaunchedEffect(frontendViewModel) {
-        newDeepLinks.collect { deepLink ->
+    LaunchedEffect(frontendViewModel, isReady) {
+        if (!isReady) return@LaunchedEffect
+        viewModel.newDeepLink.filterNotNull().collect { deepLink ->
             when (deepLink) {
                 is LaunchActivity.DeepLink.NavigateTo ->
                     frontendViewModel?.navigateTo(target = deepLink.target, serverId = deepLink.serverId)
-                        ?: navController.navigateToFrontend(target = deepLink.target, serverId = deepLink.serverId)
+                        ?: navController.navigateToNewDeepLinkDestination(viewModel, deepLink)
 
                 is LaunchActivity.DeepLink.ReloadFrontend ->
                     frontendViewModel?.reloadFrontend(serverId = deepLink.serverId)
                         // A freshly opened frontend is already fully loaded
-                        ?: navController.navigateToFrontend(serverId = deepLink.serverId)
+                        ?: navController.navigateToNewDeepLinkDestination(viewModel, deepLink)
 
                 else -> Timber.w("Ignoring deep link only supported at launch: ${deepLink::class.simpleName}")
             }
+            viewModel.onNewDeepLinkHandled()
         }
     }
+}
+
+private fun NavController.navigateToNewDeepLinkDestination(
+    viewModel: LaunchViewModel,
+    deepLink: LaunchActivity.DeepLink,
+) {
+    val destination = viewModel.newDeepLinkDestination(deepLink) ?: return
+    navigate(destination, navOptions { launchSingleTop = true })
 }
 
 /**

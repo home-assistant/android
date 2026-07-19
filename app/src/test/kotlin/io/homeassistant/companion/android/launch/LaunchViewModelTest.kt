@@ -27,7 +27,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -412,13 +411,52 @@ class LaunchViewModelTest {
     }
 
     @Test
-    fun `Given a deep link received while running when queued then it is emitted to the UI collector`() = runTest {
+    fun `Given deep links received while running when queued then only the latest is kept until handled`() = runTest {
         createViewModel(null)
-        val deepLink = LaunchActivity.DeepLink.ReloadFrontend(1)
+        val first = LaunchActivity.DeepLink.ReloadFrontend(1)
+        val second = LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/x"), 1)
 
-        viewModel.onNewDeepLink(deepLink)
+        viewModel.onNewDeepLink(first)
+        viewModel.onNewDeepLink(second)
+        assertEquals(second, viewModel.newDeepLink.value)
 
-        assertEquals(deepLink, viewModel.newDeepLinks.first())
+        viewModel.onNewDeepLinkHandled()
+        assertNull(viewModel.newDeepLink.value)
+    }
+
+    @Test
+    fun `Given full Automotive when resolving a running deep link then the Automotive UI is kept`() = runTest {
+        createViewModel(null, isAutomotive = true, isFullFlavor = true)
+
+        assertEquals(
+            AutomotiveRoute,
+            viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/x"), 1)),
+        )
+        assertEquals(
+            AutomotiveRoute,
+            viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.ReloadFrontend(1)),
+        )
+    }
+
+    @Test
+    fun `Given a phone when resolving a running deep link then the frontend is the destination`() = runTest {
+        createViewModel(null)
+
+        assertEquals(
+            FrontendRoute(FrontendTarget.Path("/x"), 1),
+            viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/x"), 1)),
+        )
+        assertEquals(
+            FrontendRoute(FrontendTarget.Default, 1),
+            viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.ReloadFrontend(1)),
+        )
+    }
+
+    @Test
+    fun `Given a launch only deep link when resolving then there is no running destination`() = runTest {
+        createViewModel(null)
+
+        assertNull(viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.OpenInvitation("https://ha.test")))
     }
 
     @Test
