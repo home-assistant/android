@@ -83,8 +83,8 @@ import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
-import io.homeassistant.companion.android.frontend.externalbus.outgoing.NavigateToMessage
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchReloadFrontend
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
@@ -97,9 +97,7 @@ import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
-import io.homeassistant.companion.android.util.ReloadRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
-import io.homeassistant.companion.android.util.WebViewNavigationMediator
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -135,8 +133,6 @@ class MessagingManager @Inject constructor(
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
     private val permissionRequestMediator: PermissionRequestMediator,
-    private val reloadRequestMediator: ReloadRequestMediator,
-    private val webViewNavigationMediator: WebViewNavigationMediator,
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
     private val bluetoothSensorManager: BluetoothSensorManager,
@@ -822,14 +818,10 @@ class MessagingManager @Inject constructor(
             }
 
             COMMAND_WEBVIEW -> {
-                val isReload = WEBVIEW_RELOAD.equals(command?.trim(), ignoreCase = true)
-                when {
-                    isReload && isFrontendVisible(serverId) -> reloadRequestMediator.emitReloadRequestEvent()
-                    !isReload && canNavigateFrontendInApp(serverId = serverId, path = command) ->
-                        webViewNavigationMediator.requestNavigation(FrontendTarget.fromRawPath(command))
-                    !Settings.canDrawOverlays(context) -> notifyMissingPermission(message, serverId)
-                    // A fresh launch is already reloaded, so reload falls back to the default dashboard
-                    else -> openWebview(title = command?.takeUnless { isReload }, data = data)
+                if (!Settings.canDrawOverlays(context)) {
+                    notifyMissingPermission(message, serverId)
+                } else {
+                    openWebview(command, data)
                 }
             }
 
@@ -2006,31 +1998,21 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun isFrontendVisible(serverId: String): Boolean {
-        val targetServerId = serverId.toIntOrNull() ?: return false
-        return webViewNavigationMediator.visibleServerId.value == targetServerId
-    }
-
-    private suspend fun canNavigateFrontendInApp(serverId: String, path: String?): Boolean {
-        if (!isFrontendVisible(serverId)) {
-            return false
-        }
-        val targetServerId = serverId.toIntOrNull() ?: return false
-        if (!NavigateToMessage.isAvailable(serverManager.getServer(targetServerId)?.version)) {
-            return false
-        }
-        // Trimmed and matched ignoring case since the value is typed by hand
-        val target = path?.trim().orEmpty()
-        val launchPrefixes = listOf(APP_PREFIX, INTENT_PREFIX, SETTINGS_PREFIX, DEEP_LINK_PREFIX)
-        return launchPrefixes.none { target.startsWith(it, ignoreCase = true) } && !UrlUtil.isAbsoluteUrl(target)
-    }
-
     private fun openWebview(title: String?, data: Map<String, String>) {
         try {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val intent = context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            // Trimmed and matched ignoring case since the value is typed by hand
+            val isReload = WEBVIEW_RELOAD.equals(title?.trim(), ignoreCase = true)
+            val intent = if (isReload) {
+                context.intentLaunchReloadFrontend(serverId)
+            } else {
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
+            }
+            // Delivered to the running activity (onNewIntent) so an open frontend handles the
+            // deep link in place instead of being recreated; otherwise it starts fresh
+            intent.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP,
+            )
             context.startActivity(intent)
         } catch (e: Exception) {
             Timber.e(e, "Unable to open webview")

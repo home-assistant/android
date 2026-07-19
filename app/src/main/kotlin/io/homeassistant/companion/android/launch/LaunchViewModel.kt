@@ -24,6 +24,8 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
@@ -146,6 +149,14 @@ internal class LaunchViewModel @VisibleForTesting constructor(
      */
     val pipReadiness: StateFlow<PipReadiness?> = _pipReadiness.asStateFlow()
 
+    private val _newDeepLinks = Channel<LaunchActivity.DeepLink>(capacity = Channel.BUFFERED)
+
+    /**
+     * Deep links delivered through [LaunchActivity.onNewIntent] while the activity is already
+     * running, buffered until the UI collects them.
+     */
+    val newDeepLinks: Flow<LaunchActivity.DeepLink> = _newDeepLinks.receiveAsFlow()
+
     init {
         viewModelScope.launch {
             cleanupServers()
@@ -204,6 +215,11 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         _pipReadiness.value = readiness
     }
 
+    /** Queues a deep link received while the activity is already running. */
+    fun onNewDeepLink(deepLink: LaunchActivity.DeepLink) {
+        _newDeepLinks.trySend(deepLink)
+    }
+
     private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {
         when (initialDeepLink) {
             is LaunchActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
@@ -219,6 +235,10 @@ internal class LaunchViewModel @VisibleForTesting constructor(
 
             is LaunchActivity.DeepLink.NavigateTo,
             -> connectToServer(initialDeepLink.serverId, initialDeepLink.target)
+
+            // A launch is a fresh load already, nothing left to reload
+            is LaunchActivity.DeepLink.ReloadFrontend,
+            -> connectToServer(initialDeepLink.serverId, FrontendTarget.Default)
 
             is LaunchActivity.DeepLink.OpenWearOnboarding -> navigateToWearOnboarding(
                 wearName = initialDeepLink.wearName,

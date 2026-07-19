@@ -56,8 +56,6 @@ import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
-import io.homeassistant.companion.android.util.ReloadRequestMediator
-import io.homeassistant.companion.android.util.WebViewNavigationMediator
 import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -132,8 +130,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
-    private val reloadRequestMediator: ReloadRequestMediator,
-    private val webViewNavigationMediator: WebViewNavigationMediator,
     @NamedKeyChain private val keyChainRepository: KeyChainRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
@@ -159,8 +155,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
         matterThreadHandler: FrontendMatterThreadHandler,
-        reloadRequestMediator: ReloadRequestMediator,
-        webViewNavigationMediator: WebViewNavigationMediator,
         @NamedKeyChain keyChainRepository: KeyChainRepository,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
@@ -183,8 +177,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler = improvHandler,
         barcodeScannerHandler = barcodeScannerHandler,
         matterThreadHandler = matterThreadHandler,
-        reloadRequestMediator = reloadRequestMediator,
-        webViewNavigationMediator = webViewNavigationMediator,
         keyChainRepository = keyChainRepository,
     )
 
@@ -315,7 +307,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     private var pendingMoreInfoEntityId: String? = null
 
-    private var isFrontendVisible = false
+    /**
+     * The latest [navigateTo] or [reloadFrontend] request; a newer request cancels one still
+     * waiting for the frontend handshake.
+     */
+    private var externalNavigationJob: Job? = null
 
     /**
      * The user's "Autoplay video" preference.
@@ -366,35 +362,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 releaseExoPlayerIfLeavingContent(state)
                 // Timeout watcher - cancels automatically when state changes from Loading
                 watchLoadingTimeout(state)
-            }
-        }
-
-        viewModelScope.launch {
-            reloadRequestMediator.eventFlow.collect {
-                // Dropping the cache while the page is still loading can wedge the load
-                _webViewActions.emit(
-                    if (_viewState.value is FrontendViewState.Content) {
-                        WebViewAction.HardReload()
-                    } else {
-                        WebViewAction.Reload()
-                    },
-                )
-            }
-        }
-
-        viewModelScope.launch {
-            // Requests are only made for servers supporting navigate, no version check is needed.
-            // Bus messages sent before the frontend handshake are lost, so each request waits for
-            // it and only the latest request is kept while waiting
-            webViewNavigationMediator.navigationRequests.collectLatest { target ->
-                _viewState.first { it is FrontendViewState.Content }
-                when (target) {
-                    is FrontendTarget.EntityMoreInfo -> _webViewActions.emit(
-                        WebViewAction.OpenMoreInfo(target.entityId),
-                    )
-                    is FrontendTarget.Path -> externalBusRepository.send(NavigateToMessage(path = target.path))
-                    FrontendTarget.Default -> externalBusRepository.send(NavigateToMessage(path = "/"))
-                }
             }
         }
 
@@ -583,8 +550,75 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         _viewState.update {
             FrontendViewState.LoadServer(serverId = serverId)
         }
-        if (isFrontendVisible) {
-            webViewNavigationMediator.setVisibleServer(serverId)
+        loadServer()
+    }
+
+    /**
+     * Navigates to [target] on [serverId] for the webview notification command delivered to the
+     * running frontend. Another server is loaded from scratch directly at the target, the shown
+     * server is navigated in place. Only the latest external request is applied: bus messages
+     * sent before the frontend handshake are lost, so a request waits for the page and a newer
+     * request replaces a waiting one.
+     */
+    fun navigateTo(target: FrontendTarget, serverId: Int) {
+        externalNavigationJob?.cancel()
+        externalNavigationJob = viewModelScope.launch {
+            if (!isCurrentServer(serverId)) {
+                loadServerAt(serverId, target)
+                return@launch
+            }
+            _viewState.first { it is FrontendViewState.Content }
+            when (target) {
+                is FrontendTarget.EntityMoreInfo -> _webViewActions.emit(
+                    WebViewAction.OpenMoreInfo(target.entityId),
+                )
+
+                is FrontendTarget.Path -> navigateToPath(target.path)
+                FrontendTarget.Default -> navigateToDefaultDashboard(_viewState.value.serverId)
+            }
+        }
+    }
+
+    /**
+     * Reloads the frontend of [serverId] for the webview notification command delivered to the
+     * running frontend. Another server is simply loaded, which is a fresh page already.
+     */
+    fun reloadFrontend(serverId: Int) {
+        externalNavigationJob?.cancel()
+        externalNavigationJob = viewModelScope.launch {
+            if (!isCurrentServer(serverId)) {
+                loadServerAt(serverId, FrontendTarget.Default)
+                return@launch
+            }
+            // Dropping the cache while the page is still loading can wedge the load
+            _webViewActions.emit(
+                if (_viewState.value is FrontendViewState.Content) {
+                    WebViewAction.HardReload()
+                } else {
+                    WebViewAction.Reload()
+                },
+            )
+        }
+    }
+
+    private suspend fun navigateToPath(path: String) {
+        val serverId = _viewState.value.serverId
+        val version = serverManager.getServer(serverId)?.version
+        if (NavigateToMessage.isAvailable(version)) {
+            externalBusRepository.send(NavigateToMessage(path = path))
+        } else {
+            // Servers without navigation support get a full page load at the target instead
+            loadServerAt(serverId, FrontendTarget.Path(path))
+        }
+    }
+
+    /** Whether [serverId] refers to the server the frontend currently shows. */
+    private suspend fun isCurrentServer(serverId: Int): Boolean =
+        serverManager.getServer(serverId)?.id == serverManager.getServer(_viewState.value.serverId)?.id
+
+    private fun loadServerAt(serverId: Int, target: FrontendTarget) {
+        _viewState.update {
+            FrontendViewState.LoadServer(serverId = serverId, target = target)
         }
         loadServer()
     }
@@ -723,12 +757,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is GestureResult.NavigateToDefaultDashboard -> navigateToDefaultDashboard(_viewState.value.serverId)
             is GestureResult.Forwarded, is GestureResult.Ignored -> { /* no-op */ }
         }
-    }
-
-    /** Publishes the shown server while the frontend is visible so the webview command can act on it in place. */
-    fun setFrontendVisible(visible: Boolean) {
-        isFrontendVisible = visible
-        webViewNavigationMediator.setVisibleServer(_viewState.value.serverId.takeIf { visible })
     }
 
     /**

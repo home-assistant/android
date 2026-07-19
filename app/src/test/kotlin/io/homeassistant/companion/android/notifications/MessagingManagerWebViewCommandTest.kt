@@ -1,24 +1,22 @@
 package io.homeassistant.companion.android.notifications
 
 import android.app.Application
+import android.content.Intent
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
-import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.util.ReloadRequestMediator
-import io.homeassistant.companion.android.util.WebViewNavigationMediator
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,31 +35,24 @@ private const val WEBHOOK_ID = "webhook"
 @Config(application = HiltTestApplication::class)
 class MessagingManagerWebViewCommandTest {
 
-    private lateinit var navigationMediator: WebViewNavigationMediator
-    private lateinit var reloadMediator: ReloadRequestMediator
-    private val visibleServerId = MutableStateFlow<Int?>(null)
-    private lateinit var server: Server
+    private val application = ApplicationProvider.getApplicationContext<Application>()
     private lateinit var messagingManager: MessagingManager
 
     @Before
     fun setUp() {
+        ShadowSettings.setCanDrawOverlays(true)
         val serverManager = mockk<ServerManager>(relaxed = true)
         val integrationRepository = mockk<IntegrationRepository>(relaxed = true)
-        server = mockk<Server>(relaxed = true) {
+        val server = mockk<Server>(relaxed = true) {
             every { id } returns SERVER_ID
-            every { version } returns HomeAssistantVersion(2025, 6, 0)
         }
         coEvery { serverManager.getServer(WEBHOOK_ID) } returns server
         coEvery { serverManager.getServer(SERVER_ID) } returns server
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.isTrusted() } returns true
 
-        navigationMediator = mockk(relaxed = true)
-        every { navigationMediator.visibleServerId } returns visibleServerId
-        reloadMediator = mockk(relaxed = true)
-
         messagingManager = MessagingManager(
-            context = ApplicationProvider.getApplicationContext<Application>(),
+            context = application,
             okHttpClientProvider = mockk(relaxed = true),
             serverManager = serverManager,
             prefsRepository = mockk(relaxed = true),
@@ -71,8 +62,6 @@ class MessagingManagerWebViewCommandTest {
             textToSpeechClient = mockk(relaxed = true),
             flashlightHelper = mockk(relaxed = true),
             permissionRequestMediator = mockk(relaxed = true),
-            reloadRequestMediator = reloadMediator,
-            webViewNavigationMediator = navigationMediator,
             assistConfigManager = mockk(relaxed = true),
             defaultAssistantManager = mockk(relaxed = true),
             bluetoothSensorManager = mockk(relaxed = true),
@@ -91,113 +80,82 @@ class MessagingManagerWebViewCommandTest {
         shadowOf(Looper.getMainLooper()).idle()
     }
 
-    @Test
-    fun `Given the frontend shows the server when receiving webview command then it navigates in place`() {
-        visibleServerId.value = SERVER_ID
+    /** The deep link of the started [LaunchActivity] intent, asserting the intent shape. */
+    private fun startedDeepLink(): LaunchActivity.DeepLink {
+        val intent = checkNotNull(shadowOf(application).nextStartedActivity) { "No activity was started" }
+        assertEquals(LaunchActivity::class.java.name, intent.component?.className)
+        // Delivered to a running activity instead of recreating it
+        val expectedFlags =
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        assertEquals(expectedFlags, intent.flags and expectedFlags)
+        val deepLink = intent.extras?.keySet()?.firstNotNullOfOrNull {
+            @Suppress("DEPRECATION")
+            intent.extras?.get(it) as? LaunchActivity.DeepLink
+        }
+        return checkNotNull(deepLink) { "The started intent carries no deep link" }
+    }
 
+    @Test
+    fun `Given a path when receiving webview command then the frontend is launched at the target`() {
         handleWebViewCommand("/lovelace/cameras")
 
-        verify(exactly = 1) { navigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/cameras")) }
-    }
-
-    @Test
-    fun `Given an entity target when receiving webview command then it opens more info in place`() {
-        visibleServerId.value = SERVER_ID
-
-        handleWebViewCommand("entityId:sun.sun")
-
-        verify(exactly = 1) { navigationMediator.requestNavigation(FrontendTarget.EntityMoreInfo("sun.sun")) }
-    }
-
-    @Test
-    fun `Given an empty command when receiving webview command then it navigates to the default dashboard in place`() {
-        visibleServerId.value = SERVER_ID
-
-        handleWebViewCommand("")
-
-        verify(exactly = 1) { navigationMediator.requestNavigation(FrontendTarget.Default) }
-    }
-
-    @Test
-    fun `Given a server without the navigate command when receiving webview command then it does not navigate in place`() {
-        visibleServerId.value = SERVER_ID
-        every { server.version } returns HomeAssistantVersion(2025, 5, 0)
-        ShadowSettings.setCanDrawOverlays(true)
-
-        handleWebViewCommand("/lovelace/cameras")
-
-        verify(exactly = 0) { navigationMediator.requestNavigation(any()) }
-    }
-
-    private fun assertCommandDoesNotNavigateInPlace(path: String) {
-        visibleServerId.value = SERVER_ID
-        ShadowSettings.setCanDrawOverlays(true)
-
-        handleWebViewCommand(path)
-
-        verify(exactly = 0) { navigationMediator.requestNavigation(any()) }
-    }
-
-    @Test
-    fun `Given an app settings path when receiving webview command then it does not navigate in place`() {
-        assertCommandDoesNotNavigateInPlace("settings://notification_history")
-    }
-
-    @Test
-    fun `Given an app launch path with surrounding spaces when receiving webview command then it does not navigate in place`() {
-        assertCommandDoesNotNavigateInPlace(" app://com.example.app ")
-    }
-
-    @Test
-    fun `Given the frontend shows the server when receiving reload command then it reloads in place`() {
-        visibleServerId.value = SERVER_ID
-
-        handleWebViewCommand("reload")
-
-        verify(exactly = 1) { reloadMediator.emitReloadRequestEvent() }
-        verify(exactly = 0) { navigationMediator.requestNavigation(any()) }
-    }
-
-    @Test
-    fun `Given the frontend is not visible when receiving reload command then it launches the frontend instead`() {
-        visibleServerId.value = null
-        ShadowSettings.setCanDrawOverlays(true)
-
-        handleWebViewCommand("reload")
-
-        verify(exactly = 0) { reloadMediator.emitReloadRequestEvent() }
         assertEquals(
-            LaunchActivity::class.java.name,
-            shadowOf(ApplicationProvider.getApplicationContext<Application>()).nextStartedActivity?.component?.className,
+            LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/lovelace/cameras"), SERVER_ID),
+            startedDeepLink(),
         )
     }
 
     @Test
-    fun `Given the frontend is not visible when receiving webview command then it does not navigate in place`() {
-        visibleServerId.value = null
-        ShadowSettings.setCanDrawOverlays(true)
+    fun `Given an entity target when receiving webview command then the frontend is launched at its more info`() {
+        handleWebViewCommand("entityId:sun.sun")
+
+        assertEquals(
+            LaunchActivity.DeepLink.NavigateTo(FrontendTarget.EntityMoreInfo("sun.sun"), SERVER_ID),
+            startedDeepLink(),
+        )
+    }
+
+    @Test
+    fun `Given an empty command when receiving webview command then the frontend is launched at the default dashboard`() {
+        handleWebViewCommand("")
+
+        assertEquals(
+            LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Default, SERVER_ID),
+            startedDeepLink(),
+        )
+    }
+
+    @Test
+    fun `Given a path with surrounding spaces when receiving webview command then the target is trimmed`() {
+        handleWebViewCommand(" /lovelace/cameras ")
+
+        assertEquals(
+            LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/lovelace/cameras"), SERVER_ID),
+            startedDeepLink(),
+        )
+    }
+
+    @Test
+    fun `Given the reload command when receiving webview command then the frontend is reloaded`() {
+        handleWebViewCommand("reload")
+
+        assertEquals(LaunchActivity.DeepLink.ReloadFrontend(SERVER_ID), startedDeepLink())
+    }
+
+    @Test
+    fun `Given the reload command in mixed case with spaces when receiving webview command then the frontend is reloaded`() {
+        handleWebViewCommand(" Reload ")
+
+        assertEquals(LaunchActivity.DeepLink.ReloadFrontend(SERVER_ID), startedDeepLink())
+    }
+
+    @Test
+    fun `Given no overlay permission when receiving webview command then no activity is started`() {
+        ShadowSettings.setCanDrawOverlays(false)
 
         handleWebViewCommand("/lovelace/cameras")
 
-        verify(exactly = 0) { navigationMediator.requestNavigation(any()) }
-    }
-
-    @Test
-    fun `Given an absolute URL when receiving webview command then it does not navigate in place`() {
-        assertCommandDoesNotNavigateInPlace("https://example.com")
-    }
-
-    @Test
-    fun `Given an uppercase absolute URL with surrounding spaces when receiving webview command then it does not navigate in place`() {
-        assertCommandDoesNotNavigateInPlace(" HTTPS://example.com")
-    }
-
-    @Test
-    fun `Given a path with surrounding spaces when receiving webview command then it navigates to the trimmed path`() {
-        visibleServerId.value = SERVER_ID
-
-        handleWebViewCommand(" /lovelace/cameras ")
-
-        verify(exactly = 1) { navigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/cameras")) }
+        assertNull(shadowOf(application).nextStartedActivity)
+        assertTrue(shadowOf(application).broadcastIntents.isEmpty())
     }
 }

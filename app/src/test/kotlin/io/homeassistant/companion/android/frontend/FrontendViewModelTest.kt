@@ -60,8 +60,6 @@ import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
-import io.homeassistant.companion.android.util.ReloadRequestMediator
-import io.homeassistant.companion.android.util.WebViewNavigationMediator
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.mockServer
 import io.mockk.clearMocks
@@ -146,8 +144,6 @@ class FrontendViewModelTest {
     private val matterThreadHandler: FrontendMatterThreadHandler = mockk(relaxed = true) {
         every { events } returns MutableSharedFlow()
     }
-    private val reloadRequestMediator = ReloadRequestMediator()
-    private val webViewNavigationMediator = WebViewNavigationMediator()
 
     private val improvUiStateFlow = MutableStateFlow<ImprovUIState?>(null)
     private val improvEventsFlow = MutableSharedFlow<FrontendImprovHandler.Event>(extraBufferCapacity = 1)
@@ -191,8 +187,6 @@ class FrontendViewModelTest {
             improvHandler = improvHandler,
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
             matterThreadHandler = matterThreadHandler,
-            reloadRequestMediator = reloadRequestMediator,
-            webViewNavigationMediator = webViewNavigationMediator,
             keyChainRepository = keyChainRepository,
         )
     }
@@ -837,8 +831,26 @@ class FrontendViewModelTest {
             return messageFlow
         }
 
+        private fun mockCurrentServer(haVersion: HomeAssistantVersion? = HomeAssistantVersion(2025, 6, 0)) {
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "test",
+                haVersion = haVersion,
+                serverId = serverId,
+            )
+        }
+
+        private fun mockOtherServer(otherServerId: Int) {
+            coEvery { serverManager.getServer(otherServerId) } returns mockServer(
+                url = "https://other.test",
+                name = "other",
+                serverId = otherServerId,
+            )
+        }
+
         @Test
-        fun `Given a connected frontend when reload requested then webViewActions emits HardReload action`() = runTest {
+        fun `Given a connected frontend when reloading its server then webViewActions emits HardReload`() = runTest {
+            mockCurrentServer()
             val messageFlow = connectableMessageFlow()
             val viewModel = createViewModel()
 
@@ -847,7 +859,7 @@ class FrontendViewModelTest {
                 advanceUntilIdle()
                 skipItems(2) // The connection handshake: history clear and theme color read
 
-                reloadRequestMediator.emitReloadRequestEvent()
+                viewModel.reloadFrontend(serverId)
 
                 assertTrue(awaitItem() is WebViewAction.HardReload)
                 cancelAndIgnoreRemainingEvents()
@@ -855,15 +867,15 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given a loading frontend when reload requested then webViewActions emits a plain Reload action`() = runTest {
+        fun `Given a loading frontend when reloading its server then webViewActions emits a plain Reload`() = runTest {
+            mockCurrentServer()
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-
             val viewModel = createViewModel()
 
             viewModel.webViewActions.test {
-                reloadRequestMediator.emitReloadRequestEvent()
+                viewModel.reloadFrontend(serverId)
 
                 assertTrue(awaitItem() is WebViewAction.Reload)
                 cancelAndIgnoreRemainingEvents()
@@ -871,20 +883,37 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given a navigation request when made then the frontend navigates over the external bus`() = runTest {
+        fun `Given a connected frontend when navigating to a path then it navigates over the external bus`() = runTest {
+            mockCurrentServer()
             val messageFlow = connectableMessageFlow()
-            createViewModel()
+            val viewModel = createViewModel()
             messageFlow.emit(FrontendHandlerEvent.Connected)
             advanceUntilIdle()
 
-            webViewNavigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/cameras"))
+            viewModel.navigateTo(FrontendTarget.Path("/lovelace/cameras"), serverId)
             advanceUntilIdle()
 
             coVerify { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
         }
 
         @Test
-        fun `Given an entity navigation request when made then webViewActions emits OpenMoreInfo`() = runTest {
+        fun `Given a server without navigation support when navigating to a path then the page is loaded at the target`() = runTest {
+            mockCurrentServer(haVersion = HomeAssistantVersion(2025, 5, 0))
+            val messageFlow = connectableMessageFlow()
+            val viewModel = createViewModel()
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            viewModel.navigateTo(FrontendTarget.Path("/lovelace/cameras"), serverId)
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
+            verify { urlManager.serverUrlFlow(serverId, FrontendTarget.Path("/lovelace/cameras")) }
+        }
+
+        @Test
+        fun `Given an entity target when navigating then webViewActions emits OpenMoreInfo`() = runTest {
+            mockCurrentServer()
             val messageFlow = connectableMessageFlow()
             val viewModel = createViewModel()
 
@@ -893,7 +922,7 @@ class FrontendViewModelTest {
                 advanceUntilIdle()
                 skipItems(2) // The connection handshake: history clear and theme color read
 
-                webViewNavigationMediator.requestNavigation(FrontendTarget.EntityMoreInfo("sun.sun"))
+                viewModel.navigateTo(FrontendTarget.EntityMoreInfo("sun.sun"), serverId)
 
                 assertEquals("sun.sun", (awaitItem() as WebViewAction.OpenMoreInfo).entityId)
                 cancelAndIgnoreRemainingEvents()
@@ -901,11 +930,33 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given a loading frontend when a navigation request is made then it is delivered once connected`() = runTest {
+        fun `Given the default target when navigating then the default dashboard navigation is used`() = runTest {
+            mockCurrentServer()
             val messageFlow = connectableMessageFlow()
-            createViewModel()
+            val viewModel = createViewModel()
+            val job = launch {
+                viewModel.webViewActions.collect {
+                    // The default dashboard navigation clears the history and awaits it
+                    if (it is WebViewAction.ClearHistory) it.result.complete(Unit)
+                }
+            }
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
 
-            webViewNavigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/cameras"))
+            viewModel.navigateTo(FrontendTarget.Default, serverId)
+            advanceUntilIdle()
+
+            coVerify { externalBusRepository.send(NavigateToMessage(path = "/", replace = true)) }
+            job.cancel()
+        }
+
+        @Test
+        fun `Given a loading frontend when navigating then the request is delivered once connected`() = runTest {
+            mockCurrentServer()
+            val messageFlow = connectableMessageFlow()
+            val viewModel = createViewModel()
+
+            viewModel.navigateTo(FrontendTarget.Path("/lovelace/cameras"), serverId)
             // Stay within the connection timeout so the frontend keeps loading
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
             coVerify(exactly = 0) { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
@@ -917,12 +968,13 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given several navigation requests while loading when connected then only the latest is delivered`() = runTest {
+        fun `Given several navigations while loading when connected then only the latest is delivered`() = runTest {
+            mockCurrentServer()
             val messageFlow = connectableMessageFlow()
-            createViewModel()
+            val viewModel = createViewModel()
 
-            webViewNavigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/old"))
-            webViewNavigationMediator.requestNavigation(FrontendTarget.Path("/lovelace/new"))
+            viewModel.navigateTo(FrontendTarget.Path("/lovelace/old"), serverId)
+            viewModel.navigateTo(FrontendTarget.Path("/lovelace/new"), serverId)
             // Stay within the connection timeout so the frontend keeps loading
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
@@ -934,53 +986,36 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given the frontend when it becomes visible then its server is published`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
+        fun `Given another server when navigating then it is loaded directly at the target`() = runTest {
+            mockCurrentServer()
+            val otherServerId = serverId + 1
+            mockOtherServer(otherServerId)
+            val messageFlow = connectableMessageFlow()
             val viewModel = createViewModel()
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
 
-            viewModel.setFrontendVisible(true)
+            viewModel.navigateTo(FrontendTarget.Path("/lovelace/cameras"), otherServerId)
+            advanceUntilIdle()
 
-            assertEquals(serverId, webViewNavigationMediator.visibleServerId.value)
+            coVerify(exactly = 0) { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
+            verify { urlManager.serverUrlFlow(otherServerId, FrontendTarget.Path("/lovelace/cameras")) }
         }
 
         @Test
-        fun `Given a visible frontend when it is hidden then the published server is cleared`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
+        fun `Given another server when reloading then it is simply loaded`() = runTest {
+            mockCurrentServer()
+            val otherServerId = serverId + 1
+            mockOtherServer(otherServerId)
+            val messageFlow = connectableMessageFlow()
             val viewModel = createViewModel()
-            viewModel.setFrontendVisible(true)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
 
-            viewModel.setFrontendVisible(false)
+            viewModel.reloadFrontend(otherServerId)
+            advanceUntilIdle()
 
-            assertNull(webViewNavigationMediator.visibleServerId.value)
-        }
-
-        @Test
-        fun `Given a visible frontend when switching server then the new server is published`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
-            val viewModel = createViewModel()
-            viewModel.setFrontendVisible(true)
-
-            viewModel.switchServer(serverId + 1)
-
-            assertEquals(serverId + 1, webViewNavigationMediator.visibleServerId.value)
-        }
-
-        @Test
-        fun `Given a hidden frontend when switching server then no server is published`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
-            val viewModel = createViewModel()
-
-            viewModel.switchServer(serverId + 1)
-
-            assertNull(webViewNavigationMediator.visibleServerId.value)
+            verify { urlManager.serverUrlFlow(otherServerId, FrontendTarget.Default) }
         }
 
         @Test

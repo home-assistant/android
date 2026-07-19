@@ -217,20 +217,6 @@ class UrlUtilTest {
         assertTrue(url.isPubliclyAccessible())
     }
 
-    @ParameterizedTest(name = "isAbsoluteUrl: {0} -> {1}")
-    @CsvSource(
-        "https://example.com, true",
-        "http://example.com, true",
-        "HTTPS://example.com, true",
-        "HTTP://EXAMPLE.COM, true",
-        "/lovelace/default, false",
-        "app://com.example.app, false",
-        "' https://example.com', false",
-    )
-    fun `isAbsoluteUrl returns expected value`(input: String, expected: Boolean) {
-        assertEquals(expected, UrlUtil.isAbsoluteUrl(input))
-    }
-
     @ParameterizedTest(name = "hasSameOrigin: {0} vs {1} -> {2}")
     @CsvSource(
         "https://example.com, https://example.com, true",

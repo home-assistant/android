@@ -27,6 +27,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -388,6 +389,36 @@ class LaunchViewModelTest {
             LaunchUiState.Ready(FrontendRoute(FrontendTarget.Path("/path"), serverId)),
             viewModel.uiState.value,
         )
+    }
+
+    @Test
+    fun `Given initial deep link is ReloadFrontend when creating viewModel, then navigate to frontend at the default dashboard`() = runTest {
+        val serverId = 42
+        val server = mockk<Server>(relaxed = true)
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
+        coEvery { serverManager.getServer(serverId) } returns server
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
+        coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
+
+        createViewModel(LaunchActivity.DeepLink.ReloadFrontend(serverId))
+        advanceUntilIdle()
+        assertEquals(
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, serverId)),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `Given a deep link received while running when queued then it is emitted to the UI collector`() = runTest {
+        createViewModel(null)
+        val deepLink = LaunchActivity.DeepLink.ReloadFrontend(1)
+
+        viewModel.onNewDeepLink(deepLink)
+
+        assertEquals(deepLink, viewModel.newDeepLinks.first())
     }
 
     @Test
