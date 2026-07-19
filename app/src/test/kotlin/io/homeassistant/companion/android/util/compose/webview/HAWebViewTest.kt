@@ -117,6 +117,44 @@ class HAWebViewTest {
         verify(exactly = 0) { webView.pauseTimers() }
     }
 
+    @Test
+    fun `Given a started WebView when it stops keeping timers running then timers are not paused`() {
+        val timersManager = WebViewTimersManager()
+        timersManager.onWebViewStarted(webView)
+
+        timersManager.onWebViewStopped(webView, keepTimersRunning = true)
+
+        verify(exactly = 0) { webView.pauseTimers() }
+    }
+
+    @Test
+    fun `Given a WebView stopped keeping timers running when it starts and stops again then timers pause again`() {
+        val timersManager = WebViewTimersManager()
+        timersManager.onWebViewStarted(webView)
+        timersManager.onWebViewStopped(webView, keepTimersRunning = true)
+
+        timersManager.onWebViewStarted(webView)
+        timersManager.onWebViewStopped(webView)
+
+        // The count reached zero in between: the restart resumes (a no-op on running timers)
+        // and the next regular stop pauses again
+        verify(exactly = 2) { webView.resumeTimers() }
+        verify(exactly = 1) { webView.pauseTimers() }
+    }
+
+    @Test
+    fun `Given two started WebViews when one stops keeping timers running then the last regular stop still pauses`() {
+        val timersManager = WebViewTimersManager()
+        val otherWebView = mockk<WebView>(relaxed = true)
+        timersManager.onWebViewStarted(webView)
+        timersManager.onWebViewStarted(otherWebView)
+
+        timersManager.onWebViewStopped(webView, keepTimersRunning = true)
+        timersManager.onWebViewStopped(otherWebView)
+
+        verify(exactly = 1) { otherWebView.pauseTimers() }
+    }
+
     // endregion
 
     // region WebViewLifecycleEffect
@@ -171,6 +209,48 @@ class HAWebViewTest {
         composeTestRule.waitForIdle()
 
         verify(exactly = 0) { manager.onWebViewStarted(any()) }
+    }
+
+    @Test
+    fun `Given keep running while stopped when host activity stops then the WebView is not paused`() {
+        composeTestRule.setContent {
+            WebViewLifecycleEffect(webView = webView, keepRunningWhileStopped = { true }, manager = manager)
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+
+        verify(exactly = 0) { webView.onPause() }
+        verify(exactly = 1) { manager.onWebViewStopped(webView, keepTimersRunning = true) }
+    }
+
+    @Test
+    fun `Given keep running while stopped when host activity restarts then it registers and resumes as usual`() {
+        composeTestRule.setContent {
+            WebViewLifecycleEffect(webView = webView, keepRunningWhileStopped = { true }, manager = manager)
+        }
+        composeTestRule.waitForIdle()
+        composeTestRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+
+        composeTestRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+
+        verify(exactly = 2) { manager.onWebViewStarted(webView) }
+        verify(exactly = 2) { webView.onResume() }
+    }
+
+    @Test
+    fun `Given the screen commanded off only after start when host activity stops then the WebView keeps running`() {
+        var keepRunning = false
+        composeTestRule.setContent {
+            WebViewLifecycleEffect(webView = webView, keepRunningWhileStopped = { keepRunning }, manager = manager)
+        }
+        composeTestRule.waitForIdle()
+
+        keepRunning = true
+        composeTestRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+
+        verify(exactly = 0) { webView.onPause() }
+        verify(exactly = 1) { manager.onWebViewStopped(webView, keepTimersRunning = true) }
     }
 
     // endregion

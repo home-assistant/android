@@ -3,10 +3,13 @@ package io.homeassistant.companion.android.util
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.app.admin.DevicePolicyManager
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.PowerManager
-import androidx.annotation.VisibleForTesting
+import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -22,8 +25,10 @@ private val SCREEN_ON_WAKE_LOCK_TIMEOUT = 30.seconds
  * Turns the display off and back on for the screen off and screen on notification commands,
  * keeping all wake lock handling in one place. The display power is cut with
  * [DevicePolicyManager.lockNow] while a partial wake lock keeps the device awake, which requires
- * [ScreenOffAdminReceiver] active as device admin and no secure keyguard. All functions must be
- * called from the main thread, the wake lock state is not synchronized.
+ * [ScreenOffAdminReceiver] active as device admin and no secure keyguard. The commanded off state
+ * ends when the screen turns on by any means, including the power button, so the wake lock cannot
+ * outlive an already visible screen. All functions must be called from the main thread, the wake
+ * lock state is not synchronized ([Intent.ACTION_SCREEN_ON] is also delivered on the main thread).
  */
 @Singleton
 class ScreenOffHelper @Inject constructor(@ApplicationContext private val context: Context) {
@@ -35,8 +40,16 @@ class ScreenOffHelper @Inject constructor(@ApplicationContext private val contex
 
     private var screenOffWakeLock: PowerManager.WakeLock? = null
 
-    /** Whether the screen is currently turned off by [turnScreenOff]. */
-    @VisibleForTesting
+    private val screenOnReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            releaseScreenOffWakeLock()
+        }
+    }
+
+    /**
+     * Whether the screen is currently turned off by [turnScreenOff]. Read by the frontend to keep
+     * its WebView running while the display is commanded off.
+     */
     internal val isScreenOff: Boolean
         get() = screenOffWakeLock != null
 
@@ -61,6 +74,15 @@ class ScreenOffHelper @Inject constructor(@ApplicationContext private val contex
                 screenOffWakeLock = powerManager
                     ?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, SCREEN_OFF_WAKE_LOCK_TAG)
                     ?.apply { acquire() }
+                if (screenOffWakeLock != null) {
+                    // Protected system broadcast, only the system can send it
+                    ContextCompat.registerReceiver(
+                        context,
+                        screenOnReceiver,
+                        IntentFilter(Intent.ACTION_SCREEN_ON),
+                        ContextCompat.RECEIVER_EXPORTED,
+                    )
+                }
             }
             devicePolicyManager.lockNow()
             true
@@ -95,6 +117,7 @@ class ScreenOffHelper @Inject constructor(@ApplicationContext private val contex
     private fun releaseScreenOffWakeLock(): Boolean {
         val wakeLock = screenOffWakeLock ?: return false
         screenOffWakeLock = null
+        context.unregisterReceiver(screenOnReceiver)
         if (wakeLock.isHeld) {
             wakeLock.release()
         }

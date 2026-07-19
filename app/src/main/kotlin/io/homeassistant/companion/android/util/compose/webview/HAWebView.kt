@@ -66,6 +66,8 @@ const val BLANK_URL = "about:blank"
  * @param factory A lambda that creates the WebView instance. If this returns null, a new
  *                WebView will be created with the current context. This is useful for providing
  *                a pre-configured WebView instance.
+ * @param keepRunningWhileStopped Sampled when the screen stops; `true` keeps the WebView and the
+ *                                global WebView timers running, see [WebViewLifecycleEffect].
  */
 @Composable
 fun HAWebView(
@@ -76,6 +78,7 @@ fun HAWebView(
     // Only used when the backstack of the webView is empty
     onBackPressed: (() -> Unit)? = null,
     nightModeTheme: NightModeTheme? = null,
+    keepRunningWhileStopped: () -> Boolean = { false },
 ) {
     var webview by remember { mutableStateOf<WebView?>(null) }
     val uiMode = LocalConfiguration.current.uiMode
@@ -124,7 +127,7 @@ fun HAWebView(
             },
         )
 
-        WebViewLifecycleEffect(webView = webview)
+        WebViewLifecycleEffect(webView = webview, keepRunningWhileStopped = keepRunningWhileStopped)
     }
 
     // To avoid checking doUpdateVisitedHistory from the webViewClient we simply delegate the back button handling
@@ -139,20 +142,31 @@ fun HAWebView(
  * Freezes the [webView] while its screen is not visible: pauses the view's own processing and,
  * through the [manager], the global WebView timers once no other WebView screen is started either.
  *
- * Scoped to the composition's lifecycle owner, so leaving the screen, the app, or the composition freezes the view.
+ * Scoped to the composition's lifecycle owner, so leaving the screen, the app, or the composition freezes the view —
+ * unless [keepRunningWhileStopped] returns `true` at that moment (for example while the display is commanded off but
+ * the page must stay connected), in which case the view keeps running until the next regular stop.
  */
 @VisibleForTesting
 @Composable
-internal fun WebViewLifecycleEffect(webView: WebView?, manager: WebViewTimersManager = webViewTimersManager) {
+internal fun WebViewLifecycleEffect(
+    webView: WebView?,
+    keepRunningWhileStopped: () -> Boolean = { false },
+    manager: WebViewTimersManager = webViewTimersManager,
+) {
     if (webView != null) {
         LifecycleStartEffect(webView) {
             Timber.d("Webview started")
             manager.onWebViewStarted(webView)
             webView.onResume()
             onStopOrDispose {
-                Timber.d("Webview stopped")
-                webView.onPause()
-                manager.onWebViewStopped(webView)
+                if (keepRunningWhileStopped()) {
+                    Timber.d("Webview stopped, keeping it running")
+                    manager.onWebViewStopped(webView, keepTimersRunning = true)
+                } else {
+                    Timber.d("Webview stopped")
+                    webView.onPause()
+                    manager.onWebViewStopped(webView)
+                }
             }
         }
     }
@@ -180,14 +194,20 @@ internal class WebViewTimersManager {
         startedWebViews++
     }
 
-    /** Unregisters a started WebView screen, pausing global timers if it was the last one. */
-    fun onWebViewStopped(webView: WebView) {
+    /**
+     * Unregisters a started WebView screen, pausing global timers if it was the last one.
+     *
+     * [keepTimersRunning] skips only the pausing: the screen is still unregistered so the count
+     * stays exact, and the next first started screen resumes timers, which is a no-op when they
+     * were never paused.
+     */
+    fun onWebViewStopped(webView: WebView, keepTimersRunning: Boolean = false) {
         if (startedWebViews == 0) {
             FailFast.fail { "onWebViewStopped called without a matching onWebViewStarted" }
             return
         }
         startedWebViews--
-        if (startedWebViews == 0) {
+        if (startedWebViews == 0 && !keepTimersRunning) {
             webView.pauseTimers()
         }
     }
