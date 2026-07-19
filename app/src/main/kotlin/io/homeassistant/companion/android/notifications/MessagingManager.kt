@@ -849,6 +849,18 @@ class MessagingManager @Inject constructor(
                             Toast.LENGTH_LONG,
                         ).show()
                     }
+                } else if (screenOffHelper.isSecureKeyguardSet()) {
+                    // The command refuses to lock a device behind credentials, so requesting
+                    // the device admin would ask for an invasive permission that can never be
+                    // used; tell the user why instead
+                    Timber.w("$COMMAND_SCREEN_OFF is not available with a secure lock screen")
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            context,
+                            context.getString(commonR.string.screen_off_secure_keyguard),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
                 } else if (!screenOffHelper.canTurnScreenOff()) {
                     notifyMissingPermission(type = message, serverId = serverId)
                 } else if (!screenOffHelper.turnScreenOff()) {

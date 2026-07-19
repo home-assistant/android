@@ -58,6 +58,18 @@ class ScreenOffHelperTest {
     }
 
     @Test
+    fun `Given a secure keyguard when checking then it is reported as set`() {
+        every { keyguardManager.isDeviceSecure } returns true
+
+        assertTrue(helper.isSecureKeyguardSet())
+    }
+
+    @Test
+    fun `Given no secure keyguard when checking then it is reported as not set`() {
+        assertFalse(helper.isSecureKeyguardSet())
+    }
+
+    @Test
     fun `Given a secure keyguard when turning screen off then the screen stays on`() {
         activateDeviceAdmin()
         every { keyguardManager.isDeviceSecure } returns true

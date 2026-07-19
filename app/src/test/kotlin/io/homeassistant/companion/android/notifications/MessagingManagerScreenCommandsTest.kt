@@ -19,6 +19,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -95,6 +96,21 @@ class MessagingManagerScreenCommandsTest {
         handleMessage(MessagingManager.COMMAND_SCREEN_ON)
 
         verify(exactly = 1) { screenOffHelper.turnScreenOn() }
+    }
+
+    @Test
+    fun `Given a secure lock screen when receiving screen off command then the device admin is not requested`() {
+        every { screenOffHelper.isSecureKeyguardSet() } returns true
+        val application = ApplicationProvider.getApplicationContext<Application>()
+
+        handleMessage(MessagingManager.COMMAND_SCREEN_OFF)
+
+        assertEquals(
+            application.getString(commonR.string.screen_off_secure_keyguard),
+            ShadowToast.getTextOfLatestToast(),
+        )
+        assertNull(shadowOf(application).nextStartedActivity)
+        verify(exactly = 0) { screenOffHelper.turnScreenOff() }
     }
 
     @Test

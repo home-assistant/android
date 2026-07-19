@@ -34,12 +34,18 @@ class ScreenOffHelper @Inject constructor(@ApplicationContext private val contex
     fun canTurnScreenOff(): Boolean = devicePolicyManager?.isAdminActive(adminComponent) == true
 
     /**
+     * Whether a secure keyguard (PIN, pattern or password) is set, in which case [turnScreenOff]
+     * refuses to run — so the device admin activation should not be requested either.
+     */
+    fun isSecureKeyguardSet(): Boolean = keyguardManager?.isDeviceSecure != false
+
+    /**
      * @return `true` if the screen was turned off, `false` when the device admin is not active or
      * a secure keyguard is set
      */
     fun turnScreenOff(): Boolean {
         val devicePolicyManager = devicePolicyManager ?: return false
-        if (keyguardManager?.isDeviceSecure != false) {
+        if (isSecureKeyguardSet()) {
             Timber.w("Not turning the screen off, the secure keyguard would lock the device")
             return false
         }
