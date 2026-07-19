@@ -1585,7 +1585,8 @@ misc
         )
 
         subscription.test {
-            // The resubscription is sent but stays unanswered, tracking a second in flight entry
+            // The resubscription is sent but stays unanswered, tracked as a reconnecting entry
+            // next to the kept original
             every {
                 mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
             } returns true
@@ -1593,21 +1594,153 @@ misc
             advanceTimeBy(11.seconds)
             runCurrent()
             assertEquals(
-                2,
+                1,
                 webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
-                "The kept original and the in flight attempt should both be tracked",
+                "The kept original should stay the only tracked subscription",
+            )
+            assertEquals(
+                1,
+                webSocketCore.activeMessages.count { it.value is ActiveMessage.Reconnecting },
+                "The in flight attempt should be tracked as reconnecting",
             )
 
             cancelAndIgnoreRemainingEvents()
         }
 
-        // Closing the subscription removes every entry tracked for the message
+        // Closing the subscription removes every entry tracked for the message, and the
+        // possibly-accepted in-flight attempt is unsubscribed server-side rather than left
+        // to linger
         advanceUntilIdle()
         assertEquals(
             0,
-            webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
-            "No orphan subscription entry should remain after the flow is closed",
+            webSocketCore.activeMessages.count {
+                it.value is ActiveMessage.Subscription || it.value is ActiveMessage.Reconnecting
+            },
+            "No orphan entry should remain after the flow is closed",
         )
+        verify(atLeast = 2) {
+            mockConnection.send(match<String> { it.contains(""""type":"unsubscribe_events"""") })
+        }
+    }
+
+    @Test
+    fun `Given a subscription the server keeps rejecting Then it is retried with backoff and never abandoned`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // The server rejects every resubscription on the restored connection until accept flips
+            var subscribeAttempts = 0
+            var lastSubscribeId: Long? = null
+            var accept = false
+            every {
+                mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
+            } answers {
+                val id = checkNotNull(Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong())
+                subscribeAttempts++
+                lastSubscribeId = id
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$id,"type":"result","success":$accept,"result":{}}""",
+                )
+                true
+            }
+            closeConnection()
+
+            // Rejections are retried with a growing backoff: attempts at ~10s, ~20s, ~40s
+            advanceTimeBy(11.seconds)
+            runCurrent()
+            assertEquals(1, subscribeAttempts)
+            advanceTimeBy(10.seconds)
+            runCurrent()
+            assertEquals(2, subscribeAttempts)
+            advanceTimeBy(10.seconds)
+            runCurrent()
+            assertEquals(2, subscribeAttempts, "Rejection retries should back off instead of hammering")
+            advanceTimeBy(10.seconds)
+            runCurrent()
+            assertEquals(3, subscribeAttempts)
+            assertEquals(
+                1,
+                webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
+                "A rejected subscription must never be abandoned while it is still collected",
+            )
+
+            // Once the server accepts, the subscription is restored and events flow again
+            accept = true
+            advanceTimeBy(41.seconds)
+            runCurrent()
+            assertEquals(4, subscribeAttempts)
+
+            val newId = checkNotNull(lastSubscribeId)
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":$newId, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""",
+            )
+            assertEquals("light.bed_light", awaitItem().entityId)
+            assertEquals(
+                1,
+                webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
+                "Only the restored subscription should remain",
+            )
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given a restore loop retrying When shutdown is invoked Then no further reconnection is attempted`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // The server becomes unavailable: the auth message cannot be sent anymore
+            every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } returns false
+            var connectionAttemptCount = 0
+            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+                connectionAttemptCount++
+                mockConnection
+            }
+            closeConnection()
+
+            // The restore loop is retrying while the server stays unreachable
+            advanceTimeBy(11.seconds)
+            runCurrent()
+            assertTrue(connectionAttemptCount >= 1, "The restore loop should be retrying")
+
+            webSocketCore.shutdown()
+            runCurrent()
+            val attemptsAtShutdown = connectionAttemptCount
+
+            // Shutting down cancels the restore loop, no further attempt is made
+            advanceTimeBy(10.minutes)
+            runCurrent()
+            assertEquals(
+                attemptsAtShutdown,
+                connectionAttemptCount,
+                "Shutdown should stop the restore loop",
+            )
+
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -1625,23 +1758,29 @@ misc
         )
 
         subscription.test {
-            // First reconnection: the subscribe request is sent but never acknowledged
+            // First reconnection: the subscribe request is sent but never acknowledged, and
+            // cancelling the ambiguous socket reports the failure as OkHttp would
             every {
                 mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
             } returns true
+            mockCancelTriggersOnFailure()
             closeConnection()
             advanceTimeBy(11.seconds)
             runCurrent()
 
-            // Once the answer times out the subscription must be kept for the next reconnection
+            // Once the answer times out the subscription must be kept for the next reconnection,
+            // and the ambiguous socket (the subscribe may have been accepted with the answer
+            // lost) must be cancelled so restoration resumes on a clean connection
             advanceTimeBy(31.seconds)
             runCurrent()
             assertTrue(
                 webSocketCore.activeMessages.any { it.value is ActiveMessage.Subscription },
                 "Subscription should be kept when the resubscription is not acknowledged",
             )
+            verify(atLeast = 1) { mockConnection.cancel() }
 
-            // Second reconnection: the subscribe request is acknowledged and events flow again
+            // The reported failure alone must drive the second reconnection: once the subscribe
+            // request is acknowledged, events flow again
             var resubscribeId: Long? = null
             every {
                 mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
@@ -1654,7 +1793,6 @@ misc
                 )
                 true
             }
-            closeConnection()
             advanceTimeBy(11.seconds)
             runCurrent()
 
@@ -1669,6 +1807,9 @@ misc
                 webSocketCore.activeMessages.count { it.value is ActiveMessage.Subscription },
                 "Only the acknowledged subscription should remain",
             )
+            // Only the ambiguous socket was cancelled, never the replacement that restored
+            // the subscription
+            verify(exactly = 1) { mockConnection.cancel() }
         }
     }
 

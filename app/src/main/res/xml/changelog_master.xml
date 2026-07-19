@@ -3,18 +3,15 @@
     tools:ignore="MissingDefaultResource">
     <release version="2026.7.4 - Main" versioncode="3">
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
-        <change>Local push notifications now detect silently dropped connections and keep retrying to reconnect while the server is unreachable, like during a server restart, instead of staying disconnected</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.7.4 - Wear" versioncode="2">
         <change>Android 17: added assistant volume level sensor</change>
-        <change>Local push notifications now detect silently dropped connections and keep retrying to reconnect while the server is unreachable, like during a server restart, instead of staying disconnected</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.7.4 - Automotive" versioncode="1">
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
-        <change>Local push notifications now detect silently dropped connections and keep retrying to reconnect while the server is unreachable, like during a server restart, instead of staying disconnected</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
         <change>Bug fixes and dependency updates</change>
     </release>

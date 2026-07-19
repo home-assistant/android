@@ -38,6 +38,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.hasActiveConnection
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -116,7 +117,10 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
     }
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    @VisibleForTesting
+    internal var dispatcher: CoroutineDispatcher = Dispatchers.IO
+
+    override suspend fun doWork(): Result = withContext(dispatcher) {
         if (!checkLocalNetworkPermission()) {
             Timber.d("Skipping websocket work: ACCESS_LOCAL_NETWORK permission missing")
             return@withContext Result.success()
