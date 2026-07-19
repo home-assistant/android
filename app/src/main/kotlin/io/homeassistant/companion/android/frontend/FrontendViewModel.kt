@@ -56,6 +56,7 @@ import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -547,6 +548,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     fun switchServer(serverId: Int) {
+        // The user's choice supersedes an external navigation still waiting for the page
+        externalNavigationJob?.cancel()
         _viewState.update {
             FrontendViewState.LoadServer(serverId = serverId)
         }
@@ -568,6 +571,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 return@launch
             }
             _viewState.first { it is FrontendViewState.Content }
+            if (!isCurrentServer(serverId)) {
+                // The shown server changed while waiting for the page, that navigation wins
+                return@launch
+            }
             when (target) {
                 is FrontendTarget.EntityMoreInfo -> _webViewActions.emit(
                     WebViewAction.OpenMoreInfo(target.entityId),
@@ -590,25 +597,20 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 loadServerAt(serverId, FrontendTarget.Default)
                 return@launch
             }
-            // Dropping the cache while the page is still loading can wedge the load
-            _webViewActions.emit(
-                if (_viewState.value is FrontendViewState.Content) {
-                    WebViewAction.HardReload()
-                } else {
-                    WebViewAction.Reload()
-                },
-            )
+            _webViewActions.emit(WebViewAction.Reload())
         }
     }
 
     private suspend fun navigateToPath(path: String) {
         val serverId = _viewState.value.serverId
         val version = serverManager.getServer(serverId)?.version
-        if (NavigateToMessage.isAvailable(version)) {
-            externalBusRepository.send(NavigateToMessage(path = path))
-        } else {
-            // Servers without navigation support get a full page load at the target instead
+        if (UrlUtil.isAbsoluteUrl(path) || !NavigateToMessage.isAvailable(version)) {
+            // The frontend navigation cannot leave the current origin, and servers without
+            // navigation support cannot use it at all: both get a full page load instead
             loadServerAt(serverId, FrontendTarget.Path(path))
+        } else {
+            // The frontend resolves relative paths against the current page, normalize to root
+            externalBusRepository.send(NavigateToMessage(path = "/" + path.trimStart('/')))
         }
     }
 

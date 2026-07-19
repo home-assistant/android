@@ -849,25 +849,7 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given a connected frontend when reloading its server then webViewActions emits HardReload`() = runTest {
-            mockCurrentServer()
-            val messageFlow = connectableMessageFlow()
-            val viewModel = createViewModel()
-
-            viewModel.webViewActions.test {
-                messageFlow.emit(FrontendHandlerEvent.Connected)
-                advanceUntilIdle()
-                skipItems(2) // The connection handshake: history clear and theme color read
-
-                viewModel.reloadFrontend(serverId)
-
-                assertTrue(awaitItem() is WebViewAction.HardReload)
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-        @Test
-        fun `Given a loading frontend when reloading its server then webViewActions emits a plain Reload`() = runTest {
+        fun `Given the shown server when reloading then webViewActions emits Reload`() = runTest {
             mockCurrentServer()
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
@@ -894,6 +876,57 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             coVerify { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
+        }
+
+        @Test
+        fun `Given a relative path when navigating then it is sent root relative`() = runTest {
+            mockCurrentServer()
+            val messageFlow = connectableMessageFlow()
+            val viewModel = createViewModel()
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            viewModel.navigateTo(FrontendTarget.Path("lovelace/cameras"), serverId)
+            advanceUntilIdle()
+
+            // The frontend resolves relative paths against the current page, see issue #5381
+            coVerify { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
+        }
+
+        @Test
+        fun `Given an absolute URL when navigating then the page is loaded instead of the frontend navigation`() = runTest {
+            mockCurrentServer()
+            val messageFlow = connectableMessageFlow()
+            val viewModel = createViewModel()
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            viewModel.navigateTo(FrontendTarget.Path("https://example.com/lovelace"), serverId)
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { externalBusRepository.send(NavigateToMessage(path = "https://example.com/lovelace")) }
+            coVerify(exactly = 0) { externalBusRepository.send(NavigateToMessage(path = "/https://example.com/lovelace")) }
+            verify { urlManager.serverUrlFlow(serverId, FrontendTarget.Path("https://example.com/lovelace")) }
+        }
+
+        @Test
+        fun `Given a navigation waiting for the page when the user switches server then it is dropped`() = runTest {
+            mockCurrentServer()
+            val otherServerId = serverId + 1
+            mockOtherServer(otherServerId)
+            val messageFlow = connectableMessageFlow()
+            every { urlManager.serverUrlFlow(otherServerId, any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = otherServerId),
+            )
+            val viewModel = createViewModel()
+
+            viewModel.navigateTo(FrontendTarget.Path("/lovelace/cameras"), serverId)
+            advanceUntilIdle()
+            viewModel.switchServer(otherServerId)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { externalBusRepository.send(NavigateToMessage(path = "/lovelace/cameras")) }
         }
 
         @Test
