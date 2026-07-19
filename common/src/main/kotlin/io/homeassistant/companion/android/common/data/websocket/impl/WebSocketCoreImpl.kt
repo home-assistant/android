@@ -1066,30 +1066,31 @@ internal class WebSocketCoreImpl(
     }
 
     private fun handleClosingSocket() {
-        val previousState = connectionState
-        val closeReason = pendingCloseReason ?: WebSocketState.Closed.Reason.OTHER
-        val wasActive = previousState == WebSocketState.Active
-        pendingCloseReason = null
-
-        // Transition to closed state unless already closed
-        when (previousState) {
-            is WebSocketState.Closed -> {
-                // Already closed, preserve existing reason
-            }
-
-            WebSocketState.Authenticating,
-            WebSocketState.Active, WebSocketState.Initial,
-            -> {
-                connectionState = WebSocketState.Closed(closeReason)
-            }
-        }
-
-        // If null, either connect() is managing lifecycle or already cleaned up
-        if (connectionHolder.get() == null) return
-
         wsScope.launch {
             connectedMutex.withLock {
-                // Another callback of the same closing already handled it
+                // Snapshot and transition under the mutex: a duplicate terminal callback of the
+                // same closing serializes behind the first one, sees the Closed state and no
+                // holder, and can neither suppress nor repeat the reconnect decision
+                val previousState = connectionState
+                val closeReason = pendingCloseReason ?: WebSocketState.Closed.Reason.OTHER
+                val wasActive = previousState == WebSocketState.Active
+                pendingCloseReason = null
+
+                // Transition to closed state unless already closed
+                when (previousState) {
+                    is WebSocketState.Closed -> {
+                        // Already closed, preserve existing reason
+                    }
+
+                    WebSocketState.Authenticating,
+                    WebSocketState.Active, WebSocketState.Initial,
+                    -> {
+                        connectionState = WebSocketState.Closed(closeReason)
+                    }
+                }
+
+                // If null, either connect() is managing the lifecycle, close() already cleaned
+                // up, or another callback of the same closing already handled it
                 val holder = connectionHolder.getAndSet(null) ?: return@launch
                 // Cancel URL observer - connect() will recreate it if needed
                 holder.urlObserverJob.cancel()

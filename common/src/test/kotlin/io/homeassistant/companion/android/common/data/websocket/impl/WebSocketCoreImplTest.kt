@@ -1698,6 +1698,41 @@ misc
     }
 
     @Test
+    fun `Given duplicate close callbacks When both arrive before cleanup runs Then exactly one restore loop starts`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            var connectionAttempts = 0
+            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+                connectionAttempts++
+                mockConnection
+            }
+
+            // Both terminal callbacks of the same closing arrive before the launched cleanup
+            // coroutines get to run; the second one must neither suppress the reconnect
+            // decision of the first nor start a second restore loop
+            webSocketListener.onClosing(mockConnection, 1000, "test")
+            webSocketListener.onClosed(mockConnection, 1000, "test")
+
+            advanceTimeBy(11.seconds)
+            runCurrent()
+
+            assertEquals(1, connectionAttempts, "Exactly one restore loop should reconnect")
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `Given a restore loop retrying When shutdown is invoked Then no further reconnection is attempted`() = runTest {
         setupServer(backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
