@@ -12,7 +12,8 @@ import com.android.tools.screenshot.PreviewTest
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 
 @Preview(name = "phoneLTR", device = "spec:width=411.4dp,height=923.4dp", group = "phone") // Pixel 9 LTR
 @Preview(name = "phoneRLT", device = "spec:width=411.4dp,height=923.4dp", group = "phone", locale = "ar") // Pixel 9 RTL
@@ -29,26 +30,44 @@ class EntityPickerScreenshotTest {
     @PreviewTest
     @EntityPickerPreviews
     @Composable
+    fun `EntityPicker loading`() {
+        HAThemeForPreview {
+            Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
+                EntityPicker(
+                    displayState = EntityDisplayState.Loading,
+                    selectedEntityId = "light.bed",
+                    onSelectionChanged = {},
+                )
+                EntityPicker(
+                    displayState = EntityDisplayState.Loading,
+                    selectedEntityId = null,
+                    onSelectionChanged = {},
+                    state = rememberEntityPickerState(isExpanded = true),
+                )
+            }
+        }
+    }
+
+    @PreviewTest
+    @EntityPickerPreviews
+    @Composable
     fun `EntityPicker collapsed`() {
         HAThemeForPreview {
             Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
                 EntityPicker(
-                    entities = createTestEntities(),
+                    displayState = EntityDisplayState.Loaded(createTestEntities()),
                     selectedEntityId = null,
-                    onEntitySelectedId = {},
-                    onEntityCleared = {},
+                    onSelectionChanged = {},
                 )
                 EntityPicker(
-                    entities = createTestEntities(),
+                    displayState = EntityDisplayState.Loaded(createTestEntities()),
                     selectedEntityId = "light.bed",
-                    onEntitySelectedId = {},
-                    onEntityCleared = {},
+                    onSelectionChanged = {},
                 )
                 EntityPicker(
-                    entities = createTestEntities(),
+                    displayState = EntityDisplayState.Loaded(createTestEntities()),
                     selectedEntityId = "sensor.temperature",
-                    onEntitySelectedId = {},
-                    onEntityCleared = {},
+                    onSelectionChanged = {},
                 )
             }
         }
@@ -60,11 +79,10 @@ class EntityPickerScreenshotTest {
     fun `EntityPicker expanded with entities`() {
         HAThemeForPreview {
             EntityPicker(
-                entities = createTestEntities(),
+                displayState = EntityDisplayState.Loaded(createTestEntities()),
                 selectedEntityId = null,
-                onEntitySelectedId = {},
-                onEntityCleared = {},
-                isExpanded = true,
+                onSelectionChanged = {},
+                state = rememberEntityPickerState(isExpanded = true),
                 modifier = Modifier.padding(HADimens.SPACE4),
             )
         }
@@ -76,11 +94,10 @@ class EntityPickerScreenshotTest {
     fun `EntityPicker expanded with selected entity`() {
         HAThemeForPreview {
             EntityPicker(
-                entities = createTestEntities(),
+                displayState = EntityDisplayState.Loaded(createTestEntities()),
                 selectedEntityId = "switch.fan",
-                onEntitySelectedId = {},
-                onEntityCleared = {},
-                isExpanded = true,
+                onSelectionChanged = {},
+                state = rememberEntityPickerState(isExpanded = true),
                 modifier = Modifier.padding(HADimens.SPACE4),
             )
         }
@@ -92,11 +109,10 @@ class EntityPickerScreenshotTest {
     fun `EntityPicker with empty list`() {
         HAThemeForPreview {
             EntityPicker(
-                entities = emptyList(),
+                displayState = EntityDisplayState.Loaded(emptyList()),
                 selectedEntityId = null,
-                onEntitySelectedId = {},
-                onEntityCleared = {},
-                isExpanded = true,
+                onSelectionChanged = {},
+                state = rememberEntityPickerState(isExpanded = true),
                 modifier = Modifier.padding(HADimens.SPACE4),
             )
         }
@@ -108,36 +124,32 @@ class EntityPickerScreenshotTest {
     fun `EntityPicker with many entities`() {
         HAThemeForPreview {
             EntityPicker(
-                entities = createManyTestEntities(),
+                displayState = EntityDisplayState.Loaded(createManyTestEntities()),
                 selectedEntityId = null,
-                onEntitySelectedId = {},
-                onEntityCleared = {},
-                isExpanded = true,
+                onSelectionChanged = {},
+                state = rememberEntityPickerState(isExpanded = true),
                 modifier = Modifier.padding(HADimens.SPACE4),
             )
         }
     }
 
     private fun createTestEntities() = listOf(
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "light.bed",
-            domain = "light",
-            friendlyName = "Bed Light",
+            name = "Bed Light",
             icon = CommunityMaterial.Icon2.cmd_lightbulb,
             areaName = "Bedroom",
             deviceName = "Device #1",
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "sensor.temperature",
-            domain = "sensor",
-            friendlyName = "Temperature",
+            name = "Temperature",
             areaName = "Living Room",
             icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "switch.fan",
-            domain = "switch",
-            friendlyName = "Fan",
+            name = "Fan",
             icon = CommunityMaterial.Icon2.cmd_fan,
             areaName = "Bedroom",
             deviceName = "Device #2",
@@ -145,78 +157,68 @@ class EntityPickerScreenshotTest {
     )
 
     private fun createManyTestEntities() = listOf(
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "light.living_room",
-            domain = "light",
-            friendlyName = "Living Room Light",
+            name = "Living Room Light",
             icon = CommunityMaterial.Icon2.cmd_lightbulb,
             areaName = "Living Room",
             deviceName = "Smart Bulb Pro",
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "light.bedroom",
-            domain = "light",
-            friendlyName = "Bedroom Light",
+            name = "Bedroom Light",
             icon = CommunityMaterial.Icon2.cmd_lightbulb,
             areaName = "Bedroom",
             deviceName = "Smart Bulb Basic",
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "light.kitchen",
-            domain = "light",
-            friendlyName = "Kitchen Light",
+            name = "Kitchen Light",
             icon = CommunityMaterial.Icon2.cmd_lightbulb,
             areaName = "Kitchen",
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "sensor.temperature",
-            domain = "sensor",
-            friendlyName = "Temperature Sensor",
+            name = "Temperature Sensor",
             areaName = "Living Room",
             icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "sensor.humidity",
-            domain = "sensor",
-            friendlyName = "Humidity Sensor",
+            name = "Humidity Sensor",
             areaName = "Bathroom",
             icon = CommunityMaterial.Icon3.cmd_water_percent,
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "switch.fan",
-            domain = "switch",
-            friendlyName = "Ceiling Fan",
+            name = "Ceiling Fan",
             icon = CommunityMaterial.Icon2.cmd_fan,
             areaName = "Bedroom",
             deviceName = "Smart Switch",
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "switch.heater",
-            domain = "switch",
-            friendlyName = "Heater",
+            name = "Heater",
             icon = CommunityMaterial.Icon3.cmd_radiator,
             areaName = "Living Room",
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "climate.thermostat",
-            domain = CLIMATE_DOMAIN,
-            friendlyName = "Thermostat",
+            name = "Thermostat",
             icon = CommunityMaterial.Icon3.cmd_thermostat,
             areaName = "Hallway",
             deviceName = "Nest Thermostat",
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "lock.front_door",
-            domain = "lock",
-            friendlyName = "Front Door Lock",
+            name = "Front Door Lock",
             icon = CommunityMaterial.Icon2.cmd_lock,
             areaName = "Entry",
             deviceName = "Smart Lock Pro",
         ),
-        EntityPickerItem(
+        EntityDisplayItem(
             entityId = "cover.garage_door",
-            domain = "cover",
-            friendlyName = "Garage Door",
+            name = "Garage Door",
             icon = CommunityMaterial.Icon2.cmd_garage,
             areaName = "Garage",
         ),

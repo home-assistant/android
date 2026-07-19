@@ -9,6 +9,8 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
+import io.homeassistant.companion.android.frontend.addto.EntityAddToAction
+import io.homeassistant.companion.android.frontend.addto.ExternalEntityAddToAction
 import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -57,8 +59,6 @@ import io.homeassistant.companion.android.frontend.session.RevokeAuthResult
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
-import io.homeassistant.companion.android.webview.addto.EntityAddToAction
-import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

@@ -951,11 +951,13 @@
     <string name="tile_add">Add tile</string>
     <string name="tile_added">Tile added</string>
     <string name="tile_data_missing">You need to set up the tile before using it</string>
-    <string name="tile_entity">Select an entity to toggle or call (required)</string>
-    <string name="tile_label">Tile label (required)</string>
+    <string name="tile_entity">Select an entity to toggle or call*</string>
+    <string name="tile_label">Tile label*</string>
     <string name="tile_not_setup">Requires setup</string>
+    <string name="tile_required_field_hint">* Indicates a required field</string>
     <string name="tile_save">Update tile data</string>
-    <string name="tile_server">Select a server (required)</string>
+    <string name="tile_server">Select a server*</string>
+    <string name="tile_slot_label">%1$s (%2$s)</string>
     <string name="tile_subtitle">Tile subtitle</string>
     <string name="tile_updated">Tile data updated</string>
     <string name="tiles">Tiles</string>
@@ -1088,7 +1090,6 @@
     <string name="enable_change_log_popup">Show change log after updating</string>
     <string name="enable_change_log_popup_summary">Allow the change log dialog to automatically appear when the app is updated</string>
     <string name="tile_icon">Tile icon</string>
-    <string name="tile_icon_original">Use entity icon</string>
     <string name="tile_select">Select a tile to edit</string>
     <string name="tile_fetch_entity_error">Cannot fetch entity</string>
     <string name="shortcut_pinned">Pinned shortcuts</string>
@@ -1495,6 +1496,7 @@
     <string name="connection_check_home_assistant">Home Assistant verification</string>
     <string name="connection_check_home_assistant_success">Verified as Home Assistant</string>
     <string name="connection_check_error_not_home_assistant">Server is not Home Assistant</string>
+    <string name="entity_picker_loading_failed">Failed to load entities</string>
     <string name="entity_picker_no_entity_found">No entity found</string>
     <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>

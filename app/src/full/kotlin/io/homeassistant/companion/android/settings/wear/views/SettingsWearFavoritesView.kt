@@ -17,16 +17,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
+import io.homeassistant.companion.android.util.compose.entity.rememberEntityDisplayState
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
@@ -106,31 +108,32 @@ fun LoadWearFavoritesSettings(
             item {
                 // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6300
                 HATheme {
+                    // This screen talks to the watch through SettingsWearRepository and has no websocket
+                    // access, so the items carry no area/device metadata. Use GetEntitiesForDisplayUseCase
+                    // here if that ever changes.
                     EntityPicker(
-                        entities = validEntities,
+                        displayState = rememberEntityDisplayState(validEntities),
                         selectedEntityId = null,
-                        onEntityCleared = { /* Nothing */ },
-                        onEntitySelectedId = {
-                            settingsWearViewModel.onEntitySelected(true, it)
+                        onSelectionChanged = { entityId ->
+                            entityId?.let { settingsWearViewModel.onEntitySelected(true, it) }
                         },
                         addButtonText = stringResource(commonR.string.add_favorite),
                         modifier = Modifier.padding(all = 16.dp),
-                        // In order to have the info about the area/device/zone we need the websocket, it would
-                        // requires SettingsWearRepository to be able to use the WebSocket which is a significant
-                        // work.
                     )
                 }
             }
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 val favoriteEntityID = favoriteEntities[index].replace("[", "").replace("]", "")
-                settingsWearViewModel.entities[favoriteEntityID]?.let {
+                settingsWearViewModel.entities[favoriteEntityID]?.let { entity ->
+                    val context = LocalContext.current
+                    // Metadata-free item, this screen has no websocket access (see the picker above)
+                    val displayEntity = remember(entity) { EntityDisplayItem.from(entity = entity, context = context) }
                     ReorderableItem(
                         state = reorderState,
                         key = favoriteEntities[index],
                     ) { isDragging ->
                         FavoriteEntityRow(
-                            entityName = it.friendlyName,
-                            entityId = favoriteEntityID,
+                            entity = displayEntity,
                             onClick = {
                                 settingsWearViewModel.onEntitySelected(
                                     false,

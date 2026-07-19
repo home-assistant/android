@@ -15,8 +15,6 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
-import io.homeassistant.companion.android.webview.addto.EntityAddToAction
-import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify

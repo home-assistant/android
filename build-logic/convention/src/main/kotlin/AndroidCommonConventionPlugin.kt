@@ -132,6 +132,7 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "implementation"(libs.kotlinx.serialization.json)
 
                     "ksp"(libs.hilt.android.compiler)
+                    "kspTest"(libs.hilt.android.compiler)
                     "implementation"(libs.hilt.android)
 
                     "implementation"(libs.core.ktx)
