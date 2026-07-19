@@ -12,17 +12,6 @@ package io.homeassistant.companion.android
  * Feature flags should be removed from this file once the feature is fully released and stable.
  */
 object WIPFeature {
-
-    /**
-     * Enables the new frontend screen using compose navigation instead of the WebViewActivity.
-     *
-     * When true, [FrontendRoute] navigates to [FrontendScreen] (Compose).
-     * When false, [FrontendRoute] navigates to [io.homeassistant.companion.android.webview.WebViewActivity] (legacy).
-     *
-     * This flag is only enabled in DEBUG builds during development.
-     */
-    val USE_FRONTEND_V2: Boolean = BuildConfig.DEBUG
-
     /**
      * Enables the new shortcuts v2 implementation.
      *

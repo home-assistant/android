@@ -7,6 +7,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalInspectionMode
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +37,7 @@ private object FuzzySearchConfig {
      * Field weights for scoring, matching the frontend implementation.
      */
     object Weights {
-        const val FRIENDLY_NAME = 8
+        const val NAME = 8
         const val DEVICE_NAME = 7
         const val AREA_NAME = 6
         const val DOMAIN_NAME = 6
@@ -54,7 +56,7 @@ private object FuzzySearchConfig {
  */
 @VisibleForTesting
 internal data class EntityWithSearchFields(
-    val entity: EntityPickerItem,
+    val entity: EntityDisplayItem,
     val searchableFields: List<SearchField>,
     val sortingKey: String,
 )
@@ -67,43 +69,55 @@ internal data class EntityWithSearchFields(
  *
  * @param entities The list of entities to search through
  * @param searchQuery The search query string
- * @return A state holding the filtered and sorted list of entities
+ * @return A state holding the filtered and sorted list of entities, or `null` while the first
+ * filtering pass has not completed yet (callers should show a loading state instead of an
+ * empty result)
  */
 @Composable
 internal fun rememberFilteredEntities(
-    entities: List<EntityPickerItem>,
+    entities: Collection<EntityDisplayItem>,
     searchQuery: String,
     dispatcher: CoroutineContext = Dispatchers.Default,
-): List<EntityPickerItem> {
+): List<EntityDisplayItem>? {
     // Cache the entities with pre-computed searchable fields
-    // Computed on background to avoid blocking UI
-    var entitiesWithFields by remember { mutableStateOf<List<EntityWithSearchFields>>(emptyList()) }
+    // Computed on background to avoid blocking UI, null until the first computation completes
+    var entitiesWithFields by remember { mutableStateOf<List<EntityWithSearchFields>?>(null) }
 
     LaunchedEffect(entities) {
         entitiesWithFields = entities.mapToEntitiesWithFields(dispatcher)
     }
 
-    var filteredEntities by remember { mutableStateOf(entities) }
+    // In inspection mode (previews/screenshots) the filtering LaunchedEffect below never runs,
+    // so seed with the input to render the list. In production it starts as null (filtering in
+    // progress) and is filled by the effect, avoiding a throwaway copy of a potentially large
+    // list on the compose thread.
+    val isInspecting = LocalInspectionMode.current
+    var filteredEntities by remember {
+        mutableStateOf(if (isInspecting) entities.toList() else null)
+    }
 
-    LaunchedEffect(entitiesWithFields, searchQuery) {
-        filteredEntities = filterAndSortEntitiesOptimized(entitiesWithFields, searchQuery, dispatcher)
+    val fields = entitiesWithFields
+    if (fields != null) {
+        LaunchedEffect(entitiesWithFields, searchQuery) {
+            filteredEntities = filterAndSortEntitiesOptimized(fields, searchQuery, dispatcher)
+        }
     }
 
     return filteredEntities
 }
 
-private suspend fun List<EntityPickerItem>.mapToEntitiesWithFields(
+private suspend fun Collection<EntityDisplayItem>.mapToEntitiesWithFields(
     dispatcher: CoroutineContext,
 ): List<EntityWithSearchFields> = withContext(dispatcher) {
     return@withContext map { entity ->
-        val sortingKey = entity.friendlyName.lowercase()
+        val sortingKey = entity.name.lowercase()
 
         EntityWithSearchFields(
             entity = entity,
             sortingKey = sortingKey,
             searchableFields = buildList {
                 // Store fields in lowercase to avoid repeated conversions during search
-                add(SearchField(sortingKey, FuzzySearchConfig.Weights.FRIENDLY_NAME))
+                add(SearchField(sortingKey, FuzzySearchConfig.Weights.NAME))
                 entity.deviceName?.let {
                     add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME))
                 }
@@ -127,7 +141,7 @@ internal suspend fun filterAndSortEntitiesOptimized(
     entitiesWithFields: List<EntityWithSearchFields>,
     query: String,
     dispatcher: CoroutineContext = Dispatchers.Default,
-): List<EntityPickerItem> = withContext(dispatcher) {
+): List<EntityDisplayItem> = withContext(dispatcher) {
     val trimmedQuery = query.trim()
 
     if (trimmedQuery.isBlank()) {
@@ -162,7 +176,7 @@ internal suspend fun filterAndSortEntitiesOptimized(
         }
     }
 
-    // Sort by score (descending) then by friendly name (ascending)
+    // Sort by score (descending) then by display name (ascending)
     scoredEntities
         .sortedWith(
             compareByDescending<ScoredEntity> { it.score }
@@ -274,6 +288,6 @@ internal data class SearchField(val value: String, val weight: Int)
  *
  * @param entity The entity item
  * @param score The calculated match score
- * @param sortingKey Cached lowercase friendly name for efficient sorting
+ * @param sortingKey Cached lowercase display name for efficient sorting
  */
-internal data class ScoredEntity(val entity: EntityPickerItem, val score: Double, val sortingKey: String)
+internal data class ScoredEntity(val entity: EntityDisplayItem, val score: Double, val sortingKey: String)

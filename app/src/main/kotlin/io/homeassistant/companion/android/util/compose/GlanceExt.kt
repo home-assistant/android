@@ -19,7 +19,7 @@ fun glanceStringResource(@StringRes id: Int, vararg arguments: Any): String =
  * Get an Action that will open the frontend for the given [path]
  */
 @Composable
-fun actionStartWebView(path: String, serverId: Int): Action {
+fun actionStartFrontend(path: String, serverId: Int): Action {
     val intent = LocalContext.current.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(path), serverId)
     intent.action = path
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.IconicsPainter
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget.Companion.toRawPath
 import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsSettingsFragment
@@ -50,7 +51,7 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-fun ManageShortcutsView(
+internal fun ManageShortcutsView(
     viewModel: ManageShortcutsViewModel,
     showIconDialog: (tag: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -272,19 +273,15 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
         // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
         HATheme {
             EntityPicker(
-                entities = viewModel.entities[shortcut.serverId.value].orEmpty(),
-                entityRegistry = viewModel.entityRegistry[shortcut.serverId.value],
-                deviceRegistry = viewModel.deviceRegistry[shortcut.serverId.value],
-                areaRegistry = viewModel.areaRegistry[shortcut.serverId.value],
+                displayState = viewModel.displayEntities[shortcut.serverId.value] ?: EntityDisplayState.Loading,
                 selectedEntityId = (
                     FrontendTarget.fromRawPath(viewModel.shortcuts[i].path.value)
                         as? FrontendTarget.EntityMoreInfo
                     )?.entityId,
-                onEntitySelectedId = { entityId ->
-                    viewModel.shortcuts[i].path.value = FrontendTarget.EntityMoreInfo(entityId).toRawPath().orEmpty()
-                },
-                onEntityCleared = {
-                    viewModel.shortcuts[i].path.value = ""
+                onSelectionChanged = { entityId ->
+                    viewModel.shortcuts[i].path.value = entityId
+                        ?.let { FrontendTarget.EntityMoreInfo(it).toRawPath() }
+                        .orEmpty()
                 },
                 modifier = Modifier.padding(bottom = 16.dp),
             )

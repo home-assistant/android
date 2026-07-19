@@ -476,16 +476,14 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- Kept only for not-yet-migrated hardcoded links such as app shortcuts -->
         <activity
             android:name=".webview.WebViewActivity"
-            android:supportsPictureInPicture="true"
-            android:resizeableActivity="true"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode" />
+            android:exported="false" />
 
         <activity
             android:name=".settings.SettingsActivity"
-            android:parentActivityName=".webview.WebViewActivity"
+            android:parentActivityName=".launch.LaunchActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.HomeAssistant.Config" />
@@ -534,11 +532,6 @@
                 <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
-
-        <activity
-            android:name=".barcode.BarcodeScannerActivity"
-            android:exported="false"
-            android:theme="@style/Theme.HomeAssistant.Config" />
 
         <activity android:name=".assist.AssistActivity"
             android:exported="true"
