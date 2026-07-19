@@ -171,7 +171,6 @@ internal fun FrontendScreen(
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         webViewClient = viewModel.webViewClient,
         webChromeClient = webChromeClient,
-        keepWebViewRunningWhileStopped = viewModel::isScreenCommandedOff,
         customView = customView,
         frontendJsCallback = viewModel.frontendJsCallback,
         pendingPermissionRequest = pendingPermissionRequest,
@@ -233,7 +232,6 @@ internal fun FrontendScreenContent(
     autoPlayVideoEnabled: Boolean = false,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
     keepScreenOnEnabled: Boolean = false,
-    keepWebViewRunningWhileStopped: () -> Boolean = { false },
     pendingPermissionRequest: PermissionRequest? = null,
     pendingDialog: FrontendDialog? = null,
     pendingFileChooser: FileChooserRequest? = null,
@@ -295,7 +293,6 @@ internal fun FrontendScreenContent(
             onDownloadRequested = onDownloadRequested,
             onGesture = onGesture,
             autoPlayVideoEnabled = autoPlayVideoEnabled,
-            keepRunningWhileStopped = keepWebViewRunningWhileStopped,
         )
 
         PipEligibleOverlays(
@@ -556,7 +553,6 @@ private fun SafeHAWebView(
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
-    keepRunningWhileStopped: () -> Boolean = { false },
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
     val insets = WindowInsets.safeDrawing
@@ -593,7 +589,6 @@ private fun SafeHAWebView(
 
             HAWebView(
                 nightModeTheme = contentState?.nightModeTheme,
-                keepRunningWhileStopped = keepRunningWhileStopped,
                 modifier = Modifier
                     .weight(1f)
                     .background(Color.Transparent),

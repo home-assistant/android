@@ -56,7 +56,6 @@ import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
-import io.homeassistant.companion.android.util.ScreenOffHelper
 import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -130,7 +129,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
-    private val screenOffHelper: ScreenOffHelper,
     @NamedKeyChain private val keyChainRepository: KeyChainRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
@@ -156,7 +154,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
         matterThreadHandler: FrontendMatterThreadHandler,
-        screenOffHelper: ScreenOffHelper,
         @NamedKeyChain keyChainRepository: KeyChainRepository,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
@@ -179,7 +176,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler = improvHandler,
         barcodeScannerHandler = barcodeScannerHandler,
         matterThreadHandler = matterThreadHandler,
-        screenOffHelper = screenOffHelper,
         keyChainRepository = keyChainRepository,
     )
 
@@ -549,12 +545,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
         loadServer()
     }
-
-    /**
-     * Whether the display is currently commanded off by the screen off notification command,
-     * in which case the frontend must keep running to stay connected.
-     */
-    fun isScreenCommandedOff(): Boolean = screenOffHelper.isScreenOff
 
     /**
      * Called from the security level configuration screen after the user makes a choice or discard.

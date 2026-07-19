@@ -59,7 +59,6 @@ import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
-import io.homeassistant.companion.android.util.ScreenOffHelper
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.mockServer
 import io.mockk.clearMocks
@@ -144,7 +143,6 @@ class FrontendViewModelTest {
     private val matterThreadHandler: FrontendMatterThreadHandler = mockk(relaxed = true) {
         every { events } returns MutableSharedFlow()
     }
-    private val screenOffHelper: ScreenOffHelper = mockk()
 
     private val improvUiStateFlow = MutableStateFlow<ImprovUIState?>(null)
     private val improvEventsFlow = MutableSharedFlow<FrontendImprovHandler.Event>(extraBufferCapacity = 1)
@@ -188,7 +186,6 @@ class FrontendViewModelTest {
             improvHandler = improvHandler,
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
             matterThreadHandler = matterThreadHandler,
-            screenOffHelper = screenOffHelper,
             keyChainRepository = keyChainRepository,
         )
     }
