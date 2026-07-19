@@ -24,7 +24,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.KeyEvent
 import android.widget.RemoteViews
@@ -835,21 +834,22 @@ class MessagingManager @Inject constructor(
                     )
                 }
 
-                val powerManager = context.getSystemService<PowerManager>()
-                val wakeLock = powerManager?.newWakeLock(
-                    PowerManager.FULL_WAKE_LOCK or
-                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                        PowerManager.ON_AFTER_RELEASE,
-                    "HomeAssistant::NotificationScreenOnWakeLock",
-                )
-                wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
-                // Released while the wake lock is held so the device cannot suspend meanwhile
                 screenOffHelper.turnScreenOn()
-                wakeLock?.release()
             }
 
             COMMAND_SCREEN_OFF -> {
-                if (!screenOffHelper.canTurnScreenOff()) {
+                if (context.isAutomotive()) {
+                    // Automotive has no device admin settings, so the screen can never be
+                    // turned off; tell the user instead of failing silently
+                    Timber.w("$COMMAND_SCREEN_OFF is not supported on this device")
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            context,
+                            context.getString(commonR.string.screen_off_unsupported),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                } else if (!screenOffHelper.canTurnScreenOff()) {
                     notifyMissingPermission(type = message, serverId = serverId)
                 } else if (!screenOffHelper.turnScreenOff()) {
                     Timber.d("Unable to turn the screen off, posting notification to device")
@@ -1819,7 +1819,7 @@ class MessagingManager @Inject constructor(
 
     private fun requestDeviceAdminPermission() {
         // The activation screen only opens from an activity, see ScreenOffAdminRequestActivity
-        val intent = Intent(context, ScreenOffAdminRequestActivity::class.java)
+        val intent = ScreenOffAdminRequestActivity.newInstance(context)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }

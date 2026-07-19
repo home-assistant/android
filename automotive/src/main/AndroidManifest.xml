@@ -117,27 +117,6 @@
             </intent-filter>
         </receiver>
 
-        <!--Device admin holding only the force lock policy, used by the command_screen_off
-        notification command to turn the display off (see ScreenOffHelper).-->
-        <receiver android:name=".util.ScreenOffAdminReceiver"
-            android:description="@string/screen_off_admin_description"
-            android:exported="true"
-            android:label="@string/screen_off_admin_name"
-            android:permission="android.permission.BIND_DEVICE_ADMIN">
-            <meta-data
-                android:name="android.app.device_admin"
-                android:resource="@xml/screen_off_device_admin" />
-            <intent-filter>
-                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
-            </intent-filter>
-        </receiver>
-
-        <!--Transparent activity that opens the device admin activation screen for the
-        command_screen_off notification command (see ScreenOffAdminRequestActivity).-->
-        <activity android:name=".util.ScreenOffAdminRequestActivity"
-            android:exported="false"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-
         <receiver android:name=".widgets.button.ButtonWidget" android:label="@string/widget_button_image_description"
             android:exported="false">
             <intent-filter>

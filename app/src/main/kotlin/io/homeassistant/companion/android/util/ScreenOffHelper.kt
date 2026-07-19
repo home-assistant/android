@@ -11,14 +11,19 @@ import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.seconds
 import timber.log.Timber
 
 private const val SCREEN_OFF_WAKE_LOCK_TAG = "HomeAssistant::NotificationScreenOffWakeLock"
+private const val SCREEN_ON_WAKE_LOCK_TAG = "HomeAssistant::NotificationScreenOnWakeLock"
+private val SCREEN_ON_WAKE_LOCK_TIMEOUT = 30.seconds
 
 /**
- * Cuts the display power with [DevicePolicyManager.lockNow] while a partial wake lock keeps the
- * device awake. Requires [ScreenOffAdminReceiver] active as device admin and no secure keyguard.
- * All functions must be called from the main thread, the wake lock state is not synchronized.
+ * Turns the display off and back on for the screen off and screen on notification commands,
+ * keeping all wake lock handling in one place. The display power is cut with
+ * [DevicePolicyManager.lockNow] while a partial wake lock keeps the device awake, which requires
+ * [ScreenOffAdminReceiver] active as device admin and no secure keyguard. All functions must be
+ * called from the main thread, the wake lock state is not synchronized.
  */
 @Singleton
 class ScreenOffHelper @Inject constructor(@ApplicationContext private val context: Context) {
@@ -61,13 +66,33 @@ class ScreenOffHelper @Inject constructor(@ApplicationContext private val contex
             true
         } catch (e: SecurityException) {
             Timber.e(e, "Device admin is not active, cannot turn the screen off")
-            turnScreenOn()
+            releaseScreenOffWakeLock()
             false
         }
     }
 
-    /** @return `true` if the screen was turned off before, `false` if there was nothing to do */
+    /**
+     * Wakes the screen up, releasing the wake lock held by [turnScreenOff] when the screen was
+     * turned off before.
+     *
+     * @return `true` if the screen was turned off before, `false` if it was not
+     */
     fun turnScreenOn(): Boolean {
+        val screenOnWakeLock = powerManager?.newWakeLock(
+            PowerManager.FULL_WAKE_LOCK or
+                PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                PowerManager.ON_AFTER_RELEASE,
+            SCREEN_ON_WAKE_LOCK_TAG,
+        )
+        screenOnWakeLock?.acquire(SCREEN_ON_WAKE_LOCK_TIMEOUT.inWholeMilliseconds)
+        // Released while the screen on wake lock is held so the device cannot suspend in between
+        val wasScreenOff = releaseScreenOffWakeLock()
+        screenOnWakeLock?.release()
+        return wasScreenOff
+    }
+
+    /** @return `true` if the wake lock of [turnScreenOff] was released, `false` if none was held */
+    private fun releaseScreenOffWakeLock(): Boolean {
         val wakeLock = screenOffWakeLock ?: return false
         screenOffWakeLock = null
         if (wakeLock.isHeld) {

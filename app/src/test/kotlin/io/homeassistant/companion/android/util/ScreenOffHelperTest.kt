@@ -1,39 +1,41 @@
 package io.homeassistant.companion.android.util
 
-import android.app.Application
 import android.app.KeyguardManager
 import android.app.admin.DevicePolicyManager
-import android.content.ComponentName
 import android.content.Context
-import android.content.ContextWrapper
-import androidx.test.core.app.ApplicationProvider
-import dagger.hilt.android.testing.HiltTestApplication
+import android.os.PowerManager
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
-import org.robolectric.shadows.ShadowPowerManager
+import io.mockk.verify
+import io.mockk.verifyOrder
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-@RunWith(RobolectricTestRunner::class)
-@Config(application = HiltTestApplication::class)
 class ScreenOffHelperTest {
 
-    private lateinit var application: Application
-    private lateinit var helper: ScreenOffHelper
+    private val devicePolicyManager = mockk<DevicePolicyManager>()
+    private val keyguardManager = mockk<KeyguardManager>()
+    private val powerManager = mockk<PowerManager>()
+    private val context = mockk<Context> {
+        every { getSystemService(DevicePolicyManager::class.java) } returns devicePolicyManager
+        every { getSystemService(KeyguardManager::class.java) } returns keyguardManager
+        every { getSystemService(PowerManager::class.java) } returns powerManager
+    }
+    private val screenOffLock = fakeWakeLock()
+    private val screenOnLock = fakeWakeLock()
+    private val helper = ScreenOffHelper(context)
 
-    @Before
+    @BeforeEach
     fun setUp() {
-        ShadowPowerManager.clearWakeLocks()
-        application = ApplicationProvider.getApplicationContext()
-        helper = ScreenOffHelper(application)
+        every { devicePolicyManager.isAdminActive(any()) } returns false
+        every { devicePolicyManager.lockNow() } just Runs
+        every { keyguardManager.isDeviceSecure } returns false
+        every { powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, any()) } returns screenOffLock
+        every { powerManager.newWakeLock(neq(PowerManager.PARTIAL_WAKE_LOCK), any()) } returns screenOnLock
     }
 
     @Test
@@ -55,9 +57,8 @@ class ScreenOffHelperTest {
         assertTrue(helper.turnScreenOff())
 
         assertTrue(helper.isScreenOff)
-        val wakeLock = ShadowPowerManager.getLatestWakeLock()
-        assertNotNull(wakeLock)
-        assertTrue(wakeLock.isHeld)
+        assertTrue(screenOffLock.isHeld)
+        verify(exactly = 1) { devicePolicyManager.lockNow() }
     }
 
     @Test
@@ -68,52 +69,60 @@ class ScreenOffHelperTest {
         assertTrue(helper.turnScreenOff())
 
         assertTrue(helper.isScreenOff)
-        assertTrue(ShadowPowerManager.getLatestWakeLock().isHeld)
+        assertTrue(screenOffLock.isHeld)
+        verify(exactly = 1) { screenOffLock.acquire() }
+        verify(exactly = 2) { devicePolicyManager.lockNow() }
     }
 
     @Test
     fun `Given a secure keyguard when turning screen off then the screen stays on`() {
         activateDeviceAdmin()
-        shadowOf(application.getSystemService(KeyguardManager::class.java)).setIsDeviceSecure(true)
+        every { keyguardManager.isDeviceSecure } returns true
 
         assertFalse(helper.turnScreenOff())
 
         assertFalse(helper.isScreenOff)
-        assertNull(ShadowPowerManager.getLatestWakeLock())
+        verify(exactly = 0) { powerManager.newWakeLock(any(), any()) }
     }
 
     @Test
-    fun `Given screen turned off when turning screen on then the wake lock is released`() {
+    fun `Given screen turned off when turning screen on then the wake lock is released while the screen wakes up`() {
         activateDeviceAdmin()
         assertTrue(helper.turnScreenOff())
 
         assertTrue(helper.turnScreenOn())
 
         assertFalse(helper.isScreenOff)
-        assertFalse(ShadowPowerManager.getLatestWakeLock().isHeld)
+        assertFalse(screenOffLock.isHeld)
+        // The wake lock is released while the screen on wake lock is held, so the device
+        // cannot suspend in between
+        verifyOrder {
+            screenOnLock.acquire(any<Long>())
+            screenOffLock.release()
+            screenOnLock.release()
+        }
     }
 
     @Test
-    fun `Given screen not turned off when turning screen on then there is nothing to do`() {
+    fun `Given screen not turned off when turning screen on then the screen is still woken up`() {
         assertFalse(helper.turnScreenOn())
 
         assertFalse(helper.isScreenOff)
+        verify(exactly = 1) { screenOnLock.acquire(any<Long>()) }
+        verify(exactly = 1) { screenOnLock.release() }
     }
 
     @Test
     fun `Given device admin deactivated in between when turning screen off then the wake lock is released`() {
-        val devicePolicyManager = mockk<DevicePolicyManager> {
-            every { lockNow() } throws SecurityException("Device admin was deactivated")
-        }
-        val context = object : ContextWrapper(application) {
-            override fun getSystemService(name: String): Any? = if (name == Context.DEVICE_POLICY_SERVICE) devicePolicyManager else super.getSystemService(name)
-        }
-        val helper = ScreenOffHelper(context)
+        activateDeviceAdmin()
+        every { devicePolicyManager.lockNow() } throws SecurityException("Device admin was deactivated")
 
         assertFalse(helper.turnScreenOff())
 
         assertFalse(helper.isScreenOff)
-        assertFalse(ShadowPowerManager.getLatestWakeLock().isHeld)
+        assertFalse(screenOffLock.isHeld)
+        // Cleaning up after the failure must not wake the screen
+        verify(exactly = 0) { screenOnLock.acquire(any<Long>()) }
     }
 
     @Test
@@ -125,11 +134,20 @@ class ScreenOffHelperTest {
         assertTrue(helper.turnScreenOff())
 
         assertTrue(helper.isScreenOff)
-        assertTrue(ShadowPowerManager.getLatestWakeLock().isHeld)
+        assertTrue(screenOffLock.isHeld)
     }
 
     private fun activateDeviceAdmin() {
-        shadowOf(application.getSystemService(DevicePolicyManager::class.java))
-            .setActiveAdmin(ComponentName(application, ScreenOffAdminReceiver::class.java))
+        every { devicePolicyManager.isAdminActive(any()) } returns true
+    }
+
+    private fun fakeWakeLock(): PowerManager.WakeLock {
+        var held = false
+        return mockk {
+            every { acquire() } answers { held = true }
+            every { acquire(any()) } answers { held = true }
+            every { release() } answers { held = false }
+            every { isHeld } answers { held }
+        }
     }
 }

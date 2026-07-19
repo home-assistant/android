@@ -2,10 +2,12 @@ package io.homeassistant.companion.android.notifications
 
 import android.app.ActivityManager
 import android.app.Application
+import android.content.pm.PackageManager
 import android.os.Looper
 import android.os.Process
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.NotificationData
@@ -23,6 +25,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowToast
 
 /**
  * Covers the routing of the screen on and screen off commands only, [MessagingManager] has no
@@ -92,6 +95,20 @@ class MessagingManagerScreenCommandsTest {
         handleMessage(MessagingManager.COMMAND_SCREEN_ON)
 
         verify(exactly = 1) { screenOffHelper.turnScreenOn() }
+    }
+
+    @Test
+    fun `Given an Automotive device when receiving screen off command then the user is told it is not supported`() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        shadowOf(application.packageManager).setSystemFeature(PackageManager.FEATURE_AUTOMOTIVE, true)
+
+        handleMessage(MessagingManager.COMMAND_SCREEN_OFF)
+
+        assertEquals(
+            application.getString(commonR.string.screen_off_unsupported),
+            ShadowToast.getTextOfLatestToast(),
+        )
+        verify(exactly = 0) { screenOffHelper.turnScreenOff() }
     }
 
     @Test

@@ -13,7 +13,6 @@
     </release>
     <release version="2026.7.4 - Automotive" versioncode="1">
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
-        <change>New command_screen_off notification command turns the screen off while the device stays awake and connected (requires activating the device admin); command_screen_on turns it back on</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
         <change>Bug fixes and dependency updates</change>
     </release>

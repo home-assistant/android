@@ -283,6 +283,7 @@
     <string name="fullscreen">Fullscreen</string>
     <string name="screen_off_admin_description">Only used to turn the screen off when the server sends the screen off command</string>
     <string name="screen_off_admin_name">Turn the screen off</string>
+    <string name="screen_off_unsupported">Turning the screen off is not supported on this device</string>
     <string name="screen_orientation_title_settings">Screen orientation</string>
     <string name="screen_orientation_option_label_system">Follow system settings</string>
     <string name="screen_orientation_option_label_portrait">Portrait</string>

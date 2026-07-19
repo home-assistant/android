@@ -1,17 +1,11 @@
 package io.homeassistant.companion.android.util
 
+import android.content.Context
 import android.content.Intent
-import androidx.test.core.app.ApplicationProvider
-import dagger.hilt.android.testing.HiltTestApplication
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.junit.jupiter.api.Test
 
-@RunWith(RobolectricTestRunner::class)
-@Config(application = HiltTestApplication::class)
 class ScreenOffAdminReceiverTest {
 
     @Test
@@ -19,7 +13,7 @@ class ScreenOffAdminReceiverTest {
         val screenOffHelper = mockk<ScreenOffHelper>(relaxed = true)
         val receiver = ScreenOffAdminReceiver().apply { this.screenOffHelper = screenOffHelper }
 
-        receiver.onDisabled(ApplicationProvider.getApplicationContext(), Intent())
+        receiver.onDisabled(mockk<Context>(), mockk<Intent>())
 
         verify(exactly = 1) { screenOffHelper.turnScreenOn() }
     }
