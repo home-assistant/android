@@ -849,7 +849,25 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given the shown server when reloading then webViewActions emits Reload`() = runTest {
+        fun `Given a connected frontend when reloading its server then webViewActions emits HardReload`() = runTest {
+            mockCurrentServer()
+            val messageFlow = connectableMessageFlow()
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+                skipItems(2) // The connection handshake: history clear and theme color read
+
+                viewModel.reloadFrontend(serverId)
+
+                assertTrue(awaitItem() is WebViewAction.HardReload)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a loading frontend when reloading its server then webViewActions emits a plain Reload`() = runTest {
             mockCurrentServer()
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),

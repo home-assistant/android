@@ -77,6 +77,24 @@ sealed interface WebViewAction {
         }
     }
 
+    /**
+     * Reloads the current page ignoring cached resources, like a hard refresh in a desktop
+     * browser. The current document keeps being displayed and is destroyed once the reloaded page
+     * commits, which releases the native resources it holds, like WebRTC peer connections and
+     * camera streams. Nothing is released when the page cannot be loaded again.
+     *
+     * Note that [WebView.clearCache] clears the cache for the whole application, not only for the
+     * displayed page.
+     */
+    data class HardReload(override val result: CompletableDeferred<Unit> = CompletableDeferred()) :
+        AwaitableAction<Unit> {
+        override fun run(webView: WebView) {
+            webView.clearCache(true)
+            webView.reload()
+            result.complete(Unit)
+        }
+    }
+
     /** Perform haptic feedback on the WebView. */
     data class Haptic(val type: HapticType, override val result: CompletableDeferred<Unit> = CompletableDeferred()) :
         AwaitableAction<Unit> {

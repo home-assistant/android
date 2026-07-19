@@ -597,7 +597,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 loadServerAt(serverId, FrontendTarget.Default)
                 return@launch
             }
-            _webViewActions.emit(WebViewAction.Reload())
+            // Dropping the cache while the page is still loading can wedge the load
+            _webViewActions.emit(
+                if (_viewState.value is FrontendViewState.Content) {
+                    WebViewAction.HardReload()
+                } else {
+                    WebViewAction.Reload()
+                },
+            )
         }
     }
 
