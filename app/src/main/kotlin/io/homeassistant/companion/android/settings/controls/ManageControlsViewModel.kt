@@ -105,12 +105,11 @@ class ManageControlsViewModel @VisibleForTesting constructor(
             servers.map { server ->
                 async {
                     // The flow completes with a terminal state after Loading, failures surface as Error
-                    // and leave the server out of the list, like the previous behavior.
+                    // and leave the server out of the list to not block configuration of other server's entities
                     val displayState = getEntitiesForDisplay(server.id) { it.domain in supportedDomains }.last()
                     if (displayState is EntityDisplayState.Loaded) {
                         entitiesList[server.id] = withContext(backgroundDispatcher) {
                             displayState.entities
-                                .filterNot { it.isHidden }
                                 .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
                         }
                     }
