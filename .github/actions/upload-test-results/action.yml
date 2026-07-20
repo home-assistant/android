@@ -6,7 +6,7 @@ inputs:
     required: true
   job-status:
     description: >-
-      Status of the calling job, pass `${{ job.status }}`. Reports are only uploaded when it is
+      Status of the calling job, pass the job.status context. Reports are only uploaded when it is
       `failure`.
     required: true
 runs:
