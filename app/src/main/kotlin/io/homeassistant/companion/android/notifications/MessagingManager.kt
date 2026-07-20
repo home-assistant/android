@@ -84,6 +84,7 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchReloadFrontend
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
@@ -142,6 +143,7 @@ class MessagingManager @Inject constructor(
         const val INTENT_PREFIX = "intent:"
         const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
         const val SETTINGS_PREFIX = "settings://"
+        const val WEBVIEW_RELOAD = "reload"
         const val NOTIFICATION_HISTORY = "notification_history"
         const val NO_ACTION = "noAction"
 
@@ -1999,14 +2001,18 @@ class MessagingManager @Inject constructor(
     private fun openWebview(title: String?, data: Map<String, String>) {
         try {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val intent = if (title.isNullOrEmpty()) {
-                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
+            // Trimmed and matched ignoring case since the value is typed by hand
+            val isReload = WEBVIEW_RELOAD.equals(title?.trim(), ignoreCase = true)
+            val intent = if (isReload) {
+                context.intentLaunchReloadFrontend(serverId)
             } else {
                 context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
             }
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-            intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+            // Delivered to the running activity (onNewIntent) so an open frontend handles the
+            // deep link in place instead of being recreated; otherwise it starts fresh
+            intent.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP,
+            )
             context.startActivity(intent)
         } catch (e: Exception) {
             Timber.e(e, "Unable to open webview")

@@ -146,6 +146,15 @@ internal class LaunchViewModel @VisibleForTesting constructor(
      */
     val pipReadiness: StateFlow<PipReadiness?> = _pipReadiness.asStateFlow()
 
+    private val _newDeepLink = MutableStateFlow<LaunchActivity.DeepLink?>(null)
+
+    /**
+     * The latest deep link delivered through [LaunchActivity.onNewIntent] while the activity is
+     * already running, or `null` once handled. Conflated on purpose: commands arriving while none
+     * can be applied yet keep only the most recent one.
+     */
+    val newDeepLink: StateFlow<LaunchActivity.DeepLink?> = _newDeepLink.asStateFlow()
+
     init {
         viewModelScope.launch {
             cleanupServers()
@@ -204,6 +213,40 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         _pipReadiness.value = readiness
     }
 
+    /** Keeps the latest deep link received while the activity is already running. */
+    fun onNewDeepLink(deepLink: LaunchActivity.DeepLink) {
+        _newDeepLink.value = deepLink
+    }
+
+    /** Marks the current [newDeepLink] as applied. */
+    fun onNewDeepLinkHandled() {
+        _newDeepLink.value = null
+    }
+
+    /**
+     * The destination a [deepLink] received while the activity is already running navigates to
+     * when no frontend is shown, applying the same Automotive policy as a launch: the dedicated
+     * Automotive UI is never replaced by the WebView. Returns `null` for deep links only
+     * supported at launch.
+     */
+    fun newDeepLinkDestination(deepLink: LaunchActivity.DeepLink): HAStartDestinationRoute? = when (deepLink) {
+        is LaunchActivity.DeepLink.NavigateTo ->
+            if (shouldNavigateToAutomotive) {
+                AutomotiveRoute
+            } else {
+                FrontendRoute(deepLink.target, deepLink.serverId)
+            }
+
+        is LaunchActivity.DeepLink.ReloadFrontend ->
+            if (shouldNavigateToAutomotive) {
+                AutomotiveRoute
+            } else {
+                FrontendRoute(FrontendTarget.Default, deepLink.serverId)
+            }
+
+        else -> null
+    }
+
     private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {
         when (initialDeepLink) {
             is LaunchActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
@@ -219,6 +262,10 @@ internal class LaunchViewModel @VisibleForTesting constructor(
 
             is LaunchActivity.DeepLink.NavigateTo,
             -> connectToServer(initialDeepLink.serverId, initialDeepLink.target)
+
+            // A launch is a fresh load already, nothing left to reload
+            is LaunchActivity.DeepLink.ReloadFrontend,
+            -> connectToServer(initialDeepLink.serverId, FrontendTarget.Default)
 
             is LaunchActivity.DeepLink.OpenWearOnboarding -> navigateToWearOnboarding(
                 wearName = initialDeepLink.wearName,

@@ -391,6 +391,75 @@ class LaunchViewModelTest {
     }
 
     @Test
+    fun `Given initial deep link is ReloadFrontend when creating viewModel, then navigate to frontend at the default dashboard`() = runTest {
+        val serverId = 42
+        val server = mockk<Server>(relaxed = true)
+        every { workManager.enqueue(any<OneTimeWorkRequest>()) } returns mockk()
+
+        coEvery { serverManager.getServer(serverId) } returns server
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.authenticationRepository().getSessionState() } returns SessionState.CONNECTED
+        val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
+        coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
+
+        createViewModel(LaunchActivity.DeepLink.ReloadFrontend(serverId))
+        advanceUntilIdle()
+        assertEquals(
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, serverId)),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
+    fun `Given deep links received while running when queued then only the latest is kept until handled`() = runTest {
+        createViewModel(null)
+        val first = LaunchActivity.DeepLink.ReloadFrontend(1)
+        val second = LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/x"), 1)
+
+        viewModel.onNewDeepLink(first)
+        viewModel.onNewDeepLink(second)
+        assertEquals(second, viewModel.newDeepLink.value)
+
+        viewModel.onNewDeepLinkHandled()
+        assertNull(viewModel.newDeepLink.value)
+    }
+
+    @Test
+    fun `Given full Automotive when resolving a running deep link then the Automotive UI is kept`() = runTest {
+        createViewModel(null, isAutomotive = true, isFullFlavor = true)
+
+        assertEquals(
+            AutomotiveRoute,
+            viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/x"), 1)),
+        )
+        assertEquals(
+            AutomotiveRoute,
+            viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.ReloadFrontend(1)),
+        )
+    }
+
+    @Test
+    fun `Given a phone when resolving a running deep link then the frontend is the destination`() = runTest {
+        createViewModel(null)
+
+        assertEquals(
+            FrontendRoute(FrontendTarget.Path("/x"), 1),
+            viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/x"), 1)),
+        )
+        assertEquals(
+            FrontendRoute(FrontendTarget.Default, 1),
+            viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.ReloadFrontend(1)),
+        )
+    }
+
+    @Test
+    fun `Given a launch only deep link when resolving then there is no running destination`() = runTest {
+        createViewModel(null)
+
+        assertNull(viewModel.newDeepLinkDestination(LaunchActivity.DeepLink.OpenInvitation("https://ha.test")))
+    }
+
+    @Test
     fun `Given initial deep link is OpenWearOnboarding and full flavor, when creating viewModel, then navigate to wear onboarding`() = runTest {
         createViewModel(
             initialDeepLink = LaunchActivity.DeepLink.OpenWearOnboarding("ha_wear", "http://ha"),
