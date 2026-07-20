@@ -188,8 +188,13 @@ class LaunchActivity : AppCompatActivity() {
 
         // Skip the system's default splash exit animation: the app's loading screen shows the
         // same centered icon, so removing the splash instantly makes the transition seamless.
-        splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
-            splashScreenViewProvider.remove()
+        // Only on API 31+: below that the system draws no exit animation, and asking for the
+        // splash screen view would inflate a compat layout that needs androidx's
+        // Theme.SplashScreen attributes, which Theme.LaunchScreen does not define.
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
+            splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
+                splashScreenViewProvider.remove()
+            }
         }
 
         enableEdgeToEdgeCompat()
