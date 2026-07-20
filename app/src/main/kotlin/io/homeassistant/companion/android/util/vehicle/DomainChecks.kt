@@ -2,10 +2,10 @@ package io.homeassistant.companion.android.util.vehicle
 
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.supportsAlarmControlPanelArmAway
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 
 val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
-    "alarm_control_panel" to R.string.alarm_control_panels,
+    ALARM_CONTROL_PANEL_DOMAIN to R.string.alarm_control_panels,
     "button" to R.string.buttons,
     "cover" to R.string.covers,
     "fan" to R.string.fans,
@@ -27,7 +27,7 @@ val MAP_DOMAINS = listOf(
 )
 
 val NOT_ACTIONABLE_DOMAINS = listOf(
-    "alarm_control_panel",
+    ALARM_CONTROL_PANEL_DOMAIN,
     "binary_sensor",
     "sensor",
 )
@@ -44,10 +44,4 @@ fun canNavigate(entity: Entity): Boolean {
             ((entity.attributes["latitude"] as? Number)?.toDouble() != null) &&
             ((entity.attributes["longitude"] as? Number)?.toDouble() != null)
         )
-}
-
-fun alarmHasNoCode(entity: Entity): Boolean {
-    return entity.domain == "alarm_control_panel" &&
-        entity.attributes["code_format"] as? String == null &&
-        entity.supportsAlarmControlPanelArmAway()
 }

@@ -7,6 +7,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon2
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
@@ -137,7 +138,6 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
-    const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
 
     val DOMAINS_PRESS = listOf("button", "input_button")
@@ -152,7 +152,7 @@ object EntityExt {
     )
 
     val STATE_COLORED_DOMAINS = listOf(
-        "alarm_control_panel",
+        ALARM_CONTROL_PANEL_DOMAIN,
         "alert",
         "automation",
         "binary_sensor",
@@ -261,17 +261,6 @@ fun Entity.getCoverPosition(): EntityPosition? {
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getCoverPosition")
         null
-    }
-}
-
-fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
-    return try {
-        if (domain != "alarm_control_panel") return false
-        (attributes["supported_features"] as Number).toInt() and
-            EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
-    } catch (e: Exception) {
-        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsArmedAway")
-        false
     }
 }
 
@@ -484,7 +473,7 @@ fun Entity.getIcon(): IIcon {
             }
         when (domain) {
             "air_quality" -> Icon.cmd_air_filter
-            "alarm_control_panel" -> when (compareState) {
+            ALARM_CONTROL_PANEL_DOMAIN -> when (compareState) {
                 "armed_away" -> Icon3.cmd_shield_lock
                 "armed_custom_bypass" -> Icon3.cmd_security
                 "armed_home" -> Icon3.cmd_shield_home
@@ -909,9 +898,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
             if (state == "unlocked") "lock" else "unlock"
         }
 
-        "alarm_control_panel" -> {
-            if (state != "disarmed") "alarm_disarm" else "alarm_arm_away"
-        }
+        ALARM_CONTROL_PANEL_DOMAIN -> getAlarmOnPressedAction()
 
         in EntityExt.DOMAINS_PRESS -> "press"
         "fan",
@@ -924,6 +911,11 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
 
         "scene" -> "turn_on"
         else -> "toggle"
+    }
+
+    if (action == null) {
+        Timber.tag(EntityExt.TAG).w("No action called when entity '%s' was pressed", entityId)
+        return
     }
 
     integrationRepository.callAction(
@@ -1003,7 +995,7 @@ fun Entity.isActive() = when {
     (domain in listOf("button", "input_button", "event", "scene")) -> state != "unavailable"
     (state == "unavailable" || state == "unknown") -> false
     (state == "off" && domain != "alert") -> false
-    (domain == "alarm_control_panel") -> state != "disarmed"
+    (domain == ALARM_CONTROL_PANEL_DOMAIN) -> state != "disarmed"
     (domain == "alert") -> state != "idle"
     (domain == "cover") -> state != "closed"
     (domain in listOf("device_tracker", PERSON_DOMAIN)) -> state != "not_home"
