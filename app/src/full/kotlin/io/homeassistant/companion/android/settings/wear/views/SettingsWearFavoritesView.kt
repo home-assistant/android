@@ -17,7 +17,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -125,9 +124,8 @@ fun LoadWearFavoritesSettings(
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 val favoriteEntityID = favoriteEntities[index].replace("[", "").replace("]", "")
                 settingsWearViewModel.entities[favoriteEntityID]?.let { entity ->
-                    val context = LocalContext.current
                     // Metadata-free item, this screen has no websocket access (see the picker above)
-                    val displayEntity = remember(entity) { EntityDisplayItem.from(entity = entity, context = context) }
+                    val displayEntity = remember(entity) { EntityDisplayItem.from(entity) }
                     ReorderableItem(
                         state = reorderState,
                         key = favoriteEntities[index],

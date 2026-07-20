@@ -156,7 +156,7 @@ fun getDomainList(
             mapOf<String, Any>(),
             LocalDateTime.now(),
             LocalDateTime.now(),
-        ).getIcon(carContext)
+        ).getIcon()
 
         val entityList = allEntities.map {
             it.values.filter { entity ->
