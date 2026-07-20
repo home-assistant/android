@@ -103,7 +103,7 @@ class FriendlyStateTest {
     }
 
     @Test
-    fun `Given a non binary sensor with a known state when getting friendly state then maps to the state resource`() {
+    fun `Given not a binary sensor with a known state when getting friendly state then maps to the state resource`() {
         val entity = createEntity(entityId = "lock.front_door", state = "locked")
 
         assertResource(commonR.string.state_locked, entity.friendlyState(displayPrecision = null))
@@ -170,7 +170,7 @@ class FriendlyStateTest {
 
     // endregion
 
-    // region Precision
+    // region Display precision
 
     @Test
     fun `Given a numeric sensor state with a display precision when getting friendly state then the state is rounded`() {
