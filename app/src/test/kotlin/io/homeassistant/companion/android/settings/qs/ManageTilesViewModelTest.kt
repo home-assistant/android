@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.server.Server
@@ -21,8 +22,6 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

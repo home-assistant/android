@@ -29,8 +29,6 @@ import io.homeassistant.companion.android.database.qs.isSetup
 import io.homeassistant.companion.android.database.qs.numberedId
 import io.homeassistant.companion.android.qs.Tile1Service
 import io.homeassistant.companion.android.settings.qs.ManageTilesState.Companion.changeServer
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.homeassistant.companion.android.util.icondialog.mdiName
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import kotlinx.coroutines.Job
