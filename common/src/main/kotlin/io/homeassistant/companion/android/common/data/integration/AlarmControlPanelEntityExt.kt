@@ -11,7 +11,7 @@ private fun Entity.isAlarmControlPanelEntity(): Boolean {
 }
 
 private fun Entity.alarmHasNoCode(): Boolean {
-    // Retrieving the alarm entity code format to known if the alaram currently has code
+    // Retrieving the alarm entity code format to know if the alarm currently has a code
     // If code format cannot be retrieved, consider we have a code by default and actions are not applicable
     return isAlarmControlPanelEntity() && (attributes["code_format"] as? String)?.isNotEmpty() != true
 }
@@ -49,10 +49,12 @@ private fun Entity.alarmCanBeDisarmedWithoutCode(): Boolean {
     return isAlarmControlPanelEntity() && !alarmIsDisarmed() && alarmHasNoCode()
 }
 
+/** @return `true` if [getAlarmOnPressedAction] would return an action, `false` otherwise */
 fun Entity.isAlarmActionable(): Boolean {
-    return isAlarmControlPanelEntity() && alarmCanBeDisarmedWithoutCode() || alarmCanBeArmedAwayWithoutCode()
+    return getAlarmOnPressedAction() != null
 }
 
+/** @return action string for alarm control panel entities, based on its current state and support by the app */
 fun Entity.getAlarmOnPressedAction(): String? {
     if (!isAlarmControlPanelEntity()) {
         return null
