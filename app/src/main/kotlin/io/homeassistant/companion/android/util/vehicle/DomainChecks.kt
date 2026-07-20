@@ -2,9 +2,10 @@ package io.homeassistant.companion.android.util.vehicle
 
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 
 val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
-    "alarm_control_panel" to R.string.alarm_control_panels,
+    ALARM_CONTROL_PANEL_DOMAIN to R.string.alarm_control_panels,
     "button" to R.string.buttons,
     "cover" to R.string.covers,
     "fan" to R.string.fans,
@@ -26,7 +27,7 @@ val MAP_DOMAINS = listOf(
 )
 
 val NOT_ACTIONABLE_DOMAINS = listOf(
-    "alarm_control_panel",
+    ALARM_CONTROL_PANEL_DOMAIN,
     "binary_sensor",
     "sensor",
 )
