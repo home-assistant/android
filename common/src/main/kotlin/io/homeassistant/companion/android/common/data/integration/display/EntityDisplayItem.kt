@@ -43,11 +43,12 @@ data class EntityDisplayItem(
 
     /**
      * Formatted subtitle combining area and device name, adapting the separator to the
-     * layout direction. Null if the item has neither.
+     * layout direction. Null if the item has neither, or when it would just repeat [name].
      */
     fun subtitle(layoutDirection: LayoutDirection): String? = listOfNotNull(areaName, deviceName)
         .takeIf { it.isNotEmpty() }
         ?.joinToString(if (layoutDirection == LayoutDirection.Ltr) " ▸ " else " ◂ ")
+        ?.takeIf { it != name }
 
     companion object {
         /**

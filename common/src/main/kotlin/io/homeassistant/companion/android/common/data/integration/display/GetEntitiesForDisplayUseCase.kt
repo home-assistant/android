@@ -153,7 +153,7 @@ class GetEntitiesForDisplayUseCase @Inject constructor(
 
         EntityDisplayItem(
             entityId = entity.entityId,
-            name = displayEntry?.name ?: entity.friendlyName,
+            name = displayEntry?.name?.takeIf { it.isNotBlank() } ?: entity.friendlyName,
             icon = resolveIcon(entity, displayEntry?.icon),
             areaName = area?.name,
             floorName = floor?.name,

@@ -10,6 +10,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.DEVICE_TRACKER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
@@ -160,7 +161,7 @@ object EntityExt {
         CAMERA_DOMAIN,
         CLIMATE_DOMAIN,
         "cover",
-        "device_tracker",
+        DEVICE_TRACKER_DOMAIN,
         "fan",
         "group",
         "humidifier",
@@ -511,6 +512,13 @@ fun Entity.getIcon(): IIcon {
             "conversation" -> Icon3.cmd_microphone_message
             "cover" -> coverIcon(compareState, this)
             "counter" -> Icon.cmd_counter
+
+            DEVICE_TRACKER_DOMAIN, PERSON_DOMAIN -> if (compareState == "not_home") {
+                Icon.cmd_account_arrow_right
+            } else {
+                Icon.cmd_account
+            }
+
             "fan" -> if (compareState == "off") {
                 Icon2.cmd_fan_off
             } else {
@@ -635,11 +643,6 @@ fun Entity.getIcon(): IIcon {
             }
 
             "persistent_notification" -> Icon.cmd_bell
-            PERSON_DOMAIN -> if (compareState == "not_home") {
-                Icon.cmd_account_arrow_right
-            } else {
-                Icon.cmd_account
-            }
 
             "plant" -> Icon2.cmd_flower
             "proximity" -> Icon.cmd_apple_safari
@@ -757,7 +760,7 @@ private fun binarySensorIcon(state: String?, entity: Entity): IIcon {
 }
 
 private fun coverIcon(state: String?, entity: Entity): IIcon {
-    val open = state !== "closed"
+    val open = state != "closed"
 
     return when (entity.attributes["device_class"]) {
         "garage" -> when (state) {
@@ -998,7 +1001,7 @@ fun Entity.isActive() = when {
     (domain == ALARM_CONTROL_PANEL_DOMAIN) -> state != "disarmed"
     (domain == "alert") -> state != "idle"
     (domain == "cover") -> state != "closed"
-    (domain in listOf("device_tracker", PERSON_DOMAIN)) -> state != "not_home"
+    (domain in listOf(DEVICE_TRACKER_DOMAIN, PERSON_DOMAIN)) -> state != "not_home"
     (domain == "lawn_mower") -> state in listOf("mowing", "error")
     // on Android, contrary to HA Frontend, a lock is considered active when locked
     (domain == "lock") -> state == "locked"
