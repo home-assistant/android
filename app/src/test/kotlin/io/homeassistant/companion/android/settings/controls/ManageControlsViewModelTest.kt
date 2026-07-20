@@ -79,7 +79,7 @@ class ManageControlsViewModelTest {
     )
 
     @Test
-    fun `Given resolved entities when created then hidden entities are excluded and the rest sorted by display name`() = runTest {
+    fun `Given resolved entities when created then hidden entities are included and the rest sorted by display name`() = runTest {
         coEvery { serverManager.servers() } returns listOf(fakeServer(1))
         every { getEntitiesForDisplay(1, any<(Entity) -> Boolean>()) } returns flowOf(
             EntityDisplayState.Loading,
@@ -96,7 +96,7 @@ class ManageControlsViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.entitiesLoaded)
-        assertEquals(listOf("Bulb", "plug"), viewModel.entitiesList[1]?.map { it.name })
+        assertEquals(listOf("Bulb", "plug", "Secret"), viewModel.entitiesList[1]?.map { it.name })
     }
 
     @Test
