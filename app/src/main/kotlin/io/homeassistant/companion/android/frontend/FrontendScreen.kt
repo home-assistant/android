@@ -52,7 +52,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.graphics.ColorUtils
-import androidx.core.net.toUri
 import androidx.core.util.TypedValueCompat.pxToDp
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -96,9 +95,7 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
-import io.homeassistant.companion.android.util.compose.webview.BackAction
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
-import io.homeassistant.companion.android.util.compose.webview.resolveBackAction
 import io.homeassistant.companion.android.util.sensitive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -190,6 +187,7 @@ internal fun FrontendScreen(
         onSecurityLevelDone = viewModel::onSecurityLevelDone,
         onSecurityLevelHelpClick = onSecurityLevelHelpClick,
         onShowSnackbar = onShowSnackbar,
+        onBackPressed = viewModel::onBackPressed,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
         onErrorAction = viewModel::onErrorAction,
         onDownloadRequested = viewModel::onDownloadRequested,
@@ -230,6 +228,7 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    onBackPressed: () -> Unit = {},
     onErrorAction: (ErrorActionIntent) -> Unit = {},
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
@@ -264,22 +263,9 @@ internal fun FrontendScreenContent(
     val loadingSurfaceColor = LocalHAColorScheme.current.colorSurfaceDefault
 
     // Consume back only while the dashboard (Content) is shown and the WebView has history to pop.
-    // The previous back-stack entry can be a stale cross-origin URL (e.g. the internal URL left in
-    // history after switching to the external one); resolveBackAction detects that case and routes
-    // to the dashboard root instead of navigating back into an unreachable page.
-    BackHandler(enabled = content?.canGoBack == true) {
-        val view = webView ?: return@BackHandler
-        when (val action = resolveBackAction(view, content?.url?.toUri())) {
-            BackAction.GoBack -> view.goBack()
-            is BackAction.NavigateToRoot -> {
-                view.loadUrl(action.rootUrl.toString())
-                // Drop the stale cross-origin entry so the next back press exits the app
-                // instead of looping back into it.
-                view.clearHistory()
-            }
-            BackAction.None -> {}
-        }
-    }
+    // Resolution against the WebView back stack happens in the ViewModel via
+    // WebViewAction.NavigateBack (stale cross-origin entries route to the dashboard root).
+    BackHandler(enabled = content?.canGoBack == true) { onBackPressed() }
 
     FrontendScreenEffects(
         webView = webView,

@@ -1110,6 +1110,20 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * navigations can reset the viewport meta tag). The collection then stays active
      * to react to settings changes until the next page load restarts it.
      */
+    /**
+     * Handles the system back gesture while the dashboard consumes it ([FrontendViewState.Content]
+     * with WebView history). Emits [WebViewAction.NavigateBack], which resolves the gesture against
+     * the WebView's back/forward list: same-origin entries pop normally, a stale cross-origin entry
+     * routes to the dashboard root instead. Outside Content-with-history the screen does not consume
+     * the gesture, so this is a no-op.
+     */
+    fun onBackPressed() {
+        val state = _viewState.value
+        if (state is FrontendViewState.Content && state.canGoBack) {
+            viewModelScope.launch { _webViewActions.emit(WebViewAction.NavigateBack(state.url)) }
+        }
+    }
+
     private fun onPageFinished(url: String?) {
         viewModelScope.launch { applySafeAreaInsetsIfHandled() }
 

@@ -1512,6 +1512,73 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given Content with back history when back pressed then emits NavigateBack with current url`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+            reportCanGoBack(true)
+
+            viewModel.webViewActions.test {
+                viewModel.onBackPressed()
+                advanceUntilIdle()
+
+                assertEquals(WebViewAction.NavigateBack(testUrlWithAuth), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given Content without back history when back pressed then no action is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+            reportCanGoBack(false)
+
+            viewModel.webViewActions.test {
+                viewModel.onBackPressed()
+                advanceUntilIdle()
+
+                expectNoEvents()
+                cancel()
+            }
+        }
+
+        @Test
+        fun `Given Loading state when back pressed then no action is emitted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            // The frontend never connects, so the state stays Loading and back is not consumed.
+            val (viewModel, _) = createViewModelWithCanGoBackCapture()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.webViewActions.test {
+                viewModel.onBackPressed()
+                advanceUntilIdle()
+
+                expectNoEvents()
+                cancel()
+            }
+        }
+
+        @Test
         fun `Given the frontend connects when content is shown then webViewActions emits ClearHistory`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow

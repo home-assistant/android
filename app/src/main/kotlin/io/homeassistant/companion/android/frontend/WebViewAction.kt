@@ -6,10 +6,13 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.graphics.toColorInt
+import androidx.core.net.toUri
 import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLORS_SCRIPT
 import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLOR_SPACER
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
+import io.homeassistant.companion.android.util.compose.webview.BackAction
+import io.homeassistant.companion.android.util.compose.webview.resolveBackAction
 import io.homeassistant.companion.android.util.compose.webview.settings
 import io.homeassistant.companion.android.util.sensitive
 import kotlinx.coroutines.CompletableDeferred
@@ -92,6 +95,35 @@ sealed interface WebViewAction {
         override fun run(webView: WebView) {
             webView.clearHistory()
             result.complete(Unit)
+        }
+    }
+
+    /**
+     * Resolves and performs back navigation against the WebView's back/forward list via
+     * [resolveBackAction]:
+     *
+     * - [BackAction.GoBack]: the previous entry is same-origin — pop it normally.
+     * - [BackAction.NavigateToRoot]: the previous entry is a stale cross-origin URL (e.g. the
+     *   internal URL left in history after switching to the external one) — load the root of the
+     *   current origin and clear the history so the user lands on the dashboard instead of an
+     *   unreachable page.
+     * - [BackAction.None]: nothing to navigate back to — no-op.
+     *
+     * @param loadedUrl The URL the ViewModel most recently loaded into the WebView. Used instead of
+     *        [WebView.getUrl], which can be `about:blank` during loads.
+     */
+    data class NavigateBack(val loadedUrl: String?) : WebViewAction {
+        override fun run(webView: WebView) {
+            when (val action = resolveBackAction(webView, loadedUrl?.toUri())) {
+                BackAction.GoBack -> webView.goBack()
+                is BackAction.NavigateToRoot -> {
+                    webView.loadUrl(action.rootUrl.toString())
+                    // Drop the stale cross-origin entry so the next back press exits the app
+                    // instead of looping back into it.
+                    webView.clearHistory()
+                }
+                BackAction.None -> Unit
+            }
         }
     }
 
