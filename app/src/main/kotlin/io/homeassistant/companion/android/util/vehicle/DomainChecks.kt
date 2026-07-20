@@ -5,7 +5,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.DEVICE_TRACKER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.supportsAlarmControlPanelArmAway
 
 val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
     ALARM_CONTROL_PANEL_DOMAIN to R.string.alarm_control_panels,
