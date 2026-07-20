@@ -4,6 +4,11 @@ inputs:
   test-name:
     description: "Name of the test used as prefix for the artifact names."
     required: true
+  job-status:
+    description: >-
+      Status of the calling job, pass `${{ job.status }}`. Reports are only uploaded when it is
+      `failure`.
+    required: true
 runs:
   using: "composite"
   steps:
@@ -18,7 +23,7 @@ runs:
           **/build/outputs/*/connected/*
 
     - name: Upload test reports
-      if: failure()
+      if: ${{ inputs.job-status == 'failure' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: ${{ inputs.test-name }} reports
