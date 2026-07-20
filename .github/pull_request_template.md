@@ -27,6 +27,13 @@
 - [ ] The code follows the project's [code style](https://developers.home-assistant.io/docs/android/codestyle) and [best_practices](https://developers.home-assistant.io/docs/android/best_practices).
 - [ ] The changes have been thoroughly tested, and edge cases have been considered.
 - [ ] Changes are backward compatible whenever feasible. Any breaking changes are documented in the changelog for users and/or in the code for developers depending on the relevance.
+- [ ] I have read the [Open Home Foundation AI Policy](https://developers.home-assistant.io/docs/ai_policy).
+
+Select exactly one option that describes AI usage in this contribution:
+
+- [ ] AI assistance was used for this contribution
+- [ ] AI took full control of the code generation for this contribution
+- [ ] I have not used AI for this contribution
 
 ## Screenshots
 <!--
