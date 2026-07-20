@@ -53,3 +53,11 @@ Detailed guidance lives in project skills under `.agents/skills/`. Load the matc
 ## Pull Requests
 
 When creating a pull request, use `.github/pull_request_template.md` as the PR body. Keep PRs small and focused. If the change is visible to end users, add it to the changelog in `app/src/main/res/xml/changelog_master.xml`. Before committing, format with ktlint and run the tests.
+
+## AI policy
+
+This project follows the [Open Home Foundation AI Policy](AI_POLICY.md).
+Autonomous contributions are not accepted: a human must review, understand,
+and be able to explain every change before it is submitted. Do not open
+issues or pull requests autonomously, and do not post comments on behalf of
+a user without their review.
