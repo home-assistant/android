@@ -45,7 +45,7 @@ fun EntityUi(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = entity.getIcon(LocalContext.current)
+    val iconBitmap = entity.getIcon()
     val friendlyName = attributes["friendly_name"].toString()
     val nameModifier = Modifier
         .fillMaxWidth()

@@ -94,7 +94,7 @@ interface HaControl {
             // Specific override for some domain icons to match HA frontend rather than provided device type
             val iconOverride = listOf(MEDIA_PLAYER_DOMAIN, "number")
             if (entity.domain in iconOverride) {
-                val icon = IconicsDrawable(context, entity.getIcon(context)).apply { sizeDp = 48 }
+                val icon = IconicsDrawable(context, entity.getIcon()).apply { sizeDp = 48 }
                 val tint = if (entity.isActive()) {
                     R.color.colorDeviceControlsDefaultOn
                 } else {

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material3.SwitchButton
@@ -67,7 +66,7 @@ private fun FavoriteToggleChip(
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit,
 ) {
     val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = entity.getIcon(LocalContext.current)
+    val iconBitmap = entity.getIcon()
 
     val entityId = entity.entityId
     val checked = favoriteEntityIds.contains(entityId)

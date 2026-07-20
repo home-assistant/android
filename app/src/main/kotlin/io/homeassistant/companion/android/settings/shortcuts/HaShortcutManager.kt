@@ -26,13 +26,13 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.IconDialogCompat
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.link.HA_DEEP_LINK_SCHEME
 import io.homeassistant.companion.android.launch.link.LinkActivity
 import io.homeassistant.companion.android.launch.link.navigateDeepLinkUri
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.widgets.assist.AssistShortcutActivity
 import javax.inject.Inject
 import javax.inject.Singleton

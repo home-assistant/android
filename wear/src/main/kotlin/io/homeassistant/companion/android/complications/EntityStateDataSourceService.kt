@@ -74,7 +74,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             null
         }
 
-        val icon = entity.getIcon(applicationContext)
+        val icon = entity.getIcon()
         val iconBitmap = IconicsDrawable(this, icon).apply {
             colorInt = Color.WHITE
         }.toBitmap()

@@ -40,7 +40,7 @@ fun SetCameraTileView(
                 val entity = tile?.entityId?.let { tileEntityId ->
                     entities?.firstOrNull { it.entityId == tileEntityId }
                 }
-                val icon = entity?.getIcon(LocalContext.current) ?: CommunityMaterial.Icon3.cmd_video
+                val icon = entity?.getIcon() ?: CommunityMaterial.Icon3.cmd_video
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {

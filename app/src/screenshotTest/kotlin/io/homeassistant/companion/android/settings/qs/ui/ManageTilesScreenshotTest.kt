@@ -8,10 +8,10 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.util.getIconByMdiName
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.TileId
 import io.homeassistant.companion.android.util.compose.HAPreviews
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 
 class ManageTilesScreenshotTest {
 

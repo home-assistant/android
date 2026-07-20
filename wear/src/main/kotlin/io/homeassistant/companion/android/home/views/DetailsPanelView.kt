@@ -92,7 +92,7 @@ fun DetailsPanelView(
                         modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
                     ) {
                         Image(
-                            asset = entity.getIcon(LocalContext.current),
+                            asset = entity.getIcon(),
                             colorFilter = ColorFilter.tint(
                                 if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface,
                             ),
@@ -104,7 +104,7 @@ fun DetailsPanelView(
                     }
                 } else {
                     Image(
-                        asset = entity.getIcon(LocalContext.current),
+                        asset = entity.getIcon(),
                         colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                     )
                 }

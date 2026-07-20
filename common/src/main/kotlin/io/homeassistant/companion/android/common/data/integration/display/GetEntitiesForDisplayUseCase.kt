@@ -226,6 +226,6 @@ class GetEntitiesForDisplayUseCase @Inject constructor(
         val customMdiIcon = customIcon
             ?.takeIf { it.startsWith(MDI_PREFIX) }
             ?.let { IconicsDrawable(context, "cmd-${it.removePrefix(MDI_PREFIX)}").icon }
-        return customMdiIcon ?: entity.getIcon(context)
+        return customMdiIcon ?: entity.getIcon()
     }
 }

@@ -43,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -216,12 +215,11 @@ fun EntityPicker(
  */
 @Composable
 fun rememberEntityDisplayState(entities: List<Entity>): EntityDisplayState {
-    val context = LocalContext.current
     var displayState by remember { mutableStateOf<EntityDisplayState>(EntityDisplayState.Loading) }
     // Conversion runs on a background dispatcher to avoid ANRs on large entity lists
     LaunchedEffect(entities) {
         displayState = withContext(Dispatchers.Default) {
-            EntityDisplayState.Loaded(entities.map { EntityDisplayItem.from(entity = it, context = context) })
+            EntityDisplayState.Loaded(entities.map(EntityDisplayItem::from))
         }
     }
     return displayState

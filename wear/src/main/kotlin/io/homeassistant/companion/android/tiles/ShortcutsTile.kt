@@ -115,7 +115,6 @@ class ShortcutsTile : TileService() {
                         val iconIIcon = getIcon(
                             entity.icon,
                             entity.domain,
-                            this@ShortcutsTile,
                         )
                         val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
                             colorInt = Color.WHITE
