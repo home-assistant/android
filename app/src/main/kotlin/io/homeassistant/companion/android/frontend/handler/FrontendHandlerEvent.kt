@@ -24,6 +24,9 @@ sealed interface FrontendHandlerEvent {
      */
     data object Disconnected : FrontendHandlerEvent
 
+    /**
+     * Frontend reported it finished rendering and is ready to be displayed.
+     */
     data object Loaded : FrontendHandlerEvent
 
     /**

@@ -164,7 +164,7 @@ class FrontendMessageHandler @Inject constructor(
                 }
             }
             is FrontendLoaded -> {
-                Timber.d("Frontend is loaded ready to be displayed")
+                Timber.d("Frontend is loaded and ready to be displayed")
                 FrontendHandlerEvent.Loaded
             }
 
