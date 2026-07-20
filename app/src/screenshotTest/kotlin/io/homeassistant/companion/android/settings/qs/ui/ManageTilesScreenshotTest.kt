@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
+import io.homeassistant.companion.android.settings.qs.TileId
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 
@@ -45,7 +46,10 @@ class ManageTilesScreenshotTest {
             ManageTilesContent(
                 snackbarHostState = remember { SnackbarHostState() },
                 state = addTileState.copy(
-                    selectedTileId = addTileState.tileSlotsDropdownItems[1].key,
+                    selectedTileId = TileId("tile_2"),
+                    tileSlotItems = addTileState.tileSlotItems.map {
+                        if (it.id == TileId("tile_2")) it.copy(label = "Living room") else it
+                    },
                     serversDropdownItems = listOf(
                         HADropdownItem(key = 1, label = "Home"),
                         HADropdownItem(key = 2, label = "Vacation home"),
@@ -79,8 +83,7 @@ class ManageTilesScreenshotTest {
             ManageTilesContent(
                 snackbarHostState = remember { SnackbarHostState() },
                 state = addTileState.copy(
-                    selectedIconId = "mdi:account",
-                    selectedIcon = CommunityMaterial.getIconByMdiName("mdi:account"),
+                    customIcon = CommunityMaterial.getIconByMdiName("mdi:account"),
                     selectedEntityId = "light.living_room",
                 ),
                 submitEnabled = false,
@@ -100,11 +103,7 @@ class ManageTilesScreenshotTest {
 
     private companion object {
         val addTileState = ManageTilesState(
-            tileSlotsDropdownItems = listOf(
-                HADropdownItem(key = "tile_1", label = "Tile 1"),
-                HADropdownItem(key = "tile_2", label = "Tile 2"),
-            ),
-            selectedTileId = "tile_1",
+            selectedTileId = TileId("tile_1"),
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
             tileLabel = "",
@@ -113,7 +112,6 @@ class ManageTilesScreenshotTest {
             showSubtitle = true,
             tileSubtitle = "",
             selectedEntityId = "",
-            selectedIcon = null,
             submitButtonLabel = commonR.string.tile_add,
         )
     }

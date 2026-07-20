@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -19,6 +20,8 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
+import io.homeassistant.companion.android.settings.qs.TileId
+import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -132,7 +135,7 @@ class ManageTilesTest {
     }
 
     private class TestHelper {
-        var tileSelected: String? = null
+        var tileSelected: TileId? = null
         var serverSelected: Int? = null
         var tileLabel: String? = null
         var tileSubtitle: String? = null
@@ -173,18 +176,13 @@ class ManageTilesTest {
 
     private companion object {
         val addTileState = ManageTilesState(
-            tileSlotsDropdownItems = listOf(
-                HADropdownItem(key = "tile_1", label = "Tile 1"),
-                HADropdownItem(key = "tile_2", label = "Tile 2"),
-            ),
-            selectedTileId = "tile_1",
+            selectedTileId = TileId("tile_1"),
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
             tileLabel = "",
             showSubtitle = true,
             tileSubtitle = "",
             selectedEntityId = "",
-            selectedIcon = null,
             submitButtonLabel = commonR.string.tile_add,
         )
 
@@ -194,7 +192,7 @@ class ManageTilesTest {
                 HADropdownItem(key = 2, label = "Vacation home"),
             ),
             selectedServerId = 1,
-            selectedIconId = "mdi:home",
+            customIcon = CommunityMaterial.getIconByMdiName("mdi:home"),
             tileLabel = "Living room",
             selectedEntityId = "light.living_room",
             submitButtonLabel = commonR.string.tile_save,

@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -57,6 +58,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
+import io.homeassistant.companion.android.settings.qs.TileId
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.icondialog.IconDialog
@@ -68,6 +70,7 @@ internal fun ManageTilesScreen(viewModel: ManageTilesViewModel, modifier: Modifi
     val state by viewModel.state.collectAsStateWithLifecycle()
     var showIconDialog by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
     val resources = LocalResources.current
     LaunchedEffect(Unit) {
         viewModel.tileInfoSnackbar.collect { resId ->
@@ -101,7 +104,7 @@ internal fun ManageTilesScreen(viewModel: ManageTilesViewModel, modifier: Modifi
         onResetIcon = { viewModel.selectIcon(null) },
         onShouldVibrateChange = viewModel::setShouldVibrate,
         onAuthRequiredChange = viewModel::setAuthRequired,
-        onSubmit = viewModel::addTile,
+        onSubmit = { viewModel.addTile(context) },
         modifier = modifier,
     )
 }
@@ -111,7 +114,7 @@ internal fun ManageTilesContent(
     snackbarHostState: SnackbarHostState,
     state: ManageTilesState,
     submitEnabled: Boolean,
-    onTileSelected: (id: String) -> Unit,
+    onTileSelected: (id: TileId) -> Unit,
     onServerSelected: (Int) -> Unit,
     onTileLabelChange: (String) -> Unit,
     onTileSubtitleChange: (String) -> Unit,
@@ -182,12 +185,26 @@ internal fun ManageTilesContent(
 @Composable
 private fun ColumnScope.TileLabelContent(
     state: ManageTilesState,
-    onTileSelected: (id: String) -> Unit,
+    onTileSelected: (id: TileId) -> Unit,
     onTileLabelChange: (String) -> Unit,
     onTileSubtitleChange: (String) -> Unit,
 ) {
+    val res = LocalResources.current
+    val tiles = remember(state.tileSlotItems) {
+        state.tileSlotItems.map { slot ->
+            HADropdownItem(
+                key = slot.id,
+                label = res.getString(
+                    commonR.string.tile_slot_label,
+                    res.getString(slot.nameRes),
+                    slot.label ?: res.getString(commonR.string.not_set),
+                ),
+            )
+        }
+    }
+
     HADropdownMenu(
-        items = state.tileSlotsDropdownItems,
+        items = tiles,
         selectedKey = state.selectedTileId,
         onItemSelected = onTileSelected,
         label = stringResource(commonR.string.tile_select),
@@ -369,7 +386,7 @@ private fun ManageTilesUpdatePreview() {
             snackbarHostState = remember { SnackbarHostState() },
             submitEnabled = false,
             state = previewState.copy(
-                selectedTileId = "tile_2",
+                selectedTileId = TileId("tile_2"),
                 tileLabel = "Living room",
                 tileSubtitle = "Lights",
                 selectedEntityId = "light.living_room",
@@ -402,16 +419,11 @@ private fun LabeledSwitchRowPreview() {
 }
 
 private val previewState = ManageTilesState(
-    tileSlotsDropdownItems = listOf(
-        HADropdownItem(key = "tile_1", label = "Tile 1"),
-        HADropdownItem(key = "tile_2", label = "Tile 2"),
-    ),
-    selectedTileId = "tile_1",
+    selectedTileId = TileId("tile_1"),
     selectedServerId = 0,
     tileLabel = "",
     tileSubtitle = "",
     selectedEntityId = "",
-    selectedIcon = null,
     submitButtonLabel = commonR.string.tile_add,
     showSubtitle = true,
 )

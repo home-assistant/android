@@ -7,7 +7,6 @@ import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.turbineScope
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.testing.HiltTestApplication
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
@@ -22,22 +21,27 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
+import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
+import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNull
@@ -54,7 +58,6 @@ class ManageTilesViewModelTest {
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     private lateinit var application: Application
-    private lateinit var slots: List<TileSlot>
 
     private val serverManager: ServerManager = mockk(relaxed = false)
     private val tileDao: TileDao = mockk(relaxed = false)
@@ -63,12 +66,12 @@ class ManageTilesViewModelTest {
     @Before
     fun setUp() {
         application = ApplicationProvider.getApplicationContext()
-        slots = loadTileSlots(application.resources)
         coEvery { serverManager.servers() } coAnswers { awaitCancellation() }
         coEvery { serverManager.getServer(any<Int>()) } returns null
         coEvery { tileDao.get(any()) } returns null
         coEvery { tileDao.getAll() } returns emptyList()
         coEvery { tileDao.add(any()) } returns 1L
+        every { tileDao.getAllFlow() } returns flowOf(emptyList())
         every { getEntitiesForDisplay(any(), any<(Entity) -> Boolean>()) } returns flowOf(EntityDisplayState.Loading)
     }
 
@@ -78,6 +81,14 @@ class ManageTilesViewModelTest {
         connection = ServerConnectionInfo(externalUrl = "https://example.com"),
         session = ServerSessionInfo(),
         user = ServerUserInfo(),
+    )
+
+    private fun fakeEntity(entityId: String) = Entity(
+        entityId = entityId,
+        state = "on",
+        attributes = emptyMap(),
+        lastChanged = LocalDateTime.now(),
+        lastUpdated = LocalDateTime.now(),
     )
 
     private fun fakeTile(
@@ -109,7 +120,6 @@ class ManageTilesViewModelTest {
         serverManager = serverManager,
         tileDao = tileDao,
         getEntitiesForDisplay = getEntitiesForDisplay,
-        application = application,
     )
 
     @Test
@@ -117,35 +127,27 @@ class ManageTilesViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertEquals(viewModel.slots[0].id, viewModel.state.value.selectedTileId)
-        assertEquals(
-            application.resources.getStringArray(R.array.tile_ids).size,
-            viewModel.slots.size,
-        )
+        assertEquals(tileSlots.first().id, viewModel.state.value.selectedTileId)
     }
 
     @Test
     fun `Given a saved tile id when created then that tile is selected and tile_data_missing is emitted`() = runTest {
-        val targetId = slots[1].id
+        val targetId = tileSlots[1].id
 
         turbineScope {
-            val viewModel = createViewModel(SavedStateHandle(mapOf("id" to targetId)))
+            val viewModel = createViewModel(SavedStateHandle(mapOf("id" to targetId.value)))
             val snackbar = viewModel.tileInfoSnackbar.testIn(backgroundScope)
             advanceUntilIdle()
 
-            assertEquals(viewModel.slots[1].id, viewModel.state.value.selectedTileId)
+            assertEquals(tileSlots[1].id, viewModel.state.value.selectedTileId)
             assertEquals(commonR.string.tile_data_missing, snackbar.awaitItem())
-            assertEquals(
-                application.resources.getStringArray(R.array.tile_ids).size,
-                viewModel.slots.size,
-            )
             snackbar.cancelAndConsumeRemainingEvents()
         }
     }
 
     @Test
     fun `Given an existing setup tile when selectTile then fields are populated from the entity`() = runTest {
-        val tileId = slots[0].id
+        val tileId = tileSlots[0].id.value
         val setupTile = fakeTile(
             dbId = 5,
             tileId = tileId,
@@ -170,13 +172,38 @@ class ManageTilesViewModelTest {
         assertTrue(viewModel.state.value.selectedShouldVibrate)
         assertTrue(viewModel.state.value.tileAuthRequired)
         assertEquals(2, viewModel.state.value.selectedServerId)
-        assertEquals("mdi:account", viewModel.state.value.selectedIconId)
+        assertEquals("mdi:account", viewModel.state.value.customIcon?.mdiName)
         assertEquals(commonR.string.tile_save, viewModel.state.value.submitButtonLabel)
     }
 
     @Test
+    fun `Given a setup tile selected when selecting a slot without setup data then the tile fields are reset`() = runTest {
+        val setupTileId = tileSlots[0].id.value
+        coEvery { tileDao.get(setupTileId) } returns fakeTile(
+            dbId = 5,
+            tileId = setupTileId,
+            label = "Living Room",
+            subtitle = "sub",
+            entityId = "switch.lamp",
+            iconName = "mdi:account",
+        )
+
+        val viewModel = createViewModel()
+        viewModel.selectTile(tileSlots[0].id)
+        advanceUntilIdle()
+
+        viewModel.selectTile(tileSlots[1].id)
+        advanceUntilIdle()
+
+        assertEquals("", viewModel.state.value.tileLabel)
+        assertEquals("", viewModel.state.value.tileSubtitle)
+        assertNull(viewModel.state.value.selectedEntityId)
+        assertNull(viewModel.state.value.customIcon)
+    }
+
+    @Test
     fun `Given a tile with serverId 0 when selectTile then server falls back to active server id`() = runTest {
-        val tileId = slots[0].id
+        val tileId = tileSlots[0].id.value
         coEvery { tileDao.get(tileId) } returns fakeTile(tileId = tileId, serverId = 0)
         coEvery { serverManager.getServer(any<Int>()) } returns fakeServer(id = 7)
 
@@ -189,7 +216,7 @@ class ManageTilesViewModelTest {
 
     @Test
     fun `Given a tile with explicit serverId when selectTile then that server id is used`() = runTest {
-        val tileId = slots[0].id
+        val tileId = tileSlots[0].id.value
         coEvery { tileDao.get(tileId) } returns fakeTile(tileId = tileId, serverId = 3)
 
         val viewModel = createViewModel()
@@ -204,21 +231,21 @@ class ManageTilesViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.selectTile("")
+        viewModel.selectTile(TileId(""))
         advanceUntilIdle()
 
-        assertEquals(viewModel.slots[0].id, viewModel.state.value.selectedTileId)
+        assertEquals(tileSlots[0].id, viewModel.state.value.selectedTileId)
     }
 
     @Test
-    fun `Given an mdi icon when selectIcon then selectedIconId is the mdi name and selectedIcon is set`() = runTest {
+    fun `Given an mdi icon when selectIcon then it becomes the custom and displayed icon`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         val icon = CommunityMaterial.getIconByMdiName("mdi:account")!!
         viewModel.selectIcon(icon)
 
-        assertEquals("mdi:account", viewModel.state.value.selectedIconId)
+        assertTrue(viewModel.state.value.customIcon === icon)
         assertTrue(viewModel.state.value.selectedIcon === icon)
     }
 
@@ -229,7 +256,7 @@ class ManageTilesViewModelTest {
 
         viewModel.selectIcon(null)
 
-        assertNull(viewModel.state.value.selectedIconId)
+        assertNull(viewModel.state.value.customIcon)
         assertNull(viewModel.state.value.selectedIcon)
     }
 
@@ -237,13 +264,13 @@ class ManageTilesViewModelTest {
     fun `Given no custom icon when selectEntityId then the entity id is set and icon follows the entity`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
-        assertNull(viewModel.state.value.selectedIconId)
+        assertNull(viewModel.state.value.customIcon)
 
         viewModel.selectEntityId("light.x")
 
         assertEquals("light.x", viewModel.state.value.selectedEntityId)
-        assertNull(viewModel.state.value.selectedIconId)
-        // selectedIcon is null because sortedEntities is empty.
+        assertNull(viewModel.state.value.customIcon)
+        // selectedIcon is null because the entity is not in the loaded entities.
         assertNull(viewModel.state.value.selectedIcon)
     }
 
@@ -254,17 +281,16 @@ class ManageTilesViewModelTest {
 
         val icon = CommunityMaterial.getIconByMdiName("mdi:account")!!
         viewModel.selectIcon(icon)
-        // selectedIconId is now "mdi:account" — selectEntityId must not call selectIcon(null).
         viewModel.selectEntityId("light.y")
 
-        assertEquals("mdi:account", viewModel.state.value.selectedIconId)
+        assertTrue(viewModel.state.value.customIcon === icon)
         assertEquals("light.y", viewModel.state.value.selectedEntityId)
     }
 
     @Test
     fun `Given current state when addTile then tileDao receives a TileEntity with the mapped fields and tile_updated is emitted`() = runTest {
         // Store a tile so that selectedTileId is populated from the DB primary key.
-        val tileId = slots[0].id
+        val tileId = tileSlots[0].id.value
         val storedTile = fakeTile(
             dbId = 42,
             tileId = tileId,
@@ -289,7 +315,7 @@ class ManageTilesViewModelTest {
             // Subscribe before calling addTile so we don't miss the emission.
             val snackbar = viewModel.tileInfoSnackbar.testIn(backgroundScope)
 
-            viewModel.addTile()
+            viewModel.addTile(application)
             advanceUntilIdle()
 
             // On SDK S (31 < TIRAMISU 33) the StatusBarManager branch is skipped and
@@ -304,7 +330,7 @@ class ManageTilesViewModelTest {
                             it.shouldVibrate &&
                             it.authRequired &&
                             it.iconName == "mdi:account" &&
-                            it.tileId == viewModel.slots[0].id
+                            it.tileId == tileSlots[0].id.value
                     },
                 )
             }
@@ -315,7 +341,7 @@ class ManageTilesViewModelTest {
 
     @Test
     fun `Given no existing tile row when addTile then a new row is inserted with id 0 and added false`() = runTest {
-        val tileId = slots[0].id
+        val tileId = tileSlots[0].id.value
         coEvery { tileDao.get(tileId) } returns null // no existing row for this tile slot
 
         val viewModel = createViewModel()
@@ -327,7 +353,7 @@ class ManageTilesViewModelTest {
         turbineScope {
             val snackbar = viewModel.tileInfoSnackbar.testIn(backgroundScope)
 
-            viewModel.addTile()
+            viewModel.addTile(application)
             advanceUntilIdle()
 
             coVerify(exactly = 1) {
@@ -344,7 +370,7 @@ class ManageTilesViewModelTest {
 
     @Test
     fun `Given a tile saved once when addTile is called again then the second save reuses the same persisted id`() = runTest {
-        val tileId = slots[0].id
+        val tileId = tileSlots[0].id.value
         // First save: no existing row.
         coEvery { tileDao.get(tileId) } returns null andThen fakeTile(dbId = 7, tileId = tileId, label = "First save")
 
@@ -356,13 +382,13 @@ class ManageTilesViewModelTest {
 
             viewModel.setTileLabel("First save")
             viewModel.selectEntityId("light.a")
-            viewModel.addTile()
+            viewModel.addTile(application)
             advanceUntilIdle()
             assertEquals(commonR.string.tile_updated, snackbar.awaitItem())
 
             // Second save: DAO now returns the row that was persisted with id = 7 by the first save.
             viewModel.setTileLabel("Second save")
-            viewModel.addTile()
+            viewModel.addTile(application)
             advanceUntilIdle()
             assertEquals(commonR.string.tile_updated, snackbar.awaitItem())
 
@@ -385,7 +411,7 @@ class ManageTilesViewModelTest {
 
     @Test
     fun `Given a blank subtitle when addTile then persisted subtitle is null`() = runTest {
-        val tileId = slots[0].id
+        val tileId = tileSlots[0].id.value
         coEvery { tileDao.get(tileId) } returns fakeTile(dbId = 9, tileId = tileId)
 
         val viewModel = createViewModel()
@@ -394,7 +420,7 @@ class ManageTilesViewModelTest {
         viewModel.selectEntityId("light.b")
         // tileSubtitle left as default "" (blank)
 
-        viewModel.addTile()
+        viewModel.addTile(application)
         advanceUntilIdle()
 
         coVerify(exactly = 1) {
@@ -404,7 +430,7 @@ class ManageTilesViewModelTest {
 
     @Test
     fun `Given existing tile with null subtitle when selectTile then state tileSubtitle is empty string`() = runTest {
-        val tileId = slots[0].id
+        val tileId = tileSlots[0].id.value
         coEvery { tileDao.get(tileId) } returns fakeTile(dbId = 11, tileId = tileId, subtitle = null)
 
         val viewModel = createViewModel()
@@ -412,6 +438,61 @@ class ManageTilesViewModelTest {
         advanceUntilIdle()
 
         assertEquals("", viewModel.state.value.tileSubtitle)
+    }
+
+    @Test
+    fun `Given stored tiles when created then the slot items carry the labels of the configured tiles`() = runTest {
+        every { tileDao.getAllFlow() } returns flowOf(
+            listOf(
+                fakeTile(tileId = "tile_1", label = "Living Room"),
+                fakeTile(tileId = "tile_2", label = ""),
+            ),
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val slotItems = viewModel.state.value.tileSlotItems
+        assertEquals(tileSlots.size, slotItems.size)
+        assertEquals("Living Room", slotItems.first { it.id == TileId("tile_1") }.label)
+        // A blank label counts as not configured.
+        assertNull(slotItems.first { it.id == TileId("tile_2") }.label)
+    }
+
+    @Test
+    fun `Given the entity picker when loading entities then only entities usable in a tile are requested`() = runTest {
+        // Regression test: the filter passed to the use case must exclude entities a tile
+        // cannot act on, otherwise the picker offers entities that do nothing when clicked.
+        val filter = slot<(Entity) -> Boolean>()
+        every { getEntitiesForDisplay(any(), capture(filter)) } returns flowOf(EntityDisplayState.Loading)
+
+        createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(filter.captured(fakeEntity("light.bulb")))
+        assertTrue(filter.captured(fakeEntity("scene.movie_night")))
+        assertFalse(filter.captured(fakeEntity("sensor.temperature")))
+    }
+
+    @Test
+    fun `Given a setup tile with slow entity loading when selectTile then the tile fields are populated before the entities finish loading`() = runTest {
+        // The tile fields come from the database and must not wait for the (potentially slow)
+        // entity loading; only the entity list itself stays in Loading.
+        val tileId = tileSlots[0].id.value
+        coEvery { tileDao.get(tileId) } returns
+            fakeTile(tileId = tileId, label = "Living Room", entityId = "switch.lamp", serverId = 2)
+        every { getEntitiesForDisplay(2, any<(Entity) -> Boolean>()) } returns flow {
+            emit(EntityDisplayState.Loading)
+            delay(10_000.milliseconds)
+            emit(EntityDisplayState.Loaded(emptyList()))
+        }
+
+        val viewModel = createViewModel()
+        advanceTimeBy(100.milliseconds)
+
+        assertEquals("Living Room", viewModel.state.value.tileLabel)
+        assertEquals("switch.lamp", viewModel.state.value.selectedEntityId)
+        assertInstanceOf(EntityDisplayState.Loading::class.java, viewModel.state.value.entityDisplayState)
     }
 
     @Test
