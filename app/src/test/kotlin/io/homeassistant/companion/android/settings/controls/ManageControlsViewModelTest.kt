@@ -81,7 +81,7 @@ class ManageControlsViewModelTest {
     @Test
     fun `Given resolved entities when created then hidden entities are included and the rest sorted by display name`() = runTest {
         coEvery { serverManager.servers() } returns listOf(fakeServer(1))
-        every { getEntitiesForDisplay(1, any<(Entity) -> Boolean>()) } returns flowOf(
+        every { getEntitiesForDisplay.snapshot(1, any<(Entity) -> Boolean>()) } returns flowOf(
             EntityDisplayState.Loading,
             EntityDisplayState.Loaded(
                 listOf(
@@ -102,11 +102,11 @@ class ManageControlsViewModelTest {
     @Test
     fun `Given a server failing to resolve entities when created then that server is left out but loading completes`() = runTest {
         coEvery { serverManager.servers() } returns listOf(fakeServer(1), fakeServer(2))
-        every { getEntitiesForDisplay(1, any<(Entity) -> Boolean>()) } returns flowOf(
+        every { getEntitiesForDisplay.snapshot(1, any<(Entity) -> Boolean>()) } returns flowOf(
             EntityDisplayState.Loading,
             EntityDisplayState.Error,
         )
-        every { getEntitiesForDisplay(2, any<(Entity) -> Boolean>()) } returns flowOf(
+        every { getEntitiesForDisplay.snapshot(2, any<(Entity) -> Boolean>()) } returns flowOf(
             EntityDisplayState.Loading,
             EntityDisplayState.Loaded(listOf(fakeItem("light.bulb", name = "Bulb"))),
         )

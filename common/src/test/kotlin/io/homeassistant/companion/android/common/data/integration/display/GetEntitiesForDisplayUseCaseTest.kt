@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
-import android.content.Context
 import androidx.compose.ui.unit.LayoutDirection
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
@@ -274,7 +273,7 @@ class GetEntitiesForDisplayUseCaseTest {
         fun `Given display entry with a blank name when resolving then name falls back to friendly name`() = runTest {
             givenDisplayEntries(EntityRegistryDisplayEntry(entityId = "light.bed", name = " "))
 
-            val items = useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+            val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 
             assertEquals("Bed Light", items.single().name)
         }
