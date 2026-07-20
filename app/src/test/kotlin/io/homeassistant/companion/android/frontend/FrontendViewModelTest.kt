@@ -212,6 +212,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onUrlVisited = any(),
                 )
             } answers {
                 // onUrlIntercepted is at parameter index 3 in HAWebViewClientFactory.create
@@ -303,7 +304,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given url manager returns success when initialized then state is Loading with url`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -317,7 +318,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given url manager returns session not connected when initialized then error state`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.SessionNotConnected(serverId),
             )
 
@@ -330,7 +331,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given url manager returns server not found when initialized then error state`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.ServerNotFound(serverId),
             )
 
@@ -344,7 +345,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given url manager returns success with path when initialized then loading state includes path`() = runTest {
             val urlWithPath = "https://example.com/dashboard?external_auth=1"
-            every { urlManager.serverUrlFlow(serverId, FrontendTarget.Path("/dashboard")) } returns flowOf(
+            every { urlManager.serverUrlFlow(serverId, FrontendTarget.Path("/dashboard"), any()) } returns flowOf(
                 UrlLoadResult.Success(url = urlWithPath, serverId = serverId),
             )
 
@@ -357,7 +358,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given url manager returns insecure blocked when initialized then insecure state`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.InsecureBlocked(
                     serverId = serverId,
                     missingHomeSetup = false,
@@ -374,7 +375,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given url manager returns no url available when collecting then error state`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.NoUrlAvailable(serverId),
             )
 
@@ -393,7 +394,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given url state changes from success to insecure when collecting then insecure state`() = runTest {
             val urlFlow = MutableSharedFlow<UrlLoadResult>(replay = 1)
-            every { urlManager.serverUrlFlow(any(), any()) } returns urlFlow
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns urlFlow
 
             // Emit initial success before creating ViewModel so it's available when collection starts
             urlFlow.emit(UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId))
@@ -422,7 +423,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given error state when onRetry called then state transitions to LoadServer then Loading`() = runTest {
             val urlFlow = MutableSharedFlow<UrlLoadResult>()
-            every { urlManager.serverUrlFlow(any(), any()) } returns urlFlow
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns urlFlow
 
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -456,8 +457,8 @@ class FrontendViewModelTest {
             val urlFlow1 = flowOf(UrlLoadResult.Success(url = "https://server1.com?external_auth=1", serverId = 1))
             val urlFlow2 = flowOf(UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2))
 
-            every { urlManager.serverUrlFlow(1, any()) } returns urlFlow1
-            every { urlManager.serverUrlFlow(2, any()) } returns urlFlow2
+            every { urlManager.serverUrlFlow(1, any(), any()) } returns urlFlow1
+            every { urlManager.serverUrlFlow(2, any(), any()) } returns urlFlow2
 
             val viewModel = createViewModel(serverId = 1)
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -480,7 +481,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given url manager returns success then urlFlow value matches viewState url without subscribers`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -493,7 +494,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given error state then errorFlow value matches viewState error without subscribers`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.ServerNotFound(serverId),
             )
 
@@ -509,7 +510,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given loading state when error occurs then error flow is updated`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.ServerNotFound(serverId),
             )
 
@@ -522,7 +523,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given error state when onRetry called then error flow is cleared if no error`() = runTest {
             val urlResults = MutableStateFlow<UrlLoadResult>(UrlLoadResult.ServerNotFound(serverId))
-            every { urlManager.serverUrlFlow(any(), any()) } returns urlResults
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns urlResults
 
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -542,7 +543,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given loading state when onWebViewCreationFailed called then state transitions to Error with WebViewCreationError`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -568,7 +569,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given WebViewCreationError state when url flow emits new url then error state is preserved`() = runTest {
             val urlFlow = MutableSharedFlow<UrlLoadResult>(replay = 1)
-            every { urlManager.serverUrlFlow(any(), any()) } returns urlFlow
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns urlFlow
 
             // Emit initial URL
             urlFlow.emit(UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId))
@@ -604,7 +605,7 @@ class FrontendViewModelTest {
         fun `Given connected message result when collected then state transitions to Content`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -626,7 +627,7 @@ class FrontendViewModelTest {
         fun `Given content when ShowBarcodeScanner then Content barcodeScanner is set`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -655,7 +656,7 @@ class FrontendViewModelTest {
         fun `Given an active barcode scan when NotifyBarcodeScanner then an information dialog is shown`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -675,7 +676,7 @@ class FrontendViewModelTest {
         fun `Given an active barcode scan when CloseBarcodeScanner then barcodeScanner is cleared`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -695,7 +696,7 @@ class FrontendViewModelTest {
         fun `Given an active barcode scan when onBarcodeScanned then result is sent and scanner stays open`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -719,7 +720,7 @@ class FrontendViewModelTest {
         fun `Given auth error message result when collected then state transitions to Error`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -746,7 +747,7 @@ class FrontendViewModelTest {
         fun `Given show assist message result when collected then NavigateToAssist event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -774,7 +775,7 @@ class FrontendViewModelTest {
         fun `Given open settings message result when collected then NavigateToSettings event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -798,7 +799,7 @@ class FrontendViewModelTest {
         fun `Given haptic message when collected then webViewActions emits Haptic action`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -823,10 +824,10 @@ class FrontendViewModelTest {
         @Test
         fun `Given gesture returns SwitchServer when handled then viewState transitions to new server`() = runTest {
             every { frontendBusObserver.messageResults() } returns emptyFlow()
-            every { urlManager.serverUrlFlow(1, any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(1, any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = "https://server1.com?external_auth=1", serverId = 1),
             )
-            every { urlManager.serverUrlFlow(2, any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(2, any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
             )
             coEvery {
@@ -847,7 +848,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given NAVIGATE_DASHBOARD gesture on 2025_6 server then clears history and sends navigate`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
@@ -883,7 +884,7 @@ class FrontendViewModelTest {
         fun `Given open assist settings message result when collected then NavigateToAssistSettings event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -906,7 +907,7 @@ class FrontendViewModelTest {
         fun `Given WriteNfcTag handler event when collected then NavigateToNfcWrite is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -926,7 +927,7 @@ class FrontendViewModelTest {
         fun `Given EntityAddToExecuted with event when collected then event is forwarded`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -954,7 +955,7 @@ class FrontendViewModelTest {
         fun `Given EntityAddToExecuted with null event when collected then no event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -975,7 +976,7 @@ class FrontendViewModelTest {
         fun `Given EntityAddToActionsSent when collected then no event is emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -994,7 +995,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given onNfcWriteCompleted when called then sends empty-result ResultMessage back to frontend`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1014,7 +1015,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given security level required when url result received then show security level state`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.SecurityLevelRequired(serverId),
             )
 
@@ -1028,7 +1029,7 @@ class FrontendViewModelTest {
         @Test
         fun `Given security level configured when called then url manager is notified and server reloads`() = runTest {
             val urlResults = MutableStateFlow<UrlLoadResult>(UrlLoadResult.SecurityLevelRequired(serverId))
-            every { urlManager.serverUrlFlow(any(), any()) } returns urlResults
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns urlResults
             every { urlManager.onSecurityLevelShown(any()) } just runs
 
             val viewModel = createViewModel()
@@ -1048,7 +1049,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given insecure state when onShowSecurityLevelScreen called then state transitions to SecurityLevelRequired`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.InsecureBlocked(
                     serverId = serverId,
                     missingHomeSetup = true,
@@ -1076,7 +1077,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given connectivity checks requested when error occurs then repository is called`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.ServerNotFound(serverId),
             )
 
@@ -1111,7 +1112,7 @@ class FrontendViewModelTest {
                 ),
             )
             every { connectivityCheckRepository.runChecks(any()) } returns flowOf(inProgressState, completedState)
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.ServerNotFound(serverId),
             )
 
@@ -1142,7 +1143,7 @@ class FrontendViewModelTest {
                 ),
             )
             every { connectivityCheckRepository.runChecks(any()) } returns flowOf(failedState)
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.ServerNotFound(serverId),
             )
 
@@ -1162,7 +1163,7 @@ class FrontendViewModelTest {
         fun `Given connected then checks notification permission via permission manager`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1181,7 +1182,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given pending permission then viewModel exposes it from permission manager`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1206,6 +1207,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onUrlVisited = any(),
                 )
             } answers {
                 // onPageFinished is at parameter index 4 in HAWebViewClientFactory.create
@@ -1219,7 +1221,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given page finishes then ApplyZoom action is emitted with current settings`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             zoomSettingsFlow.value = ZoomSettings(zoomLevel = 150, pinchToZoomEnabled = true)
@@ -1238,7 +1240,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given older-server more-info deep link when page finishes then OpenMoreInfo is dispatched`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId, moreInfoEntityId = "light.kitchen"),
             )
 
@@ -1254,7 +1256,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given more-info dispatched when page finishes again then OpenMoreInfo is not repeated`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId, moreInfoEntityId = "light.kitchen"),
             )
 
@@ -1274,7 +1276,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given page loaded when settings change then ApplyZoom action is emitted without page finish`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1295,7 +1297,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given page finishes again then observer restarts with fresh values`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             zoomSettingsFlow.value = ZoomSettings(zoomLevel = 100, pinchToZoomEnabled = false)
@@ -1342,6 +1344,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onUrlVisited = any(),
                 )
             } answers {
                 capturedCallback = arg(5)
@@ -1358,7 +1361,7 @@ class FrontendViewModelTest {
         fun `Given stored credentials when auth requested then auto-proceeds without dialog`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { authenticationDao.get(any()) } returns Authentication("key", "user", "pass")
@@ -1382,7 +1385,7 @@ class FrontendViewModelTest {
         fun `Given no stored credentials when auth requested then dialog is shown`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { authenticationDao.get(any()) } returns null
@@ -1403,7 +1406,7 @@ class FrontendViewModelTest {
         fun `Given auth dialog shown when cancel then snackbar event emitted`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { authenticationDao.get(any()) } returns null
@@ -1444,6 +1447,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onUrlVisited = any(),
                 )
             } answers {
                 // onCanGoBackChanged is at parameter index 6 in HAWebViewClientFactory.create
@@ -1466,7 +1470,7 @@ class FrontendViewModelTest {
         fun `Given Content state when WebView reports back availability then canGoBack reflects it`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1488,7 +1492,7 @@ class FrontendViewModelTest {
         fun `Given WebView covered by an overlay when it can go back then canGoBack is false`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1511,7 +1515,7 @@ class FrontendViewModelTest {
         fun `Given the frontend connects when content is shown then webViewActions emits ClearHistory`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1533,10 +1537,10 @@ class FrontendViewModelTest {
         fun `Given a connected server with back history when switching servers then history is cleared and canGoBack is false`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(1, any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(1, any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = "https://server1.com?external_auth=1", serverId = 1),
             )
-            every { urlManager.serverUrlFlow(2, any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(2, any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
             )
 
@@ -1571,7 +1575,7 @@ class FrontendViewModelTest {
         private fun connectedMessageFlow(): MutableSharedFlow<FrontendHandlerEvent> {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             return messageFlow
@@ -1767,7 +1771,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given JS confirm received then dialog is exposed via pendingDialog`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1783,7 +1787,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given dialog confirmed then JsResult is confirmed and slot clears`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1802,7 +1806,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given dialog cancelled then JsResult is cancelled and slot clears`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1821,7 +1825,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given a dialog already shown when second JS confirm arrives then it queues until first is resolved`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1855,7 +1859,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given file chooser triggered then pendingFileChooser exposes the params`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1881,7 +1885,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given pending file chooser when result delivered then filePathCallback receives uris and slot clears`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1910,7 +1914,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given pending file chooser when user cancels then filePathCallback receives null and slot clears`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1940,7 +1944,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given loading state when connection times out then error state with timeout error`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1961,7 +1965,7 @@ class FrontendViewModelTest {
         fun `Given loading state when connected before timeout then no timeout error`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -1991,7 +1995,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given download error result when download requested then emits ShowSnackbar UI event`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
@@ -2020,7 +2024,7 @@ class FrontendViewModelTest {
             val testUri = mockk<Uri> {
                 every { this@mockk.toString() } returns "ftp://example.com/file.txt"
             }
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
@@ -2046,7 +2050,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given forwarded result when download requested then no UI event emitted`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
@@ -2071,7 +2075,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given download requested when downloadManager called then passes current serverId`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
@@ -2100,7 +2104,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given storage permission denied when download requested then does not call downloadManager`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { permissionManager.checkStoragePermissionForDownload() } returns false
@@ -2120,7 +2124,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given storage permission granted when download requested then proceeds with download`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { permissionManager.checkStoragePermissionForDownload() } returns true
@@ -2152,7 +2156,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given fullscreen true when onExoPlayerFullscreenChanged then manager is notified and RequestFullscreen true emitted`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -2167,7 +2171,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given fullscreen false when onExoPlayerFullscreenChanged then manager is notified and RequestFullscreen false emitted`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -2184,7 +2188,7 @@ class FrontendViewModelTest {
         fun `Given ExoPlayerAction message when handled then manager handle is called`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             createViewModel()
@@ -2200,7 +2204,7 @@ class FrontendViewModelTest {
         fun `Given player is in fullscreen when player state becomes null then RequestFullscreen false is emitted`() = runTest {
             val playerState = MutableStateFlow<ExoPlayerUiState?>(null)
             every { exoPlayerManager.state } returns playerState
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -2221,7 +2225,7 @@ class FrontendViewModelTest {
         fun `Given player never entered fullscreen when player state becomes null then no RequestFullscreen is emitted`() = runTest {
             val playerState = MutableStateFlow<ExoPlayerUiState?>(null)
             every { exoPlayerManager.state } returns playerState
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -2241,11 +2245,11 @@ class FrontendViewModelTest {
         fun `Given Content state when state transitions out of Content then player is closed`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
-            every { urlManager.serverUrlFlow(2, any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(2, any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = "https://example.com/2?external_auth=1", serverId = 2),
             )
 
@@ -2267,7 +2271,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given ViewModel is cleared when onCleared then manager is closed`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -2288,7 +2292,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given factory client when onShowCustomView then provided show callback receives the View`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -2306,7 +2310,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given factory client when onHideCustomView then provided hide callback is invoked`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -2323,7 +2327,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given factory client when onShowCustomView then RequestFullscreen true emitted`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -2338,7 +2342,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given factory client when onHideCustomView then RequestFullscreen false emitted`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             val viewModel = createViewModel()
@@ -2448,7 +2452,7 @@ class FrontendViewModelTest {
         fun `Given StartImprovScan event when received then handler is invoked`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2464,7 +2468,7 @@ class FrontendViewModelTest {
         fun `Given ConfigureImprovDevice event when received then handler is invoked with name`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2480,7 +2484,7 @@ class FrontendViewModelTest {
         fun `Given handler emits uiState when collected then Content improvUiState is updated`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2498,7 +2502,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given handler emits ReloadAtPath event when collected then state transitions to LoadServer`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2522,7 +2526,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given onImprovSheetDismissed when called then handler onDismissed is invoked`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2537,7 +2541,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given onImprovConnectDevice when called then forwards to handler`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2552,7 +2556,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given onImprovRestart when called then forwards to handler`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2567,7 +2571,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given improvScanRequested exposed when collected then mirrors handler scanRequested`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2582,7 +2586,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given processImprovScanRequests when called then forwards to handler`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2600,7 +2604,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given pref on and allowed url on 2025_6 server when onLeavingApp then clears history and sends navigate`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
@@ -2633,7 +2637,7 @@ class FrontendViewModelTest {
         @Suppress("DEPRECATION")
         @Test
         fun `Given pref on and allowed url on old server when onLeavingApp then clears history and emits sidebar fallback`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
@@ -2666,7 +2670,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given pref off when onLeavingApp then does nothing`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns false
@@ -2686,7 +2690,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given excluded config url when onLeavingApp then does nothing`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
@@ -2706,7 +2710,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given excluded hassio url when onLeavingApp then does nothing`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
@@ -2726,7 +2730,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given config dashboard url when onLeavingApp then navigates`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
@@ -2758,7 +2762,7 @@ class FrontendViewModelTest {
 
         @Test
         fun `Given app not in background when onLeavingApp then does nothing`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled() } returns true
@@ -2789,7 +2793,7 @@ class FrontendViewModelTest {
         fun `Given StartMatterCommissioning handler event when collected then handler is called`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2806,7 +2810,7 @@ class FrontendViewModelTest {
         fun `Given ImportThreadCredentials handler event when collected then handler is called with current serverId`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
@@ -2916,7 +2920,7 @@ class FrontendViewModelTest {
             try {
                 val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
                 every { frontendBusObserver.messageResults() } returns messageFlow
-                every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                     UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
                 )
                 stubIntegrationRepository(versionAtLeast = false, shouldNotify = true)
@@ -2942,7 +2946,7 @@ class FrontendViewModelTest {
         fun `Given up-to-date server when connected then no security warning snackbar`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             stubIntegrationRepository(versionAtLeast = true, shouldNotify = true)

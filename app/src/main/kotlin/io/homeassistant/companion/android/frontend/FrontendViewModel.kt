@@ -56,7 +56,9 @@ import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.util.hasSameOrigin
+import io.homeassistant.companion.android.util.toRelativeUrl
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
@@ -238,6 +240,16 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     private var latestSafeAreaInsets: SafeAreaInsets? = null
 
+    /**
+     * Last URL reported by the WebView, including SPA history updates (`history.pushState`),
+     * so it reflects the page actually shown to the user. Used to preserve the current relative
+     * URL when the base URL switches (internal <-> external) on the same server.
+     *
+     * Only accessed on the main thread: writes come from the WebView client callback and reads
+     * from the URL flow collection in [viewModelScope] (the main dispatcher).
+     */
+    private var lastVisitedUrl: String? = null
+
     override val urlFlow: StateFlow<String?> =
         _viewState.map { it.url }
             .distinctUntilChanged()
@@ -279,6 +291,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             _viewState.update { state ->
                 if (state is FrontendViewState.Content) state.copy(canGoBack = canGoBack) else state
             }
+        },
+        onUrlVisited = { url ->
+            if (url != null && url != BLANK_URL) lastVisitedUrl = url
         },
     )
 
@@ -754,6 +769,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             urlManager.serverUrlFlow(
                 serverId = currentState.serverId,
                 target = target,
+                currentRelativeUrl = {
+                    // external_auth is re-added by the URL manager; more-info-entity-id is a
+                    // one-shot deep-link parameter that must not reopen the dialog after a switch.
+                    lastVisitedUrl?.toUri()?.toRelativeUrl(
+                        excludeParams = setOf("external_auth", "more-info-entity-id"),
+                    )
+                },
             ).collect { result ->
                 handleUrlResult(result)
             }
