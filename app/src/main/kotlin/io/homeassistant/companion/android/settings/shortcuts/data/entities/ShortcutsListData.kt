@@ -3,16 +3,16 @@ package io.homeassistant.companion.android.settings.shortcuts.data.entities
 import androidx.compose.runtime.Immutable
 
 @Immutable
-data class ShortcutsListData(val appShortcuts: AppShortcuts, val homeShortcuts: HomeShortcuts)
+internal data class ShortcutsListData(val appShortcuts: AppShortcuts, val homeShortcuts: HomeShortcuts)
 
 @Immutable
-data class AppShortcuts(val items: List<ShortcutListItem>, val maxAppShortcuts: Int)
+internal data class AppShortcuts(val items: List<ShortcutListItem>, val maxAppShortcuts: Int)
 
 @Immutable
-data class HomeShortcuts(val items: List<HomeShortcutListItem>, val canPinShortcuts: Boolean)
+internal data class HomeShortcuts(val items: List<HomeShortcutListItem>, val canPinShortcuts: Boolean)
 
 @Immutable
-data class ShortcutListItem(val id: String, val label: String, val icon: ShortcutIcon = ShortcutIcon.Default)
+internal data class ShortcutListItem(val id: String, val label: String, val icon: ShortcutIcon = ShortcutIcon.Default)
 
 @Immutable
-data class HomeShortcutListItem(val shortcut: ShortcutListItem, val isEnabled: Boolean)
+internal data class HomeShortcutListItem(val shortcut: ShortcutListItem, val isEnabled: Boolean)

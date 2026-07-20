@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.settings.shortcuts.data.entities
 import androidx.compose.runtime.Immutable
 
 @Immutable
-data class ShortcutDraft(
+internal data class ShortcutDraft(
     val serverId: Int,
     val icon: ShortcutIcon = ShortcutIcon.Default,
     val label: String,
@@ -23,7 +23,7 @@ data class ShortcutDraft(
 }
 
 /** Converts this [Shortcut] into an editable [ShortcutDraft], keeping its typed icon. */
-fun Shortcut.toDraft(): ShortcutDraft = ShortcutDraft(
+internal fun Shortcut.toDraft(): ShortcutDraft = ShortcutDraft(
     serverId = serverId,
     icon = icon,
     label = label,

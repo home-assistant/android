@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.settings.shortcuts.data.entities.Short
 import io.homeassistant.companion.android.settings.shortcuts.data.entities.ShortcutResult
 
 /** Source of truth for dynamic app shortcuts managed by the launcher shortcut API. */
-interface AppShortcutsRepository {
+internal interface AppShortcutsRepository {
     /** Loads all configured app shortcuts. */
     suspend fun load(): ShortcutResult<AppShortcuts>
 

@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.settings.shortcuts.data.entities.Short
 import io.homeassistant.companion.android.settings.shortcuts.data.entities.ShortcutResult
 
 /** Source of truth for pinned home-screen shortcuts managed by the launcher shortcut API. */
-interface HomeShortcutsRepository {
+internal interface HomeShortcutsRepository {
     /** Whether the current platform supports pinning home-screen shortcuts. */
     fun canPinShortcuts(): Boolean
 

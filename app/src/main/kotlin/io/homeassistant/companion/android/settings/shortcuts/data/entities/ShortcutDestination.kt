@@ -7,7 +7,7 @@ private const val ENTITY_ID_OBJECT_ID = """(?!_)[0-9a-z_]+(?<!_)"""
 private val ENTITY_ID_PATTERN = Regex("""^$ENTITY_ID_DOMAIN\.$ENTITY_ID_OBJECT_ID$""")
 
 @Immutable
-sealed interface ShortcutDestination {
+internal sealed interface ShortcutDestination {
     data class Dashboard(val path: String) : ShortcutDestination
 
     data class Entity(val entityId: String) : ShortcutDestination
@@ -18,7 +18,7 @@ sealed interface ShortcutDestination {
  * value itself. Keeping it as an extension keeps callers readable without making validation a
  * sealed-interface contract.
  */
-val ShortcutDestination.isValid: Boolean
+internal val ShortcutDestination.isValid: Boolean
     get() = when (this) {
         is ShortcutDestination.Dashboard -> path.isNotBlank() &&
             path.startsWith("/") &&

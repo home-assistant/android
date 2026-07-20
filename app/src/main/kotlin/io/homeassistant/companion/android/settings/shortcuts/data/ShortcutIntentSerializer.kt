@@ -8,7 +8,7 @@ import io.homeassistant.companion.android.settings.shortcuts.data.entities.Short
  * Decodes Android shortcut payloads into shortcut data.
  * The concrete implementation lives with the app-owned launch intent contract.
  */
-interface ShortcutIntentSerializer {
+internal interface ShortcutIntentSerializer {
     /**
      * Decodes an Android [shortcut] payload into the editable [Shortcut] model, using [defaultServerId]
      * when the payload has no server. Used when opening a shortcut in the editor, so a usable

@@ -4,7 +4,7 @@ import io.homeassistant.companion.android.settings.shortcuts.data.entities.Short
 import io.homeassistant.companion.android.settings.shortcuts.data.entities.ShortcutServersSnapshot
 
 /** Source of truth for server data needed by shortcut editing. */
-interface ShortcutServersRepository {
+internal interface ShortcutServersRepository {
     /** Loads all available shortcut servers and the default server used for fallbacks. */
     suspend fun loadServers(): ShortcutResult<ShortcutServersSnapshot>
 }

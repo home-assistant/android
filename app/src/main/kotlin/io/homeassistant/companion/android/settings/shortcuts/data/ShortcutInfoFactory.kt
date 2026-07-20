@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.settings.shortcuts.data.entities.Short
  *
  * It is a `fun interface` so the single-method binding can be provided as a lambda.
  */
-fun interface ShortcutInfoFactory {
+internal fun interface ShortcutInfoFactory {
     /** Builds an Android shortcut info for [id] from the editable [draft] content. */
     fun create(id: String, draft: ShortcutDraft): ShortcutInfoCompat
 }
