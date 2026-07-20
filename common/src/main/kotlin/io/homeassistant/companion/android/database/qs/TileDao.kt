@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TileDao {
@@ -13,6 +14,10 @@ interface TileDao {
 
     @Query("SELECT * FROM qs_tiles")
     suspend fun getAll(): List<TileEntity>
+
+    /** Observes all stored tiles, emitting again on every change to the table. */
+    @Query("SELECT * FROM qs_tiles")
+    fun getAllFlow(): Flow<List<TileEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(tileEntity: TileEntity): Long

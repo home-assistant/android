@@ -83,7 +83,7 @@ open class HomeAssistantApplication : Application() {
     lateinit var settingsDao: SettingsDao
 
     @Inject
-    lateinit var shortcutManager: HaShortcutManager
+    internal lateinit var shortcutManager: HaShortcutManager
 
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
