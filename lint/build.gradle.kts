@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `java-library`
@@ -7,25 +6,15 @@ plugins {
     alias(libs.plugins.android.lint)
 }
 
+// These checks run inside the lint tool's own JVM, never on a device, so they follow lint's
+// requirement (JDK 17+ since AGP 8) rather than the Android `javaVersion`. Targeting the lower
+// Android version makes Gradle reject the lint artifacts, which are published as JDK 17+ only.
 java {
-    sourceCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
-    targetCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.fromTarget(libs.versions.javaVersion.get())
-    }
-}
-
-// JUnit 6 requires JDK 17+ at runtime. We only set targetCompatibility/jvmTarget
-// for tests, not sourceCompatibility, because the test source code can still be written
-// using the lower Java version features while being compiled to run on JDK 17+.
-tasks.named<JavaCompile>("compileTestJava") {
-    targetCompatibility = JavaVersion.VERSION_17.toString()
-}
-
-tasks.named<KotlinCompile>("compileTestKotlin") {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
     }
