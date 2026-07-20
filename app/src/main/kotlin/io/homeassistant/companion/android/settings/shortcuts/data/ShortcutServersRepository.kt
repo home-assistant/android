@@ -1,7 +1,7 @@
-package io.homeassistant.companion.android.common.data.shortcuts
+package io.homeassistant.companion.android.settings.shortcuts.data
 
-import io.homeassistant.companion.android.common.data.shortcuts.entities.ShortcutResult
-import io.homeassistant.companion.android.common.data.shortcuts.entities.ShortcutServersSnapshot
+import io.homeassistant.companion.android.settings.shortcuts.data.entities.ShortcutResult
+import io.homeassistant.companion.android.settings.shortcuts.data.entities.ShortcutServersSnapshot
 
 /** Source of truth for server data needed by shortcut editing. */
 interface ShortcutServersRepository {

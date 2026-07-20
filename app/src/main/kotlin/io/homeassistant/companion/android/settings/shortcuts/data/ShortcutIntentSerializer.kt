@@ -1,11 +1,11 @@
-package io.homeassistant.companion.android.common.data.shortcuts
+package io.homeassistant.companion.android.settings.shortcuts.data
 
 import androidx.core.content.pm.ShortcutInfoCompat
-import io.homeassistant.companion.android.common.data.shortcuts.entities.Shortcut
-import io.homeassistant.companion.android.common.data.shortcuts.entities.ShortcutListItem
+import io.homeassistant.companion.android.settings.shortcuts.data.entities.Shortcut
+import io.homeassistant.companion.android.settings.shortcuts.data.entities.ShortcutListItem
 
 /**
- * Decodes Android shortcut payloads into common shortcut data.
+ * Decodes Android shortcut payloads into shortcut data.
  * The concrete implementation lives with the app-owned launch intent contract.
  */
 interface ShortcutIntentSerializer {

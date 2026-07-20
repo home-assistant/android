@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.common.data.shortcuts.entities
+package io.homeassistant.companion.android.settings.shortcuts.data.entities
 
 sealed interface ShortcutResult<out T> {
     data class Success<T>(val data: T) : ShortcutResult<T>

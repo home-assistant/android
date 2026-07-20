@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.common.data.shortcuts.entities
+package io.homeassistant.companion.android.settings.shortcuts.data.entities
 
 import androidx.compose.runtime.Immutable
 
@@ -6,7 +6,7 @@ import androidx.compose.runtime.Immutable
 sealed interface ShortcutIcon {
     data class Mdi(val name: String) : ShortcutIcon
 
-    object Default : ShortcutIcon
+    data object Default : ShortcutIcon
 
     companion object {
         /**

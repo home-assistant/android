@@ -1,6 +1,4 @@
-package io.homeassistant.companion.android.common.data.shortcuts.entities
-
-import io.homeassistant.companion.android.common.data.shortcuts.entities.ShortcutServer
+package io.homeassistant.companion.android.settings.shortcuts.data.entities
 
 /** Available shortcut servers and server-scoped shortcut metadata. */
 data class ShortcutServersSnapshot(val servers: List<ShortcutServer>, val defaultServer: ShortcutServer) {

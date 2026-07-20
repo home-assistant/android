@@ -1,9 +1,9 @@
-package io.homeassistant.companion.android.common.data.shortcuts
+package io.homeassistant.companion.android.settings.shortcuts.data
 
-import io.homeassistant.companion.android.common.data.shortcuts.entities.AppShortcuts
-import io.homeassistant.companion.android.common.data.shortcuts.entities.Shortcut
-import io.homeassistant.companion.android.common.data.shortcuts.entities.ShortcutDraft
-import io.homeassistant.companion.android.common.data.shortcuts.entities.ShortcutResult
+import io.homeassistant.companion.android.settings.shortcuts.data.entities.AppShortcuts
+import io.homeassistant.companion.android.settings.shortcuts.data.entities.Shortcut
+import io.homeassistant.companion.android.settings.shortcuts.data.entities.ShortcutDraft
+import io.homeassistant.companion.android.settings.shortcuts.data.entities.ShortcutResult
 
 /** Source of truth for dynamic app shortcuts managed by the launcher shortcut API. */
 interface AppShortcutsRepository {

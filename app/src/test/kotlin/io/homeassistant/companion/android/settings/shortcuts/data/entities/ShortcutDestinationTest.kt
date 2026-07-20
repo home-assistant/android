@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.common.data.shortcuts.entities
+package io.homeassistant.companion.android.settings.shortcuts.data.entities
 
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
