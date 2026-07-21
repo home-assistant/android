@@ -31,9 +31,9 @@
 
 Select exactly one option that describes AI usage in this contribution:
 
-- [ ] AI assistance was used for this contribution
-- [ ] AI took full control of the code generation for this contribution
-- [ ] I have not used AI for this contribution
+- [ ] I have not used AI for this contribution.
+- [ ] AI assistance was used for this contribution.
+- [ ] AI fully generated the code for this contribution, but I've reviewed and understood it before submitting and will respond without AI during review.
 
 ## Screenshots
 <!--
