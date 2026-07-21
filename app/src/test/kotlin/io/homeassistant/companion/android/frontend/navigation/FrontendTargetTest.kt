@@ -25,6 +25,21 @@ class FrontendTargetTest {
     }
 
     @Test
+    fun `Given a hand-typed path when fromRawPath then case and surrounding spaces are normalized`() {
+        assertEquals(FrontendTarget.Default, FrontendTarget.fromRawPath(""))
+        assertEquals(FrontendTarget.Default, FrontendTarget.fromRawPath("   "))
+        assertEquals(FrontendTarget.Path("/lovelace/0"), FrontendTarget.fromRawPath("  /lovelace/0  "))
+        assertEquals(
+            FrontendTarget.EntityMoreInfo("light.kitchen"),
+            FrontendTarget.fromRawPath("EntityId:light.kitchen"),
+        )
+        assertEquals(
+            FrontendTarget.EntityMoreInfo("light.kitchen"),
+            FrontendTarget.fromRawPath("  entityId: light.kitchen  "),
+        )
+    }
+
+    @Test
     fun `Given any target when toLegacyPath then round-trips through fromRawPath`() {
         samples.forEach { target ->
             assertEquals(target, FrontendTarget.fromRawPath(target.toRawPath()))

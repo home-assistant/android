@@ -102,7 +102,8 @@ object UrlUtil {
     }
 
     fun isAbsoluteUrl(it: String?): Boolean {
-        return Regex("^https?://").containsMatchIn(it.toString())
+        // Matched ignoring case since the value is often typed by hand in a notification command
+        return Regex("^https?://", RegexOption.IGNORE_CASE).containsMatchIn(it.toString())
     }
 
     /** @return `true` if both URLs have the same 'base': an equal protocol, host, port and userinfo */
