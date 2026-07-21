@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.common.compose.composable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
@@ -40,7 +39,6 @@ fun HAFloatingActionButton(
     FloatingActionButton(
         onClick = onClick,
         modifier = modifier.size(ButtonSize.LARGE.value),
-        shape = CircleShape,
         containerColor = colors.containerColor,
         contentColor = colors.contentColor,
         content = {
