@@ -18,7 +18,7 @@ object WIPFeature {
      * When true, the settings entry navigates to [io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment].
      * When false, the settings entry navigates to [io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsSettingsFragment].
      *
-     * This flag is only enabled in DEBUG builds during development.
+     * This flag is currently not enabled by default as the feature is on hold (no active contributor).
      */
-    val USE_SHORTCUTS_V2: Boolean = BuildConfig.DEBUG
+    val USE_SHORTCUTS_V2: Boolean = false
 }
