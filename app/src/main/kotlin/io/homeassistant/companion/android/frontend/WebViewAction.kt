@@ -7,6 +7,7 @@ import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLORS_SCRIPT
 import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLOR_SPACER
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
@@ -107,7 +108,9 @@ sealed interface WebViewAction {
      *   internal URL left in history after switching to the external one) — load the root of the
      *   current origin and clear the history so the user lands on the dashboard instead of an
      *   unreachable page.
-     * - [BackAction.None]: nothing to navigate back to — no-op.
+     * - [BackAction.None]: nothing actionable to navigate back to. This action is only dispatched
+     *   when the dashboard reports it can go back, so reaching [BackAction.None] means back was
+     *   consumed but nothing happened — a [FailFast] flags it during development.
      *
      * @param loadedUrl The URL the ViewModel most recently loaded into the WebView. Used instead of
      *        [WebView.getUrl], which can be `about:blank` during loads.
@@ -122,7 +125,9 @@ sealed interface WebViewAction {
                     // instead of looping back into it.
                     webView.clearHistory()
                 }
-                BackAction.None -> Unit
+                BackAction.None -> FailFast.fail {
+                    "NavigateBack resolved to no action although the dashboard reported it could go back"
+                }
             }
         }
     }

@@ -263,8 +263,6 @@ internal fun FrontendScreenContent(
     val loadingSurfaceColor = LocalHAColorScheme.current.colorSurfaceDefault
 
     // Consume back only while the dashboard (Content) is shown and the WebView has history to pop.
-    // Resolution against the WebView back stack happens in the ViewModel via
-    // WebViewAction.NavigateBack (stale cross-origin entries route to the dashboard root).
     BackHandler(enabled = content?.canGoBack == true) { onBackPressed() }
 
     FrontendScreenEffects(

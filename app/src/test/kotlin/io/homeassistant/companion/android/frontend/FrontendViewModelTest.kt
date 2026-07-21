@@ -1529,7 +1529,55 @@ class FrontendViewModelTest {
                 viewModel.onBackPressed()
                 advanceUntilIdle()
 
+                // No URL was visited yet, so NavigateBack falls back to the loaded state URL.
                 assertEquals(WebViewAction.NavigateBack(testUrlWithAuth), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a visited url when back pressed then NavigateBack uses the visited url`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            var capturedCanGoBackChanged: ((Boolean) -> Unit)? = null
+            var capturedUrlVisited: ((String?) -> Unit)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
+                    onUrlVisited = any(),
+                )
+            } answers {
+                capturedCanGoBackChanged = arg(6)
+                capturedUrlVisited = arg(7)
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+            // SPA navigation reports a deeper URL than the one the ViewModel loaded.
+            capturedUrlVisited?.invoke("https://example.com/history?external_auth=1")
+            capturedCanGoBackChanged?.invoke(true)
+
+            viewModel.webViewActions.test {
+                viewModel.onBackPressed()
+                advanceUntilIdle()
+
+                assertEquals(
+                    WebViewAction.NavigateBack("https://example.com/history?external_auth=1"),
+                    awaitItem(),
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }

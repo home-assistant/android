@@ -51,6 +51,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
+import io.homeassistant.companion.android.frontend.url.FrontendUrlParams
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
@@ -555,6 +556,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     fun switchServer(serverId: Int) {
+        // Drop the previous server's visited URL so its path is not carried over to the new server.
+        lastVisitedUrl = null
         _viewState.update {
             FrontendViewState.LoadServer(serverId = serverId)
         }
@@ -773,7 +776,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     // external_auth is re-added by the URL manager; more-info-entity-id is a
                     // one-shot deep-link parameter that must not reopen the dialog after a switch.
                     lastVisitedUrl?.toUri()?.toRelativeUrl(
-                        excludeParams = setOf("external_auth", "more-info-entity-id"),
+                        excludeParams = setOf(FrontendUrlParams.EXTERNAL_AUTH, FrontendUrlParams.MORE_INFO_ENTITY_ID),
                     )
                 },
             ).collect { result ->
@@ -1101,6 +1104,18 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
+     * Handles the system back gesture.
+     */
+    fun onBackPressed() {
+        val state = _viewState.value
+        if (state is FrontendViewState.Content && state.canGoBack) {
+            // Prefer the actually-visited URL (which tracks in-frontend SPA navigation) over the
+            // last URL the ViewModel loaded, so back resolution reflects the page the user is on.
+            viewModelScope.launch { _webViewActions.emit(WebViewAction.NavigateBack(lastVisitedUrl ?: state.url)) }
+        }
+    }
+
+    /**
      * Called when a page finishes loading in the WebView.
      *
      * Reapplies the frontend safe-area insets, which a full page (re)load resets. Cancels any
@@ -1110,20 +1125,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * navigations can reset the viewport meta tag). The collection then stays active
      * to react to settings changes until the next page load restarts it.
      */
-    /**
-     * Handles the system back gesture while the dashboard consumes it ([FrontendViewState.Content]
-     * with WebView history). Emits [WebViewAction.NavigateBack], which resolves the gesture against
-     * the WebView's back/forward list: same-origin entries pop normally, a stale cross-origin entry
-     * routes to the dashboard root instead. Outside Content-with-history the screen does not consume
-     * the gesture, so this is a no-op.
-     */
-    fun onBackPressed() {
-        val state = _viewState.value
-        if (state is FrontendViewState.Content && state.canGoBack) {
-            viewModelScope.launch { _webViewActions.emit(WebViewAction.NavigateBack(state.url)) }
-        }
-    }
-
     private fun onPageFinished(url: String?) {
         viewModelScope.launch { applySafeAreaInsetsIfHandled() }
 

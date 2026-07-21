@@ -50,7 +50,7 @@ class FrontendUrlManager @Inject constructor(
      * @param serverId The server ID to use (can be [ServerManager.SERVER_ID_ACTIVE])
      * @param target The frontend destination to open on the initial URL (e.g., a deep link)
      * @param currentRelativeUrl Provides the relative URL (path + query + fragment) currently shown
-     *        in the WebView, or `null` when unknown or at the dashboard root
+     *        in the WebView, or `null` for the dashboard root
      * @return Flow of [UrlLoadResult] that emits when URL state changes
      */
     fun serverUrlFlow(
@@ -86,10 +86,10 @@ class FrontendUrlManager @Inject constructor(
 
             val currentTarget = when {
                 !targetConsumed -> target
-                // On internal/external URL switches on the same server, preserve the full relative
-                // URL (path + query params + fragment) so the user stays on the exact same page,
-                // including filtered views like history with date ranges.
-                baseUrlChanged -> currentRelativeUrl()?.let { FrontendTarget.Path(it) } ?: FrontendTarget.Default
+                // On internal/external URL switches on the same server, preserve the relative URL
+                // currently shown so the user stays on the exact same page, including filtered views
+                // like history with date ranges. A null relative URL (dashboard root) maps to Default.
+                baseUrlChanged -> FrontendTarget.fromRawPath(currentRelativeUrl())
                 else -> FrontendTarget.Default
             }
 
@@ -170,8 +170,8 @@ class FrontendUrlManager @Inject constructor(
         }
 
         val urlWithAuth = httpUrl.newBuilder()
-            .apply { moreInfoEntityIdForQuery?.let { addQueryParameter("more-info-entity-id", it) } }
-            .addQueryParameter("external_auth", "1")
+            .apply { moreInfoEntityIdForQuery?.let { addQueryParameter(FrontendUrlParams.MORE_INFO_ENTITY_ID, it) } }
+            .addQueryParameter(FrontendUrlParams.EXTERNAL_AUTH, "1")
             .build()
             .toString()
 
