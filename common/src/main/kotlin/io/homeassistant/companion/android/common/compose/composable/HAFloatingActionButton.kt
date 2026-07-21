@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 
 /**
- * Displays a circular floating action button (FAB) with a single icon, themed with the Home
+ * Displays a floating action button (FAB) with a single icon, themed with the Home
  * Assistant color scheme.
  *
  * @param icon The [ImageVector] icon to be displayed in the button.
