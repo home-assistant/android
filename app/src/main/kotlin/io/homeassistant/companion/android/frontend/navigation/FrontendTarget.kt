@@ -26,11 +26,11 @@ sealed interface FrontendTarget : Parcelable {
         /**
          * Parses a raw path string into a [FrontendTarget].
          *
-         * A `null` or blank path maps to [Default]. Surrounding whitespace and the case of the
-         * [ENTITY_ID_PREFIX] are ignored since the value is often typed by hand in a notification
-         * command.
+         * A `null` or blank path maps to [Default].
          */
         fun fromRawPath(path: String?): FrontendTarget {
+            // Parse leniently (trim whitespace, match the prefix case-insensitively) since the
+            // value can be hand-typed, e.g. in a notification command.
             val trimmed = path?.trim()
             return when {
                 trimmed.isNullOrEmpty() -> Default
