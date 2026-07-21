@@ -38,7 +38,7 @@ fun HAFloatingActionButton(
     val colors = LocalHAColorScheme.current.fabColorsFromVariant(variant)
     FloatingActionButton(
         onClick = onClick,
-        modifier = modifier.size(ButtonSize.LARGE.value),
+        modifier = modifier,
         containerColor = colors.containerColor,
         contentColor = colors.contentColor,
         content = {
