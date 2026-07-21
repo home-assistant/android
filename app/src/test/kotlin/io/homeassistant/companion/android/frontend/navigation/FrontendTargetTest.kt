@@ -40,6 +40,12 @@ class FrontendTargetTest {
     }
 
     @Test
+    fun `Given a blank entity id when fromRawPath then maps to Default`() {
+        assertEquals(FrontendTarget.Default, FrontendTarget.fromRawPath("entityId:"))
+        assertEquals(FrontendTarget.Default, FrontendTarget.fromRawPath("  entityId:   "))
+    }
+
+    @Test
     fun `Given any target when toLegacyPath then round-trips through fromRawPath`() {
         samples.forEach { target ->
             assertEquals(target, FrontendTarget.fromRawPath(target.toRawPath()))
