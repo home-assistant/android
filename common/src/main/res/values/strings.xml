@@ -955,6 +955,7 @@
     <string name="tile_required_field_hint">* Indicates a required field</string>
     <string name="tile_save">Update tile data</string>
     <string name="tile_server">Select a server*</string>
+    <string name="tile_slot_label">%1$s (%2$s)</string>
     <string name="tile_subtitle">Tile subtitle</string>
     <string name="tile_updated">Tile data updated</string>
     <string name="tiles">Tiles</string>
@@ -1502,4 +1503,5 @@
     <string name="experimental">Experimental</string>
     <string name="learn_more">Learn more</string>
     <string name="default_assistant_required">Home Assistant must be your default assistant to perform %s.</string>
+    <string name="hidden_entity">Hidden entity</string>
 </resources>

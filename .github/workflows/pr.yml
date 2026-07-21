@@ -216,6 +216,7 @@ jobs:
         if: always()
         with:
           test-name: Screenshot test
+          job-status: ${{ job.status }}
 
   pr_build:
     needs: [lockfiles, ktlint]
@@ -318,6 +319,7 @@ jobs:
         if: always()
         with:
           test-name: Unit test
+          job-status: ${{ job.status }}
 
   build_emulator_wtf_apks:
     name: "Build Emulator.wtf APKs"
@@ -433,3 +435,4 @@ jobs:
         if: always()
         with:
           test-name: Instrumentation test (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
+          job-status: ${{ job.status }}

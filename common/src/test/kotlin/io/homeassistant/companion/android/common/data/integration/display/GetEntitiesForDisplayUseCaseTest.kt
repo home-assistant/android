@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
 import android.content.Context
+import androidx.compose.ui.unit.LayoutDirection
 import app.cash.turbine.test
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
@@ -267,6 +268,15 @@ class GetEntitiesForDisplayUseCaseTest {
         }
 
         @Test
+        fun `Given display entry with a blank name when resolving then name falls back to friendly name`() = runTest {
+            givenDisplayEntries(EntityRegistryDisplayEntry(entityId = "light.bed", name = " "))
+
+            val items = useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+
+            assertEquals("Bed Light", items.single().name)
+        }
+
+        @Test
         fun `Given no friendly name when resolving then name falls back to entity id`() = runTest {
             givenServerVersion("2025.1.0")
 
@@ -391,8 +401,7 @@ class GetEntitiesForDisplayUseCaseTest {
 
             val items = useCase(serverId = serverId, entities = listOf(lightEntity)).awaitLoaded()
 
-            // The domain default branch of Entity.getIcon does not touch the context
-            assertEquals(lightEntity.getIcon(context), items.single().icon)
+            assertEquals(lightEntity.getIcon(), items.single().icon)
         }
 
         @Test
@@ -423,6 +432,43 @@ class GetEntitiesForDisplayUseCaseTest {
                 icon = CommunityMaterial.Icon.cmd_bookmark,
             )
             assertEquals(expectedDomain, item.domain)
+        }
+
+        @Test
+        fun `Given area and device names when reading the subtitle then they are joined for the layout direction`() {
+            val item = EntityDisplayItem(
+                entityId = "light.bed",
+                name = "Bed",
+                icon = CommunityMaterial.Icon.cmd_bookmark,
+                areaName = "Bedroom",
+                deviceName = "Hub",
+            )
+
+            assertEquals("Bedroom ▸ Hub", item.subtitle(LayoutDirection.Ltr))
+            assertEquals("Bedroom ◂ Hub", item.subtitle(LayoutDirection.Rtl))
+        }
+
+        @Test
+        fun `Given no area and device name when reading the subtitle then it is null`() {
+            val item = EntityDisplayItem(
+                entityId = "light.bed",
+                name = "Bed",
+                icon = CommunityMaterial.Icon.cmd_bookmark,
+            )
+
+            assertNull(item.subtitle(LayoutDirection.Ltr))
+        }
+
+        @Test
+        fun `Given a subtitle equal to the name when reading the subtitle then it is null`() {
+            val item = EntityDisplayItem(
+                entityId = "light.bed",
+                name = "Bed",
+                icon = CommunityMaterial.Icon.cmd_bookmark,
+                deviceName = "Bed",
+            )
+
+            assertNull(item.subtitle(LayoutDirection.Ltr))
         }
     }
 }

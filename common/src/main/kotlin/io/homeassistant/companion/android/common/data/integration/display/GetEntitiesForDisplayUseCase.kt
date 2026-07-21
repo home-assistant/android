@@ -153,7 +153,7 @@ class GetEntitiesForDisplayUseCase @Inject constructor(
 
         EntityDisplayItem(
             entityId = entity.entityId,
-            name = displayEntry?.name ?: entity.friendlyName,
+            name = displayEntry?.name?.takeIf { it.isNotBlank() } ?: entity.friendlyName,
             icon = resolveIcon(entity, displayEntry?.icon),
             areaName = area?.name,
             floorName = floor?.name,
@@ -226,6 +226,6 @@ class GetEntitiesForDisplayUseCase @Inject constructor(
         val customMdiIcon = customIcon
             ?.takeIf { it.startsWith(MDI_PREFIX) }
             ?.let { IconicsDrawable(context, "cmd-${it.removePrefix(MDI_PREFIX)}").icon }
-        return customMdiIcon ?: entity.getIcon(context)
+        return customMdiIcon ?: entity.getIcon()
     }
 }
