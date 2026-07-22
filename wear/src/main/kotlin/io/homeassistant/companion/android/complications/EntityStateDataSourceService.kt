@@ -15,15 +15,11 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.colorInt
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.canSupportPrecision
-import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.integration.friendlyState
-import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
-import retrofit2.HttpException
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -34,6 +30,9 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
 
     @Inject
     lateinit var entityStateComplicationsDao: EntityStateComplicationsDao
+
+    @Inject
+    lateinit var entitiesForDisplayManager: EntitiesForDisplayManager
 
     override suspend fun onComplicationRequest(request: ComplicationRequest): ComplicationData? {
         if (request.complicationType != ComplicationType.SHORT_TEXT &&
@@ -46,51 +45,23 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         val entityId = settings?.entityId
             ?: return getErrorComplication(request, R.string.complication_entity_invalid, true)
 
-        val entity = try {
-            serverManager.integrationRepository().getEntity(entityId)
-                ?: return getErrorComplication(request, R.string.state_unknown)
-        } catch (t: Throwable) {
-            Timber.e(t, "Unable to get entity state for $entityId")
-            return if (t is HttpException && t.code() == 404) {
-                getErrorComplication(request, R.string.complication_entity_invalid)
-            } else {
-                null
-            }
-        }
+        val displayEntity = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
+            .awaitLoadedOrNull()
+            ?.entity(entityId)
+            ?: return getErrorComplication(request, R.string.complication_entity_invalid)
 
-        val entityOptions = if (
-            entity.canSupportPrecision() &&
-            serverManager.getServer()?.version?.isAtLeast(2023, 3) == true
-        ) {
-            try {
-                serverManager.webSocketRepository().getEntityRegistryFor(entityId)?.options
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to get entity registry for $entityId")
-                null
-            }
-        } else {
-            null
-        }
-
-        val icon = entity.getIcon()
-        val iconBitmap = IconicsDrawable(this, icon).apply {
+        val iconBitmap = IconicsDrawable(this, displayEntity.icon).apply {
             colorInt = Color.WHITE
         }.toBitmap()
 
         val title = if (settings.showTitle) {
-            PlainComplicationText.Builder(entity.friendlyName).build()
+            PlainComplicationText.Builder(displayEntity.name).build()
         } else {
             null
         }
 
         val text = PlainComplicationText.Builder(
-            entity.friendlyState(
-                this,
-                entityOptions,
-                appendUnitOfMeasurement = settings.showUnit,
-            ),
+            displayEntity.state.resolve(this, withUnit = settings.showUnit),
         ).build()
 
         val contentDescription = PlainComplicationText.Builder(
@@ -110,6 +81,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .setMonochromaticImage(monochromaticImage)
                     .build()
             }
+
             ComplicationType.LONG_TEXT -> {
                 LongTextComplicationData.Builder(
                     text = text,
@@ -120,6 +92,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .setMonochromaticImage(monochromaticImage)
                     .build()
             }
+
             else -> null // Already handled at the start of the function
         }
     }
@@ -146,6 +119,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .setMonochromaticImage(monochromaticImage)
                     .build()
             }
+
             ComplicationType.LONG_TEXT -> {
                 LongTextComplicationData.Builder(
                     text = text,
@@ -155,6 +129,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
                     .setMonochromaticImage(monochromaticImage)
                     .build()
             }
+
             else -> {
                 Timber.w("Preview for unsupported complication type $type requested")
                 null

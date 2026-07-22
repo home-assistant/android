@@ -23,9 +23,10 @@ import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.util.capitalize
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
@@ -37,7 +38,7 @@ import java.util.Locale
 @Composable
 fun ChooseEntityView(
     entitiesByDomainOrder: List<String>,
-    entitiesByDomain: Map<String, List<Entity>>,
+    entitiesByDomain: Map<String, List<EntityDisplay>>,
     favoriteEntityIds: List<String>,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit,
@@ -118,9 +119,8 @@ fun ChooseEntityView(
 }
 
 @Composable
-private fun ChooseEntityChip(entity: Entity, onEntitySelected: (entity: SimplifiedEntity) -> Unit) {
-    val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = entity.getIcon()
+private fun ChooseEntityChip(entity: EntityDisplay, onEntitySelected: (entity: SimplifiedEntity) -> Unit) {
+    val iconBitmap = entity.icon
     Button(
         modifier = Modifier
             .fillMaxWidth(),
@@ -132,7 +132,7 @@ private fun ChooseEntityChip(entity: Entity, onEntitySelected: (entity: Simplifi
         },
         label = {
             Text(
-                text = attributes["friendly_name"].toString(),
+                text = entity.name,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -141,8 +141,8 @@ private fun ChooseEntityChip(entity: Entity, onEntitySelected: (entity: Simplifi
             onEntitySelected(
                 SimplifiedEntity(
                     entity.entityId,
-                    attributes["friendly_name"] as String? ?: entity.entityId,
-                    attributes["icon"] as String? ?: "",
+                    entity.name,
+                    entity.statelessIcon.mdiName,
                 ),
             )
         },
@@ -172,8 +172,8 @@ fun ChooseEntityViewWithDataPreview() {
             playPreviewEntityScene2.entityId,
         ),
         entitiesByDomain = mapOf(
-            playPreviewEntityScene1.entityId to listOf(playPreviewEntityScene1),
-            playPreviewEntityScene2.entityId to listOf(playPreviewEntityScene2),
+            playPreviewEntityScene1.entityId to listOf(EntityDisplayWithoutContext(playPreviewEntityScene1)),
+            playPreviewEntityScene2.entityId to listOf(EntityDisplayWithoutContext(playPreviewEntityScene2)),
         ),
         favoriteEntityIds = listOf(playPreviewEntityScene1.entityId),
         onNoneClicked = {},
