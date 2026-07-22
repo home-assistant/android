@@ -400,6 +400,10 @@ private fun FrontendScreenEffects(
     LeavingAppEffect(webView = webView, onLeavingApp = onLeavingApp)
 }
 
+/**
+ * Reports the lifecycle start/stop events to [onScreenStartedChanged] whenever the
+ * [LifecycleStartEffect] changes.
+ */
 @Composable
 private fun ReportScreenStartedEffect(onScreenStartedChanged: (Boolean) -> Unit) {
     LifecycleStartEffect(Unit) {
