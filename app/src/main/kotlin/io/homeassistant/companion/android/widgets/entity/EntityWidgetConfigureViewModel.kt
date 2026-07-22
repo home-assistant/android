@@ -8,23 +8,18 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.RemoteException
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.material.color.DynamicColors
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.EntityExt
-import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
@@ -33,403 +28,275 @@ import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
-
-internal data class EntityWidgetTextColors(val white: String, val black: String)
-
-internal enum class EntityWidgetTextColor {
-    WHITE,
-    BLACK,
-}
-
-internal enum class EntityWidgetConfigureError {
-    CREATE,
-    UPDATE,
-}
-
-internal data class EntityWidgetConfigureViewState(
-    val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
-    val selectedEntityId: String? = null,
-    val appendAttributes: Boolean = false,
-    val selectedAttributeIds: List<String> = emptyList(),
-    val customAttribute: String = "",
-    val label: String = "",
-    val textSize: String = DEFAULT_TEXT_SIZE,
-    val stateSeparator: String = "",
-    val attributeSeparator: String = "",
-    val selectedTapAction: WidgetTapAction = WidgetTapAction.REFRESH,
-    val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
-    val selectedTextColor: EntityWidgetTextColor = EntityWidgetTextColor.WHITE,
-    val isUpdateWidget: Boolean = false,
-    val error: EntityWidgetConfigureError? = null,
-) {
-    val hasValidTextSize: Boolean
-        get() = textSize.toFloatOrNull()?.let { it.isFinite() && it > 0 } == true
-
-    val isActionEnabled: Boolean
-        get() = selectedEntityId != null && hasValidTextSize
-}
 
 @HiltViewModel(assistedFactory = EntityWidgetConfigureViewModel.Factory::class)
 class EntityWidgetConfigureViewModel @AssistedInject constructor(
     private val staticWidgetDao: StaticWidgetDao,
     private val serverManager: ServerManager,
+    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+    @Assisted private val widgetId: Int,
     @Assisted preselectedEntityId: String?,
 ) : ViewModel() {
 
-    private lateinit var textColors: EntityWidgetTextColors
-    private var initialized = false
-
-    internal var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
-        private set
-
-    val servers = serverManager.serversFlow
-
-    internal var viewState by mutableStateOf(EntityWidgetConfigureViewState(selectedEntityId = preselectedEntityId))
-        private set
-
-    val selectedServerId: Int get() = viewState.selectedServerId
-    val selectedEntityId: String? get() = viewState.selectedEntityId
-    val appendAttributes: Boolean get() = viewState.appendAttributes
-    val selectedAttributeIds: List<String> get() = viewState.selectedAttributeIds
-    val label: String get() = viewState.label
-    val textSize: String get() = viewState.textSize
-    val stateSeparator: String get() = viewState.stateSeparator
-    val attributeSeparator: String get() = viewState.attributeSeparator
-    val selectedTapAction: WidgetTapAction get() = viewState.selectedTapAction
-    val selectedBackgroundType: WidgetBackgroundType get() = viewState.selectedBackgroundType
-    internal val selectedTextColor: EntityWidgetTextColor get() = viewState.selectedTextColor
-    val isUpdateWidget: Boolean get() = viewState.isUpdateWidget
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val entities: StateFlow<List<Entity>> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (!serverManager.isRegistered()) {
-                emptyList()
+    private val _state = MutableStateFlow(
+        EntityWidgetConfigureState(
+            selectedEntityId = preselectedEntityId,
+            dynamicColorAvailable = DynamicColors.isDynamicColorAvailable(),
+            selectedBackgroundType = if (DynamicColors.isDynamicColorAvailable()) {
+                WidgetBackgroundType.DYNAMICCOLOR
             } else {
-                try {
-                    serverManager.integrationRepository(serverId).getEntities().orEmpty()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to query entities")
-                    emptyList()
-                }
-            }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(500.milliseconds),
-            initialValue = emptyList(),
-        )
+                WidgetBackgroundType.DAYNIGHT
+            },
+        ),
+    )
+    internal val state: StateFlow<EntityWidgetConfigureState> = _state.asStateFlow()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val entityRegistry: StateFlow<List<EntityRegistryResponse>?> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (!serverManager.isRegistered()) {
-                null
-            } else {
-                try {
-                    serverManager.webSocketRepository(serverId).getEntityRegistry()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get entity registry")
-                    null
-                }
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
+    private val _errors = MutableSharedFlow<Int>(replay = 1)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val deviceRegistry: StateFlow<List<DeviceRegistryResponse>?> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (!serverManager.isRegistered()) {
-                null
-            } else {
-                try {
-                    serverManager.webSocketRepository(serverId).getDeviceRegistry()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get device registry")
-                    null
-                }
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val areaRegistry: StateFlow<List<AreaRegistryResponse>?> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (!serverManager.isRegistered()) {
-                null
-            } else {
-                try {
-                    serverManager.webSocketRepository(serverId).getAreaRegistry()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get area registry")
-                    null
-                }
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
+    /** Errors to surface to the user, as string resources. */
+    val errors = _errors.asSharedFlow()
 
     private var labelFromEntity = false
+    private var loadEntitiesJob: Job? = null
+    private var loadAttributesJob: Job? = null
 
-    internal fun onSetup(
-        widgetId: Int,
-        defaultBackgroundType: WidgetBackgroundType,
-        textColors: EntityWidgetTextColors,
-    ) {
-        if (initialized) return
-        initialized = true
+    init {
+        viewModelScope.launch { restoreConfiguration() }
 
-        this.widgetId = widgetId
-        this.textColors = textColors
-        viewState = viewState.copy(selectedBackgroundType = defaultBackgroundType)
-
-        initializeState(widgetId)
+        viewModelScope.launch {
+            serverManager.serversFlow.collect { servers ->
+                _state.update { current ->
+                    current.copy(
+                        serversDropdownItems = servers.map { server ->
+                            HADropdownItem(key = server.id, label = server.friendlyName)
+                        },
+                    )
+                }
+            }
+        }
     }
 
-    private fun initializeState(widgetId: Int) = viewModelScope.launch {
-        val widget = if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID && selectedEntityId == null) {
+    /**
+     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
+     */
+    private suspend fun restoreConfiguration() {
+        val widget = if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID && _state.value.selectedEntityId == null) {
             staticWidgetDao.get(widgetId)
         } else {
             null
         }
 
         if (widget != null) {
-            viewState = viewState.copy(
-                selectedServerId = widget.serverId,
-                selectedEntityId = widget.entityId,
-                appendAttributes = !widget.attributeIds.isNullOrBlank(),
-                selectedAttributeIds = widget.attributeIds
-                    ?.split(',')
-                    ?.map(String::trim)
-                    ?.filter(String::isNotEmpty)
-                    .orEmpty(),
-                label = widget.label.orEmpty(),
-                textSize = widget.textSize.toInt().toString(),
-                stateSeparator = widget.stateSeparator,
-                attributeSeparator = widget.attributeSeparator,
-                selectedTapAction = widget.tapAction,
-                selectedBackgroundType = widget.backgroundType,
-                selectedTextColor = if (widget.textColor == textColors.black) {
-                    EntityWidgetTextColor.BLACK
-                } else {
-                    EntityWidgetTextColor.WHITE
-                },
-                isUpdateWidget = true,
-            )
+            _state.update {
+                it.copy(
+                    selectedServerId = widget.serverId,
+                    selectedEntityId = widget.entityId,
+                    selectedAttributeIds = widget.attributeIds.toAttributeIdsList(),
+                    label = widget.label.orEmpty(),
+                    textSize = widget.textSize.toInt().toString(),
+                    stateSeparator = widget.stateSeparator,
+                    attributeSeparator = widget.attributeSeparator,
+                    selectedTapAction = widget.tapAction,
+                    selectedBackgroundType = widget.backgroundType,
+                    textColorHex = widget.textColor,
+                    isUpdateWidget = true,
+                )
+            }
         } else {
-            val serverId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE
-            viewState = viewState.copy(selectedServerId = serverId)
+            _state.update {
+                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
+            }
         }
+
+        loadEntities(_state.value.selectedServerId)
+        loadAttributes(_state.value.selectedEntityId)
     }
 
     fun onServerSelected(serverId: Int) {
-        if (serverId == selectedServerId) return
+        if (serverId == _state.value.selectedServerId) return
 
-        viewState = viewState.copy(
-            selectedServerId = serverId,
-            selectedEntityId = null,
-            selectedAttributeIds = emptyList(),
-            selectedTapAction = WidgetTapAction.REFRESH,
-        )
+        _state.update { it.changeServer(serverId) }
+        loadEntities(serverId)
+        loadAttributes(entityId = null)
     }
 
     fun onEntitySelected(entityId: String?) {
-        val domain = entityId?.substringBefore('.')
-        viewState = viewState.copy(
-            selectedEntityId = entityId,
-            selectedAttributeIds = emptyList(),
-            selectedTapAction = if (domain in EntityExt.APP_PRESS_ACTION_DOMAINS) {
-                WidgetTapAction.TOGGLE
-            } else {
-                WidgetTapAction.REFRESH
-            },
-        )
-
-        if (label.isBlank() || labelFromEntity) {
-            updateLabelFromEntity(null)
+        _state.update { current ->
+            val updated = current.copy(
+                selectedEntityId = entityId,
+                selectedAttributeIds = emptyList(),
+                availableAttributes = emptyList(),
+            )
+            updated.copy(
+                selectedTapAction = if (updated.isToggleable) WidgetTapAction.TOGGLE else WidgetTapAction.REFRESH,
+            )
         }
-    }
-
-    internal fun onSelectedEntityLoaded(entity: Entity?) {
-        if (entity == null || entity.entityId != selectedEntityId) return
-
-        val friendlyName = entity.friendlyName.takeIf { it != entity.entityId }.orEmpty()
-        if (label == friendlyName) {
-            labelFromEntity = friendlyName.isNotEmpty()
-        } else if (label.isBlank() || labelFromEntity) {
-            updateLabelFromEntity(entity)
-        }
-    }
-
-    fun onAppendAttributesChanged(append: Boolean) {
-        viewState = viewState.copy(appendAttributes = append)
+        syncLabelWithSelectedEntity()
+        loadAttributes(entityId)
     }
 
     fun onAttributeAdded(attributeId: String) {
-        if (attributeId !in selectedAttributeIds) {
-            viewState = viewState.copy(selectedAttributeIds = selectedAttributeIds + attributeId)
+        _state.update {
+            if (attributeId in it.selectedAttributeIds) {
+                it
+            } else {
+                it.copy(selectedAttributeIds = it.selectedAttributeIds + attributeId)
+            }
         }
     }
 
     fun onAttributeRemoved(attributeId: String) {
-        viewState = viewState.copy(selectedAttributeIds = selectedAttributeIds - attributeId)
+        _state.update { it.copy(selectedAttributeIds = it.selectedAttributeIds - attributeId) }
     }
 
     fun onCustomAttributeChanged(value: String) {
-        viewState = viewState.copy(customAttribute = value)
+        _state.update { it.copy(customAttribute = value) }
     }
 
     fun onCustomAttributesAdded() {
-        val attributes = viewState.customAttribute
-            .split(',')
-            .map(String::trim)
-            .filter(String::isNotEmpty)
+        _state.update { current ->
+            val attributes = current.customAttribute.toAttributeIdsList()
 
-        if (attributes.isEmpty()) return
-
-        viewState = viewState.copy(
-            selectedAttributeIds = selectedAttributeIds + attributes.filterNot(selectedAttributeIds::contains),
-            customAttribute = "",
-        )
+            if (attributes.isEmpty()) {
+                current
+            } else {
+                current.copy(
+                    selectedAttributeIds = current.selectedAttributeIds +
+                        attributes.filterNot(current.selectedAttributeIds::contains),
+                    customAttribute = "",
+                )
+            }
+        }
     }
 
     fun onLabelChanged(value: String) {
-        viewState = viewState.copy(label = value)
+        _state.update { it.copy(label = value) }
         labelFromEntity = false
     }
 
     fun onTextSizeChanged(value: String) {
-        viewState = viewState.copy(textSize = value.filter(Char::isDigit))
+        _state.update { it.copy(textSize = value.filter(Char::isDigit)) }
     }
 
     fun onStateSeparatorChanged(value: String) {
-        viewState = viewState.copy(stateSeparator = value)
+        _state.update { it.copy(stateSeparator = value) }
     }
 
     fun onAttributeSeparatorChanged(value: String) {
-        viewState = viewState.copy(attributeSeparator = value)
+        _state.update { it.copy(attributeSeparator = value) }
     }
 
     fun onTapActionSelected(action: WidgetTapAction) {
-        viewState = viewState.copy(selectedTapAction = action)
+        _state.update { it.copy(selectedTapAction = action) }
     }
 
     fun onBackgroundTypeSelected(backgroundType: WidgetBackgroundType) {
-        viewState = viewState.copy(selectedBackgroundType = backgroundType)
+        _state.update { it.copy(selectedBackgroundType = backgroundType) }
     }
 
-    internal fun onTextColorSelected(textColor: EntityWidgetTextColor) {
-        viewState = viewState.copy(selectedTextColor = textColor)
+    internal fun onTextColorSelected(colorHex: String) {
+        _state.update { it.copy(textColorHex = colorHex) }
     }
 
-    internal fun onActionError(error: EntityWidgetConfigureError) {
-        viewState = viewState.copy(error = error)
-    }
-
-    internal fun onErrorShown() {
-        viewState = viewState.copy(error = null)
-    }
-
-    private suspend fun selectedEntity(): Entity? = withContext(Dispatchers.Default) {
-        entities.value.firstOrNull { it.entityId == selectedEntityId }
-    }
-
-    suspend fun isValidSelection(): Boolean {
-        return viewState.isActionEnabled &&
-            serverManager.getServer(selectedServerId) != null &&
-            selectedEntity() != null
-    }
-
-    suspend fun updateWidgetConfiguration() {
-        check(widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) { "Widget ID is invalid" }
-        staticWidgetDao.add(getPendingDaoEntity())
-    }
-
-    internal suspend fun getPendingDaoEntity(): StaticWidgetEntity {
-        check(isValidSelection()) { "Widget data is invalid" }
-        val entity = checkNotNull(selectedEntity()) { "Selected entity is unknown on server" }
-
-        return StaticWidgetEntity(
-            id = widgetId,
-            serverId = selectedServerId,
-            entityId = entity.entityId,
-            attributeIds = selectedAttributeIds.takeIf { appendAttributes && it.isNotEmpty() }?.joinToString(","),
-            label = label,
-            textSize = textSize.toFloatOrNull() ?: DEFAULT_TEXT_SIZE.toFloat(),
-            stateSeparator = stateSeparator,
-            attributeSeparator = attributeSeparator.takeIf { appendAttributes }.orEmpty(),
-            tapAction = if (entity.domain in EntityExt.APP_PRESS_ACTION_DOMAINS) {
-                selectedTapAction
-            } else {
-                WidgetTapAction.REFRESH
-            },
-            lastUpdate = staticWidgetDao.get(widgetId)?.lastUpdate.orEmpty(),
-            backgroundType = selectedBackgroundType,
-            textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                when (selectedTextColor) {
-                    EntityWidgetTextColor.WHITE -> textColors.white
-                    EntityWidgetTextColor.BLACK -> textColors.black
-                }
-            } else {
-                null
-            },
-        )
-    }
-
-    @SuppressLint("NewApi") // The activity calls this only after its API 26 runtime check.
-    suspend fun requestWidgetCreation(context: Context) {
-        check(SdkVersion.isAtLeast(Build.VERSION_CODES.O)) { "Widget pinning is not supported" }
-
-        val appWidgetManager = AppWidgetManager.getInstance(context)
-        val pinningSupported = try {
-            appWidgetManager.isRequestPinAppWidgetSupported
-        } catch (e: RemoteException) {
-            Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
-            false
+    private fun loadEntities(serverId: Int) {
+        loadEntitiesJob?.cancel()
+        loadEntitiesJob = viewModelScope.launch {
+            if (!serverManager.isRegistered()) {
+                Timber.w("No server registered")
+                _state.update { it.copy(entityDisplayState = EntityDisplayState.Loaded(emptyList())) }
+                return@launch
+            }
+            getEntitiesForDisplay(serverId).collect { displayState ->
+                _state.update { it.copy(entityDisplayState = displayState) }
+                // The selection can be set before the entities resolve (preselected entity or
+                // restored widget), so the generated label is refreshed once they are available.
+                syncLabelWithSelectedEntity()
+            }
         }
-        check(pinningSupported) { "Widget pinning is not supported" }
-
-        staticWidgetDao.getWidgetCountFlow().drop(1).onStart {
-            val requestAccepted = appWidgetManager.requestPinAppWidget(
-                ComponentName(context, EntityWidget::class.java),
-                null,
-                PendingIntent.getBroadcast(
-                    context,
-                    System.currentTimeMillis().toInt(),
-                    Intent(context, EntityWidget::class.java).apply {
-                        action = ACTION_APPWIDGET_CREATED
-                        putExtra(EXTRA_WIDGET_ENTITY, getPendingDaoEntity())
-                    },
-                    PendingIntent.FLAG_MUTABLE,
-                ),
-            )
-            check(requestAccepted) { "Widget pin request was rejected" }
-        }.first()
     }
 
+    /**
+     * Loads the attributes the selected entity exposes, offered as suggestions when the user
+     * appends attributes to the widget.
+     */
+    private fun loadAttributes(entityId: String?) {
+        loadAttributesJob?.cancel()
+        loadAttributesJob = viewModelScope.launch {
+            val attributes = entityId?.let { readAttributes(it) }.orEmpty()
+            _state.update { it.copy(availableAttributes = attributes) }
+        }
+    }
+
+    private suspend fun readAttributes(entityId: String): List<String> = try {
+        serverManager.integrationRepository(_state.value.selectedServerId).getEntity(entityId)
+            ?.attributes
+            ?.keys
+            .orEmpty()
+            .sorted()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Failed to load the attributes of the selected entity")
+        emptyList()
+    }
+
+    /**
+     * Aligns the label with the display name of the selected entity, unless the user typed their own.
+     */
+    private fun syncLabelWithSelectedEntity() {
+        val current = _state.value
+        val entity = current.selectedEntity ?: return
+        val name = entity.name.takeIf { it != entity.entityId }.orEmpty()
+
+        if (current.label == name) {
+            labelFromEntity = name.isNotEmpty()
+        } else if (current.label.isBlank() || labelFromEntity) {
+            _state.update { it.copy(label = name) }
+            labelFromEntity = name.isNotEmpty()
+        }
+    }
+
+    private suspend fun isValidSelection(): Boolean {
+        val current = _state.value
+        return current.isActionEnabled &&
+            serverManager.getServer(current.selectedServerId) != null &&
+            current.selectedEntity != null
+    }
+
+    /**
+     * Persists the current configuration, reporting through [errors] and returning false when it
+     * cannot be saved.
+     */
+    suspend fun updateWidgetConfiguration(): Boolean {
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            Timber.e("Cannot save the widget configuration, the widget ID is invalid")
+            _errors.emit(commonR.string.widget_update_error)
+            return false
+        }
+        val widget = getPendingDaoEntity()
+        if (widget == null) {
+            _errors.emit(commonR.string.widget_update_error)
+            return false
+        }
+
+        staticWidgetDao.add(widget)
+        return true
+    }
+
+    /** Asks the already placed widgets to redraw with the configuration that was just saved. */
     fun updateWidget(context: Context) {
         context.sendBroadcast(
             Intent(context, EntityWidget::class.java).apply {
@@ -438,16 +305,109 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
         )
     }
 
-    private fun updateLabelFromEntity(entity: Entity?) {
-        val friendlyName = entity?.friendlyName?.takeIf { it != entity.entityId }.orEmpty()
-        viewState = viewState.copy(label = friendlyName)
-        labelFromEntity = friendlyName.isNotEmpty()
+    /**
+     * Builds the widget to persist from the current configuration, or null when it is incomplete.
+     */
+    internal suspend fun getPendingDaoEntity(): StaticWidgetEntity? {
+        if (!isValidSelection()) {
+            Timber.e("Cannot build the widget, the current configuration is invalid")
+            return null
+        }
+        val current = _state.value
+        val entity = current.selectedEntity
+        if (entity == null) {
+            Timber.e("Cannot build the widget, the selected entity is unknown on the server")
+            return null
+        }
+
+        return StaticWidgetEntity(
+            id = widgetId,
+            serverId = current.selectedServerId,
+            entityId = entity.entityId,
+            attributeIds = current.selectedAttributeIds.takeIf { it.isNotEmpty() }?.joinToString(","),
+            label = current.label,
+            textSize = current.textSizeOrDefault,
+            stateSeparator = current.stateSeparator,
+            attributeSeparator = current.attributeSeparator
+                .takeIf { current.selectedAttributeIds.isNotEmpty() }
+                .orEmpty(),
+            tapAction = if (current.isToggleable) current.selectedTapAction else WidgetTapAction.REFRESH,
+            lastUpdate = staticWidgetDao.get(widgetId)?.lastUpdate.orEmpty(),
+            backgroundType = current.selectedBackgroundType,
+            textColor = current.textColorHex.takeIf {
+                current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
+            },
+        )
+    }
+
+    /**
+     * Asks the launcher to pin the configured widget and suspends until it is added, reporting
+     * through [errors] and returning false when the widget cannot be requested at all.
+     */
+    @SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs.
+    suspend fun requestWidgetCreation(context: Context): Boolean {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+            Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val pinningSupported = try {
+            appWidgetManager.isRequestPinAppWidgetSupported
+        } catch (e: RemoteException) {
+            Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
+            false
+        }
+        if (!pinningSupported) {
+            Timber.e("Cannot pin the widget, the launcher does not support it")
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        val widget = getPendingDaoEntity()
+        if (widget == null) {
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        var requestAccepted = false
+        staticWidgetDao.getWidgetCountFlow()
+            // We drop the first value since we only care about knowing when the widget is actually added
+            .drop(1)
+            .onStart {
+                requestAccepted = appWidgetManager.requestPinAppWidget(
+                    ComponentName(context, EntityWidget::class.java),
+                    null,
+                    PendingIntent.getBroadcast(
+                        context,
+                        System.currentTimeMillis().toInt(),
+                        Intent(context, EntityWidget::class.java).apply {
+                            action = ACTION_APPWIDGET_CREATED
+                            putExtra(EXTRA_WIDGET_ENTITY, widget)
+                        },
+                        PendingIntent.FLAG_MUTABLE,
+                    ),
+                )
+                // A rejected request never adds a widget, so emit to stop waiting for one
+                if (!requestAccepted) emit(0)
+            }.first()
+
+        if (!requestAccepted) {
+            Timber.e("The launcher rejected the widget pin request")
+            _errors.emit(commonR.string.widget_creation_error)
+        }
+        return requestAccepted
     }
 
     @AssistedFactory
     interface Factory {
-        fun create(preselectedEntityId: String?): EntityWidgetConfigureViewModel
+        fun create(widgetId: Int, preselectedEntityId: String?): EntityWidgetConfigureViewModel
     }
 }
 
-private const val DEFAULT_TEXT_SIZE = "30"
+/**
+ * Splits a comma separated list of attributes, dropping the blank entries.
+ */
+private fun String?.toAttributeIdsList(): List<String> =
+    this?.split(',')?.map(String::trim)?.filter(String::isNotEmpty).orEmpty()

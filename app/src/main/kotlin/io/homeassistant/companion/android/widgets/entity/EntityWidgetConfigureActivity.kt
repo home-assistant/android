@@ -3,22 +3,15 @@ package io.homeassistant.companion.android.widgets.entity
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
-import io.homeassistant.companion.android.util.getHexForColor
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -36,10 +29,16 @@ class EntityWidgetConfigureActivity : BaseActivity() {
         }
     }
 
+    private val widgetId: Int
+        get() = intent.extras?.getInt(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID,
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+
     private val viewModel: EntityWidgetConfigureViewModel by viewModels(
         extrasProducer = {
             defaultViewModelCreationExtras.withCreationCallback<EntityWidgetConfigureViewModel.Factory> { factory ->
-                factory.create(intent.extras?.getString(FOR_ENTITY, null))
+                factory.create(widgetId, intent.extras?.getString(FOR_ENTITY, null))
             }
         },
     )
@@ -48,39 +47,24 @@ class EntityWidgetConfigureActivity : BaseActivity() {
         get() = intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdgeCompat()
         super.onCreate(savedInstanceState)
 
         setResult(RESULT_CANCELED)
-
-        val widgetId = intent.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
         }
 
-        viewModel.onSetup(
-            widgetId = widgetId,
-            defaultBackgroundType = if (DynamicColors.isDynamicColorAvailable()) {
-                WidgetBackgroundType.DYNAMICCOLOR
-            } else {
-                WidgetBackgroundType.DAYNIGHT
-            },
-            textColors = EntityWidgetTextColors(
-                white = application.getHexForColor(android.R.color.white),
-                black = application.getHexForColor(commonR.color.colorWidgetButtonLabelBlack),
-            ),
-        )
-
         setContent {
             HATheme {
                 EntityWidgetConfigureScreen(
                     viewModel = viewModel,
-                    dynamicColorAvailable = DynamicColors.isDynamicColorAvailable(),
+                    // The app sets the extra when it opens this screen itself, so there is
+                    // something to go back to. The launcher opens it through the
+                    // APPWIDGET_CONFIGURE filter instead, leaving nothing behind us.
+                    canNavigateBack = requestLauncherSetup,
+                    onNavigate = ::finish,
                     onActionClick = ::onActionClick,
                 )
             }
@@ -90,41 +74,19 @@ class EntityWidgetConfigureActivity : BaseActivity() {
     private fun onActionClick() {
         lifecycleScope.launch {
             if (requestLauncherSetup) {
-                if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) && viewModel.isValidSelection()) {
-                    requestPinWidget()
-                } else {
-                    showWidgetError(EntityWidgetConfigureError.CREATE)
+                if (viewModel.requestWidgetCreation(this@EntityWidgetConfigureActivity)) {
+                    finish()
                 }
             } else {
-                updateWidget()
+                if (viewModel.updateWidgetConfiguration()) {
+                    viewModel.updateWidget(this@EntityWidgetConfigureActivity)
+                    setResult(
+                        RESULT_OK,
+                        Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId),
+                    )
+                    finish()
+                }
             }
         }
-    }
-
-    private suspend fun requestPinWidget() {
-        try {
-            viewModel.requestWidgetCreation(this)
-            finish()
-        } catch (_: IllegalStateException) {
-            showWidgetError(EntityWidgetConfigureError.CREATE)
-        }
-    }
-
-    private suspend fun updateWidget() {
-        try {
-            viewModel.updateWidgetConfiguration()
-            viewModel.updateWidget(this)
-            setResult(
-                RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, viewModel.widgetId),
-            )
-            finish()
-        } catch (_: IllegalStateException) {
-            showWidgetError(EntityWidgetConfigureError.UPDATE)
-        }
-    }
-
-    private fun showWidgetError(error: EntityWidgetConfigureError) {
-        viewModel.onActionError(error)
     }
 }

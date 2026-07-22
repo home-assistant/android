@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.widgets.entity
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,8 +20,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -29,11 +27,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,79 +39,56 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
-import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.composable.HAInputChip
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HADimens
-import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.EntityExt
-import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
-import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import io.homeassistant.companion.android.widgets.WidgetBackgroundTypeDropdown
+import io.homeassistant.companion.android.widgets.WidgetTextColor
+import io.homeassistant.companion.android.widgets.WidgetTextColorDropdown
 
-internal const val ENTITY_WIDGET_CUSTOM_ATTRIBUTE_TAG = "entity_widget_custom_attribute"
-internal const val ENTITY_WIDGET_ACTION_BUTTON_TAG = "entity_widget_action_button"
-
-private data class SelectedEntityData(val entity: Entity? = null, val availableAttributes: List<String> = emptyList())
-
+/**
+ * Configuration screen of the entity widget, bound to its [EntityWidgetConfigureViewModel].
+ *
+ * @param canNavigateBack Whether leaving goes back to a previous screen, offering a back arrow
+ * instead of a close button.
+ */
 @Composable
 internal fun EntityWidgetConfigureScreen(
     viewModel: EntityWidgetConfigureViewModel,
-    dynamicColorAvailable: Boolean,
+    canNavigateBack: Boolean,
+    onNavigate: () -> Unit,
     onActionClick: () -> Unit,
 ) {
-    val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
-    val entities by viewModel.entities.collectAsStateWithLifecycle()
-    val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
-    val deviceRegistry by viewModel.deviceRegistry.collectAsStateWithLifecycle()
-    val areaRegistry by viewModel.areaRegistry.collectAsStateWithLifecycle()
-    val viewState = viewModel.viewState
-    val selectedEntityData by produceState(
-        initialValue = SelectedEntityData(),
-        entities,
-        viewState.selectedEntityId,
-    ) {
-        value = withContext(Dispatchers.Default) {
-            val entity = entities.firstOrNull { it.entityId == viewState.selectedEntityId }
-            SelectedEntityData(
-                entity = entity,
-                availableAttributes = entity?.attributes?.keys.orEmpty().sorted(),
-            )
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+
+    LaunchedEffect(Unit) {
+        viewModel.errors.collect { resId ->
+            snackbarHostState.showSnackbar(resources.getString(resId))
         }
     }
-    val selectedEntity = selectedEntityData.entity
 
-    LaunchedEffect(selectedEntity?.entityId, selectedEntity?.friendlyName) {
-        viewModel.onSelectedEntityLoaded(selectedEntity)
-    }
-
-    EntityWidgetConfigureView(
-        servers = servers,
-        viewState = viewState,
+    EntityWidgetConfigureContent(
+        state = state,
+        snackbarHostState = snackbarHostState,
+        canNavigateBack = canNavigateBack,
+        onNavigate = onNavigate,
         onServerSelected = viewModel::onServerSelected,
-        entities = entities,
         onEntitySelected = viewModel::onEntitySelected,
-        entityRegistry = entityRegistry,
-        deviceRegistry = deviceRegistry,
-        areaRegistry = areaRegistry,
-        availableAttributes = selectedEntityData.availableAttributes,
-        onAppendAttributesChanged = viewModel::onAppendAttributesChanged,
         onAttributeAdded = viewModel::onAttributeAdded,
         onAttributeRemoved = viewModel::onAttributeRemoved,
         onCustomAttributeChanged = viewModel::onCustomAttributeChanged,
@@ -122,25 +97,22 @@ internal fun EntityWidgetConfigureScreen(
         onTextSizeChanged = viewModel::onTextSizeChanged,
         onStateSeparatorChanged = viewModel::onStateSeparatorChanged,
         onAttributeSeparatorChanged = viewModel::onAttributeSeparatorChanged,
-        isToggleable = selectedEntity?.domain in EntityExt.APP_PRESS_ACTION_DOMAINS,
         onTapActionSelected = viewModel::onTapActionSelected,
         onBackgroundTypeSelected = viewModel::onBackgroundTypeSelected,
-        dynamicColorAvailable = dynamicColorAvailable,
         onTextColorSelected = viewModel::onTextColorSelected,
-        onErrorShown = viewModel::onErrorShown,
         onActionClick = onActionClick,
     )
 }
 
+/** Stateless configuration screen for the entity widget. */
 @Composable
-internal fun EntityWidgetConfigureView(
-    servers: List<Server>,
-    viewState: EntityWidgetConfigureViewState,
+internal fun EntityWidgetConfigureContent(
+    state: EntityWidgetConfigureState,
+    snackbarHostState: SnackbarHostState,
+    canNavigateBack: Boolean,
+    onNavigate: () -> Unit,
     onServerSelected: (Int) -> Unit,
-    entities: List<Entity>,
     onEntitySelected: (String?) -> Unit,
-    availableAttributes: List<String>,
-    onAppendAttributesChanged: (Boolean) -> Unit,
     onAttributeAdded: (String) -> Unit,
     onAttributeRemoved: (String) -> Unit,
     onCustomAttributeChanged: (String) -> Unit,
@@ -149,35 +121,18 @@ internal fun EntityWidgetConfigureView(
     onTextSizeChanged: (String) -> Unit,
     onStateSeparatorChanged: (String) -> Unit,
     onAttributeSeparatorChanged: (String) -> Unit,
-    isToggleable: Boolean,
     onTapActionSelected: (WidgetTapAction) -> Unit,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
-    dynamicColorAvailable: Boolean,
-    onTextColorSelected: (EntityWidgetTextColor) -> Unit,
-    onErrorShown: () -> Unit,
-    entityRegistry: List<EntityRegistryResponse>? = null,
-    deviceRegistry: List<DeviceRegistryResponse>? = null,
-    areaRegistry: List<AreaRegistryResponse>? = null,
+    onTextColorSelected: (colorHex: String) -> Unit,
     onActionClick: () -> Unit,
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val creationError = stringResource(commonR.string.widget_creation_error)
-    val updateError = stringResource(commonR.string.widget_update_error)
-
-    LaunchedEffect(viewState.error) {
-        val error = viewState.error ?: return@LaunchedEffect
-        snackbarHostState.showSnackbar(
-            when (error) {
-                EntityWidgetConfigureError.CREATE -> creationError
-                EntityWidgetConfigureError.UPDATE -> updateError
-            },
-        )
-        onErrorShown()
-    }
-
     Scaffold(
         topBar = {
-            HATopBar(title = { Text(stringResource(commonR.string.select_entity_to_display)) })
+            HATopBar(
+                title = { Text(stringResource(commonR.string.select_entity_to_display)) },
+                onBackClick = onNavigate.takeIf { canNavigateBack },
+                onCloseClick = onNavigate.takeIf { !canNavigateBack },
+            )
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
@@ -194,23 +149,66 @@ internal fun EntityWidgetConfigureView(
             verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         ) {
             ServerSelector(
-                servers = servers,
-                selectedServerId = viewState.selectedServerId,
-                isUpdateWidget = viewState.isUpdateWidget,
+                items = state.serversDropdownItems,
+                selectedServerId = state.selectedServerId,
+                showServerSelector = state.showServerSelector,
                 onServerSelected = onServerSelected,
             )
             EntityPickerSection(
-                entities = entities,
-                selectedEntityId = viewState.selectedEntityId,
-                entityRegistry = entityRegistry,
-                deviceRegistry = deviceRegistry,
-                areaRegistry = areaRegistry,
+                displayEntities = state.entityDisplayState,
+                selectedEntityId = state.selectedEntityId,
                 onEntitySelected = onEntitySelected,
             )
+            ConfigurationSections(
+                state = state,
+                onAttributeAdded = onAttributeAdded,
+                onAttributeRemoved = onAttributeRemoved,
+                onCustomAttributeChanged = onCustomAttributeChanged,
+                onCustomAttributesAdded = onCustomAttributesAdded,
+                onAttributeSeparatorChanged = onAttributeSeparatorChanged,
+                onLabelChanged = onLabelChanged,
+                onTextSizeChanged = onTextSizeChanged,
+                onStateSeparatorChanged = onStateSeparatorChanged,
+                onTapActionSelected = onTapActionSelected,
+                onBackgroundTypeSelected = onBackgroundTypeSelected,
+                onTextColorSelected = onTextColorSelected,
+            )
+
+            ActionButton(
+                labelRes = state.actionButtonLabel,
+                enabled = state.isActionEnabled,
+                onActionClick = onActionClick,
+            )
+        }
+    }
+}
+
+/**
+ * Everything describing how to display the selected entity, revealed once there is one.
+ */
+@Composable
+private fun ColumnScope.ConfigurationSections(
+    state: EntityWidgetConfigureState,
+    onAttributeAdded: (String) -> Unit,
+    onAttributeRemoved: (String) -> Unit,
+    onCustomAttributeChanged: (String) -> Unit,
+    onCustomAttributesAdded: () -> Unit,
+    onAttributeSeparatorChanged: (String) -> Unit,
+    onLabelChanged: (String) -> Unit,
+    onTextSizeChanged: (String) -> Unit,
+    onStateSeparatorChanged: (String) -> Unit,
+    onTapActionSelected: (WidgetTapAction) -> Unit,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+    onTextColorSelected: (colorHex: String) -> Unit,
+) {
+    AnimatedVisibility(visible = state.showConfiguration) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+        ) {
             AttributeSection(
-                viewState = viewState,
-                availableAttributes = availableAttributes,
-                onAppendAttributesChanged = onAppendAttributesChanged,
+                state = state,
                 onAttributeAdded = onAttributeAdded,
                 onAttributeRemoved = onAttributeRemoved,
                 onCustomAttributeChanged = onCustomAttributeChanged,
@@ -218,27 +216,22 @@ internal fun EntityWidgetConfigureView(
                 onAttributeSeparatorChanged = onAttributeSeparatorChanged,
             )
             TextOptionsSection(
-                viewState = viewState,
+                state = state,
                 onTextSizeChanged = onTextSizeChanged,
                 onStateSeparatorChanged = onStateSeparatorChanged,
                 onLabelChanged = onLabelChanged,
             )
             TapActionSection(
-                selectedTapAction = viewState.selectedTapAction,
-                isToggleable = isToggleable,
+                selectedTapAction = state.selectedTapAction,
+                isToggleable = state.isToggleable,
                 onTapActionSelected = onTapActionSelected,
             )
             AppearanceSection(
-                selectedBackgroundType = viewState.selectedBackgroundType,
-                dynamicColorAvailable = dynamicColorAvailable,
-                selectedTextColor = viewState.selectedTextColor,
+                selectedBackgroundType = state.selectedBackgroundType,
+                dynamicColorAvailable = state.dynamicColorAvailable,
+                textColorHex = state.textColorHex,
                 onBackgroundTypeSelected = onBackgroundTypeSelected,
                 onTextColorSelected = onTextColorSelected,
-            )
-            ActionButton(
-                isUpdateWidget = viewState.isUpdateWidget,
-                enabled = viewState.isActionEnabled,
-                onActionClick = onActionClick,
             )
         }
     }
@@ -246,54 +239,41 @@ internal fun EntityWidgetConfigureView(
 
 @Composable
 private fun ServerSelector(
-    servers: List<Server>,
+    items: List<HADropdownItem<Int>>,
     selectedServerId: Int,
-    isUpdateWidget: Boolean,
+    showServerSelector: Boolean,
     onServerSelected: (Int) -> Unit,
 ) {
-    if (servers.size <= 1 && !(isUpdateWidget && servers.none { it.id == selectedServerId })) return
+    if (!showServerSelector) return
 
     HADropdownMenu(
-        items = servers.map {
-            HADropdownItem(key = it.id, label = it.friendlyName)
-        },
-        selectedKey = selectedServerId.takeIf { serverId ->
-            servers.any { it.id == serverId }
-        },
+        items = items,
+        selectedKey = selectedServerId,
         onItemSelected = onServerSelected,
         label = stringResource(commonR.string.server_select),
         placeholder = stringResource(commonR.string.server_select),
         modifier = Modifier.formControlWidth(),
-        enabled = servers.isNotEmpty(),
+        enabled = items.isNotEmpty(),
     )
 }
 
 @Composable
 private fun EntityPickerSection(
-    entities: List<Entity>,
+    displayEntities: EntityDisplayState,
     selectedEntityId: String?,
-    entityRegistry: List<EntityRegistryResponse>? = null,
-    deviceRegistry: List<DeviceRegistryResponse>? = null,
-    areaRegistry: List<AreaRegistryResponse>? = null,
     onEntitySelected: (String?) -> Unit,
 ) {
     EntityPicker(
-        entities = entities,
+        displayState = displayEntities,
         selectedEntityId = selectedEntityId,
-        onEntitySelectedId = onEntitySelected,
-        onEntityCleared = { onEntitySelected(null) },
+        onSelectionChanged = onEntitySelected,
         modifier = Modifier.formControlWidth(),
-        entityRegistry = entityRegistry,
-        deviceRegistry = deviceRegistry,
-        areaRegistry = areaRegistry,
     )
 }
 
 @Composable
 private fun AttributeSection(
-    viewState: EntityWidgetConfigureViewState,
-    availableAttributes: List<String>,
-    onAppendAttributesChanged: (Boolean) -> Unit,
+    state: EntityWidgetConfigureState,
     onAttributeAdded: (String) -> Unit,
     onAttributeRemoved: (String) -> Unit,
     onCustomAttributeChanged: (String) -> Unit,
@@ -302,51 +282,40 @@ private fun AttributeSection(
 ) {
     Column(
         modifier = Modifier.formControlWidth(),
-        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
     ) {
-        CheckboxRow(
-            text = stringResource(commonR.string.entity_attribute_checkbox),
-            checked = viewState.appendAttributes,
-            onCheckedChange = onAppendAttributesChanged,
+        AttributeSelector(
+            unselectedAttributes = state.unselectedAttributes,
+            selectedAttributeIds = state.selectedAttributeIds,
+            customAttribute = state.customAttribute,
+            onAttributeAdded = onAttributeAdded,
+            onAttributeRemoved = onAttributeRemoved,
+            onCustomAttributeChanged = onCustomAttributeChanged,
+            onCustomAttributesAdded = onCustomAttributesAdded,
         )
-
-        AnimatedVisibility(visible = viewState.appendAttributes) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
-            ) {
-                AttributeSelector(
-                    availableAttributes = availableAttributes,
-                    selectedAttributeIds = viewState.selectedAttributeIds,
-                    customAttribute = viewState.customAttribute,
-                    onAttributeAdded = onAttributeAdded,
-                    onAttributeRemoved = onAttributeRemoved,
-                    onCustomAttributeChanged = onCustomAttributeChanged,
-                    onCustomAttributesAdded = onCustomAttributesAdded,
-                )
-                HATextField(
-                    value = viewState.attributeSeparator,
-                    onValueChange = onAttributeSeparatorChanged,
-                    label = { Text(stringResource(commonR.string.widget_attribute_separator_label)) },
-                    placeholder = { Text(stringResource(commonR.string.widget_separator_input_hint)) },
-                    maxLines = 1,
-                )
-            }
-        }
+        HATextField(
+            value = state.attributeSeparator,
+            onValueChange = onAttributeSeparatorChanged,
+            label = { Text(stringResource(commonR.string.widget_attribute_separator_label)) },
+            placeholder = { Text(stringResource(commonR.string.widget_separator_input_hint)) },
+            maxLines = 1,
+        )
     }
 }
 
 @Composable
 private fun TextOptionsSection(
-    viewState: EntityWidgetConfigureViewState,
+    state: EntityWidgetConfigureState,
     onTextSizeChanged: (String) -> Unit,
     onStateSeparatorChanged: (String) -> Unit,
     onLabelChanged: (String) -> Unit,
 ) {
     HATextField(
-        value = viewState.textSize,
+        value = state.textSize,
         onValueChange = onTextSizeChanged,
+        isError = state.textSizeError != null,
         label = { Text(stringResource(commonR.string.widget_text_size_label)) },
+        supportingText = state.textSizeError?.let { { Text(stringResource(it)) } },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Number,
             imeAction = ImeAction.Next,
@@ -355,7 +324,7 @@ private fun TextOptionsSection(
     )
 
     HATextField(
-        value = viewState.stateSeparator,
+        value = state.stateSeparator,
         onValueChange = onStateSeparatorChanged,
         label = { Text(stringResource(commonR.string.widget_state_separator_label)) },
         placeholder = { Text(stringResource(commonR.string.widget_separator_input_hint)) },
@@ -363,7 +332,7 @@ private fun TextOptionsSection(
     )
 
     HATextField(
-        value = viewState.label,
+        value = state.label,
         onValueChange = onLabelChanged,
         label = { Text(stringResource(commonR.string.label_label)) },
         placeholder = { Text(stringResource(commonR.string.widget_text_hint_label)) },
@@ -379,17 +348,17 @@ private fun TapActionSection(
 ) {
     if (!isToggleable) return
 
+    val toggleLabel = stringResource(commonR.string.widget_tap_action_toggle)
+    val refreshLabel = stringResource(commonR.string.refresh)
+    val items = remember(toggleLabel, refreshLabel) {
+        listOf(
+            HADropdownItem(key = WidgetTapAction.TOGGLE, label = toggleLabel),
+            HADropdownItem(key = WidgetTapAction.REFRESH, label = refreshLabel),
+        )
+    }
+
     HADropdownMenu(
-        items = listOf(
-            HADropdownItem(
-                key = WidgetTapAction.TOGGLE,
-                label = stringResource(commonR.string.widget_tap_action_toggle),
-            ),
-            HADropdownItem(
-                key = WidgetTapAction.REFRESH,
-                label = stringResource(commonR.string.refresh),
-            ),
-        ),
+        items = items,
         selectedKey = selectedTapAction,
         onItemSelected = onTapActionSelected,
         label = stringResource(commonR.string.widget_tap_action_label),
@@ -401,69 +370,36 @@ private fun TapActionSection(
 private fun AppearanceSection(
     selectedBackgroundType: WidgetBackgroundType,
     dynamicColorAvailable: Boolean,
-    selectedTextColor: EntityWidgetTextColor,
+    textColorHex: String?,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
-    onTextColorSelected: (EntityWidgetTextColor) -> Unit,
+    onTextColorSelected: (colorHex: String) -> Unit,
 ) {
-    HADropdownMenu(
-        items = buildList {
-            if (dynamicColorAvailable) {
-                add(
-                    HADropdownItem(
-                        key = WidgetBackgroundType.DYNAMICCOLOR,
-                        label = stringResource(commonR.string.widget_background_type_dynamiccolor),
-                    ),
-                )
-            }
-            add(
-                HADropdownItem(
-                    key = WidgetBackgroundType.DAYNIGHT,
-                    label = stringResource(commonR.string.widget_background_type_daynight),
-                ),
-            )
-            add(
-                HADropdownItem(
-                    key = WidgetBackgroundType.TRANSPARENT,
-                    label = stringResource(commonR.string.widget_background_type_transparent),
-                ),
-            )
-        },
-        selectedKey = selectedBackgroundType,
-        onItemSelected = onBackgroundTypeSelected,
-        label = stringResource(commonR.string.widget_background_type_label),
+    WidgetBackgroundTypeDropdown(
+        selected = selectedBackgroundType,
+        dynamicColorAvailable = dynamicColorAvailable,
+        onSelected = onBackgroundTypeSelected,
         modifier = Modifier.formControlWidth(),
     )
 
     if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-        HADropdownMenu(
-            items = listOf(
-                HADropdownItem(
-                    key = EntityWidgetTextColor.WHITE,
-                    label = stringResource(commonR.string.widget_text_color_white),
-                ),
-                HADropdownItem(
-                    key = EntityWidgetTextColor.BLACK,
-                    label = stringResource(commonR.string.widget_text_color_black),
-                ),
-            ),
-            selectedKey = selectedTextColor,
-            onItemSelected = onTextColorSelected,
-            label = stringResource(commonR.string.widget_text_color_label),
+        // Widgets persist the resolved hex, so the Context needed to convert stays in the UI layer.
+        val context = LocalContext.current
+        val selected = remember(context, textColorHex) { WidgetTextColor.fromHex(context, textColorHex) }
+
+        WidgetTextColorDropdown(
+            selected = selected,
+            onSelected = { onTextColorSelected(it.resolve(context)) },
             modifier = Modifier.formControlWidth(),
         )
     }
 }
 
 @Composable
-private fun ActionButton(isUpdateWidget: Boolean, enabled: Boolean, onActionClick: () -> Unit) {
+private fun ActionButton(@StringRes labelRes: Int, enabled: Boolean, onActionClick: () -> Unit) {
     HAAccentButton(
-        text = stringResource(
-            if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget,
-        ),
+        text = stringResource(labelRes),
         onClick = onActionClick,
-        modifier = Modifier
-            .formControlWidth()
-            .testTag(ENTITY_WIDGET_ACTION_BUTTON_TAG),
+        modifier = Modifier.formControlWidth(),
         enabled = enabled,
     )
 }
@@ -473,29 +409,8 @@ private fun Modifier.formControlWidth(): Modifier = this
     .fillMaxWidth()
 
 @Composable
-private fun CheckboxRow(text: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-    ) {
-        HACheckbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-        )
-        Text(
-            text = text,
-            style = HATextStyle.Body,
-            color = LocalHAColorScheme.current.colorTextPrimary,
-        )
-    }
-}
-
-@Composable
 private fun AttributeSelector(
-    availableAttributes: List<String>,
+    unselectedAttributes: List<String>,
     selectedAttributeIds: List<String>,
     customAttribute: String,
     onAttributeAdded: (String) -> Unit,
@@ -503,13 +418,10 @@ private fun AttributeSelector(
     onCustomAttributeChanged: (String) -> Unit,
     onCustomAttributesAdded: () -> Unit,
 ) {
-    val unselectedAttributes = availableAttributes.filterNot(selectedAttributeIds::contains)
-
     Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
         HATextField(
             value = customAttribute,
             onValueChange = onCustomAttributeChanged,
-            modifier = Modifier.testTag(ENTITY_WIDGET_CUSTOM_ATTRIBUTE_TAG),
             label = { Text(stringResource(commonR.string.widget_attribute_add)) },
             placeholder = { Text(stringResource(commonR.string.label_attribute)) },
             trailingIcon = {
@@ -528,82 +440,52 @@ private fun AttributeSelector(
             maxLines = 1,
         )
 
-        if (unselectedAttributes.isNotEmpty()) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-            ) {
-                unselectedAttributes.forEach { attributeId ->
-                    InputChip(
-                        selected = false,
-                        onClick = { onAttributeAdded(attributeId) },
-                        label = { Text(attributeId) },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = stringResource(commonR.string.widget_attribute_add),
-                            )
-                        },
-                    )
-                }
-            }
-        }
+        AttributeChips(attributeIds = unselectedAttributes, selected = false, onClick = onAttributeAdded)
+        AttributeChips(attributeIds = selectedAttributeIds, selected = true, onClick = onAttributeRemoved)
+    }
+}
 
-        if (selectedAttributeIds.isNotEmpty()) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-            ) {
-                selectedAttributeIds.forEach { attributeId ->
-                    InputChip(
-                        selected = true,
-                        onClick = { onAttributeRemoved(attributeId) },
-                        label = { Text(attributeId) },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(commonR.string.search_clear_selection),
-                            )
-                        },
-                        colors = InputChipDefaults.inputChipColors(
-                            selectedContainerColor = LocalHAColorScheme.current.colorFillPrimaryNormalActive,
-                            selectedLabelColor = LocalHAColorScheme.current.colorTextPrimary,
-                            selectedTrailingIconColor = LocalHAColorScheme.current.colorTextSecondary,
-                        ),
-                    )
-                }
-            }
+/**
+ * Chips for one group of attributes: the ones still available to add, or the ones already selected.
+ *
+ * @param attributeIds Attributes to show, nothing is rendered when empty.
+ * @param selected Whether these attributes are part of the selection, which decides whether a chip
+ * offers to remove it or to add it.
+ * @param onClick Invoked with the attribute of the clicked chip.
+ */
+@Composable
+private fun AttributeChips(attributeIds: List<String>, selected: Boolean, onClick: (String) -> Unit) {
+    if (attributeIds.isEmpty()) return
+
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+    ) {
+        attributeIds.forEach { attributeId ->
+            HAInputChip(
+                text = attributeId,
+                onClick = { onClick(attributeId) },
+                selected = selected,
+                trailingIcon = if (selected) Icons.Default.Close else Icons.Default.Add,
+                trailingIconContentDescription = stringResource(
+                    if (selected) commonR.string.search_clear_selection else commonR.string.widget_attribute_add,
+                ),
+            )
         }
     }
 }
 
 @Preview
 @Composable
-private fun EntityWidgetConfigureViewPreview() {
+private fun EntityWidgetConfigureContentPreview() {
     HAThemeForPreview {
-        EntityWidgetConfigureView(
-            servers = listOf(previewServer1, previewServer2),
-            viewState = EntityWidgetConfigureViewState(
-                selectedServerId = previewServer1.id,
-                selectedEntityId = previewEntity1.entityId,
-                appendAttributes = true,
-                selectedAttributeIds = listOf("brightness"),
-                label = "Office light",
-                textSize = "30",
-                stateSeparator = " - ",
-                attributeSeparator = ", ",
-                selectedTapAction = WidgetTapAction.TOGGLE,
-                selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
-                selectedTextColor = EntityWidgetTextColor.WHITE,
-            ),
+        EntityWidgetConfigureContent(
+            state = previewEntityWidgetConfigureState,
+            snackbarHostState = remember { SnackbarHostState() },
+            canNavigateBack = false,
+            onNavigate = {},
             onServerSelected = {},
-            entities = listOf(previewEntity1),
             onEntitySelected = {},
-            entityRegistry = null,
-            deviceRegistry = null,
-            areaRegistry = null,
-            availableAttributes = listOf("brightness", "friendly_name"),
-            onAppendAttributesChanged = {},
             onAttributeAdded = {},
             onAttributeRemoved = {},
             onCustomAttributeChanged = {},
@@ -612,13 +494,28 @@ private fun EntityWidgetConfigureViewPreview() {
             onTextSizeChanged = {},
             onStateSeparatorChanged = {},
             onAttributeSeparatorChanged = {},
-            isToggleable = true,
             onTapActionSelected = {},
             onBackgroundTypeSelected = {},
-            dynamicColorAvailable = true,
             onTextColorSelected = {},
-            onErrorShown = {},
             onActionClick = {},
         )
     }
 }
+
+private val previewEntityWidgetConfigureState = EntityWidgetConfigureState(
+    selectedServerId = previewServer1.id,
+    serversDropdownItems = listOf(previewServer1, previewServer2).map {
+        HADropdownItem(key = it.id, label = it.friendlyName)
+    },
+    entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem.from(previewEntity1))),
+    selectedEntityId = previewEntity1.entityId,
+    availableAttributes = listOf("brightness", "friendly_name"),
+    selectedAttributeIds = listOf("brightness"),
+    label = "Office light",
+    textSize = "30",
+    stateSeparator = " - ",
+    attributeSeparator = ", ",
+    selectedTapAction = WidgetTapAction.TOGGLE,
+    selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
+    dynamicColorAvailable = true,
+)
