@@ -20,6 +20,7 @@ import io.homeassistant.companion.android.frontend.filechooser.FrontendFileChoos
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
+import io.homeassistant.companion.android.util.CheckTLSClientAuthNeededUseCase
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -82,6 +83,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     fileChooserHandler: FrontendFileChooserHandler,
     permissionManager: PermissionManager,
     prefsRepository: PrefsRepository,
+    private val checkTLSClientAuthNeededUseCase: CheckTLSClientAuthNeededUseCase,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -93,6 +95,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         fileChooserHandler: FrontendFileChooserHandler,
         permissionManager: PermissionManager,
         prefsRepository: PrefsRepository,
+        checkTLSClientAuthNeededUseCase: CheckTLSClientAuthNeededUseCase,
     ) : this(
         savedStateHandle.toRoute<ConnectionRoute>().url,
         webViewClientFactory,
@@ -100,6 +103,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         fileChooserHandler,
         permissionManager,
         prefsRepository,
+        checkTLSClientAuthNeededUseCase,
     )
 
     /** Whether the WebView is debuggable per the developer setting, null until the pref is read. */
@@ -266,7 +270,10 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                         ConnectionNavigationEvent.Authenticated(
                             url = effectiveUrl.value,
                             authCode = code,
-                            requiredMTLS = isTLSClientAuthNeeded,
+                            // The WebView may have resumed a TLS session without a
+                            // CertificateRequest, so also check the loaded certificate chain.
+                            requiredMTLS = isTLSClientAuthNeeded ||
+                                checkTLSClientAuthNeededUseCase(rawHttpUrl?.host),
                         ),
                     )
                 }
