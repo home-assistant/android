@@ -2,13 +2,13 @@ package io.homeassistant.companion.android.common.compose.composable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -75,7 +75,7 @@ fun HAInputChip(
                 color = colors.borderColor,
                 shape = RoundedCornerShape(HARadius.M),
             )
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .selectable(selected = selected, enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = HADimens.SPACE2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -113,8 +113,8 @@ private fun HAColorScheme.inputChipColors(selected: Boolean, enabled: Boolean): 
     selected -> HAInputChipColors(
         containerColor = colorFillPrimaryNormalResting,
         borderColor = Color.Transparent,
-        labelColor = colorTextPrimary,
-        trailingIconColor = colorTextPrimary,
+        labelColor = colorOnPrimaryNormal,
+        trailingIconColor = colorOnPrimaryNormal,
     )
 
     else -> HAInputChipColors(
