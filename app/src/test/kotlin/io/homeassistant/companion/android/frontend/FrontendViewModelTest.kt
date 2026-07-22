@@ -1984,6 +1984,83 @@ class FrontendViewModelTest {
             // Should still be content state, not error
             assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
         }
+
+        @Test
+        fun `Given loading state when screen is stopped then timeout does not fire while stopped`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(1.seconds)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            // The WebView is frozen while the screen is stopped, so the countdown must not run
+            viewModel.onScreenStartedChanged(false)
+            advanceTimeBy(CONNECTION_TIMEOUT * 2)
+
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+        }
+
+        @Test
+        fun `Given screen stopped while loading when screen starts again then timeout restarts from zero`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            viewModel.onScreenStartedChanged(false)
+            advanceTimeBy(CONNECTION_TIMEOUT)
+            viewModel.onScreenStartedChanged(true)
+
+            // The countdown restarted on start: just before a full timeout it is still loading
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            advanceTimeBy(2.seconds)
+            val state = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+            assertEquals(FrontendConnectionError.ExternalBusTimeout, state.error)
+        }
+
+        @Test
+        fun `Given external bus timeout error when frontend connects then state recovers to Content`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+            val errorState = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+            assertEquals(FrontendConnectionError.ExternalBusTimeout, errorState.error)
+
+            // The WebView keeps loading under the error overlay and completes the handshake
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertEquals(testUrlWithAuth, state.url)
+        }
+
+        @Test
+        fun `Given a non-timeout error when frontend connects then error state is kept`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.ServerNotFound(serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+            assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+        }
     }
 
     @Nested
