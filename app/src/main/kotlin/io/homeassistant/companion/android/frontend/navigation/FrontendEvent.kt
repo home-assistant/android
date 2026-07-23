@@ -25,8 +25,13 @@ sealed interface FrontendEvent {
      *
      * @param messageResId String resource ID for the message to display
      * @param action Optional action button. `null` renders a plain message snackbar.
+     * @param formatArgs Arguments for the placeholders of [messageResId], in order.
      */
-    data class ShowSnackbar(@param:StringRes val messageResId: Int, val action: Action? = null) : FrontendEvent {
+    data class ShowSnackbar(
+        @param:StringRes val messageResId: Int,
+        val action: Action? = null,
+        val formatArgs: List<Any> = emptyList(),
+    ) : FrontendEvent {
 
         /**
          * @param labelResId String resource for the action button label (e.g. "Get help").

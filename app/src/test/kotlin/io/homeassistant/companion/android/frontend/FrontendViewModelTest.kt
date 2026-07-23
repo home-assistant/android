@@ -212,6 +212,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
                 )
             } answers {
                 // onUrlIntercepted is at parameter index 3 in HAWebViewClientFactory.create
@@ -1206,6 +1207,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
                 )
             } answers {
                 // onPageFinished is at parameter index 4 in HAWebViewClientFactory.create
@@ -1342,6 +1344,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
                 )
             } answers {
                 capturedCallback = arg(5)
@@ -1431,6 +1434,65 @@ class FrontendViewModelTest {
     }
 
     @Nested
+    inner class SubresourceSslError {
+
+        private fun createViewModelWithSubresourceSslErrorCapture(): Pair<FrontendViewModel, (String?) -> Unit> {
+            var capturedCallback: ((String?) -> Unit)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
+                )
+            } answers {
+                // onSubresourceSslError is at parameter index 7 in HAWebViewClientFactory.create
+                capturedCallback = arg(7)
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel()
+            val callback = capturedCallback
+            assertNotNull(callback)
+            return viewModel to callback
+        }
+
+        @Test
+        fun `Given SSL error on a subresource when reported then snackbar names its host`() = runTest {
+            val (viewModel, reportSslError) = createViewModelWithSubresourceSslErrorCapture()
+
+            viewModel.events.test {
+                reportSslError("https://analytics.example.com/beacon.min.js")
+                advanceUntilIdle()
+
+                val event = assertInstanceOf(FrontendEvent.ShowSnackbar::class.java, awaitItem())
+                assertEquals(commonR.string.error_ssl_subresource_host, event.messageResId)
+                assertEquals(listOf("analytics.example.com"), event.formatArgs)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given SSL error on a subresource without parsable url when reported then snackbar is generic`() = runTest {
+            val (viewModel, reportSslError) = createViewModelWithSubresourceSslErrorCapture()
+
+            viewModel.events.test {
+                reportSslError(null)
+                advanceUntilIdle()
+
+                val event = assertInstanceOf(FrontendEvent.ShowSnackbar::class.java, awaitItem())
+                assertEquals(commonR.string.error_ssl_subresource, event.messageResId)
+                assertTrue(event.formatArgs.isEmpty())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
     inner class BackNavigation {
 
         private fun createViewModelWithCanGoBackCapture(): Pair<FrontendViewModel, (Boolean) -> Unit> {
@@ -1444,6 +1506,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
                 )
             } answers {
                 // onCanGoBackChanged is at parameter index 6 in HAWebViewClientFactory.create
