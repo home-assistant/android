@@ -28,7 +28,9 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Th
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import javax.inject.Inject
 import javax.inject.Provider
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
 
 interface WebSocketRepository {
     fun getConnectionState(): WebSocketState
@@ -161,4 +163,63 @@ internal class WebSocketRepositoryFactory @Inject internal constructor(
     suspend fun create(serverId: Int): WebSocketRepository {
         return WebSocketRepositoryImpl(coreFactory.create(serverId), serverManagerProvider.get())
     }
+}
+
+/** [WebSocketRepository.getAreaRegistry], returning null when it cannot be retrieved. */
+suspend fun WebSocketRepository.getAreaRegistryOrNull(): List<AreaRegistryResponse>? =
+    registryOrNull("area") { getAreaRegistry() }
+
+/** [WebSocketRepository.getDeviceRegistry], returning null when it cannot be retrieved. */
+suspend fun WebSocketRepository.getDeviceRegistryOrNull(): List<DeviceRegistryResponse>? =
+    registryOrNull("device") { getDeviceRegistry() }
+
+/** [WebSocketRepository.getEntityRegistry], returning null when it cannot be retrieved. */
+suspend fun WebSocketRepository.getEntityRegistryOrNull(): List<EntityRegistryResponse>? =
+    registryOrNull("entity") { getEntityRegistry() }
+
+/** [WebSocketRepository.getEntityRegistryDisplay], returning null when it cannot be retrieved. */
+suspend fun WebSocketRepository.getEntityRegistryDisplayOrNull(): EntityRegistryDisplayResponse? =
+    registryOrNull("entity display") { getEntityRegistryDisplay() }
+
+/** [WebSocketRepository.getFloorRegistry], returning null when it cannot be retrieved. */
+suspend fun WebSocketRepository.getFloorRegistryOrNull(): List<FloorRegistryResponse>? =
+    registryOrNull("floor") { getFloorRegistry() }
+
+/** [WebSocketRepository.getAreaRegistryUpdates], returning null when it cannot be subscribed to. */
+suspend fun WebSocketRepository.getAreaRegistryUpdatesOrNull(): Flow<AreaRegistryUpdatedEvent>? =
+    subscriptionOrNull("area registry") { getAreaRegistryUpdates() }
+
+/** [WebSocketRepository.getDeviceRegistryUpdates], returning null when it cannot be subscribed to. */
+suspend fun WebSocketRepository.getDeviceRegistryUpdatesOrNull(): Flow<DeviceRegistryUpdatedEvent>? =
+    subscriptionOrNull("device registry") { getDeviceRegistryUpdates() }
+
+/** [WebSocketRepository.getEntityRegistryUpdates], returning null when it cannot be subscribed to. */
+suspend fun WebSocketRepository.getEntityRegistryUpdatesOrNull(): Flow<EntityRegistryUpdatedEvent>? =
+    subscriptionOrNull("entity registry") { getEntityRegistryUpdates() }
+
+/**
+ * The registry getters return null when the server cannot provide the data, but still throw when
+ * the response cannot be parsed, which callers displaying registry data degrade from rather than
+ * fail on.
+ */
+private suspend fun <T> registryOrNull(registryName: String, fetch: suspend () -> T?): T? = try {
+    fetch()
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    Timber.e(e, "Couldn't load $registryName registry")
+    null
+}
+
+/**
+ * The update subscriptions return null when the server cannot provide them, but still throw when
+ * the subscription itself fails, which callers observing updates degrade from rather than fail on.
+ */
+private suspend fun <T> subscriptionOrNull(name: String, subscribe: suspend () -> Flow<T>?): Flow<T>? = try {
+    subscribe()
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    Timber.e(e, "Couldn't subscribe to $name updates")
+    null
 }

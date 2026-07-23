@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.integration.ActionData
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
@@ -177,6 +178,8 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     override suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
+        if (!isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY)) return null
+
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "config/entity_registry/list_for_display",
@@ -187,6 +190,8 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     override suspend fun getFloorRegistry(): List<FloorRegistryResponse>? {
+        if (!isServerAtLeast(MIN_VERSION_FLOOR_REGISTRY)) return null
+
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "config/floor_registry/list",
@@ -388,7 +393,7 @@ class WebSocketRepositoryImpl internal constructor(
                 message = buildMap {
                     put("type", "matter/commission_on_network")
                     put("pin", pin)
-                    if (webSocketCore.server()?.version?.isAtLeast(2024, 1) == true) {
+                    if (isServerAtLeast(HomeAssistantVersion(2024, 1, 0))) {
                         put("ip_addr", ip)
                     }
                 },
@@ -461,6 +466,24 @@ class WebSocketRepositoryImpl internal constructor(
         }
     }
 
+    /** Whether the server this repository talks to runs at least [version]. */
+    private suspend fun isServerAtLeast(version: HomeAssistantVersion): Boolean =
+        webSocketCore.server()?.version?.isAtLeast(version) == true
+
     private inline fun <reified T> mapResponse(response: RawMessageSocketResponse?): T? =
         response?.result?.run { kotlinJsonMapper.decodeFromJsonElement(this) }
 }
+
+/**
+ * Minimum server version to use `config/entity_registry/list_for_display`.
+ *
+ * The command itself exists since 2023.3, but only since 2024.10 (https://github.com/home-assistant/core/pull/125832)
+ * is the `en` field the server-resolved display name (`name or original_name`) and the `hn`
+ * (`has_entity_name`) flag present. Before 2024.10, `en` was only sent for entities with
+ * `has_entity_name` and no user-set name, so it cannot be trusted as the display name. Older
+ * servers use `config/entity_registry/list` instead.
+ */
+private val MIN_VERSION_ENTITY_REGISTRY_DISPLAY = HomeAssistantVersion(year = 2024, month = 10, release = 0)
+
+/** Minimum server version of the `config/floor_registry/list` command (https://github.com/home-assistant/core/pull/110741). */
+private val MIN_VERSION_FLOOR_REGISTRY = HomeAssistantVersion(year = 2024, month = 3, release = 0)

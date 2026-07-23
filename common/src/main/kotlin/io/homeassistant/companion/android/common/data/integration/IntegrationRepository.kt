@@ -15,7 +15,9 @@ import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import javax.inject.Inject
 import javax.inject.Provider
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
 
 interface IntegrationRepository {
 
@@ -118,4 +120,28 @@ internal class IntegrationRepositoryFactory @Inject constructor(
             deviceId = deviceId,
         )
     }
+}
+
+/** [IntegrationRepository.getEntities], returning null when they cannot be retrieved. */
+suspend fun IntegrationRepository.getEntitiesOrNull(): List<Entity>? = orNull("entities") { getEntities() }
+
+/** [IntegrationRepository.getEntityUpdates], returning null when it cannot be subscribed to. */
+suspend fun IntegrationRepository.getEntityUpdatesOrNull(): Flow<Entity>? =
+    orNull("entity updates") { getEntityUpdates() }
+
+/** [IntegrationRepository.getEntityUpdates], returning null when it cannot be subscribed to. */
+suspend fun IntegrationRepository.getEntityUpdatesOrNull(entityIds: List<String>): Flow<Entity>? =
+    orNull("entity updates") { getEntityUpdates(entityIds) }
+
+/**
+ * These calls return null when the server cannot provide the data, but still throw when the
+ * request itself fails, which callers displaying entities degrade from rather than fail on.
+ */
+private suspend fun <T> orNull(name: String, call: suspend () -> T?): T? = try {
+    call()
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    Timber.e(e, "Couldn't get $name")
+    null
 }

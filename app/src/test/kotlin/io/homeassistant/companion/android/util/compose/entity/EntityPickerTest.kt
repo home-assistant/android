@@ -25,8 +25,9 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.mockk
@@ -110,7 +111,7 @@ class EntityPickerTest {
      * By forcing a tablet size, we use the inline dropdown which stays in the same composition tree.
      */
     private fun setExpandedEntityPickerContent(
-        displayState: EntityDisplayState = EntityDisplayState.Loaded(createTestEntities()),
+        displayState: EntityDisplayState<EntityDisplayWithContext> = EntityDisplayState.Loaded(createTestEntities()),
         selectedEntityId: String? = null,
         onSelectionChanged: (String?) -> Unit = {},
         filterDispatcher: CoroutineContext = mainDispatcherRule.testDispatcher,
@@ -132,39 +133,49 @@ class EntityPickerTest {
     }
 
     private fun createTestEntities() = listOf(
-        EntityDisplayItem(
-            entityId = "light.living_room",
-            name = "Living Room Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "light.living_room",
+                name = "Living Room Light",
+                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            ),
             areaName = "Living Room",
             deviceName = "Smart Bulb",
         ),
-        EntityDisplayItem(
-            entityId = "light.bedroom",
-            name = "Bedroom Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "light.bedroom",
+                name = "Bedroom Light",
+                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            ),
             areaName = "Bedroom",
         ),
-        EntityDisplayItem(
-            entityId = "sensor.temperature",
-            name = "Temperature Sensor",
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "sensor.temperature",
+                name = "Temperature Sensor",
+                icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+            ),
             areaName = "Living Room",
-            icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
         ),
-        EntityDisplayItem(
-            entityId = "switch.fan",
-            name = "Ceiling Fan",
-            icon = CommunityMaterial.Icon2.cmd_fan,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "switch.fan",
+                name = "Ceiling Fan",
+                icon = CommunityMaterial.Icon2.cmd_fan,
+            ),
             areaName = "Bedroom",
             deviceName = "Smart Switch",
         ),
     )
 
-    private fun createHiddenTestEntity() = EntityDisplayItem(
-        entityId = "light.attic",
-        name = "Attic Light",
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
-        isHidden = true,
+    private fun createHiddenTestEntity() = EntityDisplayWithContext(
+        EntityDisplayWithoutContext(
+            entityId = "light.attic",
+            name = "Attic Light",
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            isHidden = true,
+        ),
     )
 
     @Test

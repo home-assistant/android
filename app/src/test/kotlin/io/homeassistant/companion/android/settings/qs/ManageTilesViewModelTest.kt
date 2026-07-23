@@ -9,9 +9,10 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.getIconByMdiName
 import io.homeassistant.companion.android.common.util.mdiName
@@ -61,7 +62,7 @@ class ManageTilesViewModelTest {
 
     private val serverManager: ServerManager = mockk(relaxed = false)
     private val tileDao: TileDao = mockk(relaxed = false)
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase = mockk()
+    private val entitiesForDisplayManager: EntitiesForDisplayManager = mockk()
 
     @Before
     fun setUp() {
@@ -71,7 +72,7 @@ class ManageTilesViewModelTest {
         coEvery { tileDao.get(any()) } returns null
         coEvery { tileDao.getAll() } returns emptyList()
         coEvery { tileDao.add(any()) } returns 1L
-        every { getEntitiesForDisplay.snapshot(any(), any<(Entity) -> Boolean>()) } returns flowOf(EntityDisplayState.Loading)
+        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns flowOf(EntityDisplayState.Loading)
         every { tileDao.getAllFlow() } returns flowOf(emptyList())
     }
 
@@ -119,7 +120,7 @@ class ManageTilesViewModelTest {
         savedStateHandle = savedState,
         serverManager = serverManager,
         tileDao = tileDao,
-        getEntitiesForDisplay = getEntitiesForDisplay,
+        entitiesForDisplayManager = entitiesForDisplayManager,
     )
 
     @Test
@@ -464,7 +465,7 @@ class ManageTilesViewModelTest {
         // Regression test: the filter passed to the use case must exclude entities a tile
         // cannot act on, otherwise the picker offers entities that do nothing when clicked.
         val filter = slot<(Entity) -> Boolean>()
-        every { getEntitiesForDisplay.snapshot(any(), capture(filter)) } returns flowOf(EntityDisplayState.Loading)
+        every { entitiesForDisplayManager.snapshotInContext(any(), capture(filter)) } returns flowOf(EntityDisplayState.Loading)
 
         createViewModel()
         advanceUntilIdle()
@@ -481,7 +482,7 @@ class ManageTilesViewModelTest {
         val tileId = tileSlots[0].id.value
         coEvery { tileDao.get(tileId) } returns
             fakeTile(tileId = tileId, label = "Living Room", entityId = "switch.lamp", serverId = 2)
-        every { getEntitiesForDisplay.snapshot(2, any<(Entity) -> Boolean>()) } returns flow {
+        every { entitiesForDisplayManager.snapshotInContext(2, any<(Entity) -> Boolean>()) } returns flow {
             emit(EntityDisplayState.Loading)
             delay(10_000.milliseconds)
             emit(EntityDisplayState.Loaded(emptyList()))
@@ -502,15 +503,15 @@ class ManageTilesViewModelTest {
         // that is expected to win. Without cancelling the stale in-flight collection, the slow flow
         // would emit last and clobber the fresh one.
         val icon = CommunityMaterial.getIconByMdiName("mdi:account")!!
-        every { getEntitiesForDisplay.snapshot(1, any<(Entity) -> Boolean>()) } returns flow {
+        every { entitiesForDisplayManager.snapshotInContext(1, any<(Entity) -> Boolean>()) } returns flow {
             emit(EntityDisplayState.Loading)
             delay(100.milliseconds)
-            emit(EntityDisplayState.Loaded(listOf(EntityDisplayItem(entityId = "light.stale", name = "Stale", icon = icon))))
+            emit(EntityDisplayState.Loaded(listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(entityId = "light.stale", name = "Stale", icon = icon)))))
         }
-        every { getEntitiesForDisplay.snapshot(2, any<(Entity) -> Boolean>()) } returns flow {
+        every { entitiesForDisplayManager.snapshotInContext(2, any<(Entity) -> Boolean>()) } returns flow {
             emit(EntityDisplayState.Loading)
             delay(10.milliseconds)
-            emit(EntityDisplayState.Loaded(listOf(EntityDisplayItem(entityId = "light.fresh", name = "Fresh", icon = icon))))
+            emit(EntityDisplayState.Loaded(listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(entityId = "light.fresh", name = "Fresh", icon = icon)))))
         }
 
         val viewModel = createViewModel()

@@ -57,7 +57,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
@@ -71,7 +71,7 @@ fun ManageControlsView(
     authSetting: ControlsAuthRequiredSetting,
     authRequiredList: List<String>,
     entitiesLoaded: Boolean,
-    entitiesList: Map<Int, List<EntityDisplayItem>>,
+    entitiesList: Map<Int, List<EntityDisplayWithContext>>,
     panelSetting: Pair<String?, Int>?,
     serversList: List<Server>,
     structureEnabled: Boolean,
@@ -303,7 +303,7 @@ fun ManageControlsView(
 
 @Composable
 fun ManageControlsEntity(
-    entity: EntityDisplayItem,
+    entity: EntityDisplayWithContext,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,

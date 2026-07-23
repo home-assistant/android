@@ -36,8 +36,9 @@ import io.homeassistant.companion.android.common.compose.composable.rememberSele
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import java.time.LocalDateTime
 
@@ -346,38 +347,50 @@ private val sampleDropdownItems = (1..30).map { index ->
 }
 
 private val sampleDisplayEntities = listOf(
-    EntityDisplayItem(
-        entityId = "light.living_room",
-        name = "Living Room Light",
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.living_room",
+            name = "Living Room Light",
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        ),
         areaName = "Living Room",
         deviceName = "Smart Bulb Pro",
     ),
-    EntityDisplayItem(
-        entityId = "light.bedroom",
-        name = "Bedroom Light",
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.bedroom",
+            name = "Bedroom Light",
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        ),
         areaName = "Bedroom",
     ),
-    EntityDisplayItem(
-        entityId = "sensor.temperature",
-        name = "Temperature Sensor",
-        icon = CommunityMaterial.Icon3.cmd_thermometer,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "sensor.temperature",
+            name = "Temperature Sensor",
+            icon = CommunityMaterial.Icon3.cmd_thermometer,
+        ),
     ),
-    EntityDisplayItem(
-        entityId = "switch.fan",
-        name = "Ceiling Fan",
-        icon = CommunityMaterial.Icon2.cmd_fan,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "switch.fan",
+            name = "Ceiling Fan",
+            icon = CommunityMaterial.Icon2.cmd_fan,
+        ),
     ),
-    EntityDisplayItem(
-        entityId = "binary_sensor.motion",
-        name = "Motion Sensor",
-        icon = CommunityMaterial.Icon3.cmd_motion_sensor,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "binary_sensor.motion",
+            name = "Motion Sensor",
+            icon = CommunityMaterial.Icon3.cmd_motion_sensor,
+        ),
     ),
-    EntityDisplayItem(
-        entityId = "cover.garage_door",
-        name = "Garage Door",
-        icon = CommunityMaterial.Icon2.cmd_garage,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "cover.garage_door",
+            name = "Garage Door",
+            icon = CommunityMaterial.Icon2.cmd_garage,
+        ),
     ),
 )
 

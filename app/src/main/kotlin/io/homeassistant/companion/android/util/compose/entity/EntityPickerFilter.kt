@@ -8,7 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalInspectionMode
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +57,7 @@ private object FuzzySearchConfig {
  */
 @VisibleForTesting
 internal data class EntityWithSearchFields(
-    val entity: EntityDisplayItem,
+    val entity: EntityDisplay,
     val searchableFields: List<SearchField>,
     val sortingKey: String,
 )
@@ -75,10 +76,10 @@ internal data class EntityWithSearchFields(
  */
 @Composable
 internal fun rememberFilteredEntities(
-    entities: Collection<EntityDisplayItem>,
+    entities: Collection<EntityDisplay>,
     searchQuery: String,
     dispatcher: CoroutineContext = Dispatchers.Default,
-): List<EntityDisplayItem>? {
+): List<EntityDisplay>? {
     // Cache the entities with pre-computed searchable fields
     // Computed on background to avoid blocking UI, null until the first computation completes
     var entitiesWithFields by remember { mutableStateOf<List<EntityWithSearchFields>?>(null) }
@@ -106,7 +107,7 @@ internal fun rememberFilteredEntities(
     return filteredEntities
 }
 
-private suspend fun Collection<EntityDisplayItem>.mapToEntitiesWithFields(
+private suspend fun Collection<EntityDisplay>.mapToEntitiesWithFields(
     dispatcher: CoroutineContext,
 ): List<EntityWithSearchFields> = withContext(dispatcher) {
     return@withContext map { entity ->
@@ -118,10 +119,12 @@ private suspend fun Collection<EntityDisplayItem>.mapToEntitiesWithFields(
             searchableFields = buildList {
                 // Store fields in lowercase to avoid repeated conversions during search
                 add(SearchField(sortingKey, FuzzySearchConfig.Weights.NAME))
-                entity.deviceName?.let {
-                    add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME))
+                (entity as? EntityDisplayWithContext)?.let {
+                    entity.deviceName?.let {
+                        add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME))
+                    }
+                    entity.areaName?.let { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }
                 }
-                entity.areaName?.let { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }
                 add(SearchField(entity.domain.lowercase(), FuzzySearchConfig.Weights.DOMAIN_NAME))
                 add(SearchField(entity.entityId.lowercase(), FuzzySearchConfig.Weights.ENTITY_ID))
             },
@@ -144,7 +147,7 @@ internal suspend fun filterAndSortEntitiesOptimized(
     entitiesWithFields: List<EntityWithSearchFields>,
     query: String,
     dispatcher: CoroutineContext = Dispatchers.Default,
-): List<EntityDisplayItem> = withContext(dispatcher) {
+): List<EntityDisplay> = withContext(dispatcher) {
     val trimmedQuery = query.trim()
 
     if (trimmedQuery.isBlank()) {
@@ -185,11 +188,10 @@ internal suspend fun filterAndSortEntitiesOptimized(
 }
 
 /** The entities not hidden in the registry, in their sorted order. */
-private fun visibleEntities(entitiesWithFields: List<EntityWithSearchFields>): List<EntityDisplayItem> =
-    entitiesWithFields
-        .filter { !it.entity.isHidden }
-        .sortedBy { it.sortingKey }
-        .map { it.entity }
+private fun visibleEntities(entitiesWithFields: List<EntityWithSearchFields>): List<EntityDisplay> = entitiesWithFields
+    .filter { !it.entity.isHidden }
+    .sortedBy { it.sortingKey }
+    .map { it.entity }
 
 /**
  * Calculates fuzzy match score using pre-computed searchable fields.
@@ -296,4 +298,4 @@ internal data class SearchField(val value: String, val weight: Int)
  * @param score The calculated match score
  * @param sortingKey Cached lowercase display name for efficient sorting
  */
-internal data class ScoredEntity(val entity: EntityDisplayItem, val score: Double, val sortingKey: String)
+internal data class ScoredEntity(val entity: EntityDisplay, val score: Double, val sortingKey: String)

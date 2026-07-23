@@ -12,8 +12,9 @@ import com.android.tools.screenshot.PreviewTest
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 
 @Preview(name = "phoneLTR", device = "spec:width=411.4dp,height=923.4dp", group = "phone") // Pixel 9 LTR
 @Preview(name = "phoneRLT", device = "spec:width=411.4dp,height=923.4dp", group = "phone", locale = "ar") // Pixel 9 RTL
@@ -134,99 +135,131 @@ class EntityPickerScreenshotTest {
     }
 
     private fun createTestEntities() = listOf(
-        EntityDisplayItem(
-            entityId = "light.bed",
-            name = "Bed Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "light.bed",
+                name = "Bed Light",
+                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            ),
             areaName = "Bedroom",
             deviceName = "Device #1",
         ),
-        EntityDisplayItem(
-            entityId = "sensor.temperature",
-            name = "Temperature",
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "sensor.temperature",
+                name = "Temperature",
+                icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+            ),
             areaName = "Living Room",
-            icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
         ),
-        EntityDisplayItem(
-            entityId = "switch.fan",
-            name = "Fan",
-            icon = CommunityMaterial.Icon2.cmd_fan,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "switch.fan",
+                name = "Fan",
+                icon = CommunityMaterial.Icon2.cmd_fan,
+            ),
             areaName = "Bedroom",
             deviceName = "Device #2",
         ),
     )
 
     private fun createManyTestEntities() = listOf(
-        EntityDisplayItem(
-            entityId = "light.attic",
-            name = "Attic Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "light.attic",
+                name = "Attic Light",
+                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                isHidden = true,
+            ),
             areaName = "Attic",
-            isHidden = true,
         ),
-        EntityDisplayItem(
-            entityId = "light.living_room",
-            name = "Living Room Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "light.living_room",
+                name = "Living Room Light",
+                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            ),
+
             areaName = "Living Room",
             deviceName = "Smart Bulb Pro",
         ),
-        EntityDisplayItem(
-            entityId = "light.bedroom",
-            name = "Bedroom Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "light.bedroom",
+                name = "Bedroom Light",
+                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            ),
             areaName = "Bedroom",
             deviceName = "Smart Bulb Basic",
         ),
-        EntityDisplayItem(
-            entityId = "light.kitchen",
-            name = "Kitchen Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "light.kitchen",
+                name = "Kitchen Light",
+                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            ),
             areaName = "Kitchen",
         ),
-        EntityDisplayItem(
-            entityId = "sensor.temperature",
-            name = "Temperature Sensor",
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "sensor.temperature",
+                name = "Temperature Sensor",
+                icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+            ),
             areaName = "Living Room",
-            icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
         ),
-        EntityDisplayItem(
-            entityId = "sensor.humidity",
-            name = "Humidity Sensor",
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "sensor.humidity",
+                name = "Humidity Sensor",
+                icon = CommunityMaterial.Icon3.cmd_water_percent,
+            ),
             areaName = "Bathroom",
-            icon = CommunityMaterial.Icon3.cmd_water_percent,
         ),
-        EntityDisplayItem(
-            entityId = "switch.fan",
-            name = "Ceiling Fan",
-            icon = CommunityMaterial.Icon2.cmd_fan,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "switch.fan",
+                name = "Ceiling Fan",
+                icon = CommunityMaterial.Icon2.cmd_fan,
+            ),
             areaName = "Bedroom",
             deviceName = "Smart Switch",
         ),
-        EntityDisplayItem(
-            entityId = "switch.heater",
-            name = "Heater",
-            icon = CommunityMaterial.Icon3.cmd_radiator,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "switch.heater",
+                name = "Heater",
+                icon = CommunityMaterial.Icon3.cmd_radiator,
+            ),
+
             areaName = "Living Room",
         ),
-        EntityDisplayItem(
-            entityId = "climate.thermostat",
-            name = "Thermostat",
-            icon = CommunityMaterial.Icon3.cmd_thermostat,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "climate.thermostat",
+                name = "Thermostat",
+                icon = CommunityMaterial.Icon3.cmd_thermostat,
+            ),
+
             areaName = "Hallway",
             deviceName = "Nest Thermostat",
         ),
-        EntityDisplayItem(
-            entityId = "lock.front_door",
-            name = "Front Door Lock",
-            icon = CommunityMaterial.Icon2.cmd_lock,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "lock.front_door",
+                name = "Front Door Lock",
+                icon = CommunityMaterial.Icon2.cmd_lock,
+            ),
+
             areaName = "Entry",
             deviceName = "Smart Lock Pro",
         ),
-        EntityDisplayItem(
-            entityId = "cover.garage_door",
-            name = "Garage Door",
-            icon = CommunityMaterial.Icon2.cmd_garage,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "cover.garage_door",
+                name = "Garage Door",
+                icon = CommunityMaterial.Icon2.cmd_garage,
+            ),
             areaName = "Garage",
         ),
     )

@@ -26,6 +26,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.complications.ComplicationConfigViewModel
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -101,7 +102,7 @@ fun MainConfigView(
             item {
                 val iconBitmap = getIcon(
                     entity?.icon,
-                    entity?.domain ?: "light",
+                    entity?.domain ?: LIGHT_DOMAIN,
                 )
                 Button(
                     modifier = Modifier.fillMaxWidth(),
