@@ -145,16 +145,7 @@ class NotificationListenerSensorManager @Inject constructor(
         updateActiveNotificationCount(activeNotifications)
 
         sensorWorkerScope.launch {
-            if (!isEnabled(lastNotification)) {
-                return@launch
-            }
-
-            val settings = getNotificationSettings(lastNotification)
-
-            if (sbn.packageName == applicationContext.packageName ||
-                (settings.allowPackages.isNotEmpty() && sbn.packageName !in settings.allowPackages) ||
-                (!settings.disableAllowListRequirement && settings.allowPackages.isEmpty())
-            ) {
+            if (!shouldProcessNotification(lastNotification, sbn.packageName)) {
                 return@launch
             }
 
@@ -197,16 +188,7 @@ class NotificationListenerSensorManager @Inject constructor(
         updateActiveNotificationCount(activeNotifications)
 
         sensorWorkerScope.launch {
-            if (!isEnabled(lastRemovedNotification)) {
-                return@launch
-            }
-
-            val settings = getNotificationSettings(lastRemovedNotification)
-
-            if (sbn.packageName == applicationContext.packageName ||
-                (settings.allowPackages.isNotEmpty() && sbn.packageName !in settings.allowPackages) ||
-                (!settings.disableAllowListRequirement && settings.allowPackages.isEmpty())
-            ) {
+            if (!shouldProcessNotification(lastRemovedNotification, sbn.packageName)) {
                 return@launch
             }
 
@@ -356,6 +338,17 @@ class NotificationListenerSensorManager @Inject constructor(
         )
 
         return NotificationSettings(allowPackages, disableAllowListRequirement)
+    }
+
+    private suspend fun shouldProcessNotification(sensor: SensorManager.BasicSensor, packageName: String): Boolean {
+        if (!isEnabled(sensor)) {
+            return false
+        }
+
+        val settings = getNotificationSettings(sensor)
+        val packageAllowed = packageName in settings.allowPackages
+        val allowListDisabled = settings.allowPackages.isEmpty() && settings.disableAllowListRequirement
+        return packageName != applicationContext.packageName && (packageAllowed || allowListDisabled)
     }
 
     private data class NotificationSettings(val allowPackages: List<String>, val disableAllowListRequirement: Boolean)
