@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.navigation
 
 import android.content.IntentSender
+import android.content.res.Resources
 import android.net.Uri
 import androidx.annotation.StringRes
 
@@ -30,7 +31,7 @@ sealed interface FrontendEvent {
     data class ShowSnackbar(
         @param:StringRes val messageResId: Int,
         val action: Action? = null,
-        val formatArgs: List<Any> = emptyList(),
+        private val formatArgs: List<Any> = emptyList(),
     ) : FrontendEvent {
 
         /**
@@ -39,6 +40,13 @@ sealed interface FrontendEvent {
          *   [FrontendEventHandler] like any other [FrontendEvent].
          */
         data class Action(@param:StringRes val labelResId: Int, val event: FrontendEvent)
+
+        /** Resolves the display message from [resources]. */
+        fun resolveMessage(resources: Resources): String = if (formatArgs.isEmpty()) {
+            resources.getString(messageResId)
+        } else {
+            resources.getString(messageResId, *formatArgs.toTypedArray())
+        }
     }
 
     /** Navigate to the app settings screen. */

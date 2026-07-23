@@ -1469,9 +1469,13 @@ class FrontendViewModelTest {
                 reportSslError("https://analytics.example.com/beacon.min.js")
                 advanceUntilIdle()
 
-                val event = assertInstanceOf(FrontendEvent.ShowSnackbar::class.java, awaitItem())
-                assertEquals(commonR.string.error_ssl_subresource_host, event.messageResId)
-                assertEquals(listOf("analytics.example.com"), event.formatArgs)
+                assertEquals(
+                    FrontendEvent.ShowSnackbar(
+                        commonR.string.error_ssl_subresource_host,
+                        formatArgs = listOf("analytics.example.com"),
+                    ),
+                    awaitItem(),
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -1484,9 +1488,7 @@ class FrontendViewModelTest {
                 reportSslError(null)
                 advanceUntilIdle()
 
-                val event = assertInstanceOf(FrontendEvent.ShowSnackbar::class.java, awaitItem())
-                assertEquals(commonR.string.error_ssl_subresource, event.messageResId)
-                assertTrue(event.formatArgs.isEmpty())
+                assertEquals(FrontendEvent.ShowSnackbar(commonR.string.error_ssl_subresource), awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }
