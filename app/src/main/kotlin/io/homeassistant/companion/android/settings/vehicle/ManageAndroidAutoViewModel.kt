@@ -56,7 +56,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
             servers.map { server ->
                 val serverId = server.id
                 async {
-                    getEntitiesForDisplay(serverId) { isVehicleDomain(it) }.collect { state ->
+                    getEntitiesForDisplay.snapshot(serverId) { isVehicleDomain(it) }.collect { state ->
                         displayEntitiesByServer[serverId] = state
                     }
                 }

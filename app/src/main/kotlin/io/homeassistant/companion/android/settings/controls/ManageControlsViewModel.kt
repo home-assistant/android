@@ -106,7 +106,9 @@ class ManageControlsViewModel @VisibleForTesting constructor(
                 async {
                     // The flow completes with a terminal state after Loading, failures surface as Error
                     // and leave the server out of the list to not block configuration of other server's entities
-                    val displayState = getEntitiesForDisplay(server.id) { it.domain in supportedDomains }.last()
+                    val displayState = getEntitiesForDisplay.snapshot(server.id) {
+                        it.domain in supportedDomains
+                    }.last()
                     if (displayState is EntityDisplayState.Loaded) {
                         entitiesList[server.id] = withContext(backgroundDispatcher) {
                             displayState.entities
