@@ -998,7 +998,7 @@ suspend fun EntityDisplay.onPressed(integrationRepository: IntegrationRepository
 }
 
 /**
- * Execute an app press action like [EntityDisplayItem.onPressed], but without a current state if possible to
+ * Execute an app press action like [EntityDisplay.onPressed], but without a current state if possible to
  * speed up the execution.
  * @throws IntegrationException on network errors
  */

@@ -134,6 +134,7 @@ class HaCarAppService : CarAppService() {
     private fun loadEntities(scope: CoroutineScope, id: Int) {
         serverId.value = id
         observeJob?.cancel()
+        entitiesState.value = EntityDisplayState.Loading
         observeJob = scope.launch {
             entitiesForDisplayManager.observe(id).collect { entitiesState.value = it }
         }

@@ -41,19 +41,36 @@ class DomainListScreen(
     init {
         lifecycleScope.launch {
             entitiesState.collect { state ->
-                if (state !is EntityDisplayState.Loaded) return@collect
-                val newDomains = state.entities
-                    .map { it.domain }
-                    .distinct()
-                    .filter { it in SUPPORTED_DOMAINS }
-                    .toSet()
-                val invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
-                domains.clear()
-                domains.addAll(newDomains)
-                domainsAdded = true
-                if (invalidate) invalidate()
+                when (state) {
+                    EntityDisplayState.Loading -> {
+                        if (domainsAdded) {
+                            domainsAdded = false
+                            invalidate()
+                        }
+                    }
+                    EntityDisplayState.Error -> {
+                        updateDomains(emptyList())
+                    }
+                    is EntityDisplayState.Loaded -> {
+                        updateDomains(state.entities.toList())
+                    }
+                }
             }
         }
+    }
+
+    /** Recomputes the domains from [entities], invalidating on any change. */
+    private fun updateDomains(entities: List<EntityDisplay>) {
+        val newDomains = entities
+            .map { it.domain }
+            .distinct()
+            .filter { it in SUPPORTED_DOMAINS }
+            .toSet()
+        val invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
+        domains.clear()
+        domains.addAll(newDomains)
+        domainsAdded = true
+        if (invalidate) invalidate()
     }
 
     override fun onGetTemplate(): Template {

@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration
 
 import io.homeassistant.companion.android.common.data.integration.display.AlarmDisplay
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -65,7 +65,7 @@ class AlarmControlPanelEntityExtTest {
     fun `Given actionable alarm When resolved for display Then alarm display holds the action and is actionable`() {
         val alarmEntity = createAlarmEntity("", requiredArmCode = false, supportArmAway = true, isArmed = false)
 
-        val alarm = assertInstanceOf(AlarmDisplay::class.java, EntityDisplayItem(alarmEntity).alarm)
+        val alarm = assertInstanceOf(AlarmDisplay::class.java, EntityDisplayWithoutContext(alarmEntity).alarm)
 
         assertEquals("alarm_arm_away", alarm.onPressedAction)
         assertTrue(alarm.isActionable)
@@ -75,7 +75,7 @@ class AlarmControlPanelEntityExtTest {
     fun `Given alarm requiring a code When resolved for display Then alarm display is not actionable`() {
         val alarmEntity = createAlarmEntity("A_C0DE", requiredArmCode = true, supportArmAway = true, isArmed = false)
 
-        val alarm = assertInstanceOf(AlarmDisplay::class.java, EntityDisplayItem(alarmEntity).alarm)
+        val alarm = assertInstanceOf(AlarmDisplay::class.java, EntityDisplayWithoutContext(alarmEntity).alarm)
 
         assertNull(alarm.onPressedAction)
         assertFalse(alarm.isActionable)
@@ -85,7 +85,7 @@ class AlarmControlPanelEntityExtTest {
     fun `Given not an alarm entity When resolved for display Then there is no alarm display`() {
         val lightEntity = Entity("light.an_entity_id", "on", mapOf(), LocalDateTime.now(), LocalDateTime.now())
 
-        assertNull(EntityDisplayItem(lightEntity).alarm)
+        assertNull(EntityDisplayWithoutContext(lightEntity).alarm)
     }
 
     private fun createAlarmEntity(code: String, requiredArmCode: Boolean, supportArmAway: Boolean, isArmed: Boolean): Entity {
