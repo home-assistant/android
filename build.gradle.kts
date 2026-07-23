@@ -25,8 +25,6 @@ allprojects {
     apply(plugin = rootProject.libs.plugins.detekt.get().pluginId)
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
 
-    val detektBaselineName = if (path == ":") "root" else path.removePrefix(":").replace(':', '-')
-
     // TODO this has been added until https://youtrack.jetbrains.com/issue/KT-87220/Kotlin-Gradle-plugin-resolves-kotlinAbiValidationCompatClasspath-to-newer-beta-Kotlin-artifacts-during-dependency-locking is addressed
     configurations.matching { it.name == "kotlinAbiValidationCompatClasspath" }.configureEach {
         resolutionStrategy.eachDependency {
@@ -60,7 +58,9 @@ allprojects {
     }
 
     detekt {
-        baseline = rootProject.file("config/detekt/baseline-$detektBaselineName.xml")
+        baseline = rootProject.file("config/detekt/baseline-$name.xml")
+        config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+        buildUponDefaultConfig = true
     }
 
     tasks.withType<Detekt>().configureEach {

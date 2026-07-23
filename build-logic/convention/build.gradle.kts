@@ -29,7 +29,9 @@ allprojects {
     }
 
     detekt {
-        baseline = rootProject.file("../config/detekt/baseline-build-logic-$name.xml")
+        baseline = rootProject.file("../config/detekt/baseline-$name.xml")
+        config.setFrom(rootProject.file("../config/detekt/detekt.yml"))
+        buildUponDefaultConfig = true
     }
 
     tasks.withType<Detekt>().configureEach {
