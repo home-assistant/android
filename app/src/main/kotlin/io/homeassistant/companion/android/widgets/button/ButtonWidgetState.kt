@@ -53,23 +53,21 @@ internal data class ButtonStateWithData(
     val id: Int,
     val label: String?,
     val icon: String,
-    val requiresAuthentication: Boolean
+    val requiresAuthentication: Boolean,
 ) : ButtonWidgetState {
 
     companion object {
         /**
          * Create a complete [ButtonStateWithData] from the DB
          */
-        fun from(
-            buttonEntity: ButtonWidgetEntity,
-        ): ButtonStateWithData {
+        fun from(buttonEntity: ButtonWidgetEntity): ButtonStateWithData {
             return ButtonStateWithData(
                 id = buttonEntity.id,
                 backgroundType = buttonEntity.backgroundType,
                 textColor = buttonEntity.textColor,
                 label = buttonEntity.label,
                 icon = buttonEntity.iconName,
-                requiresAuthentication = buttonEntity.requireAuthentication
+                requiresAuthentication = buttonEntity.requireAuthentication,
             )
         }
     }

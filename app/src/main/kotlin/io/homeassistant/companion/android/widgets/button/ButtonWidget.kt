@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -13,7 +12,6 @@ import androidx.glance.appwidget.state.updateAppWidgetState
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.MapAnySerializer
-import io.homeassistant.companion.android.common.util.getIconByMdiName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
@@ -54,7 +52,6 @@ class ButtonWidget : BaseGlanceEntityWidgetReceiver<ButtonWidgetEntity, ButtonWi
             CALL_SERVICE -> widgetScope.launch { callConfiguredAction(context, appWidgetId) }
         }
     }
-
 
     private fun authThenCallConfiguredAction(context: Context, appWidgetId: Int) {
         Timber.d("Calling authentication, then configured action")
@@ -129,7 +126,13 @@ class ButtonWidget : BaseGlanceEntityWidgetReceiver<ButtonWidgetEntity, ButtonWi
         glanceAppWidget.update(context, glanceId)
     }
 
-    private suspend fun updateButtonWidgetState(context: Context, glanceId: GlanceId, isLoading: Boolean = false, wasSent: Boolean = false, isSuccess: Boolean = false) {
+    private suspend fun updateButtonWidgetState(
+        context: Context,
+        glanceId: GlanceId,
+        isLoading: Boolean = false,
+        wasSent: Boolean = false,
+        isSuccess: Boolean = false,
+    ) {
         updateAppWidgetState(context = context, glanceId = glanceId) {
             it[booleanPreferencesKey(IS_LOADING_KEY)] = isLoading
             it[booleanPreferencesKey(SENT_SUCCESSFUL_KEY)] = wasSent
@@ -151,6 +154,4 @@ class ButtonWidget : BaseGlanceEntityWidgetReceiver<ButtonWidgetEntity, ButtonWi
         const val DEFAULT_MAX_ICON_SIZE = 512
         private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
-
-
 }

@@ -13,9 +13,7 @@ import kotlinx.coroutines.flow.mapLatest
 import timber.log.Timber
 
 @Singleton
-class ButtonWidgetStateUpdater @Inject constructor(
-    val buttonWidgetDao: ButtonWidgetDao,
-) {
+class ButtonWidgetStateUpdater @Inject constructor(val buttonWidgetDao: ButtonWidgetDao) {
 
     private val isActionRunning = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
     private val isActionError = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
@@ -33,7 +31,12 @@ class ButtonWidgetStateUpdater @Inject constructor(
             .map { it[widgetId] ?: false }
             .distinctUntilChanged()
 
-        return combine(runningFlow, errorFlow, successFlow, buttonWidgetDao.getFlow(widgetId)) { running, error, success, entity ->
+        return combine(runningFlow, errorFlow, successFlow, buttonWidgetDao.getFlow(widgetId)) {
+                running,
+                error,
+                success,
+                entity,
+            ->
             Quartet(running, error, success, entity)
         }.mapLatest { (running, error, success, entity) ->
             Timber.i("Widget $widgetId is running: $running, error: $error, success: $success")
@@ -69,9 +72,4 @@ class ButtonWidgetStateUpdater @Inject constructor(
         }
     }
 }
-data class Quartet<out A, out B, out C, out D>(
-    val first: A,
-    val second: B,
-    val third: C,
-    val fourth: D
-)
+data class Quartet<out A, out B, out C, out D>(val first: A, val second: B, val third: C, val fourth: D)

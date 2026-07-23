@@ -4,11 +4,9 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import androidx.annotation.StringRes
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
-import androidx.compose.ui.unit.min
 import androidx.glance.action.action
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.currentState
@@ -95,8 +93,8 @@ class ButtonWidgetViewModel @Inject constructor(
         viewModelScope.launch {
             updateUiState(servers = serverManager.servers(), selectedServerId = serverManager.getServer()?.id)
             for (server in serverManager.servers()) {
-                    getActionsFromServer(server)
-                    getEntitiesFromServer(server)
+                getActionsFromServer(server)
+                getEntitiesFromServer(server)
             }
             maybeLoadPreviousState(widgetId)
         }
@@ -179,7 +177,7 @@ class ButtonWidgetViewModel @Inject constructor(
         selectedBackgroundType: WidgetBackgroundType? = null,
         textColorIndex: Int? = null,
         requiresAuthentication: Boolean? = null,
-        isUpdating: Boolean? = null
+        isUpdating: Boolean? = null,
     ) {
         _uiState.update { currentState ->
             currentState.copy(
@@ -194,7 +192,7 @@ class ButtonWidgetViewModel @Inject constructor(
                 selectedBackgroundType = selectedBackgroundType ?: currentState.selectedBackgroundType,
                 textColorIndex = textColorIndex ?: currentState.textColorIndex,
                 requiresAuthentication = requiresAuthentication ?: currentState.requiresAuthentication,
-                isUpdating = isUpdating ?: currentState.isUpdating
+                isUpdating = isUpdating ?: currentState.isUpdating,
             )
         }
     }
@@ -332,7 +330,11 @@ class ButtonWidgetViewModel @Inject constructor(
                             item.value.toString().replace("[", "").replace("]", "") +
                                 if (item.key == "entity_id") ", " else ""
                         // Ignore if value is just a comma
-                        existingActionData[item.key] = if (value.isEmpty() || value.trim() == ",") { null } else value
+                        existingActionData[item.key] = if (value.isEmpty() || value.trim() == ",") {
+                            null
+                        } else {
+                            value
+                        }
                         addedFields.add(item.key)
                     }
                 }

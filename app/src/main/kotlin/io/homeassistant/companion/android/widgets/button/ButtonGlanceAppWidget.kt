@@ -43,13 +43,11 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.ContentScale
-import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
-import androidx.glance.layout.wrapContentHeight
 import androidx.glance.material.ColorProviders
 import androidx.glance.preview.ExperimentalGlancePreviewApi
 import androidx.glance.preview.Preview
@@ -72,11 +70,11 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
 import io.homeassistant.companion.android.util.compose.glanceHaLightColors
 import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.SENT_SUCCESSFUL_KEY
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.CALL_SERVICE
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.CALL_SERVICE_AUTH
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.DEFAULT_MAX_ICON_SIZE
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.IS_LOADING_KEY
+import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.SENT_SUCCESSFUL_KEY
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import timber.log.Timber
@@ -84,7 +82,7 @@ import timber.log.Timber
 private val authKey = ActionParameters.Key<Boolean>("auth")
 private val widgetIdKey = ActionParameters.Key<Int>("widgetId")
 
-class ButtonGlanceAppWidget() : GlanceAppWidget() {
+class ButtonGlanceAppWidget : GlanceAppWidget() {
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     internal interface ButtonGlanceWidgetEntryPoint {
@@ -293,10 +291,7 @@ private fun ButtonScreen(
 }
 
 @Composable
-fun getWidgetColors(
-    backgroundType: WidgetBackgroundType?,
-    textColor: String?,
-): ColorProviders {
+fun getWidgetColors(backgroundType: WidgetBackgroundType?, textColor: String?): ColorProviders {
     return when (backgroundType) {
         WidgetBackgroundType.DYNAMICCOLOR -> GlanceTheme.colors
         WidgetBackgroundType.DAYNIGHT -> HomeAssistantGlanceTheme.colors
@@ -315,11 +310,7 @@ fun getWidgetColors(
 }
 
 class TapAction : ActionCallback {
-    override suspend fun onAction(
-        context: Context,
-        glanceId: GlanceId,
-        parameters: ActionParameters,
-    ) {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         updateAppWidgetState(context, glanceId) {
             it[booleanPreferencesKey(IS_LOADING_KEY)] = true
         }
