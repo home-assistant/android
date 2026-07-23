@@ -347,8 +347,8 @@ class NotificationListenerSensorManager @Inject constructor(
 
         val settings = getNotificationSettings(sensor)
         val packageAllowed = packageName in settings.allowPackages
-        val allowListDisabled = settings.allowPackages.isEmpty() && settings.disableAllowListRequirement
-        return packageName != applicationContext.packageName && (packageAllowed || allowListDisabled)
+        val allowListRequirementDisabled = settings.allowPackages.isEmpty() && settings.disableAllowListRequirement
+        return packageName != applicationContext.packageName && (packageAllowed || allowListRequirementDisabled)
     }
 
     private data class NotificationSettings(val allowPackages: List<String>, val disableAllowListRequirement: Boolean)
