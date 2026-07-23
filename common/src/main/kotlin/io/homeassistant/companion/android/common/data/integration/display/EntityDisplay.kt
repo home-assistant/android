@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.integration.LightControls
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
+import io.homeassistant.companion.android.common.data.integration.getAlarmOnPressedAction
 import io.homeassistant.companion.android.common.data.integration.getColorTemperature
 import io.homeassistant.companion.android.common.data.integration.getCoordinates
 import io.homeassistant.companion.android.common.data.integration.getCoverPosition
@@ -43,6 +44,16 @@ enum class EntityCategory {
             else -> null
         }
     }
+}
+
+/** Display information specific to `alarm_control_panel` entities. */
+@Immutable
+data class AlarmDisplay(
+    /** Action to run when the panel is pressed, null when it cannot be acted on. */
+    val onPressedAction: String?,
+) {
+    /** Whether the panel can be acted on. */
+    val isActionable: Boolean get() = onPressedAction != null
 }
 
 /**
@@ -103,6 +114,9 @@ interface EntityDisplay {
     val isHidden: Boolean
     val entityCategory: EntityCategory?
     val displayPrecision: Int?
+
+    /** Alarm panel display information. */
+    val alarm: AlarmDisplay?
     val labels: List<String>
 
     val domain: String get() = entityId.substringBefore('.')
@@ -129,6 +143,8 @@ data class EntityDisplayWithoutContext(
     override val isHidden: Boolean = false,
     override val entityCategory: EntityCategory? = null,
     override val displayPrecision: Int? = null,
+    /** Alarm panel display information, only set for `alarm_control_panel` entities. */
+    override val alarm: AlarmDisplay? = null,
     override val labels: List<String> = emptyList(),
 ) : EntityDisplay {
 
@@ -164,6 +180,7 @@ data class EntityDisplayWithoutContext(
         isHidden = isHidden,
         entityCategory = entityCategory,
         displayPrecision = displayPrecision,
+        alarm = entity.alarmDisplay(),
         labels = labels,
     )
 
@@ -194,6 +211,12 @@ data class EntityDisplayWithoutContext(
             IntegrationDomains.FAN_DOMAIN -> getFanSpeed()
             IntegrationDomains.LIGHT_DOMAIN -> getLightBrightness()
             else -> null
+        }
+
+        /** Alarm panel display information, null when the entity is not an alarm control panel. */
+        private fun Entity.alarmDisplay(): AlarmDisplay? {
+            if (domain != IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN) return null
+            return AlarmDisplay(onPressedAction = getAlarmOnPressedAction())
         }
     }
 }

@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
@@ -959,13 +960,17 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
     return icon ?: Icon.cmd_eye
 }
 
-suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
+/**
+ * Execute the default app press action, choosing the action from the item's current state.
+ * @throws IntegrationException on network errors
+ */
+suspend fun EntityDisplay.onPressed(integrationRepository: IntegrationRepository) {
     val action = when (domain) {
         "lock" -> {
-            if (state == "unlocked") "lock" else "unlock"
+            if (rawState == "unlocked") "lock" else "unlock"
         }
 
-        ALARM_CONTROL_PANEL_DOMAIN -> getAlarmOnPressedAction()
+        ALARM_CONTROL_PANEL_DOMAIN -> alarm?.onPressedAction
 
         in EntityExt.DOMAINS_PRESS -> "press"
         FAN_DOMAIN,
@@ -973,7 +978,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
         "script",
         "switch",
         -> {
-            if (state == "on") "turn_off" else "turn_on"
+            if (rawState == "on") "turn_off" else "turn_on"
         }
 
         "scene" -> "turn_on"
@@ -986,14 +991,14 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
     }
 
     integrationRepository.callAction(
-        domain = this.domain,
+        domain = domain,
         action = action,
         actionData = hashMapOf("entity_id" to entityId),
     )
 }
 
 /**
- * Execute an app press action like [Entity.onPressed], but without a current state if possible to
+ * Execute an app press action like [EntityDisplayItem.onPressed], but without a current state if possible to
  * speed up the execution.
  * @throws IntegrationException on network errors
  */

@@ -49,11 +49,6 @@ private fun Entity.alarmCanBeDisarmedWithoutCode(): Boolean {
     return isAlarmControlPanelEntity() && !alarmIsDisarmed() && alarmHasNoCode()
 }
 
-/** @return `true` if [getAlarmOnPressedAction] would return an action, `false` otherwise */
-fun Entity.isAlarmActionable(): Boolean {
-    return getAlarmOnPressedAction() != null
-}
-
 /** @return action string for alarm control panel entities, based on its current state and support by the app */
 fun Entity.getAlarmOnPressedAction(): String? {
     if (!isAlarmControlPanelEntity()) {

@@ -19,12 +19,12 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.capitalize
-import io.homeassistant.companion.android.util.RegistriesDataHandler
 import io.homeassistant.companion.android.vehicle.ChangeServerScreen
 import io.homeassistant.companion.android.vehicle.DomainListScreen
 import io.homeassistant.companion.android.vehicle.EntityGridVehicleScreen
@@ -93,8 +93,7 @@ fun getNavigationGridItem(
     carContext: CarContext,
     screenManager: ScreenManager,
     integrationRepositoryProvider: suspend () -> IntegrationRepository,
-    allEntities: Flow<Map<String, Entity>>,
-    entityRegistry: List<EntityRegistryResponse>?,
+    entitiesState: Flow<EntityDisplayState<EntityDisplay>>,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.aa_navigation))
@@ -116,14 +115,9 @@ fun getNavigationGridItem(
                 MapVehicleScreen(
                     carContext,
                     integrationRepositoryProvider,
-                    allEntities.map {
-                        it.values.filter { entity ->
-                            entity.domain in MAP_DOMAINS &&
-                                RegistriesDataHandler.getHiddenByForEntity(
-                                    entity.entityId,
-                                    entityRegistry,
-                                ) == null
-                        }
+                    entitiesState.map { state ->
+                        (state as? EntityDisplayState.Loaded)?.entities.orEmpty()
+                            .filter { it.domain in MAP_DOMAINS && !it.isHidden }
                     },
                 ),
             )
@@ -139,8 +133,7 @@ fun getDomainList(
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
     prefsRepository: PrefsRepository,
-    allEntities: Flow<Map<String, Entity>>,
-    entityRegistry: List<EntityRegistryResponse>?,
+    entitiesState: Flow<EntityDisplayState<EntityDisplay>>,
     lifecycleScope: LifecycleCoroutineScope,
 ): ItemList.Builder {
     val listBuilder = ItemList.Builder()
@@ -158,14 +151,9 @@ fun getDomainList(
             LocalDateTime.now(),
         ).getIcon()
 
-        val entityList = allEntities.map {
-            it.values.filter { entity ->
-                entity.domain == domain &&
-                    RegistriesDataHandler.getHiddenByForEntity(
-                        entity.entityId,
-                        entityRegistry,
-                    ) == null
-            }
+        val entityList = entitiesState.map { state ->
+            (state as? EntityDisplayState.Loaded)?.entities.orEmpty()
+                .filter { it.domain == domain && !it.isHidden }
         }
         var domainIsEmpty = false
         lifecycleScope.launch {
@@ -200,10 +188,9 @@ fun getDomainList(
                                     prefsRepository,
                                     { serverManager.integrationRepository(serverId.value) },
                                     friendlyDomain,
-                                    entityRegistry,
                                     domains,
                                     entityList,
-                                    allEntities,
+                                    entitiesState,
                                 ),
                             )
                         }
@@ -223,9 +210,8 @@ fun getDomainsGridItem(
     screenManager: ScreenManager,
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
-    allEntities: Flow<Map<String, Entity>>,
+    entitiesState: Flow<EntityDisplayState<EntityDisplay>>,
     prefsRepository: PrefsRepository,
-    entityRegistry: List<EntityRegistryResponse>?,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.all_entities))
@@ -248,9 +234,8 @@ fun getDomainsGridItem(
                     carContext,
                     serverManager,
                     serverId,
-                    allEntities,
+                    entitiesState,
                     prefsRepository,
-                    entityRegistry,
                 ),
             )
         }

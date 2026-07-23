@@ -21,14 +21,10 @@ import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.DEVICE_TRACKER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.integration.friendlyState
-import io.homeassistant.companion.android.common.data.integration.getIcon
-import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -38,11 +34,11 @@ import timber.log.Timber
 class MapVehicleScreen(
     carContext: CarContext,
     val integrationRepositoryProvider: suspend () -> IntegrationRepository,
-    private val entitiesFlow: Flow<List<Entity>>,
+    private val entitiesFlow: Flow<List<EntityDisplay>>,
 ) : Screen(carContext) {
 
     private var loading = true
-    var entities: Set<Entity> = setOf()
+    var entities: Set<EntityDisplay> = setOf()
 
     init {
         lifecycleScope.launch {
@@ -51,16 +47,10 @@ class MapVehicleScreen(
                     loading = false
                     val newSet = it
                         .filter { entity ->
-                            if (entity.domain == DEVICE_TRACKER_DOMAIN && entity.state == "home") {
+                            if (entity.domain == DEVICE_TRACKER_DOMAIN && entity.rawState == "home") {
                                 return@filter false
                             }
-                            val attrs = entity.attributes as? Map<*, *>
-                            if (attrs != null) {
-                                val lat = attrs["latitude"] as? Double
-                                val lon = attrs["longitude"] as? Double
-                                return@filter lat != null && lon != null
-                            }
-                            return@filter false
+                            entity.coordinates != null
                         }
                         .toSet()
                     val hasChanged = entities.size != newSet.size || entities != newSet
@@ -77,13 +67,10 @@ class MapVehicleScreen(
         val gridBuilder = ItemList.Builder()
         entities
             .map {
-                // Null checks handled during collection
-                val attrs = it.attributes as Map<*, *>
-                val lat = attrs["latitude"] as Double
-                val lon = attrs["longitude"] as Double
-                Pair(it, listOf(lat, lon))
+                // Null check handled during collection
+                Pair(it, it.coordinates!!)
             }
-            .sortedBy { it.first.friendlyName }
+            .sortedBy { it.first.name }
             .forEachIndexed { index, pair ->
                 if (index >= gridLimit) {
                     Timber.i(
@@ -91,11 +78,11 @@ class MapVehicleScreen(
                     )
                     return@forEachIndexed
                 }
-                val icon = pair.first.getIcon()
+                val icon = pair.first.icon
                 gridBuilder.addItem(
                     GridItem.Builder()
-                        .setTitle(pair.first.friendlyName)
-                        .setText(pair.first.friendlyState(carContext))
+                        .setTitle(pair.first.name)
+                        .setText(pair.first.state.resolve(carContext))
                         .setImage(
                             CarIcon.Builder(
                                 IconicsDrawable(carContext, icon)
@@ -104,7 +91,7 @@ class MapVehicleScreen(
                                     }.toAndroidIconCompat(),
                             )
                                 .setTint(
-                                    if (pair.first.isActive() && pair.first.domain in EntityExt.STATE_COLORED_DOMAINS) {
+                                    if (pair.first.isActive && pair.first.domain in EntityExt.STATE_COLORED_DOMAINS) {
                                         CarColor.createCustom(
                                             carContext.getColor(R.color.colorYellow),
                                             carContext.getColor(R.color.colorYellow),
@@ -131,7 +118,7 @@ class MapVehicleScreen(
                             }
                             val intent = Intent(
                                 CarContext.ACTION_NAVIGATE,
-                                "geo:${pair.second[0]},${pair.second[1]}".toUri(),
+                                "geo:${pair.second.latitude},${pair.second.longitude}".toUri(),
                             )
                             carContext.startCarApp(intent)
                         }
