@@ -41,12 +41,11 @@ class ButtonWidget : BaseGlanceEntityWidgetReceiver<ButtonWidgetEntity, ButtonWi
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-        Timber.d("Broadcast received \nBroadcast action: $action \nAppWidgetId: $appWidgetId")
-//        Timber.d(
-//            "Broadcast received: " + System.lineSeparator() +
-//                "Broadcast action: " + action + System.lineSeparator() +
-//                "AppWidgetId: " + appWidgetId,
-//        )
+        Timber.d(
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + action + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId,
+        )
 
         super.onReceive(context, intent)
         when (action) {
@@ -148,7 +147,7 @@ class ButtonWidget : BaseGlanceEntityWidgetReceiver<ButtonWidgetEntity, ButtonWi
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE_AUTH"
 
         // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
-        const val DEFAULT_MAX_ICON_SIZE = 256
+        const val DEFAULT_MAX_ICON_SIZE = 512
         private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 

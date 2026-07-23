@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.button
 
+import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
@@ -30,6 +31,7 @@ import androidx.glance.action.clickable
 import androidx.glance.appwidget.CircularProgressIndicator
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.appWidgetBackground
@@ -40,15 +42,21 @@ import androidx.glance.color.ColorProviders
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
+import androidx.glance.layout.ContentScale
+import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
+import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.layout.wrapContentHeight
 import androidx.glance.material.ColorProviders
 import androidx.glance.preview.ExperimentalGlancePreviewApi
 import androidx.glance.preview.Preview
 import androidx.glance.semantics.semantics
 import androidx.glance.semantics.testTag
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.IconicsSize
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -83,6 +91,7 @@ class ButtonGlanceAppWidget() : GlanceAppWidget() {
         fun buttonStateUpdater(): ButtonWidgetStateUpdater
     }
 
+    override val sizeMode: SizeMode = SizeMode.Exact
     internal val isActionRunningKey = booleanPreferencesKey(IS_LOADING_KEY)
     internal val isActionSuccessKey = booleanPreferencesKey(ButtonWidget.IS_SUCCESS_KEY)
     internal val wasActionSentSuccessfulKey = booleanPreferencesKey(SENT_SUCCESSFUL_KEY)
@@ -100,7 +109,6 @@ class ButtonGlanceAppWidget() : GlanceAppWidget() {
             val updater = remember { entryPoints.buttonStateUpdater() }
 
             LaunchedEffect(widgetId, isActionRunning, wasActionSentSuccessful, isActionSuccess) {
-                Timber.i("Running Launched Effect")
                 updater.updateIsActionRunning(widgetId, isActionRunning)
                 updater.updateIsActionError(widgetId, !wasActionSentSuccessful)
                 updater.updateIsActionSuccess(widgetId, isActionSuccess)
@@ -204,6 +212,7 @@ fun LoadingScreen(modifier: Modifier = Modifier) {
     }
 }
 
+@SuppressLint("ComposeRedundantComposable")
 @Composable
 private fun GlanceModifier.buttonWidgetBackground(): GlanceModifier {
     return this.appWidgetBackground().fillMaxSize().background(
@@ -263,15 +272,22 @@ private fun ButtonScreen(
                         widgetIdKey to (state?.id ?: -1),
                     ),
                 ),
-            ),
+            )
+            .padding(8.dp),
     ) {
         Image(
             provider = ImageProvider(icon),
             contentDescription = null,
-            modifier = GlanceModifier.height(20.dp),
+            modifier = GlanceModifier.defaultWeight().fillMaxWidth(),
+            contentScale = ContentScale.Fit,
         )
+
         state?.label?.let {
-            Text(text = it, style = HomeAssistantGlanceTypography.bodySmall)
+            Text(
+                text = it,
+                style = HomeAssistantGlanceTypography.bodySmall.copy(textAlign = TextAlign.Center),
+                modifier = GlanceModifier.fillMaxWidth().padding(top = 8.dp),
+            )
         }
     }
 }
