@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.navigation
 
 import android.content.IntentSender
+import android.content.res.Resources
 import android.net.Uri
 import androidx.annotation.StringRes
 
@@ -25,8 +26,13 @@ sealed interface FrontendEvent {
      *
      * @param messageResId String resource ID for the message to display
      * @param action Optional action button. `null` renders a plain message snackbar.
+     * @param formatArgs Arguments for the placeholders of [messageResId], in order.
      */
-    data class ShowSnackbar(@param:StringRes val messageResId: Int, val action: Action? = null) : FrontendEvent {
+    data class ShowSnackbar(
+        @param:StringRes val messageResId: Int,
+        val action: Action? = null,
+        private val formatArgs: List<Any> = emptyList(),
+    ) : FrontendEvent {
 
         /**
          * @param labelResId String resource for the action button label (e.g. "Get help").
@@ -34,6 +40,13 @@ sealed interface FrontendEvent {
          *   [FrontendEventHandler] like any other [FrontendEvent].
          */
         data class Action(@param:StringRes val labelResId: Int, val event: FrontendEvent)
+
+        /** Resolves the display message from [resources]. */
+        fun resolveMessage(resources: Resources): String = if (formatArgs.isEmpty()) {
+            resources.getString(messageResId)
+        } else {
+            resources.getString(messageResId, *formatArgs.toTypedArray())
+        }
     }
 
     /** Navigate to the app settings screen. */
