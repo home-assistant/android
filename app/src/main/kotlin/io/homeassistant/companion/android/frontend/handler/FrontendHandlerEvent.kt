@@ -108,25 +108,16 @@ sealed interface FrontendHandlerEvent {
      * to the frontend with a
      * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage] correlated
      * by [messageId].
-     *
-     * @param messageId Correlation id from the incoming `matter/commission` message. Null when the
-     *   frontend omitted it — the response will then carry a null id and the frontend will ignore it.
      */
-    data class StartMatterCommissioning(val messageId: Int?) : FrontendHandlerEvent
+    data object StartMatterCommissioning : FrontendHandlerEvent
 
     /**
      * Frontend requested the app to share its locally-stored Thread credentials with the server.
      *
      * The ViewModel reads the preferred Thread dataset via Google Play Services, forwards it to
-     * the server, and replies to the frontend with a
-     * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage] correlated
-     * by [messageId].
-     *
-     * @param messageId Correlation id from the incoming `thread/import_credentials` message. Null
-     *   when the frontend omitted it — the response will then carry a null id and the frontend
-     *   will ignore it.
+     * the server.
      */
-    data class ImportThreadCredentials(val messageId: Int?) : FrontendHandlerEvent
+    data object ImportThreadCredentials : FrontendHandlerEvent
 
     /**
      * Frontend requested the app to open the barcode scanner overlay.

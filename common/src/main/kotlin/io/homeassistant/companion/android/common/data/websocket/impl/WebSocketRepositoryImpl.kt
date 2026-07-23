@@ -29,8 +29,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Cu
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.FloorRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
@@ -168,6 +170,26 @@ class WebSocketRepositoryImpl internal constructor(
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "config/entity_registry/list",
+            ),
+        )
+
+        return mapResponse(socketResponse)
+    }
+
+    override suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "config/entity_registry/list_for_display",
+            ),
+        )
+
+        return mapResponse(socketResponse)
+    }
+
+    override suspend fun getFloorRegistry(): List<FloorRegistryResponse>? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "config/floor_registry/list",
             ),
         )
 

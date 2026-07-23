@@ -17,21 +17,24 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
-import io.homeassistant.companion.android.barcode.BarcodeScannerActivity
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.developer.catalog.HAComposeCatalogActivity
+import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import kotlinx.coroutines.launch
@@ -64,6 +67,7 @@ private class DummyException : Throwable()
 private fun DevPlayGroundScreen(context: Context? = null) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var showBarcodeScanner by remember { mutableStateOf(false) }
 
     HATheme {
         Scaffold(
@@ -99,9 +103,7 @@ private fun DevPlayGroundScreen(context: Context? = null) {
                 HAFilledButton(
                     text = "Start barcode",
                     onClick = {
-                        context?.run {
-                            startActivity(BarcodeScannerActivity.newInstance(this, 0, "Title", "Subtitle", "Action"))
-                        }
+                        showBarcodeScanner = true
                     },
                 )
                 HAFilledButton(
@@ -163,6 +165,19 @@ private fun DevPlayGroundScreen(context: Context? = null) {
                         }
                     },
                     variant = ButtonVariant.WARNING,
+                )
+            }
+            if (showBarcodeScanner) {
+                BarcodeScanner(
+                    title = "Barcode Title",
+                    description = "demo description",
+                    alternativeOptionLabel = null,
+                    onResult = { _, _ ->
+                        showBarcodeScanner = false
+                    },
+                    onCancel = {
+                        showBarcodeScanner = false
+                    },
                 )
             }
         }

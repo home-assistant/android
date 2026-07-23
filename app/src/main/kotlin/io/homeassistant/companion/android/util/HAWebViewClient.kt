@@ -36,16 +36,19 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      * @param onUrlIntercepted Optional callback to intercept URL navigation.
      *        Receives the URI and whether TLS client auth was required.
      *        Return `true` to prevent WebView from loading the URL.
-     * @param onPageFinished Optional callback when a page finishes loading.
+     * @param onPageFinished Optional callback when a page finishes loading, with the final URL
+     *        (after any redirects have resolved).
      * @param onReceivedHttpAuthRequest Optional callback when the server requests HTTP Basic Auth.
      *        Receives the handler, host, the resource URL that triggered the request, and the realm.
+     * @param onCanGoBackChanged Optional callback invoked when the WebView back/forward list changes,
+     *        reporting whether the WebView can currently navigate back.
      */
     fun create(
         currentUrlFlow: StateFlow<String?>,
         onFrontendError: (FrontendConnectionError) -> Unit,
         onCrash: (() -> Unit)? = null,
         onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)? = null,
-        onPageFinished: (() -> Unit)? = null,
+        onPageFinished: ((url: String?) -> Unit)? = null,
         onReceivedHttpAuthRequest: (
             (
                 handler: HttpAuthHandler,
@@ -54,6 +57,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
                 realm: String,
             ) -> Unit
         )? = null,
+        onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
@@ -63,6 +67,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
             onUrlIntercepted = onUrlIntercepted,
             onPageFinished = onPageFinished,
             onReceivedHttpAuthRequest = onReceivedHttpAuthRequest,
+            onCanGoBackChanged = onCanGoBackChanged,
         )
     }
 }
@@ -79,10 +84,11 @@ class HAWebViewClient internal constructor(
     private val onFrontendError: (FrontendConnectionError) -> Unit,
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
-    private val onPageFinished: (() -> Unit)?,
+    private val onPageFinished: ((url: String?) -> Unit)?,
     private val onReceivedHttpAuthRequest: (
         (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
     )?,
+    private val onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
 ) : TLSWebViewClient(keyChainRepository) {
 
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
@@ -95,7 +101,12 @@ class HAWebViewClient internal constructor(
 
     override fun onPageFinished(view: WebView?, url: String?) {
         super.onPageFinished(view, url)
-        onPageFinished?.invoke()
+        onPageFinished?.invoke(url)
+    }
+
+    override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+        super.doUpdateVisitedHistory(view, url, isReload)
+        view?.let { onCanGoBackChanged?.invoke(it.canGoBack()) }
     }
 
     override fun onReceivedHttpAuthRequest(view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?) {
@@ -126,50 +137,48 @@ class HAWebViewClient internal constructor(
         Timber.e("onReceivedError: $errorDetails")
 
         val frontendConnectionError = when (error?.errorCode) {
-            ERROR_FAILED_SSL_HANDSHAKE -> FrontendConnectionError.AuthenticationError(
+            ERROR_FAILED_SSL_HANDSHAKE -> FrontendConnectionError.SslError(
                 message = commonR.string.webview_error_FAILED_SSL_HANDSHAKE,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_AUTHENTICATION -> FrontendConnectionError.AuthenticationError(
+            ERROR_AUTHENTICATION -> FrontendConnectionError.AuthRevoked(
                 message = commonR.string.webview_error_AUTHENTICATION,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_PROXY_AUTHENTICATION -> FrontendConnectionError.AuthenticationError(
+            ERROR_PROXY_AUTHENTICATION -> FrontendConnectionError.AuthRevoked(
                 message = commonR.string.webview_error_PROXY_AUTHENTICATION,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_UNSUPPORTED_AUTH_SCHEME -> FrontendConnectionError.AuthenticationError(
+            ERROR_UNSUPPORTED_AUTH_SCHEME -> FrontendConnectionError.AuthRevoked(
                 message = commonR.string.webview_error_AUTH_SCHEME,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_HOST_LOOKUP -> FrontendConnectionError.UnreachableError(
+            ERROR_HOST_LOOKUP -> FrontendConnectionError.Unreachable(
                 message = commonR.string.webview_error_HOST_LOOKUP,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_TIMEOUT -> FrontendConnectionError.UnreachableError(
-                message = commonR.string.webview_error_TIMEOUT,
+            ERROR_TIMEOUT -> FrontendConnectionError.Timeout(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_CONNECT -> FrontendConnectionError.UnreachableError(
+            ERROR_CONNECT -> FrontendConnectionError.Unreachable(
                 message = commonR.string.webview_error_CONNECT,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            else -> FrontendConnectionError.UnknownError(
-                message = commonR.string.connection_error_unknown_error,
+            else -> FrontendConnectionError.Unknown(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
@@ -195,20 +204,17 @@ class HAWebViewClient internal constructor(
         Timber.e("onReceivedHttpError: $errorDetails")
 
         val frontendConnectionError = when {
-            isTLSClientAuthNeeded && !isCertificateChainValid -> FrontendConnectionError.AuthenticationError(
-                message = commonR.string.tls_cert_expired_message,
+            isTLSClientAuthNeeded && !isCertificateChainValid -> FrontendConnectionError.TlsCertExpired(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
-            isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> FrontendConnectionError.AuthenticationError(
-                message = commonR.string.tls_cert_not_found_message,
+            isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> FrontendConnectionError.TlsCertNotFound(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
-            else -> FrontendConnectionError.UnknownError(
-                message = commonR.string.connection_error_unknown_error,
+            else -> FrontendConnectionError.Unknown(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
@@ -230,7 +236,7 @@ class HAWebViewClient internal constructor(
             else -> commonR.string.error_ssl
         }
         onFrontendError(
-            FrontendConnectionError.AuthenticationError(
+            FrontendConnectionError.SslError(
                 message = messageRes,
                 errorDetails = error.toString(),
                 rawErrorType = SslError::class.toString(),

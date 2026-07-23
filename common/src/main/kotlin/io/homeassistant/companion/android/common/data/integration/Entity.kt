@@ -2,28 +2,26 @@ package io.homeassistant.companion.android.common.data.integration
 
 import android.content.Context
 import android.graphics.Color
-import android.os.Build
-import android.text.format.DateUtils
-import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon2
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
-import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.DEVICE_TRACKER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
+import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.MapAnySerializer
-import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.getIconByMdiName
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
-import java.util.Locale
 import kotlin.math.round
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
@@ -141,7 +139,6 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
-    const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
 
     val DOMAINS_PRESS = listOf("button", "input_button")
@@ -156,7 +153,7 @@ object EntityExt {
     )
 
     val STATE_COLORED_DOMAINS = listOf(
-        "alarm_control_panel",
+        ALARM_CONTROL_PANEL_DOMAIN,
         "alert",
         "automation",
         "binary_sensor",
@@ -164,7 +161,7 @@ object EntityExt {
         CAMERA_DOMAIN,
         CLIMATE_DOMAIN,
         "cover",
-        "device_tracker",
+        DEVICE_TRACKER_DOMAIN,
         "fan",
         "group",
         "humidifier",
@@ -173,7 +170,7 @@ object EntityExt {
         "light",
         "lock",
         MEDIA_PLAYER_DOMAIN,
-        "person",
+        PERSON_DOMAIN,
         "plant",
         "remote",
         "schedule",
@@ -265,17 +262,6 @@ fun Entity.getCoverPosition(): EntityPosition? {
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getCoverPosition")
         null
-    }
-}
-
-fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
-    return try {
-        if (domain != "alarm_control_panel") return false
-        (attributes["supported_features"] as Number).toInt() and
-            EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == EntityExt.ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
-    } catch (e: Exception) {
-        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsArmedAway")
-        false
     }
 }
 
@@ -465,12 +451,11 @@ fun Entity.getVolumeStep(): Float {
     }
 }
 
-fun Entity.getIcon(context: Context): IIcon {
+fun Entity.getIcon(): IIcon {
     val attributes = this.attributes
     val icon = attributes["icon"] as? String
-    return if (icon?.startsWith("mdi:") == true) {
-        val mdiIcon = icon.split(":").getOrElse(1, { _ -> "" })
-        IconicsDrawable(context, "cmd-$mdiIcon").icon ?: Icon.cmd_bookmark
+    return if (icon?.startsWith(MDI_PREFIX) == true) {
+        CommunityMaterial.getIconByMdiName(icon) ?: Icon.cmd_bookmark
     } else {
         /**
          * Return a default icon for the domain that matches the icon used in the frontend, see
@@ -489,7 +474,7 @@ fun Entity.getIcon(context: Context): IIcon {
             }
         when (domain) {
             "air_quality" -> Icon.cmd_air_filter
-            "alarm_control_panel" -> when (compareState) {
+            ALARM_CONTROL_PANEL_DOMAIN -> when (compareState) {
                 "armed_away" -> Icon3.cmd_shield_lock
                 "armed_custom_bypass" -> Icon3.cmd_security
                 "armed_home" -> Icon3.cmd_shield_home
@@ -527,6 +512,13 @@ fun Entity.getIcon(context: Context): IIcon {
             "conversation" -> Icon3.cmd_microphone_message
             "cover" -> coverIcon(compareState, this)
             "counter" -> Icon.cmd_counter
+
+            DEVICE_TRACKER_DOMAIN, PERSON_DOMAIN -> if (compareState == "not_home") {
+                Icon.cmd_account_arrow_right
+            } else {
+                Icon.cmd_account
+            }
+
             "fan" -> if (compareState == "off") {
                 Icon2.cmd_fan_off
             } else {
@@ -651,11 +643,6 @@ fun Entity.getIcon(context: Context): IIcon {
             }
 
             "persistent_notification" -> Icon.cmd_bell
-            "person" -> if (compareState == "not_home") {
-                Icon.cmd_account_arrow_right
-            } else {
-                Icon.cmd_account
-            }
 
             "plant" -> Icon2.cmd_flower
             "proximity" -> Icon.cmd_apple_safari
@@ -773,7 +760,7 @@ private fun binarySensorIcon(state: String?, entity: Entity): IIcon {
 }
 
 private fun coverIcon(state: String?, entity: Entity): IIcon {
-    val open = state !== "closed"
+    val open = state != "closed"
 
     return when (entity.attributes["device_class"]) {
         "garage" -> when (state) {
@@ -914,9 +901,7 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
             if (state == "unlocked") "lock" else "unlock"
         }
 
-        "alarm_control_panel" -> {
-            if (state != "disarmed") "alarm_disarm" else "alarm_arm_away"
-        }
+        ALARM_CONTROL_PANEL_DOMAIN -> getAlarmOnPressedAction()
 
         in EntityExt.DOMAINS_PRESS -> "press"
         "fan",
@@ -929,6 +914,11 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
 
         "scene" -> "turn_on"
         else -> "toggle"
+    }
+
+    if (action == null) {
+        Timber.tag(EntityExt.TAG).w("No action called when entity '%s' was pressed", entityId)
+        return
     }
 
     integrationRepository.callAction(
@@ -972,280 +962,22 @@ suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository:
 val Entity.friendlyName: String
     get() = attributes["friendly_name"]?.toString() ?: entityId
 
+/**
+ * Formats the entity state for display without registry metadata, so no sensor display
+ * precision is applied. Prefer [EntityDisplayItem.state] when the entity has been
+ * resolved through `GetEntitiesForDisplayUseCase`.
+ */
+fun Entity.friendlyState(context: Context, appendUnitOfMeasurement: Boolean = false): String =
+    friendlyState(displayPrecision = null, appendUnitOfMeasurement = appendUnitOfMeasurement).resolve(context)
+
 fun Entity.friendlyState(
     context: Context,
-    options: EntityRegistryOptions? = null,
+    options: EntityRegistryOptions?,
     appendUnitOfMeasurement: Boolean = false,
-): String {
-    val attributes = this.attributes
-
-    var friendlyState = when (domain) {
-        "binary_sensor" -> {
-            // https://github.com/home-assistant/core/blob/dev/homeassistant/components/binary_sensor/strings.json#L113
-            when (attributes["device_class"]) {
-                "battery" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_low)
-                } else {
-                    context.getString(commonR.string.state_normal)
-                }
-
-                "battery_charging" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_charging)
-                } else {
-                    context.getString(commonR.string.state_not_charging)
-                }
-
-                "cold" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_cold)
-                } else {
-                    context.getString(commonR.string.state_off)
-                }
-
-                "connectivity" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_connected)
-                } else {
-                    context.getString(commonR.string.state_disconnected)
-                }
-
-                "door", "window", "garage_door", "opening" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_open)
-                } else {
-                    context.getString(commonR.string.state_closed)
-                }
-
-                "gas" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_detected)
-                } else {
-                    context.getString(commonR.string.state_clear)
-                }
-
-                "heat" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_hot)
-                } else {
-                    context.getString(commonR.string.state_off)
-                }
-
-                "light" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_light_detected)
-                } else {
-                    context.getString(commonR.string.state_no_light)
-                }
-
-                "lock" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_unlocked)
-                } else {
-                    context.getString(commonR.string.state_locked)
-                }
-
-                "moisture" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_wet)
-                } else {
-                    context.getString(commonR.string.state_dry)
-                }
-
-                "moving" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_moving)
-                } else {
-                    context.getString(commonR.string.state_not_moving)
-                }
-
-                "plug" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_plugged_in)
-                } else {
-                    context.getString(commonR.string.state_unplugged)
-                }
-
-                "presence" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_home)
-                } else {
-                    context.getString(commonR.string.state_not_home)
-                }
-
-                "problem" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_problem)
-                } else {
-                    context.getString(commonR.string.state_ok)
-                }
-
-                "running" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_running)
-                } else {
-                    context.getString(commonR.string.state_not_running)
-                }
-
-                "safety" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_unsafe)
-                } else {
-                    context.getString(commonR.string.state_safe)
-                }
-
-                "tamper" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_tampering_detected)
-                } else {
-                    context.getString(commonR.string.state_off)
-                }
-
-                "update" -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_update_available)
-                } else {
-                    context.getString(commonR.string.state_up_to_date)
-                }
-
-                else -> if (state ==
-                    "on"
-                ) {
-                    context.getString(commonR.string.state_on)
-                } else {
-                    context.getString(commonR.string.state_off)
-                }
-            }
-        }
-
-        else -> {
-            // https://github.com/home-assistant/frontend/blob/dev/src/common/entity/get_states.ts#L5
-            when (state) {
-                "above_horizon" -> context.getString(commonR.string.state_above_horizon)
-                "active" -> context.getString(commonR.string.state_active)
-                "armed_away" -> context.getString(commonR.string.state_armed_away)
-                "armed_custom_bypass" -> context.getString(commonR.string.state_armed_custom_bypass)
-                "armed_home" -> context.getString(commonR.string.state_armed_home)
-                "armed_night" -> context.getString(commonR.string.state_armed_night)
-                "armed_vacation" -> context.getString(commonR.string.state_armed_vacation)
-                "arming" -> context.getString(commonR.string.state_arming)
-                "auto" -> context.getString(commonR.string.state_auto)
-                "below_horizon" -> context.getString(commonR.string.state_below_horizon)
-                "buffering" -> context.getString(commonR.string.state_buffering)
-                "cleaning" -> context.getString(commonR.string.state_cleaning)
-                "clear-night" -> context.getString(commonR.string.state_clear_night)
-                "cloudy" -> context.getString(commonR.string.state_cloudy)
-                "closed" -> context.getString(commonR.string.state_closed)
-                "closing" -> context.getString(commonR.string.state_closing)
-                "cool" -> context.getString(commonR.string.state_cool)
-                "disarmed" -> context.getString(commonR.string.state_disarmed)
-                "disarming" -> context.getString(commonR.string.state_disarming)
-                "docked" -> context.getString(commonR.string.state_docked)
-                "dry" -> context.getString(commonR.string.state_dry)
-                "error" -> context.getString(commonR.string.state_error)
-                "exceptional" -> context.getString(commonR.string.state_exceptional)
-                "fan_only" -> context.getString(commonR.string.state_fan_only)
-                "fog" -> context.getString(commonR.string.state_fog)
-                "hail" -> context.getString(commonR.string.state_hail)
-                "heat" -> context.getString(commonR.string.state_heat)
-                "heat_cool" -> context.getString(commonR.string.state_heat_cool)
-                "home" -> context.getString(commonR.string.state_home)
-                "idle" -> context.getString(commonR.string.state_idle)
-                "jammed" -> context.getString(commonR.string.state_jammed)
-                "lightning-raining" -> context.getString(commonR.string.state_lightning_raining)
-                "lightning" -> context.getString(commonR.string.state_lightning)
-                "locked" -> context.getString(commonR.string.state_locked)
-                "locking" -> context.getString(commonR.string.state_locking)
-                "mowing" -> context.getString(commonR.string.state_mowing)
-                "not_home" -> context.getString(commonR.string.state_not_home)
-                "off" -> context.getString(commonR.string.state_off)
-                "on" -> context.getString(commonR.string.state_on)
-                "open" -> context.getString(commonR.string.state_open)
-                "opening" -> context.getString(commonR.string.state_opening)
-                "partlycloudy" -> context.getString(commonR.string.state_partlycloudy)
-                "paused" -> context.getString(commonR.string.state_paused)
-                "pending" -> context.getString(commonR.string.state_pending)
-                "playing" -> context.getString(commonR.string.state_playing)
-                "problem" -> context.getString(commonR.string.state_problem)
-                "pouring" -> context.getString(commonR.string.state_pouring)
-                "rainy" -> context.getString(commonR.string.state_rainy)
-                "recording" -> context.getString(commonR.string.state_recording)
-                "returning" -> context.getString(commonR.string.state_returning)
-                "snowy-rainy" -> context.getString(commonR.string.state_snowy_rainy)
-                "snowy" -> context.getString(commonR.string.state_snowy)
-                "standby" -> context.getString(commonR.string.state_standby)
-                "streaming" -> context.getString(commonR.string.state_streaming)
-                "sunny" -> context.getString(commonR.string.state_sunny)
-                "triggered" -> context.getString(commonR.string.state_triggered)
-                "unavailable" -> context.getString(commonR.string.state_unavailable)
-                "unlocked" -> context.getString(commonR.string.state_unlocked)
-                "unlocking" -> context.getString(commonR.string.state_unlocking)
-                "unknown" -> context.getString(commonR.string.state_unknown)
-                "windy", "windy-variant" -> context.getString(commonR.string.state_windy)
-                else -> state
-            }
-        }
-    }
-    if (friendlyState == state && SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-        try {
-            val stateInMillis = ZonedDateTime.parse(state, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                .toInstant()
-                .toEpochMilli()
-            friendlyState = DateUtils.getRelativeTimeSpanString(
-                stateInMillis,
-                System.currentTimeMillis(),
-                0,
-                DateUtils.FORMAT_ABBREV_ALL,
-            ).toString()
-        } catch (e: DateTimeParseException) {
-            /* Not a timestamp */
-        }
-    }
-    if (
-        friendlyState == state &&
-        canSupportPrecision() &&
-        (options?.sensor?.displayPrecision != null || options?.sensor?.suggestedDisplayPrecision != null)
-    ) {
-        val number = friendlyState.toDouble()
-        val precision = options.sensor.displayPrecision ?: options.sensor.suggestedDisplayPrecision!!
-        friendlyState = String.format(Locale.getDefault(), "%.${precision}f", number)
-    } else if (friendlyState == state) {
-        friendlyState = state.split("_").joinToString(" ") { word ->
-            word.replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-            }
-        }
-    }
-
-    if (appendUnitOfMeasurement) {
-        val unit = attributes["unit_of_measurement"]?.toString()
-
-        if (unit?.isNotBlank() == true) {
-            return "$friendlyState $unit"
-        }
-    }
-
-    return friendlyState
-}
+): String = friendlyState(
+    displayPrecision = options?.sensor?.let { it.displayPrecision ?: it.suggestedDisplayPrecision },
+    appendUnitOfMeasurement = appendUnitOfMeasurement,
+).resolve(context)
 
 fun Entity.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
 
@@ -1266,10 +998,10 @@ fun Entity.isActive() = when {
     (domain in listOf("button", "input_button", "event", "scene")) -> state != "unavailable"
     (state == "unavailable" || state == "unknown") -> false
     (state == "off" && domain != "alert") -> false
-    (domain == "alarm_control_panel") -> state != "disarmed"
+    (domain == ALARM_CONTROL_PANEL_DOMAIN) -> state != "disarmed"
     (domain == "alert") -> state != "idle"
     (domain == "cover") -> state != "closed"
-    (domain in listOf("device_tracker", "person")) -> state != "not_home"
+    (domain in listOf(DEVICE_TRACKER_DOMAIN, PERSON_DOMAIN)) -> state != "not_home"
     (domain == "lawn_mower") -> state in listOf("mowing", "error")
     // on Android, contrary to HA Frontend, a lock is considered active when locked
     (domain == "lock") -> state == "locked"
@@ -1281,3 +1013,9 @@ fun Entity.isActive() = when {
     (domain == CAMERA_DOMAIN) -> state == "streaming"
     else -> true
 }
+
+/**
+ * Whether this entity is the `person` entity linked to the user identified by [userId], i.e. a
+ * `person` entity whose `user_id` attribute matches.
+ */
+fun Entity.isPersonOf(userId: String): Boolean = domain == PERSON_DOMAIN && attributes["user_id"] == userId

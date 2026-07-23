@@ -24,7 +24,7 @@ class ServerRegistrationRepositoryTest {
     private val authenticationService: AuthenticationService = mockk()
     private val installIdProvider: SuspendProvider<String> = mockk()
 
-    private var repository: ServerRegistrationRepository = ServerRegistrationRepository(authenticationService, installIdProvider)
+    private var repository: ServerRegistrationRepository = ServerRegistrationRepository({ authenticationService }, installIdProvider)
 
     @Test
     fun `Given valid URL and token with refresh token, when registering auth code, then return TemporaryServer and call service correctly`() = runTest {

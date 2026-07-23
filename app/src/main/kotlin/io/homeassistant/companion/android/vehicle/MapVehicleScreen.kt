@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.DEVICE_TRACKER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -50,7 +51,7 @@ class MapVehicleScreen(
                     loading = false
                     val newSet = it
                         .filter { entity ->
-                            if (entity.domain == "device_tracker" && entity.state == "home") {
+                            if (entity.domain == DEVICE_TRACKER_DOMAIN && entity.state == "home") {
                                 return@filter false
                             }
                             val attrs = entity.attributes as? Map<*, *>
@@ -90,7 +91,7 @@ class MapVehicleScreen(
                     )
                     return@forEachIndexed
                 }
-                val icon = pair.first.getIcon(carContext)
+                val icon = pair.first.getIcon()
                 gridBuilder.addItem(
                     GridItem.Builder()
                         .setTitle(pair.first.friendlyName)

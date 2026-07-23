@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.common.data.integration.isAlarmActionable
 import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.onPressed
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -35,7 +36,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.util.vehicle.MAP_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.NOT_ACTIONABLE_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
-import io.homeassistant.companion.android.util.vehicle.alarmHasNoCode
 import io.homeassistant.companion.android.util.vehicle.canNavigate
 import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getDomainsGridItem
@@ -64,6 +64,10 @@ class EntityGridVehicleScreen(
     private var loading = true
     var entities: List<Entity> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
+
+    // Index the registry by entity ID so each grid item can look up its options (such as the
+    // sensor display precision) without scanning the whole registry on every render
+    private val entityRegistryOptions = entityRegistry?.associate { it.entityId to it.options }
 
     init {
         lifecycleScope.launch {
@@ -155,17 +159,17 @@ class EntityGridVehicleScreen(
                 Timber.i("Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
                 return@forEachIndexed
             }
-            val icon = entity.getIcon(carContext)
+            val icon = entity.getIcon()
             val gridItem =
                 GridItem.Builder()
                     .setLoading(false)
                     .setTitle(entity.friendlyName.ifEmpty { entity.entityId })
-                    .setText(entity.friendlyState(carContext))
+                    .setText(entity.friendlyState(carContext, options = entityRegistryOptions?.get(entity.entityId)))
 
             if (entity.isExecuting()) {
                 gridItem.setLoading(entity.isExecuting())
             } else {
-                if (entity.domain !in NOT_ACTIONABLE_DOMAINS || canNavigate(entity) || alarmHasNoCode(entity)) {
+                if (entity.domain !in NOT_ACTIONABLE_DOMAINS || canNavigate(entity) || entity.isAlarmActionable()) {
                     gridItem
                         .setOnClickListener {
                             Timber.i("${entity.entityId} clicked")

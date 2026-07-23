@@ -22,9 +22,10 @@ import io.homeassistant.companion.android.assist.ui.AssistSheetView
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -137,9 +138,9 @@ class AssistActivity : BaseActivity() {
                     if (fromFrontend && viewModel.userCanManagePipelines) {
                         {
                             startActivity(
-                                WebViewActivity.newInstance(
-                                    this,
-                                    "config/voice-assistants/assistants",
+                                intentLaunchWithNavigateTo(
+                                    FrontendTarget.Path("config/voice-assistants/assistants"),
+                                    ServerManager.SERVER_ID_ACTIVE,
                                 ).apply {
                                     flags += Intent.FLAG_ACTIVITY_NEW_TASK // Delivers data in onNewIntent
                                 },

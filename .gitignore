@@ -369,3 +369,9 @@ playStorePublishServiceCredentialsFile.json
 
 ## Temp results from the CI
 merged_results.sarif
+
+# AI tooling
+.claude/*
+!.claude/skills
+!.claude/settings.json
+.cursor

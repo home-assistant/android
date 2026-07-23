@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.thread
 
-import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
@@ -16,23 +15,17 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
 
     override suspend fun coreSupportsThread(serverId: Int): Boolean = false
 
-    override suspend fun syncPreferredDataset(
-        context: Context,
-        serverId: Int,
-        exportOnly: Boolean,
-        scope: CoroutineScope,
-    ): ThreadManager.SyncResult = ThreadManager.SyncResult.AppUnsupported
+    override suspend fun exportPreferredDataset(serverId: Int): ThreadManager.SyncResult.ExportResult =
+        ThreadManager.SyncResult.AppUnsupported
+
+    override suspend fun syncPreferredDataset(serverId: Int, scope: CoroutineScope): ThreadManager.SyncResult =
+        ThreadManager.SyncResult.AppUnsupported
 
     override suspend fun getPreferredDatasetFromServer(serverId: Int): ThreadDatasetResponse? = null
 
-    override suspend fun importDatasetFromServer(
-        context: Context,
-        datasetId: String,
-        preferredBorderAgentId: String?,
-        serverId: Int,
-    ) { }
+    override suspend fun importDatasetFromServer(datasetId: String, preferredBorderAgentId: String?, serverId: Int) {}
 
-    override suspend fun getPreferredDatasetFromDevice(context: Context): IntentSender? {
+    override suspend fun getPreferredDatasetFromDevice(): IntentSender? {
         throw IllegalStateException("Thread is not supported with the minimal flavor")
     }
 

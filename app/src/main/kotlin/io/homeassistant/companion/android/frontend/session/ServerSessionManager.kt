@@ -5,7 +5,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import java.net.SocketTimeoutException
 import javax.inject.Inject
+import javax.net.ssl.SSLException
 import kotlin.coroutines.cancellation.CancellationException
 import timber.log.Timber
 
@@ -65,14 +67,25 @@ class ServerSessionManager @Inject constructor(private val serverManager: Server
                 true
             }
 
-            val error = if (isAnonymousSession) {
-                FrontendConnectionError.AuthenticationError(
+            val error = when {
+                e.isSslException() -> FrontendConnectionError.SslError(
+                    message = commonR.string.webview_error_FAILED_SSL_HANDSHAKE,
+                    errorDetails = e.message,
+                    rawErrorType = "ExternalAuthSsl",
+                )
+
+                e is SocketTimeoutException -> FrontendConnectionError.Timeout(
+                    errorDetails = e.message,
+                    rawErrorType = "ExternalAuthTimeout",
+                )
+
+                isAnonymousSession -> FrontendConnectionError.AuthRevoked(
                     message = commonR.string.error_connection_failed,
                     errorDetails = e.message ?: "Authentication failed",
                     rawErrorType = "ExternalAuthFailed",
                 )
-            } else {
-                null
+
+                else -> null
             }
 
             ExternalAuthResult.Failed(
@@ -140,4 +153,13 @@ class ServerSessionManager @Inject constructor(private val serverManager: Server
             false
         }
     }
+
+    /**
+     * Whether this throwable represents an SSL/TLS failure. Walks the [Throwable.cause] chain (SSL
+     * failures are commonly wrapped, e.g. an `IOException` caused by an `SSLException`) and also
+     * checks [Throwable.suppressed] at each level (a socket timeout can carry a suppressed SSL error).
+     */
+    private fun Throwable.isSslException(): Boolean =
+        generateSequence(this) { current -> current.cause?.takeIf { it != current } }
+            .any { it is SSLException || it.suppressed.any { suppressed -> suppressed is SSLException } }
 }

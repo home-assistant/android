@@ -6,4 +6,7 @@ object IntegrationDomains {
     const val MEDIA_PLAYER_DOMAIN = "media_player"
     const val IMAGE_DOMAIN = "image"
     const val TODO_DOMAIN = "todo"
+    const val PERSON_DOMAIN = "person"
+    const val ALARM_CONTROL_PANEL_DOMAIN = "alarm_control_panel"
+    const val DEVICE_TRACKER_DOMAIN = "device_tracker"
 }

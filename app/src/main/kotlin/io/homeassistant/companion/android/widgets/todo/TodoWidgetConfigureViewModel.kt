@@ -17,20 +17,17 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +35,8 @@ import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -50,6 +48,7 @@ import timber.log.Timber
 class TodoWidgetConfigureViewModel @AssistedInject constructor(
     private val todoWidgetDao: TodoWidgetDao,
     private val serverManager: ServerManager,
+    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
     @Assisted preSelectedEntityId: String?,
 ) : ViewModel() {
     private var supportedTextColors: List<String> = emptyList()
@@ -58,81 +57,21 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
     var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
 
+    /**
+     * Picker state with the server's todo entities, resolved again whenever the selected
+     * server changes and starting as [EntityDisplayState.Loading].
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val entities: StateFlow<List<Entity>> = snapshotFlow { selectedServerId }
+    val displayEntities: StateFlow<EntityDisplayState> = snapshotFlow { selectedServerId }
         .distinctUntilChanged()
-        .mapLatest { serverId ->
+        .flatMapLatest { serverId ->
             if (serverManager.isRegistered()) {
-                try {
-                    serverManager.integrationRepository(serverId)
-                        .getEntities()
-                        .orEmpty()
-                        .filter { entity -> entity.domain == TODO_DOMAIN }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get entities")
-                    emptyList()
-                }
+                getEntitiesForDisplay(serverId = serverId) { it.domain == TODO_DOMAIN }
             } else {
                 Timber.w("No server registered")
-                emptyList()
+                flowOf(EntityDisplayState.Loaded(emptyList()))
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val entityRegistry: StateFlow<List<EntityRegistryResponse>?> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (serverManager.isRegistered()) {
-                try {
-                    serverManager.webSocketRepository(serverId).getEntityRegistry()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get entity registry")
-                    null
-                }
-            } else {
-                null
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val deviceRegistry: StateFlow<List<DeviceRegistryResponse>?> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (serverManager.isRegistered()) {
-                try {
-                    serverManager.webSocketRepository(serverId).getDeviceRegistry()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get device registry")
-                    null
-                }
-            } else {
-                null
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val areaRegistry: StateFlow<List<AreaRegistryResponse>?> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (serverManager.isRegistered()) {
-                try {
-                    serverManager.webSocketRepository(serverId).getAreaRegistry()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get area registry")
-                    null
-                }
-            } else {
-                null
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), EntityDisplayState.Loading)
 
     // We need a mutex since the update of the entities might happen concurrently with onSetup and the viewModel creation
     private val selectedEntityMutex = Mutex()
@@ -150,10 +89,11 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            entities.collect { entities ->
+            displayEntities.collect { state ->
+                if (state !is EntityDisplayState.Loaded) return@collect
                 selectedEntityMutex.withLock {
                     if (selectedEntityId == null) {
-                        selectedEntityId = entities.firstOrNull()?.entityId
+                        selectedEntityId = state.entities.firstOrNull()?.entityId
                     }
                 }
             }
@@ -193,7 +133,8 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
     suspend fun isValidSelection(): Boolean {
         selectedEntityMutex.withLock {
             return serverManager.getServer(selectedServerId) != null &&
-                selectedEntityId in entities.value.map { it.entityId }
+                selectedEntityId in
+                (displayEntities.value as? EntityDisplayState.Loaded)?.entities.orEmpty().map { it.entityId }
         }
     }
 

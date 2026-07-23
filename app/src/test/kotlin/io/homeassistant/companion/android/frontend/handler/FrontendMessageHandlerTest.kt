@@ -9,6 +9,8 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
+import io.homeassistant.companion.android.frontend.addto.EntityAddToAction
+import io.homeassistant.companion.android.frontend.addto.ExternalEntityAddToAction
 import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -57,8 +59,6 @@ import io.homeassistant.companion.android.frontend.session.RevokeAuthResult
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
-import io.homeassistant.companion.android.webview.addto.EntityAddToAction
-import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -387,53 +387,25 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given matter commission message when messageResults then emits StartMatterCommissioning with id`() = runTest {
+    fun `Given Matter commission message when messageResults then emits StartMatterCommissioning`() = runTest {
         val message = MatterCommissionMessage(id = 60)
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
             val result = awaitItem()
             assertTrue(result is FrontendHandlerEvent.StartMatterCommissioning)
-            assertEquals(60, (result as FrontendHandlerEvent.StartMatterCommissioning).messageId)
             expectNoEvents()
         }
     }
 
     @Test
-    fun `Given matter commission message without id when messageResults then emits StartMatterCommissioning with null id`() = runTest {
-        val message = MatterCommissionMessage(id = null)
-        every { externalBusRepository.incomingMessages() } returns flowOf(message)
-
-        handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.StartMatterCommissioning)
-            assertEquals(null, (result as FrontendHandlerEvent.StartMatterCommissioning).messageId)
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `Given thread import_credentials message when messageResults then emits ImportThreadCredentials with id`() = runTest {
+    fun `Given Thread import_credentials message when messageResults then emits ImportThreadCredentials`() = runTest {
         val message = ThreadImportCredentialsMessage(id = 61)
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
             val result = awaitItem()
             assertTrue(result is FrontendHandlerEvent.ImportThreadCredentials)
-            assertEquals(61, (result as FrontendHandlerEvent.ImportThreadCredentials).messageId)
-            expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `Given thread import_credentials message without id when messageResults then emits ImportThreadCredentials with null id`() = runTest {
-        val message = ThreadImportCredentialsMessage(id = null)
-        every { externalBusRepository.incomingMessages() } returns flowOf(message)
-
-        handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.ImportThreadCredentials)
-            assertEquals(null, (result as FrontendHandlerEvent.ImportThreadCredentials).messageId)
             expectNoEvents()
         }
     }
@@ -626,7 +598,7 @@ class FrontendMessageHandlerTest {
     @Test
     fun `Given failed auth with error when getExternalAuth then evaluates callback and emits AuthError`() = runTest {
         val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
-        val error = FrontendConnectionError.AuthenticationError(
+        val error = FrontendConnectionError.AuthRevoked(
             message = commonR.string.error_connection_failed,
             errorDetails = "Auth failed",
             rawErrorType = "ExternalAuthFailed",

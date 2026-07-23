@@ -6,7 +6,6 @@ import android.os.Build
 import android.provider.Settings
 import androidx.media3.datasource.DataSource
 import dagger.Binds
-import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,38 +52,41 @@ internal abstract class DataModule {
     companion object {
         @Provides
         @Singleton
-        fun provideAuthenticationService(homeAssistantApis: HomeAssistantApis): AuthenticationService =
-            homeAssistantApis.retrofit.create(AuthenticationService::class.java)
+        fun provideAuthenticationService(homeAssistantApis: HomeAssistantApis): SuspendProvider<AuthenticationService> =
+            SuspendProvider { homeAssistantApis.getRetrofit().create(AuthenticationService::class.java) }
 
         @Provides
         @Singleton
-        fun providesIntegrationService(homeAssistantApis: HomeAssistantApis): IntegrationService =
-            homeAssistantApis.retrofit.create(IntegrationService::class.java)
+        fun providesIntegrationService(homeAssistantApis: HomeAssistantApis): SuspendProvider<IntegrationService> =
+            SuspendProvider { homeAssistantApis.getRetrofit().create(IntegrationService::class.java) }
 
         @Provides
         @Singleton
-        fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient = homeAssistantApis.okHttpClient
+        fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): SuspendProvider<OkHttpClient> =
+            SuspendProvider { homeAssistantApis.getOkHttpClient() }
 
         @Provides
         @Singleton
         fun providesRealDataSourceFactory(
             @ApplicationContext appContext: Context,
-            okHttpClient: Lazy<OkHttpClient>,
+            okHttpClientProvider: SuspendProvider<OkHttpClient>,
             @NamedKeyChain keyChainRepository: KeyChainRepository,
             @NamedKeyStore keyStoreRepository: KeyChainRepository,
-        ): DataSource.Factory = MtlsAwareDataSourceFactory(
-            context = appContext,
-            okHttpClientProvider = okHttpClient,
-            usesMtls = {
-                val keyChainHasClientCert =
-                    keyChainRepository.getPrivateKey() != null &&
-                        !keyChainRepository.getCertificateChain().isNullOrEmpty()
-                val keyStoreHasClientCert =
-                    keyStoreRepository.getPrivateKey() != null &&
-                        !keyStoreRepository.getCertificateChain().isNullOrEmpty()
-                keyChainHasClientCert || keyStoreHasClientCert
-            },
-        )
+        ): SuspendProvider<DataSource.Factory> = SuspendProvider {
+            MtlsAwareDataSourceFactory(
+                context = appContext,
+                okHttpClient = okHttpClientProvider(),
+                usesMtls = {
+                    val keyChainHasClientCert =
+                        keyChainRepository.getPrivateKey() != null &&
+                            !keyChainRepository.getCertificateChain().isNullOrEmpty()
+                    val keyStoreHasClientCert =
+                        keyStoreRepository.getPrivateKey() != null &&
+                            !keyStoreRepository.getCertificateChain().isNullOrEmpty()
+                    keyChainHasClientCert || keyStoreHasClientCert
+                },
+            )
+        }
 
         @Provides
         @NamedSessionStorage
@@ -133,7 +135,7 @@ internal abstract class DataModule {
         @Provides
         @NamedDeviceId
         @Singleton
-        fun provideDeviceId(@ApplicationContext appContext: Context) = Settings.Secure.getString(
+        fun provideDeviceId(@ApplicationContext appContext: Context): String = Settings.Secure.getString(
             appContext.contentResolver,
             Settings.Secure.ANDROID_ID,
         )

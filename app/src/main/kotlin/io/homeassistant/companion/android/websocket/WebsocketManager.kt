@@ -32,10 +32,10 @@ import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissio
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.hasActiveConnection
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -252,7 +252,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             notificationManager.createNotificationChannel(notificationChannel)
         }
 
-        val intent = WebViewActivity.newInstance(applicationContext)
+        val intent = LaunchActivity.newInstance(applicationContext)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
