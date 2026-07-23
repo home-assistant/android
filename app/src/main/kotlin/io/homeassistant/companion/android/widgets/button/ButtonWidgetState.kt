@@ -8,6 +8,7 @@ import androidx.core.graphics.toColorInt
 import androidx.glance.GlanceTheme
 import androidx.glance.color.ColorProviders
 import androidx.glance.material.ColorProviders
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
@@ -15,7 +16,7 @@ import io.homeassistant.companion.android.util.compose.glanceHaLightColors
 
 sealed interface ButtonWidgetState {
     val backgroundType: WidgetBackgroundType
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        get() = if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
             WidgetBackgroundType.DYNAMICCOLOR
         } else {
             WidgetBackgroundType.DAYNIGHT

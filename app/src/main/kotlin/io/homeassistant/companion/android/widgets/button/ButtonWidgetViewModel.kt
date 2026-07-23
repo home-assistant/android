@@ -392,7 +392,7 @@ class ButtonWidgetViewModel @Inject constructor(
         // Split Domain from String
         val domain = constraint.split(".")[0]
         val validItems = ArrayList<Action>()
-        for (i in 0 until selectedServerActions.size) {
+        for (i in selectedServerActions.indices) {
             val item = selectedServerActions[i]
             if (getActionString(item).contains(domain)) {
                 validItems.add(item)
