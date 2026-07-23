@@ -960,7 +960,7 @@ suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository:
 }
 
 val Entity.friendlyName: String
-    get() = attributes["friendly_name"]?.toString() ?: entityId
+    get() = attributes["friendly_name"]?.toString()?.takeIf { it.isNotBlank() } ?: entityId
 
 /**
  * Formats the entity state for display without registry metadata, so no sensor display
