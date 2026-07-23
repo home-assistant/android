@@ -45,7 +45,6 @@ import androidx.glance.layout.Column
 import androidx.glance.layout.ContentScale
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
-import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.material.ColorProviders
@@ -65,11 +64,11 @@ import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.util.getIconByMdiName
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
 import io.homeassistant.companion.android.util.compose.glanceHaLightColors
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.CALL_SERVICE
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.CALL_SERVICE_AUTH
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.DEFAULT_MAX_ICON_SIZE

@@ -7,9 +7,7 @@ import android.content.Intent
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
-import androidx.glance.action.action
 import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.currentState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.color.DynamicColors
@@ -20,13 +18,13 @@ import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.getIconByMdiName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
