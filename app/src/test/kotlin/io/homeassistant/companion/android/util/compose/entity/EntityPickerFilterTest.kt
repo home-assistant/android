@@ -21,12 +21,14 @@ class EntityPickerFilterTest {
         name: String,
         areaName: String? = null,
         deviceName: String? = null,
+        isHidden: Boolean = false,
     ) = EntityDisplayItem(
         entityId = entityId,
         name = name,
         icon = CommunityMaterial.Icon2.cmd_lightbulb,
         areaName = areaName,
         deviceName = deviceName,
+        isHidden = isHidden,
     )
 
     // Test helper to create EntityWithSearchFields
@@ -232,6 +234,30 @@ class EntityPickerFilterTest {
         assertEquals(2, result.size)
         assertEquals("Test2", result[0].name)
         assertEquals("Test3", result[1].name)
+    }
+
+    @Test
+    fun `Given blank query when filtering then hidden entities are left out`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(createTestEntity("light.bed", name = "Bed")),
+            createEntityWithSearchFields(createTestEntity("light.attic", name = "Attic", isHidden = true)),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "")
+
+        assertEquals(listOf("Bed"), result.map { it.name })
+    }
+
+    @Test
+    fun `Given a query matching a hidden entity when filtering then it is included`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(createTestEntity("light.bed", name = "Bed")),
+            createEntityWithSearchFields(createTestEntity("light.attic", name = "Attic", isHidden = true)),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "attic")
+
+        assertEquals(listOf("Attic"), result.map { it.name })
     }
 
     @Test

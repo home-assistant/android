@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.homeassistant.android.compose)
 }
 
-val homeAssistantAndroidPushUrl: String by project
-val homeAssistantAndroidRateLimitUrl: String by project
+val homeAssistantAndroidPushUrl = providers.gradleProperty("homeAssistantAndroidPushUrl").get()
+val homeAssistantAndroidRateLimitUrl = providers.gradleProperty("homeAssistantAndroidRateLimitUrl").get()
 
 val versionName = project.version.toString()
 val versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1

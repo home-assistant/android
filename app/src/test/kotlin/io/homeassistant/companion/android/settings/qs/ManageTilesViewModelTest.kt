@@ -13,6 +13,8 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.server.Server
@@ -20,8 +22,6 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -71,8 +71,8 @@ class ManageTilesViewModelTest {
         coEvery { tileDao.get(any()) } returns null
         coEvery { tileDao.getAll() } returns emptyList()
         coEvery { tileDao.add(any()) } returns 1L
+        every { getEntitiesForDisplay.snapshot(any(), any<(Entity) -> Boolean>()) } returns flowOf(EntityDisplayState.Loading)
         every { tileDao.getAllFlow() } returns flowOf(emptyList())
-        every { getEntitiesForDisplay(any(), any<(Entity) -> Boolean>()) } returns flowOf(EntityDisplayState.Loading)
     }
 
     private fun fakeServer(id: Int) = Server(
@@ -464,7 +464,7 @@ class ManageTilesViewModelTest {
         // Regression test: the filter passed to the use case must exclude entities a tile
         // cannot act on, otherwise the picker offers entities that do nothing when clicked.
         val filter = slot<(Entity) -> Boolean>()
-        every { getEntitiesForDisplay(any(), capture(filter)) } returns flowOf(EntityDisplayState.Loading)
+        every { getEntitiesForDisplay.snapshot(any(), capture(filter)) } returns flowOf(EntityDisplayState.Loading)
 
         createViewModel()
         advanceUntilIdle()
@@ -481,7 +481,7 @@ class ManageTilesViewModelTest {
         val tileId = tileSlots[0].id.value
         coEvery { tileDao.get(tileId) } returns
             fakeTile(tileId = tileId, label = "Living Room", entityId = "switch.lamp", serverId = 2)
-        every { getEntitiesForDisplay(2, any<(Entity) -> Boolean>()) } returns flow {
+        every { getEntitiesForDisplay.snapshot(2, any<(Entity) -> Boolean>()) } returns flow {
             emit(EntityDisplayState.Loading)
             delay(10_000.milliseconds)
             emit(EntityDisplayState.Loaded(emptyList()))
@@ -502,12 +502,12 @@ class ManageTilesViewModelTest {
         // that is expected to win. Without cancelling the stale in-flight collection, the slow flow
         // would emit last and clobber the fresh one.
         val icon = CommunityMaterial.getIconByMdiName("mdi:account")!!
-        every { getEntitiesForDisplay(1, any<(Entity) -> Boolean>()) } returns flow {
+        every { getEntitiesForDisplay.snapshot(1, any<(Entity) -> Boolean>()) } returns flow {
             emit(EntityDisplayState.Loading)
             delay(100.milliseconds)
             emit(EntityDisplayState.Loaded(listOf(EntityDisplayItem(entityId = "light.stale", name = "Stale", icon = icon))))
         }
-        every { getEntitiesForDisplay(2, any<(Entity) -> Boolean>()) } returns flow {
+        every { getEntitiesForDisplay.snapshot(2, any<(Entity) -> Boolean>()) } returns flow {
             emit(EntityDisplayState.Loading)
             delay(10.milliseconds)
             emit(EntityDisplayState.Loaded(listOf(EntityDisplayItem(entityId = "light.fresh", name = "Fresh", icon = icon))))

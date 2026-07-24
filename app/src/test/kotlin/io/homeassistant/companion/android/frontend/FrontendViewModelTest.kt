@@ -212,6 +212,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
                 )
             } answers {
                 // onUrlIntercepted is at parameter index 3 in HAWebViewClientFactory.create
@@ -1206,6 +1207,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
                 )
             } answers {
                 // onPageFinished is at parameter index 4 in HAWebViewClientFactory.create
@@ -1342,6 +1344,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
                 )
             } answers {
                 capturedCallback = arg(5)
@@ -1431,6 +1434,67 @@ class FrontendViewModelTest {
     }
 
     @Nested
+    inner class SubresourceSslError {
+
+        private fun createViewModelWithSubresourceSslErrorCapture(): Pair<FrontendViewModel, (String?) -> Unit> {
+            var capturedCallback: ((String?) -> Unit)? = null
+            every {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
+                )
+            } answers {
+                // onSubresourceSslError is at parameter index 7 in HAWebViewClientFactory.create
+                capturedCallback = arg(7)
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel()
+            val callback = capturedCallback
+            assertNotNull(callback)
+            return viewModel to callback
+        }
+
+        @Test
+        fun `Given SSL error on a subresource when reported then snackbar names its host`() = runTest {
+            val (viewModel, reportSslError) = createViewModelWithSubresourceSslErrorCapture()
+
+            viewModel.events.test {
+                reportSslError("https://analytics.example.com/beacon.min.js")
+                advanceUntilIdle()
+
+                assertEquals(
+                    FrontendEvent.ShowSnackbar(
+                        commonR.string.error_ssl_subresource_host,
+                        formatArgs = listOf("analytics.example.com"),
+                    ),
+                    awaitItem(),
+                )
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given SSL error on a subresource without parsable url when reported then snackbar is generic`() = runTest {
+            val (viewModel, reportSslError) = createViewModelWithSubresourceSslErrorCapture()
+
+            viewModel.events.test {
+                reportSslError(null)
+                advanceUntilIdle()
+
+                assertEquals(FrontendEvent.ShowSnackbar(commonR.string.error_ssl_subresource), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
     inner class BackNavigation {
 
         private fun createViewModelWithCanGoBackCapture(): Pair<FrontendViewModel, (Boolean) -> Unit> {
@@ -1444,6 +1508,7 @@ class FrontendViewModelTest {
                     onPageFinished = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
                 )
             } answers {
                 // onCanGoBackChanged is at parameter index 6 in HAWebViewClientFactory.create
@@ -1983,6 +2048,83 @@ class FrontendViewModelTest {
 
             // Should still be content state, not error
             assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+        }
+
+        @Test
+        fun `Given loading state when screen is stopped then timeout does not fire while stopped`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(1.seconds)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            // The WebView is frozen while the screen is stopped, so the countdown must not run
+            viewModel.onScreenStartedChanged(false)
+            advanceTimeBy(CONNECTION_TIMEOUT * 2)
+
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+        }
+
+        @Test
+        fun `Given screen stopped while loading when screen starts again then timeout restarts from zero`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            viewModel.onScreenStartedChanged(false)
+            advanceTimeBy(CONNECTION_TIMEOUT)
+            viewModel.onScreenStartedChanged(true)
+
+            // The countdown restarted on start: just before a full timeout it is still loading
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            advanceTimeBy(2.seconds)
+            val state = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+            assertEquals(FrontendConnectionError.ExternalBusTimeout, state.error)
+        }
+
+        @Test
+        fun `Given external bus timeout error when frontend connects then state recovers to Content`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+            val errorState = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+            assertEquals(FrontendConnectionError.ExternalBusTimeout, errorState.error)
+
+            // The WebView keeps loading under the error overlay and completes the handshake
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertEquals(testUrlWithAuth, state.url)
+        }
+
+        @Test
+        fun `Given a non-timeout error when frontend connects then error state is kept`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.ServerNotFound(serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+            assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+
+            assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
         }
     }
 

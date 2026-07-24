@@ -58,7 +58,7 @@ allprojects {
     }
 
     detekt {
-        baseline = rootProject.file("config/detekt/baseline-$name.xml")
+        baseline = project.file("detekt-baseline.xml")
         config.setFrom(rootProject.file("config/detekt/detekt.yml"))
         buildUponDefaultConfig = true
     }

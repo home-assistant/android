@@ -93,7 +93,7 @@ fun MainView(
                                     .fillMaxWidth(),
                                 icon = {
                                     Image(
-                                        asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0], context),
+                                        asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0]),
                                         colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                                     )
                                 },
@@ -257,7 +257,6 @@ fun MainView(
                                             getIcon(
                                                 "",
                                                 domain,
-                                                context,
                                             ).let { Image(asset = it) }
                                         },
                                         label = { Text(domainName) },

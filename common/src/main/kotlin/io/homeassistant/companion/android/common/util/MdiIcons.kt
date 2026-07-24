@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.util.icondialog
+package io.homeassistant.companion.android.common.util
 
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -13,6 +13,7 @@ const val MDI_PREFIX = "mdi:"
 val IIcon.mdiName: String
     get() = name.replace("${CommunityMaterial.mappingPrefix}_", MDI_PREFIX).replace('_', '-')
 
+/** Resolves an MDI icon name (ie "mdi:account-alert") to its icon, or null when unknown. */
 fun CommunityMaterial.getIconByMdiName(mdiName: String): IIcon? {
     val name = mdiName.replace(MDI_PREFIX, "${mappingPrefix}_").replace('-', '_')
     return try {

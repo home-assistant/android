@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
-import android.content.Context
+import androidx.compose.ui.unit.LayoutDirection
+import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
@@ -10,12 +11,14 @@ import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayEntry
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistrySensorOptions
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.FloorRegistryResponse
 import io.homeassistant.companion.android.database.server.Server
 import io.mockk.coEvery
@@ -25,6 +28,8 @@ import io.mockk.mockk
 import io.mockk.unmockkAll
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -38,7 +43,6 @@ import org.junit.jupiter.params.provider.CsvSource
 
 class GetEntitiesForDisplayUseCaseTest {
 
-    private val context: Context = mockk()
     private val serverManager: ServerManager = mockk()
     private val webSocketRepository: WebSocketRepository = mockk()
     private val integrationRepository: IntegrationRepository = mockk()
@@ -54,7 +58,7 @@ class GetEntitiesForDisplayUseCaseTest {
         coEvery { webSocketRepository.getFloorRegistry() } returns emptyList()
         coEvery { webSocketRepository.getEntityRegistry() } returns emptyList()
         coEvery { webSocketRepository.getEntityRegistryDisplay() } returns EntityRegistryDisplayResponse()
-        useCase = GetEntitiesForDisplayUseCase(context, serverManager)
+        useCase = GetEntitiesForDisplayUseCase(serverManager)
     }
 
     @AfterEach
@@ -66,7 +70,6 @@ class GetEntitiesForDisplayUseCaseTest {
         coEvery { serverManager.getServer(serverId) } returns server
     }
 
-    // No mdi icon attribute so Entity.getIcon stays on the context-free domain default branch
     private fun entity(entityId: String, friendlyName: String? = null) = Entity(
         entityId = entityId,
         state = "on",
@@ -93,7 +96,7 @@ class GetEntitiesForDisplayUseCaseTest {
             entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed")),
         )
 
-        val items = useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+        val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 
         assertEquals("Bed", items.single().name)
         coVerify(exactly = 0) { webSocketRepository.getEntityRegistry() }
@@ -109,7 +112,7 @@ class GetEntitiesForDisplayUseCaseTest {
             AreaRegistryResponse(areaId = "bedroom", name = "Bedroom"),
         )
 
-        val items = useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+        val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 
         assertEquals("Bed Light", items.single().name)
         assertEquals("Bedroom", items.single().areaName)
@@ -120,7 +123,7 @@ class GetEntitiesForDisplayUseCaseTest {
     fun `Given server older than 2024 3 when invoking then floor registry is not fetched`() = runTest {
         givenServerVersion("2024.2.0")
 
-        useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+        useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 
         coVerify(exactly = 0) { webSocketRepository.getFloorRegistry() }
     }
@@ -132,7 +135,7 @@ class GetEntitiesForDisplayUseCaseTest {
             FloorRegistryResponse(floorId = "first", name = "First floor"),
         )
 
-        useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+        useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 
         coVerify(exactly = 1) { webSocketRepository.getFloorRegistry() }
     }
@@ -145,7 +148,7 @@ class GetEntitiesForDisplayUseCaseTest {
             EntityRegistryResponse(entityId = "light.bed", hiddenBy = "user"),
         )
 
-        val items = useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+        val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 
         assertEquals(true, items.single().isHidden)
         coVerify(exactly = 1) { webSocketRepository.getEntityRegistry() }
@@ -160,7 +163,7 @@ class GetEntitiesForDisplayUseCaseTest {
         coEvery { webSocketRepository.getAreaRegistry() } throws IllegalStateException("boom")
         coEvery { webSocketRepository.getFloorRegistry() } throws IllegalStateException("boom")
 
-        val items = useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+        val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 
         assertEquals("Bed Light", items.single().name)
         assertNull(items.single().areaName)
@@ -170,7 +173,7 @@ class GetEntitiesForDisplayUseCaseTest {
     fun `Given unknown server version when invoking then classic registry is used`() = runTest {
         givenServerVersion(null)
 
-        useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+        useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 
         coVerify(exactly = 0) { webSocketRepository.getEntityRegistryDisplay() }
         coVerify(exactly = 1) { webSocketRepository.getEntityRegistry() }
@@ -185,7 +188,7 @@ class GetEntitiesForDisplayUseCaseTest {
             entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed")),
         )
 
-        val items = useCase(serverId = serverId).awaitLoaded()
+        val items = useCase.snapshot(serverId = serverId).awaitLoaded()
 
         assertEquals("Bed", items.single().name)
         coVerify(exactly = 1) { integrationRepository.getEntities() }
@@ -200,7 +203,7 @@ class GetEntitiesForDisplayUseCaseTest {
             entity("switch.fan", "Fan"),
         )
 
-        val items = useCase(serverId = serverId) { it.domain == "light" }.awaitLoaded()
+        val items = useCase.snapshot(serverId = serverId) { it.domain == "light" }.awaitLoaded()
 
         assertEquals(listOf("light.bed"), items.map { it.entityId })
     }
@@ -211,7 +214,7 @@ class GetEntitiesForDisplayUseCaseTest {
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { integrationRepository.getEntities() } throws IllegalStateException("boom")
 
-        useCase(serverId = serverId).test {
+        useCase.snapshot(serverId = serverId).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
             assertEquals(EntityDisplayState.Error, awaitItem())
             awaitComplete()
@@ -225,7 +228,7 @@ class GetEntitiesForDisplayUseCaseTest {
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { integrationRepository.getEntities() } returns null
 
-        useCase(serverId = serverId).test {
+        useCase.snapshot(serverId = serverId).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
             assertEquals(EntityDisplayState.Error, awaitItem())
             awaitComplete()
@@ -236,7 +239,7 @@ class GetEntitiesForDisplayUseCaseTest {
     fun `Given no entities when invoking then loaded empty is emitted without registry fetch`() = runTest {
         givenServerVersion("2025.1.0")
 
-        val items = useCase(serverId = serverId, entities = emptyList()).awaitLoaded()
+        val items = useCase.snapshot(serverId = serverId, entities = emptyList()).awaitLoaded()
 
         assertEquals(emptyList<EntityDisplayItem>(), items)
         coVerify(exactly = 0) { webSocketRepository.getEntityRegistryDisplay() }
@@ -261,7 +264,16 @@ class GetEntitiesForDisplayUseCaseTest {
         fun `Given display entry without name when resolving then name falls back to friendly name`() = runTest {
             givenDisplayEntries(EntityRegistryDisplayEntry(entityId = "light.bed"))
 
-            val items = useCase(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+            val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
+
+            assertEquals("Bed Light", items.single().name)
+        }
+
+        @Test
+        fun `Given display entry with a blank name when resolving then name falls back to friendly name`() = runTest {
+            givenDisplayEntries(EntityRegistryDisplayEntry(entityId = "light.bed", name = " "))
+
+            val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed", "Bed Light"))).awaitLoaded()
 
             assertEquals("Bed Light", items.single().name)
         }
@@ -270,7 +282,7 @@ class GetEntitiesForDisplayUseCaseTest {
         fun `Given no friendly name when resolving then name falls back to entity id`() = runTest {
             givenServerVersion("2025.1.0")
 
-            val items = useCase(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
+            val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
 
             assertEquals("light.bed", items.single().name)
         }
@@ -288,7 +300,7 @@ class GetEntitiesForDisplayUseCaseTest {
                 AreaRegistryResponse(areaId = "kitchen", name = "Kitchen"),
             )
 
-            val items = useCase(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
+            val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
 
             assertEquals("Bedroom", items.single().areaName)
         }
@@ -303,7 +315,7 @@ class GetEntitiesForDisplayUseCaseTest {
                 AreaRegistryResponse(areaId = "kitchen", name = "Kitchen"),
             )
 
-            val items = useCase(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
+            val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
 
             assertEquals("Kitchen", items.single().areaName)
         }
@@ -318,7 +330,7 @@ class GetEntitiesForDisplayUseCaseTest {
                 FloorRegistryResponse(floorId = "first", name = "First floor"),
             )
 
-            val items = useCase(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
+            val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
 
             assertEquals("First floor", items.single().floorName)
         }
@@ -330,7 +342,7 @@ class GetEntitiesForDisplayUseCaseTest {
                 DeviceRegistryResponse(id = "device1", name = "Hub", nameByUser = "My Hub"),
             )
 
-            val items = useCase(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
+            val items = useCase.snapshot(serverId = serverId, entities = listOf(entity("light.bed"))).awaitLoaded()
 
             assertEquals("My Hub", items.single().deviceName)
         }
@@ -352,7 +364,7 @@ class GetEntitiesForDisplayUseCaseTest {
                 ),
             )
 
-            val item = useCase(serverId = serverId, entities = listOf(entity("sensor.temp", "Temp")))
+            val item = useCase.snapshot(serverId = serverId, entities = listOf(entity("sensor.temp", "Temp")))
                 .awaitLoaded()
                 .single()
 
@@ -374,7 +386,7 @@ class GetEntitiesForDisplayUseCaseTest {
                 categories = mapOf(0 to "config"),
             )
 
-            val item = useCase(serverId = serverId, entities = listOf(entity("sensor.temp")))
+            val item = useCase.snapshot(serverId = serverId, entities = listOf(entity("sensor.temp")))
                 .awaitLoaded()
                 .single()
 
@@ -389,22 +401,32 @@ class GetEntitiesForDisplayUseCaseTest {
             givenServerVersion("2025.1.0")
             val lightEntity = entity("light.bed")
 
-            val items = useCase(serverId = serverId, entities = listOf(lightEntity)).awaitLoaded()
+            val items = useCase.snapshot(serverId = serverId, entities = listOf(lightEntity)).awaitLoaded()
 
-            // The domain default branch of Entity.getIcon does not touch the context
-            assertEquals(lightEntity.getIcon(context), items.single().icon)
+            assertEquals(lightEntity.getIcon(), items.single().icon)
         }
 
         @Test
         fun `Given entities when resolving then order and count are preserved`() = runTest {
             givenServerVersion("2025.1.0")
 
-            val items = useCase(
+            val items = useCase.snapshot(
                 serverId = serverId,
                 entities = listOf(entity("light.bed"), entity("switch.fan"), entity("sensor.temp")),
             ).awaitLoaded()
 
             assertEquals(listOf("light.bed", "switch.fan", "sensor.temp"), items.map { it.entityId })
+        }
+
+        @Test
+        fun `Given an entity alone when building an item from it then entity fields are resolved`() {
+            val lightEntity = entity("light.bed", "Bed Light")
+
+            val item = EntityDisplayItem(lightEntity)
+
+            assertEquals("Bed Light", item.name)
+            assertEquals(lightEntity.getIcon(), item.icon)
+            assertEquals("on", item.rawState)
         }
 
         @ParameterizedTest
@@ -423,6 +445,209 @@ class GetEntitiesForDisplayUseCaseTest {
                 icon = CommunityMaterial.Icon.cmd_bookmark,
             )
             assertEquals(expectedDomain, item.domain)
+        }
+
+        @Test
+        fun `Given area and device names when reading the subtitle then they are joined for the layout direction`() {
+            val item = EntityDisplayItem(
+                entityId = "light.bed",
+                name = "Bed",
+                icon = CommunityMaterial.Icon.cmd_bookmark,
+                areaName = "Bedroom",
+                deviceName = "Hub",
+            )
+
+            assertEquals("Bedroom ▸ Hub", item.subtitle(LayoutDirection.Ltr))
+            assertEquals("Bedroom ◂ Hub", item.subtitle(LayoutDirection.Rtl))
+        }
+
+        @Test
+        fun `Given no area and device name when reading the subtitle then it is null`() {
+            val item = EntityDisplayItem(
+                entityId = "light.bed",
+                name = "Bed",
+                icon = CommunityMaterial.Icon.cmd_bookmark,
+            )
+
+            assertNull(item.subtitle(LayoutDirection.Ltr))
+        }
+
+        @Test
+        fun `Given a subtitle equal to the name when reading the subtitle then it is null`() {
+            val item = EntityDisplayItem(
+                entityId = "light.bed",
+                name = "Bed",
+                icon = CommunityMaterial.Icon.cmd_bookmark,
+                deviceName = "Bed",
+            )
+
+            assertNull(item.subtitle(LayoutDirection.Ltr))
+        }
+    }
+
+    @Nested
+    inner class Observe {
+
+        private val entityUpdates = MutableSharedFlow<Entity>()
+        private val entityRegistryUpdates = MutableSharedFlow<EntityRegistryUpdatedEvent>()
+
+        @BeforeEach
+        fun setUpObserve() {
+            givenServerVersion("2025.1.0")
+            coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
+            coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
+            coEvery { integrationRepository.getEntityUpdates() } returns entityUpdates
+            coEvery { webSocketRepository.getAreaRegistryUpdates() } returns null
+            coEvery { webSocketRepository.getDeviceRegistryUpdates() } returns null
+            coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
+        }
+
+        /** Asserts the flow emits Loading then the initial Loaded state, returning the items. */
+        private suspend fun ReceiveTurbine<EntityDisplayState>.awaitInitialLoad(): List<EntityDisplayItem> {
+            assertEquals(EntityDisplayState.Loading, awaitItem())
+            return assertInstanceOf(EntityDisplayState.Loaded::class.java, awaitItem()).entities.toList()
+        }
+
+        /**
+         * Suspends until [observe] subscribed to this update flow: the initial Loaded state is
+         * emitted before the subscriptions are established, so emitting right after it races.
+         */
+        private suspend fun MutableSharedFlow<*>.awaitSubscribed() = subscriptionCount.first { it > 0 }
+
+        @Test
+        fun `Given an entity state change when observing then a new loaded state is emitted`() = runTest {
+            useCase.observe(serverId).test {
+                assertEquals("Bed Light", awaitInitialLoad().single().name)
+                entityUpdates.awaitSubscribed()
+
+                entityUpdates.emit(entity("light.bed", "Renamed Light"))
+
+                val updated = assertInstanceOf(EntityDisplayState.Loaded::class.java, awaitItem())
+                assertEquals("Renamed Light", updated.entities.single().name)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given an update that does not change the items when observing then nothing is emitted`() = runTest {
+            useCase.observe(serverId).test {
+                awaitInitialLoad()
+                entityUpdates.awaitSubscribed()
+
+                entityUpdates.emit(entity("light.bed", "Bed Light"))
+                entityUpdates.emit(entity("light.bed", "Renamed Light"))
+
+                // Only the renaming update emits: the unchanged one before it was skipped
+                val updated = assertInstanceOf(EntityDisplayState.Loaded::class.java, awaitItem())
+                assertEquals("Renamed Light", updated.entities.single().name)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a new entity when observing then it is appended to the items`() = runTest {
+            useCase.observe(serverId).test {
+                awaitInitialLoad()
+                entityUpdates.awaitSubscribed()
+
+                entityUpdates.emit(entity("switch.fan", "Fan"))
+
+                val updated = assertInstanceOf(EntityDisplayState.Loaded::class.java, awaitItem())
+                assertEquals(listOf("light.bed", "switch.fan"), updated.entities.map { it.entityId })
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a filter when observing then non matching updates are ignored`() = runTest {
+            useCase.observe(serverId) { it.domain == "light" }.test {
+                awaitInitialLoad()
+                entityUpdates.awaitSubscribed()
+
+                entityUpdates.emit(entity("switch.fan", "Fan"))
+                entityUpdates.emit(entity("light.bed", "Renamed Light"))
+
+                // Only the light update emits: the switch was filtered out
+                val updated = assertInstanceOf(EntityDisplayState.Loaded::class.java, awaitItem())
+                assertEquals(listOf("Renamed Light"), updated.entities.map { it.name })
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given an entity registry update when observing then only the entity registry is refetched`() = runTest {
+            givenServerVersion("2024.10.0")
+            coEvery { webSocketRepository.getEntityRegistryDisplay() } returns
+                EntityRegistryDisplayResponse(
+                    entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed")),
+                ) andThen
+                EntityRegistryDisplayResponse(
+                    entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed renamed")),
+                )
+
+            useCase.observe(serverId).test {
+                assertEquals("Bed", awaitInitialLoad().single().name)
+                entityRegistryUpdates.awaitSubscribed()
+
+                entityRegistryUpdates.emit(EntityRegistryUpdatedEvent("update", "light.bed"))
+
+                val updated = assertInstanceOf(EntityDisplayState.Loaded::class.java, awaitItem())
+                assertEquals("Bed renamed", updated.entities.single().name)
+                cancelAndIgnoreRemainingEvents()
+            }
+            coVerify(exactly = 2) { webSocketRepository.getEntityRegistryDisplay() }
+            coVerify(exactly = 1) { webSocketRepository.getAreaRegistry() }
+            coVerify(exactly = 1) { webSocketRepository.getDeviceRegistry() }
+        }
+
+        @Test
+        fun `Given an area registry update when observing then only the areas and floors are refetched`() = runTest {
+            givenServerVersion("2024.10.0")
+            val areaUpdates = MutableSharedFlow<AreaRegistryUpdatedEvent>()
+            coEvery { webSocketRepository.getAreaRegistryUpdates() } returns areaUpdates
+            coEvery { webSocketRepository.getEntityRegistryDisplay() } returns EntityRegistryDisplayResponse(
+                entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", areaId = "bedroom")),
+            )
+            coEvery { webSocketRepository.getAreaRegistry() } returns
+                listOf(AreaRegistryResponse(areaId = "bedroom", name = "Bedroom")) andThen
+                listOf(AreaRegistryResponse(areaId = "bedroom", name = "Bedroom renamed"))
+
+            useCase.observe(serverId).test {
+                assertEquals("Bedroom", awaitInitialLoad().single().areaName)
+                areaUpdates.awaitSubscribed()
+
+                areaUpdates.emit(AreaRegistryUpdatedEvent("update", "bedroom"))
+
+                val updated = assertInstanceOf(EntityDisplayState.Loaded::class.java, awaitItem())
+                assertEquals("Bedroom renamed", updated.entities.single().areaName)
+                cancelAndIgnoreRemainingEvents()
+            }
+            coVerify(exactly = 2) { webSocketRepository.getAreaRegistry() }
+            coVerify(exactly = 2) { webSocketRepository.getFloorRegistry() }
+            coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay() }
+            coVerify(exactly = 1) { webSocketRepository.getDeviceRegistry() }
+        }
+
+        @Test
+        fun `Given entities fetch failure when observing then flow completes with error`() = runTest {
+            coEvery { integrationRepository.getEntities() } throws IllegalStateException("boom")
+
+            useCase.observe(serverId).test {
+                assertEquals(EntityDisplayState.Loading, awaitItem())
+                assertEquals(EntityDisplayState.Error, awaitItem())
+                awaitComplete()
+            }
+        }
+
+        @Test
+        fun `Given no update subscriptions when observing then flow completes after the loaded state`() = runTest {
+            coEvery { integrationRepository.getEntityUpdates() } returns null
+            coEvery { webSocketRepository.getEntityRegistryUpdates() } returns null
+
+            useCase.observe(serverId).test {
+                awaitInitialLoad()
+                awaitComplete()
+            }
         }
     }
 }
