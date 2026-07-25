@@ -258,6 +258,8 @@
     <string name="error_connection_failed_no_network">Network unavailable, please check your connection</string>
     <string name="error_loading_entities">Error loading entities</string>
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error. Please ensure your certificate is valid.</string>
+    <string name="error_ssl_subresource">Some content on this page could not be loaded securely.</string>
+    <string name="error_ssl_subresource_host">Content from %1$s could not be loaded securely.</string>
     <string name="error_with_registration">The \'Mobile App\' integration is required to use the app, but it is not available on your Home Assistant server. Please check your server configuration and try again.</string>
     <string name="errors">Errors</string>
     <string name="event_error">Failed to notify HA of picked option.</string>

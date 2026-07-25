@@ -125,7 +125,7 @@ fun LoadWearFavoritesSettings(
                 val favoriteEntityID = favoriteEntities[index].replace("[", "").replace("]", "")
                 settingsWearViewModel.entities[favoriteEntityID]?.let { entity ->
                     // Metadata-free item, this screen has no websocket access (see the picker above)
-                    val displayEntity = remember(entity) { EntityDisplayItem.from(entity) }
+                    val displayEntity = remember(entity) { EntityDisplayItem(entity) }
                     ReorderableItem(
                         state = reorderState,
                         key = favoriteEntities[index],
