@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -28,6 +29,37 @@ class CommandMessageTest {
             """{"type":"command","id":null,"command":"navigate","payload":{"path":"/lovelace/dashboard","options":{"replace":false}}}""",
             json,
         )
+    }
+
+    @Test
+    fun `Given MatterCommissionFinishMessage with name when serializing then produces command with payload`() {
+        val message = MatterCommissionFinishMessage(name = "Kitchen light", success = true)
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":null,"command":"matter/commission/finish","payload":{"name":"Kitchen light","success":true}}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given failed MatterCommissionFinishMessage when serializing then payload contains explicit null name`() {
+        val message = MatterCommissionFinishMessage(name = null, success = false)
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":null,"command":"matter/commission/finish","payload":{"name":null,"success":false}}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given server version when isHandledByFrontend then only 2026_7 and later handle the finish message`() {
+        assertEquals(false, MatterCommissionFinishMessage.isHandledByFrontend(null))
+        assertEquals(false, MatterCommissionFinishMessage.isHandledByFrontend(HomeAssistantVersion(2026, 6, 9)))
+        assertEquals(true, MatterCommissionFinishMessage.isHandledByFrontend(HomeAssistantVersion(2026, 7, 0)))
     }
 
     @Test

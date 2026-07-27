@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.matter
 
 import android.content.IntentSender
+import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 
 interface MatterManager {
@@ -28,9 +29,32 @@ interface MatterManager {
     }
 
     /**
+     * Terminal outcome of the platform commissioning flow launched from
+     * [CommissioningResult.Ready.intentSender], derived from its `ActivityResult` by
+     * [parseCommissioningIntentResult].
+     */
+    sealed interface CommissioningFlowOutcome {
+
+        /**
+         * The device was commissioned. [deviceName] is the name the user entered during the
+         * platform flow, or `null` when none was provided.
+         */
+        data class Success(val deviceName: String?) : CommissioningFlowOutcome
+
+        /** The flow was cancelled by the user or failed before the device was commissioned. */
+        data object Failed : CommissioningFlowOutcome
+    }
+
+    /**
      * Indicates if the app on this device supports Matter commissioning.
      */
     fun appSupportsCommissioning(): Boolean
+
+    /**
+     * Interpret the `ActivityResult` of the commissioning flow launched from
+     * [CommissioningResult.Ready.intentSender].
+     */
+    fun parseCommissioningIntentResult(result: ActivityResult): CommissioningFlowOutcome
 
     /**
      * Indicates if the server supports Matter commissioning.

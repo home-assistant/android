@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.frontend.matterthread
 
-import android.app.Activity
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import dagger.hilt.android.scopes.ViewModelScoped
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
+import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.MatterCommissionFinishMessage
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import java.util.concurrent.atomic.AtomicReference
@@ -41,13 +43,17 @@ import timber.log.Timber
  *    [onMatterThreadIntentResult].
  *  - [Event.ShowSnackbar] for transient feedback.
  *
- * The handler does not send any external-bus response messages.
+ * The only external-bus message the handler sends is [MatterCommissionFinishMessage], reporting
+ * the outcome of the Matter commissioning flow on every outcome so the frontend's add-device
+ * dialog can leave its spinner.
  */
 @ViewModelScoped
 internal class FrontendMatterThreadHandler @Inject constructor(
     private val matterManager: MatterManager,
     private val threadManager: ThreadManager,
     private val dialogManager: FrontendDialogManager,
+    private val externalBusRepository: FrontendExternalBusRepository,
+    private val serverManager: ServerManager,
 ) {
 
     /**
@@ -168,8 +174,9 @@ internal class FrontendMatterThreadHandler @Inject constructor(
 
     /**
      * Process the result of the Play Services intent launched in response to [Event.LaunchIntent].
-     * Dispatches based on what's [inFlight] — Matter just surfaces a "cancelled" snackbar on
-     * non-OK, Thread forwards the dataset to the server and reports success / no-dataset.
+     * Dispatches based on what's [inFlight] — Matter reports the outcome (and the user-entered
+     * device name) to the frontend via [MatterCommissionFinishMessage], Thread forwards the
+     * dataset to the server and reports success / no-dataset.
      *
      * Silently ignores stale results when nothing is in-flight (shouldn't happen in practice
      * since only one launcher exists, but guards against bugs).
@@ -190,11 +197,21 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     }
 
     private suspend fun handleMatterIntentResult(result: ActivityResult) {
-        if (result.resultCode == Activity.RESULT_OK) {
-            Timber.d("Matter commissioning returned success")
-        } else {
-            Timber.d("Matter commissioning returned with non-OK code ${result.resultCode}")
-            showTerminal(MatterThreadTerminal.Snackbar.MatterCancelled)
+        when (val outcome = matterManager.parseCommissioningIntentResult(result)) {
+            is MatterManager.CommissioningFlowOutcome.Success -> {
+                Timber.d("Matter commissioning returned success")
+                externalBusRepository.send(MatterCommissionFinishMessage(name = outcome.deviceName, success = true))
+            }
+
+            is MatterManager.CommissioningFlowOutcome.Failed -> {
+                Timber.d("Matter commissioning was cancelled or failed")
+                externalBusRepository.send(MatterCommissionFinishMessage(name = null, success = false))
+                // Frontends that handle the finish message show their own failure feedback and
+                // close the add-device dialog; older ones show nothing, so keep the snackbar.
+                if (!MatterCommissionFinishMessage.isHandledByFrontend(serverManager.getServer()?.version)) {
+                    showTerminal(MatterThreadTerminal.Snackbar.MatterCancelled)
+                }
+            }
         }
     }
 

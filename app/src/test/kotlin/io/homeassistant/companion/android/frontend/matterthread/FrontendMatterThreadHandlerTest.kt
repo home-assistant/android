@@ -4,11 +4,17 @@ import android.app.Activity
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import app.cash.turbine.test
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
+import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.MatterCommissionFinishMessage
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -28,12 +34,23 @@ class FrontendMatterThreadHandlerTest {
         // Default: progress dialog suspends forever (caller must cancel to dismiss).
         coEvery { showMatterThreadProgress() } coAnswers { awaitCancellation() }
     }
+    private val externalBusRepository: FrontendExternalBusRepository = mockk(relaxed = true)
+    private val serverManager: ServerManager = mockk(relaxed = true)
 
     private fun createHandler() = FrontendMatterThreadHandler(
         matterManager = matterManager,
         threadManager = threadManager,
         dialogManager = dialogManager,
+        externalBusRepository = externalBusRepository,
+        serverManager = serverManager,
     )
+
+    private fun givenServerVersion(version: HomeAssistantVersion?) {
+        val server: Server = mockk {
+            every { this@mockk.version } returns version
+        }
+        coEvery { serverManager.getServer() } returns server
+    }
 
     @Test
     fun `Given Matter Ready result when onStartMatterCommissioning then emits LaunchIntent`() = runTest {
@@ -84,8 +101,10 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Matter is in-flight and RESULT_OK when onMatterThreadIntentResult then no event is emitted`() = runTest {
+    fun `Given Matter is in-flight and commissioning succeeded when onMatterThreadIntentResult then reports success with device name`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
+        every { matterManager.parseCommissioningIntentResult(any()) } returns
+            MatterManager.CommissioningFlowOutcome.Success(deviceName = "Kitchen light")
         val handler = createHandler()
         // Drive the handler to the awaiting-intent-result state.
         handler.onStartMatterCommissioning()
@@ -94,12 +113,15 @@ class FrontendMatterThreadHandlerTest {
             handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null))
             expectNoEvents()
         }
+        coVerify { externalBusRepository.send(MatterCommissionFinishMessage(name = "Kitchen light", success = true)) }
         coVerify(exactly = 0) { dialogManager.showMatterThreadTerminal(any()) }
     }
 
     @Test
-    fun `Given Matter is in-flight and RESULT_CANCELED when onMatterThreadIntentResult then emits MatterCancelled snackbar`() = runTest {
+    fun `Given Matter is in-flight and commissioning failed on old server when onMatterThreadIntentResult then reports failure and emits MatterCancelled snackbar`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
+        every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningFlowOutcome.Failed
+        givenServerVersion(HomeAssistantVersion(2026, 6, 0))
         val handler = createHandler()
         handler.onStartMatterCommissioning()
 
@@ -113,6 +135,23 @@ class FrontendMatterThreadHandlerTest {
             )
             cancelAndIgnoreRemainingEvents()
         }
+        coVerify { externalBusRepository.send(MatterCommissionFinishMessage(name = null, success = false)) }
+    }
+
+    @Test
+    fun `Given Matter is in-flight and commissioning failed on 2026_7 server when onMatterThreadIntentResult then reports failure without snackbar`() = runTest {
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
+        every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningFlowOutcome.Failed
+        givenServerVersion(HomeAssistantVersion(2026, 7, 0))
+        val handler = createHandler()
+        handler.onStartMatterCommissioning()
+
+        handler.events.test {
+            handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_CANCELED, null))
+            expectNoEvents()
+        }
+        coVerify { externalBusRepository.send(MatterCommissionFinishMessage(name = null, success = false)) }
+        coVerify(exactly = 0) { dialogManager.showMatterThreadTerminal(any()) }
     }
 
     @Test

@@ -96,6 +96,41 @@ object ImprovDiscoveredDeviceMessage {
 val ImprovDeviceSetupDoneMessage: OutgoingExternalBusMessage = CommandMessage(command = "improv/device_setup_done")
 
 /**
+ * Reports the outcome of the platform Matter commissioning flow to the frontend.
+ *
+ * Sent after the flow launched for a
+ * [io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage]
+ * finishes, on every outcome: the frontend keeps the add-device dialog on its spinner until this
+ * message arrives (see `hasMatterStatusReport` in
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult]).
+ *
+ * @param name The device name the user entered during the flow, prefilled by the frontend in the
+ *   rename step. `null` when the flow failed or provided no name.
+ * @param success Whether the device was commissioned. On `false` the frontend shows its own
+ *   failure feedback and closes the add-device dialog.
+ *
+ * @see CommandMessage
+ */
+object MatterCommissionFinishMessage {
+    operator fun invoke(name: String?, success: Boolean): OutgoingExternalBusMessage = CommandMessage(
+        command = "matter/commission/finish",
+        payload = frontendExternalBusJson.encodeToJsonElement(
+            CommissionFinishPayload(name = name, success = success),
+        ),
+    )
+
+    /**
+     * Whether the frontend acts on this message. Supported since Home Assistant 2026.7; older
+     * frontends ignore it and show no feedback of their own, so the app must surface failures
+     * itself.
+     */
+    fun isHandledByFrontend(version: HomeAssistantVersion?): Boolean = version?.isAtLeast(2026, 7, 0) == true
+
+    @Serializable
+    private data class CommissionFinishPayload(val name: String?, val success: Boolean)
+}
+
+/**
  * Notifies the frontend that the user scanned a code.
  *
  * Sent in response to a [io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage].
