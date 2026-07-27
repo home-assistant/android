@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -155,12 +156,19 @@ fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
                     style = brandTextStyle,
                     modifier = Modifier.padding(bottom = BRAND_TEXT_SPACING),
                 )
+                val ohfLogo = ImageVector.vectorResource(commonR.drawable.ohf_lockup_inline)
                 Image(
-                    imageVector = ImageVector.vectorResource(commonR.drawable.ohf_lockup_inline),
+                    imageVector = ohfLogo,
                     contentDescription = null,
                     modifier = Modifier
                         .padding(bottom = brandBottomPadding)
                         .height(OHF_LOGO_HEIGHT)
+                        // Size by height: the intrinsic size is kept small for the vector lint
+                        // rule, so laying out at intrinsic width would shrink the logo.
+                        .aspectRatio(
+                            ratio = ohfLogo.defaultWidth.value / ohfLogo.defaultHeight.value,
+                            matchHeightConstraintsFirst = true,
+                        )
                         .graphicsLayer { alpha = brandAlpha.value },
                 )
             }
