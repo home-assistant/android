@@ -192,7 +192,7 @@ internal fun FrontendEventHandler(
                 is FrontendEvent.ShowSnackbar -> {
                     val action = event.action
                     val tapped = onShowSnackbar(
-                        resources.getString(event.messageResId),
+                        event.resolveMessage(resources),
                         action?.let { resources.getString(it.labelResId) },
                     )
                     if (tapped && action != null) handle(action.event)

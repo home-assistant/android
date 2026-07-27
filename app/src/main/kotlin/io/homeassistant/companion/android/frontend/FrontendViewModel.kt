@@ -81,6 +81,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
 /** Maximum time to wait for the frontend to load before showing a timeout error. */
@@ -282,6 +283,21 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             _viewState.update { state ->
                 if (state is FrontendViewState.Content) state.copy(canGoBack = canGoBack) else state
             }
+        },
+        onSubresourceSslError = { url ->
+            // Only the host is shown: it is what the certificate failed for, and the rest of the URL
+            // would overflow the snackbar.
+            val host = url?.toHttpUrlOrNull()?.host
+            _events.tryEmit(
+                if (host != null) {
+                    FrontendEvent.ShowSnackbar(
+                        commonR.string.error_ssl_subresource_host,
+                        formatArgs = listOf(host),
+                    )
+                } else {
+                    FrontendEvent.ShowSnackbar(commonR.string.error_ssl_subresource)
+                },
+            )
         },
     )
 

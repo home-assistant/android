@@ -58,6 +58,40 @@ class EntityTest {
     }
 
     @Nested
+    inner class FriendlyNameProperty {
+        @Test
+        fun `Given friendly_name attribute when accessing friendlyName then returns it`() {
+            val entity = createEntity(attributes = mapOf("friendly_name" to "Living Room Light"))
+            assertEquals("Living Room Light", entity.friendlyName)
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = ["", "   "])
+        fun `Given blank friendly_name attribute when accessing friendlyName then returns entityId`(name: String) {
+            val entity = createEntity(attributes = mapOf("friendly_name" to name))
+            assertEquals("light.living_room", entity.friendlyName)
+        }
+
+        @Test
+        fun `Given no friendly_name attribute when accessing friendlyName then returns entityId`() {
+            val entity = createEntity(attributes = emptyMap())
+            assertEquals("light.living_room", entity.friendlyName)
+        }
+
+        @Test
+        fun `Given null friendly_name attribute when accessing friendlyName then returns entityId`() {
+            val entity = createEntity(attributes = mapOf("friendly_name" to null))
+            assertEquals("light.living_room", entity.friendlyName)
+        }
+
+        @Test
+        fun `Given non-string friendly_name attribute when accessing friendlyName then returns its string value`() {
+            val entity = createEntity(attributes = mapOf("friendly_name" to 42))
+            assertEquals("42", entity.friendlyName)
+        }
+    }
+
+    @Nested
     inner class Deserialization {
         private fun entityJson(stateValue: String) = """
             {

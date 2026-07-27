@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
@@ -24,6 +25,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.composable.HAInputChip
 import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
 import io.homeassistant.companion.android.common.compose.composable.HASearchField
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
@@ -45,6 +47,7 @@ fun LazyListScope.catalogUserInputSection() {
     entityPicker()
     switches()
     checkboxes()
+    inputChips()
     radioGroupSection()
 }
 
@@ -182,6 +185,29 @@ private fun LazyListScope.input() {
     }
 }
 
+private fun LazyListScope.inputChips() {
+    catalogSection(title = "Input chips") {
+        CatalogRow {
+            var selected by remember { mutableStateOf(false) }
+            HAInputChip(
+                text = "toggle me",
+                onClick = { selected = !selected },
+                selected = selected,
+                trailingIcon = if (selected) Icons.Default.Close else Icons.Default.Add,
+                trailingIconContentDescription = null,
+            )
+            HAInputChip(text = "without icon", onClick = {})
+            HAInputChip(
+                text = "disabled",
+                onClick = {},
+                enabled = false,
+                trailingIcon = Icons.Default.Add,
+                trailingIconContentDescription = null,
+            )
+        }
+    }
+}
+
 private fun LazyListScope.radioGroupSection() {
     catalogSection(title = "Radio group") {
         var selectedOption by rememberSelectedOption<String>()
@@ -290,28 +316,26 @@ private fun LazyListScope.dropdownMenu() {
 }
 
 private fun LazyListScope.entityPicker() {
-    catalogSection(title = "Entity Pickers") {
-        var selectedEntityId by remember { mutableStateOf<String?>(null) }
+    catalogSection(title = "Entity Pickers (loaded, loading, error)") {
+        CatalogRow {
+            var selectedEntityId by remember { mutableStateOf<String?>(null) }
 
-        EntityPicker(
-            displayState = EntityDisplayState.Loaded(sampleDisplayEntities),
-            selectedEntityId = selectedEntityId,
-            onSelectionChanged = { selectedEntityId = it },
-        )
-    }
-    catalogSection(title = "Entity Picker loading") {
-        EntityPicker(
-            displayState = EntityDisplayState.Loading,
-            selectedEntityId = "light.living_room",
-            onSelectionChanged = {},
-        )
-    }
-    catalogSection(title = "Entity Picker error") {
-        EntityPicker(
-            displayState = EntityDisplayState.Error,
-            selectedEntityId = "light.living_room",
-            onSelectionChanged = {},
-        )
+            EntityPicker(
+                displayState = EntityDisplayState.Loaded(sampleDisplayEntities),
+                selectedEntityId = selectedEntityId,
+                onSelectionChanged = { selectedEntityId = it },
+            )
+            EntityPicker(
+                displayState = EntityDisplayState.Loading,
+                selectedEntityId = "light.living_room",
+                onSelectionChanged = {},
+            )
+            EntityPicker(
+                displayState = EntityDisplayState.Error,
+                selectedEntityId = "light.living_room",
+                onSelectionChanged = {},
+            )
+        }
     }
 }
 
