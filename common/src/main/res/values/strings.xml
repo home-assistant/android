@@ -1006,6 +1006,7 @@
     <string name="webview_creation_failed">WebView failed to initialize, please check and update your system WebView.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
+    <string name="widget_attribute_add">Add attribute</string>
     <string name="widget_background_type_title">Select widget theme</string>
     <string name="widget_background_type_label">Widget theme:</string>
     <string name="widget_background_type_daynight">Light/dark theme</string>
@@ -1054,6 +1055,7 @@
     <string name="widget_template_error">Unable to render the template</string>
     <string name="widget_text_hint_label">Label</string>
     <string name="widget_text_size_default">30</string>
+    <string name="widget_text_size_error">Enter a whole number greater than 0</string>
     <string name="widget_text_size_label">Widget text size:</string>
     <string name="widget_text_size_template">12</string>
     <string name="widget_text_color_black">Black</string>
