@@ -18,6 +18,7 @@ jobs:
   app_build:
     name: Github, Firebase, and Sentry Release
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     permissions:
       contents: write
     steps:
@@ -158,6 +159,7 @@ jobs:
   play_publish:
     name: Play Publish
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     concurrency:
       group: playstore_deploy
     permissions:
