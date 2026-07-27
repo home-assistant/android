@@ -11,6 +11,7 @@ concurrency:
 jobs:
   update-lockfiles:
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     permissions:
       contents: write # To push to the current branch
     steps:
