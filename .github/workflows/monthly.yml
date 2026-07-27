@@ -8,6 +8,7 @@ jobs:
   tag:
     name: Tag Monthly Release
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     permissions:
       actions: write
       contents: write
