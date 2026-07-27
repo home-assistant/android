@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.loading
 
+import android.annotation.SuppressLint
+import android.os.Build
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.VectorConverter
@@ -10,13 +12,18 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -26,20 +33,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
 /**
@@ -50,10 +62,7 @@ import io.homeassistant.companion.android.util.compose.HAPreviews
 private val ICON_SIZE = 112.dp
 
 /** Height of the Open Home Foundation logo, matching the frontend launch screen. */
-private val OHF_LOGO_HEIGHT = 46.dp
-
-/** Opacity of the Open Home Foundation logo, matching the frontend launch screen. */
-private const val OHF_LOGO_ALPHA = 0.66f
+private val OHF_LOGO_HEIGHT = HADimens.SPACE6
 
 /**
  * Duration of the fade-in of the branding. The system splash screen only shows the centered icon,
@@ -100,6 +109,12 @@ private val LOGO_DOTS = listOf(
 /** Minimum gap kept between the icon and the branding when the icon slides up. */
 private val MIN_ICON_SPACING = HADimens.SPACE6
 
+/** Keeps the branding text off the screen edges on narrow screens. */
+private val BRAND_HORIZONTAL_PADDING = HADimens.SPACE4
+
+/** Gap between the branding text and the Open Home Foundation logo below it. */
+private val BRAND_TEXT_SPACING = HADimens.SPACE1
+
 @Composable
 fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
     // Skip the fade-in in previews and screenshot tests, which capture the first frame
@@ -110,26 +125,80 @@ fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
     }
     BoxWithConstraints(
         contentAlignment = Alignment.Center,
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .splashScreenArea(),
     ) {
         val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         val brandBottomPadding = max(navigationBarsPadding, HADimens.SPACE12)
+        val brandText = stringResource(commonR.string.loading_screen_project_from)
+        val brandTextStyle = HATextStyle.BodyMedium.copy(
+            color = LocalHAColorScheme.current.colorTextDisabled,
+        )
+        val brandHeight = brandHeight(
+            text = brandText,
+            style = brandTextStyle,
+            containerWidthPx = constraints.maxWidth,
+            bottomPadding = brandBottomPadding,
+        )
 
-        LoadingIcon(offset = if (showBrand) iconOffset(maxHeight, brandBottomPadding) else 0.dp)
+        LoadingIcon(offset = if (showBrand) iconOffset(maxHeight, brandHeight) else 0.dp)
         if (showBrand) {
-            Image(
-                imageVector = ImageVector.vectorResource(commonR.drawable.ohf_badge),
-                contentDescription = null,
-                alpha = OHF_LOGO_ALPHA,
-                colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnNeutralNormal),
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = brandBottomPadding)
-                    .height(OHF_LOGO_HEIGHT)
-                    .graphicsLayer { alpha = brandAlpha.value },
-            )
+                    .padding(horizontal = BRAND_HORIZONTAL_PADDING),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = brandText,
+                    style = brandTextStyle,
+                    modifier = Modifier.padding(bottom = BRAND_TEXT_SPACING),
+                )
+                Image(
+                    imageVector = ImageVector.vectorResource(commonR.drawable.ohf_lockup_inline),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(bottom = brandBottomPadding)
+                        .height(OHF_LOGO_HEIGHT)
+                        .graphicsLayer { alpha = brandAlpha.value },
+                )
+            }
         }
     }
+}
+
+/**
+ * Constrains content to the area the launch screen draws in, so this screen's centered icon lines
+ * up with it.
+ *
+ * Before API 31 the starting window is laid out between the system bars, so its centered launch
+ * icon sits below the true screen center.
+ * From API 31 the system splash screen draws edge-to-edge and content stays
+ * centered on the full screen.
+ */
+@SuppressLint("ComposeRedundantComposable")
+@Composable
+private fun Modifier.splashScreenArea(): Modifier = if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
+    this
+} else {
+    windowInsetsPadding(WindowInsets.systemBars)
+        .consumeWindowInsets(WindowInsets.systemBars)
+}
+
+/**
+ * Height of the branding block at the bottom of the screen.
+ */
+@Composable
+private fun brandHeight(text: String, style: TextStyle, containerWidthPx: Int, bottomPadding: Dp): Dp {
+    val textMeasurer = rememberTextMeasurer()
+    val textHeight = with(LocalDensity.current) {
+        val textMaxWidth = (containerWidthPx - (BRAND_HORIZONTAL_PADDING * 2).roundToPx()).coerceAtLeast(0)
+        textMeasurer
+            .measure(text, style, constraints = Constraints(maxWidth = textMaxWidth))
+            .size.height.toDp()
+    }
+    return textHeight + BRAND_TEXT_SPACING + OHF_LOGO_HEIGHT + bottomPadding
 }
 
 /**
@@ -195,10 +264,13 @@ private fun logoDotScales(): List<State<Float>> {
  * The icon is centered like the system splash screen, but short screens (landscape phones
  * especially) leave too little room below it, so it moves up by exactly the amount needed instead
  * of being overlapped by the branding.
+ *
+ * @param brandHeight Total height of the branding block at the bottom of the screen, including
+ *   its bottom padding.
  */
-private fun iconOffset(screenHeight: Dp, brandBottomPadding: Dp): Dp {
+private fun iconOffset(screenHeight: Dp, brandHeight: Dp): Dp {
     val iconBottom = screenHeight / 2 + ICON_SIZE / 2
-    val brandTop = screenHeight - brandBottomPadding - OHF_LOGO_HEIGHT
+    val brandTop = screenHeight - brandHeight
     val spaceAboveIcon = (screenHeight / 2 - ICON_SIZE / 2).coerceAtLeast(0.dp)
     return (iconBottom + MIN_ICON_SPACING - brandTop).coerceIn(0.dp, spaceAboveIcon)
 }
