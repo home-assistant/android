@@ -3,6 +3,7 @@
     <string name="aa_launch_native">Native mode</string>
     <string name="aa_driving_optimized_change">Use Home Assistant in drive mode?</string>
     <string name="aa_navigation">Navigation</string>
+    <string name="aa_no_connection_title">No connection</string>
     <string name="aa_no_entities_with_locations">No entities with locations found</string>
     <string name="aa_change_server">Change server</string>
     <string name="account">Account</string>

@@ -45,6 +45,9 @@ class HaCarAppService : CarAppService() {
     @Inject
     lateinit var prefsRepository: PrefsRepository
 
+    @Inject
+    lateinit var connectionAvailabilityMonitor: ConnectionAvailabilityMonitor
+
     private val serverId = MutableStateFlow(0)
     private val allEntities = MutableStateFlow<Map<String, Entity>>(emptyMap())
     private var allEntitiesJob: Job? = null
@@ -66,6 +69,9 @@ class HaCarAppService : CarAppService() {
                     serverManager.getServer()?.let {
                         loadEntities(this, it.id)
                     }
+                }
+                lifecycleScope.launch {
+                    observeConnectionAvailability()
                 }
             }
 
@@ -121,6 +127,21 @@ class HaCarAppService : CarAppService() {
                         carContext,
                         serverManager,
                     )
+                }
+            }
+
+            private suspend fun observeConnectionAvailability() {
+                connectionAvailabilityMonitor.observeAvailability().collect { state ->
+                    val screenManager = carContext.getCarService(ScreenManager::class.java)
+                    val topIsNoConnection = screenManager.top is NoConnectionScreen
+                    when (state) {
+                        ConnectionAvailability.Unavailable -> if (!topIsNoConnection) {
+                            screenManager.push(NoConnectionScreen(carContext))
+                        }
+                        ConnectionAvailability.Available -> if (topIsNoConnection) {
+                            screenManager.pop()
+                        }
+                    }
                 }
             }
         }
