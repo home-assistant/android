@@ -1,12 +1,18 @@
 name: E2E
 
 on: # yamllint disable-line rule:truthy
+  # workflow_run only fires from the workflow definition on the default branch.
+  # workflow_call lets pr.yml invoke this PR's version of the workflow before it
+  # lands on main (see the TOREVERT job in pr.yml).
+  workflow_call:
   workflow_run:
     workflows: ['Pull Request']
     types: [completed]
 
+# The fallbacks after || cover the workflow_call mode, where the event is the
+# caller's pull_request and the workflow_run context is empty.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_repository.full_name || github.repository }}-${{ github.event.workflow_run.head_branch || github.head_ref }}
   cancel-in-progress: true
 
 permissions: {}
@@ -26,9 +32,11 @@ jobs:
     name: "Emulator tests"
     runs-on: ubuntu-latest
     environment: ui-test
+    # In workflow_call mode the caller's `needs` already gates this job.
     if: >
-      github.event.workflow_run.event == 'pull_request'
-      && github.event.workflow_run.conclusion == 'success'
+      github.event_name != 'workflow_run'
+      || (github.event.workflow_run.event == 'pull_request'
+      && github.event.workflow_run.conclusion == 'success')
     permissions:
       id-token: write  # Needed for OIDC authentication
       actions: read  # Needed for retrieving artifacts
@@ -49,8 +57,11 @@ jobs:
       # under an arbitrary existing check suite on that commit; the suite
       # cannot be chosen via the API. Every input here comes from the trusted
       # workflow_run context (no fork-controlled data is consumed).
+      # A workflow_call run is part of the PR run and shows natively, so the
+      # check is only needed in workflow_run mode.
       - name: Create PR check (in progress)
         id: create_check
+        if: github.event_name == 'workflow_run'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
@@ -106,7 +117,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: e2e-inputs
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id || github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: e2e-inputs
 
@@ -332,7 +343,7 @@ jobs:
       - name: Download artifacts from Pull Request run
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id || github.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: pr-artifacts
 
@@ -367,7 +378,7 @@ jobs:
       # action version, re-check which event fields it reads and update this.
       - name: Build minimal event payload
         env:
-          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name || github.event.pull_request.head.repo.full_name }}
         run: |
           jq -n --arg head "$HEAD_REPO" \
             '{pull_request: {head: {repo: {full_name: $head}}}}' > event.json
@@ -375,8 +386,8 @@ jobs:
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@d0a4676d0e0b938bc201470d88276b7c74c712b3 # v2.24.0
         with:
-          commit: ${{ github.event.workflow_run.head_sha }}
-          event_name: ${{ github.event.workflow_run.event }}
+          commit: ${{ github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
+          event_name: ${{ github.event.workflow_run.event || github.event_name }}
           event_file: "event.json"
           comment_mode: "failures"
           action_fail: true
