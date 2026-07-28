@@ -136,7 +136,7 @@ fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
         val brandTextStyle = HATextStyle.BodyMedium.copy(
             color = LocalHAColorScheme.current.colorTextDisabled,
         )
-        val ohfLogo = ImageVector.vectorResource(commonR.drawable.ohf_lockup_inline)
+        val ohfLogo = ImageVector.vectorResource(commonR.drawable.ohf_lockup_inline_monochrome)
         val ohfLogoRatio = ohfLogo.defaultWidth.value / ohfLogo.defaultHeight.value
         // Shrink the logo below its nominal height when the screen is too narrow for it at
         // full size, so it fits without losing its aspect ratio.
