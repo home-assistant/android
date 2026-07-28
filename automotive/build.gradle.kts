@@ -89,6 +89,11 @@ android {
     }
 }
 
+detekt {
+    // Automotive reuses the app's Kotlin source sets, which are already analyzed by :app.
+    ignoredFlavors = listOf("full", "minimal")
+}
+
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:app` module.
     implementation(libs.car.automotive)

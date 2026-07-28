@@ -174,9 +174,9 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      # Since `build-logic` is added with `includeBuild` we have to call detekt explicitly on `:convention`.
+      # Since `build-logic` is added with `includeBuild` we have to call detektMain explicitly on `:convention`.
       - name: Validate Detekt
-        run: ./gradlew detekt :build-logic:convention:detekt --continue
+        run: ./gradlew detektMain :build-logic:convention:detektMain --continue
 
       - uses: ./.github/actions/upload-sarif-results
         if: always()

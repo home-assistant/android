@@ -1,11 +1,23 @@
+complexity:
+  LongParameterList:
+    ignoreAnnotated:
+      - Composable
+  TooManyFunctions:
+    ignoreAnnotatedFunctions:
+      - Preview
+
 exceptions:
   TooGenericExceptionCaught:
     active: false
 
 naming:
   FunctionNaming:
-    active: false
+    ignoreAnnotated:
+      - Composable
 
 style:
   MaxLineLength:
     active: false
+  UnusedPrivateFunction:
+    ignoreAnnotated:
+      - Preview

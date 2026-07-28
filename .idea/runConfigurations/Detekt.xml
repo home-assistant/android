@@ -10,8 +10,8 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="detekt" />
-          <option value=":build-logic:convention:detekt" />
+          <option value="detektMain" />
+          <option value=":build-logic:convention:detektMain" />
         </list>
       </option>
       <option name="vmOptions" />
