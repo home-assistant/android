@@ -600,6 +600,13 @@ class EntitiesForDisplayManagerTest {
             }
 
             @Test
+            fun `Given not an alarm entity when resolving then there is no alarm display`() = runTest {
+                val items = resolve(entity("light.bed"))
+
+                assertNull(items.single().alarm)
+            }
+
+            @Test
             fun `Given display entry with a blank name when resolving then name falls back to friendly name`() = runTest {
                 givenDisplayEntries(EntityRegistryDisplayEntry(entityId = "light.bed", name = " "))
 

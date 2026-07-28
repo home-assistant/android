@@ -103,6 +103,9 @@ interface EntityDisplay {
     val isHidden: Boolean
     val entityCategory: EntityCategory?
     val displayPrecision: Int?
+
+    /** Alarm panel display information. */
+    val alarm: AlarmDisplay?
     val labels: List<String>
 
     val domain: String get() = entityId.substringBefore('.')
@@ -129,6 +132,7 @@ data class EntityDisplayWithoutContext(
     override val isHidden: Boolean = false,
     override val entityCategory: EntityCategory? = null,
     override val displayPrecision: Int? = null,
+    override val alarm: AlarmDisplay? = null,
     override val labels: List<String> = emptyList(),
 ) : EntityDisplay {
 
@@ -164,6 +168,7 @@ data class EntityDisplayWithoutContext(
         isHidden = isHidden,
         entityCategory = entityCategory,
         displayPrecision = displayPrecision,
+        alarm = entity.alarmDisplay(),
         labels = labels,
     )
 

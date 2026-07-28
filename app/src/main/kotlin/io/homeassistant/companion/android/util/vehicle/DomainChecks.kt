@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.FAN_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 
 val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
     ALARM_CONTROL_PANEL_DOMAIN to R.string.alarm_control_panels,
@@ -50,3 +51,5 @@ fun canNavigate(entity: Entity): Boolean {
             ((entity.attributes["longitude"] as? Number)?.toDouble() != null)
         )
 }
+
+fun canNavigate(entity: EntityDisplay): Boolean = entity.domain in MAP_DOMAINS && entity.coordinates != null
