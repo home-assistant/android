@@ -128,7 +128,6 @@ jobs:
             e2e-inputs/app-minimal-debug.apk \
             e2e-inputs/app-full-debug-androidTest.apk \
             e2e-inputs/app-minimal-debug-androidTest.apk \
-            e2e-inputs/maestro-app-full-debug.apk \
             e2e-inputs/maestro-flows/onboarding.yaml \
             e2e-inputs/homeassistant-config/configuration.yaml \
             e2e-inputs/homeassistant-config/.storage/auth \
@@ -278,17 +277,14 @@ jobs:
       - name: Run instrumentation tests minimal
         run: marathon -m Marathonfile-minimal
 
-      # The Maestro APK is a separate build with StrictMode disabled so
-      # violations don't kill the app mid flow; instrumentation above keeps
-      # StrictMode enforcement.
-      - name: Install Maestro APK
+      - name: Install app for Maestro
         env:
           SERIALS: ${{ steps.device.outputs.serials }}
         run: |
           ADB="$ANDROID_HOME/platform-tools/adb"
           PIDS=""
           for SERIAL in $SERIALS; do
-            $ADB -s "$SERIAL" install -r e2e-inputs/maestro-app-full-debug.apk &
+            $ADB -s "$SERIAL" install -r e2e-inputs/app-full-debug.apk &
             PIDS="$PIDS $!"
           done
           for PID in $PIDS; do

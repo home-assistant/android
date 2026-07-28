@@ -29,16 +29,12 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      # The Maestro APK disables StrictMode so violations don't kill the app
-      # mid flow; the instrumentation APKs below keep StrictMode enforcement.
-      - name: Build Maestro APK (StrictMode disabled)
-        run: |
-          ./gradlew :app:assembleFullDebug -PnoStrictMode -Pabis=x86,x86_64
-          mkdir -p e2e-inputs
-          cp app/build/outputs/apk/full/debug/app-full-debug.apk e2e-inputs/maestro-app-full-debug.apk
-
-      - name: Build instrumentation APKs
-        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86,x86_64
+      # StrictMode is disabled: with it on, HAStrictMode FailFasts the app on
+      # violations coming from library code (e.g. appcompat reading the stored
+      # app locales on the main thread on API 31/32), killing the Maestro flow
+      # and failing instrumentation tests on issues we cannot fix.
+      - name: Build APKs
+        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -PnoStrictMode -Pabis=x86,x86_64
 
       # The Maestro flows and Home Assistant config are shipped alongside the
       # APKs so the E2E workflow tests this PR's versions of them. They are
@@ -48,6 +44,7 @@ jobs:
       # upload-artifact silently drops by default.
       - name: Stage E2E inputs
         run: |
+          mkdir -p e2e-inputs
           cp app/build/outputs/apk/full/debug/app-full-debug.apk e2e-inputs/
           cp app/build/outputs/apk/minimal/debug/app-minimal-debug.apk e2e-inputs/
           cp app/build/outputs/apk/androidTest/full/debug/app-full-debug-androidTest.apk e2e-inputs/
