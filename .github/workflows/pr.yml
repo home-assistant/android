@@ -42,8 +42,10 @@ jobs:
 
       # The Maestro flows and Home Assistant config are shipped alongside the
       # APKs so the E2E workflow tests this PR's versions of them. They are
-      # copied out of their dotted directories because upload-artifact skips
-      # hidden paths by default.
+      # copied out of their dotted directories, and include-hidden-files is
+      # required on the upload: the Home Assistant config contains the
+      # pre-provisioned users in the hidden .storage directory, which
+      # upload-artifact silently drops by default.
       - name: Stage E2E inputs
         run: |
           cp app/build/outputs/apk/full/debug/app-full-debug.apk e2e-inputs/
@@ -53,12 +55,23 @@ jobs:
           cp -R .maestro e2e-inputs/maestro-flows
           cp -R .github/e2e/homeassistant e2e-inputs/homeassistant-config
 
+      # One emulator per supported API level so the instrumentation tests cover
+      # the whole supported range, like the previous emulator.wtf setup.
+      - name: Build device list
+        run: |
+          MIN=$(grep '^androidSdk-min' gradle/libs.versions.toml | cut -d'"' -f2)
+          MAX=$(grep '^androidSdk-target' gradle/libs.versions.toml | cut -d'"' -f2)
+          for v in $(seq "$MIN" "$MAX"); do
+            echo "model=Pixel7,version=$v"
+          done > e2e-inputs/devices.txt
+
       - name: Upload E2E inputs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: e2e-inputs
           retention-days: 1
           if-no-files-found: error
+          include-hidden-files: true
           path: e2e-inputs
 
   # TOREVERT: temporary invocation of the E2E workflow through workflow_call so

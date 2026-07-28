@@ -130,12 +130,32 @@ jobs:
             e2e-inputs/app-minimal-debug-androidTest.apk \
             e2e-inputs/maestro-app-full-debug.apk \
             e2e-inputs/maestro-flows/onboarding.yaml \
-            e2e-inputs/homeassistant-config/configuration.yaml; do
+            e2e-inputs/homeassistant-config/configuration.yaml \
+            e2e-inputs/homeassistant-config/.storage/auth \
+            e2e-inputs/devices.txt; do
             if [ ! -s "$f" ]; then
               echo "::error::Missing or empty E2E input: $f"
               exit 1
             fi
           done
+
+      - name: Load device list
+        id: devices
+        # The artifact comes from a PR build that may originate from a fork; validate
+        # every line strictly before piping the contents into GITHUB_OUTPUT to prevent
+        # heredoc-terminator injection.
+        run: |
+          while IFS= read -r line; do
+            if [[ ! "$line" =~ ^model=Pixel7,version=(2[3-9]|3[0-9]|40)$ ]]; then
+              echo "::error::Invalid line in devices.txt"
+              exit 1
+            fi
+          done < e2e-inputs/devices.txt
+          {
+            echo 'list<<DEVICES_EOF'
+            cat e2e-inputs/devices.txt
+            echo 'DEVICES_EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 21
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
@@ -160,11 +180,16 @@ jobs:
           unzip -q marathon.zip -d "$HOME/marathon-cli"
           echo "$HOME/marathon-cli/marathon-${MARATHON_VERSION}/bin" >> "$GITHUB_PATH"
 
+      # os-version pooling groups the emulators into one pool per API level and
+      # runs the full suite in every pool, instead of sharding the tests across
+      # all devices.
       - name: Prepare Marathon configuration
         run: |
           cat > Marathonfile-full <<'EOF'
           name: "app-full-debug"
           outputDir: "marathon-results/full"
+          poolingStrategy:
+            type: "os-version"
           vendorConfiguration:
             type: "Android"
             applicationApk: "e2e-inputs/app-full-debug.apk"
@@ -174,6 +199,8 @@ jobs:
           cat > Marathonfile-minimal <<'EOF'
           name: "app-minimal-debug"
           outputDir: "marathon-results/minimal"
+          poolingStrategy:
+            type: "os-version"
           vendorConfiguration:
             type: "Android"
             applicationApk: "e2e-inputs/app-minimal-debug.apk"
@@ -209,32 +236,41 @@ jobs:
         id: emulator
         uses: emulator-wtf/actions/use-emulator@72f86422814fad7432a286a1b29699cc9e73d561 # v1.1.0
         with:
-          devices: |
-            model=Pixel7,version=34
+          devices: ${{ steps.devices.outputs.list }}
           egress-tunnel: true
           egress-localhost-fwd-ip: ${{ env.E2E_FORWARD_IP }}
           dns-override: |
             ${{ env.E2E_HOME_ASSISTANT_HOST }}=${{ env.E2E_FORWARD_IP }}
           max-time-limit: 45m
 
-      - name: Resolve emulator serial
+      - name: Wait for emulators
         id: device
         run: |
           ADB="$ANDROID_HOME/platform-tools/adb"
-          $ADB wait-for-device
+          EXPECTED=$(grep -c . e2e-inputs/devices.txt)
 
-          SERIAL=$($ADB devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')
-          if [ -z "$SERIAL" ]; then
-            echo "::error::No emulator connected through adb"
+          for _ in $(seq 1 120); do
+            SERIALS=$($ADB devices | awk 'NR > 1 && $2 == "device" { print $1 }')
+            if [ "$(echo "$SERIALS" | grep -c .)" -eq "$EXPECTED" ]; then
+              break
+            fi
+            sleep 5
+          done
+
+          COUNT=$(echo "$SERIALS" | grep -c .)
+          if [ "$COUNT" -ne "$EXPECTED" ]; then
+            echo "::error::Expected $EXPECTED emulators connected through adb, got $COUNT"
             $ADB devices
             exit 1
           fi
 
-          until [ "$($ADB -s "$SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
-            sleep 1
+          for SERIAL in $SERIALS; do
+            until [ "$($ADB -s "$SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+              sleep 1
+            done
           done
 
-          echo "serial=$SERIAL" >> "$GITHUB_OUTPUT"
+          echo "serials=$(echo $SERIALS | xargs)" >> "$GITHUB_OUTPUT"
 
       - name: Run instrumentation tests full
         run: marathon -m Marathonfile-full
@@ -247,20 +283,29 @@ jobs:
       # StrictMode enforcement.
       - name: Install Maestro APK
         env:
-          ANDROID_SERIAL: ${{ steps.device.outputs.serial }}
+          SERIALS: ${{ steps.device.outputs.serials }}
         run: |
-          "$ANDROID_HOME/platform-tools/adb" -s "$ANDROID_SERIAL" install -r e2e-inputs/maestro-app-full-debug.apk
+          ADB="$ANDROID_HOME/platform-tools/adb"
+          PIDS=""
+          for SERIAL in $SERIALS; do
+            $ADB -s "$SERIAL" install -r e2e-inputs/maestro-app-full-debug.apk &
+            PIDS="$PIDS $!"
+          done
+          for PID in $PIDS; do
+            wait "$PID"
+          done
 
+      # --shard-all runs the flow on every connected device in parallel.
       - name: Run Maestro onboarding flow
         env:
-          ANDROID_SERIAL: ${{ steps.device.outputs.serial }}
           HOME_ASSISTANT_URL: ${{ env.E2E_HOME_ASSISTANT_URL }}
           HOME_ASSISTANT_USERNAME: ${{ env.E2E_HOME_ASSISTANT_USERNAME }}
           HOME_ASSISTANT_PASSWORD: ${{ env.E2E_HOME_ASSISTANT_PASSWORD }}
         run: |
           export PATH="$PATH:$HOME/.maestro/bin"
 
-          maestro --device "$ANDROID_SERIAL" test \
+          maestro test \
+            --shard-all "$(grep -c . e2e-inputs/devices.txt)" \
             --test-output-dir maestro-results \
             -e HOME_ASSISTANT_URL="$HOME_ASSISTANT_URL" \
             -e HOME_ASSISTANT_USERNAME="$HOME_ASSISTANT_USERNAME" \
@@ -268,11 +313,14 @@ jobs:
             e2e-inputs/maestro-flows/onboarding.yaml
 
       - name: Capture Android logs
-        if: always() && steps.device.outputs.serial != ''
+        if: always() && steps.device.outputs.serials != ''
         env:
-          ANDROID_SERIAL: ${{ steps.device.outputs.serial }}
+          SERIALS: ${{ steps.device.outputs.serials }}
         run: |
-          "$ANDROID_HOME/platform-tools/adb" -s "$ANDROID_SERIAL" logcat -d > logcat.txt
+          ADB="$ANDROID_HOME/platform-tools/adb"
+          for SERIAL in $SERIALS; do
+            $ADB -s "$SERIAL" logcat -d > "logcat-${SERIAL//:/-}.txt"
+          done
 
       - name: Capture Home Assistant logs
         if: always() && steps.homeassistant.outputs.containername != ''
@@ -300,7 +348,7 @@ jobs:
             homeassistant.log
             homeassistant-file.log
             homeassistant-container.json
-            logcat.txt
+            logcat-*.txt
             marathon-results
             maestro-results
 
