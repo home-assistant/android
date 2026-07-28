@@ -951,7 +951,7 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
     }
 
     if (icon == null) {
-        val unitOfMeasurement = entity.attributes["unit_of_measurement"]
+        val unitOfMeasurement = entity.unitOfMeasurement()
         if (unitOfMeasurement != null && unitOfMeasurement in listOf("°C", "°F")) {
             icon = Icon3.cmd_thermometer
         }
@@ -1041,7 +1041,7 @@ val Entity.friendlyName: String
  * through `EntitiesForDisplayManager`.
  */
 fun Entity.friendlyState(context: Context, appendUnitOfMeasurement: Boolean = false): String =
-    friendlyState(displayPrecision = null, appendUnitOfMeasurement = appendUnitOfMeasurement).resolve(context)
+    friendlyState(displayPrecision = null).resolve(context, withUnit = appendUnitOfMeasurement)
 
 fun Entity.friendlyState(
     context: Context,
@@ -1049,10 +1049,14 @@ fun Entity.friendlyState(
     appendUnitOfMeasurement: Boolean = false,
 ): String = friendlyState(
     displayPrecision = options?.sensor?.let { it.displayPrecision ?: it.suggestedDisplayPrecision },
-    appendUnitOfMeasurement = appendUnitOfMeasurement,
-).resolve(context)
+).resolve(context, withUnit = appendUnitOfMeasurement)
 
 fun Entity.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
+
+/** The unit of measurement of the entity, null when it has none or it is blank. */
+fun Entity.unitOfMeasurement(): String? = attributes["unit_of_measurement"]?.toString()?.takeIf {
+    it.isNotBlank()
+}
 
 fun Entity.isExecuting() = when (state) {
     "arming" -> true
