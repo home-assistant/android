@@ -62,7 +62,7 @@ import io.homeassistant.companion.android.util.compose.HAPreviews
  */
 private val ICON_SIZE = 112.dp
 
-/** Height of the Open Home Foundation logo, matching the frontend launch screen. */
+/** Height of the Open Home Foundation logo, matching the frontend launch screen, on screens wide enough for it. */
 private val OHF_LOGO_HEIGHT = HADimens.SPACE6
 
 /**
@@ -132,14 +132,21 @@ fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
     ) {
         val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         val brandBottomPadding = max(navigationBarsPadding, HADimens.SPACE12)
-        val brandText = stringResource(commonR.string.loading_screen_project_from)
+        val brandText = stringResource(commonR.string.loading_screen_project_from).uppercase()
         val brandTextStyle = HATextStyle.BodyMedium.copy(
             color = LocalHAColorScheme.current.colorTextDisabled,
         )
+        val ohfLogo = ImageVector.vectorResource(commonR.drawable.ohf_lockup_inline)
+        val ohfLogoRatio = ohfLogo.defaultWidth.value / ohfLogo.defaultHeight.value
+        // Shrink the logo below its nominal height when the screen is too narrow for it at
+        // full size, so it fits without losing its aspect ratio.
+        val ohfLogoHeight = ((maxWidth - BRAND_HORIZONTAL_PADDING * 2) / ohfLogoRatio)
+            .coerceIn(0.dp, OHF_LOGO_HEIGHT)
         val brandHeight = brandHeight(
             text = brandText,
             style = brandTextStyle,
             containerWidthPx = constraints.maxWidth,
+            logoHeight = ohfLogoHeight,
             bottomPadding = brandBottomPadding,
         )
 
@@ -156,17 +163,16 @@ fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
                     style = brandTextStyle,
                     modifier = Modifier.padding(bottom = BRAND_TEXT_SPACING),
                 )
-                val ohfLogo = ImageVector.vectorResource(commonR.drawable.ohf_lockup_inline)
                 Image(
                     imageVector = ohfLogo,
                     contentDescription = null,
                     modifier = Modifier
                         .padding(bottom = brandBottomPadding)
-                        .height(OHF_LOGO_HEIGHT)
+                        .height(ohfLogoHeight)
                         // Size by height: the intrinsic size is kept small for the vector lint
                         // rule, so laying out at intrinsic width would shrink the logo.
                         .aspectRatio(
-                            ratio = ohfLogo.defaultWidth.value / ohfLogo.defaultHeight.value,
+                            ratio = ohfLogoRatio,
                             matchHeightConstraintsFirst = true,
                         )
                         .graphicsLayer { alpha = brandAlpha.value },
@@ -198,7 +204,7 @@ private fun Modifier.splashScreenArea(): Modifier = if (SdkVersion.isAtLeast(Bui
  * Height of the branding block at the bottom of the screen.
  */
 @Composable
-private fun brandHeight(text: String, style: TextStyle, containerWidthPx: Int, bottomPadding: Dp): Dp {
+private fun brandHeight(text: String, style: TextStyle, containerWidthPx: Int, logoHeight: Dp, bottomPadding: Dp): Dp {
     val textMeasurer = rememberTextMeasurer()
     val textHeight = with(LocalDensity.current) {
         val textMaxWidth = (containerWidthPx - (BRAND_HORIZONTAL_PADDING * 2).roundToPx()).coerceAtLeast(0)
@@ -206,7 +212,7 @@ private fun brandHeight(text: String, style: TextStyle, containerWidthPx: Int, b
             .measure(text, style, constraints = Constraints(maxWidth = textMaxWidth))
             .size.height.toDp()
     }
-    return textHeight + BRAND_TEXT_SPACING + OHF_LOGO_HEIGHT + bottomPadding
+    return textHeight + BRAND_TEXT_SPACING + logoHeight + bottomPadding
 }
 
 /**
