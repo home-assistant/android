@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
-import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
@@ -165,9 +164,9 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
         selectedEntityMutex.withLock {
             val listEntityId = selectedEntityId!!
 
-            val integrationRepository = serverManager.integrationRepository(selectedServerId)
             val webSocketRepository = serverManager.webSocketRepository(selectedServerId)
-            val name = integrationRepository.getEntity(listEntityId)?.friendlyName
+            // The selection is valid, so the name is the one already resolved for the picker
+            val name = (displayEntities.value as? EntityDisplayState.Loaded)?.entity(listEntityId)?.name
             val todos = webSocketRepository.getTodos(listEntityId)?.response?.get(listEntityId)?.items.orEmpty()
 
             return TodoWidgetEntity(
