@@ -21,8 +21,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import java.time.LocalDateTime
@@ -325,7 +326,7 @@ class EntityWidgetConfigureScreenTest {
         val newWidgetState = EntityWidgetConfigureState(
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
-            entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem(ENTITY))),
+            entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(ENTITY)))),
         )
 
         val configuredState = newWidgetState.copy(
