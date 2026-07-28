@@ -1024,8 +1024,8 @@ suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository:
 }
 
 @Deprecated(
-    "The friendly name is not the name to display, it ignores the entity registry. Resolve the " +
-        "display name with EntitiesForDisplayManager, which reads it from EntityDisplayItem.name.",
+    "The friendly name is no longer used for display, as it ignores the entity registry. Resolve the " +
+        "display name with EntitiesForDisplayManager, which reads it from EntityDisplay.name.",
 )
 val Entity.friendlyName: String
     get() = attributes["friendly_name"]?.toString()?.takeIf { it.isNotBlank() } ?: entityId

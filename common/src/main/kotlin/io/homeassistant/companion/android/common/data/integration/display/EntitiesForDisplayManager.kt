@@ -58,9 +58,6 @@ private sealed interface ObserveEvent {
 }
 
 /**
- * Registry data fetched once per resolution, indexed by id for the merge.
- */
-/**
  * Entity registry of a server, the source of everything an [EntityDisplayWithoutContext] resolves beyond the
  * entity state: servers >= 2024.10 provide the display entries, older ones the classic entries.
  */
@@ -148,7 +145,7 @@ private data class RegistrySnapshot(
 )
 
 /**
- * Use case that resolves the display information (name, area, floor, device, icon, hidden,
+ * Manager that resolves the display information (name, area, floor, device, icon, hidden,
  * category, precision, labels) for the given entities, from the bandwidth-efficient
  * `config/entity_registry/list_for_display` command, falling back to the classic entity registry
  * when the server is too old for it (see [WebSocketRepository.getEntityRegistryDisplay]).
