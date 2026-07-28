@@ -20,30 +20,24 @@ import java.util.Locale
 @Immutable
 sealed interface FriendlyState {
     /**
-     * Resolves the display text, localizing with [context]. The unit of measurement is left out;
-     * use `resolve(context, withUnit = true)` to append it.
+     * Resolves the display text, appending the unit of measurement when [withUnit] is true and
+     * the state carries one ([WithUnit]).
      */
-    fun resolve(context: Context): String
-
-    /**
-     * Resolves the display text, dropping the unit of measurement when [withUnit] is false. Only
-     * [WithUnit] carries a unit, so the other states resolve the same regardless of the flag.
-     */
-    fun resolve(context: Context, withUnit: Boolean): String = resolve(context)
+    fun resolve(context: Context, withUnit: Boolean = false): String = resolve(context)
 
     /** A translated state, see the `state_*` string resources. */
     data class Resource(@StringRes val resId: Int) : FriendlyState {
-        override fun resolve(context: Context): String = context.getString(resId)
+        override fun resolve(context: Context, withUnit: Boolean): String = context.getString(resId)
     }
 
     /** Text needing no localization, like a precision-formatted number. */
     data class Literal(val value: String) : FriendlyState {
-        override fun resolve(context: Context): String = value
+        override fun resolve(context: Context, withUnit: Boolean): String = value
     }
 
     /** A timestamp state shown relative to now, resolved at render time so it stays current. */
     data class RelativeTime(val epochMillis: Long) : FriendlyState {
-        override fun resolve(context: Context): String = DateUtils.getRelativeTimeSpanString(
+        override fun resolve(context: Context, withUnit: Boolean): String = DateUtils.getRelativeTimeSpanString(
             epochMillis,
             System.currentTimeMillis(),
             0,
@@ -56,8 +50,6 @@ sealed interface FriendlyState {
      * leaves it out, `resolve(context, withUnit = true)` appends it.
      */
     data class WithUnit(val state: FriendlyState, val unit: String) : FriendlyState {
-        override fun resolve(context: Context): String = resolve(context, withUnit = false)
-
         override fun resolve(context: Context, withUnit: Boolean): String =
             if (withUnit) "${state.resolve(context)} $unit" else state.resolve(context)
     }
