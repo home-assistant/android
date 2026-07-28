@@ -13,29 +13,26 @@ import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.getCoverPosition
-import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 
 @RequiresApi(Build.VERSION_CODES.R)
 object CoverControl : HaControl {
-    private const val SUPPORT_SET_POSITION = 4
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity,
+        item: EntityDisplayWithContext,
         info: HaControlInfo,
     ): Control.StatefulBuilder {
-        val position = entity.getCoverPosition()
+        val position = item.coverControls?.position
         control.setControlTemplate(
-            if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_POSITION == SUPPORT_SET_POSITION) {
+            if (item.coverControls?.supportsSetPosition == true) {
                 ToggleRangeTemplate(
-                    entity.entityId,
-                    entity.isActive(),
+                    item.entityId,
+                    item.isActive,
                     "",
                     RangeTemplate(
-                        entity.entityId,
+                        item.entityId,
                         position?.min ?: 0f,
                         position?.max ?: 100f,
                         position?.value ?: 0f,
@@ -45,9 +42,9 @@ object CoverControl : HaControl {
                 )
             } else {
                 ToggleTemplate(
-                    entity.entityId,
+                    item.entityId,
                     ControlButton(
-                        entity.isActive(),
+                        item.isActive,
                         "Description",
                     ),
                 )
@@ -56,7 +53,7 @@ object CoverControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int = when (entity.attributes["device_class"]) {
+    override fun getDeviceType(item: EntityDisplayWithContext): Int = when (item.deviceClass) {
         "awning" -> DeviceTypes.TYPE_AWNING
         "blind" -> DeviceTypes.TYPE_BLINDS
         "curtain" -> DeviceTypes.TYPE_CURTAIN
@@ -68,7 +65,7 @@ object CoverControl : HaControl {
         else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
     }
 
-    override fun getDomainString(context: Context, entity: Entity): String =
+    override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.domain_cover)
 
     override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {

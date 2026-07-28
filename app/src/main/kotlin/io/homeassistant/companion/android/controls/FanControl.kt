@@ -13,32 +13,29 @@ import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.getFanSpeed
-import io.homeassistant.companion.android.common.data.integration.isActive
-import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 
 @RequiresApi(Build.VERSION_CODES.R)
 object FanControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity,
+        item: EntityDisplayWithContext,
         info: HaControlInfo,
     ): Control.StatefulBuilder {
-        if (entity.supportsFanSetSpeed()) {
-            val position = entity.getFanSpeed()
+        val speed = item.fanControls?.speed
+        if (speed != null) {
             control.setControlTemplate(
                 ToggleRangeTemplate(
-                    entity.entityId,
-                    entity.isActive(),
+                    item.entityId,
+                    item.isActive,
                     "",
                     RangeTemplate(
-                        entity.entityId,
-                        position?.min ?: 0f,
-                        position?.max ?: 100f,
-                        position?.value ?: 0f,
+                        item.entityId,
+                        speed.min,
+                        speed.max,
+                        speed.value,
                         1f,
                         "%.0f%%",
                     ),
@@ -47,9 +44,9 @@ object FanControl : HaControl {
         } else {
             control.setControlTemplate(
                 ToggleTemplate(
-                    entity.entityId,
+                    item.entityId,
                     ControlButton(
-                        entity.isActive(),
+                        item.isActive,
                         "",
                     ),
                 ),
@@ -58,9 +55,9 @@ object FanControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_FAN
+    override fun getDeviceType(item: EntityDisplayWithContext): Int = DeviceTypes.TYPE_FAN
 
-    override fun getDomainString(context: Context, entity: Entity): String =
+    override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.domain_fan)
 
     override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {

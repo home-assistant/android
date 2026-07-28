@@ -10,23 +10,22 @@ import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 
 @RequiresApi(Build.VERSION_CODES.R)
 object LockControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity,
+        item: EntityDisplayWithContext,
         info: HaControlInfo,
     ): Control.StatefulBuilder {
         control.setControlTemplate(
             ToggleTemplate(
-                entity.entityId,
+                item.entityId,
                 ControlButton(
-                    entity.isActive(),
+                    item.isActive,
                     "Description",
                 ),
             ),
@@ -34,9 +33,9 @@ object LockControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_LOCK
+    override fun getDeviceType(item: EntityDisplayWithContext): Int = DeviceTypes.TYPE_LOCK
 
-    override fun getDomainString(context: Context, entity: Entity): String =
+    override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.domain_lock)
 
     override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
