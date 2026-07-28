@@ -45,9 +45,10 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         val entityId = settings?.entityId
             ?: return getErrorComplication(request, R.string.complication_entity_invalid, true)
 
-        val displayEntity = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
-            .awaitLoadedOrNull()
-            ?.entity(entityId)
+        val loadedState = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
+            .awaitLoadedOrNull() ?: return getErrorComplication(request, R.string.state_unknown)
+
+        val displayEntity = loadedState.entity(entityId)
             ?: return getErrorComplication(request, R.string.complication_entity_invalid)
 
         val iconBitmap = IconicsDrawable(this, displayEntity.icon).apply {
