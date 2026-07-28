@@ -219,7 +219,7 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
                 _state.update { it.copy(entityDisplayState = EntityDisplayState.Loaded(emptyList())) }
                 return@launch
             }
-            getEntitiesForDisplay(serverId).collect { displayState ->
+            getEntitiesForDisplay.snapshot(serverId).collect { displayState ->
                 _state.update { it.copy(entityDisplayState = displayState) }
                 // The selection can be set before the entities resolve (preselected entity or
                 // restored widget), so the generated label is refreshed once they are available.
