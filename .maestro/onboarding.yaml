@@ -4,13 +4,10 @@ appId: io.homeassistant.companion.android.debug
 - launchApp:
     clearState: true
 
-- assertVisible:
-    text: '(?s)Connect to my Home.*Assistant server'
 - tapOn:
     text: '(?s)Connect to my Home.*Assistant server'
     retryTapIfNoChange: true
 
-- assertVisible: "Enter address manually"
 - tapOn:
     text: "Enter address manually"
     retryTapIfNoChange: true
@@ -32,7 +29,6 @@ appId: io.homeassistant.companion.android.debug
 - tapOn: "Password"
 - inputText: ${HOME_ASSISTANT_PASSWORD}
 - hideKeyboard
-- takeScreenshot: before_login_submit
 - tapOn:
     text: "Log in"
     retryTapIfNoChange: true
@@ -77,7 +73,6 @@ appId: io.homeassistant.companion.android.debug
 - extendedWaitUntil:
     notVisible: "Let us help secure your remote connection"
     timeout: 10000
-- takeScreenshot: onboarding_complete
 
 - extendedWaitUntil:
     visible:
@@ -88,7 +83,6 @@ appId: io.homeassistant.companion.android.debug
     text: '(?i)^More details$'
     optional: true
     retryTapIfNoChange: true
-- takeScreenshot: frontend_loaded_or_error_details
 - extendedWaitUntil:
     visible:
       text: '(?i)^Overview$'
@@ -109,16 +103,14 @@ appId: io.homeassistant.companion.android.debug
     retryTapIfNoChange: true
 - waitForAnimationToEnd:
     timeout: 2500
-- takeScreenshot: settings_navigation_start
 
 - extendedWaitUntil:
     visible:
       text: '(?is).*Companion app.*'
     timeout: 10000
-- takeScreenshot: settings_screen
 - tapOn:
     text: '(?is).*Companion app.*'
     retryTapIfNoChange: true
-- waitForAnimationToEnd:
-    timeout: 2500
-- takeScreenshot: companion_app_screen
+- extendedWaitUntil:
+    visible: "Servers & devices"
+    timeout: 10000

@@ -15,7 +15,7 @@ jobs:
     name: Build fullDebug APK
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -45,14 +45,14 @@ jobs:
       id-token: write
     env:
       E2E_FORWARD_IP: 172.16.0.2
-      E2E_HOME_ASSISTANT_VERSION: 2026.5.4
+      E2E_HOME_ASSISTANT_VERSION: 2026.7.4
       E2E_HOME_ASSISTANT_HOST: ha.internal
       E2E_HOME_ASSISTANT_URL: http://ha.internal:8123
       E2E_HOME_ASSISTANT_USERNAME: citest
       E2E_HOME_ASSISTANT_PASSWORD: "h7jk99&U"
-      MAESTRO_VERSION: 2.6.0
+      MAESTRO_VERSION: 2.7.0
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -81,13 +81,26 @@ jobs:
 
           jq -e '.components | index("mobile_app") != null' homeassistant-config.json >/dev/null
 
-      - uses: emulator-wtf/actions/configure-credentials@1a96fbe11f971a7f9da7d5e80eda476909224c78 # v1.0.1
+      # Set up the Maestro toolchain while the emulator finishes booting.
+      - name: Set up JDK 21
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Install Maestro CLI
+        run: |
+          export MAESTRO_VERSION
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - uses: emulator-wtf/actions/configure-credentials@72f86422814fad7432a286a1b29699cc9e73d561 # v1.1.0
         with:
           oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
 
       - name: Start emulator
         id: emulator
-        uses: emulator-wtf/actions/use-emulator@1a96fbe11f971a7f9da7d5e80eda476909224c78 # v1.0.1
+        uses: emulator-wtf/actions/use-emulator@72f86422814fad7432a286a1b29699cc9e73d561 # v1.1.0
         with:
           devices: |
             model=Pixel7,version=34
@@ -121,18 +134,6 @@ jobs:
           ANDROID_SERIAL: ${{ steps.device.outputs.serial }}
         run: |
           "$ANDROID_HOME/platform-tools/adb" -s "$ANDROID_SERIAL" install -r dist/app-full-debug.apk
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-        with:
-          distribution: "temurin"
-          java-version: "21"
-
-      - name: Install Maestro CLI
-        run: |
-          export MAESTRO_VERSION
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       - name: Run Maestro onboarding flow
         env:
