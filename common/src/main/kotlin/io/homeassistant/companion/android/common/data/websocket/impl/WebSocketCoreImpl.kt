@@ -122,6 +122,7 @@ private val MAX_DELAY_BEFORE_RECONNECT = 2.minutes
  * - On failure or when the socket is closing, if there are active subscriptions created with [subscribeTo], the implementation will automatically retry to open the connection until it succeeds.
  * - Upon reconnection, the implementation resubscribes to all active subscriptions to ensure continuity. Each attempt is tracked as an [ActiveMessage.Reconnecting] entry until the server acknowledges it.
  * - A subscription the server actively rejects is retried indefinitely with capped backoff — it is never abandoned while its collector is still listening. An attempt that receives no answer cancels the socket so restoration resumes on a clean connection where no ambiguous acceptance can linger.
+ * - Restoration always starts when a connection is established, whoever established it: any subscription still tracked from a previous connection is restored (for example after the reconnection loop gave up on an authentication failure and a later [sendMessage] reconnects).
  *
  * #### Supported features:
  * - If the connected server version is 2022.9 or above, the implementation automatically sends a `supported_features` message after the connection is established.
@@ -187,7 +188,10 @@ internal class WebSocketCoreImpl(
     @Volatile
     private var pendingCloseReason: WebSocketState.Closed.Reason? = null
 
-    /** The running subscription restore loop, replaced on each closing so only one runs at a time. */
+    /**
+     * The running job working to get the tracked subscriptions restored, replaced on each
+     * closing and each establishment so only one runs at a time.
+     */
     @GuardedBy("connectedMutex")
     private var reconnectJob: Job? = null
 
@@ -432,6 +436,7 @@ internal class WebSocketCoreImpl(
                     url = url,
                     urlObserverJob = urlObserverJob,
                 )
+                if (authSuccess) restoreLeftoverSubscriptions()
                 connectDeferred.complete(authSuccess)
             }
         }
@@ -1100,47 +1105,86 @@ internal class WebSocketCoreImpl(
                 val shouldAttemptReconnect = hasSubscriptions && wasActive
 
                 if (shouldAttemptReconnect && wsScope.isActive) {
-                    // A new closing takes over the restore loop with a fresh snapshot, replacing
-                    // the job under the lock so concurrent closings cannot start two loops
+                    // A new closing takes over the reconnection, replacing the job under the
+                    // lock so concurrent closings cannot start two loops. Once a connection is
+                    // established, restoreLeftoverSubscriptions cancels this job in turn and
+                    // replaces it with the restoration
                     reconnectJob?.cancel()
                     reconnectJob = wsScope.launch {
                         // Delay before reconnect unless URL changed
                         if (closeReason != WebSocketState.Closed.Reason.CHANGED_URL) {
                             delay(DELAY_BEFORE_RECONNECT)
                         }
-                        reconnectSubscriptions()
+                        reconnectForSubscriptions()
                     }
                 }
             }
         }
     }
 
-    private suspend fun reconnectSubscriptions() {
-        var toRestore: Set<Long> = activeMessages.filterValues { it is ActiveMessage.Subscription }.keys
+    /**
+     * Re-establishes the connection with capped backoff while subscriptions are still tracked.
+     */
+    private suspend fun reconnectForSubscriptions() {
+        var retryDelay = DELAY_BEFORE_RECONNECT
+        while (activeMessages.any { it.value is ActiveMessage.Subscription }) {
+            if (connect()) return
+            if (getConnectionState() == WebSocketState.ClosedAuth) {
+                Timber.e("Authentication failed, not retrying to reconnect for active subscriptions")
+                return
+            }
+            Timber.w("Unable to reconnect, retrying in $retryDelay to restore active subscriptions")
+            // Back off so a long outage is not hammered; a subscription is never abandoned
+            // while its collector is still listening
+            delay(retryDelay)
+            retryDelay = (retryDelay * 2).coerceAtMost(MAX_DELAY_BEFORE_RECONNECT)
+        }
+    }
+
+    /**
+     * Starts the restoration of any subscription still tracked when a connection is established:
+     * a fresh socket has no registrations, so everything tracked comes from a previous connection.
+     * Must run while [connectedMutex] is held, before the pending connect completes; the
+     * restoration is launched since running it inline would deadlock on the mutex.
+     */
+    @GuardedBy("connectedMutex")
+    private fun restoreLeftoverSubscriptions() {
+        val leftover = activeMessages.filterValues { it is ActiveMessage.Subscription }.keys
+        if (leftover.isEmpty() || !wsScope.isActive) return
+        // A recovery job still alive was working toward or against a connection that this
+        // establishment replaces: a reconnection loop has fulfilled its purpose, a restoration
+        // targeted the closed connection and is superseded by the fresh snapshot
+        reconnectJob?.cancel()
+        Timber.i("Connection established with ${leftover.size} subscriptions to restore")
+        reconnectJob = wsScope.launch {
+            restoreSubscriptions(leftover)
+        }
+    }
+
+    /**
+     * Restores [subscriptionsToRestore] (ids snapshotted under [connectedMutex] when the
+     * connection was established) on the current connection, retrying with capped backoff while
+     * the server keeps rejecting some of them. Stops once the connection is lost: the closing
+     * path reconnects and a new restoration starts with a fresh snapshot.
+     */
+    private suspend fun restoreSubscriptions(subscriptionsToRestore: Set<Long>) {
+        // Subscriptions closed since the snapshot was taken no longer need to be restored
+        var toRestore: Set<Long> =
+            subscriptionsToRestore.filterTo(mutableSetOf()) { activeMessages[it] is ActiveMessage.Subscription }
         var retryDelay = DELAY_BEFORE_RECONNECT
         while (toRestore.isNotEmpty()) {
-            if (connect()) {
-                val unrestored = resubscribeActiveSubscriptions(toRestore)
-                if (unrestored.isEmpty()) return
-                if (unrestored.size < toRestore.size) {
-                    // Progress was made, only the persistent failures keep backing off
-                    retryDelay = DELAY_BEFORE_RECONNECT
-                }
-                toRestore = unrestored
-                Timber.w("${toRestore.size} subscriptions not restored, retrying in $retryDelay")
-            } else {
-                if (getConnectionState() == WebSocketState.ClosedAuth) {
-                    Timber.e("Authentication failed, not retrying to resubscribe to active subscriptions")
-                    return
-                }
-                Timber.w(
-                    "Unable to reconnect, retrying in $retryDelay to resubscribe to active subscriptions",
-                )
+            if (getConnectionState() != WebSocketState.Active) return
+            val unrestored = resubscribeActiveSubscriptions(toRestore)
+            if (unrestored.isEmpty()) return
+            if (unrestored.size < toRestore.size) {
+                // Progress was made, only the persistent failures keep backing off
+                retryDelay = DELAY_BEFORE_RECONNECT
             }
+            toRestore = unrestored
+            Timber.w("${toRestore.size} subscriptions not restored, retrying in $retryDelay")
+            // Back off so a rejecting server is not hammered; a subscription is never abandoned
+            // while its collector is still listening
             delay(retryDelay)
-            // Back off while the server stays unreachable or keeps rejecting, so neither a long
-            // outage nor a rejecting server is hammered; a subscription is never abandoned while
-            // its collector is still listening
             retryDelay = (retryDelay * 2).coerceAtMost(MAX_DELAY_BEFORE_RECONNECT)
             // Subscriptions closed while waiting no longer need to be restored
             toRestore = toRestore.filterTo(mutableSetOf()) { activeMessages[it] is ActiveMessage.Subscription }

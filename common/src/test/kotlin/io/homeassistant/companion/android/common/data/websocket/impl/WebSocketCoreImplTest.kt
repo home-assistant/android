@@ -1849,6 +1849,69 @@ misc
     }
 
     @Test
+    fun `Given the restore loop ended by an auth failure When a later connect succeeds Then the subscription is restored`() = runTest {
+        setupServer(backgroundScope = backgroundScope)
+        mockCancelTriggersOnFailure()
+        prepareAuthenticationAnswer()
+        assertTrue(webSocketCore.connect())
+
+        mockResultSuccessForId(2)
+        val subscription = checkNotNull(
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ),
+        )
+
+        subscription.test {
+            // The server starts rejecting authentication: the restore loop gives up
+            prepareAuthenticationAnswer(successfulAuth = false)
+            closeConnection()
+            advanceTimeBy(11.seconds)
+            runCurrent()
+            assertEquals(WebSocketState.ClosedAuth, webSocketCore.getConnectionState())
+
+            // The loop stays ended, the subscription stays tracked but is not registered anywhere
+            advanceTimeBy(5.minutes)
+            runCurrent()
+            assertTrue(
+                webSocketCore.activeMessages.any { it.value is ActiveMessage.Subscription },
+                "Subscription should stay tracked after the restore loop gave up",
+            )
+
+            // Authentication works again (for instance a new token) and an unrelated caller
+            // reconnects: the leftover subscription must be restored on the new connection
+            prepareAuthenticationAnswer(successfulAuth = true)
+            var resubscribeId: Long? = null
+            every {
+                mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
+            } answers {
+                val id = checkNotNull(Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong())
+                resubscribeId = id
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$id,"type":"result","success":true,"result":{}}""",
+                )
+                true
+            }
+            assertTrue(webSocketCore.connect())
+            // advanceTimeBy rather than advanceUntilIdle: the restore job hands the subscribe
+            // request to the send consumer on backgroundScope, whose tasks only run when
+            // virtual time advances
+            advanceTimeBy(1.seconds)
+            runCurrent()
+
+            val newId = checkNotNull(resubscribeId) { "Subscription should have been re-registered after the reconnection" }
+            assertNotEquals(2L, newId)
+            webSocketListener.onMessage(
+                mockConnection,
+                """{"id":$newId, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""",
+            )
+            assertEquals("light.bed_light", awaitItem().entityId)
+        }
+    }
+
+    @Test
     fun `Given an established connection When a ping is answered Then the connection is kept`() = runTest {
         setupServer(backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
