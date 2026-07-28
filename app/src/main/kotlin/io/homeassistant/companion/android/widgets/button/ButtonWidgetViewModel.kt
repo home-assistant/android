@@ -4,9 +4,6 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
-import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,6 +48,7 @@ class ButtonWidgetViewModel @Inject constructor(
     data class ButtonWidgetUiState(
         val selectedServerId: Int? = ServerManager.SERVER_ID_ACTIVE,
         val servers: List<Server> = emptyList(),
+        val actionText: String = "",
         val serverActions: List<Action> = emptyList(),
         val dynamicFields: List<ActionFieldBinder> = emptyList(),
         val domainEntities: List<String> = emptyList(),
@@ -66,8 +64,6 @@ class ButtonWidgetViewModel @Inject constructor(
         val requiresAuthentication: Boolean = false,
         val isUpdating: Boolean? = false,
     )
-
-    val actionFieldState: TextFieldState = TextFieldState()
 
     private val _uiState: MutableStateFlow<ButtonWidgetUiState> = MutableStateFlow(ButtonWidgetUiState())
     val uiState: StateFlow<ButtonWidgetUiState> = _uiState.asStateFlow()
@@ -105,24 +101,13 @@ class ButtonWidgetViewModel @Inject constructor(
         val state = _uiState.value
         with(state) {
             val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
-            val actionText = actionFieldState.text
             val actions = actions[serverId].orEmpty()
             val actionTextParts = actionText.split(".", limit = 2)
             val domain = actions[actionText]?.domain ?: actionTextParts.getOrElse(0) { "" }
             val action = actions[actionText]?.action ?: actionTextParts.getOrElse(1) { "" }
-            val actionDataMap = HashMap<String, Any>()
-
-            dynamicFields.forEach {
-                var value = it.value
-                if (value != null) {
-                    if (it.field == "entity_id" && value is String) {
-                        // Remove trailing commas and spaces
-                        val trailingRegex = "[, ]+$".toRegex()
-                        value = value.replace(trailingRegex, "")
-                    }
-                    actionDataMap[it.field] = value
-                }
-            }
+            val actionDataMap = dynamicFields.mapNotNull { field ->
+                cleanDynamicFieldValue(field.value)?.let { cleaned -> field.field to cleaned }
+            }.toMap()
 
             return ButtonWidgetEntity(
                 id = widgetId,
@@ -166,6 +151,7 @@ class ButtonWidgetViewModel @Inject constructor(
     private fun updateUiState(
         selectedServerId: Int? = null,
         servers: List<Server>? = null,
+        actionText: String? = null,
         serverActions: List<Action>? = null,
         dynamicFields: List<ActionFieldBinder>? = null,
         domainEntities: List<String>? = null,
@@ -181,6 +167,7 @@ class ButtonWidgetViewModel @Inject constructor(
             currentState.copy(
                 selectedServerId = selectedServerId ?: currentState.selectedServerId,
                 servers = servers ?: currentState.servers,
+                actionText = actionText ?: currentState.actionText,
                 serverActions = serverActions ?: currentState.serverActions,
                 dynamicFields = dynamicFields ?: currentState.dynamicFields,
                 domainEntities = domainEntities ?: currentState.domainEntities,
@@ -225,7 +212,7 @@ class ButtonWidgetViewModel @Inject constructor(
     }
 
     fun updateActionText(newAction: String) {
-        actionFieldState.setTextAndPlaceCursorAtEnd(newAction)
+        updateUiState(actionText = newAction)
         updateActionFields(newAction)
         filterAdapterActions(newAction)
     }
@@ -241,8 +228,7 @@ class ButtonWidgetViewModel @Inject constructor(
     fun setServer(serverId: Int) {
         val selectedServerId = _uiState.value.selectedServerId
         if (selectedServerId == serverId) return
-        actionFieldState.clearText()
-        updateUiState(selectedServerId = serverId)
+        updateUiState(selectedServerId = serverId, actionText = "")
         viewModelScope.launch {
             selectedServerMutex.withLock {
                 setAdapterActions(serverId)
@@ -253,19 +239,14 @@ class ButtonWidgetViewModel @Inject constructor(
     fun addDynamicField(position: Int, field: ActionFieldBinder) {
         val dynamicFields = _uiState.value.dynamicFields.toMutableList()
         dynamicFields.add(position, field)
-        updateDynamicFields(dynamicFields = dynamicFields)
-    }
-
-    private fun updateDynamicFields(dynamicFields: List<ActionFieldBinder>) {
         updateUiState(dynamicFields = dynamicFields)
     }
 
     fun updateDynamicField(index: Int, value: String) {
-        val dynamicFields = _uiState.value.dynamicFields.toMutableList()
-        val field = dynamicFields[index]
-        field.value = value
-        dynamicFields[index] = field
-        updateDynamicFields(dynamicFields = dynamicFields)
+        val currentState = _uiState.value
+        val updatedFields = currentState.dynamicFields.toMutableList()
+        updatedFields[index] = updatedFields[index].copy(value = value)
+        updateUiState(dynamicFields = updatedFields)
     }
 
     fun selectIcon(icon: IIcon?) {
@@ -324,15 +305,7 @@ class ButtonWidgetViewModel @Inject constructor(
                         buttonWidget.serviceData,
                     )
                     for (item in dbMap) {
-                        val value =
-                            item.value.toString().replace("[", "").replace("]", "") +
-                                if (item.key == "entity_id") ", " else ""
-                        // Ignore if value is just a comma
-                        existingActionData[item.key] = if (value.isEmpty() || value.trim() == ",") {
-                            null
-                        } else {
-                            value
-                        }
+                        existingActionData[item.key] = item.value
                         addedFields.add(item.key)
                     }
                 }
@@ -371,7 +344,7 @@ class ButtonWidgetViewModel @Inject constructor(
                     dynamicFields.clear()
                 }
             }
-            updateDynamicFields(dynamicFields)
+            updateUiState(dynamicFields = dynamicFields)
         }
     }
 
@@ -402,7 +375,7 @@ class ButtonWidgetViewModel @Inject constructor(
     }
 
     private fun setEntitiesForAction() {
-        val actionText = actionFieldState.text
+        val actionText = _uiState.value.actionText
         val selectedServerId = _uiState.value.selectedServerId
         val entityMap = entities[selectedServerId] ?: return
         val domain = actions[selectedServerId]?.get(actionText)?.domain
@@ -444,5 +417,17 @@ class ButtonWidgetViewModel @Inject constructor(
     suspend fun updateWidgetConfiguration() {
         val entity = getPendingDaoEntity()
         buttonWidgetDao.add(entity)
+    }
+}
+
+private fun cleanDynamicFieldValue(value: Any?): Any? {
+    if (value !is String) return value
+    return if (value.contains(",")) {
+        value.split(",")
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .takeIf(List<String>::isNotEmpty)
+    } else {
+        value.trim().takeIf(String::isNotBlank)
     }
 }

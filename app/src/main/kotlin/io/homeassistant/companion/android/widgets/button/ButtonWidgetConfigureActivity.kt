@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
@@ -18,29 +19,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Checkbox
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.IconButton
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.TextField
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
@@ -59,9 +50,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
-import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.composable.HATextField
+import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -74,11 +67,8 @@ import io.homeassistant.companion.android.util.icondialog.IconDialog
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
-import io.homeassistant.companion.android.util.safeTopWindowInsets
-import io.homeassistant.companion.android.widgets.button.ButtonWidgetViewModel.ButtonWidgetUiState
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.WidgetUtils
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -172,14 +162,10 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
 
 @Composable
 private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddWidgetClicked: () -> Unit) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle(ButtonWidgetUiState())
-    LaunchedEffect(viewModel.actionFieldState) {
-        snapshotFlow { viewModel.actionFieldState.text.toString() }.collectLatest {
-            viewModel.updateActionText(it)
-        }
-    }
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     ButtonWidgetConfigureView(
-        actionFieldState = viewModel.actionFieldState,
+        actionText = state.actionText,
+        onActionTextUpdated = viewModel::updateActionText,
         servers = state.servers,
         selectedServerId = state.selectedServerId,
         onServerSelected = viewModel::setServer,
@@ -205,7 +191,8 @@ private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddW
 
 @Composable
 private fun ButtonWidgetConfigureView(
-    actionFieldState: TextFieldState,
+    actionText: String,
+    onActionTextUpdated: (String) -> Unit,
     servers: List<Server>,
     selectedServerId: Int?,
     onServerSelected: (Int) -> Unit,
@@ -229,14 +216,13 @@ private fun ButtonWidgetConfigureView(
 ) {
     var showAddFieldDialog by remember { mutableStateOf(false) }
     var showIconDialog by remember { mutableStateOf(false) }
+    val activity = LocalActivity.current
     Timber.i("Selected Server: $selectedServerId")
     Scaffold(
         topBar = {
-            TopAppBar(
+            HATopBar(
                 title = { Text(stringResource(commonR.string.configure_action)) },
-                windowInsets = safeTopWindowInsets(),
-                backgroundColor = colorResource(commonR.color.colorBackground),
-                contentColor = colorResource(commonR.color.colorOnBackground),
+                onCloseClick = { activity?.finish() },
             )
         },
     ) { contentPadding ->
@@ -249,7 +235,6 @@ private fun ButtonWidgetConfigureView(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (showAddFieldDialog) {
-                val actionText = actionFieldState.text as String
                 AddFieldDialog(
                     action = actionText,
                     onCancel = {
@@ -290,7 +275,7 @@ private fun ButtonWidgetConfigureView(
                 )
             }
 
-            ActionTextFieldInput(actionFieldState, serverActions)
+            ActionTextFieldInput(actionText, onActionTextUpdated, serverActions)
 
             if (dynamicFields.isNotEmpty()) {
                 dynamicFields.forEachIndexed { index, fieldBinder ->
@@ -311,11 +296,10 @@ private fun ButtonWidgetConfigureView(
                 },
             )
 
-            OutlinedTextField(
+            HATextField(
                 label = { Text(text = stringResource(commonR.string.label)) },
                 value = label,
                 onValueChange = onLabelUpdated,
-                textStyle = HATextStyle.UserInput,
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth(),
@@ -343,17 +327,17 @@ private fun ButtonWidgetConfigureView(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionTextFieldInput(
-    actionFieldState: TextFieldState,
+    value: String,
+    onValueChange: (String) -> Unit,
     serverActions: List<Action>,
     modifier: Modifier = Modifier,
 ) {
     var isActionDropdownExpanded by remember { mutableStateOf(false) }
     Box {
-        OutlinedTextField(
+        HATextField(
             label = { Text(text = stringResource(commonR.string.label_action)) },
-            state = actionFieldState,
-            lineLimits = TextFieldLineLimits.SingleLine,
-            textStyle = HATextStyle.UserInput,
+            value = value,
+            onValueChange = onValueChange,
             modifier = modifier
                 .fillMaxWidth()
                 .onFocusChanged { state ->
@@ -373,7 +357,7 @@ fun ActionTextFieldInput(
                     DropdownMenuItem(
                         text = { Text(text = text) },
                         onClick = {
-                            actionFieldState.setTextAndPlaceCursorAtEnd(text)
+                            onValueChange(text)
                             isActionDropdownExpanded = false
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -394,19 +378,16 @@ fun DynamicFieldInput(
     modifier: Modifier = Modifier,
 ) {
     var isEntityDropdownExpanded by remember { mutableStateOf(false) }
-    val initialText = field.value as? String
-    val fieldInputState = rememberTextFieldState(initialText = initialText ?: "")
-    LaunchedEffect(fieldInputState) {
-        snapshotFlow { fieldInputState.text.toString() }.collectLatest {
-            onDynamicFieldUpdated(index, it)
-        }
+    val initialValue = when (val value = field.value) {
+        is List<*> -> value.joinToString(", ")
+        is String -> value
+        else -> ""
     }
     Box {
-        OutlinedTextField(
+        HATextField(
             label = { Text(text = field.field) },
-            state = fieldInputState,
-            lineLimits = TextFieldLineLimits.SingleLine,
-            textStyle = HATextStyle.UserInput,
+            value = initialValue,
+            onValueChange = { onDynamicFieldUpdated(index, it) },
             modifier = modifier
                 .fillMaxWidth()
                 .onFocusChanged { state ->
@@ -427,7 +408,9 @@ fun DynamicFieldInput(
                     DropdownMenuItem(
                         text = { Text(text = entity) },
                         onClick = {
-                            fieldInputState.setTextAndPlaceCursorAtEnd("${fieldInputState.text} $entity, ")
+                            val current = initialValue.trim().removeSuffix(",")
+                            val newText = if (current.isEmpty()) "$entity, " else "$current, $entity, "
+                            onDynamicFieldUpdated(index, newText)
                             isEntityDropdownExpanded = false
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -462,9 +445,10 @@ fun IconSelector(icon: IIcon, onIconSelectorClicked: () -> Unit, modifier: Modif
 @Composable
 fun RequireAuthCheckbox(isChecked: Boolean, onChecked: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Checkbox(
+        HACheckbox(
             checked = isChecked,
-            onCheckedChange = { onChecked(it) },
+            onCheckedChange = onChecked,
+            modifier = modifier,
         )
         Text(text = stringResource(commonR.string.widget_checkbox_require_authentication))
     }
@@ -477,17 +461,17 @@ fun AddFieldDialog(
     onOk: ((ActionFieldBinder) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    val inputValue = remember { mutableStateOf("") }
+    var inputValue by remember { mutableStateOf("") }
 
     MdcAlertDialog(
         modifier = modifier,
         onDismissRequest = { },
         title = { Text(text = "Field") },
         content = {
-            TextField(
-                value = inputValue.value,
+            HATextField(
+                value = inputValue,
                 onValueChange = { input: String ->
-                    inputValue.value = input
+                    inputValue = input
                 },
                 singleLine = true,
                 modifier = Modifier
@@ -497,7 +481,7 @@ fun AddFieldDialog(
         onCancel = onCancel,
         onSave = null,
         onOK = {
-            val field = ActionFieldBinder(action, inputValue.value)
+            val field = ActionFieldBinder(action, inputValue)
             onOk?.invoke(field)
         },
     )
@@ -574,7 +558,8 @@ fun WidgetTextColorSelector(textColorIndex: Int, onTextColorSelected: (Int) -> U
 private fun ButtonWidgetConfigureScreenPreview() {
     HATheme {
         ButtonWidgetConfigureView(
-            actionFieldState = rememberTextFieldState(),
+            actionText = "",
+            onActionTextUpdated = {},
             servers = listOf(
                 previewServer1,
                 previewServer2,
