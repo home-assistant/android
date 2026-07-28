@@ -17,6 +17,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -76,7 +77,6 @@ import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.SENT_SUCCESSFUL_KEY
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
-import timber.log.Timber
 
 private val authKey = ActionParameters.Key<Boolean>("auth")
 private val widgetIdKey = ActionParameters.Key<Int>("widgetId")
@@ -114,8 +114,6 @@ class ButtonGlanceAppWidget : GlanceAppWidget() {
             val flow = remember(widgetId) { updater.getButtonEntityFlow(widgetId) }
             val state by flow.collectAsState(Loading)
 
-            Timber.i("GlanceAppWidget $isActionRunning")
-            Timber.i("GlanceAppWidget $state")
             HomeAssistantGlanceTheme(colors = getWidgetColors(state?.backgroundType, state?.textColor)) {
                 ScreenForState(
                     id = id,
@@ -277,6 +275,7 @@ private fun ButtonScreen(
             contentDescription = null,
             modifier = GlanceModifier.defaultWeight().fillMaxWidth(),
             contentScale = ContentScale.Fit,
+            colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurface),
         )
 
         state?.label?.let {
