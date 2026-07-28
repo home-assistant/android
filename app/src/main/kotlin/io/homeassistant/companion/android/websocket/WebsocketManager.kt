@@ -108,6 +108,9 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private val checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase =
         entryPoint.checkLocalNetworkPermission()
 
+    @VisibleForTesting
+    internal var dispatcher: CoroutineDispatcher = Dispatchers.IO
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface WebsocketManagerEntryPoint {
@@ -116,9 +119,6 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         fun settingsDao(): SettingsDao
         fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
     }
-
-    @VisibleForTesting
-    internal var dispatcher: CoroutineDispatcher = Dispatchers.IO
 
     override suspend fun doWork(): Result = withContext(dispatcher) {
         if (!checkLocalNetworkPermission()) {

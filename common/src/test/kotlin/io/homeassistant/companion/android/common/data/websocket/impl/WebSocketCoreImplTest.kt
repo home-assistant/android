@@ -1511,7 +1511,7 @@ misc
     }
 
     @Test
-    fun `Given a resubscription rejected on a live connection Then it is retried until restored`() = runTest {
+    fun `Given a resubscription When the server rejects it on a live connection Then it is retried until restored`() = runTest {
         setupServer(backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())
@@ -1624,7 +1624,7 @@ misc
     }
 
     @Test
-    fun `Given a subscription the server keeps rejecting Then it is retried with backoff and never abandoned`() = runTest {
+    fun `Given a subscription When the server keeps rejecting it Then it is retried with backoff and never abandoned`() = runTest {
         setupServer(backgroundScope = backgroundScope)
         prepareAuthenticationAnswer()
         assertTrue(webSocketCore.connect())

@@ -27,6 +27,7 @@ import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
 import io.mockk.spyk
+import io.mockk.unmockkAll
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.CancellationException
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -85,6 +87,11 @@ class WebsocketManagerTest {
             EntryPointAccessors.fromApplication(any(), WebsocketManager.WebsocketManagerEntryPoint::class.java)
         } returns
             entryPoint
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
