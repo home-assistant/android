@@ -60,7 +60,7 @@ class EntityWidgetConfigureViewModelTest {
         coEvery { serverManager.getServer() } returns server
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { dao.get(any()) } returns null
-        every { getEntitiesForDisplay(any(), any<(Entity) -> Boolean>()) } returns flowOf(displayStateOf(entity.toDisplayItem("Office light")))
+        every { getEntitiesForDisplay.snapshot(any(), any<(Entity) -> Boolean>()) } returns flowOf(displayStateOf(entity.toDisplayItem("Office light")))
     }
 
     @Test
@@ -145,7 +145,7 @@ class EntityWidgetConfigureViewModelTest {
     fun `Given a generated label when entity changes then label follows the selected entity`() = runTest {
         val secondEntity = createEntity(entityId = "switch.fan", attributes = emptyMap())
         coEvery { integrationRepository.getEntity(secondEntity.entityId) } returns secondEntity
-        every { getEntitiesForDisplay(any(), any<(Entity) -> Boolean>()) } returns
+        every { getEntitiesForDisplay.snapshot(any(), any<(Entity) -> Boolean>()) } returns
             flowOf(displayStateOf(entity.toDisplayItem("Office light"), secondEntity.toDisplayItem("Fan")))
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -251,7 +251,7 @@ class EntityWidgetConfigureViewModelTest {
         private fun displayStateOf(vararg items: EntityDisplayItem) = EntityDisplayState.Loaded(items.toList())
 
         /** Display name comes from the entity registry in production, so it is set explicitly here. */
-        private fun Entity.toDisplayItem(name: String) = EntityDisplayItem.from(this).copy(name = name)
+        private fun Entity.toDisplayItem(name: String) = EntityDisplayItem(this).copy(name = name)
 
         private fun createEntity(entityId: String, attributes: Map<String, Any?>) = Entity(
             entityId = entityId,

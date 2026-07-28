@@ -325,7 +325,7 @@ class EntityWidgetConfigureScreenTest {
         val newWidgetState = EntityWidgetConfigureState(
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
-            entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem.from(ENTITY))),
+            entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem(ENTITY))),
         )
 
         val configuredState = newWidgetState.copy(

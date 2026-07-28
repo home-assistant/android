@@ -507,7 +507,7 @@ private val previewEntityWidgetConfigureState = EntityWidgetConfigureState(
     serversDropdownItems = listOf(previewServer1, previewServer2).map {
         HADropdownItem(key = it.id, label = it.friendlyName)
     },
-    entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem.from(previewEntity1))),
+    entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem(previewEntity1))),
     selectedEntityId = previewEntity1.entityId,
     availableAttributes = listOf("brightness", "friendly_name"),
     selectedAttributeIds = listOf("brightness"),
