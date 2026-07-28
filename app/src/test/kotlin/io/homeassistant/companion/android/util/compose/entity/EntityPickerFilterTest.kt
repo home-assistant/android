@@ -1,10 +1,13 @@
 package io.homeassistant.companion.android.util.compose.entity
 
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 
 /**
@@ -22,17 +25,19 @@ class EntityPickerFilterTest {
         areaName: String? = null,
         deviceName: String? = null,
         isHidden: Boolean = false,
-    ) = EntityDisplayItem(
-        entityId = entityId,
-        name = name,
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    ) = EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = entityId,
+            name = name,
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            isHidden = isHidden,
+        ),
         areaName = areaName,
         deviceName = deviceName,
-        isHidden = isHidden,
     )
 
     // Test helper to create EntityWithSearchFields
-    private fun createEntityWithSearchFields(entity: EntityDisplayItem): EntityWithSearchFields {
+    private fun createEntityWithSearchFields(entity: EntityDisplayWithContext): EntityWithSearchFields {
         val sortingKey = entity.name.lowercase()
         return EntityWithSearchFields(
             entity = entity,
@@ -404,7 +409,7 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "light")
 
         assertEquals(2, result.size)
-        assertTrue(result.all { it.domain == "light" })
+        assertTrue(result.all { it.domain == LIGHT_DOMAIN })
         assertEquals("Bedroom", result[0].name)
         assertEquals("Kitchen", result[1].name)
     }
@@ -431,7 +436,8 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "bedroom")
 
         assertEquals(1, result.size)
-        assertEquals("Bedroom", result[0].areaName)
+        val entity = assertInstanceOf(EntityDisplayWithContext::class.java, result[0])
+        assertEquals("Bedroom", entity.areaName)
     }
 
     @Test
@@ -456,7 +462,8 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "smart")
 
         assertEquals(1, result.size)
-        assertEquals("Smart Bulb Pro", result[0].deviceName)
+        val entity = assertInstanceOf(EntityDisplayWithContext::class.java, result[0])
+        assertEquals("Smart Bulb Pro", entity.deviceName)
     }
 
     @Test

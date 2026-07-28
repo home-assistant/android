@@ -18,8 +18,9 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
@@ -48,7 +49,7 @@ import timber.log.Timber
 class TodoWidgetConfigureViewModel @AssistedInject constructor(
     private val todoWidgetDao: TodoWidgetDao,
     private val serverManager: ServerManager,
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     @Assisted preSelectedEntityId: String?,
 ) : ViewModel() {
     private var supportedTextColors: List<String> = emptyList()
@@ -62,14 +63,14 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
      * server changes and starting as [EntityDisplayState.Loading].
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val displayEntities: StateFlow<EntityDisplayState> = snapshotFlow { selectedServerId }
+    val displayEntities: StateFlow<EntityDisplayState<EntityDisplayWithContext>> = snapshotFlow { selectedServerId }
         .distinctUntilChanged()
         .flatMapLatest { serverId ->
             if (serverManager.isRegistered()) {
-                getEntitiesForDisplay.snapshot(serverId = serverId) { it.domain == TODO_DOMAIN }
+                entitiesForDisplayManager.snapshotInContext(serverId = serverId) { it.domain == TODO_DOMAIN }
             } else {
                 Timber.w("No server registered")
-                flowOf(EntityDisplayState.Loaded(emptyList()))
+                flowOf(EntityDisplayState.Loaded(emptyList<EntityDisplayWithContext>()))
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), EntityDisplayState.Loading)
 

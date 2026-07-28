@@ -78,8 +78,10 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.compose.screenWidth
 import kotlin.coroutines.CoroutineContext
@@ -115,7 +117,7 @@ private const val PLACEHOLDER_HEIGHT_FRACTION = 0.5f
  *
  * The picker supports fuzzy search with weighted field scoring and displays the entity
  * metadata (area and device names) resolved by
- * [io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase].
+ * [io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager].
  * Callers without websocket access can build the display state with [rememberEntityDisplayState].
  *
  * While the display state is [EntityDisplayState.Loading] the picker shows a loading indicator in
@@ -132,7 +134,7 @@ private const val PLACEHOLDER_HEIGHT_FRACTION = 0.5f
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntityPicker(
-    displayState: EntityDisplayState,
+    displayState: EntityDisplayState<EntityDisplay>,
     selectedEntityId: String?,
     onSelectionChanged: (String?) -> Unit,
     modifier: Modifier = Modifier,
@@ -212,21 +214,23 @@ fun EntityPicker(
 }
 
 /**
- * Builds an [EntityDisplayState] with metadata-free [EntityDisplayItem]s (no area/floor/device
+ * Builds an [EntityDisplayState<EntityDisplay>] with metadata-free [EntityDisplay]s (no area/floor/device
  * names) from raw entities on a background thread, starting as [EntityDisplayState.Loading]
  * until the conversion completes.
  *
  * Only meant for callers that cannot reach the websocket API; everyone else should resolve
  * items with
- * [io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase].
+ * [io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager].
  */
 @Composable
-fun rememberEntityDisplayState(entities: List<Entity>): EntityDisplayState {
-    var displayState by remember { mutableStateOf<EntityDisplayState>(EntityDisplayState.Loading) }
+fun rememberEntityDisplayState(entities: List<Entity>): EntityDisplayState<EntityDisplay> {
+    var displayState by remember {
+        mutableStateOf<EntityDisplayState<EntityDisplay>>(EntityDisplayState.Loading)
+    }
     // Conversion runs on a background dispatcher to avoid ANRs on large entity lists
     LaunchedEffect(entities) {
         displayState = withContext(Dispatchers.Default) {
-            EntityDisplayState.Loaded(entities.map(::EntityDisplayItem))
+            EntityDisplayState.Loaded(entities.map { EntityDisplayWithoutContext(it) })
         }
     }
     return displayState
@@ -242,7 +246,7 @@ private fun defaultAddText(): String = stringResource(commonR.string.entity_pick
  */
 @Composable
 private fun SelectedEntityChip(
-    entity: EntityDisplayItem?,
+    entity: EntityDisplay?,
     entityId: String,
     isError: Boolean,
     onClearClick: () -> Unit,
@@ -325,7 +329,7 @@ private fun SelectedEntityChipContainer(
 }
 
 @Composable
-private fun RowScope.EntityContent(entity: EntityDisplayItem, showHiddenIndicator: Boolean) {
+private fun RowScope.EntityContent(entity: EntityDisplay, showHiddenIndicator: Boolean) {
     val colorScheme = LocalHAColorScheme.current
     Image(
         asset = entity.icon,
@@ -341,7 +345,8 @@ private fun RowScope.EntityContent(entity: EntityDisplayItem, showHiddenIndicato
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        entity.subtitle(LocalLayoutDirection.current)?.let { subtitle ->
+
+        (entity as? EntityDisplayWithContext)?.subtitle(LocalLayoutDirection.current)?.let { subtitle ->
             Text(
                 text = subtitle,
                 style = HATextStyle.BodyMedium,
@@ -379,9 +384,9 @@ private fun Modifier.enclosureBorder(colorScheme: HAColorScheme): Modifier {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EntityPickerBottomSheet(
-    displayState: EntityDisplayState,
+    displayState: EntityDisplayState<EntityDisplay>,
     searchState: SearchFieldState,
-    onEntitySelected: (EntityDisplayItem) -> Unit,
+    onEntitySelected: (EntityDisplay) -> Unit,
     onDismissRequest: () -> Unit,
     bottomSheetState: SheetState,
     dispatcher: CoroutineContext,
@@ -410,9 +415,9 @@ private fun EntityPickerBottomSheet(
 
 @Composable
 private fun EntityPickerDropdown(
-    displayState: EntityDisplayState,
+    displayState: EntityDisplayState<EntityDisplay>,
     searchState: SearchFieldState,
-    onEntitySelected: (EntityDisplayItem) -> Unit,
+    onEntitySelected: (EntityDisplay) -> Unit,
     dispatcher: CoroutineContext,
     modifier: Modifier = Modifier,
 ) {
@@ -435,9 +440,9 @@ private fun EntityPickerDropdown(
 
 @Composable
 private fun EntityPickerContent(
-    displayState: EntityDisplayState,
+    displayState: EntityDisplayState<EntityDisplay>,
     searchState: SearchFieldState,
-    onEntitySelected: (EntityDisplayItem) -> Unit,
+    onEntitySelected: (EntityDisplay) -> Unit,
     dispatcher: CoroutineContext,
     modifier: Modifier = Modifier,
     // Height behaviour of the loading/error/empty placeholders. The bottom sheet has a fixed
@@ -495,9 +500,9 @@ private fun LoadingPlaceholder(modifier: Modifier = Modifier) {
 
 @Composable
 private fun LoadedEntityList(
-    entities: Collection<EntityDisplayItem>,
+    entities: Collection<EntityDisplay>,
     searchQuery: String,
-    onEntitySelected: (EntityDisplayItem) -> Unit,
+    onEntitySelected: (EntityDisplay) -> Unit,
     dispatcher: CoroutineContext,
     modifier: Modifier = Modifier,
     placeholderModifier: Modifier = Modifier,
@@ -578,7 +583,7 @@ private fun EmptyResultPlaceholder(searchQuery: String, modifier: Modifier = Mod
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun EntityListItem(entity: EntityDisplayItem, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun EntityListItem(entity: EntityDisplay, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Row(
         modifier = modifier
@@ -614,25 +619,27 @@ private fun EntityPickerCollapsedPreview() {
 }
 
 private fun previewEntities() = listOf(
-    EntityDisplayItem(
-        entityId = "light.bed",
-        name = "Bed Light",
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.bed",
+            name = "Bed Light",
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        ),
         areaName = "Bedroom",
         deviceName = "Device #1",
     ),
-    EntityDisplayItem(
-        entityId = "sensor.temperature",
-        name = "Temperature",
-        icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "sensor.temperature",
+            name = "Temperature",
+            icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+        ),
         areaName = "Living Room",
     ),
-    EntityDisplayItem(
+    EntityDisplayWithoutContext(
         entityId = "switch.fan",
         name = "Fan",
         icon = CommunityMaterial.Icon2.cmd_fan,
-        areaName = "Bedroom",
-        deviceName = "Device #2",
     ),
 )
 

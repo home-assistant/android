@@ -22,6 +22,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -234,7 +235,8 @@ class WebSocketRepositoryImplTest {
     @Nested
     inner class RegistryForDisplay {
 
-        private fun captureSentMessage(resultJson: String): CapturingSlot<Map<String, Any?>> {
+        private fun captureSentMessage(resultJson: String, version: String = "2025.1.0"): CapturingSlot<Map<String, Any?>> {
+            coEvery { webSocketCore.server() } returns createServer(version = version)
             val messageSlot = slot<Map<String, Any?>>()
             coEvery { webSocketCore.sendMessage(capture(messageSlot)) } returns MessageSocketResponse(
                 id = 1,
@@ -259,6 +261,24 @@ class WebSocketRepositoryImplTest {
         }
 
         @Test
+        fun `Given a server older than 2024 10 When getting entity registry display Then returns null without sending`() = runTest {
+            captureSentMessage("""{"entities": []}""", version = "2024.9.3")
+
+            assertNull(repository.getEntityRegistryDisplay())
+
+            coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
+        }
+
+        @Test
+        fun `Given a server older than 2024 3 When getting floor registry Then returns null without sending`() = runTest {
+            captureSentMessage("""[]""", version = "2024.2.0")
+
+            assertNull(repository.getFloorRegistry())
+
+            coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
+        }
+
+        @Test
         fun `Given a floor registry response When getting floor registry Then sends floor_registry list and decodes result`() = runTest {
             val messageSlot = captureSentMessage(
                 """[{"floor_id": "ground", "name": "Ground", "level": 0}]""",
@@ -272,10 +292,11 @@ class WebSocketRepositoryImplTest {
         }
     }
 
-    private fun createServer(deviceRegistryId: String? = null): Server {
+    private fun createServer(deviceRegistryId: String? = null, version: String? = null): Server {
         return Server(
             id = 1,
             _name = "Test Server",
+            _version = version,
             deviceRegistryId = deviceRegistryId,
             connection = ServerConnectionInfo(
                 externalUrl = "https://example.com",

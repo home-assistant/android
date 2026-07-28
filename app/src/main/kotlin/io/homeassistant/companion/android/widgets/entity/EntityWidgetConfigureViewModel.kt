@@ -17,8 +17,8 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -46,7 +46,7 @@ import timber.log.Timber
 class EntityWidgetConfigureViewModel @AssistedInject constructor(
     private val staticWidgetDao: StaticWidgetDao,
     private val serverManager: ServerManager,
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     @Assisted private val widgetId: Int,
     @Assisted preselectedEntityId: String?,
 ) : ViewModel() {
@@ -219,7 +219,7 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
                 _state.update { it.copy(entityDisplayState = EntityDisplayState.Loaded(emptyList())) }
                 return@launch
             }
-            getEntitiesForDisplay.snapshot(serverId).collect { displayState ->
+            entitiesForDisplayManager.snapshotInContext(serverId).collect { displayState ->
                 _state.update { it.copy(entityDisplayState = displayState) }
                 // The selection can be set before the entities resolve (preselected entity or
                 // restored widget), so the generated label is refreshed once they are available.

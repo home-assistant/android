@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.friendlyState
@@ -73,7 +74,7 @@ interface HaControl {
                 }
             if (iconDrawable.icon != null) {
                 val colorTint = when {
-                    entity.domain == "light" && entity.state == "on" -> R.color.colorDeviceControlsLightOn
+                    entity.domain == LIGHT_DOMAIN && entity.state == "on" -> R.color.colorDeviceControlsLightOn
                     entity.domain == CAMERA_DOMAIN -> R.color.colorDeviceControlsCamera
                     entity.domain == CLIMATE_DOMAIN && entity.state == "heat"
                     -> R.color.colorDeviceControlsThermostatHeat

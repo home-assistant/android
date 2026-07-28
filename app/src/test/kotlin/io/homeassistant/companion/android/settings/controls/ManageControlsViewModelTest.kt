@@ -6,9 +6,10 @@ import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
@@ -44,7 +45,7 @@ class ManageControlsViewModelTest {
 
     private val serverManager: ServerManager = mockk()
     private val prefsRepository: PrefsRepository = mockk()
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase = mockk()
+    private val entitiesForDisplayManager: EntitiesForDisplayManager = mockk()
 
     @Before
     fun setUp() {
@@ -63,17 +64,19 @@ class ManageControlsViewModelTest {
         user = ServerUserInfo(),
     )
 
-    private fun fakeItem(entityId: String, name: String, isHidden: Boolean = false) = EntityDisplayItem(
-        entityId = entityId,
-        name = name,
-        icon = mockk(),
-        isHidden = isHidden,
+    private fun fakeItem(entityId: String, name: String, isHidden: Boolean = false) = EntityDisplayWithContext(
+        EntityDisplayWithoutContext(
+            entityId = entityId,
+            name = name,
+            icon = mockk(),
+            isHidden = isHidden,
+        ),
     )
 
     private fun createViewModel() = ManageControlsViewModel(
         serverManager = serverManager,
         prefsRepository = prefsRepository,
-        getEntitiesForDisplay = getEntitiesForDisplay,
+        entitiesForDisplayManager = entitiesForDisplayManager,
         application = application,
         backgroundDispatcher = mainDispatcherRule.testDispatcher,
     )
@@ -81,7 +84,7 @@ class ManageControlsViewModelTest {
     @Test
     fun `Given resolved entities when created then hidden entities are included and the rest sorted by display name`() = runTest {
         coEvery { serverManager.servers() } returns listOf(fakeServer(1))
-        every { getEntitiesForDisplay.snapshot(1, any<(Entity) -> Boolean>()) } returns flowOf(
+        every { entitiesForDisplayManager.snapshotInContext(1, any<(Entity) -> Boolean>()) } returns flowOf(
             EntityDisplayState.Loading,
             EntityDisplayState.Loaded(
                 listOf(
@@ -102,11 +105,11 @@ class ManageControlsViewModelTest {
     @Test
     fun `Given a server failing to resolve entities when created then that server is left out but loading completes`() = runTest {
         coEvery { serverManager.servers() } returns listOf(fakeServer(1), fakeServer(2))
-        every { getEntitiesForDisplay.snapshot(1, any<(Entity) -> Boolean>()) } returns flowOf(
+        every { entitiesForDisplayManager.snapshotInContext(1, any<(Entity) -> Boolean>()) } returns flowOf(
             EntityDisplayState.Loading,
             EntityDisplayState.Error,
         )
-        every { getEntitiesForDisplay.snapshot(2, any<(Entity) -> Boolean>()) } returns flowOf(
+        every { entitiesForDisplayManager.snapshotInContext(2, any<(Entity) -> Boolean>()) } returns flowOf(
             EntityDisplayState.Loading,
             EntityDisplayState.Loaded(listOf(fakeItem("light.bulb", name = "Bulb"))),
         )

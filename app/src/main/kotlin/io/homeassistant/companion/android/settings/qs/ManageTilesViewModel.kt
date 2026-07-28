@@ -16,7 +16,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.isUsableInTile
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -45,7 +45,7 @@ import timber.log.Timber
 internal class ManageTilesViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val serverManager: ServerManager,
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     private val tileDao: TileDao,
 ) : ViewModel() {
     private val _state = MutableStateFlow(
@@ -171,7 +171,7 @@ internal class ManageTilesViewModel @Inject constructor(
     private fun loadEntities(serverId: Int) {
         loadEntitiesJob?.cancel()
         loadEntitiesJob = viewModelScope.launch {
-            getEntitiesForDisplay.snapshot(serverId) { it.isUsableInTile() }.collect { state ->
+            entitiesForDisplayManager.snapshotInContext(serverId) { it.isUsableInTile() }.collect { state ->
                 _state.update { it.copy(entityDisplayState = state) }
             }
         }

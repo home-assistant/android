@@ -47,8 +47,10 @@ import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState.Loaded
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -259,7 +261,7 @@ private fun ServerSelector(
 
 @Composable
 private fun EntityPickerSection(
-    displayEntities: EntityDisplayState,
+    displayEntities: EntityDisplayState<EntityDisplayWithContext>,
     selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
 ) {
@@ -507,7 +509,7 @@ private val previewEntityWidgetConfigureState = EntityWidgetConfigureState(
     serversDropdownItems = listOf(previewServer1, previewServer2).map {
         HADropdownItem(key = it.id, label = it.friendlyName)
     },
-    entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem(previewEntity1))),
+    entityDisplayState = Loaded(listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity1)))),
     selectedEntityId = previewEntity1.entityId,
     availableAttributes = listOf("brightness", "friendly_name"),
     selectedAttributeIds = listOf("brightness"),
