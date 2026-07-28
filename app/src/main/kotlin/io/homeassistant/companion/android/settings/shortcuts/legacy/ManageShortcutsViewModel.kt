@@ -96,7 +96,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
             this@ManageShortcutsViewModel.servers = servers
             servers.forEach { server ->
                 launch {
-                    getEntitiesForDisplay(serverId = server.id).collect { state ->
+                    getEntitiesForDisplay.snapshot(serverId = server.id).collect { state ->
                         displayEntities[server.id] = state
                     }
                 }

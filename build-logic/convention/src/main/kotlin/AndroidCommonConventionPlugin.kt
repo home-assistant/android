@@ -94,6 +94,9 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
 
                 tasks.withType<Test> {
                     useJUnitPlatform()
+                    // Tests run in a forked JVM that does not inherit `org.gradle.jvmargs` and defaults to
+                    // 512m, which is not enough for our project.
+                    maxHeapSize = "1g"
                 }
 
                 with(lint) {

@@ -132,6 +132,9 @@ private suspend fun Collection<EntityDisplayItem>.mapToEntitiesWithFields(
 /**
  * Optimized version that uses pre-computed searchable fields.
  *
+ * Without an effective query the hidden entities are left out; searching includes them so
+ * they can still be picked deliberately.
+ *
  * @param entitiesWithFields List of entities with pre-computed searchable fields
  * @param query The search query string
  * @return A filtered and sorted list of entities
@@ -145,9 +148,7 @@ internal suspend fun filterAndSortEntitiesOptimized(
     val trimmedQuery = query.trim()
 
     if (trimmedQuery.isBlank()) {
-        return@withContext entitiesWithFields
-            .sortedBy { it.sortingKey }
-            .map { it.entity }
+        return@withContext visibleEntities(entitiesWithFields)
     }
 
     // Split query into terms (space-separated)
@@ -157,9 +158,7 @@ internal suspend fun filterAndSortEntitiesOptimized(
         .filter { it.length >= FuzzySearchConfig.MIN_MATCH_CHAR_LENGTH }
 
     if (terms.isEmpty()) {
-        return@withContext entitiesWithFields
-            .sortedBy { it.sortingKey }
-            .map { it.entity }
+        return@withContext visibleEntities(entitiesWithFields)
     }
 
     // Score each entity using pre-computed fields
@@ -184,6 +183,13 @@ internal suspend fun filterAndSortEntitiesOptimized(
         )
         .map { it.entity }
 }
+
+/** The entities not hidden in the registry, in their sorted order. */
+private fun visibleEntities(entitiesWithFields: List<EntityWithSearchFields>): List<EntityDisplayItem> =
+    entitiesWithFields
+        .filter { !it.entity.isHidden }
+        .sortedBy { it.sortingKey }
+        .map { it.entity }
 
 /**
  * Calculates fuzzy match score using pre-computed searchable fields.

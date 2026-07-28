@@ -158,6 +158,13 @@ class EntityPickerScreenshotTest {
 
     private fun createManyTestEntities() = listOf(
         EntityDisplayItem(
+            entityId = "light.attic",
+            name = "Attic Light",
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            areaName = "Attic",
+            isHidden = true,
+        ),
+        EntityDisplayItem(
             entityId = "light.living_room",
             name = "Living Room Light",
             icon = CommunityMaterial.Icon2.cmd_lightbulb,

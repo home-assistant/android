@@ -42,6 +42,9 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      *        Receives the handler, host, the resource URL that triggered the request, and the realm.
      * @param onCanGoBackChanged Optional callback invoked when the WebView back/forward list changes,
      *        reporting whether the WebView can currently navigate back.
+     * @param onSubresourceSslError Optional callback when an SSL error occurs on a resource other than
+     *        the main URL being loaded. Receives the URL of the failing resource. The frontend itself
+     *        is unaffected, so this is a notice rather than a connection error.
      */
     fun create(
         currentUrlFlow: StateFlow<String?>,
@@ -58,6 +61,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
             ) -> Unit
         )? = null,
         onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
+        onSubresourceSslError: ((url: String?) -> Unit)? = null,
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
@@ -68,6 +72,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
             onPageFinished = onPageFinished,
             onReceivedHttpAuthRequest = onReceivedHttpAuthRequest,
             onCanGoBackChanged = onCanGoBackChanged,
+            onSubresourceSslError = onSubresourceSslError,
         )
     }
 }
@@ -89,6 +94,7 @@ class HAWebViewClient internal constructor(
         (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
     )?,
     private val onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
+    private val onSubresourceSslError: ((url: String?) -> Unit)? = null,
 ) : TLSWebViewClient(keyChainRepository) {
 
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
@@ -224,6 +230,17 @@ class HAWebViewClient internal constructor(
 
     override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
         super.onReceivedSslError(view, handler, error)
+
+        // Only fail the connection for the main URL being loaded. An SSL error on any other resource
+        // the page pulls in (a third party script, an image, ...) must not block a working frontend.
+        // The call to super already cancelled the handshake, so the resource simply won't load.
+        val resourceUrl: String? = error?.url
+        if (error != null && resourceUrl != currentUrlFlow.value) {
+            Timber.w("Ignoring SSL error on subresource ${sensitive(resourceUrl.orEmpty())}: $error")
+            onSubresourceSslError?.invoke(resourceUrl)
+            return
+        }
+
         Timber.e("onReceivedSslError: $error")
 
         val messageRes = when (error?.primaryError) {
