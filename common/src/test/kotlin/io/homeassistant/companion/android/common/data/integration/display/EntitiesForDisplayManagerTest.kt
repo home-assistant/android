@@ -572,7 +572,7 @@ class EntitiesForDisplayManagerTest {
         fun `Given no entities when invoking then loaded empty is emitted without registry fetch`() = runTest {
             val items = resolve()
 
-            assertEquals(emptyList<EntityDisplayWithoutContext>(), items)
+            assertEquals(emptyList<EntityDisplayWithContext>(), items)
             coVerify(exactly = 0) { webSocketRepository.getEntityRegistryDisplay() }
             coVerify(exactly = 0) { webSocketRepository.getDeviceRegistry() }
         }

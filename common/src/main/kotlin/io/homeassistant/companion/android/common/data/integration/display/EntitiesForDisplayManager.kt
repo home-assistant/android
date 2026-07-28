@@ -4,20 +4,10 @@ import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.integration.getEntitiesOrNull
-import io.homeassistant.companion.android.common.data.integration.getEntityUpdatesOrNull
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.integrationRepositoryOrNull
 import io.homeassistant.companion.android.common.data.servers.webSocketRepositoryOrNull
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
-import io.homeassistant.companion.android.common.data.websocket.getAreaRegistryOrNull
-import io.homeassistant.companion.android.common.data.websocket.getAreaRegistryUpdatesOrNull
-import io.homeassistant.companion.android.common.data.websocket.getDeviceRegistryOrNull
-import io.homeassistant.companion.android.common.data.websocket.getDeviceRegistryUpdatesOrNull
-import io.homeassistant.companion.android.common.data.websocket.getEntityRegistryDisplayOrNull
-import io.homeassistant.companion.android.common.data.websocket.getEntityRegistryOrNull
-import io.homeassistant.companion.android.common.data.websocket.getEntityRegistryUpdatesOrNull
-import io.homeassistant.companion.android.common.data.websocket.getFloorRegistryOrNull
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayEntry
@@ -26,6 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Fl
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.getIconByMdiName
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -36,113 +27,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import timber.log.Timber
-
-/**
- * Events driving new emissions of [EntitiesForDisplayManager.observe]. Registry events name
- * the registry that changed, so only that part of the [RegistrySnapshot] is refetched.
- */
-private sealed interface ObserveEvent {
-    sealed interface EntityEvent : ObserveEvent {
-        /** An entity state changed. */
-        data class StateChanged(val entity: Entity) : EntityEvent
-
-        /** An entity registry entry changed. */
-        data object EntityRegistryChanged : EntityEvent
-    }
-
-    /** An area registry entry changed; the floors are refetched along, they resolve through areas. */
-    data object AreaRegistryChanged : ObserveEvent
-
-    /** A device registry entry changed. */
-    data object DeviceRegistryChanged : ObserveEvent
-}
-
-/**
- * Entity registry of a server, the source of everything an [EntityDisplayWithoutContext] resolves beyond the
- * entity state: servers >= 2024.10 provide the display entries, older ones the classic entries.
- */
-private class EntityRegistryEntries(
-    private val displayEntries: Map<String, EntityRegistryDisplayEntry>? = null,
-    private val entityCategories: Map<Int, String> = emptyMap(),
-    private val classicEntries: Map<String, EntityRegistryResponse>? = null,
-) {
-    /** Display entry of [entityId], for the callers needing what only it holds (area, device). */
-    fun displayEntry(entityId: String): EntityRegistryDisplayEntry? = displayEntries?.get(entityId)
-
-    /** Classic entry of [entityId], for the callers needing what only it holds (area, device). */
-    fun classicEntry(entityId: String): EntityRegistryResponse? = classicEntries?.get(entityId)
-
-    /**
-     * Name to display for [entity]: the name of its registry entry, its `friendly_name` state
-     * attribute, or its id. This is the single place where the app decides how an entity is named,
-     * so a caller without registry entries resolves the same name as one with them.
-     */
-    fun nameOf(entity: Entity): String =
-        displayEntries?.get(entity.entityId)?.name?.takeIf { it.isNotBlank() } ?: entity.friendlyName
-
-    /**
-     * Resolves [entity] into everything its state and the registry provide, with the following
-     * precedence, stopping at the first available value:
-     * - name: the registry display name (`en`), the `friendly_name` state attribute, the entity id
-     * - icon: the custom icon of the registry entry (`ic`), the icon derived from the entity state
-     *   attributes or its domain
-     * - hidden: the `hb` flag (display), a non null `hidden_by` (classic)
-     * - category: the `ec` index decoded through the response categories mapping (display), the raw
-     *   category string (classic)
-     * - display precision: the server-computed `dp` (display); the user-configured precision, the
-     *   integration-suggested precision (classic)
-     * - labels: only available from the display entry, empty otherwise
-     */
-    fun itemFor(entity: Entity): EntityDisplayWithoutContext {
-        val displayEntry = displayEntry(entity.entityId)
-        val classicEntry = classicEntry(entity.entityId)
-
-        return EntityDisplayWithoutContext(
-            entity = entity,
-            name = nameOf(entity),
-            customIcon = displayEntry?.icon.toIcon(),
-            isHidden = displayEntry?.hidden ?: (classicEntry?.hiddenBy != null),
-            entityCategory = displayEntry?.entityCategory
-                ?.let { EntityCategory.fromString(entityCategories[it]) }
-                ?: EntityCategory.fromString(classicEntry?.entityCategory),
-            displayPrecision = displayEntry?.displayPrecision
-                ?: classicEntry?.options?.sensor?.let { it.displayPrecision ?: it.suggestedDisplayPrecision },
-            labels = displayEntry?.labels.orEmpty(),
-        )
-    }
-
-    private fun String?.toIcon(): IIcon? = this
-        ?.takeIf { it.startsWith(MDI_PREFIX) }
-        ?.let { CommunityMaterial.getIconByMdiName(it) }
-}
-
-/**
- * Fetches the entity registry of the server, falling back to the classic registry when the display
- * one is unavailable, and empty when there is no websocket to ask.
- */
-private suspend fun WebSocketRepository?.fetchEntityRegistryEntries(): EntityRegistryEntries {
-    if (this == null) return EntityRegistryEntries()
-
-    val displayResponse = getEntityRegistryDisplayOrNull()
-    // Fall back to the classic registry when the display command is unavailable or failed
-    val classicEntries = if (displayResponse == null) getEntityRegistryOrNull() else null
-
-    return EntityRegistryEntries(
-        displayEntries = displayResponse?.entities?.associateBy { it.entityId },
-        entityCategories = displayResponse?.entityCategories.orEmpty(),
-        classicEntries = classicEntries?.associateBy { it.entityId },
-    )
-}
-
-/**
- * Registry data fetched once per resolution, indexed by id for the merge.
- */
-private data class RegistrySnapshot(
-    val entries: EntityRegistryEntries = EntityRegistryEntries(),
-    val devices: Map<String, DeviceRegistryResponse> = emptyMap(),
-    val areas: Map<String, AreaRegistryResponse> = emptyMap(),
-    val floors: Map<String, FloorRegistryResponse> = emptyMap(),
-)
 
 /**
  * Manager that resolves the display information (name, area, floor, device, icon, hidden,
@@ -231,21 +115,6 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     }.flowOn(Dispatchers.Default)
 
     /**
-     * Variant that retrieves all entities of the server itself before resolving them,
-     * keeping only the ones matching [filter] (which receives the raw [Entity] so it can
-     * inspect attributes, like domain based or capability based filtering).
-     *
-     * When the entities cannot be retrieved the flow completes with [EntityDisplayState.Error].
-     */
-    fun snapshotInContext(
-        serverId: Int,
-        filter: (Entity) -> Boolean = { true },
-    ): Flow<EntityDisplayState<EntityDisplayWithContext>> = flow {
-        val entities = loadEntities(serverId) ?: return@flow
-        emit(resolveState(serverId = serverId, entities = entities.filter(filter)))
-    }.flowOn(Dispatchers.Default)
-
-    /**
      * Observes the display state of the entities matching [filter]: a new
      * [EntityDisplayState.Loaded] is emitted whenever an entity state change or an area,
      * device, or entity registry update changes the resolved items, so each emission is the
@@ -295,6 +164,21 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     }.flowOn(Dispatchers.Default)
 
     /**
+     * Variant that retrieves all entities of the server itself before resolving them,
+     * keeping only the ones matching [filter] (which receives the raw [Entity] so it can
+     * inspect attributes, like domain based or capability based filtering).
+     *
+     * When the entities cannot be retrieved the flow completes with [EntityDisplayState.Error].
+     */
+    fun snapshotInContext(
+        serverId: Int,
+        filter: (Entity) -> Boolean = { true },
+    ): Flow<EntityDisplayState<EntityDisplayWithContext>> = flow {
+        val entities = loadEntities(serverId) ?: return@flow
+        emit(resolveState(serverId = serverId, entities = entities.filter(filter)))
+    }.flowOn(Dispatchers.Default)
+
+    /**
      * Merges what an [EntityDisplayWithoutContext] depends on into a single [ObserveEvent] flow: the state
      * changes of [entityIds] and the entity registry updates. Subscriptions that cannot be
      * established are skipped, so the flow is empty when the server supports none.
@@ -313,7 +197,9 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * were requested and omitting the ones the server doesn't know, or all of them when it is null.
      */
     private suspend fun fetchEntities(serverId: Int, entityIds: List<String>?): List<Entity> {
-        val entities = serverManager.integrationRepositoryOrNull(serverId)?.getEntitiesOrNull().orEmpty()
+        val entities = serverManager.integrationRepositoryOrNull(serverId)
+            ?.let { repository -> orNull("entities") { repository.getEntities() } }
+            .orEmpty()
         if (entityIds == null) return entities
 
         val entitiesById = entities.associateBy { it.entityId }
@@ -341,21 +227,26 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      */
     private suspend fun stateChanges(serverId: Int, entityIds: List<String>?): Flow<ObserveEvent.EntityEvent>? {
         val integrationRepository = serverManager.integrationRepositoryOrNull(serverId) ?: return null
-        val updates = with(integrationRepository) {
-            if (entityIds == null) getEntityUpdatesOrNull() else getEntityUpdatesOrNull(entityIds)
+        val updates = orNull("entity updates") {
+            if (entityIds == null) {
+                integrationRepository.getEntityUpdates()
+            } else {
+                integrationRepository.getEntityUpdates(entityIds)
+            }
         }
 
         return updates?.map { ObserveEvent.EntityEvent.StateChanged(it) }
     }
 
     private suspend fun WebSocketRepository.areaRegistryChanges(): Flow<ObserveEvent>? =
-        getAreaRegistryUpdatesOrNull()?.map { ObserveEvent.AreaRegistryChanged }
+        orNull("area registry updates") { getAreaRegistryUpdates() }?.map { ObserveEvent.AreaRegistryChanged }
 
     private suspend fun WebSocketRepository.deviceRegistryChanges(): Flow<ObserveEvent>? =
-        getDeviceRegistryUpdatesOrNull()?.map { ObserveEvent.DeviceRegistryChanged }
+        orNull("device registry updates") { getDeviceRegistryUpdates() }?.map { ObserveEvent.DeviceRegistryChanged }
 
     private suspend fun WebSocketRepository.entityRegistryChanges(): Flow<ObserveEvent.EntityEvent>? =
-        getEntityRegistryUpdatesOrNull()?.map { ObserveEvent.EntityEvent.EntityRegistryChanged }
+        orNull("entity registry updates") { getEntityRegistryUpdates() }
+            ?.map { ObserveEvent.EntityEvent.EntityRegistryChanged }
 
     /**
      * Emits [EntityDisplayState.Error] when no server is registered, returning whether one is, so
@@ -434,7 +325,8 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 
         if (!hasRegisteredServer()) return null
 
-        val entities = serverManager.integrationRepositoryOrNull(serverId)?.getEntitiesOrNull()
+        val entities = serverManager.integrationRepositoryOrNull(serverId)
+            ?.let { repository -> orNull("entities") { repository.getEntities() } }
         if (entities == null) emit(EntityDisplayState.Error)
         return entities
     }
@@ -455,15 +347,135 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         }
 
     private suspend fun WebSocketRepository.fetchDevices(): Map<String, DeviceRegistryResponse> =
-        getDeviceRegistryOrNull().orEmpty().associateBy { it.id }
+        orNull("device registry") { getDeviceRegistry() }.orEmpty().associateBy { it.id }
 
     private suspend fun WebSocketRepository.fetchAreas(): Map<String, AreaRegistryResponse> =
-        getAreaRegistryOrNull().orEmpty().associateBy { it.areaId }
+        orNull("area registry") { getAreaRegistry() }.orEmpty().associateBy { it.areaId }
 
     private suspend fun WebSocketRepository.fetchFloors(): Map<String, FloorRegistryResponse> =
-        getFloorRegistryOrNull().orEmpty().associateBy { it.floorId }
+        orNull("floor registry") { getFloorRegistry() }.orEmpty().associateBy { it.floorId }
 
     /** Returns a copy of the snapshot with freshly fetched entity registry entries. */
     private suspend fun RegistrySnapshot.withEntityEntries(webSocketRepository: WebSocketRepository) =
         copy(entries = webSocketRepository.fetchEntityRegistryEntries())
 }
+
+/**
+ * Events driving new emissions of [EntitiesForDisplayManager.observe]. Registry events name
+ * the registry that changed, so only that part of the [RegistrySnapshot] is refetched.
+ */
+private sealed interface ObserveEvent {
+    sealed interface EntityEvent : ObserveEvent {
+        /** An entity state changed. */
+        data class StateChanged(val entity: Entity) : EntityEvent
+
+        /** An entity registry entry changed. */
+        data object EntityRegistryChanged : EntityEvent
+    }
+
+    /** An area registry entry changed; the floors are refetched along, they resolve through areas. */
+    data object AreaRegistryChanged : ObserveEvent
+
+    /** A device registry entry changed. */
+    data object DeviceRegistryChanged : ObserveEvent
+}
+
+/**
+ * Entity registry of a server, the source of everything an [EntityDisplayWithoutContext] resolves beyond the
+ * entity state: servers >= 2024.10 provide the display entries, older ones the classic entries.
+ */
+private class EntityRegistryEntries(
+    private val displayEntries: Map<String, EntityRegistryDisplayEntry>? = null,
+    private val entityCategories: Map<Int, String> = emptyMap(),
+    private val classicEntries: Map<String, EntityRegistryResponse>? = null,
+) {
+    /** Display entry of [entityId], for the callers needing what only it holds (area, device). */
+    fun displayEntry(entityId: String): EntityRegistryDisplayEntry? = displayEntries?.get(entityId)
+
+    /** Classic entry of [entityId], for the callers needing what only it holds (area, device). */
+    fun classicEntry(entityId: String): EntityRegistryResponse? = classicEntries?.get(entityId)
+
+    /**
+     * Name to display for [entity]: the name of its registry entry, its `friendly_name` state
+     * attribute, or its id. This is the single place where the app decides how an entity is named,
+     * so a caller without registry entries resolves the same name as one with them.
+     */
+    fun nameOf(entity: Entity): String =
+        displayEntries?.get(entity.entityId)?.name?.takeIf { it.isNotBlank() } ?: entity.friendlyName
+
+    /**
+     * Resolves [entity] into everything its state and the registry provide, with the following
+     * precedence, stopping at the first available value:
+     * - name: the registry display name (`en`), the `friendly_name` state attribute, the entity id
+     * - icon: the custom icon of the registry entry (`ic`), the icon derived from the entity state
+     *   attributes or its domain
+     * - hidden: the `hb` flag (display), a non null `hidden_by` (classic)
+     * - category: the `ec` index decoded through the response categories mapping (display), the raw
+     *   category string (classic)
+     * - display precision: the server-computed `dp` (display); the user-configured precision, the
+     *   integration-suggested precision (classic)
+     * - labels: only available from the display entry, empty otherwise
+     */
+    fun itemFor(entity: Entity): EntityDisplayWithoutContext {
+        val displayEntry = displayEntry(entity.entityId)
+        val classicEntry = classicEntry(entity.entityId)
+
+        return EntityDisplayWithoutContext(
+            entity = entity,
+            name = nameOf(entity),
+            customIcon = displayEntry?.icon.toIcon(),
+            isHidden = displayEntry?.hidden ?: (classicEntry?.hiddenBy != null),
+            entityCategory = displayEntry?.entityCategory
+                ?.let { EntityCategory.fromString(entityCategories[it]) }
+                ?: EntityCategory.fromString(classicEntry?.entityCategory),
+            displayPrecision = displayEntry?.displayPrecision
+                ?: classicEntry?.options?.sensor?.let { it.displayPrecision ?: it.suggestedDisplayPrecision },
+            labels = displayEntry?.labels.orEmpty(),
+        )
+    }
+
+    private fun String?.toIcon(): IIcon? = this
+        ?.takeIf { it.startsWith(MDI_PREFIX) }
+        ?.let { CommunityMaterial.getIconByMdiName(it) }
+}
+
+/**
+ * Fetches the entity registry of the server, falling back to the classic registry when the display
+ * one is unavailable, and empty when there is no websocket to ask.
+ */
+private suspend fun WebSocketRepository?.fetchEntityRegistryEntries(): EntityRegistryEntries {
+    if (this == null) return EntityRegistryEntries()
+
+    val displayResponse = orNull("entity display registry") { getEntityRegistryDisplay() }
+    // Fall back to the classic registry when the display command is unavailable or failed
+    val classicEntries = if (displayResponse == null) orNull("entity registry") { getEntityRegistry() } else null
+
+    return EntityRegistryEntries(
+        displayEntries = displayResponse?.entities?.associateBy { it.entityId },
+        entityCategories = displayResponse?.entityCategories.orEmpty(),
+        classicEntries = classicEntries?.associateBy { it.entityId },
+    )
+}
+
+/**
+ * Absorbs failures of the repository call fetching [name], which the display pipeline degrades
+ * from rather than fails on; cancellation still propagates.
+ */
+private suspend fun <T> orNull(name: String, call: suspend () -> T?): T? = try {
+    call()
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    Timber.e(e, "Couldn't get $name")
+    null
+}
+
+/**
+ * Registry data fetched once per resolution, indexed by id for the merge.
+ */
+private data class RegistrySnapshot(
+    val entries: EntityRegistryEntries = EntityRegistryEntries(),
+    val devices: Map<String, DeviceRegistryResponse> = emptyMap(),
+    val areas: Map<String, AreaRegistryResponse> = emptyMap(),
+    val floors: Map<String, FloorRegistryResponse> = emptyMap(),
+)

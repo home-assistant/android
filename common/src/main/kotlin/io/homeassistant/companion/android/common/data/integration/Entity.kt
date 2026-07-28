@@ -1031,9 +1031,9 @@ val Entity.friendlyName: String
     get() = attributes["friendly_name"]?.toString()?.takeIf { it.isNotBlank() } ?: entityId
 
 /**
- * Formats the entity state for display without registry metadata, so no sensor display
- * precision is applied. Prefer `EntityDisplayItem.state` when the entity has been
- * resolved through `EntitiesForDisplayManager`.
+ * Formats the entity state for display without registry context, so no sensor display
+ * precision is applied. Prefer `EntityDisplay.state` when the entity has been resolved
+ * through `EntitiesForDisplayManager`.
  */
 fun Entity.friendlyState(context: Context, appendUnitOfMeasurement: Boolean = false): String =
     friendlyState(displayPrecision = null, appendUnitOfMeasurement = appendUnitOfMeasurement).resolve(context)
