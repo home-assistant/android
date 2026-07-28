@@ -92,7 +92,7 @@ private const val PULSE_SHRINK_MILLIS = 300
 /** Delay between the pulses of consecutive dots. */
 private const val PULSE_STAGGER_MILLIS = 200
 
-private const val PULSE_MAX_SCALE = 1.2f
+private const val PULSE_MAX_SCALE = 1.3f
 
 /** Ease-out curve of each grow and shrink step, matching the frontend loading animation. */
 private val PulseEasing = CubicBezierEasing(0.39f, 0.575f, 0.565f, 1f)
@@ -165,7 +165,7 @@ fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
                 )
                 Image(
                     imageVector = ohfLogo,
-                    contentDescription = null,
+                    contentDescription = "Open Home Foundation",
                     modifier = Modifier
                         .padding(bottom = brandBottomPadding)
                         .height(ohfLogoHeight)
