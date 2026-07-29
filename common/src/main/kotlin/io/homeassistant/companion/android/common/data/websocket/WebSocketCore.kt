@@ -54,9 +54,9 @@ internal interface WebSocketCore {
     /**
      * Sends an application-level ping and verifies that the connection is alive.
      *
-     * If no pong is received while the connection is believed to be established, the connection is
-     * cancelled: this surfaces a silently dropped socket (e.g. the server restarted without the
-     * TCP connection being reset) to the close handling, which restores active subscriptions.
+     * If no pong is received while the connection is believed to be established, this indicates a
+     * silently dropped connection. The function will properly handle this as a closed connection
+     * and try restoring any active subscriptions.
      *
      * @return `true` if a pong was received, `false` otherwise.
      */

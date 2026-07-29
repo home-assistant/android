@@ -228,7 +228,7 @@ class WebsocketManagerTest {
     }
 
     @Test
-    fun `Given a collector that stopped when supervising then it is restarted on the next interval`() = runTest {
+    fun `Given a collector that stopped when listening for notifications then it is restarted on the next interval`() = runTest {
         mockSetting(WebsocketSetting.ALWAYS)
         every { context.hasActiveConnection() } returns true
         coEvery { entryPoint.serverManager.isRegistered() } returns true

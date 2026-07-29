@@ -190,7 +190,7 @@ internal class WebSocketCoreImpl(
 
     /**
      * The running job working to get the tracked subscriptions restored, replaced on each
-     * closing and each establishment so only one runs at a time.
+     * closing and each establishment of the connecton so only one runs at a time.
      */
     @GuardedBy("connectedMutex")
     private var reconnectJob: Job? = null
@@ -850,7 +850,7 @@ internal class WebSocketCoreImpl(
     }
 
     /**
-     * Finds the single [ActiveMessage.Subscription] entry matching [subscribeMessage].
+     * Finds the single [ActiveMessage.Subscription] entry and its ID matching [subscribeMessage].
      *
      * Resubscription attempts are tracked as [ActiveMessage.Reconnecting] and never match, so one
      * logical subscription always has exactly one matching entry.
@@ -1175,13 +1175,10 @@ internal class WebSocketCoreImpl(
             val unrestored = resubscribeActiveSubscriptions(toRestore)
             if (unrestored.isEmpty()) return
             if (unrestored.size < toRestore.size) {
-                // Progress was made, only the persistent failures keep backing off
                 retryDelay = DELAY_BEFORE_RECONNECT
             }
             toRestore = unrestored
             Timber.w("${toRestore.size} subscriptions not restored, retrying in $retryDelay")
-            // Back off so a rejecting server is not hammered; a subscription is never abandoned
-            // while its collector is still listening
             delay(retryDelay)
             retryDelay = (retryDelay * 2).coerceAtMost(MAX_DELAY_BEFORE_RECONNECT)
             // Subscriptions closed while waiting no longer need to be restored
@@ -1234,8 +1231,6 @@ internal class WebSocketCoreImpl(
                 }
 
                 response.success != true -> {
-                    // The server is reachable but actively refused the subscription: drop the
-                    // rejected attempt, keep the original and let the caller retry with backoff
                     response.id?.let { activeMessages.remove(it) }
                     failed += oldId
                     Timber.e("Subscription ${original.request} rejected, retrying with backoff")
@@ -1245,12 +1240,10 @@ internal class WebSocketCoreImpl(
                     val newId = checkNotNull(response.id) { "Response without ID" }
                     eventSubscriptionMutex.withLock {
                         if (activeMessages.remove(oldId, original)) {
-                            // Promote the acknowledged attempt: the original subscription with
-                            // its flow and channel is now tracked under the id the server uses
+                            // Use the server's new id for the original subscription, flow and channel
                             activeMessages[newId] = original
                         } else {
-                            // The subscription was closed while the attempt was in flight, the
-                            // acknowledged id must not outlive it on the server
+                            // Subscription was stopped while attempt was in flight, unsubscribe
                             activeMessages.remove(newId)
                             unsubscribeEvents(newId)
                         }
@@ -1323,12 +1316,6 @@ internal sealed interface ActiveMessage {
     /**
      * A resubscription attempt in flight after a reconnection.
      *
-     * Tracked under the id the server will use once it acknowledges the attempt, while
-     * [original] stays tracked under its old id so nothing is lost if the attempt fails.
-     * Events that arrive for the new id before the acknowledgement is processed are routed
-     * to [original]'s flow. On acknowledgement the attempt is promoted: [original] replaces
-     * this entry under the new id.
-     *
      * @param responseDeferred Completes with the subscription confirmation response
      * @param original The subscription being restored
      */
@@ -1391,9 +1378,7 @@ private sealed interface Command<T> {
         /**
          * A resubscription attempt for [original] after a reconnection.
          *
-         * Unlike [Subscription] it is tracked as an [ActiveMessage.Reconnecting], so the active
-         * messages map keeps a single [ActiveMessage.Subscription] entry per logical subscription
-         * while the attempt is in flight.
+         * When answered successfully, [original] should be tracked instead of this entire message.
          */
         class Resubscription(private val original: ActiveMessage.Subscription) : WithAnswer(original.request) {
 
