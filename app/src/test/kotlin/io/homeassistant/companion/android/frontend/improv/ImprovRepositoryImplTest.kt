@@ -367,10 +367,11 @@ class ImprovRepositoryImplTest {
         }
 
         @Test
-        fun `Given no Bluetooth adapter when provisionDevice then flow completes without events`() = runTest {
+        fun `Given no Bluetooth adapter when provisionDevice then flow emits error and completes`() = runTest {
             val repository = createRepository(factory = { null })
 
             repository.provisionDevice(ImprovDevice("d", "AA"), "wifi", "pwd").test {
+                assertEquals(ProvisioningEvent.ErrorOccurred(ErrorState.UNABLE_TO_CONNECT), awaitItem())
                 awaitComplete()
             }
         }
