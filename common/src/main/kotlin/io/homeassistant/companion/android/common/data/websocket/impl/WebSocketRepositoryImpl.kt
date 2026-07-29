@@ -37,7 +37,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Fl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.PongSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
@@ -72,14 +71,7 @@ class WebSocketRepositoryImpl internal constructor(
         return webSocketCore.shutdown()
     }
 
-    override suspend fun sendPing(): Boolean {
-        val socketResponse = webSocketCore.sendMessage(
-            mapOf(
-                "type" to "ping",
-            ),
-        )
-        return socketResponse is PongSocketResponse
-    }
+    override suspend fun sendPing(): Boolean = webSocketCore.ping()
 
     override suspend fun getConfig(): GetConfigResponse? {
         val socketResponse = webSocketCore.sendMessage(
