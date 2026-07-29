@@ -16,6 +16,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
@@ -94,6 +95,7 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
     val index = i + 1
     val shortcut = viewModel.shortcuts[i]
     val shortcutId = ManageShortcutsSettingsFragment.SHORTCUT_PREFIX + "_" + index
+    val pinnedIdReserved = index == 6 && viewModel.isReservedShortcutId(shortcut.id.value.orEmpty())
     Text(
         text = if (index < 6) {
             stringResource(id = R.string.shortcut) + " $index"
@@ -170,8 +172,16 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             label = {
                 Text(stringResource(id = R.string.shortcut_pinned_id))
             },
+            isError = pinnedIdReserved,
             modifier = Modifier.fillMaxWidth(),
         )
+        if (pinnedIdReserved) {
+            Text(
+                text = stringResource(id = R.string.shortcut_pinned_id_reserved),
+                fontSize = 12.sp,
+                color = MaterialTheme.colors.error,
+            )
+        }
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -310,7 +320,7 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             )
         },
         enabled =
-        (index < 6 || !shortcut.id.value.isNullOrEmpty()) &&
+        (index < 6 || (!shortcut.id.value.isNullOrEmpty() && !pinnedIdReserved)) &&
             shortcut.label.value.isNotEmpty() &&
             shortcut.desc.value.isNotEmpty() &&
             shortcut.path.value.isNotEmpty() &&

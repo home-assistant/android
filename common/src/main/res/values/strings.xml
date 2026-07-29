@@ -815,6 +815,7 @@
     <string name="shortcut_n">Shortcut %d</string>
     <string name="shortcut_pinned_desc">Pinned shortcut description</string>
     <string name="shortcut_pinned_id">Pinned shortcut ID</string>
+    <string name="shortcut_pinned_id_reserved">This ID is reserved for dynamic shortcuts</string>
     <string name="shortcut_pinned_label">Pinned shortcut label</string>
     <string name="shortcut_pinned_list">Select a pinned shortcut ID to edit</string>
     <string name="shortcut_pinned_note">Make sure to change the ID below for each new shortcut you want to add otherwise the existing ID will be updated. There are no limits to the amount of pinned shortcuts you can create.</string>

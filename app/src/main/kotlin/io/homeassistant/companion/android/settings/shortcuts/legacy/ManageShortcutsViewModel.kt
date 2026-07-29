@@ -111,9 +111,10 @@ internal class ManageShortcutsViewModel @Inject constructor(
                 Timber.d("We have ${pinnedShortcuts.size} pinned shortcuts")
             }
 
-            if (dynamicShortcuts.isNotEmpty()) {
-                for (i in 0 until dynamicShortcuts.size) {
-                    setDynamicShortcutData(dynamicShortcuts[i].id, i)
+            dynamicShortcuts.forEach { item ->
+                dynamicSlotIndex(item.id)?.let { index ->
+                    Timber.d("setting ${item.id} data")
+                    shortcuts[index].setData(item)
                 }
             }
         }
@@ -137,7 +138,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
             icon = icon,
         )
 
-        if (shortcutId.startsWith("shortcut")) {
+        if (dynamicSlotIndex(shortcutId) != null) {
             ShortcutManagerCompat.addDynamicShortcuts(app, listOf(shortcut))
             updateDynamicShortcuts()
         } else {
@@ -181,16 +182,16 @@ internal class ManageShortcutsViewModel @Inject constructor(
             }.toMutableList()
     }
 
-    private fun setDynamicShortcutData(shortcutId: String, index: Int) = viewModelScope.launch {
-        if (dynamicShortcuts.isNotEmpty()) {
-            for (item in dynamicShortcuts) {
-                if (item.id == shortcutId) {
-                    Timber.d("setting ${item.id} data")
-                    shortcuts[index].setData(item)
-                }
-            }
-        }
-    }
+    /** Returns whether [shortcutId] is reserved for a dynamic shortcut slot and can't be used for a pinned shortcut. */
+    fun isReservedShortcutId(shortcutId: String): Boolean = dynamicSlotIndex(shortcutId) != null
+
+    /**
+     * Returns the zero-based slot index for a dynamic shortcut ID managed by this screen
+     * (exactly "shortcut_1".."shortcut_5"), or null for any other ID such as a pinned shortcut.
+     */
+    private fun dynamicSlotIndex(shortcutId: String): Int? = (1..ManageShortcutsSettingsFragment.MAX_SHORTCUTS)
+        .firstOrNull { slot -> "${ManageShortcutsSettingsFragment.SHORTCUT_PREFIX}_$slot" == shortcutId }
+        ?.minus(1)
 
     private suspend fun Shortcut.setData(item: ShortcutInfoCompat) {
         val currentServerId = currentServerId()
