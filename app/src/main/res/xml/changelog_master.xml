@@ -4,6 +4,7 @@
     <release version="2026.7.6 - Main" versioncode="3">
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
+        <change>Modernized settings for entity widgets and tiles</change>
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.7.6 - Wear" versioncode="2">
