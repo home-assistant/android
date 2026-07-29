@@ -35,7 +35,11 @@ object HaFailedControl : HaControl {
     override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         item.domain.capitalize(Locale.getDefault())
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         return false
     }
 }

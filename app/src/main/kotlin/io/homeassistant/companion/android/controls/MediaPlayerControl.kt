@@ -62,7 +62,11 @@ object MediaPlayerControl : HaControl {
     override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.media_player)
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(

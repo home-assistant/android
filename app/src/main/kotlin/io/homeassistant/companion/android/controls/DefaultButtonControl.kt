@@ -43,7 +43,11 @@ object DefaultButtonControl : HaControl {
         else -> item.domain.capitalize(Locale.getDefault())
     }
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
             when (action.templateId.split(".")[0]) {

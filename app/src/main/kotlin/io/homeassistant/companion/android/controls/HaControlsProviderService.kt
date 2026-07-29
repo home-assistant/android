@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import java.util.concurrent.Flow
 import java.util.function.Consumer
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -148,6 +149,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                 subscriber.onNext(it)
                             }
                     }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Error building list of entities")
                 }
@@ -159,34 +162,36 @@ class HaControlsProviderService : ControlsProviderService() {
     override fun createPublisherFor(controlIds: MutableList<String>): Flow.Publisher<Control> {
         Timber.d("publisherFor $controlIds")
         return Flow.Publisher { subscriber ->
-            subscriber.onSubscribe(object : Flow.Subscription {
-                val webSocketScope = CoroutineScope(Dispatchers.IO)
-                override fun request(n: Long) {
-                    ioScope.launch {
-                        if (!serverManager.isRegistered()) return@launch else Timber.d("request $n")
+            subscriber.onSubscribe(
+                object : Flow.Subscription {
+                    val webSocketScope = CoroutineScope(Dispatchers.IO)
+                    override fun request(n: Long) {
+                        ioScope.launch {
+                            if (!serverManager.isRegistered()) return@launch else Timber.d("request $n")
 
-                        controlIds
-                            .groupBy {
-                                // Controls added before multiserver don't have a server ID, assume the first
-                                it.split(".")[0].toIntOrNull()
-                                    ?: serverManager.servers().firstOrNull()?.id
-                            }.forEach { (serverId, serverControlIds) ->
-                                if (serverId == null) return@forEach
-                                subscribeToEntitiesForServer(
-                                    serverId,
-                                    serverControlIds,
-                                    webSocketScope,
-                                    subscriber,
-                                )
-                            }
+                            controlIds
+                                .groupBy {
+                                    // Controls added before multiserver don't have a server ID, assume the first
+                                    it.split(".")[0].toIntOrNull()
+                                        ?: serverManager.servers().firstOrNull()?.id
+                                }.forEach { (serverId, serverControlIds) ->
+                                    if (serverId == null) return@forEach
+                                    subscribeToEntitiesForServer(
+                                        serverId,
+                                        serverControlIds,
+                                        webSocketScope,
+                                        subscriber,
+                                    )
+                                }
+                        }
                     }
-                }
 
-                override fun cancel() {
-                    Timber.d("cancel")
-                    webSocketScope.cancel()
-                }
-            })
+                    override fun cancel() {
+                        Timber.d("cancel")
+                        webSocketScope.cancel()
+                    }
+                },
+            )
         }
     }
 
@@ -208,7 +213,10 @@ class HaControlsProviderService : ControlsProviderService() {
             var actionSuccess = false
             if (haControl != null) {
                 try {
-                    actionSuccess = haControl.performAction(serverManager.integrationRepository(server), action)
+                    actionSuccess =
+                        haControl.performAction(serverManager.integrationRepository(server), action, server)
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to control or get entity information")
                 }

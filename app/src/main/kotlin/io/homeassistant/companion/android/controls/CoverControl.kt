@@ -68,7 +68,11 @@ object CoverControl : HaControl {
     override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.domain_cover)
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         return when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(

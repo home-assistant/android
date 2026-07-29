@@ -15,6 +15,7 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import java.util.concurrent.ConcurrentHashMap
 
 @RequiresApi(Build.VERSION_CODES.R)
 object ClimateControl : HaControl {
@@ -32,7 +33,7 @@ object ClimateControl : HaControl {
         "heat_cool" to TemperatureControlTemplate.FLAG_MODE_HEAT_COOL,
         "off" to TemperatureControlTemplate.FLAG_MODE_OFF,
     )
-    private val climateStates = HashMap<String, ClimateState>()
+    private val climateStates = ConcurrentHashMap<String, ClimateState>()
 
     override fun provideControlFeatures(
         context: Context,
@@ -107,7 +108,11 @@ object ClimateControl : HaControl {
     override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.domain_climate)
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         val entityStr: String = if (action.templateId.split(".").size > 2) {
             action.templateId.split(".", limit = 2)[1]
         } else {
@@ -120,7 +125,7 @@ object ClimateControl : HaControl {
                     "set_temperature",
                     hashMapOf(
                         "entity_id" to entityStr,
-                        "temperature" to (action as? FloatAction)?.newValue.toString(),
+                        "temperature" to action.newValue.toString(),
                     ),
                 )
                 true
@@ -133,7 +138,7 @@ object ClimateControl : HaControl {
                         "entity_id" to entityStr,
                         "hvac_mode" to (
                             temperatureControlModes.entries.find {
-                                it.value == ((action as? ModeAction)?.newMode ?: -1)
+                                it.value == action.newMode
                             }?.key ?: ""
                             ),
                     ),

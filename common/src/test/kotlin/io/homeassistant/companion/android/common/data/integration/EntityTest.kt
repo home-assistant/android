@@ -412,7 +412,7 @@ class EntityTest {
             )
 
             assertEquals("garage", entity.deviceClass())
-            assertEquals("/api/camera_proxy/camera.door", entity.entityPicture())
+            assertEquals("/api/camera_proxy/camera.door", entity.entityPicturePath())
         }
 
         @Test
@@ -420,7 +420,7 @@ class EntityTest {
             val entity = createEntity(attributes = mapOf("entity_picture" to " "))
 
             assertNull(entity.deviceClass())
-            assertNull(entity.entityPicture())
+            assertNull(entity.entityPicturePath())
         }
     }
 }

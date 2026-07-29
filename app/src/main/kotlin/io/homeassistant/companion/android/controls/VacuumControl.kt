@@ -12,10 +12,13 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import java.util.concurrent.ConcurrentHashMap
 
 @RequiresApi(Build.VERSION_CODES.R)
 object VacuumControl : HaControl {
-    private var entitySupportsTurnOn = false
+    private data class EntityKey(val serverId: Int, val entityId: String)
+
+    private val entitySupportsTurnOn = ConcurrentHashMap<EntityKey, Boolean>()
 
     override fun provideControlFeatures(
         context: Context,
@@ -23,7 +26,7 @@ object VacuumControl : HaControl {
         item: EntityDisplayWithContext,
         info: HaControlInfo,
     ): Control.StatefulBuilder {
-        entitySupportsTurnOn = item.vacuumControls?.supportsTurnOn == true
+        entitySupportsTurnOn[EntityKey(info.serverId, item.entityId)] = item.vacuumControls?.supportsTurnOn == true
         control.setControlTemplate(
             ToggleTemplate(
                 item.entityId,
@@ -41,10 +44,14 @@ object VacuumControl : HaControl {
     override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.domain_vacuum)
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
-            if (entitySupportsTurnOn) {
+            if (entitySupportsTurnOn[EntityKey(serverId, action.templateId)] == true) {
                 if ((action as? BooleanAction)?.newState == true) "turn_on" else "turn_off"
             } else if ((action as? BooleanAction)?.newState == true) {
                 "start"

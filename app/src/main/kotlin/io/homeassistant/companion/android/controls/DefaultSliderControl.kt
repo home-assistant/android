@@ -43,7 +43,11 @@ object DefaultSliderControl : HaControl {
             context.getString(commonR.string.domain_number)
         }
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
             "set_value",

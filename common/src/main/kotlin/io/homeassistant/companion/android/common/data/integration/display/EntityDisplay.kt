@@ -16,7 +16,7 @@ import io.homeassistant.companion.android.common.data.integration.MediaPlayerCon
 import io.homeassistant.companion.android.common.data.integration.NumberControls
 import io.homeassistant.companion.android.common.data.integration.VacuumControls
 import io.homeassistant.companion.android.common.data.integration.deviceClass
-import io.homeassistant.companion.android.common.data.integration.entityPicture
+import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
 import io.homeassistant.companion.android.common.data.integration.getClimateControls
@@ -121,7 +121,7 @@ interface EntityDisplay {
     val deviceClass: String?
 
     /** Picture of the entity (a camera thumbnail path), null when it has none. */
-    val entityPicture: String?
+    val entityPicturePath: String?
 
     /**
      * When the state of the entity last changed.
@@ -166,7 +166,7 @@ data class EntityDisplayWithoutContext(
     override val coverControls: CoverControls? = null,
     override val vacuumControls: VacuumControls? = null,
     override val deviceClass: String? = null,
-    override val entityPicture: String? = null,
+    override val entityPicturePath: String? = null,
     override val lastChanged: LocalDateTime? = null,
     override val lastUpdated: LocalDateTime? = null,
     override val isHidden: Boolean = false,
@@ -209,7 +209,7 @@ data class EntityDisplayWithoutContext(
         coverControls = entity.getCoverControls(),
         vacuumControls = entity.getVacuumControls(),
         deviceClass = entity.deviceClass(),
-        entityPicture = entity.entityPicture(),
+        entityPicturePath = entity.entityPicturePath(),
         lastChanged = entity.lastChanged,
         lastUpdated = entity.lastUpdated,
         isHidden = isHidden,

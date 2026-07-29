@@ -38,7 +38,11 @@ object LockControl : HaControl {
     override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.domain_lock)
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
             if ((action as? BooleanAction)?.newState == true) "lock" else "unlock",

@@ -541,7 +541,7 @@ fun Entity.getVacuumControls(): VacuumControls? {
 fun Entity.deviceClass(): String? = attributes["device_class"] as? String
 
 /** The `entity_picture` attribute of the entity, or null when it has none or it is blank. */
-fun Entity.entityPicture(): String? = (attributes["entity_picture"] as? String)?.takeIf { it.isNotBlank() }
+fun Entity.entityPicturePath(): String? = (attributes["entity_picture"] as? String)?.takeIf { it.isNotBlank() }
 
 fun Entity.getLightColor(): Int? {
     // https://github.com/home-assistant/frontend/blob/dev/src/panels/lovelace/cards/hui-light-card.ts#L243

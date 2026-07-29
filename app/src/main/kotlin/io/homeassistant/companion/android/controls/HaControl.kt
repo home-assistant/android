@@ -93,5 +93,9 @@ interface HaControl {
 
     fun getDomainString(context: Context, item: EntityDisplayWithContext): String
 
-    suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
+    suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean
 }
