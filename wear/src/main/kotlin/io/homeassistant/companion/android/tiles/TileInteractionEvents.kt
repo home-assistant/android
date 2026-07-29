@@ -1,8 +1,19 @@
 package io.homeassistant.companion.android.tiles
 
+import android.os.Build
 import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.TileService
+import io.homeassistant.companion.android.common.util.SdkVersion
 import timber.log.Timber
+
+/** Refresh interval value for updating the tile when it becomes visible. */
+internal const val REFRESH_INTERVAL_ON_VIEWED = 1
+
+/**
+ * Whether refreshing a tile when it becomes visible works on this device: from Wear OS 6 enter
+ * events are batched and can arrive after the user left the tile.
+ */
+internal fun isRefreshOnViewedSupported(): Boolean = !SdkVersion.isAtLeast(Build.VERSION_CODES.BAKLAVA)
 
 /**
  * Requests an update of this [TileService]'s tiles when [events] contains an enter event for a
