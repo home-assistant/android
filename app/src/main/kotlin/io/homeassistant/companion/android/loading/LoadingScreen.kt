@@ -201,7 +201,7 @@ private fun LoadingScreenPreview() {
 
 @HAPreviews
 @Composable
-private fun LoadingScreenPreview_with_branding() {
+private fun LoadingScreenPreviewWithBranding() {
     HAThemeForPreview {
         LoadingScreen(showBrand = true)
     }
