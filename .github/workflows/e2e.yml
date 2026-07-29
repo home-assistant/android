@@ -21,7 +21,7 @@ permissions:
 # one emulator per supported API level, all inside a single emulator.wtf
 # session. This is not part of the PR checks: it only runs from trusted refs
 # (schedule on main, manual dispatch), so it can build and check out code
-# directly without the fork-safety indirections PR workflows need.
+# directly without the fork-safety indirections PR workflows need. hello
 jobs:
   maestro:
     name: "Maestro onboarding"
