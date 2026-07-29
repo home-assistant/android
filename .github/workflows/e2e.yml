@@ -6,9 +6,20 @@ on: # yamllint disable-line rule:truthy
     - cron: "0 5 * * *"
   # Manual run on any branch carrying this workflow.
   workflow_dispatch:
+    inputs:
+      home-assistant-version:
+        description: "Home Assistant image tag to test against"
+        required: false
+        default: "dev"
   # TOREVERT: lets the temporary job in pr.yml exercise this workflow from the
   # PR; schedule and workflow_dispatch only work from the default branch.
   workflow_call:
+    inputs:
+      home-assistant-version:
+        description: "Home Assistant image tag to test against"
+        required: false
+        type: string
+        default: "dev"
 
 # The group must not use github.workflow: when invoked through workflow_call,
 # it resolves to the CALLER's workflow name, colliding with the caller's own
@@ -35,7 +46,9 @@ jobs:
       id-token: write
     env:
       E2E_FORWARD_IP: 172.16.0.2
-      E2E_HOME_ASSISTANT_VERSION: 2026.7.4
+      # Schedule runs have no inputs, so they fall back to the Home Assistant
+      # dev image; manual runs can override the tag.
+      E2E_HOME_ASSISTANT_VERSION: ${{ inputs.home-assistant-version || 'dev' }}
       # The hostname must not start with something resembling a dictionary
       # word: some emulator images ship Gboard with autocorrect enabled, which
       # rewrites e.g. ha.internal to have.internal while the flow types the
