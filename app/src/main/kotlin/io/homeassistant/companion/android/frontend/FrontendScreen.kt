@@ -11,6 +11,10 @@ import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -104,6 +108,9 @@ import timber.log.Timber
 
 /** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
 private const val MINIMUM_GESTURE_VELOCITY = 75f
+
+/** Duration of the loading overlay fade-out once the frontend is ready. */
+private const val LOADING_OVERLAY_FADE_OUT_MILLIS = 350
 
 /** Test tag applied to the WebView custom view fullscreen overlay. */
 @VisibleForTesting
@@ -448,7 +455,9 @@ private fun StateOverlay(
     when (viewState) {
         is FrontendViewState.LoadServer,
         is FrontendViewState.Loading,
-        -> LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
+        -> {
+            // Loading overlay rendered below so it can fade out when leaving these states
+        }
 
         is FrontendViewState.Content -> {
             // No overlay for content state to show the underlying WebView
@@ -477,6 +486,16 @@ private fun StateOverlay(
             onErrorAction = onErrorAction,
             onOpenExternalLink = onOpenExternalLink,
         )
+    }
+
+    // The loading overlay is rendered on top of the `when` so that on leaving the loading states it
+    // fades out over.
+    AnimatedVisibility(
+        visible = viewState is FrontendViewState.LoadServer || viewState is FrontendViewState.Loading,
+        enter = EnterTransition.None,
+        exit = fadeOut(animationSpec = tween(durationMillis = LOADING_OVERLAY_FADE_OUT_MILLIS)),
+    ) {
+        LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault), showBrand = true)
     }
 }
 

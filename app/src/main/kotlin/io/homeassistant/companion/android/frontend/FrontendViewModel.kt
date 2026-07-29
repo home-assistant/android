@@ -762,10 +762,18 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /**
      * Awaits the [CONNECTION_TIMEOUT] and emits a [FrontendConnectionError.ExternalBusTimeout] if the
      * frontend has not completed its external-bus handshake (left [FrontendViewState.Loading]) by then.
+     * When the handshake is done ([FrontendViewState.Loading.connected]) but the frontend never reports
+     * that it finished rendering, the content is shown anyway.
      */
     private suspend fun watchLoadingTimeout() {
         delay(CONNECTION_TIMEOUT)
-        if (_viewState.value is FrontendViewState.Loading) {
+
+        val state = _viewState.value
+        if (state !is FrontendViewState.Loading) return
+
+        if (state.connected) {
+            showContent()
+        } else {
             onError(FrontendConnectionError.ExternalBusTimeout)
         }
     }
@@ -823,6 +831,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is FrontendHandlerEvent.Disconnected -> {
                 // Disconnection handling not yet implemented
             }
+            is FrontendHandlerEvent.Loaded -> showContent()
 
             is FrontendHandlerEvent.ThemeUpdated -> {
                 viewModelScope.launch { updateThemeColors() }
@@ -1156,11 +1165,36 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         (this is FrontendViewState.Error && error is FrontendConnectionError.ExternalBusTimeout)
 
     /**
-     * Transitions to [FrontendViewState.Content] once the frontend connects (see [isAwaitingConnection]),
-     * clearing the intermediate navigation history and syncing the system bar colors to
-     * the now-available frontend theme.
+     * Whether the server's frontend reports the `loaded` external bus event once it has fully
+     * rendered, letting the app keep the loading screen up until then instead of hiding it as
+     * soon as the connection is established.
+     */
+    private suspend fun serverReportsLoaded(serverId: Int): Boolean {
+        return serverManager.getServer(serverId)?.version?.isAtLeast(2026, 8, 0) == true
+    }
+
+    /**
+     * Handles the frontend connection: on servers that report the `loaded` event (see
+     * [serverReportsLoaded]) the loading screen stays up until [showContent] runs for that event,
+     * otherwise the connection is the best available signal and the content is shown right away.
      */
     private suspend fun onConnected() {
+        if (serverReportsLoaded(_viewState.value.serverId)) {
+            // Keep the loading screen up until the frontend reports Loaded; mark the handshake as
+            // done so the loading timeout no longer treats the wait as a connection failure.
+            _viewState.update { if (it is FrontendViewState.Loading) it.copy(connected = true) else it }
+        } else {
+            showContent()
+        }
+    }
+
+    /**
+     * Transitions to [FrontendViewState.Content] (see [isAwaitingConnection]), clearing the
+     * intermediate navigation history, syncing the system bar colors to the now-available
+     * frontend theme and checking the notification permission once the content is visible.
+     * No-op on the state when the content is already shown.
+     */
+    private suspend fun showContent() {
         val wasAwaitingConnection = _viewState.value.isAwaitingConnection()
         val serverHandleInsets = serverHandlesInsets(_viewState.value.serverId)
         _viewState.update { currentState ->
@@ -1178,8 +1212,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             // Remove any previous navigation
             _webViewActions.emit(WebViewAction.ClearHistory())
             checkSecurityVersion(_viewState.value.serverId)
+            permissionManager.checkNotificationPermission(_viewState.value.serverId)
         }
-        permissionManager.checkNotificationPermission(_viewState.value.serverId)
         viewModelScope.launch { updateThemeColors() }
         viewModelScope.launch { applySafeAreaInsetsIfHandled() }
     }
