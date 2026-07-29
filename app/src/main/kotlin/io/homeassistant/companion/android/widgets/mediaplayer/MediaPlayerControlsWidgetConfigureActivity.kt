@@ -3,22 +3,17 @@ package io.homeassistant.companion.android.widgets.mediaplayer
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureViewModel.Factory
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
@@ -35,10 +30,16 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         }
     }
 
+    private val widgetId: Int
+        get() = intent.extras?.getInt(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID,
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+
     private val viewModel: MediaPlayerControlsWidgetConfigureViewModel by viewModels(
         extrasProducer = {
             defaultViewModelCreationExtras.withCreationCallback<Factory> { factory ->
-                factory.create(intent.getStringExtra(FOR_ENTITY))
+                factory.create(widgetId, intent.extras?.getString(FOR_ENTITY, null))
             }
         },
     )
@@ -63,15 +64,16 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             return
         }
 
-        viewModel.onSetup(widgetId)
-
         setContent {
             HATheme {
                 MediaPlayerControlsWidgetConfigureScreen(
                     viewModel = viewModel,
-                    dynamicColorAvailable = DynamicColors.isDynamicColorAvailable(),
+                    // The app sets the extra when it opens this screen itself, so there is
+                    // something to go back to. The launcher opens it through the
+                    // APPWIDGET_CONFIGURE filter instead, leaving nothing behind us.
+                    canNavigateBack = requestLauncherSetup,
+                    onNavigate = ::finish,
                     onActionClick = ::onActionClick,
-                    onClose = ::finish,
                 )
             }
         }
@@ -80,35 +82,19 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
     private fun onActionClick() {
         lifecycleScope.launch {
             if (requestLauncherSetup) {
-                if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) && viewModel.isValidSelection()) {
-                    requestPinWidget()
-                } else {
-                    viewModel.onUserMessage(commonR.string.widget_creation_error)
+                if (viewModel.requestWidgetCreation(this@MediaPlayerControlsWidgetConfigureActivity)) {
+                    finish()
                 }
             } else {
-                updateWidget()
+                if (viewModel.updateWidgetConfiguration()) {
+                    viewModel.updateWidget(this@MediaPlayerControlsWidgetConfigureActivity)
+                    setResult(
+                        RESULT_OK,
+                        Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId),
+                    )
+                    finish()
+                }
             }
         }
-    }
-
-    private suspend fun requestPinWidget() {
-        try {
-            viewModel.requestWidgetCreation(this)
-            finish()
-        } catch (e: IllegalStateException) {
-            Timber.e(e, "Unable to request widget pin")
-            viewModel.onUserMessage(commonR.string.widget_creation_error)
-        }
-    }
-
-    private suspend fun updateWidget() {
-        // The view model surfaces a user message itself when the selection is invalid.
-        if (!viewModel.updateWidgetConfiguration()) return
-        viewModel.updateWidget(this)
-        setResult(
-            RESULT_OK,
-            Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, viewModel.widgetId),
-        )
-        finish()
     }
 }

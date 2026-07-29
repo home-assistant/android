@@ -2,7 +2,11 @@ package io.homeassistant.companion.android.widgets.mediaplayer
 
 import androidx.compose.runtime.Composable
 import com.android.tools.screenshot.PreviewTest
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.previewEntity1
@@ -18,26 +22,14 @@ class MediaPlayerControlsWidgetConfigureScreenshotTest {
     fun `MediaPlayerControlsWidgetConfigureScreen single server`() {
         HAThemeForPreview {
             MediaPlayerControlsWidgetConfigureContent(
-                uiState = MediaPlayerControlsWidgetConfigureUiState(
-                    config = MediaPlayerControlsWidgetConfigureViewState(
-                        selectedServerId = previewServer1.id,
-                        selectedEntityIds = listOf(previewEntity1.entityId),
-                        label = "Living room",
-                        showVolume = true,
-                        showSkip = true,
-                        showSeek = false,
-                        showSource = true,
-                        backgroundType = WidgetBackgroundType.DAYNIGHT,
-                        isUpdateWidget = false,
-                    ),
-                    servers = listOf(previewServer1),
-                    availableEntities = emptyList(),
-                    selectedEntities = listOf(
-                        SelectedMediaPlayer(previewEntity1.entityId, "Living room speaker"),
-                    ),
-                    isInputValid = true,
+                state = previewState.copy(
+                    serversDropdownItems = listOf(previewServer1).map {
+                        HADropdownItem(key = it.id, label = it.friendlyName)
+                    },
+                    selectedEntityIds = listOf(previewEntity1.entityId),
                 ),
-                dynamicColorAvailable = true,
+                canNavigateBack = false,
+                onNavigate = {},
                 onServerSelected = {},
                 onEntityAdded = {},
                 onEntityRemoved = {},
@@ -48,7 +40,6 @@ class MediaPlayerControlsWidgetConfigureScreenshotTest {
                 onShowSourceChanged = {},
                 onBackgroundTypeSelected = {},
                 onActionClick = {},
-                onClose = {},
             )
         }
     }
@@ -59,27 +50,16 @@ class MediaPlayerControlsWidgetConfigureScreenshotTest {
     fun `MediaPlayerControlsWidgetConfigureScreen multiple servers updating`() {
         HAThemeForPreview {
             MediaPlayerControlsWidgetConfigureContent(
-                uiState = MediaPlayerControlsWidgetConfigureUiState(
-                    config = MediaPlayerControlsWidgetConfigureViewState(
-                        selectedServerId = previewServer2.id,
-                        selectedEntityIds = listOf(previewEntity1.entityId, previewEntity2.entityId),
-                        label = "",
-                        showVolume = true,
-                        showSkip = false,
-                        showSeek = true,
-                        showSource = false,
-                        backgroundType = WidgetBackgroundType.TRANSPARENT,
-                        isUpdateWidget = true,
-                    ),
-                    servers = listOf(previewServer1, previewServer2),
-                    availableEntities = emptyList(),
-                    selectedEntities = listOf(
-                        SelectedMediaPlayer(previewEntity1.entityId, "Living room speaker"),
-                        SelectedMediaPlayer(previewEntity2.entityId, "Kitchen speaker"),
-                    ),
-                    isInputValid = true,
+                state = previewState.copy(
+                    selectedServerId = previewServer2.id,
+                    label = "",
+                    showSkip = false,
+                    showSource = false,
+                    selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
+                    isUpdateWidget = true,
                 ),
-                dynamicColorAvailable = true,
+                canNavigateBack = false,
+                onNavigate = {},
                 onServerSelected = {},
                 onEntityAdded = {},
                 onEntityRemoved = {},
@@ -90,8 +70,28 @@ class MediaPlayerControlsWidgetConfigureScreenshotTest {
                 onShowSourceChanged = {},
                 onBackgroundTypeSelected = {},
                 onActionClick = {},
-                onClose = {},
             )
         }
     }
 }
+
+private val previewState = MediaPlayerControlsWidgetConfigureState(
+    selectedServerId = previewServer1.id,
+    serversDropdownItems = listOf(previewServer1, previewServer2).map {
+        HADropdownItem(key = it.id, label = it.friendlyName)
+    },
+    entityDisplayState = EntityDisplayState.Loaded(
+        listOf(
+            EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity1), areaName = "Kitchen"),
+            EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity2)),
+        ),
+    ),
+    selectedEntityIds = listOf(previewEntity1.entityId, previewEntity2.entityId),
+    label = "Living room",
+    showVolume = true,
+    showSkip = true,
+    showSeek = false,
+    showSource = true,
+    selectedBackgroundType = WidgetBackgroundType.DAYNIGHT,
+    dynamicColorAvailable = true,
+)

@@ -1,10 +1,13 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
@@ -16,12 +19,12 @@ import io.mockk.every
 import io.mockk.mockk
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -32,14 +35,14 @@ import org.junit.jupiter.api.extension.ExtendWith
 class MediaPlayerControlsWidgetConfigureViewModelTest {
 
     private val dao = mockk<MediaPlayerControlsWidgetDao>(relaxUnitFun = true)
-    private val integrationRepository = mockk<IntegrationRepository>()
-    private val webSocketRepository = mockk<WebSocketRepository>(relaxed = true)
     private val serverManager = mockk<ServerManager>()
+    private val entitiesForDisplayManager = mockk<EntitiesForDisplayManager>()
 
     private val widgetId = 42
     private val serverId = 1
     private val server = mockk<Server> {
         every { id } returns serverId
+        every { friendlyName } returns "Home"
     }
     private val entity = createEntity("media_player.living_room")
     private val secondEntity = createEntity("media_player.kitchen")
@@ -48,22 +51,22 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
     fun setUp() {
         every { serverManager.serversFlow } returns flowOf(listOf(server))
         coEvery { serverManager.isRegistered() } returns true
-        coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { serverManager.webSocketRepository(any()) } returns webSocketRepository
-        coEvery { integrationRepository.getEntities() } returns listOf(entity, secondEntity)
+        coEvery { serverManager.getServer() } returns server
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { dao.get(any()) } returns null
+        every {
+            entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>())
+        } returns flowOf(displayStateOf(entity.toDisplayItem(), secondEntity.toDisplayItem()))
     }
 
     @Test
-    fun `Given an existing widget when setup completes then persisted configuration is restored`() = runTest {
+    fun `Given an existing widget when created then persisted configuration is restored`() = runTest {
         coEvery { dao.get(widgetId) } returns createWidgetEntity()
-        val viewModel = createViewModel()
 
-        viewModel.onSetup(widgetId)
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
-        val state = viewModel.uiState.value.config
+        val state = viewModel.state.value
         assertTrue(state.isUpdateWidget)
         assertEquals(serverId, state.selectedServerId)
         assertEquals(listOf(entity.entityId), state.selectedEntityIds)
@@ -72,60 +75,47 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         assertTrue(state.showSkip)
         assertFalse(state.showSeek)
         assertTrue(state.showSource)
-        assertEquals(WidgetBackgroundType.TRANSPARENT, state.backgroundType)
+        assertEquals(WidgetBackgroundType.TRANSPARENT, state.selectedBackgroundType)
     }
 
     @Test
-    fun `Given an existing widget with several entities when setup completes then all entities are restored`() = runTest {
-        coEvery { dao.get(widgetId) } returns createWidgetEntity(
-            entityId = "${entity.entityId}, ${secondEntity.entityId}",
-        )
-        val viewModel = createViewModel()
-
-        viewModel.onSetup(widgetId)
-        advanceUntilIdle()
-
-        assertEquals(
-            listOf(entity.entityId, secondEntity.entityId),
-            viewModel.uiState.value.config.selectedEntityIds,
-        )
-    }
-
-    @Test
-    fun `Given an existing widget with duplicate entities when setup completes then duplicates are removed`() = runTest {
+    fun `Given an existing widget with several entities when created then all of them are restored deduplicated`() = runTest {
         coEvery { dao.get(widgetId) } returns createWidgetEntity(
             entityId = "${entity.entityId}, ${entity.entityId}, ${secondEntity.entityId}",
         )
-        val viewModel = createViewModel()
 
-        viewModel.onSetup(widgetId)
+        val viewModel = createViewModel()
         advanceUntilIdle()
 
         assertEquals(
             listOf(entity.entityId, secondEntity.entityId),
-            viewModel.uiState.value.config.selectedEntityIds,
+            viewModel.state.value.selectedEntityIds,
         )
     }
 
     @Test
-    fun `Given setup is called again when state changed then current state is preserved`() = runTest {
+    fun `Given servers when created then they are exposed as dropdown items`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(HADropdownItem(key = serverId, label = "Home")),
+            viewModel.state.value.serversDropdownItems,
+        )
+    }
+
+    @Test
+    fun `Given a preselected entity when created then no persisted configuration is loaded`() = runTest {
         val viewModel = createViewModel(preselectedEntityId = entity.entityId)
-        viewModel.onSetup(widgetId)
-        advanceUntilIdle()
-        viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
-
-        viewModel.onSetup(widgetId)
         advanceUntilIdle()
 
-        assertEquals(WidgetBackgroundType.TRANSPARENT, viewModel.uiState.value.config.backgroundType)
-        // A preselected entity means we never load a persisted configuration from the DAO.
-        coVerify(exactly = 0) { dao.get(widgetId) }
+        assertEquals(listOf(entity.entityId), viewModel.state.value.selectedEntityIds)
+        coVerify(exactly = 0) { dao.get(any()) }
     }
 
     @Test
     fun `Given valid selections when configuration is saved then widget data is persisted`() = runTest {
         val viewModel = createViewModel()
-        viewModel.onSetup(widgetId)
         advanceUntilIdle()
 
         viewModel.onEntityAdded(entity.entityId)
@@ -135,8 +125,7 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
         advanceUntilIdle()
 
-        assertTrue(viewModel.isValidSelection())
-        viewModel.updateWidgetConfiguration()
+        assertTrue(viewModel.updateWidgetConfiguration())
 
         coVerify {
             dao.add(
@@ -158,108 +147,100 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
     @Test
     fun `Given several entities are selected when configuration is saved then they are stored comma separated`() = runTest {
         val viewModel = createViewModel()
-        viewModel.onSetup(widgetId)
         advanceUntilIdle()
 
         viewModel.onEntityAdded(entity.entityId)
         viewModel.onEntityAdded(secondEntity.entityId)
         advanceUntilIdle()
 
-        viewModel.updateWidgetConfiguration()
+        assertTrue(viewModel.updateWidgetConfiguration())
 
         coVerify {
-            dao.add(
-                match {
-                    it.entityId == "${entity.entityId},${secondEntity.entityId}"
-                },
-            )
+            dao.add(match { it.entityId == "${entity.entityId},${secondEntity.entityId}" })
         }
-    }
-
-    @Test
-    fun `Given several entities are selected when one is removed then it is dropped from the selection`() = runTest {
-        val viewModel = createViewModel()
-        viewModel.onSetup(widgetId)
-        advanceUntilIdle()
-
-        viewModel.onEntityAdded(entity.entityId)
-        viewModel.onEntityAdded(secondEntity.entityId)
-        viewModel.onEntityRemoved(entity.entityId)
-        advanceUntilIdle()
-
-        assertEquals(listOf(secondEntity.entityId), viewModel.uiState.value.config.selectedEntityIds)
     }
 
     @Test
     fun `Given the same entity added twice when checking the selection then it is only stored once`() = runTest {
         val viewModel = createViewModel()
-        viewModel.onSetup(widgetId)
         advanceUntilIdle()
 
         viewModel.onEntityAdded(entity.entityId)
         viewModel.onEntityAdded(entity.entityId)
-        advanceUntilIdle()
 
-        assertEquals(listOf(entity.entityId), viewModel.uiState.value.config.selectedEntityIds)
+        assertEquals(listOf(entity.entityId), viewModel.state.value.selectedEntityIds)
     }
 
     @Test
-    fun `Given no entity selected when an entity is added then the input becomes valid`() = runTest {
+    fun `Given several entities are selected when one is removed then it is dropped from the selection`() = runTest {
         val viewModel = createViewModel()
-        viewModel.onSetup(widgetId)
         advanceUntilIdle()
-        assertFalse(viewModel.uiState.value.isInputValid)
 
         viewModel.onEntityAdded(entity.entityId)
-        advanceUntilIdle()
+        viewModel.onEntityAdded(secondEntity.entityId)
+        viewModel.onEntityRemoved(entity.entityId)
 
-        assertTrue(viewModel.uiState.value.isInputValid)
+        assertEquals(listOf(secondEntity.entityId), viewModel.state.value.selectedEntityIds)
     }
 
     @Test
-    fun `Given a server change when an entity was selected then the selection is cleared`() = runTest {
+    fun `Given no entity selected when an entity is added then the action becomes enabled`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertFalse(viewModel.state.value.isActionEnabled)
+
+        viewModel.onEntityAdded(entity.entityId)
+
+        assertTrue(viewModel.state.value.isActionEnabled)
+    }
+
+    @Test
+    fun `Given a selection when an entity is added then it is no longer offered by the picker`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEntityAdded(entity.entityId)
+
+        val state = viewModel.state.value
+        assertEquals(listOf(entity.toDisplayItem()), state.selectedEntities)
+        assertEquals(
+            listOf(secondEntity.entityId),
+            (state.availableEntities as EntityDisplayState.Loaded).entities.map { it.entityId },
+        )
+    }
+
+    @Test
+    fun `Given a server change when entities were selected then the selection is cleared and entities reload`() = runTest {
         val newServerId = serverId + 1
         val viewModel = createViewModel(preselectedEntityId = entity.entityId)
-        viewModel.onSetup(widgetId)
         advanceUntilIdle()
 
         viewModel.onServerSelected(newServerId)
-        advanceUntilIdle()
 
-        val state = viewModel.uiState.value.config
+        val state = viewModel.state.value
         assertEquals(newServerId, state.selectedServerId)
         assertTrue(state.selectedEntityIds.isEmpty())
+        assertFalse(state.isActionEnabled)
     }
 
     @Test
-    fun `Given entity loading fails when the screen is shown then a user message is surfaced and cleared once shown`() = runTest {
-        coEvery { integrationRepository.getEntities() } throws RuntimeException("boom")
+    fun `Given no entity selected when saving then it fails and an error is reported`() = runTest {
         val viewModel = createViewModel()
-
-        viewModel.onSetup(widgetId)
         advanceUntilIdle()
 
-        assertEquals(commonR.string.widget_entity_fetch_error, viewModel.uiState.value.userMessage)
+        assertFalse(viewModel.updateWidgetConfiguration())
 
-        viewModel.onUserMessageShown()
-        advanceUntilIdle()
-
-        assertNull(viewModel.uiState.value.userMessage)
+        assertEquals(commonR.string.widget_update_error, viewModel.errors.first())
+        coVerify(exactly = 0) { dao.add(any()) }
     }
 
-    @Test
-    fun `Given a user message is requested then it is exposed in the ui state`() = runTest {
-        val viewModel = createViewModel()
-        viewModel.onSetup(widgetId)
-        advanceUntilIdle()
-
-        viewModel.onUserMessage(commonR.string.widget_creation_error)
-        advanceUntilIdle()
-
-        assertEquals(commonR.string.widget_creation_error, viewModel.uiState.value.userMessage)
-    }
-
-    private fun createViewModel(preselectedEntityId: String? = null) = MediaPlayerControlsWidgetConfigureViewModel(dao, serverManager, preselectedEntityId)
+    private fun createViewModel(preselectedEntityId: String? = null) = MediaPlayerControlsWidgetConfigureViewModel(
+        mediaPlayerControlsWidgetDao = dao,
+        serverManager = serverManager,
+        entitiesForDisplayManager = entitiesForDisplayManager,
+        widgetId = widgetId,
+        preselectedEntityId = preselectedEntityId,
+    )
 
     private fun createWidgetEntity(entityId: String = entity.entityId) = MediaPlayerControlsWidgetEntity(
         id = widgetId,
@@ -273,11 +254,17 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         backgroundType = WidgetBackgroundType.TRANSPARENT,
     )
 
-    private fun createEntity(entityId: String) = Entity(
-        entityId = entityId,
-        state = "playing",
-        attributes = mapOf("friendly_name" to "Living Room"),
-        lastChanged = LocalDateTime.MIN,
-        lastUpdated = LocalDateTime.MIN,
-    )
+    private companion object {
+        fun displayStateOf(vararg items: EntityDisplayWithContext) = EntityDisplayState.Loaded(items.toList())
+
+        fun Entity.toDisplayItem() = EntityDisplayWithContext(EntityDisplayWithoutContext(this))
+
+        fun createEntity(entityId: String) = Entity(
+            entityId = entityId,
+            state = "playing",
+            attributes = mapOf("friendly_name" to "Living Room"),
+            lastChanged = LocalDateTime.MIN,
+            lastUpdated = LocalDateTime.MIN,
+        )
+    }
 }

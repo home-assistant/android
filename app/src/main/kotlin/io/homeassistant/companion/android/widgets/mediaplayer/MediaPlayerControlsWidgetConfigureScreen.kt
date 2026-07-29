@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,8 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
@@ -43,17 +48,17 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
-import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState.Loaded
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
+import io.homeassistant.companion.android.widgets.WidgetBackgroundTypeDropdown
 
 /**
  * Stateful entry point that connects [MediaPlayerControlsWidgetConfigureViewModel] to the stateless
@@ -63,24 +68,25 @@ import io.homeassistant.companion.android.util.previewServer2
 @Composable
 internal fun MediaPlayerControlsWidgetConfigureScreen(
     viewModel: MediaPlayerControlsWidgetConfigureViewModel,
-    dynamicColorAvailable: Boolean,
+    canNavigateBack: Boolean,
+    onNavigate: () -> Unit,
     onActionClick: () -> Unit,
-    onClose: () -> Unit,
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    uiState.userMessage?.let { messageResId ->
-        val message = stringResource(messageResId)
-        LaunchedEffect(messageResId) {
-            snackbarHostState.showSnackbar(message)
-            viewModel.onUserMessageShown()
+    val resources = LocalResources.current
+
+    LaunchedEffect(Unit) {
+        viewModel.errors.collect { resId ->
+            snackbarHostState.showSnackbar(resources.getString(resId))
         }
     }
 
     MediaPlayerControlsWidgetConfigureContent(
-        uiState = uiState,
-        dynamicColorAvailable = dynamicColorAvailable,
+        state = state,
+        snackbarHostState = snackbarHostState,
+        canNavigateBack = canNavigateBack,
+        onNavigate = onNavigate,
         onServerSelected = viewModel::onServerSelected,
         onEntityAdded = viewModel::onEntityAdded,
         onEntityRemoved = viewModel::onEntityRemoved,
@@ -91,8 +97,6 @@ internal fun MediaPlayerControlsWidgetConfigureScreen(
         onShowSourceChanged = viewModel::onShowSourceChanged,
         onBackgroundTypeSelected = viewModel::onBackgroundTypeSelected,
         onActionClick = onActionClick,
-        onClose = onClose,
-        snackbarHostState = snackbarHostState,
     )
 }
 
@@ -101,8 +105,9 @@ internal fun MediaPlayerControlsWidgetConfigureScreen(
  */
 @Composable
 internal fun MediaPlayerControlsWidgetConfigureContent(
-    uiState: MediaPlayerControlsWidgetConfigureUiState,
-    dynamicColorAvailable: Boolean,
+    state: MediaPlayerControlsWidgetConfigureState,
+    canNavigateBack: Boolean,
+    onNavigate: () -> Unit,
     onServerSelected: (Int) -> Unit,
     onEntityAdded: (String) -> Unit,
     onEntityRemoved: (String) -> Unit,
@@ -113,21 +118,19 @@ internal fun MediaPlayerControlsWidgetConfigureContent(
     onShowSourceChanged: (Boolean) -> Unit,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
     onActionClick: () -> Unit,
-    onClose: () -> Unit,
-    modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    val state = uiState.config
-
     Scaffold(
-        modifier = modifier,
         topBar = {
             HATopBar(
                 title = { Text(stringResource(commonR.string.select_entity_to_display)) },
-                onCloseClick = onClose,
+                onBackClick = onNavigate.takeIf { canNavigateBack },
+                onCloseClick = onNavigate.takeIf { !canNavigateBack },
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         Column(
@@ -140,43 +143,27 @@ internal fun MediaPlayerControlsWidgetConfigureContent(
             verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         ) {
             ServerSelector(
-                servers = uiState.servers,
+                items = state.serversDropdownItems,
                 selectedServerId = state.selectedServerId,
-                isUpdateWidget = state.isUpdateWidget,
+                showServerSelector = state.showServerSelector,
                 onServerSelected = onServerSelected,
             )
 
             EntityPickerSection(
-                availableEntities = uiState.availableEntities,
-                selectedEntities = uiState.selectedEntities,
-                entityRegistry = uiState.entityRegistry,
-                deviceRegistry = uiState.deviceRegistry,
-                areaRegistry = uiState.areaRegistry,
+                availableEntities = state.availableEntities,
+                selectedEntities = state.selectedEntities,
                 onEntityAdded = onEntityAdded,
                 onEntityRemoved = onEntityRemoved,
             )
 
-            MediaControlsOptions(
+            ConfigurationSections(
                 state = state,
+                onLabelChanged = onLabelChanged,
                 onShowVolumeChanged = onShowVolumeChanged,
                 onShowSkipChanged = onShowSkipChanged,
                 onShowSeekChanged = onShowSeekChanged,
                 onShowSourceChanged = onShowSourceChanged,
-                modifier = Modifier.formControlWidth(),
-            )
-
-            HATextField(
-                value = state.label,
-                onValueChange = onLabelChanged,
-                label = { Text(stringResource(commonR.string.label_label)) },
-                maxLines = 1,
-                modifier = Modifier.formControlWidth(),
-            )
-
-            BackgroundTypeDropdown(
-                selected = state.backgroundType,
-                dynamicColorAvailable = dynamicColorAvailable,
-                onSelected = onBackgroundTypeSelected,
+                onBackgroundTypeSelected = onBackgroundTypeSelected,
             )
 
             HAAccentButton(
@@ -184,7 +171,7 @@ internal fun MediaPlayerControlsWidgetConfigureContent(
                     if (state.isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget,
                 ),
                 onClick = onActionClick,
-                enabled = uiState.isInputValid,
+                enabled = state.isActionEnabled,
                 modifier = Modifier.formControlWidth(),
             )
         }
@@ -192,33 +179,69 @@ internal fun MediaPlayerControlsWidgetConfigureContent(
 }
 
 @Composable
+private fun ColumnScope.ConfigurationSections(
+    state: MediaPlayerControlsWidgetConfigureState,
+    onLabelChanged: (String) -> Unit,
+    onShowVolumeChanged: (Boolean) -> Unit,
+    onShowSkipChanged: (Boolean) -> Unit,
+    onShowSeekChanged: (Boolean) -> Unit,
+    onShowSourceChanged: (Boolean) -> Unit,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+) {
+    AnimatedVisibility(visible = state.showConfiguration) {
+        Column(
+            modifier = Modifier.formControlWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+        ) {
+            MediaControlsOptions(
+                state = state,
+                onShowVolumeChanged = onShowVolumeChanged,
+                onShowSkipChanged = onShowSkipChanged,
+                onShowSeekChanged = onShowSeekChanged,
+                onShowSourceChanged = onShowSourceChanged,
+            )
+
+            HATextField(
+                value = state.label,
+                onValueChange = onLabelChanged,
+                label = { Text(stringResource(commonR.string.label_label)) },
+                maxLines = 1,
+            )
+
+            WidgetBackgroundTypeDropdown(
+                selected = state.selectedBackgroundType,
+                dynamicColorAvailable = state.dynamicColorAvailable,
+                onSelected = onBackgroundTypeSelected,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ServerSelector(
-    servers: List<Server>,
+    items: List<HADropdownItem<Int>>,
     selectedServerId: Int,
-    isUpdateWidget: Boolean,
+    showServerSelector: Boolean,
     onServerSelected: (Int) -> Unit,
 ) {
-    if (servers.size <= 1 && !(isUpdateWidget && servers.none { it.id == selectedServerId })) return
+    if (!showServerSelector) return
 
     HADropdownMenu(
-        items = servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
+        items = items,
         selectedKey = selectedServerId,
         onItemSelected = onServerSelected,
-        label = stringResource(commonR.string.widget_spinner_server),
-        // When editing a widget whose persisted server no longer exists, the selected id is absent
-        // from items; show a prompt instead of a blank field.
-        placeholder = stringResource(commonR.string.select),
+        label = stringResource(commonR.string.server_select),
+        placeholder = stringResource(commonR.string.server_select),
         modifier = Modifier.formControlWidth(),
+        enabled = items.isNotEmpty(),
     )
 }
 
 @Composable
 private fun EntityPickerSection(
-    availableEntities: List<Entity>,
-    selectedEntities: List<SelectedMediaPlayer>,
-    entityRegistry: List<EntityRegistryResponse>?,
-    deviceRegistry: List<DeviceRegistryResponse>?,
-    areaRegistry: List<AreaRegistryResponse>?,
+    availableEntities: EntityDisplayState<EntityDisplayWithContext>,
+    selectedEntities: List<EntityDisplayWithContext>,
     onEntityAdded: (String) -> Unit,
     onEntityRemoved: (String) -> Unit,
 ) {
@@ -229,14 +252,14 @@ private fun EntityPickerSection(
         // The picker acts as an "add entity" control; selected entities are listed below so a
         // widget can control several media players (it shows whichever one is currently playing).
         EntityPicker(
-            entities = availableEntities,
+            displayState = availableEntities,
             selectedEntityId = null,
-            onEntitySelectedId = onEntityAdded,
-            onEntityCleared = {},
+            onSelectionChanged = { entityId ->
+                if (entityId != null) {
+                    onEntityAdded(entityId)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
-            entityRegistry = entityRegistry,
-            deviceRegistry = deviceRegistry,
-            areaRegistry = areaRegistry,
         )
 
         if (selectedEntities.isNotEmpty()) {
@@ -248,13 +271,11 @@ private fun EntityPickerSection(
 
             selectedEntities.forEach { entity ->
                 SelectedEntityRow(
-                    entityName = entity.friendlyName,
-                    entityId = entity.entityId,
+                    entity = entity,
                     onRemove = { onEntityRemoved(entity.entityId) },
                 )
             }
 
-            // Delimiter so it is clear the rows above are the current selection.
             HAHorizontalDivider()
         }
     }
@@ -262,7 +283,7 @@ private fun EntityPickerSection(
 
 @Composable
 private fun MediaControlsOptions(
-    state: MediaPlayerControlsWidgetConfigureViewState,
+    state: MediaPlayerControlsWidgetConfigureState,
     onShowVolumeChanged: (Boolean) -> Unit,
     onShowSkipChanged: (Boolean) -> Unit,
     onShowSeekChanged: (Boolean) -> Unit,
@@ -324,7 +345,8 @@ private fun CheckboxRow(text: String, checked: Boolean, onCheckedChange: (Boolea
 }
 
 @Composable
-private fun SelectedEntityRow(entityName: String, entityId: String, onRemove: () -> Unit) {
+private fun SelectedEntityRow(entity: EntityDisplayWithContext, onRemove: () -> Unit) {
+    val colorScheme = LocalHAColorScheme.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -332,60 +354,33 @@ private fun SelectedEntityRow(entityName: String, entityId: String, onRemove: ()
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = entityName,
+                text = entity.name,
                 style = HATextStyle.Body,
-                color = LocalHAColorScheme.current.colorTextPrimary,
+                color = colorScheme.colorTextPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                text = entityId,
-                style = HATextStyle.Body,
-                color = LocalHAColorScheme.current.colorTextSecondary,
-            )
+
+            entity.subtitle(LocalLayoutDirection.current)?.let { subtitle ->
+                Text(
+                    text = subtitle,
+                    style = HATextStyle.BodyMedium,
+                    color = colorScheme.colorTextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = HADimens.SPACE1),
+                )
+            }
         }
         IconButton(onClick = onRemove) {
             Icon(
                 imageVector = Icons.Default.Clear,
+                tint = colorScheme.colorOnNeutralNormal,
                 contentDescription = stringResource(commonR.string.delete),
             )
         }
     }
 }
-
-@Composable
-private fun BackgroundTypeDropdown(
-    selected: WidgetBackgroundType,
-    dynamicColorAvailable: Boolean,
-    onSelected: (WidgetBackgroundType) -> Unit,
-) {
-    // The available options only depend on dynamic-color support, so remember the list instead of
-    // rebuilding it on every recomposition. Shares the option set with the entity widget (#7007).
-    val items = remember(dynamicColorAvailable) {
-        buildList {
-            if (dynamicColorAvailable) {
-                add(WidgetBackgroundType.DYNAMICCOLOR)
-            }
-            add(WidgetBackgroundType.DAYNIGHT)
-            add(WidgetBackgroundType.TRANSPARENT)
-        }
-    }
-
-    HADropdownMenu(
-        items = items.map { type ->
-            HADropdownItem(key = type, label = stringResource(type.labelRes))
-        },
-        selectedKey = selected,
-        onItemSelected = onSelected,
-        label = stringResource(commonR.string.widget_background_type_label),
-        modifier = Modifier.formControlWidth(),
-    )
-}
-
-private val WidgetBackgroundType.labelRes: Int
-    get() = when (this) {
-        WidgetBackgroundType.DYNAMICCOLOR -> commonR.string.widget_background_type_dynamiccolor
-        WidgetBackgroundType.DAYNIGHT -> commonR.string.widget_background_type_daynight
-        WidgetBackgroundType.TRANSPARENT -> commonR.string.widget_background_type_transparent
-    }
 
 /** Caps form controls at a readable width and centres them on large screens, matching #7007. */
 private fun Modifier.formControlWidth(): Modifier = this
@@ -397,27 +392,27 @@ private fun Modifier.formControlWidth(): Modifier = this
 private fun MediaPlayerControlsWidgetConfigureContentPreview() {
     HAThemeForPreview {
         MediaPlayerControlsWidgetConfigureContent(
-            uiState = MediaPlayerControlsWidgetConfigureUiState(
-                config = MediaPlayerControlsWidgetConfigureViewState(
-                    selectedServerId = previewServer1.id,
-                    selectedEntityIds = listOf(previewEntity1.entityId, previewEntity2.entityId),
-                    label = "Living room",
-                    showVolume = true,
-                    showSkip = true,
-                    showSeek = false,
-                    showSource = true,
-                    backgroundType = WidgetBackgroundType.DAYNIGHT,
-                    isUpdateWidget = false,
+            state = MediaPlayerControlsWidgetConfigureState(
+                selectedServerId = previewServer1.id,
+                entityDisplayState = Loaded(
+                    listOf(
+                        EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity1), areaName = "Kitchen"),
+                        EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity2)),
+                    ),
                 ),
-                servers = listOf(previewServer1, previewServer2),
-                availableEntities = emptyList(),
-                selectedEntities = listOf(
-                    SelectedMediaPlayer(previewEntity1.entityId, "Living room speaker"),
-                    SelectedMediaPlayer(previewEntity2.entityId, "Kitchen speaker"),
-                ),
-                isInputValid = true,
+                selectedEntityIds = listOf(previewEntity1.entityId, previewEntity2.entityId),
+                label = "Living room",
+                showVolume = true,
+                showSkip = true,
+                showSeek = false,
+                showSource = true,
+                selectedBackgroundType = WidgetBackgroundType.DAYNIGHT,
+                dynamicColorAvailable = true,
+                isUpdateWidget = false,
+                serversDropdownItems = listOf(previewServer1, previewServer2).map {
+                    HADropdownItem(key = it.id, label = it.friendlyName)
+                },
             ),
-            dynamicColorAvailable = true,
             onServerSelected = {},
             onEntityAdded = {},
             onEntityRemoved = {},
@@ -428,7 +423,8 @@ private fun MediaPlayerControlsWidgetConfigureContentPreview() {
             onShowSourceChanged = {},
             onBackgroundTypeSelected = {},
             onActionClick = {},
-            onClose = {},
+            onNavigate = {},
+            canNavigateBack = true,
         )
     }
 }
