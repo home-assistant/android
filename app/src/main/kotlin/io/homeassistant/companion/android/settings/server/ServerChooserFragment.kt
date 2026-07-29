@@ -4,15 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.os.bundleOf
 import androidx.fragment.app.setFragmentResult
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.setLayoutAndExpandedByDefault
 import javax.inject.Inject
 
@@ -22,6 +22,9 @@ class ServerChooserFragment : BottomSheetDialogFragment() {
     @Inject
     lateinit var serverManager: ServerManager
 
+    @Inject
+    lateinit var serverChooserItems: ServerChooserItemsUseCase
+
     companion object {
         const val TAG = "ServerChooser"
 
@@ -29,17 +32,22 @@ class ServerChooserFragment : BottomSheetDialogFragment() {
         const val RESULT_SERVER = "server"
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                val servers by produceState(initialValue = emptyList()) {
-                    value = serverManager.servers()
+                val items by produceState(initialValue = emptyList()) {
+                    serverChooserItems(serverManager.servers()).collect { value = it }
                 }
-                HomeAssistantAppTheme {
-                    ServerChooserView(
-                        servers = servers,
+                HATheme {
+                    ServerChooser(
+                        items = items,
                         onServerSelected = { serverId ->
-                            setFragmentResult(RESULT_KEY, bundleOf(RESULT_SERVER to serverId))
+                            setFragmentResult(RESULT_KEY, Bundle().apply { putInt(RESULT_SERVER, serverId) })
+                            dismiss()
+                        },
+                        onDismissRequest = {
+                            setFragmentResult(RESULT_KEY, Bundle())
                             dismiss()
                         },
                     )

@@ -1,9 +1,13 @@
 package io.homeassistant.companion.android.util.compose.entity
 
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 
 /**
@@ -17,22 +21,24 @@ class EntityPickerFilterTest {
     // Test helper to create entities
     private fun createTestEntity(
         entityId: String,
-        domain: String = entityId.substringBefore("."),
-        friendlyName: String,
+        name: String,
         areaName: String? = null,
         deviceName: String? = null,
-    ) = EntityPickerItem(
-        entityId = entityId,
-        domain = domain,
-        friendlyName = friendlyName,
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        isHidden: Boolean = false,
+    ) = EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = entityId,
+            name = name,
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            isHidden = isHidden,
+        ),
         areaName = areaName,
         deviceName = deviceName,
     )
 
     // Test helper to create EntityWithSearchFields
-    private fun createEntityWithSearchFields(entity: EntityPickerItem): EntityWithSearchFields {
-        val sortingKey = entity.friendlyName.lowercase()
+    private fun createEntityWithSearchFields(entity: EntityDisplayWithContext): EntityWithSearchFields {
+        val sortingKey = entity.name.lowercase()
         return EntityWithSearchFields(
             entity = entity,
             sortingKey = sortingKey,
@@ -196,19 +202,19 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.living_room",
-                    friendlyName = "Living Room",
+                    name = "Living Room",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "switch.kitchen",
-                    friendlyName = "Kitchen",
+                    name = "Kitchen",
                 ),
             ),
         )
@@ -224,15 +230,39 @@ class EntityPickerFilterTest {
     @Test
     fun `Given blank query when filtering then returns all entities sorted by friendly name`() = runTest {
         val entities = listOf(
-            createEntityWithSearchFields(createTestEntity("light.test", friendlyName = "Test3")),
-            createEntityWithSearchFields(createTestEntity("light.test", friendlyName = "Test2")),
+            createEntityWithSearchFields(createTestEntity("light.test", name = "Test3")),
+            createEntityWithSearchFields(createTestEntity("light.test", name = "Test2")),
         )
 
         val result = filterAndSortEntitiesOptimized(entities, "   ")
 
         assertEquals(2, result.size)
-        assertEquals("Test2", result[0].friendlyName)
-        assertEquals("Test3", result[1].friendlyName)
+        assertEquals("Test2", result[0].name)
+        assertEquals("Test3", result[1].name)
+    }
+
+    @Test
+    fun `Given blank query when filtering then hidden entities are left out`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(createTestEntity("light.bed", name = "Bed")),
+            createEntityWithSearchFields(createTestEntity("light.attic", name = "Attic", isHidden = true)),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "")
+
+        assertEquals(listOf("Bed"), result.map { it.name })
+    }
+
+    @Test
+    fun `Given a query matching a hidden entity when filtering then it is included`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(createTestEntity("light.bed", name = "Bed")),
+            createEntityWithSearchFields(createTestEntity("light.attic", name = "Attic", isHidden = true)),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "attic")
+
+        assertEquals(listOf("Attic"), result.map { it.name })
     }
 
     @Test
@@ -241,13 +271,13 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "switch.kitchen",
-                    friendlyName = "Kitchen",
+                    name = "Kitchen",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                 ),
             ),
         )
@@ -256,8 +286,8 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "b")
 
         assertEquals(2, result.size)
-        assertEquals("Bedroom", result[0].friendlyName)
-        assertEquals("Kitchen", result[1].friendlyName)
+        assertEquals("Bedroom", result[0].name)
+        assertEquals("Kitchen", result[1].name)
     }
 
     @Test
@@ -266,13 +296,13 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "switch.kitchen",
-                    friendlyName = "Kitchen",
+                    name = "Kitchen",
                 ),
             ),
         )
@@ -290,13 +320,13 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "automation.ticker",
-                    friendlyName = "Stocks",
+                    name = "Stocks",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                 ),
             ),
         )
@@ -313,13 +343,13 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "automation.ticker",
-                    friendlyName = "Stocks",
+                    name = "Stocks",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                 ),
             ),
         )
@@ -336,13 +366,13 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "automation.ticker",
-                    friendlyName = "Stocks",
+                    name = "Stocks",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                 ),
             ),
         )
@@ -359,22 +389,19 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    domain = "light",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.kitchen",
-                    domain = "light",
-                    friendlyName = "Kitchen",
+                    name = "Kitchen",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "switch.bedroom",
-                    domain = "switch",
-                    friendlyName = "Switch",
+                    name = "Switch",
                 ),
             ),
         )
@@ -382,9 +409,9 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "light")
 
         assertEquals(2, result.size)
-        assertTrue(result.all { it.domain == "light" })
-        assertEquals("Bedroom", result[0].friendlyName)
-        assertEquals("Kitchen", result[1].friendlyName)
+        assertTrue(result.all { it.domain == LIGHT_DOMAIN })
+        assertEquals("Bedroom", result[0].name)
+        assertEquals("Kitchen", result[1].name)
     }
 
     @Test
@@ -393,14 +420,14 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom_main",
-                    friendlyName = "Main Light",
+                    name = "Main Light",
                     areaName = "Bedroom",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.kitchen",
-                    friendlyName = "Kitchen Light",
+                    name = "Kitchen Light",
                     areaName = "Kitchen",
                 ),
             ),
@@ -409,7 +436,8 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "bedroom")
 
         assertEquals(1, result.size)
-        assertEquals("Bedroom", result[0].areaName)
+        val entity = assertInstanceOf(EntityDisplayWithContext::class.java, result[0])
+        assertEquals("Bedroom", entity.areaName)
     }
 
     @Test
@@ -418,14 +446,14 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                     deviceName = "Smart Bulb Pro",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.kitchen",
-                    friendlyName = "Kitchen",
+                    name = "Kitchen",
                     deviceName = "Basic Bulb",
                 ),
             ),
@@ -434,7 +462,8 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "smart")
 
         assertEquals(1, result.size)
-        assertEquals("Smart Bulb Pro", result[0].deviceName)
+        val entity = assertInstanceOf(EntityDisplayWithContext::class.java, result[0])
+        assertEquals("Smart Bulb Pro", entity.deviceName)
     }
 
     @Test
@@ -443,17 +472,17 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom_main",
-                    friendlyName = "Main Light",
+                    name = "Main Light",
                     areaName = "Bedroom",
                 ),
             ),
             createEntityWithSearchFields(
-                createTestEntity("switch.bedroom_fan", friendlyName = "Fan", areaName = "Bedroom"),
+                createTestEntity("switch.bedroom_fan", name = "Fan", areaName = "Bedroom"),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.kitchen",
-                    friendlyName = "Kitchen Light",
+                    name = "Kitchen Light",
                     areaName = "Kitchen",
                 ),
             ),
@@ -471,7 +500,7 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                 ),
             ),
         )
@@ -487,20 +516,20 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "automation.ticker",
-                    friendlyName = "Stocks",
+                    name = "Stocks",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "sensor.ticker",
-                    friendlyName = "Stocks Up",
+                    name = "Stocks Up",
                 ),
             ),
-            createEntityWithSearchFields(createTestEntity("ticker", friendlyName = "Just Ticker")),
+            createEntityWithSearchFields(createTestEntity("ticker", name = "Just Ticker")),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.bedroom",
-                    friendlyName = "Bedroom",
+                    name = "Bedroom",
                 ),
             ),
         )
@@ -517,13 +546,13 @@ class EntityPickerFilterTest {
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.BEDROOM",
-                    friendlyName = "BEDROOM Light",
+                    name = "BEDROOM Light",
                 ),
             ),
             createEntityWithSearchFields(
                 createTestEntity(
                     "light.kitchen",
-                    friendlyName = "kitchen light",
+                    name = "kitchen light",
                 ),
             ),
         )
@@ -537,17 +566,17 @@ class EntityPickerFilterTest {
     @Test
     fun `Given identical scores when filtering then sorts by friendly name`() = runTest {
         val entities = listOf(
-            createEntityWithSearchFields(createTestEntity("light.c", friendlyName = "C Light")),
-            createEntityWithSearchFields(createTestEntity("light.a", friendlyName = "A Light")),
-            createEntityWithSearchFields(createTestEntity("light.b", friendlyName = "B Light")),
+            createEntityWithSearchFields(createTestEntity("light.c", name = "C Light")),
+            createEntityWithSearchFields(createTestEntity("light.a", name = "A Light")),
+            createEntityWithSearchFields(createTestEntity("light.b", name = "B Light")),
         )
 
         val result = filterAndSortEntitiesOptimized(entities, "light")
 
         assertEquals(3, result.size)
         // Should be sorted by friendly name after same score
-        assertEquals("A Light", result[0].friendlyName)
-        assertEquals("B Light", result[1].friendlyName)
-        assertEquals("C Light", result[2].friendlyName)
+        assertEquals("A Light", result[0].name)
+        assertEquals("B Light", result[1].name)
+        assertEquals("C Light", result[2].name)
     }
 }

@@ -19,11 +19,11 @@ import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
@@ -33,34 +33,28 @@ import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
 import io.homeassistant.companion.android.util.vehicle.nativeModeAction
 import io.homeassistant.companion.android.util.vehicle.settingsAction
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
 class MainVehicleScreen(
     carContext: CarContext,
     val serverManager: ServerManager,
     private val serverId: StateFlow<Int>,
-    private val allEntities: Flow<Map<String, Entity>>,
+    private val entitiesState: Flow<EntityDisplayState<EntityDisplay>>,
     private val prefsRepository: PrefsRepository,
     private val onChangeServer: (Int) -> Unit,
     private val onRefresh: () -> Unit,
 ) : BaseVehicleScreen(carContext) {
 
-    private var favoritesEntities: List<Entity> = listOf()
-    private var entityRegistry: List<EntityRegistryResponse>? = null
+    private var favoritesEntities: List<EntityDisplay> = listOf()
     private var favoritesList = emptyList<AutoFavorite>()
     private var isLoggedIn: Boolean? = null
     private val domains = mutableSetOf<String>()
-    private var domainsJob: Job? = null
     private var domainsAdded = false
-    private var domainsAddedFor: Int? = null
 
     private val isAutomotive get() = carContext.isAutomotive()
 
@@ -87,42 +81,19 @@ class MainVehicleScreen(
                     invalidate()
                 }
 
-                serverId.collect { server ->
-                    if (domainsAddedFor != server) {
-                        domainsAdded = false
-                        domainsAddedFor = server
-                        invalidate() // Show loading state
-                        entityRegistry = try {
-                            serverManager.webSocketRepository(server).getEntityRegistry()
-                        } catch (e: CancellationException) {
-                            throw e
-                        } catch (e: Exception) {
-                            Timber.e(e, "Failed to get entity registry")
-                            null
+                entitiesState.collect { state ->
+                    when (state) {
+                        EntityDisplayState.Loading -> {
+                            if (domainsAdded) {
+                                domainsAdded = false
+                                invalidate()
+                            }
                         }
-                    }
-
-                    if (domainsJob?.isActive == true) domainsJob?.cancel()
-                    domainsJob = launch {
-                        allEntities.collect { entities ->
-                            val newDomains = entities.values
-                                .map { it.domain }
-                                .distinct()
-                                .filter { it in SUPPORTED_DOMAINS }
-                                .toSet()
-                            var invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
-                            domains.clear()
-                            domains.addAll(newDomains)
-                            domainsAdded = true
-
-                            val newFavorites = getFavoritesList(entities)
-                            invalidate =
-                                invalidate ||
-                                newFavorites.size != favoritesEntities.size ||
-                                newFavorites.toSet() != favoritesEntities.toSet()
-                            favoritesEntities = newFavorites
-
-                            if (invalidate) invalidate()
+                        EntityDisplayState.Error -> {
+                            updateEntities(emptyList())
+                        }
+                        is EntityDisplayState.Loaded -> {
+                            updateEntities(state.entities.toList())
                         }
                     }
                 }
@@ -133,6 +104,27 @@ class MainVehicleScreen(
                 SensorReceiver.updateAllSensors(carContext)
             }
         }
+    }
+
+    /** Recomputes the domains and favorites from [entities], invalidating on any change. */
+    private fun updateEntities(entities: List<EntityDisplay>) {
+        val newDomains = entities
+            .map { it.domain }
+            .distinct()
+            .filter { it in SUPPORTED_DOMAINS }
+            .toSet()
+        var invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
+        domains.clear()
+        domains.addAll(newDomains)
+        domainsAdded = true
+
+        val newFavorites = getFavoritesList(entities)
+        invalidate = invalidate ||
+            newFavorites.size != favoritesEntities.size ||
+            newFavorites.toSet() != favoritesEntities.toSet()
+        favoritesEntities = newFavorites
+
+        if (invalidate) invalidate()
     }
 
     override fun onDrivingOptimizedChanged(newState: Boolean) {
@@ -160,10 +152,9 @@ class MainVehicleScreen(
                 prefsRepository,
                 { serverManager.integrationRepository(serverId.value) },
                 carContext.getString(commonR.string.favorites),
-                entityRegistry,
                 domains,
                 flowOf(),
-                allEntities,
+                entitiesState,
             ).getEntityGridItems(favoritesEntities, canSwitchServers)
         } else {
             var builder = ItemList.Builder()
@@ -175,8 +166,7 @@ class MainVehicleScreen(
                     serverManager,
                     serverId,
                     prefsRepository,
-                    allEntities,
-                    entityRegistry,
+                    entitiesState,
                     lifecycleScope,
                 )
             }
@@ -186,8 +176,7 @@ class MainVehicleScreen(
                     carContext,
                     screenManager,
                     { serverManager.integrationRepository(serverId.value) },
-                    allEntities,
-                    entityRegistry,
+                    entitiesState,
                 ).build(),
             )
             builder
@@ -237,10 +226,10 @@ class MainVehicleScreen(
         }.build()
     }
 
-    private fun getFavoritesList(entities: Map<String, Entity>): List<Entity> {
-        return entities.values.filter { entity ->
-            favoritesList.contains(AutoFavorite(serverId.value, entity.entityId))
+    private fun getFavoritesList(entities: List<EntityDisplay>): List<EntityDisplay> {
+        return entities.filter { displayed ->
+            favoritesList.contains(AutoFavorite(serverId.value, displayed.entityId))
         }
-            .sortedBy { entity -> favoritesList.indexOf(AutoFavorite(serverId.value, entity.entityId)) }
+            .sortedBy { displayed -> favoritesList.indexOf(AutoFavorite(serverId.value, displayed.entityId)) }
     }
 }

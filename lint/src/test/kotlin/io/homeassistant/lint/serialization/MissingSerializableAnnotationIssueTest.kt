@@ -1,8 +1,8 @@
 package io.homeassistant.lint.serialization
 
-import com.android.tools.lint.checks.infrastructure.LintDetectorTest.kotlin
+import com.android.tools.lint.checks.infrastructure.TestFiles.kotlin
 import com.android.tools.lint.checks.infrastructure.TestLintTask.lint
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class MissingSerializableAnnotationIssueTest {
     private val issuesToUse = arrayOf(

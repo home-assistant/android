@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.dialog
 
 import android.content.Context
+import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
 
 /**
  * Represents a dialog to be displayed.
@@ -40,4 +41,20 @@ sealed interface FrontendDialog {
         val onProceed: (username: String, password: String, remember: Boolean) -> Unit,
         val onCancel: () -> Unit,
     ) : FrontendDialog
+
+    /**
+     * Non-dismissable progress dialog shown while Thread reads the preferred dataset from Play
+     * Services.
+     *
+     * The dialog has no user-facing buttons; it is dismissed programmatically.
+     */
+    data object MatterThreadProgressDialog : FrontendDialog
+
+    /**
+     * Informational Dialog shown for [MatterThreadTerminal.Dialog] terminal states.
+     *
+     * @param onDismiss Invoked when the user dismisses the dialog (OK / scrim / back).
+     */
+    data class MatterThreadTerminalDialog(val terminal: MatterThreadTerminal.Dialog, val onDismiss: () -> Unit) :
+        FrontendDialog
 }

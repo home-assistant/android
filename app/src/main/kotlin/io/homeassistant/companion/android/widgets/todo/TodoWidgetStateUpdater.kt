@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.widgets.todo
 
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
@@ -14,11 +14,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onStart
 import timber.log.Timber
 
 /**
@@ -26,60 +24,10 @@ import timber.log.Timber
  * by exposing a flow through [stateFlow].
  */
 internal class TodoWidgetStateUpdater @Inject constructor(
-    val todoWidgetDao: TodoWidgetDao,
-    val serverManager: ServerManager,
+    private val todoWidgetDao: TodoWidgetDao,
+    private val serverManager: ServerManager,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
 ) {
-
-    private suspend fun WebSocketRepository.getTodoItems(listEntityId: String): List<TodoWidgetEntity.TodoItem> {
-        return getTodos(listEntityId)?.response?.get(listEntityId)?.items.orEmpty().map {
-            TodoWidgetEntity.TodoItem(
-                uid = it.uid,
-                summary = it.summary,
-                status = it.status,
-            )
-        }
-    }
-
-    private fun getTodoEntityOnConfigurationChange(widgetId: Int): Flow<TodoWidgetEntity> {
-        // The flow starts with a null dao entity until the configuration is done
-        // We emit again when the configuration f the widget change
-        return todoWidgetDao.getFlow(widgetId).filterNotNull().distinctUntilChanged { old, new ->
-            old.isSameConfiguration(new)
-        }
-    }
-
-    private suspend fun getAndSubscribeEntityUpdates(serverId: Int, listEntityId: String): Flow<Entity?>? {
-        if (serverManager.getServer(serverId) == null) {
-            Timber.w("Server has been removed and the widget needs to be reconfigured")
-            return null
-        }
-
-        // Since we might be re-subscribing we might not have get the entity update when subscribing so we query it first
-        val currentEntity = serverManager.integrationRepository(serverId).getEntity(listEntityId)
-
-        val entityUpdateFlow = serverManager.integrationRepository(serverId).getEntityUpdates(listOf(listEntityId))
-
-        if (entityUpdateFlow == null) {
-            Timber.w("Integration return null for entity update the widget won't update")
-        }
-
-        return entityUpdateFlow?.onStart {
-            currentEntity?.let {
-                emit(currentEntity)
-            }
-        }
-    }
-
-    private fun getInitialStateFlow(widgetId: Int): Flow<TodoState> {
-        return suspend { todoWidgetDao.get(widgetId) }.asFlow().map {
-            if (it == null) {
-                EmptyTodoState
-            } else {
-                TodoStateWithData.from(it)
-            }
-        }
-    }
-
     /**
      * Observes and provides the state of the widget identified by the given [widgetId].
      *
@@ -105,22 +53,34 @@ internal class TodoWidgetStateUpdater @Inject constructor(
                 val serverId = todoEntity.serverId
                 val listEntityId = todoEntity.entityId
 
-                getAndSubscribeEntityUpdates(
-                    serverId,
-                    listEntityId,
-                )?.filterNotNull()?.distinctUntilChanged()?.map { entity ->
-                    Timber.d("Got an update of the entity $entity getting todos")
-                    val todos = serverManager.webSocketRepository(serverId).getTodoItems(listEntityId)
-                    // We update the DAO to keep it up to date for the next update of the widget
-                    todoWidgetDao.updateWidgetLastUpdate(
-                        widgetId = widgetId,
-                        lastUpdateData = TodoWidgetEntity.LastUpdateData(
-                            entityName = entity.friendlyName,
-                            todos = todos,
-                        ),
-                    )
-                    TodoStateWithData.from(todoEntity, entity, todos)
-                } ?: flowOf(TodoStateWithData.from(todoEntity))
+                // Every emission is a change of the entity or of its name, so each one refreshes
+                entitiesForDisplayManager.observe(serverId, listOf(listEntityId))
+                    .map { state ->
+                        val displayEntity = when (state) {
+                            // Nothing was ever loaded for this widget, so there is nothing to show yet
+                            EntityDisplayState.Loading if todoEntity.latestUpdateData == null -> {
+                                return@map LoadingTodoState
+                            }
+                            // Still loading, or the entity is gone (removed server, deleted list),
+                            // so the widget keeps showing the data of the database
+                            EntityDisplayState.Loading, EntityDisplayState.Error -> {
+                                return@map TodoStateWithData.from(todoEntity)
+                            }
+                            is EntityDisplayState.Loaded -> state.entity(listEntityId)
+                                ?: return@map TodoStateWithData.from(todoEntity)
+                        }
+                        Timber.d("Got an update of the entity ${displayEntity.entityId} getting todos")
+                        val todos = serverManager.webSocketRepository(serverId).getTodoItems(listEntityId)
+                        // We update the DAO to keep it up to date for the next update of the widget
+                        todoWidgetDao.updateWidgetLastUpdate(
+                            widgetId = widgetId,
+                            lastUpdateData = TodoWidgetEntity.LastUpdateData(
+                                entityName = displayEntity.name,
+                                todos = todos,
+                            ),
+                        )
+                        TodoStateWithData.from(todoEntity, displayEntity, todos)
+                    }
             }
 
         // Initial state should emit before watch but if an issue occur make it explicit in the flow
@@ -129,6 +89,34 @@ internal class TodoWidgetStateUpdater @Inject constructor(
             Timber.e(it, "Error while watching for changes for widget $widgetId")
         }.onCompletion {
             Timber.d("Stop watching for changes for widget $widgetId")
+        }
+    }
+
+    private suspend fun WebSocketRepository.getTodoItems(listEntityId: String): List<TodoWidgetEntity.TodoItem> {
+        return getTodos(listEntityId)?.response?.get(listEntityId)?.items.orEmpty().map {
+            TodoWidgetEntity.TodoItem(
+                uid = it.uid,
+                summary = it.summary,
+                status = it.status,
+            )
+        }
+    }
+
+    private fun getTodoEntityOnConfigurationChange(widgetId: Int): Flow<TodoWidgetEntity> {
+        // The flow starts with a null dao entity until the configuration is done
+        // We emit again when the configuration f the widget change
+        return todoWidgetDao.getFlow(widgetId).filterNotNull().distinctUntilChanged { old, new ->
+            old.isSameConfiguration(new)
+        }
+    }
+
+    private fun getInitialStateFlow(widgetId: Int): Flow<TodoState> {
+        return suspend { todoWidgetDao.get(widgetId) }.asFlow().map {
+            if (it == null) {
+                EmptyTodoState
+            } else {
+                TodoStateWithData.from(it)
+            }
         }
     }
 }

@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +45,7 @@ open class HomeAssistantApplication : Application() {
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
-            HAStrictMode.enable(threadPolicyIgnoredViolationRules = threadPolicyIgnoredViolationRules)
+            HAStrictMode.enable()
         }
 
         Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $SdkVersion")

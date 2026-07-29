@@ -30,7 +30,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
@@ -38,7 +40,6 @@ import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URLEncoder
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -92,9 +93,9 @@ class ServerSettingsFragment :
         lifecycleScope.launch {
             if (presenter.hasMultipleServers()) {
                 val activateClickListener = OnPreferenceClickListener {
-                    val intent = WebViewActivity.newInstance(requireContext(), null, serverId).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    }
+                    val intent = requireContext().intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
+                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
                     requireContext().startActivity(intent)
                     return@OnPreferenceClickListener true
                 }

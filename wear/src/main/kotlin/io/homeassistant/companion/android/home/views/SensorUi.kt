@@ -54,11 +54,9 @@ fun SensorUi(
                 it.key == Manifest.permission.ACCESS_FINE_LOCATION &&
                 SdkVersion.isAtLeast(Build.VERSION_CODES.R) &&
                 manager.requiredPermissions(
-                    context,
                     basicSensor.id,
                 ).contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
                 manager.requiredPermissions(
-                    context,
                     basicSensor.id,
                 ).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             ) {
@@ -68,9 +66,8 @@ fun SensorUi(
             if (
                 it.key == Manifest.permission.BODY_SENSORS &&
                 SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &&
-                manager.requiredPermissions(context, basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &&
+                manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &&
                 manager.requiredPermissions(
-                    context,
                     basicSensor.id,
                 ).contains(Manifest.permission.BODY_SENSORS_BACKGROUND)
             ) {
@@ -85,13 +82,13 @@ fun SensorUi(
         perm = allGranted
     }
 
-    LaunchedEffect(Unit) { perm = manager.checkPermission(context, basicSensor.id) }
+    LaunchedEffect(Unit) { perm = manager.checkPermission(basicSensor.id) }
     val isChecked = (sensor == null && basicSensor.enabledByDefault) ||
         (sensor?.enabled == true && perm)
     SwitchButton(
         checked = isChecked,
         onCheckedChange = { enabled ->
-            val permissions = manager.requiredPermissions(context, basicSensor.id)
+            val permissions = manager.requiredPermissions(basicSensor.id)
             if (perm || !enabled) {
                 onSensorClicked(basicSensor.id, enabled)
             } else {
@@ -144,7 +141,8 @@ fun SensorUi(
 @Composable
 private fun PreviewSensorUI() {
     val context = LocalContext.current
-    val batterySensors = runBlocking { batterySensorManager.getAvailableSensors(context) }
+    val batterySensorManager = batterySensorManager(context)
+    val batterySensors = runBlocking { batterySensorManager.getAvailableSensors() }
     CompositionLocalProvider {
         ThemeLazyColumn {
             item {

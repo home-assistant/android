@@ -2,7 +2,7 @@ package io.homeassistant.lint.room
 
 import com.android.tools.lint.checks.infrastructure.TestFiles.kotlin
 import com.android.tools.lint.checks.infrastructure.TestLintTask.lint
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class CoroutineDaoFunctionsIssueTest {
     private val roomAnnotation = kotlin(

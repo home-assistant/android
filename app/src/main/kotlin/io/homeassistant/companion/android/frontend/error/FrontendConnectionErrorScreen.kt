@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -41,9 +42,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HADetails
 import io.homeassistant.companion.android.common.compose.composable.HAIconButton
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HATopBarPlaceholder
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -113,16 +116,9 @@ fun FrontendConnectionErrorScreen(
     actions: @Composable () -> Unit = {},
 ) {
     error?.let { connectionError ->
-        val icon = when (connectionError) {
-            is FrontendConnectionError.AuthenticationError -> R.drawable.ic_casita_crying
-            is FrontendConnectionError.UnknownError -> R.drawable.ic_casita_problem
-            is FrontendConnectionError.UnreachableError -> R.drawable.ic_casita_no_connection
-            is FrontendConnectionError.UnrecoverableError -> R.drawable.ic_casita_problem
-        }
-
         FrontendConnectionErrorScreen(
             onOpenExternalLink = onOpenExternalLink,
-            icon = ImageVector.vectorResource(icon),
+            icon = ImageVector.vectorResource(connectionError.icon),
             title = stringResource(connectionError.title),
             subtitle = stringResource(connectionError.message),
             url = url,
@@ -398,6 +394,42 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: suspend (Uri) -> Unit) {
     }
 }
 
+/**
+ * Renders the recovery actions for a connection error as a vertical stack of buttons.
+ */
+@Composable
+internal fun ErrorActions(
+    actions: List<ErrorAction>,
+    onAction: (ErrorActionIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
+    ) {
+        actions.forEach { action ->
+            val label = stringResource(action.labelRes)
+            val buttonModifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = MaxContentWidth)
+            when (action.style) {
+                ErrorAction.Style.Primary -> HAAccentButton(
+                    text = label,
+                    onClick = { onAction(action.intent) },
+                    modifier = buttonModifier,
+                )
+
+                ErrorAction.Style.Secondary -> HAPlainButton(
+                    text = label,
+                    onClick = { onAction(action.intent) },
+                    modifier = buttonModifier,
+                )
+            }
+        }
+    }
+}
+
 @HAPreviews
 @Composable
 private fun FrontendErrorScreenPreview() {
@@ -406,7 +438,7 @@ private fun FrontendErrorScreenPreview() {
             onOpenExternalLink = {},
             title = "Connection failed",
             subtitle = "Unable to reach your Home Assistant server",
-            errorType = "UnreachableError",
+            errorType = "Unreachable",
             connectivityCheckState = ConnectivityCheckState(),
             onRetryConnectivityCheck = {},
             errorDescription = "Connection timed out after 30 seconds",

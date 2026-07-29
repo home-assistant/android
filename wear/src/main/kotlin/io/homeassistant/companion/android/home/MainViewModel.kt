@@ -21,8 +21,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
@@ -50,11 +50,15 @@ import timber.log.Timber
 class MainViewModel @Inject constructor(
     private val favoritesDao: FavoritesDao,
     private val favoriteCachesDao: FavoriteCachesDao,
-    private val sensorsDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val cameraTileDao: CameraTileDao,
     private val thermostatTileDao: ThermostatTileDao,
+    private val managers: Set<@JvmSuppressWildcards SensorManager>,
     application: Application,
 ) : AndroidViewModel(application) {
+
+    /** Every registered [SensorManager], used by the sensor management screens. */
+    val sensorManagers: List<SensorManager> get() = managers.toList()
 
     enum class LoadingState {
         LOADING,
@@ -193,7 +197,7 @@ class MainViewModel @Inject constructor(
     fun stringForDomain(domain: String): String? =
         HomePresenterImpl.domainsWithNames[domain]?.let { getApplication<Application>().getString(it) }
 
-    val sensors = sensorsDao.getAllFlow().collectAsState()
+    val sensors = sensorRepository.getAllFlow().collectAsState()
 
     var availableSensors = emptyList<SensorManager.BasicSensor>()
 
@@ -528,13 +532,13 @@ class MainViewModel @Inject constructor(
 
     fun enableDisableSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
         viewModelScope.launch {
-            val basicSensor = sensorManager.getAvailableSensors(getApplication())
+            val basicSensor = sensorManager.getAvailableSensors()
                 .first { basicSensor -> basicSensor.id == sensorId }
-            updateSensorEntity(sensorsDao, basicSensor, isEnabled)
+            updateSensorEntity(basicSensor, isEnabled)
 
             if (isEnabled) {
                 try {
-                    sensorManager.requestSensorUpdate(getApplication())
+                    sensorManager.requestSensorUpdate()
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while requesting update for sensor $sensorId")
                 }
@@ -542,13 +546,9 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private suspend fun updateSensorEntity(
-        sensorDao: SensorDao,
-        basicSensor: SensorManager.BasicSensor,
-        isEnabled: Boolean,
-    ) {
+    private suspend fun updateSensorEntity(basicSensor: SensorManager.BasicSensor, isEnabled: Boolean) {
         homePresenter.getServerId()?.let { serverId ->
-            sensorDao.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
+            sensorRepository.setSensorsEnabled(listOf(basicSensor.id), serverId, isEnabled)
             SensorReceiver.updateAllSensors(getApplication())
         }
     }
@@ -558,16 +558,16 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             val context = getApplication<HomeAssistantApplication>().applicationContext
             availableSensors = sensorManager
-                .getAvailableSensors(context)
+                .getAvailableSensors()
                 .sortedBy { context.getString(it.name) }.distinct()
         }
     }
 
     fun initAllSensors() {
         viewModelScope.launch {
-            for (manager in SensorReceiver.MANAGERS) {
-                for (basicSensor in manager.getAvailableSensors(getApplication())) {
-                    manager.isEnabled(getApplication(), basicSensor)
+            for (manager in managers) {
+                for (basicSensor in manager.getAvailableSensors()) {
+                    manager.isEnabled(basicSensor)
                 }
             }
         }

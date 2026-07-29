@@ -15,9 +15,13 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult.ActionPerformed
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
@@ -28,7 +32,8 @@ import io.homeassistant.companion.android.loading.LoadingScreen
  * This composable sets up the basic structure of the app, including the [Scaffold] for layout,
  * a [SnackbarHost], and the [HANavHost] for handling navigation.
  *
- * It also handles horizontal window insets to ensure content is displayed correctly within the screen's safe areas.
+ * It also handles horizontal window insets to ensure content is displayed correctly within the screen's safe areas,
+ * except for the frontend destination, which draws edge-to-edge and handles all its insets itself.
  * Sub composable needs to handle vertical insets themselves.
  *
  * @param navController The NavHostController to use for navigation.
@@ -58,15 +63,19 @@ internal fun HAApp(
             )
         },
     ) { padding ->
+        val currentBackStackEntry by navController.currentBackStackEntryAsState()
+        val isFrontend = currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .consumeWindowInsets(padding)
-                .windowInsetsPadding(
-                    WindowInsets.safeDrawing.only(
-                        WindowInsetsSides.Horizontal,
-                    ),
+                .then(
+                    if (isFrontend) {
+                        Modifier
+                    } else {
+                        Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                    },
                 ),
         ) {
             HANavHost(

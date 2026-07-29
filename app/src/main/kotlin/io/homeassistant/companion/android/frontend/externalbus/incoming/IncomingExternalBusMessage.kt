@@ -78,6 +78,15 @@ data class ConnectionStatusPayload(val event: String) {
 }
 
 /**
+ * Message indicating the frontend has fully rendered and can be displayed.
+ *
+ * Sent once the frontend removes its launch screen. No response is expected for this message.
+ */
+@Serializable
+@SerialName("frontend/loaded")
+data class FrontendLoaded(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
  * Message requesting the app's configuration and capabilities.
  *
  * The frontend sends this to discover what native features the app supports,
@@ -278,9 +287,7 @@ data class EntityAddToPayload(
 /**
  * Message requesting the app to start the Matter device commissioning flow.
  *
- * The app is expected to run the commissioning flow and, once it resolves, send back a
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage]
- * correlated by [id] (success or failure).
+ * The app is expected to run the commissioning flow.
  *
  * Will not be sent by the frontend when the device reports
  * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canCommissionMatter] = `false`.
