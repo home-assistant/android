@@ -70,23 +70,6 @@ class MatterManagerImpl @Inject constructor(
         }
     }
 
-    override fun parseCommissioningIntentResult(result: ActivityResult): MatterManager.CommissioningFlowOutcome {
-        if (result.resultCode != Activity.RESULT_OK) {
-            return MatterManager.CommissioningFlowOutcome.Failed
-        }
-        return try {
-            val commissioningResult = CommissioningResult.fromIntentSenderResult(result.resultCode, result.data)
-            MatterManager.CommissioningFlowOutcome.Success(
-                deviceName = commissioningResult.deviceName?.takeIf { it.isNotBlank() },
-            )
-        } catch (e: ApiException) {
-            // RESULT_OK means our commissioning service completed, so the device was added even
-            // when the result payload cannot be read; only the user-entered name is lost.
-            Timber.w(e, "Commissioning succeeded but its result could not be parsed")
-            MatterManager.CommissioningFlowOutcome.Success(deviceName = null)
-        }
-    }
-
     override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? {
         return try {
             serverManager.webSocketRepository(serverId).commissionMatterDevice(code)
@@ -106,6 +89,23 @@ class MatterManagerImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Error while executing server commissioning request")
             null
+        }
+    }
+
+    override fun parseCommissioningIntentResult(result: ActivityResult): MatterManager.CommissioningRequestResult {
+        if (result.resultCode != Activity.RESULT_OK) {
+            return MatterManager.CommissioningRequestResult.Failed
+        }
+        return try {
+            val commissioningResult = CommissioningResult.fromIntentSenderResult(result.resultCode, result.data)
+            MatterManager.CommissioningRequestResult.Success(
+                deviceName = commissioningResult.deviceName.takeIf { it.isNotBlank() },
+            )
+        } catch (e: ApiException) {
+            // RESULT_OK means our commissioning service completed, so the device was added even
+            // when the result payload cannot be read; only the user-entered name is lost.
+            Timber.w(e, "Commissioning succeeded but its result could not be parsed")
+            MatterManager.CommissioningRequestResult.Success(deviceName = null)
         }
     }
 }

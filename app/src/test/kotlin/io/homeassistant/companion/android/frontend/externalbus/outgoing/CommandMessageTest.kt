@@ -56,10 +56,10 @@ class CommandMessageTest {
     }
 
     @Test
-    fun `Given server version when isHandledByFrontend then only 2026_7 and later handle the finish message`() {
-        assertEquals(false, MatterCommissionFinishMessage.isHandledByFrontend(null))
-        assertEquals(false, MatterCommissionFinishMessage.isHandledByFrontend(HomeAssistantVersion(2026, 6, 9)))
-        assertEquals(true, MatterCommissionFinishMessage.isHandledByFrontend(HomeAssistantVersion(2026, 7, 0)))
+    fun `Given server version when isAvailable then only 2026_7 and later handle the finish message`() {
+        assertEquals(false, MatterCommissionFinishMessage.isAvailable(null))
+        assertEquals(false, MatterCommissionFinishMessage.isAvailable(HomeAssistantVersion(2026, 6, 9)))
+        assertEquals(true, MatterCommissionFinishMessage.isAvailable(HomeAssistantVersion(2026, 7, 0)))
     }
 
     @Test

@@ -104,7 +104,7 @@ class FrontendMatterThreadHandlerTest {
     fun `Given Matter is in-flight and commissioning succeeded when onMatterThreadIntentResult then reports success with device name`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
         every { matterManager.parseCommissioningIntentResult(any()) } returns
-            MatterManager.CommissioningFlowOutcome.Success(deviceName = "Kitchen light")
+            MatterManager.CommissioningRequestResult.Success(deviceName = "Kitchen light")
         val handler = createHandler()
         // Drive the handler to the awaiting-intent-result state.
         handler.onStartMatterCommissioning()
@@ -120,7 +120,7 @@ class FrontendMatterThreadHandlerTest {
     @Test
     fun `Given Matter is in-flight and commissioning failed on old server when onMatterThreadIntentResult then reports failure and emits MatterCancelled snackbar`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
-        every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningFlowOutcome.Failed
+        every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningRequestResult.Failed
         givenServerVersion(HomeAssistantVersion(2026, 6, 0))
         val handler = createHandler()
         handler.onStartMatterCommissioning()
@@ -141,7 +141,7 @@ class FrontendMatterThreadHandlerTest {
     @Test
     fun `Given Matter is in-flight and commissioning failed on 2026_7 server when onMatterThreadIntentResult then reports failure without snackbar`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
-        every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningFlowOutcome.Failed
+        every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningRequestResult.Failed
         givenServerVersion(HomeAssistantVersion(2026, 7, 0))
         val handler = createHandler()
         handler.onStartMatterCommissioning()

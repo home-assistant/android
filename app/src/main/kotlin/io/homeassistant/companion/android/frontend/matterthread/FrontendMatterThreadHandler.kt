@@ -45,7 +45,7 @@ import timber.log.Timber
  *
  * The only external-bus message the handler sends is [MatterCommissionFinishMessage], reporting
  * the outcome of the Matter commissioning flow on every outcome so the frontend's add-device
- * dialog can leave its spinner.
+ * dialog can hide its spinner.
  */
 @ViewModelScoped
 internal class FrontendMatterThreadHandler @Inject constructor(
@@ -198,17 +198,17 @@ internal class FrontendMatterThreadHandler @Inject constructor(
 
     private suspend fun handleMatterIntentResult(result: ActivityResult) {
         when (val outcome = matterManager.parseCommissioningIntentResult(result)) {
-            is MatterManager.CommissioningFlowOutcome.Success -> {
+            is MatterManager.CommissioningRequestResult.Success -> {
                 Timber.d("Matter commissioning returned success")
                 externalBusRepository.send(MatterCommissionFinishMessage(name = outcome.deviceName, success = true))
             }
 
-            is MatterManager.CommissioningFlowOutcome.Failed -> {
+            is MatterManager.CommissioningRequestResult.Failed -> {
                 Timber.d("Matter commissioning was cancelled or failed")
                 externalBusRepository.send(MatterCommissionFinishMessage(name = null, success = false))
                 // Frontends that handle the finish message show their own failure feedback and
-                // close the add-device dialog; older ones show nothing, so keep the snackbar.
-                if (!MatterCommissionFinishMessage.isHandledByFrontend(serverManager.getServer()?.version)) {
+                // close the add-device dialog; older ones show nothing, so show a simple Snackbar.
+                if (!MatterCommissionFinishMessage.isAvailable(serverManager.getServer()?.version)) {
                     showTerminal(MatterThreadTerminal.Snackbar.MatterCancelled)
                 }
             }

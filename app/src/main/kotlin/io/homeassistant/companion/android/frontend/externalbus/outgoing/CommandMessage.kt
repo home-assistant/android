@@ -119,12 +119,7 @@ object MatterCommissionFinishMessage {
         ),
     )
 
-    /**
-     * Whether the frontend acts on this message. Supported since Home Assistant 2026.7; older
-     * frontends ignore it and show no feedback of their own, so the app must surface failures
-     * itself.
-     */
-    fun isHandledByFrontend(version: HomeAssistantVersion?): Boolean = version?.isAtLeast(2026, 7, 0) == true
+    fun isAvailable(version: HomeAssistantVersion?): Boolean = version?.isAtLeast(2026, 7, 0) == true
 
     @Serializable
     private data class CommissionFinishPayload(val name: String?, val success: Boolean)

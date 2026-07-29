@@ -29,20 +29,20 @@ interface MatterManager {
     }
 
     /**
-     * Terminal outcome of the platform commissioning flow launched from
+     * Terminal outcome of the platform commissioning request launched from
      * [CommissioningResult.Ready.intentSender], derived from its `ActivityResult` by
      * [parseCommissioningIntentResult].
      */
-    sealed interface CommissioningFlowOutcome {
+    sealed interface CommissioningRequestResult {
 
         /**
          * The device was commissioned. [deviceName] is the name the user entered during the
-         * platform flow, or `null` when none was provided.
+         * platform request, or `null` when none was provided.
          */
-        data class Success(val deviceName: String?) : CommissioningFlowOutcome
+        data class Success(val deviceName: String?) : CommissioningRequestResult
 
-        /** The flow was cancelled by the user or failed before the device was commissioned. */
-        data object Failed : CommissioningFlowOutcome
+        /** The request was cancelled by the user or failed before the device was commissioned. */
+        data object Failed : CommissioningRequestResult
     }
 
     /**
@@ -54,7 +54,7 @@ interface MatterManager {
      * Interpret the `ActivityResult` of the commissioning flow launched from
      * [CommissioningResult.Ready.intentSender].
      */
-    fun parseCommissioningIntentResult(result: ActivityResult): CommissioningFlowOutcome
+    fun parseCommissioningIntentResult(result: ActivityResult): CommissioningRequestResult
 
     /**
      * Indicates if the server supports Matter commissioning.
