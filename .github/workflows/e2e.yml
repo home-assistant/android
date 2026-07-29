@@ -10,8 +10,11 @@ on: # yamllint disable-line rule:truthy
   # PR; schedule and workflow_dispatch only work from the default branch.
   workflow_call:
 
+# The group must not use github.workflow: when invoked through workflow_call,
+# it resolves to the CALLER's workflow name, colliding with the caller's own
+# concurrency group and deadlocking the called jobs.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: e2e-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -21,7 +24,7 @@ permissions:
 # one emulator per supported API level, all inside a single emulator.wtf
 # session. This is not part of the PR checks: it only runs from trusted refs
 # (schedule on main, manual dispatch), so it can build and check out code
-# directly without the fork-safety indirections PR workflows need. hello
+# directly without the fork-safety indirections PR workflows need.
 jobs:
   maestro:
     name: "Maestro onboarding"
