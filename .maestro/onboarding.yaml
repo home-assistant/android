@@ -39,9 +39,20 @@ appId: io.homeassistant.companion.android.debug
 # Generous timeouts from here on: all shards load the frontend from the single
 # Home Assistant container at the same time, so pages appear much slower than
 # on a lone device.
-- extendedWaitUntil:
-    visible: "Log in"
-    timeout: 60000
+#
+# The login form autofocuses the username field, and on old WebViews
+# (Chromium 69, API 26-28) the resulting focus churn keeps the accessibility
+# tree from ever settling, so the wait never sees the page even once rendered.
+# The neutral tap blurs the field to let the tree settle; the retry re-blurs
+# and re-checks, since the first tap may land before the page has loaded.
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn:
+          point: 50%,25%
+      - extendedWaitUntil:
+          visible: "Log in"
+          timeout: 20000
 
 - tapOn: "Username"
 - inputText: ${HOME_ASSISTANT_USERNAME}
