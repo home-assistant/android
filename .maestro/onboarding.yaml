@@ -13,6 +13,14 @@ appId: io.homeassistant.companion.android.debug
     text: '(?s)Connect to my Home.*Assistant server'
     retryTapIfNoChange: true
 
+# On API 33+ the discovery screen triggers the NEARBY_WIFI_DEVICES system
+# dialog, which Maestro's launchApp permissions do not cover. The regex
+# tolerates the typographic apostrophe in "Don't allow".
+- tapOn:
+    text: "Don.t allow"
+    optional: true
+    retryTapIfNoChange: true
+
 - tapOn:
     text: "Enter address manually"
     retryTapIfNoChange: true
@@ -28,9 +36,12 @@ appId: io.homeassistant.companion.android.debug
     text: "Connect"
     retryTapIfNoChange: true
 
+# Generous timeouts from here on: all shards load the frontend from the single
+# Home Assistant container at the same time, so pages appear much slower than
+# on a lone device.
 - extendedWaitUntil:
     visible: "Log in"
-    timeout: 25000
+    timeout: 60000
 
 - tapOn: "Username"
 - inputText: ${HOME_ASSISTANT_USERNAME}
@@ -46,7 +57,7 @@ appId: io.homeassistant.companion.android.debug
 
 - extendedWaitUntil:
     visible: "How would you like to name this device?"
-    timeout: 25000
+    timeout: 60000
 
 - tapOn:
     text: "Save"
@@ -54,7 +65,7 @@ appId: io.homeassistant.companion.android.debug
 
 - extendedWaitUntil:
     visible: "Got it"
-    timeout: 20000
+    timeout: 30000
 
 - tapOn:
     text: "Got it"
@@ -82,10 +93,23 @@ appId: io.homeassistant.companion.android.debug
     notVisible: "Let us help secure your remote connection"
     timeout: 10000
 
+# The notification permission prompt can cover the frontend once it loads
+# (API 33+): its modal sheet also prunes the accessibility tree behind it, so
+# wait for either the frontend or the sheet, dismiss the sheet if present, and
+# only then assert on the frontend.
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^(Overview|More details|Do not allow)$'
+    timeout: 60000
+- tapOn:
+    text: "Do not allow"
+    optional: true
+    retryTapIfNoChange: true
+
 - extendedWaitUntil:
     visible:
       text: '(?i)^(Overview|More details)$'
-    timeout: 25000
+    timeout: 60000
 
 - tapOn:
     text: '(?i)^More details$'
