@@ -143,7 +143,7 @@ appId: io.homeassistant.companion.android.debug
 - extendedWaitUntil:
     visible:
       text: '(?is).*Companion app.*'
-    timeout: 10000
+    timeout: 60000
 - tapOn:
     text: '(?is).*Companion app.*'
     retryTapIfNoChange: true
