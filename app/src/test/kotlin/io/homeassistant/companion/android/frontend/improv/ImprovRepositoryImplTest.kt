@@ -36,11 +36,12 @@ class ImprovRepositoryImplTest {
         sdkInt: Int = Build.VERSION_CODES.S,
         scope: CoroutineScope = backgroundScope,
         ioDispatcher: CoroutineDispatcher = StandardTestDispatcher(testScheduler),
+        factory: ImprovManagerFactory = improvManagerFactory,
     ): ImprovRepositoryImpl {
         SdkVersion.sdkInt = sdkInt
         return ImprovRepositoryImpl(
             permissionChecker = permissionChecker,
-            improvManagerFactory = improvManagerFactory,
+            improvManagerFactory = factory,
             shareInScope = scope,
             backgroundDispatcher = ioDispatcher,
         )
@@ -345,6 +346,32 @@ class ImprovRepositoryImplTest {
                 val error = awaitError()
                 assertInstanceOf(SecurityException::class.java, error)
                 assertEquals("wifi-denied", error.message)
+            }
+        }
+    }
+
+    @Nested
+    inner class WithoutBluetoothAdapter {
+
+        @Test
+        fun `Given no Bluetooth adapter when scanDevices subscribed then scan stays inert`() = runTest {
+            every { permissionChecker.hasPermission(any()) } returns true
+            val repository = createRepository(factory = { null })
+
+            repository.scanDevices().test {
+                assertEquals(emptyList<ImprovDevice>(), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            // Also covers the teardown path: stopScan on a missing manager must not throw.
+            advanceTimeBy(SCAN_IDLE_WINDOW_MS + 1)
+        }
+
+        @Test
+        fun `Given no Bluetooth adapter when provisionDevice then flow completes without events`() = runTest {
+            val repository = createRepository(factory = { null })
+
+            repository.provisionDevice(ImprovDevice("d", "AA"), "wifi", "pwd").test {
+                awaitComplete()
             }
         }
     }

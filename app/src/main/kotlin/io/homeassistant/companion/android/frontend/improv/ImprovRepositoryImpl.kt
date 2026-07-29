@@ -60,7 +60,8 @@ class ImprovRepositoryImpl @VisibleForTesting constructor(
         backgroundDispatcher = Dispatchers.IO,
     )
 
-    private val manager: ImprovManager = improvManagerFactory.create(this)
+    // Null on devices without a Bluetooth adapter; scanning and provisioning are then inert.
+    private val manager: ImprovManager? = improvManagerFactory.create(this)
 
     private val devices = MutableStateFlow(emptyList<ImprovDevice>())
     private val stateEvents = MutableSharedFlow<DeviceState>(extraBufferCapacity = 16)
@@ -98,6 +99,11 @@ class ImprovRepositoryImpl @VisibleForTesting constructor(
 
     override fun provisionDevice(device: ImprovDevice, ssid: String, password: String): Flow<ProvisioningEvent> =
         channelFlow {
+            val manager = manager ?: run {
+                Timber.w("Ignoring Improv provisioning: device has no Bluetooth adapter")
+                close()
+                return@channelFlow
+            }
             var credentialsSent = false
 
             // Forward error events for the duration of the session.
@@ -190,6 +196,7 @@ class ImprovRepositoryImpl @VisibleForTesting constructor(
     // endregion
 
     private suspend fun startScanInternal() = withContext(backgroundDispatcher) {
+        val manager = manager ?: return@withContext
         if (!hasPermissions()) return@withContext
         try {
             manager.findDevices()
@@ -206,7 +213,7 @@ class ImprovRepositoryImpl @VisibleForTesting constructor(
     // `ensureActive` and the BLE scan would never be torn down.
     private suspend fun stopScanInternal() = withContext(NonCancellable + backgroundDispatcher) {
         try {
-            manager.stopScan()
+            manager?.stopScan()
         } catch (e: Exception) {
             Timber.w(e, "Cannot stop scanning")
         }
