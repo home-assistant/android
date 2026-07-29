@@ -44,8 +44,12 @@ jobs:
     env:
       E2E_FORWARD_IP: 172.16.0.2
       E2E_HOME_ASSISTANT_VERSION: 2026.7.4
-      E2E_HOME_ASSISTANT_HOST: ha.internal
-      E2E_HOME_ASSISTANT_URL: http://ha.internal:8123
+      # The hostname must not start with something resembling a dictionary
+      # word: some emulator images ship Gboard with autocorrect enabled, which
+      # rewrites e.g. ha.internal to have.internal while the flow types the
+      # URL.
+      E2E_HOME_ASSISTANT_HOST: homeassistant.internal
+      E2E_HOME_ASSISTANT_URL: http://homeassistant.internal:8123
       E2E_HOME_ASSISTANT_USERNAME: citest
       E2E_HOME_ASSISTANT_PASSWORD: "h7jk99&U"
       MAESTRO_VERSION: 2.7.0

@@ -1,8 +1,13 @@
 # yamllint disable rule:document-start
 appId: io.homeassistant.companion.android.debug
 ---
+# Granting all permissions upfront keeps the flow deterministic across API
+# levels: otherwise system permission dialogs (nearby devices, notifications)
+# cover the UI at API-level-dependent moments.
 - launchApp:
     clearState: true
+    permissions:
+      all: allow
 
 - tapOn:
     text: '(?s)Connect to my Home.*Assistant server'
@@ -16,6 +21,9 @@ appId: io.homeassistant.companion.android.debug
     text: '(?s)What is your Home.*Assistant address.*'
 - tapOn: "http://homeassistant.local:8123"
 - inputText: ${HOME_ASSISTANT_URL}
+# Dismiss the keyboard and Gboard's first-run tooltip, which can cover the
+# Connect button.
+- hideKeyboard
 - tapOn:
     text: "Connect"
     retryTapIfNoChange: true
