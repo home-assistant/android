@@ -436,3 +436,15 @@ jobs:
         with:
           test-name: Instrumentation test (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
           job-status: ${{ job.status }}
+
+  # TOREVERT: temporary invocation of the E2E workflow so this PR can exercise
+  # it end to end; schedule and workflow_dispatch only fire once e2e.yml is on
+  # the default branch. Remove this job (and the workflow_call trigger in
+  # e2e.yml) before merging.
+  e2e_tests:
+    name: "E2E"
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+    uses: ./.github/workflows/e2e.yml

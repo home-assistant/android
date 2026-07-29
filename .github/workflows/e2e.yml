@@ -6,6 +6,9 @@ on: # yamllint disable-line rule:truthy
     - cron: "0 5 * * *"
   # Manual run on any branch carrying this workflow.
   workflow_dispatch:
+  # TOREVERT: lets the temporary job in pr.yml exercise this workflow from the
+  # PR; schedule and workflow_dispatch only work from the default branch.
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
