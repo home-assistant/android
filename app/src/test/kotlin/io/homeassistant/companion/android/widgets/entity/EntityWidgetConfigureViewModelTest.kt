@@ -75,7 +75,7 @@ class EntityWidgetConfigureViewModelTest {
         assertTrue(state.isUpdateWidget)
         assertEquals(serverId, state.selectedServerId)
         assertEquals(entity.entityId, state.selectedEntityId)
-        assertEquals(listOf("brightness", "friendly_name"), state.selectedAttributeIds)
+        assertEquals(listOf("brightness", "power"), state.selectedAttributeIds)
         assertEquals("Office light", state.label)
         assertEquals("28", state.textSize)
         assertEquals(" - ", state.stateSeparator)
@@ -193,12 +193,12 @@ class EntityWidgetConfigureViewModelTest {
     fun `Given custom attributes when attributes are added then input is parsed and cleared`() = runTest {
         val viewModel = createViewModel(entity.entityId)
         viewModel.onAttributeAdded("brightness")
-        viewModel.onCustomAttributeChanged("friendly_name, unit_of_measurement, brightness")
+        viewModel.onCustomAttributeChanged("power, unit_of_measurement, brightness")
 
         viewModel.onCustomAttributesAdded()
 
         val state = viewModel.state.value
-        assertEquals(listOf("brightness", "friendly_name", "unit_of_measurement"), state.selectedAttributeIds)
+        assertEquals(listOf("brightness", "power", "unit_of_measurement"), state.selectedAttributeIds)
         assertEquals("", state.customAttribute)
     }
 
@@ -234,7 +234,7 @@ class EntityWidgetConfigureViewModelTest {
         id = widgetId,
         serverId = serverId,
         entityId = entity.entityId,
-        attributeIds = "brightness,friendly_name",
+        attributeIds = "brightness,power",
         label = "Office light",
         textSize = 28F,
         stateSeparator = " - ",
