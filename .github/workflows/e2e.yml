@@ -70,12 +70,19 @@ jobs:
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
-      # One emulator per supported API level.
+      # One emulator per supported API level, floored at E2E_MIN_API: on older
+      # images the bundled WebView (Chromium 69 on API 26-28) renders the
+      # frontend but its content never surfaces to Maestro's view-hierarchy
+      # polling, failing every WebView assertion. The instrumentation tests in
+      # PR CI still cover the full range down to the app's min SDK.
       - name: Build device list
         id: devices
+        env:
+          E2E_MIN_API: 29
         run: |
           MIN=$(grep '^androidSdk-min' gradle/libs.versions.toml | cut -d'"' -f2)
           MAX=$(grep '^androidSdk-target' gradle/libs.versions.toml | cut -d'"' -f2)
+          MIN=$((MIN < E2E_MIN_API ? E2E_MIN_API : MIN))
           for v in $(seq "$MIN" "$MAX"); do
             echo "model=Pixel7,version=$v"
           done > devices.txt
