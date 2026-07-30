@@ -112,17 +112,8 @@ appId: io.homeassistant.companion.android.debug
 
 - extendedWaitUntil:
     visible:
-      text: '(?i)^(Overview|More details)$'
-    timeout: 60000
-
-- tapOn:
-    text: '(?i)^More details$'
-    optional: true
-    retryTapIfNoChange: true
-- extendedWaitUntil:
-    visible:
       text: '(?i)^Overview$'
-    timeout: 3000
+    timeout: 60000
 
 - tapOn:
     text: '(?i)^Sidebar toggle$'
