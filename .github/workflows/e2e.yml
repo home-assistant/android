@@ -20,22 +20,18 @@ permissions:
   contents: read
 
 # Runs the Maestro onboarding flow against a real Home Assistant instance on
-# one emulator per supported API level, all inside a single emulator.wtf
-# session. This is not part of the PR checks: it only runs from trusted refs
-# (schedule on main, manual dispatch), so it can build and check out code
-# directly without the fork-safety indirections PR workflows need.
+# one emulator per supported API level.
 jobs:
   maestro:
     name: "Maestro onboarding"
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: ui-test
     permissions:
       contents: read
       id-token: write
     env:
       E2E_FORWARD_IP: 172.16.0.2
-      # Schedule runs have no inputs, so they fall back to the Home Assistant
-      # dev image; manual runs can override the tag.
       E2E_HOME_ASSISTANT_VERSION: ${{ inputs.home-assistant-version || 'dev' }}
       # The hostname must not start with something resembling a dictionary
       # word: some emulator images ship Gboard with autocorrect enabled, which
@@ -56,12 +52,7 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      # emulator.wtf bills by the minute, so everything that does not need the
-      # devices runs before the emulator session starts.
-      #
-      # StrictMode is disabled: with it on, HAStrictMode FailFasts the app on
-      # violations coming from library code (e.g. appcompat reading the stored
-      # app locales on the main thread on API 31/32), killing the flow.
+      # StrictMode is disabled.
       - name: Assemble app fullDebug
         run: ./gradlew :app:assembleFullDebug -PnoStrictMode -Pabis=x86,x86_64
 
@@ -125,7 +116,7 @@ jobs:
           egress-localhost-fwd-ip: ${{ env.E2E_FORWARD_IP }}
           dns-override: |
             ${{ env.E2E_HOME_ASSISTANT_HOST }}=${{ env.E2E_FORWARD_IP }}
-          max-time-limit: 30m
+          max-time-limit: 15m
 
       - name: Wait for emulators
         id: device
@@ -133,7 +124,8 @@ jobs:
           ADB="$ANDROID_HOME/platform-tools/adb"
           EXPECTED=$(grep -c . devices.txt)
 
-          for _ in $(seq 1 120); do
+          # Up to 3 minutes; a slower start would not leave enough of the 15m session for the flows.
+          for _ in $(seq 1 36); do
             SERIALS=$($ADB devices | awk 'NR > 1 && $2 == "device" { print $1 }')
             if [ "$(echo "$SERIALS" | grep -c .)" -eq "$EXPECTED" ]; then
               break
@@ -148,10 +140,21 @@ jobs:
             exit 1
           fi
 
+          # Bounded so a session dying mid-boot fails the step instead of hanging the job.
           for SERIAL in $SERIALS; do
-            until [ "$($ADB -s "$SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+            BOOTED=""
+            for _ in $(seq 1 120); do
+              if [ "$($ADB -s "$SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
+                BOOTED=1
+                break
+              fi
               sleep 1
             done
+            if [ -z "$BOOTED" ]; then
+              echo "::error::Emulator $SERIAL did not finish booting"
+              $ADB devices
+              exit 1
+            fi
           done
 
           echo "serials=$(echo $SERIALS | xargs)" >> "$GITHUB_OUTPUT"
@@ -205,13 +208,6 @@ jobs:
         if: always() && steps.homeassistant.outputs.containername != ''
         run: docker inspect ${{ steps.homeassistant.outputs.containername }} > homeassistant-container.json
 
-      - name: Capture Home Assistant file log
-        if: always()
-        run: |
-          if [ -f .github/e2e/homeassistant/home-assistant.log ]; then
-            cp .github/e2e/homeassistant/home-assistant.log homeassistant-file.log
-          fi
-
       - name: Upload E2E artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -221,7 +217,6 @@ jobs:
           path: |
             homeassistant-config.json
             homeassistant.log
-            homeassistant-file.log
             homeassistant-container.json
             logcat-*.txt
             maestro-results
