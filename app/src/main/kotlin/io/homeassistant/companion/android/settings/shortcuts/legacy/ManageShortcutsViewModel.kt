@@ -18,8 +18,9 @@ import androidx.lifecycle.viewModelScope
 import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
@@ -36,7 +37,7 @@ import timber.log.Timber
 internal class ManageShortcutsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val shortcutManager: HaShortcutManager,
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     application: Application,
 ) : AndroidViewModel(application) {
 
@@ -53,7 +54,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
 
     var servers by mutableStateOf(emptyList<Server>())
         private set
-    var displayEntities = mutableStateMapOf<Int, EntityDisplayState>()
+    var displayEntities = mutableStateMapOf<Int, EntityDisplayState<EntityDisplayWithContext>>()
         private set
 
     private suspend fun currentServerId() = serverManager.getServer()?.id ?: 0
@@ -96,7 +97,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
             this@ManageShortcutsViewModel.servers = servers
             servers.forEach { server ->
                 launch {
-                    getEntitiesForDisplay.snapshot(serverId = server.id).collect { state ->
+                    entitiesForDisplayManager.snapshotInContext(serverId = server.id).collect { state ->
                         displayEntities[server.id] = state
                     }
                 }

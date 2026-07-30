@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.FavoriteEntityRow
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -108,7 +108,7 @@ fun LoadWearFavoritesSettings(
                 // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6300
                 HATheme {
                     // This screen talks to the watch through SettingsWearRepository and has no websocket
-                    // access, so the items carry no area/device metadata. Use GetEntitiesForDisplayUseCase
+                    // access, so the items carry no area/device metadata. Use EntitiesForDisplayManager
                     // here if that ever changes.
                     EntityPicker(
                         displayState = rememberEntityDisplayState(validEntities),
@@ -125,7 +125,7 @@ fun LoadWearFavoritesSettings(
                 val favoriteEntityID = favoriteEntities[index].replace("[", "").replace("]", "")
                 settingsWearViewModel.entities[favoriteEntityID]?.let { entity ->
                     // Metadata-free item, this screen has no websocket access (see the picker above)
-                    val displayEntity = remember(entity) { EntityDisplayItem(entity) }
+                    val displayEntity = remember(entity) { EntityDisplayWithoutContext(entity) }
                     ReorderableItem(
                         state = reorderState,
                         key = favoriteEntities[index],

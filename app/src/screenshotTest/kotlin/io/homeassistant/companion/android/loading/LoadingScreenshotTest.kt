@@ -16,4 +16,13 @@ class LoadingScreenshotTest {
             LoadingScreen(modifier = Modifier)
         }
     }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `LoadingScreen with branding`() {
+        HAThemeForPreview {
+            LoadingScreen(modifier = Modifier, showBrand = true)
+        }
+    }
 }

@@ -78,6 +78,15 @@ data class ConnectionStatusPayload(val event: String) {
 }
 
 /**
+ * Message indicating the frontend has fully rendered and can be displayed.
+ *
+ * Sent once the frontend removes its launch screen. No response is expected for this message.
+ */
+@Serializable
+@SerialName("frontend/loaded")
+data class FrontendLoaded(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
  * Message requesting the app's configuration and capabilities.
  *
  * The frontend sends this to discover what native features the app supports,

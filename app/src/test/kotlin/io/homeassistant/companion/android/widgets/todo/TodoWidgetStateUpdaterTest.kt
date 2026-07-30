@@ -2,18 +2,22 @@ package io.homeassistant.companion.android.widgets.todo
 
 import app.cash.turbine.TurbineTestContext
 import app.cash.turbine.test
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import com.mikepenz.iconics.typeface.IIcon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.mockk.coEvery
-import io.mockk.coJustAwait
 import io.mockk.coJustRun
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
@@ -26,13 +30,12 @@ import org.junit.jupiter.api.Test
 class TodoWidgetStateUpdaterTest {
 
     private val dao = mockk<TodoWidgetDao>()
-    private val integrationRepository = mockk<IntegrationRepository>()
     private val webSocketRepository = mockk<WebSocketRepository>()
     private val serverManager = mockk<ServerManager>().apply {
-        coEvery { integrationRepository(any()) } returns integrationRepository
         coEvery { webSocketRepository(any()) } returns webSocketRepository
     }
-    private val updater = TodoWidgetStateUpdater(dao, serverManager)
+    private val entitiesForDisplayManager = mockk<EntitiesForDisplayManager>()
+    private val updater = TodoWidgetStateUpdater(dao, serverManager, entitiesForDisplayManager)
 
     /*
 Initial state emission
@@ -64,8 +67,7 @@ Initial state emission
             awaitClose()
         }
         coEvery { dao.get(widgetId) } returns todoWidgetEntity
-        coEvery { serverManager.getServer(any<Int>()) } returns mockk()
-        coJustAwait { integrationRepository.getEntity(entityId) }
+        mockDisplayEntities(entityId) { awaitClose() }
 
         updater.stateFlow(42).test {
             val state = awaitItem()
@@ -85,8 +87,8 @@ Initial state emission
             awaitClose()
         }
         coEvery { dao.get(widgetId) } returns todoWidgetEntity
-        coEvery { serverManager.getServer(any<Int>()) } returns null
-        coJustAwait { integrationRepository.getEntity(entityId) }
+        // A removed server has nothing to observe, so the widget keeps the data of the database
+        mockDisplayEntities(entityId) { send(EntityDisplayState.Error) }
 
         updater.stateFlow(42).test {
             assertEquals(TodoStateWithData.from(todoWidgetEntity), awaitItem())
@@ -117,7 +119,7 @@ Watch for update
         val widgetId = 42
         val entityId = "test"
         val todoWidgetEntity = TodoWidgetEntity(widgetId, 1, entityId)
-        val serverEntity = fakeServerEntity(entityId)
+        val displayEntity = fakeEntityDisplay(entityId, "My list")
         val getTodoResponse = GetTodosResponse.TodoItem("testUID", "test", "test")
         val getTodosResponse = fakeTodosResponse(entityId, items = listOf(getTodoResponse))
 
@@ -128,10 +130,9 @@ Watch for update
             awaitClose()
         }
         coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
-        coEvery { serverManager.getServer(any<Int>()) } returns mockk()
 
-        coEvery { integrationRepository.getEntity(entityId) } returns serverEntity
-        coEvery { integrationRepository.getEntityUpdates(any()) } returns channelFlow {
+        mockDisplayEntities(entityId) {
+            send(loaded(displayEntity))
             awaitClose()
         }
 
@@ -142,7 +143,7 @@ Watch for update
             assertEquals(
                 TodoStateWithData.from(
                     todoWidgetEntity,
-                    serverEntity,
+                    displayEntity,
                     listOf(
                         TodoWidgetEntity.TodoItem(
                             uid = getTodoResponse.uid,
@@ -164,12 +165,12 @@ Watch for update
         val widgetId = 42
         val entityId = "test"
         val todoWidgetEntity = TodoWidgetEntity(widgetId, 1, entityId)
-        val serverEntity = fakeServerEntity(entityId)
+        val displayEntity = fakeEntityDisplay(entityId, "My list")
         val getTodoResponse = GetTodosResponse.TodoItem("testUID", "test", "test")
         val getTodosResponse = fakeTodosResponse(entityId, items = listOf(getTodoResponse))
 
         var daoFlowEmitter: ProducerScope<TodoWidgetEntity?>? = null
-        var entityUpdatesEmitter: ProducerScope<Entity>? = null
+        var entityUpdatesEmitter: ProducerScope<EntityDisplayState<EntityDisplayWithoutContext>>? = null
 
         mockInitialStateForEmpty()
 
@@ -179,11 +180,10 @@ Watch for update
             awaitClose()
         }
         coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
-        coEvery { serverManager.getServer(any<Int>()) } returns mockk()
 
-        coEvery { integrationRepository.getEntity(entityId) } returns serverEntity
-        coEvery { integrationRepository.getEntityUpdates(any()) } returns channelFlow {
+        mockDisplayEntities(entityId) {
             entityUpdatesEmitter = this
+            send(loaded(displayEntity))
             awaitClose()
         }
 
@@ -209,25 +209,24 @@ Watch for update
             verifyDaoUpdate(exactly = 2)
             verifyEntityUpdates(exactly = 2) // Subscribe a second time since the configuration changed
 
-            // Send same EntityUpdate doesn't do anything
-            entityUpdatesEmitter!!.send(serverEntity)
-            verifyDaoUpdate(exactly = 2)
-
-            // Send new EntityUpdate trigger an update
-            entityUpdatesEmitter.send(serverEntity.copy(attributes = mapOf("test" to 1)))
+            // Every emission is a change of the entity upstream, so each one refreshes the todos
+            entityUpdatesEmitter!!.send(loaded(displayEntity))
             awaitItem()
             verifyDaoUpdate(exactly = 3)
+
+            entityUpdatesEmitter.send(loaded(displayEntity.copy(name = "Renamed list")))
+            awaitItem()
+            verifyDaoUpdate(exactly = 4)
 
             expectNoEvents()
         }
     }
 
     @Test
-    fun `Given widgetID in DAO when subscribing to stateFlow with null entityUpdates then it emits dao entity with out of sync`() = runTest {
+    fun `Given widgetID in DAO when subscribing to stateFlow without entity to observe then it emits dao entity with out of sync`() = runTest {
         val widgetId = 42
         val entityId = "test"
         val todoWidgetEntity = TodoWidgetEntity(widgetId, 1, entityId)
-        val serverEntity = fakeServerEntity(entityId)
 
         mockInitialStateForEmpty()
 
@@ -236,10 +235,8 @@ Watch for update
             awaitClose()
         }
         coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
-        coEvery { serverManager.getServer(any<Int>()) } returns mockk()
 
-        coEvery { integrationRepository.getEntity(entityId) } returns serverEntity
-        coEvery { integrationRepository.getEntityUpdates(any()) } returns null
+        mockDisplayEntities(entityId) { send(EntityDisplayState.Error) }
 
         updater.stateFlow(widgetId).test {
             awaitEmptyTodoState()
@@ -253,9 +250,74 @@ Watch for update
         }
     }
 
+    @Test
+    fun `Given widget without data in DAO when loading then emits loading state`() = runTest {
+        val widgetId = 42
+        val entityId = "test"
+        val todoWidgetEntity = TodoWidgetEntity(widgetId, 1, entityId)
+        val displayEntity = fakeEntityDisplay(entityId, "My list")
+
+        mockInitialStateForEmpty()
+
+        coEvery { dao.getFlow(widgetId) } returns channelFlow {
+            send(todoWidgetEntity)
+            awaitClose()
+        }
+        coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
+        coEvery { webSocketRepository.getTodos(entityId) } returns fakeTodosResponse(entityId)
+
+        mockDisplayEntities(entityId) {
+            send(EntityDisplayState.Loading)
+            send(loaded(displayEntity))
+            awaitClose()
+        }
+
+        updater.stateFlow(widgetId).test {
+            awaitEmptyTodoState()
+            // Nothing was ever loaded for this widget, an empty list would be misleading
+            assertEquals(LoadingTodoState, awaitItem())
+            assertEquals(TodoStateWithData.from(todoWidgetEntity, displayEntity, emptyList()), awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given widget with data in DAO when loading then emits the DAO data instead of loading`() = runTest {
+        val widgetId = 42
+        val entityId = "test"
+        val todoWidgetEntity = TodoWidgetEntity(widgetId, 1, entityId).copy(
+            latestUpdateData = TodoWidgetEntity.LastUpdateData(
+                entityName = "My list",
+                todos = listOf(TodoWidgetEntity.TodoItem(uid = "1", summary = "Task 1", status = "needs_action")),
+            ),
+        )
+
+        coEvery { dao.getFlow(widgetId) } returns channelFlow {
+            send(todoWidgetEntity)
+            awaitClose()
+        }
+        coEvery { dao.get(widgetId) } returns todoWidgetEntity
+
+        mockDisplayEntities(entityId) {
+            send(EntityDisplayState.Loading)
+            awaitClose()
+        }
+
+        updater.stateFlow(widgetId).test {
+            // The cached data is shown while loading rather than a spinner over readable content
+            assertEquals(TodoStateWithData.from(todoWidgetEntity), awaitItem())
+            assertEquals(TodoStateWithData.from(todoWidgetEntity), awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    private fun fakeEntityDisplay(entityId: String, name: String, icon: IIcon? = null): EntityDisplayWithoutContext {
+        return EntityDisplayWithoutContext(entityId, name, icon ?: Icon.cmd_bookmark)
+    }
+
     private fun verifyEntityUpdates(exactly: Int) {
-        coVerify(exactly = exactly) {
-            integrationRepository.getEntityUpdates(any())
+        verify(exactly = exactly) {
+            entitiesForDisplayManager.observe(any(), any())
         }
     }
 
@@ -283,4 +345,12 @@ Watch for update
     private fun mockInitialStateForEmpty() {
         coEvery { dao.get(any()) } returns null
     }
+
+    private fun mockDisplayEntities(entityId: String, emissions: suspend ProducerScope<EntityDisplayState<EntityDisplayWithoutContext>>.() -> Unit) {
+        every { entitiesForDisplayManager.observe(any(), listOf(entityId)) } returns channelFlow {
+            emissions()
+        }
+    }
+
+    private fun loaded(display: EntityDisplayWithoutContext) = EntityDisplayState.Loaded(listOf(display))
 }

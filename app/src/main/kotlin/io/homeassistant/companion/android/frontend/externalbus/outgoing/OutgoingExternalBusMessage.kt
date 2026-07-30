@@ -99,6 +99,7 @@ object ConfigResultMessage {
         val appVersion: String,
         val hasEntityAddTo: Boolean = true,
         val hasAssistSettings: Boolean = true,
+        val hasSplashscreen: Boolean = true,
     ) {
         companion object {
             fun create(

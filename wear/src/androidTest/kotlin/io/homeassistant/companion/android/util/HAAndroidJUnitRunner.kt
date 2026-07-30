@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.test.runner.AndroidJUnitRunner
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.FailFastHandler
+import java.util.TimeZone
 
 /**
  * [FailFastHandler] used during instrumentation tests that rethrows the captured exception as an
@@ -35,6 +36,10 @@ internal object TestFailFastHandler : FailFastHandler {
 class HAAndroidJUnitRunner : AndroidJUnitRunner() {
     override fun onCreate(arguments: Bundle?) {
         FailFast.setHandler(TestFailFastHandler)
+        // Load the timezone database before HAStrictMode is enabled: since Android 17,
+        // Espresso's idle loop calls Message.toString() on the main thread, whose lazy
+        // TimeUtils/ZoneInfoDb initialization reads from disk and would trip StrictMode.
+        TimeZone.getDefault()
         super.onCreate(arguments)
     }
 }

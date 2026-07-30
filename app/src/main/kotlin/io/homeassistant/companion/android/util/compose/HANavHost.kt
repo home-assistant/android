@@ -19,8 +19,6 @@ import io.homeassistant.companion.android.frontend.navigation.navigateToFrontend
 import io.homeassistant.companion.android.launch.HAStartDestinationRoute
 import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.loading.LoadingScreen
-import io.homeassistant.companion.android.loading.navigation.LoadingRoute
-import io.homeassistant.companion.android.loading.navigation.loadingScreen
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardApp
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
@@ -36,8 +34,8 @@ import io.homeassistant.companion.android.settings.server.ServerChooserFragment
  * Navigation host for the main application.
  *
  * This composable function sets up the navigation graph for the whole app.
- * The [NavHost] start destination is always [LoadingRoute] until something triggers a navigation
- * to a different destination.
+ * The [NavHost] is only composed once [startDestination] is resolved; until then a bare
+ * [LoadingScreen] is displayed instead.
  *
  * @param navController The [NavHostController] for managing navigation.
  * @param startDestination The initial destination of the navigation graph. If it is null [LoadingScreen]
@@ -63,7 +61,6 @@ internal fun HANavHost(
             navController = navController,
             startDestination = startDestination,
         ) {
-            loadingScreen()
             onboarding(
                 navController,
                 onShowSnackbar = onShowSnackbar,
@@ -149,7 +146,7 @@ internal fun HANavHost(
                 carAppActivity(navController)
             }
         }
-    } ?: LoadingScreen()
+    } ?: LoadingScreen(showBrand = true)
 }
 
 /**

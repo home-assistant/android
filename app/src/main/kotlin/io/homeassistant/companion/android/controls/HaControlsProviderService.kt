@@ -10,6 +10,9 @@ import io.homeassistant.companion.android.common.data.integration.ControlsAuthRe
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.COVER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.FAN_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -47,14 +50,14 @@ class HaControlsProviderService : ControlsProviderService() {
             "button" to DefaultButtonControl,
             CAMERA_DOMAIN to CameraControl,
             CLIMATE_DOMAIN to ClimateControl,
-            "cover" to CoverControl,
-            "fan" to FanControl,
+            COVER_DOMAIN to CoverControl,
+            FAN_DOMAIN to FanControl,
             "ha_failed" to HaFailedControl,
             "humidifier" to DefaultSwitchControl,
             "input_boolean" to DefaultSwitchControl,
             "input_button" to DefaultButtonControl,
             "input_number" to DefaultSliderControl,
-            "light" to LightControl,
+            LIGHT_DOMAIN to LightControl,
             "lock" to LockControl,
             MEDIA_PLAYER_DOMAIN to MediaPlayerControl,
             "number" to DefaultSliderControl,

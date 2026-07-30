@@ -20,19 +20,13 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.integration.friendlyState
-import io.homeassistant.companion.android.common.data.integration.getIcon
-import io.homeassistant.companion.android.common.data.integration.isActive
-import io.homeassistant.companion.android.common.data.integration.isAlarmActionable
-import io.homeassistant.companion.android.common.data.integration.isExecuting
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.onPressed
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.util.vehicle.MAP_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.NOT_ACTIONABLE_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
@@ -55,19 +49,14 @@ class EntityGridVehicleScreen(
     val prefsRepository: PrefsRepository,
     val integrationRepositoryProvider: suspend () -> IntegrationRepository,
     val title: String,
-    private val entityRegistry: List<EntityRegistryResponse>?,
     private val domains: MutableSet<String>,
-    private val entitiesFlow: Flow<List<Entity>>,
-    private val allEntities: Flow<Map<String, Entity>>,
+    private val entitiesFlow: Flow<List<EntityDisplay>>,
+    private val entitiesState: Flow<EntityDisplayState<EntityDisplay>>,
 ) : Screen(carContext) {
 
     private var loading = true
-    var entities: List<Entity> = listOf()
+    var entities: List<EntityDisplay> = listOf()
     private val isFavorites = title == carContext.getString(R.string.favorites)
-
-    // Index the registry by entity ID so each grid item can look up its options (such as the
-    // sensor display precision) without scanning the whole registry on every render
-    private val entityRegistryOptions = entityRegistry?.associate { it.entityId to it.options }
 
     init {
         lifecycleScope.launch {
@@ -92,7 +81,7 @@ class EntityGridVehicleScreen(
      * @param canSwitchServers If `true` and the function is called for favorites, the item limit is adjusted to keep
      * space for a 'Switch server' item
      */
-    fun getEntityGridItems(entities: List<Entity>, canSwitchServers: Boolean): ItemList.Builder {
+    fun getEntityGridItems(entities: List<EntityDisplay>, canSwitchServers: Boolean): ItemList.Builder {
         val listBuilder = if (entities.isNotEmpty()) {
             createEntityGrid(entities, canSwitchServers)
         } else {
@@ -103,8 +92,7 @@ class EntityGridVehicleScreen(
                 serverManager,
                 serverId,
                 prefsRepository,
-                allEntities,
-                entityRegistry,
+                entitiesState,
                 lifecycleScope,
             )
         }
@@ -114,8 +102,7 @@ class EntityGridVehicleScreen(
                     carContext,
                     screenManager,
                     integrationRepositoryProvider,
-                    allEntities,
-                    entityRegistry,
+                    entitiesState,
                 ).build(),
             )
             if (domains.isNotEmpty()) {
@@ -125,9 +112,8 @@ class EntityGridVehicleScreen(
                         screenManager,
                         serverManager,
                         serverId,
-                        allEntities,
+                        entitiesState,
                         prefsRepository,
-                        entityRegistry,
                     ).build(),
                 )
             }
@@ -149,50 +135,47 @@ class EntityGridVehicleScreen(
         }.build()
     }
 
-    private fun createEntityGrid(entities: List<Entity>, canSwitchServers: Boolean): ItemList.Builder {
+    private fun createEntityGrid(entities: List<EntityDisplay>, canSwitchServers: Boolean): ItemList.Builder {
         val listBuilder = ItemList.Builder()
         val manager = carContext.getCarService(ConstraintManager::class.java)
         val gridLimit = manager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
         val extraGrid = if (canSwitchServers) 3 else 2
-        entities.forEachIndexed { index, entity ->
+        entities.forEachIndexed { index, displayed ->
             if (index >= (gridLimit - if (isFavorites) extraGrid else 0)) {
                 Timber.i("Grid limit ($gridLimit) reached, not adding more entities (${entities.size}) for $title ")
                 return@forEachIndexed
             }
-            val icon = entity.getIcon()
             val gridItem =
                 GridItem.Builder()
                     .setLoading(false)
-                    .setTitle(entity.friendlyName.ifEmpty { entity.entityId })
-                    .setText(entity.friendlyState(carContext, options = entityRegistryOptions?.get(entity.entityId)))
+                    .setTitle(displayed.name)
+                    .setText(displayed.state.resolve(carContext))
 
-            if (entity.isExecuting()) {
-                gridItem.setLoading(entity.isExecuting())
+            if (displayed.isExecuting) {
+                gridItem.setLoading(displayed.isExecuting)
             } else {
-                if (entity.domain !in NOT_ACTIONABLE_DOMAINS || canNavigate(entity) || entity.isAlarmActionable()) {
+                if (displayed.domain !in NOT_ACTIONABLE_DOMAINS ||
+                    canNavigate(displayed) ||
+                    displayed.alarm?.isActionable == true
+                ) {
                     gridItem
                         .setOnClickListener {
-                            Timber.i("${entity.entityId} clicked")
-                            when (entity.domain) {
+                            Timber.i("${displayed.entityId} clicked")
+                            when (displayed.domain) {
                                 in MAP_DOMAINS -> {
-                                    val attrs = entity.attributes as? Map<*, *>
-                                    if (attrs != null) {
-                                        val lat = attrs["latitude"] as? Double
-                                        val lon = attrs["longitude"] as? Double
-                                        if (lat != null && lon != null) {
-                                            val intent = Intent(
-                                                CarContext.ACTION_NAVIGATE,
-                                                "geo:$lat,$lon".toUri(),
-                                            )
-                                            carContext.startCarApp(intent)
-                                        }
+                                    displayed.coordinates?.let { coordinates ->
+                                        val intent = Intent(
+                                            CarContext.ACTION_NAVIGATE,
+                                            "geo:${coordinates.latitude},${coordinates.longitude}".toUri(),
+                                        )
+                                        carContext.startCarApp(intent)
                                     }
                                 }
 
                                 in SUPPORTED_DOMAINS -> {
                                     lifecycleScope.launch {
                                         try {
-                                            entity.onPressed(integrationRepositoryProvider())
+                                            displayed.onPressed(integrationRepositoryProvider())
                                         } catch (e: CancellationException) {
                                             throw e
                                         } catch (e: Exception) {
@@ -211,12 +194,12 @@ class EntityGridVehicleScreen(
                 gridItem
                     .setImage(
                         CarIcon.Builder(
-                            IconicsDrawable(carContext, icon).apply {
+                            IconicsDrawable(carContext, displayed.icon).apply {
                                 sizeDp = 64
                             }.toAndroidIconCompat(),
                         )
                             .setTint(
-                                if (entity.isActive() && entity.domain in EntityExt.STATE_COLORED_DOMAINS) {
+                                if (displayed.isActive && displayed.domain in EntityExt.STATE_COLORED_DOMAINS) {
                                     CarColor.createCustom(
                                         carContext.getColor(R.color.colorYellow),
                                         carContext.getColor(R.color.colorYellow),

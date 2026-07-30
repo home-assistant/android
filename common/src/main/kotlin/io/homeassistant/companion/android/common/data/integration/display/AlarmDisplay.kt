@@ -1,10 +1,41 @@
-package io.homeassistant.companion.android.common.data.integration
+package io.homeassistant.companion.android.common.data.integration.display
 
 import androidx.annotation.VisibleForTesting
+import androidx.compose.runtime.Immutable
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 
 @VisibleForTesting
 internal const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
+
+/** Display information specific to `alarm_control_panel` entities. */
+@Immutable
+data class AlarmDisplay(
+    /** Action to run when the panel is pressed, null when it cannot be acted on. */
+    val onPressedAction: String?,
+) {
+    /** Whether the panel can be acted on. */
+    val isActionable: Boolean get() = onPressedAction != null
+}
+
+/** Alarm panel display information, null when the entity is not an alarm control panel. */
+internal fun Entity.alarmDisplay(): AlarmDisplay? {
+    if (!isAlarmControlPanelEntity()) return null
+    return AlarmDisplay(onPressedAction = alarmOnPressedAction())
+}
+
+/** Action to run when the panel is pressed, based on its current state and support by the app. */
+private fun Entity.alarmOnPressedAction(): String? {
+    if (alarmCanBeDisarmedWithoutCode()) {
+        return "alarm_disarm"
+    }
+
+    if (alarmCanBeArmedAwayWithoutCode()) {
+        return "alarm_arm_away"
+    }
+
+    return null
+}
 
 private fun Entity.isAlarmControlPanelEntity(): Boolean {
     return domain == ALARM_CONTROL_PANEL_DOMAIN
@@ -34,10 +65,6 @@ private fun Entity.alarmIsDisarmed(): Boolean {
 }
 
 private fun Entity.alarmCanBeArmedAwayWithoutCode(): Boolean {
-    if (!isAlarmControlPanelEntity()) {
-        return false
-    }
-
     if (!alarmIsDisarmed() || !supportsAlarmControlPanelArmAway()) {
         return false
     }
@@ -47,26 +74,4 @@ private fun Entity.alarmCanBeArmedAwayWithoutCode(): Boolean {
 
 private fun Entity.alarmCanBeDisarmedWithoutCode(): Boolean {
     return isAlarmControlPanelEntity() && !alarmIsDisarmed() && alarmHasNoCode()
-}
-
-/** @return `true` if [getAlarmOnPressedAction] would return an action, `false` otherwise */
-fun Entity.isAlarmActionable(): Boolean {
-    return getAlarmOnPressedAction() != null
-}
-
-/** @return action string for alarm control panel entities, based on its current state and support by the app */
-fun Entity.getAlarmOnPressedAction(): String? {
-    if (!isAlarmControlPanelEntity()) {
-        return null
-    }
-
-    if (alarmCanBeDisarmedWithoutCode()) {
-        return "alarm_disarm"
-    }
-
-    if (alarmCanBeArmedAwayWithoutCode()) {
-        return "alarm_arm_away"
-    }
-
-    return null
 }

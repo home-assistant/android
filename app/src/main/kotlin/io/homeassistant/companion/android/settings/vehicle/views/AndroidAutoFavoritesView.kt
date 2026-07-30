@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.settings.vehicle.ManageAndroidAutoViewModel
@@ -59,7 +60,9 @@ fun AndroidAutoFavoritesSettings(
     val loadedEntities = (displayState as? EntityDisplayState.Loaded)?.entities.orEmpty()
     // The picker shows the entities not already in the favorites; build the filtered state off
     // the main thread so its entity index is not computed on the compose thread.
-    var pickerDisplayState by remember { mutableStateOf<EntityDisplayState>(EntityDisplayState.Loading) }
+    var pickerDisplayState by remember {
+        mutableStateOf<EntityDisplayState<EntityDisplayWithContext>>(EntityDisplayState.Loading)
+    }
     LaunchedEffect(favoriteEntities.size, displayState, selectedServer) {
         pickerDisplayState = when (displayState) {
             is EntityDisplayState.Loading -> EntityDisplayState.Loading
