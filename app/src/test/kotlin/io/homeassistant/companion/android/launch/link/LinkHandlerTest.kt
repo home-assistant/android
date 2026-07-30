@@ -13,6 +13,8 @@ import java.net.URL
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNotNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -287,6 +289,34 @@ class LinkHandlerTest {
         val result = handler.handleLink(uri)
 
         assertEquals(LinkDestination.Webview(FrontendTarget.Path("dashboard-smartphone/0?kiosk"), 2), result)
+    }
+
+    @Test
+    fun `Given compliant and non-compliant raw paths when validating then only compliant ones pass`() {
+        assertTrue(isValidFrontendRawPath("lovelace/dashboard-1?kiosk&edit=1#section"))
+        assertTrue(isValidFrontendRawPath("dashboard/my%20room"))
+        assertFalse(isValidFrontendRawPath("lovelace/my room"))
+        assertFalse(isValidFrontendRawPath("lovelace/café"))
+    }
+
+    @Test
+    fun `Given a hand-typed path with spaces when building the navigate deep link then illegal characters are percent-encoded`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = navigateDeepLinkUri(FrontendTarget.Path("lovelace/my room?tab=my tab#my view"), serverId = 2)
+
+        assertEquals("homeassistant://navigate/lovelace/my%20room?tab=my%20tab&server_id=2#my%20view", uri.toString())
+        assertEquals(
+            LinkDestination.Webview(FrontendTarget.Path("lovelace/my%20room?tab=my%20tab#my%20view"), 2),
+            handler.handleLink(uri),
+        )
+    }
+
+    @Test
+    fun `Given a path with existing escapes when building the navigate deep link then escapes are not double-encoded`() = runTest {
+        val uri = navigateDeepLinkUri(FrontendTarget.Path("dashboard/my%20room?kiosk"), serverId = 2)
+
+        assertEquals("homeassistant://navigate/dashboard/my%20room?kiosk&server_id=2", uri.toString())
     }
 
     @Test

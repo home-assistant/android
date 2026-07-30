@@ -45,15 +45,38 @@ internal fun navigateDeepLinkUri(target: FrontendTarget, serverId: Int): Uri {
 }
 
 /**
+ * Characters that need no percent-encoding in a URI path (RFC 3986 pchar plus "/"), on top of
+ * [Uri.encode]'s unreserved set. "%" is kept so escapes already present pass through.
+ */
+private const val PATH_ALLOWED_CHARS = "/%:@!$&'()*+,;="
+
+/** Query and fragment additionally allow "?". */
+private const val QUERY_FRAGMENT_ALLOWED_CHARS = "$PATH_ALLOWED_CHARS?"
+
+/**
+ * Whether [rawPath] is already a compliant frontend path in URL form, i.e. the encoding performed
+ * by [Uri.Builder.encodedRawPath] would keep it unchanged. Used by input UIs (e.g. the shortcut
+ * editor) to reject paths before they are persisted.
+ */
+internal fun isValidFrontendRawPath(rawPath: String): Boolean =
+    rawPath == Uri.encode(rawPath, "$QUERY_FRAGMENT_ALLOWED_CHARS#")
+
+/**
  * Sets [rawPath] — a frontend path in URL form, possibly carrying a query and fragment — on this
  * builder component by component, so a query like `?kiosk` stays a query instead of being
  * percent-encoded into the path ([Uri.Builder.path] would store it as `%3Fkiosk`).
+ *
+ * Characters illegal in a component (e.g. spaces in a hand-typed shortcut path or deep link) are
+ * percent-encoded; reserved characters and escapes already present pass through untouched, so a
+ * literal percent must be written `%25`.
  */
 private fun Uri.Builder.encodedRawPath(rawPath: String): Uri.Builder {
     val withoutFragment = rawPath.substringBefore('#')
-    encodedPath("/" + withoutFragment.substringBefore('?').removePrefix("/"))
-    if ('?' in withoutFragment) encodedQuery(withoutFragment.substringAfter('?'))
-    if ('#' in rawPath) encodedFragment(rawPath.substringAfter('#'))
+    encodedPath("/" + Uri.encode(withoutFragment.substringBefore('?').removePrefix("/"), PATH_ALLOWED_CHARS))
+    if ('?' in withoutFragment) {
+        encodedQuery(Uri.encode(withoutFragment.substringAfter('?'), QUERY_FRAGMENT_ALLOWED_CHARS))
+    }
+    if ('#' in rawPath) encodedFragment(Uri.encode(rawPath.substringAfter('#'), QUERY_FRAGMENT_ALLOWED_CHARS))
     return this
 }
 
