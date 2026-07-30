@@ -161,6 +161,33 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
     }
 
     @Test
+    fun `Given a restored selection with an entity unknown on the server when saving then only known entities are persisted`() = runTest {
+        coEvery { dao.get(widgetId) } returns createWidgetEntity(
+            entityId = "media_player.removed,${entity.entityId}",
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.updateWidgetConfiguration())
+
+        coVerify { dao.add(match { it.entityId == entity.entityId }) }
+    }
+
+    @Test
+    fun `Given a selection with only entities unknown on the server when saving then it fails and an error is reported`() = runTest {
+        coEvery { dao.get(widgetId) } returns createWidgetEntity(entityId = "media_player.removed")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.updateWidgetConfiguration())
+
+        assertEquals(commonR.string.widget_update_error, viewModel.errors.first())
+        coVerify(exactly = 0) { dao.add(any()) }
+    }
+
+    @Test
     fun `Given the same entity added twice when checking the selection then it is only stored once`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()

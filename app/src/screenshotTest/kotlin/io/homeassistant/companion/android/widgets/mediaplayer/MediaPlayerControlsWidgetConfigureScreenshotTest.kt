@@ -73,6 +73,29 @@ class MediaPlayerControlsWidgetConfigureScreenshotTest {
             )
         }
     }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `MediaPlayerControlsWidgetConfigureScreen no selected entity`() {
+        HAThemeForPreview {
+            MediaPlayerControlsWidgetConfigureContent(
+                state = previewState.copy(selectedEntityIds = emptyList()),
+                canNavigateBack = false,
+                onNavigate = {},
+                onServerSelected = {},
+                onEntityAdded = {},
+                onEntityRemoved = {},
+                onLabelChanged = {},
+                onShowVolumeChanged = {},
+                onShowSkipChanged = {},
+                onShowSeekChanged = {},
+                onShowSourceChanged = {},
+                onBackgroundTypeSelected = {},
+                onActionClick = {},
+            )
+        }
+    }
 }
 
 private val previewState = MediaPlayerControlsWidgetConfigureState(
@@ -82,8 +105,11 @@ private val previewState = MediaPlayerControlsWidgetConfigureState(
     },
     entityDisplayState = EntityDisplayState.Loaded(
         listOf(
-            EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity1), areaName = "Kitchen"),
-            EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity2)),
+            EntityDisplayWithContext(
+                EntityDisplayWithoutContext(previewEntity1, name = "Main speaker"),
+                areaName = "Kitchen",
+            ),
+            EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity2, name = "TV speaker")),
         ),
     ),
     selectedEntityIds = listOf(previewEntity1.entityId, previewEntity2.entityId),

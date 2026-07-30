@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -30,7 +29,6 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,7 +87,7 @@ internal data class MediaPlayerControlsWidgetConfigureState(
         entityDisplayState
     }
 
-    val isActionEnabled = selectedEntityIds.isNotEmpty()
+    val isActionEnabled = selectedEntities.isNotEmpty()
 
     fun changeServer(serverId: Int): MediaPlayerControlsWidgetConfigureState = copy(
         selectedServerId = serverId,
@@ -98,7 +96,6 @@ internal data class MediaPlayerControlsWidgetConfigureState(
     )
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = MediaPlayerControlsWidgetConfigureViewModel.Factory::class)
 class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     private val mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao,
@@ -216,10 +213,7 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
      * this function will not return. If this function is called again and the user does not cancel,
      * both calls to the function will return. While this behavior could be avoided,
      * it does not cause issues in the current implementation as returning multiple times has no adverse effects.
-     *
-     * @throws IllegalStateException when widget pinning is not supported or the request is rejected.
      */
-    @SuppressLint("NewApi") // The caller guards this with an API 26 runtime check before invoking it.
     suspend fun requestWidgetCreation(context: Context): Boolean {
         if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
@@ -328,9 +322,9 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     }
 
     private suspend fun isValidSelection(): Boolean {
-        val state = _state.value
-        return serverManager.getServer(state.selectedServerId) != null &&
-            state.selectedEntityIds.isNotEmpty()
+        val current = _state.value
+        return current.isActionEnabled &&
+            serverManager.getServer(current.selectedServerId) != null
     }
 
     private suspend fun getPendingDaoEntity(): MediaPlayerControlsWidgetEntity? {
@@ -340,10 +334,9 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
         }
         val current = _state.value
 
-        val entityId = current.selectedEntityIds
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .joinToString(",")
+        // Persist only the entities resolved on the server, so ids that no longer exist (and are
+        // not rendered as selected rows) cannot silently end up in the widget.
+        val entityId = current.selectedEntities.joinToString(",") { it.entityId }
 
         if (entityId.isEmpty()) {
             Timber.e("Cannot build the widget, the selected entities are unknown on the server")
