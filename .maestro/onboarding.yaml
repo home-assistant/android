@@ -131,8 +131,11 @@ appId: io.homeassistant.companion.android.debug
 - waitForAnimationToEnd:
     timeout: 2500
 
-- extendedWaitUntil:
-    visible:
+# scrollUntilVisible instead of a plain wait: on older bundled WebViews (seen on API 30) the
+# accessibility tree can miss the row even though it is rendered, and scrolling forces the
+# WebView to re-serialize it. No-op when the row is already in the tree.
+- scrollUntilVisible:
+    element:
       text: '(?is).*Companion app.*'
     timeout: 60000
 - tapOn:
