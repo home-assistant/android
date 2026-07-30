@@ -1414,6 +1414,7 @@
     <string name="connection_security_less_secure">Less secure: Do not allow this app to know when you\'re home</string>
     <string name="home_assistant_branding_icon_content_description">Home\u00A0Assistant branding icon</string>
     <string name="loading_content_description">Loading</string>
+    <string name="loading_screen_project_from">A project from the</string>
     <string name="searching_home_network">Searching on\nhome network</string>
     <string name="server_discovery_no_server_info">Check that your Home\u00A0Assistant server is powered on and you\'re connected to the same network. You can enter the address manually if you know it.</string>
     <string name="server_discovery_connect">Connect</string>
