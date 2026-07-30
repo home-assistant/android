@@ -37,9 +37,9 @@ class MediaPlayerControlsWidgetConfigureActivity :
     BaseWidgetConfigureActivity<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
 
     companion object {
-        fun newInstance(context: Context, entityId: String): Intent {
+        fun newInstance(context: Context, entityId: String? = null): Intent {
             return Intent(context, MediaPlayerControlsWidgetConfigureActivity::class.java).apply {
-                putExtra(FOR_ENTITY, entityId)
+                entityId?.let { putExtra(FOR_ENTITY, it) }
                 putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }

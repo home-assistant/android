@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Changelog content of the current release, referenced by ChangelogContent.kt in :app.
+     Kept in a dedicated file so the per-release content is easy to spot and can be managed
+     as its own file in Lokalise. Escaped inline HTML (like &lt;b&gt;) is rendered as styling. -->
+<resources>
+    <string name="changelog_entry_assistant_volume">&lt;b&gt;Android 17&lt;/b&gt;: added assistant volume level sensor, plus a notification command to control it</string>
+    <string name="changelog_entry_health_connect">&lt;b&gt;Health Connect&lt;/b&gt; sleep duration now ignores awake and out-of-bed time</string>
+    <string name="changelog_entry_entity_widgets">Modernized settings for &lt;b&gt;entity widgets&lt;/b&gt;</string>
+    <string name="changelog_entry_tiles">Modernized settings for &lt;b&gt;tiles&lt;/b&gt;</string>
+    <string name="changelog_entry_bug_fixes">Bug fixes and dependency updates everywhere</string>
+</resources>
