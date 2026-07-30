@@ -71,7 +71,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
     )
 
     var shortcuts = mutableStateListOf<Shortcut>().apply {
-        repeat(6) {
+        repeat(ManageShortcutsSettingsFragment.MAX_SHORTCUTS + 1) {
             add(
                 Shortcut(
                     id = mutableStateOf(""),
@@ -187,7 +187,8 @@ internal class ManageShortcutsViewModel @Inject constructor(
 
     /**
      * Returns the zero-based slot index for a dynamic shortcut ID managed by this screen
-     * (exactly "shortcut_1".."shortcut_5"), or null for any other ID such as a pinned shortcut.
+     * (exactly "${ManageShortcutsSettingsFragment.SHORTCUT_PREFIX}_<slot>" where slot is 1..MAX_SHORTCUTS),
+     * or null for any other ID such as a pinned shortcut.
      */
     private fun dynamicSlotIndex(shortcutId: String): Int? = (1..ManageShortcutsSettingsFragment.MAX_SHORTCUTS)
         .firstOrNull { slot -> "${ManageShortcutsSettingsFragment.SHORTCUT_PREFIX}_$slot" == shortcutId }

@@ -95,9 +95,11 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
     val index = i + 1
     val shortcut = viewModel.shortcuts[i]
     val shortcutId = ManageShortcutsSettingsFragment.SHORTCUT_PREFIX + "_" + index
-    val pinnedIdReserved = index == 6 && viewModel.isReservedShortcutId(shortcut.id.value.orEmpty())
+    val pinnedIdReserved =
+        index == ManageShortcutsSettingsFragment.PINNED_SHORTCUT_INDEX &&
+            viewModel.isReservedShortcutId(shortcut.id.value.orEmpty())
     Text(
-        text = if (index < 6) {
+        text = if (index < ManageShortcutsSettingsFragment.PINNED_SHORTCUT_INDEX) {
             stringResource(id = R.string.shortcut) + " $index"
         } else {
             stringResource(

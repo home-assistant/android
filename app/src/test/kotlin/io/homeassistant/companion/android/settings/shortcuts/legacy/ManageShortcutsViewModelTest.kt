@@ -51,6 +51,15 @@ class ManageShortcutsViewModelTest {
     @Before
     fun setUp() {
         application = ApplicationProvider.getApplicationContext()
+
+        val dynamicIds = ShortcutManagerCompat.getShortcuts(
+            application,
+            ShortcutManagerCompat.FLAG_MATCH_DYNAMIC,
+        ).map { it.id }
+        if (dynamicIds.isNotEmpty()) {
+            ShortcutManagerCompat.removeDynamicShortcuts(application, dynamicIds)
+        }
+
         coEvery { serverManager.getServer(any<Int>()) } returns fakeServer(0)
         coEvery { serverManager.servers() } returns listOf(fakeServer(0))
         every { entitiesForDisplayManager.snapshotInContext(serverId = any()) } returns emptyFlow()
