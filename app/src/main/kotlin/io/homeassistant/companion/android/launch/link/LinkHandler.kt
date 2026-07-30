@@ -38,10 +38,23 @@ internal fun navigateDeepLinkUri(target: FrontendTarget, serverId: Int): Uri {
         .authority(NAVIGATE_URL_PATH.removeSurrounding("/"))
     when (target) {
         is FrontendTarget.EntityMoreInfo -> builder.appendQueryParameter(MORE_INFO_ENTITY_ID_PARAM, target.entityId)
-        is FrontendTarget.Path -> builder.path(target.path)
+        is FrontendTarget.Path -> builder.encodedRawPath(target.path)
         FrontendTarget.Default -> Unit
     }
     return builder.appendQueryParameter(SERVER_ID_PARAM, serverId.toString()).build()
+}
+
+/**
+ * Sets [rawPath] — a frontend path in URL form, possibly carrying a query and fragment — on this
+ * builder component by component, so a query like `?kiosk` stays a query instead of being
+ * percent-encoded into the path ([Uri.Builder.path] would store it as `%3Fkiosk`).
+ */
+private fun Uri.Builder.encodedRawPath(rawPath: String): Uri.Builder {
+    val withoutFragment = rawPath.substringBefore('#')
+    encodedPath("/" + withoutFragment.substringBefore('?').removePrefix("/"))
+    if ('?' in withoutFragment) encodedQuery(withoutFragment.substringAfter('?'))
+    if ('#' in rawPath) encodedFragment(rawPath.substringAfter('#'))
+    return this
 }
 
 /**
@@ -234,9 +247,28 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         val target = if (moreInfoEntityId != null && uri.isNavigateRoot()) {
             FrontendTarget.EntityMoreInfo(moreInfoEntityId)
         } else {
-            FrontendTarget.Path(uri.toString())
+            FrontendTarget.fromRawPath(uri.toFrontendRawPath())
         }
         return webviewDestination(target, serverId)
+    }
+
+    /**
+     * Rebuilds the raw frontend path (including query and fragment) from a navigate deep link,
+     * dropping the app's server selection parameters. All components are kept encoded as written,
+     * so the path reaches the frontend exactly as it appears in the link.
+     */
+    private fun Uri.toFrontendRawPath(): String = buildString {
+        append(encodedPath.orEmpty().removePrefix("/"))
+        encodedQuery
+            ?.splitToSequence('&')
+            ?.filterNot { param ->
+                val name = param.substringBefore('=')
+                name == SERVER_ID_PARAM || name == SERVER_PARAM
+            }
+            ?.joinToString("&")
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { append('?').append(it) }
+        encodedFragment?.let { append('#').append(it) }
     }
 
     /**
