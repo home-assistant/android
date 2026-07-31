@@ -46,14 +46,14 @@ object NFCUtil {
     @Throws(IllegalArgumentException::class, IOException::class, Exception::class)
     fun createNFCMessage(url: String, intent: Intent?): Boolean {
         val nfcRecord = NdefRecord.createUri(url)
-        val applicationRecords = BuildConfig.APPLICATION_IDS.map {
+        val applicationFlavorsRecords = BuildConfig.APPLICATION_IDS.map {
             NdefRecord.createApplicationRecord(it)
         }
-        val packageRecord = NdefRecord.createApplicationRecord(BuildConfig.APPLICATION_ID)
+        val thisApplicationRecord = NdefRecord.createApplicationRecord(BuildConfig.APPLICATION_ID)
 
         val nfcMessages = listOf(
-            NdefMessage(arrayOf(nfcRecord) + applicationRecords),
-            NdefMessage(arrayOf(nfcRecord, packageRecord)),
+            NdefMessage(arrayOf(nfcRecord) + applicationFlavorsRecords),
+            NdefMessage(arrayOf(nfcRecord, thisApplicationRecord)),
             NdefMessage(arrayOf(nfcRecord)),
         )
         intent?.let {
