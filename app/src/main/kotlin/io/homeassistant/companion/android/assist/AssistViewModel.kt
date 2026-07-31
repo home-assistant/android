@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.assist
 import android.app.Application
 import android.content.Intent
 import androidx.annotation.VisibleForTesting
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -67,7 +68,14 @@ class AssistViewModel @AssistedInject constructor(
     private val startMessage =
         AssistMessage(application.getString(commonR.string.assist_how_can_i_assist), isInput = false)
     private val _conversation = mutableStateListOf(startMessage)
-    val conversation: List<AssistMessage> = _conversation
+
+    /**
+     * Conversation messages to display. The input placeholder marking an active voice recording is
+     * hidden: listening is already conveyed by the microphone button animation.
+     */
+    val conversation: List<AssistMessage> by derivedStateOf {
+        _conversation.filterNot { it.isInput && it.isPlaceholder }
+    }
 
     private val _pipelines = mutableStateListOf<AssistUiPipeline>()
     val pipelines: List<AssistUiPipeline> = _pipelines
