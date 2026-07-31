@@ -33,13 +33,6 @@ private const val SMALL_TAG_SIZE_IN_BYTES = 100
 private const val NTAG213_TAG_SIZE_IN_BYTES = 144
 private const val NTAG215_TAG_SIZE_IN_BYTES = 504
 
-/** List of test cases with tag size to expected number of records to be written */
-private val TAG_CASES = listOf(
-    SMALL_TAG_SIZE_IN_BYTES to 1, // URL only
-    NTAG213_TAG_SIZE_IN_BYTES to 2, // URL and one app ID
-    NTAG215_TAG_SIZE_IN_BYTES to (BuildConfig.APPLICATION_IDS.size + 1), // URL and all app IDs
-)
-
 /**
  * Tests for writing tags with NFCUtil.
  *
@@ -48,6 +41,13 @@ private val TAG_CASES = listOf(
  */
 @RunWith(RobolectricTestRunner::class)
 class NFCUtilTest {
+
+    /** List of test cases with tag size to expected number of records to be written */
+    private val tagCases = listOf(
+        SMALL_TAG_SIZE_IN_BYTES to 1, // URL only
+        NTAG213_TAG_SIZE_IN_BYTES to 2, // URL and one app ID
+        NTAG215_TAG_SIZE_IN_BYTES to (BuildConfig.APPLICATION_IDS.size + 1), // URL and all app IDs
+    )
 
     private lateinit var tagDiscoveredIntent: Intent
     private lateinit var tag: Tag
@@ -72,7 +72,7 @@ class NFCUtilTest {
         val ndefMock = mockNdef(messageSlot)
 
         // Loop through cases as JUnit 4 can only parametrize the entire class
-        TAG_CASES.forEach { (tagSize, expectedNumberOfRecords) ->
+        tagCases.forEach { (tagSize, expectedNumberOfRecords) ->
             every { ndefMock.maxSize } returns tagSize
             messageSlot.clear()
 
@@ -119,7 +119,7 @@ class NFCUtilTest {
         val ndefFormatableMock = mockNdefFormatable()
 
         // Loop through cases as JUnit 4 can only parametrize the entire class
-        TAG_CASES.forEach { (tagSize, expectedNumberOfRecords) ->
+        tagCases.forEach { (tagSize, expectedNumberOfRecords) ->
             val messageSlot = slot<NdefMessage>()
             every { ndefFormatableMock.format(capture(messageSlot)) } answers {
                 if (messageSlot.captured.toByteArray().size <= tagSize) {

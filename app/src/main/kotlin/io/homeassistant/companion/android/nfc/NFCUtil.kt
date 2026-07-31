@@ -100,15 +100,13 @@ object NFCUtil {
     @Throws(IllegalArgumentException::class, IOException::class, Exception::class)
     private fun writeMessageToTag(nfcMessages: List<NdefMessage>, tag: Tag?): Boolean {
         val nDefTag = Ndef.get(tag)
-
-        nDefTag?.let {
+        nDefTag?.use {
             it.connect()
             val messageToWrite = nfcMessages.firstOrNull { message ->
                 message.toByteArray().size <= it.maxSize
             } ?: throw IllegalArgumentException("Message is too large")
             return if (it.isWritable) {
                 it.writeNdefMessage(messageToWrite)
-                it.close()
                 // Message is written to tag
                 true
             } else {
@@ -121,15 +119,16 @@ object NFCUtil {
             var caughtException: IOException? = null
             // Tag wasn't Ndef yet, so we don't know the size. Try all messages until the last one fails.
             for (message in nfcMessages) {
-                try {
-                    it.connect()
-                    it.format(message)
-                    it.close()
-                    // The data is written to the tag
-                    return true
-                } catch (e: IOException) {
-                    // Failed to format tag with message, try next
-                    caughtException = IOException("Failed to format tag", e)
+                it.use { formatableTag ->
+                    try {
+                        formatableTag.connect()
+                        formatableTag.format(message)
+                        // The data is written to the tag
+                        return true
+                    } catch (e: IOException) {
+                        // Failed to format tag with message, try next
+                        caughtException = IOException("Failed to format tag", e)
+                    }
                 }
             }
             caughtException?.let { e -> throw e }
