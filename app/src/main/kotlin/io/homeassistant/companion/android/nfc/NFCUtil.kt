@@ -36,12 +36,16 @@ object NFCUtil {
         val applicationRecords = BuildConfig.APPLICATION_IDS.map {
             NdefRecord.createApplicationRecord(it)
         }
+        val packageRecord = NdefRecord.createApplicationRecord(BuildConfig.APPLICATION_ID)
 
-        val nfcMessage = NdefMessage(arrayOf(nfcRecord) + applicationRecords)
-        val nfcFallbackMessage = NdefMessage(arrayOf(nfcRecord))
+        val nfcMessages = listOf(
+            NdefMessage(arrayOf(nfcRecord) + applicationRecords),
+            NdefMessage(arrayOf(nfcRecord, packageRecord)),
+            NdefMessage(arrayOf(nfcRecord)),
+        )
         intent?.let {
             val tag = IntentCompat.getParcelableExtra(it, NfcAdapter.EXTRA_TAG, Tag::class.java)
-            return writeMessageToTag(nfcMessage, nfcFallbackMessage, tag)
+            return writeMessageToTag(nfcMessages, tag)
         }
         return false
     }
@@ -65,43 +69,60 @@ object NFCUtil {
         nfcAdapter.enableForegroundDispatch(activity, pendingIntent, filters, techLists)
     }
 
-    @Throws(Exception::class)
-    private fun writeMessageToTag(nfcMessage: NdefMessage, fallbackMessage: NdefMessage, tag: Tag?): Boolean {
+    /**
+     * Write a message to an NFC tag. The first message in [nfcMessages] that fits on the given [tag] will
+     * be written to the tag.
+     *
+     * @param nfcMessages List of available messages to write to a NFC tag. The first message that fits (size) will be
+     * written, later messages should be smaller and serve as fallback messages.
+     * @param tag The NFC tag to write the message to.
+     *
+     * @throws IllegalArgumentException if no messages fit on the tag
+     * @throws IOException if the tag is NDEF and a message would fit, but it cannot be written to
+     * @throws Exception for other tag operation exceptions
+     *
+     * @return `true` if a tag was successfully written, `false` if the tag doesn't support NDEF, throws if writing
+     * isn't possible
+     */
+    @Throws(IllegalArgumentException::class, IOException::class, Exception::class)
+    private fun writeMessageToTag(nfcMessages: List<NdefMessage>, tag: Tag?): Boolean {
         val nDefTag = Ndef.get(tag)
 
         nDefTag?.let {
             it.connect()
-            var messageToWrite = nfcMessage
-            if (it.maxSize < nfcMessage.toByteArray().size) {
-                messageToWrite = fallbackMessage
-            }
-            if (it.maxSize < fallbackMessage.toByteArray().size) {
-                // Message to large to write to NFC tag
-                throw Exception("Message is too large")
-            }
+            val messageToWrite = nfcMessages.firstOrNull { message ->
+                message.toByteArray().size <= it.maxSize
+            } ?: throw IllegalArgumentException("Message is too large")
             return if (it.isWritable) {
                 it.writeNdefMessage(messageToWrite)
                 it.close()
                 // Message is written to tag
                 true
             } else {
-                throw Exception("NFC tag is read-only")
+                throw IOException("NFC tag is read-only")
             }
         }
 
         val nDefFormatableTag = NdefFormatable.get(tag)
-
         nDefFormatableTag?.let {
-            try {
-                it.connect()
-                it.format(nfcMessage)
-                it.close()
-                // The data is written to the tag
-            } catch (e: IOException) {
-                // Failed to format tag
-                throw Exception("Failed to format tag", e)
+            var caughtException: IOException? = null
+            // Tag wasn't Ndef yet, so we don't know the size. Try all messages until the last one fails.
+            for (message in nfcMessages) {
+                try {
+                    it.connect()
+                    it.format(message)
+                    it.close()
+                    // The data is written to the tag
+                    return true
+                } catch (e: IOException) {
+                    // Failed to format tag with message, try next
+                    caughtException = IOException("Failed to format tag", e)
+                }
             }
+            caughtException?.let { e -> throw e }
         }
-        return true
+
+        // Not already Ndef or Ndef Formatable
+        return false
     }
 }
