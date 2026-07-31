@@ -383,7 +383,7 @@ private fun RowScope.AssistTextInput(
     HATextField(
         value = text,
         onValueChange = { text = it },
-        label = { Text(stringResource(commonR.string.assist_enter_a_request)) },
+        placeholder = { Text(stringResource(commonR.string.assist_enter_a_request)) },
         modifier = Modifier
             .weight(1f)
             .focusRequester(focusRequester),

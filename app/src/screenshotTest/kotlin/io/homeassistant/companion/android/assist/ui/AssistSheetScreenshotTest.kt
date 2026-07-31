@@ -128,6 +128,17 @@ class AssistSheetScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
+    fun `Assist opened from outside the app shows the app name`() {
+        AssistSheetScreenshot(
+            conversation = shortConversation,
+            inputMode = AssistInputMode.VOICE_INACTIVE,
+            fromFrontend = false,
+        )
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
     fun `Assist long answer filling the screen`() {
         AssistSheetScreenshot(
             conversation = longAnswerConversation,
@@ -147,6 +158,7 @@ class AssistSheetScreenshotTest {
         inputMode: AssistInputMode?,
         pipelines: List<AssistUiPipeline> = singleServerPipelines,
         currentPipeline: AssistUiPipeline? = singleServerPipelines.first(),
+        fromFrontend: Boolean = true,
     ) {
         HAThemeForPreview(modifier = Modifier.fillMaxSize()) {
             AssistSheet(
@@ -154,7 +166,7 @@ class AssistSheetScreenshotTest {
                 pipelines = pipelines,
                 inputMode = inputMode,
                 currentPipeline = currentPipeline,
-                fromFrontend = true,
+                fromFrontend = fromFrontend,
                 onSelectPipeline = { _, _ -> },
                 onManagePipelines = null,
                 onChangeInput = {},
