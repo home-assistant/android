@@ -30,7 +30,20 @@ object NFCUtil {
         return ndefMessage?.records?.get(0)?.toUri()
     }
 
-    @Throws(Exception::class)
+    /**
+     * Write the given [url] to the tag in [intent].
+     *
+     * @param url URL to write to the tag.
+     * @param intent Tag to write to, in an intent which holds the extra [NfcAdapter.EXTRA_TAG].
+     *
+     * @throws IllegalArgumentException if the url doesn't fit on the tag.
+     * @throws IOException if the tag is NDEF and the url would fit, but it cannot be written to.
+     * @throws Exception for other tag operation exceptions.
+     *
+     * @return `true` if the tag was successfully written to, `false` if the tag doesn't support NDEF messages,
+     * throws if writing wasn't possible.
+     */
+    @Throws(IllegalArgumentException::class, IOException::class, Exception::class)
     fun createNFCMessage(url: String, intent: Intent?): Boolean {
         val nfcRecord = NdefRecord.createUri(url)
         val applicationRecords = BuildConfig.APPLICATION_IDS.map {
@@ -77,12 +90,12 @@ object NFCUtil {
      * written, later messages should be smaller and serve as fallback messages.
      * @param tag The NFC tag to write the message to.
      *
-     * @throws IllegalArgumentException if no messages fit on the tag
-     * @throws IOException if the tag is NDEF and a message would fit, but it cannot be written to
-     * @throws Exception for other tag operation exceptions
+     * @throws IllegalArgumentException if none of the messages fit on the tag.
+     * @throws IOException if the tag is NDEF and a message would fit, but it cannot be written to.
+     * @throws Exception for other tag operation exceptions.
      *
-     * @return `true` if a tag was successfully written, `false` if the tag doesn't support NDEF, throws if writing
-     * isn't possible
+     * @return `true` if the tag was successfully written to, `false` if the tag doesn't support NDEF messages,
+     * throws if writing wasn't possible.
      */
     @Throws(IllegalArgumentException::class, IOException::class, Exception::class)
     private fun writeMessageToTag(nfcMessages: List<NdefMessage>, tag: Tag?): Boolean {
