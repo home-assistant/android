@@ -139,6 +139,7 @@ private fun ColumnScope.MatterCommissioningHeader() {
             .padding(top = HADimens.SPACE6)
             .padding(all = HADimens.SPACE5)
             .size(120.dp),
+    )
     Text(
         text = stringResource(commonR.string.matter_shared_title),
         style = HATextStyle.Headline,
