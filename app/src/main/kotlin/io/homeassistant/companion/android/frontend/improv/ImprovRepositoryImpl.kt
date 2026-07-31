@@ -100,7 +100,8 @@ class ImprovRepositoryImpl @VisibleForTesting constructor(
     override fun provisionDevice(device: ImprovDevice, ssid: String, password: String): Flow<ProvisioningEvent> =
         channelFlow {
             val manager = manager ?: run {
-                Timber.w("Ignoring Improv provisioning: device has no Bluetooth adapter")
+                Timber.i("Improv provisioning not available: device has no Bluetooth adapter")
+                send(ProvisioningEvent.ErrorOccurred(ErrorState.UNABLE_TO_CONNECT))
                 close()
                 return@channelFlow
             }
