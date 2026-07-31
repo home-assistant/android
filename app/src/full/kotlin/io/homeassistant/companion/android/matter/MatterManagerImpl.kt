@@ -1,10 +1,14 @@
 package io.homeassistant.companion.android.matter
 
+import android.app.Activity
 import android.content.ComponentName
 import android.os.Build
+import androidx.activity.result.ActivityResult
 import androidx.annotation.ChecksSdkIntAtLeast
+import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.home.matter.commissioning.CommissioningClient
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
+import com.google.android.gms.home.matter.commissioning.CommissioningResult
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -85,6 +89,23 @@ class MatterManagerImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Error while executing server commissioning request")
             null
+        }
+    }
+
+    override fun parseCommissioningIntentResult(result: ActivityResult): MatterManager.CommissioningRequestResult {
+        if (result.resultCode != Activity.RESULT_OK) {
+            return MatterManager.CommissioningRequestResult.Failed
+        }
+        return try {
+            val commissioningResult = CommissioningResult.fromIntentSenderResult(result.resultCode, result.data)
+            MatterManager.CommissioningRequestResult.Success(
+                deviceName = commissioningResult.deviceName.takeIf { it.isNotBlank() },
+            )
+        } catch (e: ApiException) {
+            // RESULT_OK means our commissioning service completed, so the device was added even
+            // when the result payload cannot be read; only the user-entered name is lost.
+            Timber.w(e, "Commissioning succeeded but its result could not be parsed")
+            MatterManager.CommissioningRequestResult.Success(deviceName = null)
         }
     }
 }
