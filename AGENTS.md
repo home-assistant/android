@@ -52,7 +52,7 @@ Detailed guidance lives in project skills under `.agents/skills/`. Load the matc
 
 ## Pull Requests
 
-When creating a pull request, use `.github/pull_request_template.md` as the PR body. Keep PRs small and focused. If the change is visible to end users, add it to the changelog in `app/src/main/res/xml/changelog_master.xml`. Before committing, format with ktlint and run the tests.
+When creating a pull request, use `.github/pull_request_template.md` as the PR body. Keep PRs small and focused. If the change is visible to end users, add it to the changelog in `app/src/main/kotlin/io/homeassistant/companion/android/changelog/ChangelogContent.kt`. Before committing, format with ktlint and run the tests.
 
 ## AI policy
 

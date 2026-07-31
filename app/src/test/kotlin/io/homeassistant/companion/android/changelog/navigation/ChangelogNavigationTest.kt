@@ -24,7 +24,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.testing.unit.stringResource
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -116,9 +116,9 @@ internal class ChangelogNavigationTest {
     }
 
     @Test
-    fun `Given popup disabled when frontend is displayed then stays on frontend without marking seen`() {
+    fun `Given popup disabled when frontend is displayed then stays on frontend without marking seen`() = runTest {
         seedLastSeenVersionCode(BuildConfig.VERSION_CODE - 1)
-        runBlocking { prefsRepository.setChangeLogPopupEnabled(false) }
+        prefsRepository.setChangeLogPopupEnabled(false)
 
         setContent()
         composeTestRule.waitForIdle()
