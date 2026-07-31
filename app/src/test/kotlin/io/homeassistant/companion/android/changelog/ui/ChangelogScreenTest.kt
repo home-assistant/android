@@ -17,10 +17,10 @@ import io.homeassistant.companion.android.changelog.ChangelogSection
 import io.homeassistant.companion.android.changelog.ChangelogUiState
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.testing.unit.stringResource
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
