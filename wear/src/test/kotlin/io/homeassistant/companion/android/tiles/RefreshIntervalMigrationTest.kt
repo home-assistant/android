@@ -57,7 +57,7 @@ class RefreshIntervalMigrationTest {
     }
 
     @Test
-    fun `Given a device still supporting when viewed When migrating Then nothing is read or written`() = runTest {
+    fun `Given a device supporting when viewed interval When migrating Then nothing is read or written`() = runTest {
         SdkVersion.sdkInt = Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 
         migration.migrate()
