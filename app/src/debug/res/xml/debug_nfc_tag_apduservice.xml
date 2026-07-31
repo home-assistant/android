@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Referenced from the manifest meta-data of DebugNfcTagEmulatorService, which lint cannot see -->
 <host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:description="@string/debug_nfc_tag_emulator"
-    android:requireDeviceUnlock="false">
+    android:requireDeviceUnlock="false"
+    tools:ignore="UnusedResources">
     <aid-group
         android:category="other"
         android:description="@string/debug_nfc_tag_emulator">
