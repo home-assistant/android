@@ -22,11 +22,10 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
             IllegalStateException("Matter commissioning is not supported with the minimal flavor"),
         )
 
-    override fun parseCommissioningIntentResult(result: ActivityResult): MatterManager.CommissioningRequestResult =
-        MatterManager.CommissioningRequestResult.Failed
-
     override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? = null
-
     override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? =
         null
+
+    override fun parseCommissioningIntentResult(result: ActivityResult): MatterManager.CommissioningRequestResult =
+        MatterManager.CommissioningRequestResult.Failed
 }

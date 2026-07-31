@@ -51,12 +51,6 @@ interface MatterManager {
     fun appSupportsCommissioning(): Boolean
 
     /**
-     * Interpret the `ActivityResult` of the commissioning flow launched from
-     * [CommissioningResult.Ready.intentSender].
-     */
-    fun parseCommissioningIntentResult(result: ActivityResult): CommissioningRequestResult
-
-    /**
      * Indicates if the server supports Matter commissioning.
      */
     suspend fun coreSupportsCommissioning(serverId: Int): Boolean
@@ -88,4 +82,10 @@ interface MatterManager {
      * @return [MatterCommissionResponse], or `null` if it wasn't possible to complete the request.
      */
     suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse?
+
+    /**
+     * Interpret the `ActivityResult` of the commissioning flow launched from
+     * [CommissioningResult.Ready.intentSender].
+     */
+    fun parseCommissioningIntentResult(result: ActivityResult): CommissioningRequestResult
 }
