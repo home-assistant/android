@@ -101,6 +101,25 @@ class DebugNfcTagEmulatorServiceTest {
     }
 
     @Test
+    fun `Given NDEF file selected when reading with a length above 127 then the length is treated as unsigned`() {
+        assertArrayEquals(STATUS_OK, service.processCommandApdu(SELECT_NDEF_APPLICATION, null))
+        assertArrayEquals(STATUS_OK, service.processCommandApdu(SELECT_NDEF_FILE, null))
+
+        // 0xFF is negative as a signed byte, it must not crash or corrupt the response
+        val response = readBinary(offset = 0, length = 0xFF)
+
+        assertArrayEquals(STATUS_OK, response.copyOfRange(response.size - 2, response.size))
+        assertEquals(0xFF + 2, response.size)
+    }
+
+    @Test
+    fun `Given a too long tag id when set then the content reports it instead of crashing`() {
+        DebugNfcTagEmulatorState.setTagId("x".repeat(DebugNfcTagEmulatorState.MAX_NDEF_FILE_SIZE))
+
+        assertTrue(DebugNfcTagEmulatorState.content.value.summary.contains("too large"))
+    }
+
+    @Test
     fun `Given unknown file when selecting then file not found is returned`() {
         assertArrayEquals(STATUS_OK, service.processCommandApdu(SELECT_NDEF_APPLICATION, null))
 

@@ -43,6 +43,12 @@ object DebugNfcTagEmulatorState {
     fun setTagId(tagId: String) {
         val message = NFCUtil.createTagMessage(NFCUtil.createTagUrl(tagId))
         val bytes = message.toByteArray()
+        if (bytes.size > MAX_NDEF_FILE_SIZE - 2) {
+            Timber.w("Tag message of ${bytes.size} bytes exceeds the emulated file size")
+            ndefFile.fill(0)
+            _content.value = EmulatedTagContent(summary = "<message too large: ${bytes.size} bytes>", rawHex = "0000")
+            return
+        }
         ndefFile.fill(0)
         ndefFile[0] = (bytes.size shr 8).toByte()
         ndefFile[1] = bytes.size.toByte()
@@ -119,14 +125,14 @@ class DebugNfcTagEmulatorService : android.nfc.cardemulation.HostApduService() {
         return when (instruction) {
             INS_SELECT if p1 == SELECT_BY_NAME -> selectApplication(apdu)
             INS_SELECT -> selectFile(apdu)
-            INS_READ_BINARY -> readBinary(offset, length = apdu.getOrNull(4)?.toInt() ?: 0)
+            INS_READ_BINARY -> readBinary(offset, length = apdu.getOrNull(4)?.toInt()?.and(0xFF) ?: 0)
             INS_UPDATE_BINARY -> updateBinary(offset, apdu)
             else -> STATUS_INS_NOT_SUPPORTED
         }
     }
 
     private fun selectApplication(apdu: ByteArray): ByteArray {
-        val length = apdu.getOrNull(4)?.toInt() ?: return STATUS_WRONG_LENGTH
+        val length = apdu.getOrNull(4)?.toInt()?.and(0xFF) ?: return STATUS_WRONG_LENGTH
         val aid = apdu.copyOfRange(5, (5 + length).coerceAtMost(apdu.size))
         return if (aid.contentEquals(NDEF_AID)) {
             selectedFileId = null
