@@ -12,6 +12,7 @@ import android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_LOW
 import android.hardware.SensorManager.SENSOR_STATUS_ACCURACY_MEDIUM
 import android.hardware.SensorManager.SENSOR_STATUS_NO_CONTACT
 import android.hardware.SensorManager.SENSOR_STATUS_UNRELIABLE
+import android.health.connect.HealthPermissions
 import android.os.Build
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -73,7 +74,9 @@ class HeartRateSensorManager @Inject constructor(
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
+            arrayOf(HealthPermissions.READ_HEART_RATE, HealthPermissions.READ_HEALTH_DATA_IN_BACKGROUND)
+        } else if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             arrayOf(Manifest.permission.BODY_SENSORS, Manifest.permission.BODY_SENSORS_BACKGROUND)
         } else {
             arrayOf(Manifest.permission.BODY_SENSORS)
