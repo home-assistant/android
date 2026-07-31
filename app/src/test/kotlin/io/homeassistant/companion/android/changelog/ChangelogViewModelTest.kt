@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.changelog
 
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -9,19 +10,21 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
+private const val CURRENT_VERSION_CODE = 42
+
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class ChangelogViewModelTest {
 
-    private val changelogRepository: ChangelogRepository = mockk(relaxUnitFun = true)
+    private val prefsRepository: PrefsRepository = mockk(relaxUnitFun = true)
 
-    private fun createViewModel(isAutomotive: Boolean = false, rawVersionName: String = "2026.7.6-full") = ChangelogViewModel(changelogRepository, isAutomotive, rawVersionName)
+    private fun createViewModel(isAutomotive: Boolean = false, rawVersionName: String = "2026.7.6-full") = ChangelogViewModel(prefsRepository, isAutomotive, rawVersionName, CURRENT_VERSION_CODE)
 
     @Test
     fun `Given creation when initializing then marks changelog seen`() = runTest {
         createViewModel()
         advanceUntilIdle()
 
-        coVerify { changelogRepository.markChangelogSeen() }
+        coVerify { prefsRepository.markChangelogSeen(CURRENT_VERSION_CODE) }
     }
 
     @Test

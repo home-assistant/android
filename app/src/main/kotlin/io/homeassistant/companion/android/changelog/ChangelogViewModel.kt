@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,16 +39,17 @@ data class ChangelogUiState(
  */
 @HiltViewModel
 class ChangelogViewModel @VisibleForTesting constructor(
-    changelogRepository: ChangelogRepository,
+    prefsRepository: PrefsRepository,
     isAutomotive: Boolean,
     rawVersionName: String,
+    currentVersionCode: Int,
 ) : ViewModel() {
 
     @Inject
     constructor(
-        changelogRepository: ChangelogRepository,
+        prefsRepository: PrefsRepository,
         @IsAutomotive isAutomotive: Boolean,
-    ) : this(changelogRepository, isAutomotive, BuildConfig.VERSION_NAME)
+    ) : this(prefsRepository, isAutomotive, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
 
     val uiState: StateFlow<ChangelogUiState> = MutableStateFlow(
         run {
@@ -63,7 +65,7 @@ class ChangelogViewModel @VisibleForTesting constructor(
 
     init {
         viewModelScope.launch {
-            changelogRepository.markChangelogSeen()
+            prefsRepository.markChangelogSeen(currentVersionCode)
         }
     }
 }

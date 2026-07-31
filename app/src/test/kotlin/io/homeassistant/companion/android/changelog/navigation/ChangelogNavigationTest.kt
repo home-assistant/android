@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.changelog.navigation
 
-import android.content.Context
 import androidx.compose.material3.Text
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -12,7 +11,6 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.testing.TestNavHostController
-import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -22,23 +20,21 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import javax.inject.Inject
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 private const val FRONTEND_FAKE_CONTENT = "frontend"
-
-/** Prefs file/key the seen state is persisted in, see [io.homeassistant.companion.android.changelog.ChangelogRepository]. */
-private const val PREFERENCES_NAME = "changelog"
-private const val VERSION_KEY = "ChangeLog_last_version_code"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -51,6 +47,9 @@ internal class ChangelogNavigationTest {
     @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
+    @get:Rule(order = 2)
+    val mainDispatcherRule = MainDispatcherJUnit4Rule()
+
     @Inject
     lateinit var prefsRepository: PrefsRepository
 
@@ -61,17 +60,22 @@ internal class ChangelogNavigationTest {
         hiltRule.inject()
     }
 
-    private fun seedLastSeenVersionCode(versionCode: Int) {
-        ApplicationProvider.getApplicationContext<Context>()
-            .getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putInt(VERSION_KEY, versionCode)
-            .commit()
+    private suspend fun seedLastSeenVersionCode(versionCode: Int) {
+        prefsRepository.markChangelogSeen(versionCode)
     }
 
-    private fun lastSeenVersionCode(): Int = ApplicationProvider.getApplicationContext<Context>()
-        .getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
-        .getInt(VERSION_KEY, -1)
+    private suspend fun hasUnseenChangelog(): Boolean = prefsRepository.wasAppUpdatedSinceChangelogSeen(BuildConfig.VERSION_CODE)
+
+    /**
+     * Runs the scheduler until the changelog is marked seen. The ViewModel coroutine runs on the
+     * controlled Main dispatcher, but the write itself hops to the real IO dispatcher, so keep
+     * advancing until its result is visible. Bounded by the runTest timeout.
+     */
+    private suspend fun TestScope.awaitChangelogMarkedSeen() {
+        while (hasUnseenChangelog()) {
+            advanceUntilIdle()
+        }
+    }
 
     private fun setContent() {
         composeTestRule.setContent {
@@ -93,7 +97,7 @@ internal class ChangelogNavigationTest {
     private fun isOnChangelog(): Boolean = navController.currentBackStackEntry?.destination?.hasRoute<ChangelogRoute>() == true
 
     @Test
-    fun `Given unseen changelog when frontend is displayed then navigates to changelog and marks it seen`() {
+    fun `Given unseen changelog when frontend is displayed then navigates to changelog and marks it seen`() = runTest {
         seedLastSeenVersionCode(BuildConfig.VERSION_CODE - 1)
 
         setContent()
@@ -101,11 +105,11 @@ internal class ChangelogNavigationTest {
 
         composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.changelog_screen_title))
             .assertIsDisplayed()
-        composeTestRule.waitUntil { lastSeenVersionCode() == BuildConfig.VERSION_CODE }
+        awaitChangelogMarkedSeen()
     }
 
     @Test
-    fun `Given changelog already seen when frontend is displayed then stays on frontend`() {
+    fun `Given changelog already seen when frontend is displayed then stays on frontend`() = runTest {
         seedLastSeenVersionCode(BuildConfig.VERSION_CODE)
 
         setContent()
@@ -124,11 +128,11 @@ internal class ChangelogNavigationTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(FRONTEND_FAKE_CONTENT).assertIsDisplayed()
-        assertEquals(BuildConfig.VERSION_CODE - 1, lastSeenVersionCode())
+        assertTrue(hasUnseenChangelog())
     }
 
     @Test
-    fun `Given changelog displayed when closing then returns to frontend`() {
+    fun `Given changelog displayed when closing then returns to frontend`() = runTest {
         seedLastSeenVersionCode(BuildConfig.VERSION_CODE - 1)
 
         setContent()

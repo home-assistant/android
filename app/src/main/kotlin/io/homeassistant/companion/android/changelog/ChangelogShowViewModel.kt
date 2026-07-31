@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.changelog
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import javax.inject.Inject
 
@@ -9,10 +11,13 @@ import javax.inject.Inject
  * Decides whether the changelog screen should be shown.
  */
 @HiltViewModel
-class ChangelogShowViewModel @Inject constructor(
-    private val changelogRepository: ChangelogRepository,
+class ChangelogShowViewModel @VisibleForTesting constructor(
     private val prefsRepository: PrefsRepository,
+    private val currentVersionCode: Int,
 ) : ViewModel() {
+
+    @Inject
+    constructor(prefsRepository: PrefsRepository) : this(prefsRepository, BuildConfig.VERSION_CODE)
 
     private var consumed = false
 
@@ -26,6 +31,7 @@ class ChangelogShowViewModel @Inject constructor(
     suspend fun consumeShouldShowChangelog(): Boolean {
         if (consumed) return false
         consumed = true
-        return prefsRepository.isChangeLogPopupEnabled() && changelogRepository.wasAppUpdatedSinceChangelogSeen()
+        return prefsRepository.isChangeLogPopupEnabled() &&
+            prefsRepository.wasAppUpdatedSinceChangelogSeen(currentVersionCode)
     }
 }

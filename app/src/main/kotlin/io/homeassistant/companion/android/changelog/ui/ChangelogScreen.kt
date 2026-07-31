@@ -31,7 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
@@ -43,7 +42,6 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.changelog.ChangelogAction
-import io.homeassistant.companion.android.changelog.ChangelogCategory
 import io.homeassistant.companion.android.changelog.ChangelogEntry
 import io.homeassistant.companion.android.changelog.ChangelogPlatform
 import io.homeassistant.companion.android.changelog.ChangelogSection
@@ -57,7 +55,6 @@ import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.composable.HAVerticalDivider
 import io.homeassistant.companion.android.common.compose.composable.LabelSize
 import io.homeassistant.companion.android.common.compose.composable.LabelVariant
-import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HASize
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -311,14 +308,6 @@ private fun PlatformTag(platform: ChangelogPlatform, isCurrent: Boolean) {
         variant = if (isCurrent) LabelVariant.PRIMARY else LabelVariant.NEUTRAL,
         size = LabelSize.SMALL,
     )
-}
-
-private fun ChangelogCategory.markerColor(colorScheme: HAColorScheme): Color = with(colorScheme) {
-    when (this@markerColor) {
-        ChangelogCategory.NEW -> colorFillSuccessLoudResting
-        ChangelogCategory.IMPROVED -> colorFillPrimaryLoudResting
-        ChangelogCategory.FIXED -> colorFillNeutralLoudResting
-    }
 }
 
 @Preview

@@ -9,21 +9,22 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
+private const val CURRENT_VERSION_CODE = 42
+
 class ChangelogShowViewModelTest {
 
-    private val changelogRepository: ChangelogRepository = mockk()
     private val prefsRepository: PrefsRepository = mockk()
-    private val viewModel = ChangelogShowViewModel(changelogRepository, prefsRepository)
+    private val viewModel = ChangelogShowViewModel(prefsRepository, CURRENT_VERSION_CODE)
 
     @Test
     fun `Given enabled popup and unseen changelog when consuming then returns true only once`() = runTest {
         coEvery { prefsRepository.isChangeLogPopupEnabled() } returns true
-        coEvery { changelogRepository.wasAppUpdatedSinceChangelogSeen() } returns true
+        coEvery { prefsRepository.wasAppUpdatedSinceChangelogSeen(CURRENT_VERSION_CODE) } returns true
 
         assertTrue(viewModel.consumeShouldShowChangelog())
         assertFalse(viewModel.consumeShouldShowChangelog())
 
-        coVerify(exactly = 1) { changelogRepository.wasAppUpdatedSinceChangelogSeen() }
+        coVerify(exactly = 1) { prefsRepository.wasAppUpdatedSinceChangelogSeen(CURRENT_VERSION_CODE) }
     }
 
     @Test
@@ -33,13 +34,13 @@ class ChangelogShowViewModelTest {
         assertFalse(viewModel.consumeShouldShowChangelog())
 
         // wasAppUpdatedSinceChangelogSeen marks a fresh install as seen, the short-circuit must prevent that
-        coVerify(exactly = 0) { changelogRepository.wasAppUpdatedSinceChangelogSeen() }
+        coVerify(exactly = 0) { prefsRepository.wasAppUpdatedSinceChangelogSeen(any()) }
     }
 
     @Test
     fun `Given seen changelog when consuming then returns false`() = runTest {
         coEvery { prefsRepository.isChangeLogPopupEnabled() } returns true
-        coEvery { changelogRepository.wasAppUpdatedSinceChangelogSeen() } returns false
+        coEvery { prefsRepository.wasAppUpdatedSinceChangelogSeen(CURRENT_VERSION_CODE) } returns false
 
         assertFalse(viewModel.consumeShouldShowChangelog())
     }

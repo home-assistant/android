@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.changelog
 
 import androidx.annotation.StringRes
+import androidx.compose.ui.graphics.Color
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
 import io.homeassistant.companion.android.settings.SettingsActivity
 
@@ -15,12 +17,17 @@ enum class ChangelogPlatform(@field:StringRes val labelRes: Int) {
 }
 
 /**
- * The kinds of changes a changelog groups its entries under.
+ * The kinds of changes a changelog groups its entries under, each fully describing how its
+ * section header is displayed.
+ *
+ * @property labelRes The header label of the section.
+ * @property markerColor The color of the section marker, resolved from the current color scheme
+ * so it adapts to the theme.
  */
-enum class ChangelogCategory(@field:StringRes val labelRes: Int) {
-    NEW(commonR.string.changelog_category_new),
-    IMPROVED(commonR.string.changelog_category_improved),
-    FIXED(commonR.string.changelog_category_fixed),
+enum class ChangelogCategory(@field:StringRes val labelRes: Int, val markerColor: (HAColorScheme) -> Color) {
+    NEW(commonR.string.changelog_category_new, HAColorScheme::colorFillSuccessLoudResting),
+    IMPROVED(commonR.string.changelog_category_improved, HAColorScheme::colorFillPrimaryLoudResting),
+    FIXED(commonR.string.changelog_category_fixed, HAColorScheme::colorFillNeutralLoudResting),
 }
 
 /**
