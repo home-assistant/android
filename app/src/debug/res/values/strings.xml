@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="dev_playground_label">DevPlayground</string>
+    <string name="debug_nfc_tag_emulator">Debug NFC tag emulator</string>
 </resources>

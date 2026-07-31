@@ -116,7 +116,7 @@ class NfcSetupActivity : BaseActivity() {
                     }
                 } else {
                     try {
-                        val nfcTagUrl = "https://www.home-assistant.io/tag/$nfcTagToWriteUUID"
+                        val nfcTagUrl = NFCUtil.createTagUrl(requireNotNull(nfcTagToWriteUUID))
                         NFCUtil.createNFCMessage(nfcTagUrl, intent)
                         Timber.d("Wrote nfc tag with url: $nfcTagUrl")
 

@@ -30,15 +30,28 @@ object NFCUtil {
         return ndefMessage?.records?.get(0)?.toUri()
     }
 
-    @Throws(Exception::class)
-    fun createNFCMessage(url: String, intent: Intent?): Boolean {
+    /**
+     * Returns the URL stored on Home Assistant NFC tags for [tagId], the reverse of
+     * [io.homeassistant.companion.android.util.UrlUtil.splitNfcTagId].
+     */
+    fun createTagUrl(tagId: String): String = "https://www.home-assistant.io/tag/$tagId"
+
+    /**
+     * Returns the NDEF message written to Home Assistant NFC tags: the tag [url] plus application
+     * records so that scanning the tag launches the app.
+     */
+    fun createTagMessage(url: String): NdefMessage {
         val nfcRecord = NdefRecord.createUri(url)
         val applicationRecords = BuildConfig.APPLICATION_IDS.map {
             NdefRecord.createApplicationRecord(it)
         }
+        return NdefMessage(arrayOf(nfcRecord) + applicationRecords)
+    }
 
-        val nfcMessage = NdefMessage(arrayOf(nfcRecord) + applicationRecords)
-        val nfcFallbackMessage = NdefMessage(arrayOf(nfcRecord))
+    @Throws(Exception::class)
+    fun createNFCMessage(url: String, intent: Intent?): Boolean {
+        val nfcMessage = createTagMessage(url)
+        val nfcFallbackMessage = NdefMessage(arrayOf(NdefRecord.createUri(url)))
         intent?.let {
             val tag = IntentCompat.getParcelableExtra(it, NfcAdapter.EXTRA_TAG, Tag::class.java)
             return writeMessageToTag(nfcMessage, nfcFallbackMessage, tag)
