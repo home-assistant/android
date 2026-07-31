@@ -8,11 +8,12 @@ import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
+import io.mockk.called
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.confirmVerified
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -62,6 +63,6 @@ class RefreshIntervalMigrationTest {
 
         migration.migrate()
 
-        confirmVerified(cameraTileDao, thermostatTileDao, wearPrefsRepository)
+        verify { listOf(cameraTileDao, thermostatTileDao, wearPrefsRepository) wasNot called }
     }
 }
