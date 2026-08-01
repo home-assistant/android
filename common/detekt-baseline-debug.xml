@@ -302,13 +302,6 @@
     <ID>UnsafeCallOnNullableType:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$it.connection.webhookId!!</ID>
     <ID>UnusedParameter:LastRebootSensorManager.kt:LastRebootSensorManager$applicationContext: Context</ID>
     <ID>UnusedParameter:MonitoringManager.kt:MonitoringManager$context: Context</ID>
-    <ID>UnusedPrivateFunction:HABanner.kt:@PreviewLightDark @Composable private fun HAHintPreview</ID>
-    <ID>UnusedPrivateFunction:HADetails.kt:@PreviewLightDark @Composable private fun HADetailsPreview_close</ID>
-    <ID>UnusedPrivateFunction:HADetails.kt:@PreviewLightDark @Composable private fun HADetailsPreview_open</ID>
-    <ID>UnusedPrivateFunction:HAFloatingActionButton.kt:@PreviewLightDark @Composable private fun HAFloatingActionButtonPreview</ID>
-    <ID>UnusedPrivateFunction:HAInputChip.kt:@PreviewLightDark @Composable private fun HAInputChipPreview</ID>
-    <ID>UnusedPrivateFunction:HALabel.kt:@PreviewLightDark @Composable private fun HALabelPreview</ID>
-    <ID>UnusedPrivateFunction:HASettingsCard.kt:@PreviewLightDark @Composable private fun HASettingsCardPreview</ID>
     <ID>UseOrEmpty:HADropdownMenu.kt:selectedLabel ?: placeholder ?: ""</ID>
     <ID>UseOrEmpty:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$localStorage.getString(PREF_PUSH_TOKEN) ?: ""</ID>
     <ID>UseOrEmpty:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$server()._version ?: ""</ID>

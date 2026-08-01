@@ -506,7 +506,6 @@
     <ID>TooManyFunctions:MessagingManager.kt:MessagingManager</ID>
     <ID>TooManyFunctions:NotificationListenerSensorManager.kt:NotificationListenerSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:SensorDetailViewModel.kt:SensorDetailViewModel : AndroidViewModel</ID>
-    <ID>TooManyFunctions:ServerDiscoveryScreen.kt:io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryScreen.kt</ID>
     <ID>TooManyFunctions:ServerSettingsFragment.kt:ServerSettingsFragment : PreferenceFragmentCompatServerSettingsView</ID>
     <ID>TooManyFunctions:ServerSettingsPresenter.kt:ServerSettingsPresenter</ID>
     <ID>TooManyFunctions:ServerSettingsPresenterImpl.kt:ServerSettingsPresenterImpl : PreferenceDataStoreServerSettingsPresenter</ID>
@@ -587,30 +586,6 @@
     <ID>UnusedParameter:FrontendViewModel.kt:FrontendViewModel$url: String?</ID>
     <ID>UnusedParameter:ImprovPermission.kt:modifier: Modifier = Modifier</ID>
     <ID>UnusedParameter:QuestSensorManager.kt:QuestSensorManager$applicationContext: Context</ID>
-    <ID>UnusedPrivateFunction:BlockInsecureScreen.kt:@HAPreviews @Composable private fun BlockInsecureScreenPreview</ID>
-    <ID>UnusedPrivateFunction:ConnectionScreen.kt:@HAPreviews @Composable private fun ConnectionScreenPreview</ID>
-    <ID>UnusedPrivateFunction:FrontendConnectionErrorScreen.kt:@HAPreviews @Composable private fun FrontendErrorScreenPreview</ID>
-    <ID>UnusedPrivateFunction:FrontendScreen.kt:@HAPreviews @Composable private fun FrontendScreenErrorPreview</ID>
-    <ID>UnusedPrivateFunction:FrontendScreen.kt:@HAPreviews @Composable private fun FrontendScreenInsecurePreview</ID>
-    <ID>UnusedPrivateFunction:FrontendScreen.kt:@HAPreviews @Composable private fun FrontendScreenLoadingPreview</ID>
-    <ID>UnusedPrivateFunction:FrontendScreen.kt:@HAPreviews @Composable private fun FrontendScreenSecurityLevelRequiredPreview</ID>
-    <ID>UnusedPrivateFunction:LoadingScreen.kt:@HAPreviews @Composable private fun LoadingScreenPreview</ID>
-    <ID>UnusedPrivateFunction:LoadingScreen.kt:@HAPreviews @Composable private fun LoadingScreenPreviewWithBranding</ID>
-    <ID>UnusedPrivateFunction:LocalFirstScreen.kt:@HAPreviews @Composable private fun LocalFirstScreenPreview</ID>
-    <ID>UnusedPrivateFunction:LocationForSecureConnectionScreen.kt:@HAPreviews @Composable private fun LocationForSecureConnectionScreenPreview</ID>
-    <ID>UnusedPrivateFunction:LocationSharingScreen.kt:@HAPreviews @Composable private fun LocationSharingScreenPreview</ID>
-    <ID>UnusedPrivateFunction:ManualServerScreen.kt:@HAPreviews @Composable private fun ManualServerScreenPreview</ID>
-    <ID>UnusedPrivateFunction:NameYourDeviceScreen.kt:@HAPreviews @Composable private fun NameYourDeviceScreenPreview</ID>
-    <ID>UnusedPrivateFunction:ServerDiscoveryScreen.kt:@HAPreviews @Composable private fun ServerDiscoveryScreenPreview_no_server_found</ID>
-    <ID>UnusedPrivateFunction:ServerDiscoveryScreen.kt:@HAPreviews @Composable private fun ServerDiscoveryScreenPreview_scanning</ID>
-    <ID>UnusedPrivateFunction:ServerDiscoveryScreen.kt:@HAPreviews @Composable private fun ServerDiscoveryScreenPreview_with_multiple_servers</ID>
-    <ID>UnusedPrivateFunction:ServerDiscoveryScreen.kt:@HAPreviews @Composable private fun ServerDiscoveryScreenPreview_with_one_server</ID>
-    <ID>UnusedPrivateFunction:SetHomeNetworkScreen.kt:@HAPreviews @Composable private fun SetHomeNetworkScreenPreview</ID>
-    <ID>UnusedPrivateFunction:SettingsWearOnboardingView.kt:@PreviewLightDark @Composable private fun PreviewSettingWearAppMissingView</ID>
-    <ID>UnusedPrivateFunction:SettingsWearOnboardingView.kt:@PreviewLightDark @Composable private fun PreviewSettingWearAppMissingViewWithButton</ID>
-    <ID>UnusedPrivateFunction:WearMTLSScreen.kt:@HAPreviews @Composable private fun WearMTLSScreenPreview</ID>
-    <ID>UnusedPrivateFunction:WelcomeInvitationScreen.kt:@HAPreviews @Composable private fun WelcomeInvitationScreenPreview</ID>
-    <ID>UnusedPrivateFunction:WelcomeScreen.kt:@HAPreviews @Composable private fun WelcomeScreenPreview</ID>
     <ID>UnusedPrivateProperty:HAUserInputScreen.kt:private val now = LocalDateTime.now()</ID>
     <ID>UnusedPrivateProperty:SettingsPresenterImpl.kt:SettingsPresenterImpl$private val settingsDao: SettingsDao</ID>
     <ID>UseCheckOrError:AssistVoiceInteractionService.kt:AssistVoiceInteractionService$throw IllegalStateException("No wake word models found in assets")</ID>

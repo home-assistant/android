@@ -309,7 +309,6 @@
     <ID>TooManyFunctions:MessagingManager.kt:MessagingManager</ID>
     <ID>TooManyFunctions:NotificationListenerSensorManager.kt:NotificationListenerSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:SensorDetailViewModel.kt:SensorDetailViewModel : AndroidViewModel</ID>
-    <ID>TooManyFunctions:ServerDiscoveryScreen.kt:io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryScreen.kt</ID>
     <ID>TooManyFunctions:ServerSettingsFragment.kt:ServerSettingsFragment : PreferenceFragmentCompatServerSettingsView</ID>
     <ID>TooManyFunctions:ServerSettingsPresenter.kt:ServerSettingsPresenter</ID>
     <ID>TooManyFunctions:ServerSettingsPresenterImpl.kt:ServerSettingsPresenterImpl : PreferenceDataStoreServerSettingsPresenter</ID>

@@ -5,6 +5,8 @@ complexity:
   TooManyFunctions:
     ignoreAnnotatedFunctions:
       - Preview
+      - HAPreviews
+      - PreviewLightDark
 
 exceptions:
   TooGenericExceptionCaught:
@@ -21,3 +23,5 @@ style:
   UnusedPrivateFunction:
     ignoreAnnotated:
       - Preview
+      - HAPreviews
+      - PreviewLightDark
