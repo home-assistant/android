@@ -34,15 +34,23 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as R
 import io.homeassistant.companion.android.theme.wearColorScheme
+import io.homeassistant.companion.android.tiles.REFRESH_INTERVAL_ON_VIEWED
+import io.homeassistant.companion.android.tiles.isRefreshOnViewedSupported
 import io.homeassistant.companion.android.util.intervalToString
 
 @Composable
 fun RefreshIntervalPickerView(currentInterval: Int, onSelectInterval: (Int) -> Unit) {
-    // Refresh interval options: never, when viewed, every x time
-    val options = listOf(
-        0, 1, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60,
-        10 * 60 * 60, 24 * 60 * 60,
-    )
+    // Refresh interval options: never, when viewed (only where it works), every x time
+    val options = buildList {
+        add(0)
+        if (isRefreshOnViewedSupported()) add(REFRESH_INTERVAL_ON_VIEWED)
+        addAll(
+            listOf(
+                60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 2 * 60 * 60, 5 * 60 * 60,
+                10 * 60 * 60, 24 * 60 * 60,
+            ),
+        )
+    }
     val initialIndex = options.indexOf(currentInterval)
     val state = rememberPickerState(
         initialNumberOfOptions = options.size,
