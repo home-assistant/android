@@ -4,8 +4,6 @@
   <CurrentIssues>
     <ID>ComplexCondition:ConversationViewModel.kt:ConversationViewModel$(onConversationVersion &amp;&amp; !onPipelineVersion &amp;&amp; config == null) || (onPipelineVersion &amp;&amp; config == null)</ID>
     <ID>ComplexCondition:HealthServicesSensorManager.kt:HealthServicesSensorManager$!activityStateEnabled &amp;&amp; !dailyFloorEnabled &amp;&amp; !dailyDistanceEnabled &amp;&amp; !dailyCaloriesEnabled &amp;&amp; !dailyStepsEnabled</ID>
-    <ID>ComplexCondition:SensorUi.kt:it.key == Manifest.permission.ACCESS_FINE_LOCATION &amp;&amp; SdkVersion.isAtLeast(Build.VERSION_CODES.R) &amp;&amp; manager.requiredPermissions( basicSensor.id, ).contains(Manifest.permission.ACCESS_FINE_LOCATION) &amp;&amp; manager.requiredPermissions( basicSensor.id, ).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)</ID>
-    <ID>ComplexCondition:SensorUi.kt:it.key == Manifest.permission.BODY_SENSORS &amp;&amp; SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &amp;&amp; manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &amp;&amp; manager.requiredPermissions( basicSensor.id, ).contains(Manifest.permission.BODY_SENSORS_BACKGROUND)</ID>
     <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$private suspend fun setPipeline: Boolean</ID>
     <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
     <ID>CyclomaticComplexMethod:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
@@ -13,7 +11,7 @@
     <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private suspend fun updateHealthServices</ID>
     <ID>CyclomaticComplexMethod:MainView.kt:@Composable fun MainView</ID>
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$fun handleMessage</ID>
-    <ID>CyclomaticComplexMethod:SensorUi.kt:@SuppressLint("InlinedApi") @Composable fun SensorUi</ID>
+    <ID>CyclomaticComplexMethod:SensorUi.kt:@Composable fun SensorUi</ID>
     <ID>CyclomaticComplexMethod:ThermostatTile.kt:ThermostatTile$override fun onTileRequest: ListenableFuture&lt;Tile&gt;</ID>
     <ID>CyclomaticComplexMethod:ThermostatTile.kt:ThermostatTile$private fun timeline: Timeline</ID>
     <ID>CyclomaticComplexMethod:WearToggleChip.kt:WearToggleChip$@Composable fun entityToggleChipBackgroundColors: ToggleChipColors</ID>
@@ -35,7 +33,7 @@
     <ID>LongMethod:MainViewModel.kt:MainViewModel$private suspend fun updateEntityDomains</ID>
     <ID>LongMethod:PhoneInstallView.kt:@Composable fun PhoneInstallView</ID>
     <ID>LongMethod:PhoneSettingsListener.kt:PhoneSettingsListener$private fun login</ID>
-    <ID>LongMethod:SensorUi.kt:@SuppressLint("InlinedApi") @Composable fun SensorUi</ID>
+    <ID>LongMethod:SensorUi.kt:@Composable fun SensorUi</ID>
     <ID>LongMethod:SetThermostatTileView.kt:@Composable fun SetThermostatTileView</ID>
     <ID>LongMethod:SettingsView.kt:@Composable fun SettingsView</ID>
     <ID>LongMethod:ThermostatTile.kt:ThermostatTile$override fun onTileRequest: ListenableFuture&lt;Tile&gt;</ID>

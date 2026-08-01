@@ -6,8 +6,6 @@
     <ID>AbstractClassCanBeInterface:WearSensorModule.kt:WearSensorModule$WearSensorModule</ID>
     <ID>ComplexCondition:ConversationViewModel.kt:ConversationViewModel$(onConversationVersion &amp;&amp; !onPipelineVersion &amp;&amp; config == null) || (onPipelineVersion &amp;&amp; config == null)</ID>
     <ID>ComplexCondition:HealthServicesSensorManager.kt:HealthServicesSensorManager$!activityStateEnabled &amp;&amp; !dailyFloorEnabled &amp;&amp; !dailyDistanceEnabled &amp;&amp; !dailyCaloriesEnabled &amp;&amp; !dailyStepsEnabled</ID>
-    <ID>ComplexCondition:SensorUi.kt:it.key == Manifest.permission.ACCESS_FINE_LOCATION &amp;&amp; SdkVersion.isAtLeast(Build.VERSION_CODES.R) &amp;&amp; manager.requiredPermissions( basicSensor.id, ).contains(Manifest.permission.ACCESS_FINE_LOCATION) &amp;&amp; manager.requiredPermissions( basicSensor.id, ).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)</ID>
-    <ID>ComplexCondition:SensorUi.kt:it.key == Manifest.permission.BODY_SENSORS &amp;&amp; SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &amp;&amp; manager.requiredPermissions(basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &amp;&amp; manager.requiredPermissions( basicSensor.id, ).contains(Manifest.permission.BODY_SENSORS_BACKGROUND)</ID>
     <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$private suspend fun setPipeline: Boolean</ID>
     <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
     <ID>CyclomaticComplexMethod:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
@@ -15,12 +13,14 @@
     <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private suspend fun updateHealthServices</ID>
     <ID>CyclomaticComplexMethod:MainView.kt:@Composable fun MainView</ID>
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$fun handleMessage</ID>
-    <ID>CyclomaticComplexMethod:SensorUi.kt:@SuppressLint("InlinedApi") @Composable fun SensorUi</ID>
+    <ID>CyclomaticComplexMethod:SensorUi.kt:@Composable fun SensorUi</ID>
     <ID>CyclomaticComplexMethod:ThermostatTile.kt:ThermostatTile$override fun onTileRequest: ListenableFuture&lt;Tile&gt;</ID>
     <ID>CyclomaticComplexMethod:ThermostatTile.kt:ThermostatTile$private fun timeline: Timeline</ID>
     <ID>CyclomaticComplexMethod:WearToggleChip.kt:WearToggleChip$@Composable fun entityToggleChipBackgroundColors: ToggleChipColors</ID>
     <ID>CyclomaticComplexMethod:WearToggleChip.kt:WearToggleChipColors$override fun equals: Boolean</ID>
     <ID>ForbiddenComment:MainViewModel.kt:MainViewModel$// TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments</ID>
+    <ID>ForbiddenVoid:CameraTile.kt:CameraTile$Void?</ID>
+    <ID>ForbiddenVoid:TemplateTile.kt:TemplateTile$Void?</ID>
     <ID>FunctionOnlyReturningConstant:ApplicationModule.kt:ApplicationModule$@Provides @Singleton @PushWebsocketSupport fun providesPushWebsocketSupport: Boolean</ID>
     <ID>HasPlatformType:HeaderViewHolder.kt:HeaderViewHolder$val headerTextView = v.findViewById&lt;TextView&gt;(R.id.headerTextView)</ID>
     <ID>InjectDispatcher:CameraTile.kt:CameraTile$IO</ID>
@@ -55,7 +55,7 @@
     <ID>LongMethod:MainViewModel.kt:MainViewModel$private suspend fun updateEntityDomains</ID>
     <ID>LongMethod:PhoneInstallView.kt:@Composable fun PhoneInstallView</ID>
     <ID>LongMethod:PhoneSettingsListener.kt:PhoneSettingsListener$private fun login</ID>
-    <ID>LongMethod:SensorUi.kt:@SuppressLint("InlinedApi") @Composable fun SensorUi</ID>
+    <ID>LongMethod:SensorUi.kt:@Composable fun SensorUi</ID>
     <ID>LongMethod:SetThermostatTileView.kt:@Composable fun SetThermostatTileView</ID>
     <ID>LongMethod:SettingsView.kt:@Composable fun SettingsView</ID>
     <ID>LongMethod:ThermostatTile.kt:ThermostatTile$override fun onTileRequest: ListenableFuture&lt;Tile&gt;</ID>
@@ -149,7 +149,6 @@
     <ID>UnsafeCallOnNullableType:ThermostatTile.kt:ThermostatTile$tileConfig.refreshInterval!!</ID>
     <ID>UnusedVariable:PhoneSettingsListener.kt:PhoneSettingsListener$val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")</ID>
     <ID>UnusedVariable:PhoneSettingsListener.kt:PhoneSettingsListener$val notificationsEnabled = dataMap.getBoolean("Notifications")</ID>
-    <ID>UnusedVariable:SensorUi.kt:val context = LocalContext.current</ID>
     <ID>UseAnyOrNoneInsteadOfFind:SensorManagerUi.kt:firstOrNull { availableSensor -&gt; sensor.id == availableSensor.id }</ID>
     <ID>UseCheckNotNull:ThermostatTile.kt:ThermostatTile$check(entity != null)</ID>
     <ID>UseOrEmpty:CameraTile.kt:CameraTile$picture ?: ""</ID>

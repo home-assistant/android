@@ -12,7 +12,6 @@
     <ID>ComplexCondition:MessagingManager.kt:MessagingManager$( !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS ) || ( !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND] in FORCE_COMMANDS ) || ( !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &amp;&amp; jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null &amp;&amp; jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! &gt;= 5 )</ID>
     <ID>ComplexCondition:SsidView.kt:activeSsid?.isNotBlank() == true &amp;&amp; wifiSsids.none { it == activeSsid } &amp;&amp; (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || activeSsid !== WifiManager.UNKNOWN_SSID)</ID>
     <ID>ComplexCondition:TileExtensions.kt:TileExtensions$tileData != null &amp;&amp; tileData.isSetup &amp;&amp; tileData.entityId.split('.')[0] in toggleDomainsWithLock &amp;&amp; serverManager.getServer(tileData.serverId) != null</ID>
-    <ID>ComplexCondition:WebsocketManager.kt:WebsocketManager$jobs.values.any { it.isActive } &amp;&amp; isActive &amp;&amp; shouldWeRun() &amp;&amp; manageServerJobs(jobs, this)</ID>
     <ID>ConstructorParameterNaming:FrontendViewModel.kt:FrontendViewModel.ViewStateManager$private val _state: MutableStateFlow&lt;FrontendViewState&gt; = MutableStateFlow(initialState)</ID>
     <ID>CyclomaticComplexMethod:AssistSheetView.kt:@Composable fun AssistSheetControls</ID>
     <ID>CyclomaticComplexMethod:AssistViewModel.kt:AssistViewModel$fun onCreate</ID>
@@ -26,8 +25,6 @@
     <ID>CyclomaticComplexMethod:DeveloperSettingsPresenterImpl.kt:DeveloperSettingsPresenterImpl$override fun runThreadDebug</ID>
     <ID>CyclomaticComplexMethod:EntityGridVehicleScreen.kt:EntityGridVehicleScreen$private fun createEntityGrid: ItemList.Builder</ID>
     <ID>CyclomaticComplexMethod:EntityWidget.kt:EntityWidget$private suspend fun resolveTextToShow: ResolvedText</ID>
-    <ID>CyclomaticComplexMethod:EntityWidgetConfigureActivity.kt:EntityWidgetConfigureActivity$override fun onCreate</ID>
-    <ID>CyclomaticComplexMethod:EntityWidgetConfigureActivity.kt:EntityWidgetConfigureActivity$override suspend fun getPendingDaoEntity: StaticWidgetEntity</ID>
     <ID>CyclomaticComplexMethod:FrontendBarcodeScannerHandler.kt:private fun BarcodeFormat.toFrontendWireFormat: String</ID>
     <ID>CyclomaticComplexMethod:FrontendGestureManager.kt:FrontendGestureManager$suspend fun handleGesture: GestureResult</ID>
     <ID>CyclomaticComplexMethod:FrontendMessageHandler.kt:FrontendMessageHandler$private suspend fun handleMessage: FrontendHandlerEvent</ID>
@@ -89,7 +86,6 @@
     <ID>LongMethod:EntityGridVehicleScreen.kt:EntityGridVehicleScreen$private fun createEntityGrid: ItemList.Builder</ID>
     <ID>LongMethod:EntityPicker.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun EntityPicker</ID>
     <ID>LongMethod:EntityWidget.kt:EntityWidget$override suspend fun getWidgetRemoteViews: RemoteViews</ID>
-    <ID>LongMethod:EntityWidgetConfigureActivity.kt:EntityWidgetConfigureActivity$override fun onCreate</ID>
     <ID>LongMethod:ExternalUrlInputView.kt:@OptIn(ExperimentalComposeUiApi::class) @Composable fun ExternalUrlInputView</ID>
     <ID>LongMethod:FrontendMessageHandler.kt:FrontendMessageHandler$private suspend fun handleMessage: FrontendHandlerEvent</ID>
     <ID>LongMethod:FrontendNavigation.kt:internal fun NavGraphBuilder.frontendScreen</ID>
@@ -151,6 +147,8 @@
     <ID>MagicNumber:AssistShortcutViewModel.kt:AssistShortcutViewModel$5</ID>
     <ID>MagicNumber:AssistViewModel.kt:AssistViewModel$2023</ID>
     <ID>MagicNumber:AssistViewModel.kt:AssistViewModel$5</ID>
+    <ID>MagicNumber:CommandMessage.kt:MatterCommissionFinishMessage$2026</ID>
+    <ID>MagicNumber:CommandMessage.kt:MatterCommissionFinishMessage$7</ID>
     <ID>MagicNumber:CommandMessage.kt:NavigateToMessage$2025</ID>
     <ID>MagicNumber:CommandMessage.kt:NavigateToMessage$6</ID>
     <ID>MagicNumber:ContextExtensions.kt:0xFFFFFF</ID>
@@ -168,6 +166,7 @@
     <ID>MagicNumber:FrontendUrlManager.kt:FrontendUrlManager$2025</ID>
     <ID>MagicNumber:FrontendUrlManager.kt:FrontendUrlManager$6</ID>
     <ID>MagicNumber:FrontendViewModel.kt:FrontendViewModel$2026</ID>
+    <ID>MagicNumber:FrontendViewModel.kt:FrontendViewModel$8</ID>
     <ID>MagicNumber:GesturesScreen.kt:200</ID>
     <ID>MagicNumber:HAWebView.kt:5</ID>
     <ID>MagicNumber:HaControlsProviderService.kt:HaControlsProviderService$2022</ID>
@@ -221,7 +220,6 @@
     <ID>MatchingDeclarationName:AutomotiveNavigation.kt:AutomotiveRoute : HAStartDestinationRoute</ID>
     <ID>MatchingDeclarationName:ConnectionNavigation.kt:ConnectionRoute</ID>
     <ID>MatchingDeclarationName:FrontendNavigation.kt:FrontendRoute : HAStartDestinationRoute</ID>
-    <ID>MatchingDeclarationName:LoadingNavigation.kt:LoadingRoute</ID>
     <ID>MatchingDeclarationName:LocalFirstNavigation.kt:LocalFirstRoute</ID>
     <ID>MatchingDeclarationName:LocationSharingNavigation.kt:LocationSharingRoute</ID>
     <ID>MatchingDeclarationName:ManageWidgetsView.kt:WidgetType</ID>
@@ -248,6 +246,9 @@
     <ID>ReturnCount:DefaultAssistantManager.kt:DefaultAssistantManagerImpl$override suspend fun shouldSuggestAssistantSetup: Boolean</ID>
     <ID>ReturnCount:EntityPickerFilter.kt:internal fun fuzzyMatch: Double</ID>
     <ID>ReturnCount:EntityWidget.kt:EntityWidget$private suspend fun resolveTextToShow: ResolvedText</ID>
+    <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$@SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs. suspend fun requestWidgetCreation: Boolean</ID>
+    <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$internal suspend fun getPendingDaoEntity: StaticWidgetEntity?</ID>
+    <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:FrontendGestureManager.kt:FrontendGestureManager$private suspend fun switchServerBy: GestureResult</ID>
     <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun buildUrl: UrlLoadResult</ID>
     <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun shouldSetSecurityLevel: Boolean</ID>
@@ -288,7 +289,6 @@
     <ID>TooGenericExceptionThrown:NFCUtil.kt:NFCUtil$throw Exception("NFC tag is read-only")</ID>
     <ID>TooGenericExceptionThrown:NameYourDeviceViewModelTest.kt:NameYourDeviceViewModelTest$throw RuntimeException("Failed to register")</ID>
     <ID>TooManyFunctions:AppSensorModule.kt:AppSensorModule</ID>
-    <ID>TooManyFunctions:AssistSettingsScreen.kt:io.homeassistant.companion.android.settings.assist.AssistSettingsScreen.kt</ID>
     <ID>TooManyFunctions:AssistViewModel.kt:AssistViewModel : AssistViewModelBase</ID>
     <ID>TooManyFunctions:AssistVoiceInteractionService.kt:AssistVoiceInteractionService : VoiceInteractionService</ID>
     <ID>TooManyFunctions:BarcodeScanner.kt:io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner.kt</ID>
@@ -297,11 +297,12 @@
     <ID>TooManyFunctions:CarSensorManager.kt:CarSensorManager : SensorManagerDefaultLifecycleObserver</ID>
     <ID>TooManyFunctions:DeveloperSettingsPresenterImpl.kt:DeveloperSettingsPresenterImpl : PreferenceDataStoreDeveloperSettingsPresenter</ID>
     <ID>TooManyFunctions:EntityPicker.kt:io.homeassistant.companion.android.util.compose.entity.EntityPicker.kt</ID>
+    <ID>TooManyFunctions:EntityWidgetConfigureScreen.kt:io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureScreen.kt</ID>
+    <ID>TooManyFunctions:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel : ViewModel</ID>
     <ID>TooManyFunctions:FakePlayer.kt:FakePlayer : Player</ID>
     <ID>TooManyFunctions:FrontendScreen.kt:io.homeassistant.companion.android.frontend.FrontendScreen.kt</ID>
     <ID>TooManyFunctions:FrontendViewModel.kt:FrontendViewModel : ViewModelFrontendConnectionErrorStateProvider</ID>
     <ID>TooManyFunctions:HealthConnectSensorManager.kt:HealthConnectSensorManager : SensorManager</ID>
-    <ID>TooManyFunctions:ImprovSheet.kt:io.homeassistant.companion.android.frontend.improv.ui.ImprovSheet.kt</ID>
     <ID>TooManyFunctions:LaunchViewModel.kt:LaunchViewModel : ViewModel</ID>
     <ID>TooManyFunctions:ManageTilesViewModel.kt:ManageTilesViewModel : ViewModel</ID>
     <ID>TooManyFunctions:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget : BaseWidgetProvider</ID>
@@ -315,7 +316,6 @@
     <ID>TooManyFunctions:SettingsFragment.kt:SettingsFragment : PreferenceFragmentCompatSettingsView</ID>
     <ID>TooManyFunctions:SettingsPresenterImpl.kt:SettingsPresenterImpl : PreferenceDataStoreSettingsPresenter</ID>
     <ID>TooManyFunctions:TileExtensions.kt:TileExtensions : TileService</ID>
-    <ID>TooManyFunctions:TodoGlanceAppWidget.kt:io.homeassistant.companion.android.widgets.todo.TodoGlanceAppWidget.kt</ID>
     <ID>UnusedParameter:AssistSettingsScreen.kt:modifier: Modifier = Modifier</ID>
     <ID>UnusedParameter:DevicePolicyManager.kt:DevicePolicyManager$applicationContext: Context</ID>
     <ID>UnusedParameter:FrontendViewModel.kt:FrontendViewModel$url: String?</ID>
