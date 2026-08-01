@@ -7,7 +7,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
-import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import java.text.SimpleDateFormat
@@ -40,7 +39,15 @@ class LastRebootSensorManager @Inject constructor(
             "mdi:restart",
             deviceClass = "timestamp",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            settings = listOf(
+                SensorManager.BasicSensor.Setting(
+                    SETTING_DEADBAND,
+                    SensorSettingType.NUMBER,
+                    DEFAULT_DEADBAND.toString(),
+                ),
+            ),
         )
+        private const val DEFAULT_DEADBAND = 60000
     }
 
     override fun docsLink(): String {
@@ -73,13 +80,9 @@ class LastRebootSensorManager @Inject constructor(
 
         val sensorRepository = sensorRepository
         val fullSensor = sensorRepository.getFull(lastRebootSensor.id).toSensorWithAttributes()
-        val sensorSetting = sensorRepository.getSettings(lastRebootSensor.id)
         val lastTimeMillis =
             fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
-        val settingDeadband = sensorSetting.firstOrNull { it.name == SETTING_DEADBAND }?.value?.toIntOrNull() ?: 60000
-        sensorRepository.add(
-            SensorSetting(lastRebootSensor.id, SETTING_DEADBAND, settingDeadband.toString(), SensorSettingType.NUMBER),
-        )
+        val settingDeadband = getNumberSetting(lastRebootSensor, SETTING_DEADBAND)
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()
             val diffMillis = (timeInMillis - lastTimeMillis).absoluteValue

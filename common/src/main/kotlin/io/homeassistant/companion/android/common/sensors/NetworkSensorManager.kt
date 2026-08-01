@@ -72,6 +72,13 @@ class NetworkSensorManager @Inject constructor(
             "mdi:wifi",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+            settings = listOf(
+                SensorManager.BasicSensor.Setting(
+                    SETTING_GET_CURRENT_BSSID,
+                    SensorSettingType.TOGGLE,
+                    "false",
+                ),
+            ),
         )
 
         @ProvidesSensor
@@ -325,14 +332,14 @@ class NetworkSensorManager @Inject constructor(
         val settingName = "network_replace_mac_var1:$bssid:"
         val sensorRepository = sensorRepository
         val sensorSettings = sensorRepository.getSettings(bssidState.id)
-        val getCurrentBSSID = sensorSettings.firstOrNull { it.name == SETTING_GET_CURRENT_BSSID }?.value ?: "false"
+        val getCurrentBSSID = sensorSettings.first { it.name == SETTING_GET_CURRENT_BSSID }.value
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
-                sensorRepository.add(
-                    SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE),
+                sensorRepository.updateSettingValue(bssidState.id, SETTING_GET_CURRENT_BSSID, "false")
+                sensorRepository.addDynamicSetting(
+                    SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING),
                 )
-                sensorRepository.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
             }
         } else {
             if (currentSetting != "") {
@@ -340,10 +347,6 @@ class NetworkSensorManager @Inject constructor(
             } else {
                 sensorRepository.removeSetting(bssidState.id, settingName)
             }
-
-            sensorRepository.add(
-                SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE),
-            )
         }
 
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"

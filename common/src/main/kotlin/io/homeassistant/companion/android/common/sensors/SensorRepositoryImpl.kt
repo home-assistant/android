@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.database.server.ServerDao
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import timber.log.Timber
 
 /**
@@ -23,6 +24,8 @@ internal class SensorRepositoryImpl @Inject constructor(
 
     // Sensor enabled-by-default per sensor id, used to synthesize a Sensor when no row exists.
     private val enabledByDefaultById: Map<String, Boolean> = basicSensors.associate { it.id to it.enabledByDefault }
+    private val settingDefinitionsBySensorId: Map<String, List<SensorManager.BasicSensor.Setting>> =
+        basicSensors.associate { it.id to it.settings }
 
     // This could in theory return orphan sensors for removed servers where the DB was not cleared properly
     override suspend fun get(id: String): List<Sensor> = sensorsByServer(id, dao.get(id), configuredServerIds())
@@ -96,18 +99,59 @@ internal class SensorRepositoryImpl @Inject constructor(
     override suspend fun replaceAllAttributes(sensorId: String, attributes: List<Attribute>) =
         dao.replaceAllAttributes(sensorId, attributes)
 
-    override suspend fun getSettings(id: String) = dao.getSettings(id)
-    override fun getSettingsFlow(id: String) = dao.getSettingsFlow(id)
-    override suspend fun add(sensorSetting: SensorSetting) = dao.add(sensorSetting)
-    override suspend fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean) =
-        dao.updateSettingEnabled(sensorId, settingName, enabled)
-    override suspend fun updateSettingValue(sensorId: String, settingName: String, value: String) =
-        dao.updateSettingValue(sensorId, settingName, value)
+    override suspend fun getSettings(id: String) = settingsWithDefaults(id, dao.getSettings(id))
+    override fun getSettingsFlow(id: String) = dao.getSettingsFlow(id).map { settingsWithDefaults(id, it) }
+    override suspend fun addDynamicSetting(sensorSetting: SensorSetting) = dao.add(sensorSetting)
+    override suspend fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean) {
+        settingForUpdate(sensorId, settingName)?.let { dao.upsertSettingEnabled(it, enabled) }
+    }
+
+    override suspend fun updateSettingValue(sensorId: String, settingName: String, value: String) {
+        settingForUpdate(sensorId, settingName)?.let { dao.upsertSettingValue(it, value) }
+    }
+    override suspend fun getOrInitializeSettingValue(
+        sensorId: String,
+        settingName: String,
+        initialValue: String,
+    ): String = settingForUpdate(sensorId, settingName)?.let {
+        dao.getOrInitializeSettingValue(it, initialValue)
+    }.orEmpty()
+
     override suspend fun removeSetting(sensorId: String, settingName: String) = dao.removeSetting(sensorId, settingName)
     override suspend fun removeSettings(sensorId: String, settingNames: List<String>) =
         dao.removeSettings(sensorId, settingNames)
 
     private suspend fun configuredServerIds(): List<Int> = serverDao.getAll().map { it.id }
+
+    private fun settingsWithDefaults(id: String, stored: List<SensorSetting>): List<SensorSetting> {
+        val definitions = settingDefinitionsBySensorId[id].orEmpty()
+        val storedByName = stored.associateBy { it.name }
+        val declaredNames = definitions.mapTo(mutableSetOf()) { it.name }
+        val declared = definitions.map { definition ->
+            val declaredSetting = definition.toSensorSetting(id)
+            storedByName[definition.name]?.let {
+                declaredSetting.copy(value = it.value, enabled = it.enabled)
+            } ?: declaredSetting
+        }
+        return declared + stored.filterNot { it.name in declaredNames }
+    }
+
+    private suspend fun settingForUpdate(sensorId: String, settingName: String): SensorSetting? {
+        val setting = getSettings(sensorId).firstOrNull { it.name == settingName }
+        if (setting == null) {
+            FailFast.fail { "No setting defined for sensor id=$sensorId, name=$settingName" }
+        }
+        return setting
+    }
+
+    private fun SensorManager.BasicSensor.Setting.toSensorSetting(sensorId: String) = SensorSetting(
+        sensorId = sensorId,
+        name = name,
+        value = defaultValue,
+        valueType = type,
+        enabled = enabledByDefault,
+        entries = entries,
+    )
 
     /**
      * In-memory default state for ([id], [serverId]), or `null` when [id] has no backing
