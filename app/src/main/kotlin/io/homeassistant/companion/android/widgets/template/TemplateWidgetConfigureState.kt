@@ -25,6 +25,8 @@ internal data class TemplateWidgetConfigureState(
     val serversDropdownItems: List<HADropdownItem<Int>> = emptyList(),
     val template: String = "",
     val preview: TemplatePreview = TemplatePreview.Empty,
+    /** Whether a render for the current [template] is still in flight. */
+    val isRenderingPreview: Boolean = false,
     val textSize: String = DEFAULT_TEXT_SIZE,
     val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     val textColorHex: String? = null,
@@ -34,7 +36,10 @@ internal data class TemplateWidgetConfigureState(
     val showServerSelector = serversDropdownItems.size > 1 ||
         serversDropdownItems.none { it.key == selectedServerId }
 
-    val isActionEnabled = preview is TemplatePreview.Rendered
+    // Guards against saving a template that hasn't been (re-)validated yet: without
+    // `!isRenderingPreview`, editing an already-valid template would keep the action enabled
+    // using the *previous* render's result while the new one is still in flight.
+    val isActionEnabled = preview is TemplatePreview.Rendered && !isRenderingPreview
 
     @StringRes
     val actionButtonLabel = if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget

@@ -102,6 +102,29 @@ class TemplateWidgetConfigureViewModelTest {
     }
 
     @Test
+    fun `Given a rendered template when changed again then action is disabled until the new render completes`() =
+        runTest {
+            coEvery { integrationRepository.renderTemplate("{{ 1 }}", emptyMap()) } returns "1"
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+            viewModel.onTemplateChanged("{{ 1 }}")
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.isActionEnabled)
+
+            coEvery { integrationRepository.renderTemplate("{{ 2 }}", emptyMap()) } returns "2"
+            viewModel.onTemplateChanged("{{ 2 }}")
+
+            // The new render hasn't completed yet: the stale "1" preview must not keep the action enabled.
+            assertEquals(TemplatePreview.Rendered("1"), viewModel.state.value.preview)
+            assertFalse(viewModel.state.value.isActionEnabled)
+
+            advanceUntilIdle()
+
+            assertEquals(TemplatePreview.Rendered("2"), viewModel.state.value.preview)
+            assertTrue(viewModel.state.value.isActionEnabled)
+        }
+
+    @Test
     fun `Given a template cleared when changed then the preview goes back to empty`() = runTest {
         coEvery { integrationRepository.renderTemplate("{{ 1 }}", emptyMap()) } returns "1"
         val viewModel = createViewModel()

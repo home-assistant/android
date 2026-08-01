@@ -124,7 +124,7 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
 
         if (value.isEmpty()) {
             renderJob?.cancel()
-            _state.update { it.copy(preview = TemplatePreview.Empty) }
+            _state.update { it.copy(preview = TemplatePreview.Empty, isRenderingPreview = false) }
         } else {
             renderTemplate(value, _state.value.selectedServerId)
         }
@@ -145,6 +145,9 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
     /** Renders [template] against [serverId], cancelling any render already in flight. */
     private fun renderTemplate(template: String, serverId: Int) {
         renderJob?.cancel()
+        // Marked before launching so `isActionEnabled` can't stay true on a stale render while
+        // this one is in flight (see `TemplateWidgetConfigureState.isActionEnabled`).
+        _state.update { it.copy(isRenderingPreview = true) }
         renderJob = viewModelScope.launch {
             val preview = try {
                 val rendered = serverManager.integrationRepository(serverId).renderTemplate(template, mapOf())
@@ -162,7 +165,7 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
                     },
                 )
             }
-            _state.update { it.copy(preview = preview) }
+            _state.update { it.copy(preview = preview, isRenderingPreview = false) }
         }
     }
 
