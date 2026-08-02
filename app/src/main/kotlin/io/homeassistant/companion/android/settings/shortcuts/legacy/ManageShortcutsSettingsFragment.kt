@@ -28,6 +28,7 @@ class ManageShortcutsSettingsFragment : Fragment() {
 
     companion object {
         const val MAX_SHORTCUTS = 5
+        const val PINNED_SHORTCUT_INDEX = MAX_SHORTCUTS + 1
         const val SHORTCUT_PREFIX = "shortcut"
     }
 

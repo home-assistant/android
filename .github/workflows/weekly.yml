@@ -8,11 +8,12 @@ jobs:
   tag:
     name: Tag Weekly Release
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     permissions:
       actions: write # Start workflows onPush and prepareNextRelease
       contents: write # Allow pushing tags
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: true # Needed to be able to push the new tag

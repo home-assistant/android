@@ -40,8 +40,9 @@ import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -185,7 +186,7 @@ private fun TodoWidgetConfigureView(
     servers: List<Server>,
     selectedServerId: Int,
     onServerSelected: (Int) -> Unit,
-    entitiesState: EntityDisplayState,
+    entitiesState: EntityDisplayState<EntityDisplayWithContext>,
     selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
     showCompleted: Boolean,
@@ -309,15 +310,19 @@ private fun TodoWidgetConfigureViewPreview() {
 }
 
 private val previewDisplayEntities = listOf(
-    EntityDisplayItem(
-        entityId = "todo.shopping_list",
-        name = "Shopping List",
-        icon = CommunityMaterial.Icon.cmd_clipboard_list,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "todo.shopping_list",
+            name = "Shopping List",
+            icon = CommunityMaterial.Icon.cmd_clipboard_list,
+        ),
         areaName = "Kitchen",
     ),
-    EntityDisplayItem(
-        entityId = "todo.chores",
-        name = "Chores",
-        icon = CommunityMaterial.Icon.cmd_clipboard_list,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "todo.chores",
+            name = "Chores",
+            icon = CommunityMaterial.Icon.cmd_clipboard_list,
+        ),
     ),
 )

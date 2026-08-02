@@ -206,7 +206,7 @@ class FriendlyStateTest {
     // region Unit of measurement
 
     @Test
-    fun `Given a unit of measurement when appending it then the state is wrapped with the unit`() {
+    fun `Given a unit of measurement when resolving the state then it is wrapped with the unit`() {
         val entity = createEntity(
             entityId = "sensor.temperature",
             state = "20.126456",
@@ -215,26 +215,26 @@ class FriendlyStateTest {
 
         assertEquals(
             FriendlyState.WithUnit(FriendlyState.Literal("20.13"), "°C"),
-            entity.friendlyState(displayPrecision = 2, appendUnitOfMeasurement = true),
+            entity.friendlyState(displayPrecision = 2),
         )
     }
 
     @Test
-    fun `Given a unit of measurement when not appending it then the state is not wrapped`() {
+    fun `Given no unit of measurement when resolving the state then it is not wrapped`() {
         val entity = createEntity(
             entityId = "sensor.temperature",
             state = "20.126456",
-            attributes = mapOf("unit_of_measurement" to "°C"),
+            attributes = emptyMap(),
         )
 
         assertEquals(
             FriendlyState.Literal("20.126456"),
-            entity.friendlyState(displayPrecision = null, appendUnitOfMeasurement = false),
+            entity.friendlyState(displayPrecision = null),
         )
     }
 
     @Test
-    fun `Given a blank unit of measurement when appending it then the state is not wrapped`() {
+    fun `Given a blank unit of measurement when resolving the state then it is not wrapped`() {
         val entity = createEntity(
             entityId = "sensor.temperature",
             state = "20.126456",
@@ -243,12 +243,12 @@ class FriendlyStateTest {
 
         assertEquals(
             FriendlyState.Literal("20.126456"),
-            entity.friendlyState(displayPrecision = null, appendUnitOfMeasurement = true),
+            entity.friendlyState(displayPrecision = null),
         )
     }
 
     @Test
-    fun `Given a translated state with a unit of measurement when appending it then the resource keeps the unit`() {
+    fun `Given a translated state with a unit of measurement when resolving then the resource keeps the unit`() {
         val entity = createEntity(
             entityId = "sensor.status",
             state = "on",
@@ -257,7 +257,7 @@ class FriendlyStateTest {
 
         assertEquals(
             FriendlyState.WithUnit(FriendlyState.Resource(commonR.string.state_on), "W"),
-            entity.friendlyState(displayPrecision = null, appendUnitOfMeasurement = true),
+            entity.friendlyState(displayPrecision = null),
         )
     }
 
@@ -276,10 +276,17 @@ class FriendlyStateTest {
     }
 
     @Test
-    fun `Given a state with a unit when resolving then the unit is separated by a space`() {
+    fun `Given a state with a unit when resolving by default then the unit is not appended`() {
         val state = FriendlyState.WithUnit(FriendlyState.Resource(commonR.string.state_on), "W")
 
-        assertEquals("On W", state.resolve(context))
+        assertEquals("On", state.resolve(context))
+    }
+
+    @Test
+    fun `Given a state with a unit when resolving with the unit then it is separated by a space`() {
+        val state = FriendlyState.WithUnit(FriendlyState.Resource(commonR.string.state_on), "W")
+
+        assertEquals("On W", state.resolve(context, withUnit = true))
     }
 
     @Test

@@ -258,6 +258,8 @@
     <string name="error_connection_failed_no_network">Network unavailable, please check your connection</string>
     <string name="error_loading_entities">Error loading entities</string>
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error. Please ensure your certificate is valid.</string>
+    <string name="error_ssl_subresource">Some content on this page could not be loaded securely.</string>
+    <string name="error_ssl_subresource_host">Content from %1$s could not be loaded securely.</string>
     <string name="error_with_registration">The \'Mobile App\' integration is required to use the app, but it is not available on your Home Assistant server. Please check your server configuration and try again.</string>
     <string name="errors">Errors</string>
     <string name="event_error">Failed to notify HA of picked option.</string>
@@ -813,10 +815,12 @@
     <string name="shortcut_n">Shortcut %d</string>
     <string name="shortcut_pinned_desc">Pinned shortcut description</string>
     <string name="shortcut_pinned_id">Pinned shortcut ID</string>
+    <string name="shortcut_pinned_id_reserved">This ID is reserved for dynamic shortcuts</string>
     <string name="shortcut_pinned_label">Pinned shortcut label</string>
     <string name="shortcut_pinned_list">Select a pinned shortcut ID to edit</string>
     <string name="shortcut_pinned_note">Make sure to change the ID below for each new shortcut you want to add otherwise the existing ID will be updated. There are no limits to the amount of pinned shortcuts you can create.</string>
     <string name="shortcut_type">Select shortcut type</string>
+    <string name="shortcut_path_invalid">The path contains characters that are not allowed in a URL</string>
     <string name="shortcut_updated">Shortcut updated</string>
     <string name="shortcut">Shortcut</string>
     <string name="shortcuts_choose">Choose shortcuts</string>
@@ -1004,6 +1008,7 @@
     <string name="webview_creation_failed">WebView failed to initialize, please check and update your system WebView.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
+    <string name="widget_attribute_add">Add attribute</string>
     <string name="widget_background_type_title">Select widget theme</string>
     <string name="widget_background_type_label">Widget theme:</string>
     <string name="widget_background_type_daynight">Light/dark theme</string>
@@ -1052,6 +1057,7 @@
     <string name="widget_template_error">Unable to render the template</string>
     <string name="widget_text_hint_label">Label</string>
     <string name="widget_text_size_default">30</string>
+    <string name="widget_text_size_error">Enter a whole number greater than 0</string>
     <string name="widget_text_size_label">Widget text size:</string>
     <string name="widget_text_size_template">12</string>
     <string name="widget_text_color_black">Black</string>
@@ -1409,6 +1415,7 @@
     <string name="connection_security_less_secure">Less secure: Do not allow this app to know when you\'re home</string>
     <string name="home_assistant_branding_icon_content_description">Home\u00A0Assistant branding icon</string>
     <string name="loading_content_description">Loading</string>
+    <string name="loading_screen_project_from">A project from the</string>
     <string name="searching_home_network">Searching on\nhome network</string>
     <string name="server_discovery_no_server_info">Check that your Home\u00A0Assistant server is powered on and you\'re connected to the same network. You can enter the address manually if you know it.</string>
     <string name="server_discovery_connect">Connect</string>
@@ -1503,4 +1510,5 @@
     <string name="experimental">Experimental</string>
     <string name="learn_more">Learn more</string>
     <string name="default_assistant_required">Home Assistant must be your default assistant to perform %s.</string>
+    <string name="hidden_entity">Hidden entity</string>
 </resources>

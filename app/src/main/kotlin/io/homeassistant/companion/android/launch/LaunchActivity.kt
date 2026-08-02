@@ -186,6 +186,14 @@ class LaunchActivity : AppCompatActivity() {
             viewModel.shouldShowSplashScreen()
         }
 
+        // Skip the system's default splash exit animation for a seamless transition to
+        // the icon on the loading screen.
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
+            splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
+                splashScreenViewProvider.remove()
+            }
+        }
+
         enableEdgeToEdgeCompat()
 
         setContent {

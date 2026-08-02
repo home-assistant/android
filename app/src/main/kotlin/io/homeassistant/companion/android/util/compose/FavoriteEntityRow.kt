@@ -30,7 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 /**
@@ -40,7 +41,7 @@ import sh.calvin.reorderable.ReorderableCollectionItemScope
  */
 @Composable
 fun ReorderableCollectionItemScope.FavoriteEntityRow(
-    entity: EntityDisplayItem,
+    entity: EntityDisplay,
     onClick: () -> Unit,
     checked: Boolean,
     modifier: Modifier = Modifier,
@@ -72,7 +73,9 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
                 Text(text = entity.name, style = MaterialTheme.typography.body1)
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                     Text(
-                        text = entity.subtitle(LocalLayoutDirection.current) ?: entity.entityId,
+                        text =
+                        (entity as? EntityDisplayWithContext)?.subtitle(LocalLayoutDirection.current)
+                            ?: entity.entityId,
                         style = MaterialTheme.typography.body2,
                     )
                 }

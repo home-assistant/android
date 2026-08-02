@@ -11,6 +11,10 @@ import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -58,6 +62,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
@@ -103,6 +108,9 @@ import timber.log.Timber
 
 /** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
 private const val MINIMUM_GESTURE_VELOCITY = 75f
+
+/** Duration of the loading overlay fade-out once the frontend is ready. */
+private const val LOADING_OVERLAY_FADE_OUT_MILLIS = 350
 
 /** Test tag applied to the WebView custom view fullscreen overlay. */
 @VisibleForTesting
@@ -193,6 +201,7 @@ internal fun FrontendScreen(
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
         onSafeAreaInsetsChanged = viewModel::onSafeAreaInsetsChanged,
+        onScreenStartedChanged = viewModel::onScreenStartedChanged,
         onGesture = viewModel::onGesture,
         onLeavingApp = viewModel::onLeavingApp,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
@@ -243,6 +252,7 @@ internal fun FrontendScreenContent(
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
     onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit = {},
+    onScreenStartedChanged: (Boolean) -> Unit = {},
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
     onLeavingApp: (String?) -> Unit = {},
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
@@ -280,6 +290,7 @@ internal fun FrontendScreenContent(
         statusBarColor = content?.statusBarColor ?: loadingSurfaceColor,
         navigationBarColor = content?.backgroundColor ?: loadingSurfaceColor,
         onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
+        onScreenStartedChanged = onScreenStartedChanged,
     )
 
     FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
@@ -363,6 +374,7 @@ private fun FrontendScreenEffects(
     statusBarColor: Color?,
     navigationBarColor: Color?,
     onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
+    onScreenStartedChanged: (Boolean) -> Unit,
 ) {
     SystemBarsAppearanceEffect(
         statusBarColor = statusBarColor,
@@ -370,6 +382,8 @@ private fun FrontendScreenEffects(
     )
 
     ReportSafeAreaInsetsEffect(onSafeAreaInsetsChanged = onSafeAreaInsetsChanged)
+
+    ReportScreenStartedEffect(onScreenStartedChanged = onScreenStartedChanged)
 
     ImprovScanLifecycleEffect(
         scanRequested = improvScanRequested,
@@ -393,6 +407,18 @@ private fun FrontendScreenEffects(
     KeepScreenOnEffect(enabled = keepScreenOnEnabled)
 
     LeavingAppEffect(webView = webView, onLeavingApp = onLeavingApp)
+}
+
+/**
+ * Reports the lifecycle start/stop events to [onScreenStartedChanged] whenever the
+ * [LifecycleStartEffect] changes.
+ */
+@Composable
+private fun ReportScreenStartedEffect(onScreenStartedChanged: (Boolean) -> Unit) {
+    LifecycleStartEffect(Unit) {
+        onScreenStartedChanged(true)
+        onStopOrDispose { onScreenStartedChanged(false) }
+    }
 }
 
 /**
@@ -431,7 +457,9 @@ private fun StateOverlay(
     when (viewState) {
         is FrontendViewState.LoadServer,
         is FrontendViewState.Loading,
-        -> LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
+        -> {
+            // Loading overlay rendered below so it can fade out when leaving these states
+        }
 
         is FrontendViewState.Content -> {
             // No overlay for content state to show the underlying WebView
@@ -460,6 +488,16 @@ private fun StateOverlay(
             onErrorAction = onErrorAction,
             onOpenExternalLink = onOpenExternalLink,
         )
+    }
+
+    // The loading overlay is rendered on top of the `when` so that on leaving the loading states it
+    // fades out over.
+    AnimatedVisibility(
+        visible = viewState is FrontendViewState.LoadServer || viewState is FrontendViewState.Loading,
+        enter = EnterTransition.None,
+        exit = fadeOut(animationSpec = tween(durationMillis = LOADING_OVERLAY_FADE_OUT_MILLIS)),
+    ) {
+        LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault), showBrand = true)
     }
 }
 

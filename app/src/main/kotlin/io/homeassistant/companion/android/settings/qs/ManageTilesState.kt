@@ -6,6 +6,7 @@ import com.mikepenz.iconics.typeface.IIcon
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 
 /** A tile slot with the label of its configured tile, ready to be displayed in the slot picker. */
@@ -21,7 +22,7 @@ internal data class TileSlotItem(val id: TileId, @StringRes val nameRes: Int, va
 internal data class ManageTilesState(
     val selectedTileId: TileId = tileSlots.first().id,
     val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
-    val entityDisplayState: EntityDisplayState = EntityDisplayState.Loading,
+    val entityDisplayState: EntityDisplayState<EntityDisplayWithContext> = EntityDisplayState.Loading,
     val customIcon: IIcon? = null,
     val selectedEntityId: String? = null,
     val tileLabel: String = "",

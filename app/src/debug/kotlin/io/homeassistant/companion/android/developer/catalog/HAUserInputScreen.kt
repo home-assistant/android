@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
@@ -24,6 +25,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.composable.HAInputChip
 import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
 import io.homeassistant.companion.android.common.compose.composable.HASearchField
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
@@ -34,8 +36,9 @@ import io.homeassistant.companion.android.common.compose.composable.rememberSele
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import java.time.LocalDateTime
 
@@ -45,6 +48,7 @@ fun LazyListScope.catalogUserInputSection() {
     entityPicker()
     switches()
     checkboxes()
+    inputChips()
     radioGroupSection()
 }
 
@@ -182,6 +186,29 @@ private fun LazyListScope.input() {
     }
 }
 
+private fun LazyListScope.inputChips() {
+    catalogSection(title = "Input chips") {
+        CatalogRow {
+            var selected by remember { mutableStateOf(false) }
+            HAInputChip(
+                text = "toggle me",
+                onClick = { selected = !selected },
+                selected = selected,
+                trailingIcon = if (selected) Icons.Default.Close else Icons.Default.Add,
+                trailingIconContentDescription = null,
+            )
+            HAInputChip(text = "without icon", onClick = {})
+            HAInputChip(
+                text = "disabled",
+                onClick = {},
+                enabled = false,
+                trailingIcon = Icons.Default.Add,
+                trailingIconContentDescription = null,
+            )
+        }
+    }
+}
+
 private fun LazyListScope.radioGroupSection() {
     catalogSection(title = "Radio group") {
         var selectedOption by rememberSelectedOption<String>()
@@ -290,28 +317,26 @@ private fun LazyListScope.dropdownMenu() {
 }
 
 private fun LazyListScope.entityPicker() {
-    catalogSection(title = "Entity Pickers") {
-        var selectedEntityId by remember { mutableStateOf<String?>(null) }
+    catalogSection(title = "Entity Pickers (loaded, loading, error)") {
+        CatalogRow {
+            var selectedEntityId by remember { mutableStateOf<String?>(null) }
 
-        EntityPicker(
-            displayState = EntityDisplayState.Loaded(sampleDisplayEntities),
-            selectedEntityId = selectedEntityId,
-            onSelectionChanged = { selectedEntityId = it },
-        )
-    }
-    catalogSection(title = "Entity Picker loading") {
-        EntityPicker(
-            displayState = EntityDisplayState.Loading,
-            selectedEntityId = "light.living_room",
-            onSelectionChanged = {},
-        )
-    }
-    catalogSection(title = "Entity Picker error") {
-        EntityPicker(
-            displayState = EntityDisplayState.Error,
-            selectedEntityId = "light.living_room",
-            onSelectionChanged = {},
-        )
+            EntityPicker(
+                displayState = EntityDisplayState.Loaded(sampleDisplayEntities),
+                selectedEntityId = selectedEntityId,
+                onSelectionChanged = { selectedEntityId = it },
+            )
+            EntityPicker(
+                displayState = EntityDisplayState.Loading,
+                selectedEntityId = "light.living_room",
+                onSelectionChanged = {},
+            )
+            EntityPicker(
+                displayState = EntityDisplayState.Error,
+                selectedEntityId = "light.living_room",
+                onSelectionChanged = {},
+            )
+        }
     }
 }
 
@@ -322,38 +347,50 @@ private val sampleDropdownItems = (1..30).map { index ->
 }
 
 private val sampleDisplayEntities = listOf(
-    EntityDisplayItem(
-        entityId = "light.living_room",
-        name = "Living Room Light",
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.living_room",
+            name = "Living Room Light",
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        ),
         areaName = "Living Room",
         deviceName = "Smart Bulb Pro",
     ),
-    EntityDisplayItem(
-        entityId = "light.bedroom",
-        name = "Bedroom Light",
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.bedroom",
+            name = "Bedroom Light",
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        ),
         areaName = "Bedroom",
     ),
-    EntityDisplayItem(
-        entityId = "sensor.temperature",
-        name = "Temperature Sensor",
-        icon = CommunityMaterial.Icon3.cmd_thermometer,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "sensor.temperature",
+            name = "Temperature Sensor",
+            icon = CommunityMaterial.Icon3.cmd_thermometer,
+        ),
     ),
-    EntityDisplayItem(
-        entityId = "switch.fan",
-        name = "Ceiling Fan",
-        icon = CommunityMaterial.Icon2.cmd_fan,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "switch.fan",
+            name = "Ceiling Fan",
+            icon = CommunityMaterial.Icon2.cmd_fan,
+        ),
     ),
-    EntityDisplayItem(
-        entityId = "binary_sensor.motion",
-        name = "Motion Sensor",
-        icon = CommunityMaterial.Icon3.cmd_motion_sensor,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "binary_sensor.motion",
+            name = "Motion Sensor",
+            icon = CommunityMaterial.Icon3.cmd_motion_sensor,
+        ),
     ),
-    EntityDisplayItem(
-        entityId = "cover.garage_door",
-        name = "Garage Door",
-        icon = CommunityMaterial.Icon2.cmd_garage,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "cover.garage_door",
+            name = "Garage Door",
+            icon = CommunityMaterial.Icon2.cmd_garage,
+        ),
     ),
 )
 

@@ -373,4 +373,5 @@ merged_results.sarif
 # AI tooling
 .claude/*
 !.claude/skills
+!.claude/settings.json
 .cursor

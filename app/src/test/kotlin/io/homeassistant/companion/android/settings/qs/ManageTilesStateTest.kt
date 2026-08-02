@@ -1,8 +1,9 @@
 package io.homeassistant.companion.android.settings.qs
 
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.settings.qs.ManageTilesState.Companion.changeServer
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -15,10 +16,12 @@ class ManageTilesStateTest {
 
     private fun serverItems(vararg ids: Int) = ids.map { HADropdownItem(key = it, label = "Server $it") }
 
-    private fun fakeEntity(entityId: String) = EntityDisplayItem(
-        entityId = entityId,
-        name = entityId,
-        icon = mockk(),
+    private fun fakeEntity(entityId: String) = EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = entityId,
+            name = entityId,
+            icon = mockk(),
+        ),
     )
 
     @Test

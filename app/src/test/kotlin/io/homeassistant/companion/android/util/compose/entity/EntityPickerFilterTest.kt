@@ -1,10 +1,13 @@
 package io.homeassistant.companion.android.util.compose.entity
 
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 
 /**
@@ -21,16 +24,20 @@ class EntityPickerFilterTest {
         name: String,
         areaName: String? = null,
         deviceName: String? = null,
-    ) = EntityDisplayItem(
-        entityId = entityId,
-        name = name,
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        isHidden: Boolean = false,
+    ) = EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = entityId,
+            name = name,
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            isHidden = isHidden,
+        ),
         areaName = areaName,
         deviceName = deviceName,
     )
 
     // Test helper to create EntityWithSearchFields
-    private fun createEntityWithSearchFields(entity: EntityDisplayItem): EntityWithSearchFields {
+    private fun createEntityWithSearchFields(entity: EntityDisplayWithContext): EntityWithSearchFields {
         val sortingKey = entity.name.lowercase()
         return EntityWithSearchFields(
             entity = entity,
@@ -235,6 +242,30 @@ class EntityPickerFilterTest {
     }
 
     @Test
+    fun `Given blank query when filtering then hidden entities are left out`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(createTestEntity("light.bed", name = "Bed")),
+            createEntityWithSearchFields(createTestEntity("light.attic", name = "Attic", isHidden = true)),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "")
+
+        assertEquals(listOf("Bed"), result.map { it.name })
+    }
+
+    @Test
+    fun `Given a query matching a hidden entity when filtering then it is included`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(createTestEntity("light.bed", name = "Bed")),
+            createEntityWithSearchFields(createTestEntity("light.attic", name = "Attic", isHidden = true)),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "attic")
+
+        assertEquals(listOf("Attic"), result.map { it.name })
+    }
+
+    @Test
     fun `Given short term when filtering then returns all entities sorted by friendly name`() = runTest {
         val entities = listOf(
             createEntityWithSearchFields(
@@ -378,7 +409,7 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "light")
 
         assertEquals(2, result.size)
-        assertTrue(result.all { it.domain == "light" })
+        assertTrue(result.all { it.domain == LIGHT_DOMAIN })
         assertEquals("Bedroom", result[0].name)
         assertEquals("Kitchen", result[1].name)
     }
@@ -405,7 +436,8 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "bedroom")
 
         assertEquals(1, result.size)
-        assertEquals("Bedroom", result[0].areaName)
+        val entity = assertInstanceOf(EntityDisplayWithContext::class.java, result[0])
+        assertEquals("Bedroom", entity.areaName)
     }
 
     @Test
@@ -430,7 +462,8 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "smart")
 
         assertEquals(1, result.size)
-        assertEquals("Smart Bulb Pro", result[0].deviceName)
+        val entity = assertInstanceOf(EntityDisplayWithContext::class.java, result[0])
+        assertEquals("Smart Bulb Pro", entity.deviceName)
     }
 
     @Test

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.integration
 
 import android.content.Context
 import android.graphics.Color
+import androidx.compose.runtime.Immutable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
@@ -10,9 +11,13 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.COVER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.DEVICE_TRACKER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.FAN_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
@@ -128,7 +133,27 @@ data class Entity(
     val domain: String by lazy { entityId.substringBefore('.') }
 }
 
+@Immutable
 data class EntityPosition(val value: Float, val min: Float, val max: Float)
+
+/** Geographic position of an entity, resolved from its state attributes. */
+@Immutable
+data class EntityCoordinates(val latitude: Double, val longitude: Double)
+
+/** Speed control of a fan entity, resolved from its state attributes. */
+@Immutable
+data class FanControls(val speed: EntityPosition, val steps: Int)
+
+/**
+ * Color temperature control of a light entity, in kelvin on servers >= 2022.11 and in mireds
+ * before, resolved from its state attributes.
+ */
+@Immutable
+data class ColorTemperatureControl(val current: Float, val min: Float, val max: Float, val isKelvin: Boolean)
+
+/** Controls of a light entity, each null when the light does not support it. */
+@Immutable
+data class LightControls(val brightness: EntityPosition?, val colorTemperature: ColorTemperatureControl?)
 
 object EntityExt {
     const val TAG = "EntityExt"
@@ -142,7 +167,7 @@ object EntityExt {
 
     val DOMAINS_PRESS = listOf("button", "input_button")
     val DOMAINS_TOGGLE = listOf(
-        "automation", "cover", "fan", "humidifier", "input_boolean", "light", "lock",
+        "automation", COVER_DOMAIN, FAN_DOMAIN, "humidifier", "input_boolean", LIGHT_DOMAIN, "lock",
         MEDIA_PLAYER_DOMAIN, "remote", "siren", "switch",
     )
 
@@ -159,14 +184,14 @@ object EntityExt {
         "calendar",
         CAMERA_DOMAIN,
         CLIMATE_DOMAIN,
-        "cover",
-        "device_tracker",
-        "fan",
+        COVER_DOMAIN,
+        DEVICE_TRACKER_DOMAIN,
+        FAN_DOMAIN,
         "group",
         "humidifier",
         "input_boolean",
         "lawn_mower",
-        "light",
+        LIGHT_DOMAIN,
         "lock",
         MEDIA_PLAYER_DOMAIN,
         PERSON_DOMAIN,
@@ -243,7 +268,7 @@ fun Entity.getCoverPosition(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-cover.ts#L33
     return try {
         if (
-            domain != "cover" ||
+            domain != COVER_DOMAIN ||
             attributes["current_position"] == null
         ) {
             return null
@@ -251,7 +276,7 @@ fun Entity.getCoverPosition(): EntityPosition? {
 
         val minValue = 0f
         val maxValue = 100f
-        val currentValue = (attributes["current_position"] as? Number)?.toFloat() ?: 0f
+        val currentValue = floatAttributeOrNull("current_position") ?: 0f
 
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
@@ -266,7 +291,7 @@ fun Entity.getCoverPosition(): EntityPosition? {
 
 fun Entity.supportsFanSetSpeed(): Boolean {
     return try {
-        if (domain != "fan") return false
+        if (domain != FAN_DOMAIN) return false
         (attributes["supported_features"] as Number).toInt() and
             EntityExt.FAN_SUPPORT_SET_SPEED == EntityExt.FAN_SUPPORT_SET_SPEED
     } catch (e: Exception) {
@@ -282,7 +307,7 @@ fun Entity.getFanSpeed(): EntityPosition? {
 
         val minValue = 0f
         val maxValue = 100f
-        val currentValue = (attributes["percentage"] as? Number)?.toFloat() ?: 0f
+        val currentValue = floatAttributeOrNull("percentage") ?: 0f
 
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
@@ -317,7 +342,7 @@ fun Entity.getFanSteps(): Int? {
 
 fun Entity.supportsLightBrightness(): Boolean {
     return try {
-        if (domain != "light") return false
+        if (domain != LIGHT_DOMAIN) return false
 
         // On HA Core 2021.5 and later brightness detection has changed
         // to simplify things in the app lets use both methods for now
@@ -350,7 +375,7 @@ fun Entity.getLightBrightness(): EntityPosition? {
                 val minValue = 0f
                 val maxValue = 100f
                 val currentValue =
-                    (attributes["brightness"] as? Number)?.toFloat()?.div(255f)
+                    floatAttributeOrNull("brightness")?.div(255f)
                         ?.times(100)
                         ?: 0f
 
@@ -371,7 +396,7 @@ fun Entity.getLightBrightness(): EntityPosition? {
 
 fun Entity.supportsLightColorTemperature(): Boolean {
     return try {
-        if (domain != "light") return false
+        if (domain != LIGHT_DOMAIN) return false
 
         val supportedColorModes =
             attributes["supported_color_modes"] as? List<String>
@@ -386,10 +411,42 @@ fun Entity.supportsLightColorTemperature(): Boolean {
     }
 }
 
+/**
+ * Color temperature of a light, null when it doesn't support it or is not currently in that color
+ * mode. In kelvin on servers >= 2022.11, in mireds before.
+ */
+fun Entity.getColorTemperature(): ColorTemperatureControl? {
+    if (!supportsLightColorTemperature() || attributes["color_mode"] != EntityExt.LIGHT_MODE_COLOR_TEMP) {
+        return null
+    }
+
+    // Kelvin was added in 2022.11, older servers only report mireds
+    val isKelvin = attributes.containsKey("color_temp_kelvin")
+    val min = floatAttributeOrNull(if (isKelvin) "min_color_temp_kelvin" else "min_mireds") ?: 0f
+    val max = floatAttributeOrNull(if (isKelvin) "max_color_temp_kelvin" else "max_mireds") ?: 0f
+    val current = floatAttributeOrNull(if (isKelvin) "color_temp_kelvin" else "color_temp") ?: 0f
+
+    return ColorTemperatureControl(
+        current = current.coerceIn(min, max),
+        min = min,
+        max = max,
+        isKelvin = isKelvin,
+    )
+}
+
+/** Geographic position of the entity, null when it has none. */
+fun Entity.getCoordinates(): EntityCoordinates? {
+    val latitude = floatAttributeOrNull("latitude")?.toDouble()
+    val longitude = floatAttributeOrNull("longitude")?.toDouble()
+    return if (latitude != null && longitude != null) EntityCoordinates(latitude, longitude) else null
+}
+
+private fun Entity.floatAttributeOrNull(name: String): Float? = (attributes[name] as? Number)?.toFloat()
+
 fun Entity.getLightColor(): Int? {
     // https://github.com/home-assistant/frontend/blob/dev/src/panels/lovelace/cards/hui-light-card.ts#L243
     return try {
-        if (domain != "light") return null
+        if (domain != LIGHT_DOMAIN) return null
 
         when {
             state != "off" && attributes["rgb_color"] != null -> {
@@ -425,7 +482,7 @@ fun Entity.getVolumeLevel(): EntityPosition? {
 
         // Convert to percentage to match frontend behavior:
         // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-media_player.ts#L137
-        val currentValue = (attributes["volume_level"] as? Number)?.toFloat()?.times(100) ?: 0f
+        val currentValue = floatAttributeOrNull("volume_level")?.times(100) ?: 0f
 
         EntityPosition(
             value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
@@ -442,7 +499,7 @@ fun Entity.getVolumeStep(): Float {
     return try {
         if (!supportsVolumeSet()) return 0.1f
 
-        val volumeStep = (attributes["volume_step"] as? Number)?.toFloat() ?: 0.1f
+        val volumeStep = floatAttributeOrNull("volume_step") ?: 0.1f
         volumeStep.coerceAtLeast(0.01f)
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeStep")
@@ -450,27 +507,36 @@ fun Entity.getVolumeStep(): Float {
     }
 }
 
-fun Entity.getIcon(): IIcon {
+fun Entity.getIcon(): IIcon = getIcon(
+    compareState = state.ifBlank {
+        val attributeState = attributes["state"]
+        if (attributeState != null && attributeState !is String) {
+            Timber.w(
+                "Entity $entityId has non-String state attribute: ${attributeState::class.simpleName}. Please open an issue on the relevant integration.",
+            )
+        }
+        attributeState as? String?
+    },
+)
+
+/**
+ * Icon of the entity ignoring its state, so it stays the same as the entity changes: the custom
+ * icon it asks for, else the general icon of its domain. For callers persisting an icon rather
+ * than rendering the current one with [getIcon].
+ */
+fun Entity.getStatelessIcon(): IIcon = getIcon(compareState = null)
+
+/**
+ * Icon of the entity for [compareState], its state or null to get the icon of the domain that
+ * doesn't depend on it. Default icons match the ones used by the frontend, see icons.json in the
+ * component's core integration.
+ */
+private fun Entity.getIcon(compareState: String?): IIcon {
     val attributes = this.attributes
     val icon = attributes["icon"] as? String
     return if (icon?.startsWith(MDI_PREFIX) == true) {
         CommunityMaterial.getIconByMdiName(icon) ?: Icon.cmd_bookmark
     } else {
-        /**
-         * Return a default icon for the domain that matches the icon used in the frontend, see
-         * icons.json in the component's core integration.
-         * Note: for SimplifiedEntity sometimes return a more general icon because we don't have state.
-         */
-        val compareState =
-            state.ifBlank {
-                val attributeState = attributes["state"]
-                if (attributeState != null && attributeState !is String) {
-                    Timber.w(
-                        "Entity $entityId has non-String state attribute: ${attributeState::class.simpleName}. Please open an issue on the relevant integration.",
-                    )
-                }
-                attributeState as? String?
-            }
         when (domain) {
             "air_quality" -> Icon.cmd_air_filter
             ALARM_CONTROL_PANEL_DOMAIN -> when (compareState) {
@@ -509,9 +575,16 @@ fun Entity.getIcon(): IIcon {
             CLIMATE_DOMAIN -> Icon3.cmd_thermostat
             "configurator" -> Icon.cmd_cog
             "conversation" -> Icon3.cmd_microphone_message
-            "cover" -> coverIcon(compareState, this)
+            COVER_DOMAIN -> coverIcon(compareState, this)
             "counter" -> Icon.cmd_counter
-            "fan" -> if (compareState == "off") {
+
+            DEVICE_TRACKER_DOMAIN, PERSON_DOMAIN -> if (compareState == "not_home") {
+                Icon.cmd_account_arrow_right
+            } else {
+                Icon.cmd_account
+            }
+
+            FAN_DOMAIN -> if (compareState == "off") {
                 Icon2.cmd_fan_off
             } else {
                 Icon2.cmd_fan
@@ -551,7 +624,7 @@ fun Entity.getIcon(): IIcon {
             "input_select" -> Icon2.cmd_format_list_bulleted
             "input_text" -> Icon2.cmd_form_textbox
             "lawn_mower" -> Icon3.cmd_robot_mower
-            "light" -> Icon2.cmd_lightbulb
+            LIGHT_DOMAIN -> Icon2.cmd_lightbulb
             "lock" -> when (compareState) {
                 "unlocked", "open" -> Icon2.cmd_lock_open_variant
                 "jammed" -> Icon2.cmd_lock_alert
@@ -635,11 +708,6 @@ fun Entity.getIcon(): IIcon {
             }
 
             "persistent_notification" -> Icon.cmd_bell
-            PERSON_DOMAIN -> if (compareState == "not_home") {
-                Icon.cmd_account_arrow_right
-            } else {
-                Icon.cmd_account
-            }
 
             "plant" -> Icon2.cmd_flower
             "proximity" -> Icon.cmd_apple_safari
@@ -739,7 +807,7 @@ private fun binarySensorIcon(state: String?, entity: Entity): IIcon {
         "garage_door" -> if (isOff) Icon2.cmd_garage else Icon2.cmd_garage_open
         "gas", "problem", "safety", "tamper" -> if (isOff) Icon.cmd_check_circle else Icon.cmd_alert_circle
         "heat" -> if (isOff) Icon3.cmd_thermometer else Icon2.cmd_fire
-        "light" -> if (isOff) Icon.cmd_brightness_5 else Icon.cmd_brightness_7
+        LIGHT_DOMAIN -> if (isOff) Icon.cmd_brightness_5 else Icon.cmd_brightness_7
         "lock" -> if (isOff) Icon2.cmd_lock else Icon2.cmd_lock_open
         "moisture" -> if (isOff) Icon3.cmd_water_off else Icon3.cmd_water
         "motion" -> if (isOff) Icon3.cmd_motion_sensor_off else Icon3.cmd_motion_sensor
@@ -757,7 +825,7 @@ private fun binarySensorIcon(state: String?, entity: Entity): IIcon {
 }
 
 private fun coverIcon(state: String?, entity: Entity): IIcon {
-    val open = state !== "closed"
+    val open = state != "closed"
 
     return when (entity.attributes["device_class"]) {
         "garage" -> when (state) {
@@ -883,7 +951,7 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
     }
 
     if (icon == null) {
-        val unitOfMeasurement = entity.attributes["unit_of_measurement"]
+        val unitOfMeasurement = entity.unitOfMeasurement()
         if (unitOfMeasurement != null && unitOfMeasurement in listOf("°C", "°F")) {
             icon = Icon3.cmd_thermometer
         }
@@ -892,21 +960,25 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
     return icon ?: Icon.cmd_eye
 }
 
-suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
+/**
+ * Execute the default app press action, choosing the action from the item's current state.
+ * @throws IntegrationException on network errors
+ */
+suspend fun EntityDisplay.onPressed(integrationRepository: IntegrationRepository) {
     val action = when (domain) {
         "lock" -> {
-            if (state == "unlocked") "lock" else "unlock"
+            if (rawState == "unlocked") "lock" else "unlock"
         }
 
-        ALARM_CONTROL_PANEL_DOMAIN -> getAlarmOnPressedAction()
+        ALARM_CONTROL_PANEL_DOMAIN -> alarm?.onPressedAction
 
         in EntityExt.DOMAINS_PRESS -> "press"
-        "fan",
+        FAN_DOMAIN,
         "input_boolean",
         "script",
         "switch",
         -> {
-            if (state == "on") "turn_off" else "turn_on"
+            if (rawState == "on") "turn_off" else "turn_on"
         }
 
         "scene" -> "turn_on"
@@ -919,14 +991,14 @@ suspend fun Entity.onPressed(integrationRepository: IntegrationRepository) {
     }
 
     integrationRepository.callAction(
-        domain = this.domain,
+        domain = domain,
         action = action,
         actionData = hashMapOf("entity_id" to entityId),
     )
 }
 
 /**
- * Execute an app press action like [Entity.onPressed], but without a current state if possible to
+ * Execute an app press action like [EntityDisplay.onPressed], but without a current state if possible to
  * speed up the execution.
  * @throws IntegrationException on network errors
  */
@@ -956,16 +1028,20 @@ suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository:
     )
 }
 
+@Deprecated(
+    "The friendly name is no longer used for display, as it ignores the entity registry. Resolve the " +
+        "display name with EntitiesForDisplayManager, which reads it from EntityDisplay.name.",
+)
 val Entity.friendlyName: String
-    get() = attributes["friendly_name"]?.toString() ?: entityId
+    get() = attributes["friendly_name"]?.toString()?.takeIf { it.isNotBlank() } ?: entityId
 
 /**
- * Formats the entity state for display without registry metadata, so no sensor display
- * precision is applied. Prefer [EntityDisplayItem.state] when the entity has been
- * resolved through `GetEntitiesForDisplayUseCase`.
+ * Formats the entity state for display without registry context, so no sensor display
+ * precision is applied. Prefer `EntityDisplay.state` when the entity has been resolved
+ * through `EntitiesForDisplayManager`.
  */
 fun Entity.friendlyState(context: Context, appendUnitOfMeasurement: Boolean = false): String =
-    friendlyState(displayPrecision = null, appendUnitOfMeasurement = appendUnitOfMeasurement).resolve(context)
+    friendlyState(displayPrecision = null).resolve(context, withUnit = appendUnitOfMeasurement)
 
 fun Entity.friendlyState(
     context: Context,
@@ -973,10 +1049,14 @@ fun Entity.friendlyState(
     appendUnitOfMeasurement: Boolean = false,
 ): String = friendlyState(
     displayPrecision = options?.sensor?.let { it.displayPrecision ?: it.suggestedDisplayPrecision },
-    appendUnitOfMeasurement = appendUnitOfMeasurement,
-).resolve(context)
+).resolve(context, withUnit = appendUnitOfMeasurement)
 
 fun Entity.canSupportPrecision() = domain == "sensor" && state.toDoubleOrNull() != null
+
+/** The unit of measurement of the entity, null when it has none or it is blank. */
+fun Entity.unitOfMeasurement(): String? = attributes["unit_of_measurement"]?.toString()?.takeIf {
+    it.isNotBlank()
+}
 
 fun Entity.isExecuting() = when (state) {
     "arming" -> true
@@ -997,8 +1077,8 @@ fun Entity.isActive() = when {
     (state == "off" && domain != "alert") -> false
     (domain == ALARM_CONTROL_PANEL_DOMAIN) -> state != "disarmed"
     (domain == "alert") -> state != "idle"
-    (domain == "cover") -> state != "closed"
-    (domain in listOf("device_tracker", PERSON_DOMAIN)) -> state != "not_home"
+    (domain == COVER_DOMAIN) -> state != "closed"
+    (domain in listOf(DEVICE_TRACKER_DOMAIN, PERSON_DOMAIN)) -> state != "not_home"
     (domain == "lawn_mower") -> state in listOf("mowing", "error")
     // on Android, contrary to HA Frontend, a lock is considered active when locked
     (domain == "lock") -> state == "locked"

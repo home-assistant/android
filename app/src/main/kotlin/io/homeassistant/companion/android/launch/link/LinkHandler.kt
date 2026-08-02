@@ -39,10 +39,46 @@ internal fun navigateDeepLinkUri(target: FrontendTarget, serverId: Int): Uri {
     when (target) {
         is FrontendTarget.EntityMoreInfo ->
             builder.appendQueryParameter(FrontendUrlParams.MORE_INFO_ENTITY_ID, target.entityId)
-        is FrontendTarget.Path -> builder.path(target.path)
+        is FrontendTarget.Path -> builder.encodedRawPath(target.path)
         FrontendTarget.Default -> Unit
     }
     return builder.appendQueryParameter(SERVER_ID_PARAM, serverId.toString()).build()
+}
+
+/**
+ * Characters that need no percent-encoding in a URI path (RFC 3986 pchar plus "/"), on top of
+ * [Uri.encode]'s unreserved set. "%" is kept so escapes already present pass through.
+ */
+private const val PATH_ALLOWED_CHARS = "/%:@!$&'()*+,;="
+
+/** Query and fragment additionally allow "?". */
+private const val QUERY_FRAGMENT_ALLOWED_CHARS = "$PATH_ALLOWED_CHARS?"
+
+/**
+ * Whether [rawPath] is already a compliant frontend path in URL form, i.e. the encoding performed
+ * by [Uri.Builder.encodedRawPath] would keep it unchanged. Used by input UIs (e.g. the shortcut
+ * editor) to reject paths before they are persisted.
+ */
+internal fun isValidFrontendRawPath(rawPath: String): Boolean =
+    rawPath == Uri.encode(rawPath, "$QUERY_FRAGMENT_ALLOWED_CHARS#")
+
+/**
+ * Sets [rawPath] — a frontend path in URL form, possibly carrying a query and fragment — on this
+ * builder component by component, so a query like `?kiosk` stays a query instead of being
+ * percent-encoded into the path ([Uri.Builder.path] would store it as `%3Fkiosk`).
+ *
+ * Characters illegal in a component (e.g. spaces in a hand-typed shortcut path or deep link) are
+ * percent-encoded; reserved characters and escapes already present pass through untouched, so a
+ * literal percent must be written `%25`.
+ */
+private fun Uri.Builder.encodedRawPath(rawPath: String): Uri.Builder {
+    val withoutFragment = rawPath.substringBefore('#')
+    encodedPath("/" + Uri.encode(withoutFragment.substringBefore('?').removePrefix("/"), PATH_ALLOWED_CHARS))
+    if ('?' in withoutFragment) {
+        encodedQuery(Uri.encode(withoutFragment.substringAfter('?'), QUERY_FRAGMENT_ALLOWED_CHARS))
+    }
+    if ('#' in rawPath) encodedFragment(Uri.encode(rawPath.substringAfter('#'), QUERY_FRAGMENT_ALLOWED_CHARS))
+    return this
 }
 
 /**
@@ -235,9 +271,28 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         val target = if (moreInfoEntityId != null && uri.isNavigateRoot()) {
             FrontendTarget.EntityMoreInfo(moreInfoEntityId)
         } else {
-            FrontendTarget.Path(uri.toString())
+            FrontendTarget.fromRawPath(uri.toFrontendRawPath())
         }
         return webviewDestination(target, serverId)
+    }
+
+    /**
+     * Rebuilds the raw frontend path (including query and fragment) from a navigate deep link,
+     * dropping the app's server selection parameters. All components are kept encoded as written,
+     * so the path reaches the frontend exactly as it appears in the link.
+     */
+    private fun Uri.toFrontendRawPath(): String = buildString {
+        append(encodedPath.orEmpty().removePrefix("/"))
+        encodedQuery
+            ?.splitToSequence('&')
+            ?.filterNot { param ->
+                val name = param.substringBefore('=')
+                name == SERVER_ID_PARAM || name == SERVER_PARAM
+            }
+            ?.joinToString("&")
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { append('?').append(it) }
+        encodedFragment?.let { append('#').append(it) }
     }
 
     /**

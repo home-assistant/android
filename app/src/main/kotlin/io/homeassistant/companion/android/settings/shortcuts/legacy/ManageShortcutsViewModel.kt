@@ -18,8 +18,9 @@ import androidx.lifecycle.viewModelScope
 import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
@@ -36,7 +37,7 @@ import timber.log.Timber
 internal class ManageShortcutsViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val shortcutManager: HaShortcutManager,
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     application: Application,
 ) : AndroidViewModel(application) {
 
@@ -53,7 +54,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
 
     var servers by mutableStateOf(emptyList<Server>())
         private set
-    var displayEntities = mutableStateMapOf<Int, EntityDisplayState>()
+    var displayEntities = mutableStateMapOf<Int, EntityDisplayState<EntityDisplayWithContext>>()
         private set
 
     private suspend fun currentServerId() = serverManager.getServer()?.id ?: 0
@@ -70,7 +71,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
     )
 
     var shortcuts = mutableStateListOf<Shortcut>().apply {
-        repeat(6) {
+        repeat(ManageShortcutsSettingsFragment.MAX_SHORTCUTS + 1) {
             add(
                 Shortcut(
                     id = mutableStateOf(""),
@@ -96,7 +97,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
             this@ManageShortcutsViewModel.servers = servers
             servers.forEach { server ->
                 launch {
-                    getEntitiesForDisplay(serverId = server.id).collect { state ->
+                    entitiesForDisplayManager.snapshotInContext(serverId = server.id).collect { state ->
                         displayEntities[server.id] = state
                     }
                 }
@@ -110,9 +111,10 @@ internal class ManageShortcutsViewModel @Inject constructor(
                 Timber.d("We have ${pinnedShortcuts.size} pinned shortcuts")
             }
 
-            if (dynamicShortcuts.isNotEmpty()) {
-                for (i in 0 until dynamicShortcuts.size) {
-                    setDynamicShortcutData(dynamicShortcuts[i].id, i)
+            dynamicShortcuts.forEach { item ->
+                dynamicSlotIndex(item.id)?.let { index ->
+                    Timber.d("setting ${item.id} data")
+                    shortcuts[index].setData(item)
                 }
             }
         }
@@ -136,7 +138,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
             icon = icon,
         )
 
-        if (shortcutId.startsWith("shortcut")) {
+        if (dynamicSlotIndex(shortcutId) != null) {
             ShortcutManagerCompat.addDynamicShortcuts(app, listOf(shortcut))
             updateDynamicShortcuts()
         } else {
@@ -180,16 +182,17 @@ internal class ManageShortcutsViewModel @Inject constructor(
             }.toMutableList()
     }
 
-    private fun setDynamicShortcutData(shortcutId: String, index: Int) = viewModelScope.launch {
-        if (dynamicShortcuts.isNotEmpty()) {
-            for (item in dynamicShortcuts) {
-                if (item.id == shortcutId) {
-                    Timber.d("setting ${item.id} data")
-                    shortcuts[index].setData(item)
-                }
-            }
-        }
-    }
+    /** Returns whether [shortcutId] is reserved for a dynamic shortcut slot and can't be used for a pinned shortcut. */
+    fun isReservedShortcutId(shortcutId: String): Boolean = dynamicSlotIndex(shortcutId) != null
+
+    /**
+     * Returns the zero-based slot index for a dynamic shortcut ID managed by this screen
+     * (exactly "${ManageShortcutsSettingsFragment.SHORTCUT_PREFIX}_<slot>" where slot is 1..MAX_SHORTCUTS),
+     * or null for any other ID such as a pinned shortcut.
+     */
+    private fun dynamicSlotIndex(shortcutId: String): Int? = (1..ManageShortcutsSettingsFragment.MAX_SHORTCUTS)
+        .firstOrNull { slot -> "${ManageShortcutsSettingsFragment.SHORTCUT_PREFIX}_$slot" == shortcutId }
+        ?.minus(1)
 
     private suspend fun Shortcut.setData(item: ShortcutInfoCompat) {
         val currentServerId = currentServerId()

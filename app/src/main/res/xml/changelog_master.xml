@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="2026.7.5 - Main" versioncode="3">
+    <release version="2026.8.1 - Main" versioncode="3">
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
+        <change>Modernized settings for entity widgets and tiles</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2026.7.5 - Wear" versioncode="2">
+    <release version="2026.8.1 - Wear" versioncode="2">
         <change>Android 17: added assistant volume level sensor</change>
         <change>Bug fixes and dependency updates</change>
     </release>
-    <release version="2026.7.5 - Automotive" versioncode="1">
+    <release version="2026.8.1 - Automotive" versioncode="1">
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
         <change>Bug fixes and dependency updates</change>
