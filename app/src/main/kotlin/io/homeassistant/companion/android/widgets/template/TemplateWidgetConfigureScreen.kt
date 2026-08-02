@@ -182,16 +182,18 @@ private fun ServerSelector(
 
 @Composable
 private fun TemplateSection(template: String, preview: TemplatePreview, onTemplateChanged: (String) -> Unit) {
-    HATextField(
-        value = template,
-        onValueChange = onTemplateChanged,
-        label = { Text(stringResource(commonR.string.template)) },
-        placeholder = { Text(stringResource(commonR.string.template_widget_default)) },
-        minLines = TEMPLATE_FIELD_MIN_LINES,
-        modifier = Modifier.formControlWidth(),
-    )
+    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
+        HATextField(
+            value = template,
+            onValueChange = onTemplateChanged,
+            label = { Text(stringResource(commonR.string.template)) },
+            placeholder = { Text(stringResource(commonR.string.template_widget_default)) },
+            minLines = TEMPLATE_FIELD_MIN_LINES,
+            modifier = Modifier.formControlWidth(),
+        )
 
-    TemplatePreviewCard(preview = preview)
+        TemplatePreviewCard(preview = preview)
+    }
 }
 
 /** Shows [preview] labelled as such, so it doesn't get mistaken for another input field. */
