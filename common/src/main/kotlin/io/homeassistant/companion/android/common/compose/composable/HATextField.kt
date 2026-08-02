@@ -44,6 +44,8 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
  * [KeyboardOptions.imeAction]
  * @param maxLines the maximum height in terms of maximum number of visible lines. If [singleLine]
  * is set to `true`, this value will be ignored
+ * @param minLines the minimum height in terms of minimum number of visible lines. Ignored if
+ * [singleLine] is `true`
  * @param singleLine when `true`, this text field becomes a single horizontally scrolling text field
  * instead of wrapping onto multiple lines. [maxLines] will be ignored and automatically set to 1
  */
@@ -62,6 +64,7 @@ fun HATextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     maxLines: Int = Int.MAX_VALUE,
+    minLines: Int = 1,
     singleLine: Boolean = maxLines == 1,
     visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
@@ -75,6 +78,7 @@ fun HATextField(
         leadingIcon = leadingIcon,
         shape = RoundedCornerShape(size = HARadius.M),
         maxLines = maxLines,
+        minLines = minLines,
         singleLine = singleLine,
         // The color is controlled from the [colors] attribute
         textStyle = HATextStyle.UserInput.copy(color = Color.Unspecified),

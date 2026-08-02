@@ -106,7 +106,7 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
             )
         }
 
-        if (widget.template.isNotEmpty()) {
+        if (widget.template.isNotBlank()) {
             renderTemplate(widget.template, widget.serverId)
         }
     }
@@ -116,13 +116,14 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
 
         _state.update { it.copy(selectedServerId = serverId) }
         val template = _state.value.template
-        if (template.isNotEmpty()) renderTemplate(template, serverId)
+        if (template.isNotBlank()) renderTemplate(template, serverId)
     }
 
     fun onTemplateChanged(value: String) {
         _state.update { it.copy(template = value) }
 
-        if (value.isEmpty()) {
+        // A whitespace-only template isn't worth rendering either
+        if (value.isBlank()) {
             renderJob?.cancel()
             _state.update { it.copy(preview = TemplatePreview.Empty, isRenderingPreview = false) }
         } else {

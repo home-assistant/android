@@ -1,22 +1,20 @@
 package io.homeassistant.companion.android.widgets.template
 
-import android.graphics.Typeface
-import android.text.style.AbsoluteSizeSpan
-import android.text.style.CharacterStyle
-import android.text.style.ForegroundColorSpan
-import android.text.style.RelativeSizeSpan
-import android.text.style.StyleSpan
-import android.text.style.UnderlineSpan
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -27,31 +25,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
-import androidx.core.text.HtmlCompat
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.composable.HASettingsCard
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.util.compose.parseHtml
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.widgets.WidgetBackgroundTypeDropdown
@@ -194,10 +187,32 @@ private fun TemplateSection(template: String, preview: TemplatePreview, onTempla
         onValueChange = onTemplateChanged,
         label = { Text(stringResource(commonR.string.template)) },
         placeholder = { Text(stringResource(commonR.string.template_widget_default)) },
+        minLines = TEMPLATE_FIELD_MIN_LINES,
         modifier = Modifier.formControlWidth(),
     )
 
-    Text(text = preview.toAnnotatedString(), modifier = Modifier.formControlWidth())
+    TemplatePreviewCard(preview = preview)
+}
+
+/** Shows [preview] labelled as such, so it doesn't get mistaken for another input field. */
+@Composable
+private fun TemplatePreviewCard(preview: TemplatePreview) {
+    HASettingsCard(modifier = Modifier.formControlWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Visibility,
+                    contentDescription = null,
+                    modifier = Modifier.size(HAPreviewIconSize),
+                )
+                Text(text = stringResource(commonR.string.template_preview_label))
+            }
+            Text(text = preview.toAnnotatedString())
+        }
+    }
 }
 
 @Composable
@@ -239,40 +254,8 @@ private fun Modifier.formControlWidth(): Modifier = this
     .widthIn(max = MaxButtonWidth)
     .fillMaxWidth()
 
-/**
- * Converts a rendered template's HTML into an [AnnotatedString], the same approach used to render
- * templates on the Wear OS template tile ([io.homeassistant.companion.android.tiles.TemplateTile]).
- */
-private fun parseHtml(renderedText: String): AnnotatedString = buildAnnotatedString {
-    // Replace both actual and literal (escaped) line break characters with <br>
-    val renderedSpanned = HtmlCompat.fromHtml(
-        renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"),
-        HtmlCompat.FROM_HTML_MODE_LEGACY,
-    )
-    append(renderedSpanned.toString())
-    renderedSpanned.getSpans(0, renderedSpanned.length, CharacterStyle::class.java).forEach { span ->
-        val start = renderedSpanned.getSpanStart(span)
-        val end = renderedSpanned.getSpanEnd(span)
-        when (span) {
-            is AbsoluteSizeSpan -> addStyle(SpanStyle(fontSize = span.size.sp), start, end)
-            is ForegroundColorSpan -> addStyle(SpanStyle(color = Color(span.foregroundColor)), start, end)
-            is RelativeSizeSpan -> {
-                val defaultSize = 12
-                addStyle(SpanStyle(fontSize = (span.sizeChange * defaultSize).sp), start, end)
-            }
-            is StyleSpan -> when (span.style) {
-                Typeface.BOLD -> addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
-                Typeface.ITALIC -> addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
-                Typeface.BOLD_ITALIC -> addStyle(
-                    SpanStyle(fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic),
-                    start,
-                    end,
-                )
-            }
-            is UnderlineSpan -> addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
-        }
-    }
-}
+private const val TEMPLATE_FIELD_MIN_LINES = 3
+private val HAPreviewIconSize = 16.dp
 
 @Preview
 @Composable

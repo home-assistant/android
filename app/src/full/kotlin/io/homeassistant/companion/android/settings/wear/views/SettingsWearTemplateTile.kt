@@ -1,12 +1,5 @@
 package io.homeassistant.companion.android.settings.wear.views
 
-import android.graphics.Typeface
-import android.text.style.AbsoluteSizeSpan
-import android.text.style.CharacterStyle
-import android.text.style.ForegroundColorSpan
-import android.text.style.RelativeSizeSpan
-import android.text.style.StyleSpan
-import android.text.style.UnderlineSpan
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,24 +19,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY
-import androidx.core.text.HtmlCompat.fromHtml
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.util.compose.parseHtml
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
@@ -126,35 +112,6 @@ fun SettingsWearTemplateTile(
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 8.dp),
             )
-        }
-    }
-}
-
-private fun parseHtml(renderedText: String) = buildAnnotatedString {
-    // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
-    val renderedSpanned =
-        fromHtml(renderedText.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>"), FROM_HTML_MODE_LEGACY)
-    append(renderedSpanned.toString())
-    renderedSpanned.getSpans(0, renderedSpanned.length, CharacterStyle::class.java).forEach { span ->
-        val start = renderedSpanned.getSpanStart(span)
-        val end = renderedSpanned.getSpanEnd(span)
-        when (span) {
-            is AbsoluteSizeSpan -> addStyle(SpanStyle(fontSize = span.size.sp), start, end)
-            is ForegroundColorSpan -> addStyle(SpanStyle(color = Color(span.foregroundColor)), start, end)
-            is RelativeSizeSpan -> {
-                val defaultSize = 12
-                addStyle(SpanStyle(fontSize = (span.sizeChange * defaultSize).sp), start, end)
-            }
-            is StyleSpan -> when (span.style) {
-                Typeface.BOLD -> addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
-                Typeface.ITALIC -> addStyle(SpanStyle(fontStyle = FontStyle.Italic), start, end)
-                Typeface.BOLD_ITALIC -> addStyle(
-                    SpanStyle(fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic),
-                    start,
-                    end,
-                )
-            }
-            is UnderlineSpan -> addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
         }
     }
 }
