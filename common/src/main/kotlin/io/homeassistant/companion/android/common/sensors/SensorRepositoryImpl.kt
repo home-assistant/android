@@ -115,7 +115,7 @@ internal class SensorRepositoryImpl @Inject constructor(
         initialValue: String,
     ): String = settingForUpdate(sensorId, settingName)?.let {
         dao.getOrInitializeSettingValue(it, initialValue)
-    }.orEmpty()
+    } ?: initialValue
 
     override suspend fun removeSetting(sensorId: String, settingName: String) = dao.removeSetting(sensorId, settingName)
     override suspend fun removeSettings(sensorId: String, settingNames: List<String>) =

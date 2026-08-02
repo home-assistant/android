@@ -364,6 +364,17 @@ class SensorRepositoryImplTest {
     }
 
     @Test
+    fun `Given missing setting declaration when initializing setting then fails fast and returns initial value`() = runTest {
+        var throwableCaptured: Throwable? = null
+        FailFast.setHandler { throwable, _ -> throwableCaptured = throwable }
+
+        val result = repository.getOrInitializeSettingValue("last_update", "unknown", "generated")
+
+        assertNotNull(throwableCaptured)
+        assertEquals("generated", result)
+    }
+
+    @Test
     fun `Given declaration-only list setting when updating value then preserves declaration metadata`() = runTest {
         val listSetting = SensorManager.BasicSensor.Setting(
             name = "list_setting",
