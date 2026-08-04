@@ -199,7 +199,7 @@ class FrontendScreenImprovScreenshotTest {
                 improvUiState = improvUiState,
             ),
             pendingPermissionRequest = pendingPermissionRequest,
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},

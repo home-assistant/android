@@ -10,9 +10,10 @@ import android.webkit.ClientCertRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.VisibleForTesting
+import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
+import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import java.lang.ref.WeakReference
-import java.security.PrivateKey
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import kotlinx.coroutines.CoroutineScope
@@ -27,7 +28,10 @@ import timber.log.Timber
  * we don't want the webview code in the wear app.
  */
 
-open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) : WebViewClient() {
+open class TLSWebViewClient(
+    private val keyChainRepository: KeyChainRepository,
+    private val clientCertProvider: ClientCertProvider,
+) : WebViewClient() {
     var isTLSClientAuthNeeded = false
         @VisibleForTesting set
 
@@ -36,9 +40,6 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
 
     var isCertificateChainValid = false
         @VisibleForTesting set
-
-    private var key: PrivateKey? = null
-    private var chain: Array<X509Certificate>? = null
 
     private fun getActivity(context: Context?): Activity? {
         if (context == null) {
@@ -54,29 +55,19 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
         // Let the WebViewClient know the endpoint requires TLS Client Auth
         isTLSClientAuthNeeded = true
 
-        // Aim to obtain the private key for the whole lifecycle
         val activity = getActivity(view.context)
-        if (activity != null) {
-            // If the key is available, process the request
-            if (key != null && chain != null) {
-                request.proceed(key, chain)
-            } else {
-                // Get the key and the chain from the repo (if the user previously chose)
-                key = keyChainRepository.getPrivateKey()
-                chain = keyChainRepository.getCertificateChain()
-
-                if (key != null && chain != null) {
-                    checkChainValidity()
-                    request.proceed(key, chain)
-                } else {
-                    // If no key is available, then the user must be prompt for a key
-                    // The whole operation is wrapped in the selectPrivateKey method but caution as it must occurs outside of the main thread
-                    // see: https://developer.android.com/reference/android/security/KeyChain#getPrivateKey(android.content.Context,%20java.lang.String)
-                    selectClientCert(activity, request)
-                }
-            }
-        } else {
+        if (activity == null) {
             request.ignore()
+            return
+        }
+
+        val certificate = clientCertProvider.certificate
+        if (certificate != null) {
+            checkChainValidity(certificate.chain)
+            request.proceed(certificate.privateKey, certificate.chain)
+        } else {
+            // If no certificate is available, then the user must be prompted for one
+            selectClientCert(activity, request)
         }
     }
 
@@ -85,15 +76,13 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
         try {
             KeyChain.choosePrivateKeyAlias(
                 activity,
-                SafeKeyChainAliasCallback(keyChainRepository, activity.applicationContext) { key, chain ->
-                    if (key == null || chain == null) {
+                SafeKeyChainAliasCallback(keyChainRepository) { certificate ->
+                    if (certificate == null) {
                         hasUserDeniedAccess = true
                         request.ignore()
                     } else {
-                        checkChainValidity()
-                        this.key = key
-                        this.chain = chain
-                        request.proceed(key, chain)
+                        checkChainValidity(certificate.chain)
+                        request.proceed(certificate.privateKey, certificate.chain)
                     }
                 },
                 request.keyTypes,
@@ -111,15 +100,13 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
         }
     }
 
-    private fun checkChainValidity() {
-        if (chain != null) {
-            // Ensure the whole certificate chain is valid
-            isCertificateChainValid = true
-            try {
-                chain?.forEach { it.checkValidity() }
-            } catch (ex: CertificateException) {
-                isCertificateChainValid = false
-            }
+    private fun checkChainValidity(chain: Array<X509Certificate>) {
+        // Ensure the whole certificate chain is valid
+        isCertificateChainValid = try {
+            chain.forEach { it.checkValidity() }
+            true
+        } catch (ex: CertificateException) {
+            false
         }
     }
 }
@@ -133,29 +120,25 @@ open class TLSWebViewClient(private var keyChainRepository: KeyChainRepository) 
  *
  * If the consumer (e.g., WebView) is destroyed before the user selects a key,
  * the [WeakReference] will allow it to be garbage collected, and the result will not be
- * delivered to the (now-gone) consumer. The user's selection is intended to be
- * handled independently by [KeyChainRepository.load] within its coroutine scope,
- * ensuring the choice is persisted even if the initial UI component is gone.
+ * delivered to the (now-gone) consumer. The user's selection is still persisted through
+ * [KeyChainRepository.select] within this callback's coroutine scope, ensuring the choice
+ * survives even if the initial UI component is gone.
  */
 private class SafeKeyChainAliasCallback(
-    private var keyChainRepository: KeyChainRepository,
-    context: Context,
-    onResult: (key: PrivateKey?, chain: Array<X509Certificate>?) -> Unit,
+    private val keyChainRepository: KeyChainRepository,
+    onResult: (certificate: ClientCertificate?) -> Unit,
 ) : KeyChainAliasCallback {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
-    private val context = context.applicationContext
     private val onResult = WeakReference(onResult)
 
     override fun alias(alias: String?) {
         if (alias != null) {
             ioScope.launch {
-                keyChainRepository.load(context, alias)
-                val key = keyChainRepository.getPrivateKey()
-                val chain = keyChainRepository.getCertificateChain()
-                onResult.get()?.invoke(key, chain)
+                val certificate = keyChainRepository.select(alias)
+                onResult.get()?.invoke(certificate)
             }
         } else {
-            onResult.get()?.invoke(null, null)
+            onResult.get()?.invoke(null)
         }
     }
 }
