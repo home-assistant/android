@@ -35,9 +35,9 @@ import timber.log.Timber
 class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEntity, CameraWidgetDao>() {
 
     companion object {
-        fun newInstance(context: Context, entityId: String): Intent {
+        fun newInstance(context: Context, entityId: String? = null): Intent {
             return Intent(context, CameraWidgetConfigureActivity::class.java).apply {
-                putExtra(FOR_ENTITY, entityId)
+                entityId?.let { putExtra(FOR_ENTITY, it) }
                 putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }

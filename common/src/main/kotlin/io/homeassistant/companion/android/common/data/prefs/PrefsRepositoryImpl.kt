@@ -39,6 +39,7 @@ private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
 private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
 private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
+private const val PREF_LAST_SEEN_CHANGELOG_VERSION = "last_seen_changelog_version"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
@@ -383,6 +384,18 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_CHANGE_LOG_POPUP_ENABLED, enabled)
+    }
+
+    override suspend fun wasAppUpdatedSinceChangelogSeen(currentVersionCode: Int): Boolean {
+        val lastSeenVersionCode = localStorage().getInt(PREF_LAST_SEEN_CHANGELOG_VERSION) ?: run {
+            markChangelogSeen(currentVersionCode)
+            return false
+        }
+        return lastSeenVersionCode < currentVersionCode
+    }
+
+    override suspend fun markChangelogSeen(currentVersionCode: Int) {
+        localStorage().putInt(PREF_LAST_SEEN_CHANGELOG_VERSION, currentVersionCode)
     }
 
     override suspend fun removeServer(serverId: Int) {
