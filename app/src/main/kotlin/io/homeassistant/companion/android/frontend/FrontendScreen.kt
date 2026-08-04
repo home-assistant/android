@@ -177,7 +177,7 @@ internal fun FrontendScreen(
     FrontendScreenContent(
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
-        webViewClient = viewModel.webViewClient,
+        getWebViewClient = viewModel::getWebViewClient,
         webChromeClient = webChromeClient,
         customView = customView,
         frontendJsCallback = viewModel.frontendJsCallback,
@@ -222,7 +222,7 @@ internal fun FrontendScreen(
 @Composable
 internal fun FrontendScreenContent(
     viewState: FrontendViewState,
-    webViewClient: WebViewClient,
+    getWebViewClient: suspend () -> WebViewClient,
     webChromeClient: WebChromeClient,
     frontendJsCallback: FrontendJsCallback,
     onBlockInsecureRetry: () -> Unit,
@@ -276,6 +276,7 @@ internal fun FrontendScreenContent(
     FrontendScreenEffects(
         webView = webView,
         url = viewState.url,
+        getWebViewClient = getWebViewClient,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
         pendingFileChooser = pendingFileChooser,
@@ -297,7 +298,6 @@ internal fun FrontendScreenContent(
         // Always render WebView at base layer
         SafeHAWebView(
             onWebViewCreated = { webView = it },
-            webViewClient = webViewClient,
             webChromeClient = webChromeClient,
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
@@ -360,6 +360,7 @@ private fun FrontendScreenHandlers(pendingPermissionRequest: PermissionRequest?,
 private fun FrontendScreenEffects(
     webView: WebView?,
     url: String,
+    getWebViewClient: suspend () -> WebViewClient,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
     pendingFileChooser: FileChooserRequest?,
@@ -391,6 +392,7 @@ private fun FrontendScreenEffects(
     WebViewEffects(
         webView = webView,
         url = url,
+        getWebViewClient = getWebViewClient,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
@@ -584,7 +586,6 @@ private fun ErrorOverlay(
 @Composable
 private fun SafeHAWebView(
     onWebViewCreated: (WebView) -> Unit,
-    webViewClient: WebViewClient,
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
     autoPlayVideoEnabled: Boolean,
@@ -632,7 +633,6 @@ private fun SafeHAWebView(
                     .background(Color.Transparent),
                 configure = {
                     configureForFrontend(
-                        webViewClient = webViewClient,
                         webChromeClient = webChromeClient,
                         onWebViewCreated = onWebViewCreated,
                         onDownloadRequested = onDownloadRequested,
@@ -679,7 +679,6 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
  */
 @SuppressLint("ClickableViewAccessibility")
 private fun WebView.configureForFrontend(
-    webViewClient: WebViewClient,
     webChromeClient: WebChromeClient?,
     onWebViewCreated: (WebView) -> Unit,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit,
@@ -687,8 +686,6 @@ private fun WebView.configureForFrontend(
     autoPlayVideoEnabled: Boolean,
 ) {
     onWebViewCreated(this)
-
-    this.webViewClient = webViewClient
 
     webChromeClient?.let { this.webChromeClient = it }
 
@@ -734,12 +731,14 @@ private fun WebView.configureForFrontend(
 private fun WebViewEffects(
     webView: WebView?,
     url: String,
+    getWebViewClient: suspend () -> WebViewClient,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
     autoPlayVideoEnabled: Boolean,
 ) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
+            webView.webViewClient = getWebViewClient()
             frontendJsCallback.attachToWebView(webView)
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
@@ -973,7 +972,7 @@ private fun FrontendScreenLoadingPreview() {
                 serverId = 1,
                 url = "https://example.com",
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},
@@ -1004,7 +1003,7 @@ private fun FrontendScreenErrorPreview() {
                     rawErrorType = "HostLookupError",
                 ),
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},
@@ -1031,7 +1030,7 @@ private fun FrontendScreenInsecurePreview() {
                 missingHomeSetup = true,
                 missingLocation = true,
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},
@@ -1056,7 +1055,7 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
             viewState = FrontendViewState.SecurityLevelRequired(
                 serverId = 1,
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},

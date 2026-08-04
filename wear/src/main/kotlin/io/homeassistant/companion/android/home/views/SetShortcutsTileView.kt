@@ -60,7 +60,7 @@ fun SetShortcutsTileView(shortcutEntities: List<SimplifiedEntity>, onShortcutEnt
                     },
                     secondaryLabel = {
                         Text(
-                            text = shortcutEntities[index].friendlyName,
+                            text = shortcutEntities[index].name,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )

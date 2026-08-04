@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.integration.display
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.LayoutDirection
 import com.mikepenz.iconics.typeface.IIcon
+import io.homeassistant.companion.android.common.data.integration.ClimateControls
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityCoordinates
 import io.homeassistant.companion.android.common.data.integration.EntityPosition
@@ -12,6 +13,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.integration.LightControls
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
+import io.homeassistant.companion.android.common.data.integration.getClimateControls
 import io.homeassistant.companion.android.common.data.integration.getColorTemperature
 import io.homeassistant.companion.android.common.data.integration.getCoordinates
 import io.homeassistant.companion.android.common.data.integration.getCoverPosition
@@ -90,6 +92,9 @@ interface EntityDisplay {
     /** Controls of the entity, null when it is not a light. */
     val lightControls: LightControls?
 
+    /** Controls of the entity, null when it is not a climate one. */
+    val climateControls: ClimateControls?
+
     /**
      * When the state of the entity last changed.
      *
@@ -127,6 +132,7 @@ data class EntityDisplayWithoutContext(
     override val color: Int? = null,
     override val fanControls: FanControls? = null,
     override val lightControls: LightControls? = null,
+    override val climateControls: ClimateControls? = null,
     override val lastChanged: LocalDateTime? = null,
     override val lastUpdated: LocalDateTime? = null,
     override val isHidden: Boolean = false,
@@ -163,6 +169,7 @@ data class EntityDisplayWithoutContext(
         color = entity.getLightColor(),
         fanControls = entity.fanControls(),
         lightControls = entity.lightControls(),
+        climateControls = entity.getClimateControls(),
         lastChanged = entity.lastChanged,
         lastUpdated = entity.lastUpdated,
         isHidden = isHidden,

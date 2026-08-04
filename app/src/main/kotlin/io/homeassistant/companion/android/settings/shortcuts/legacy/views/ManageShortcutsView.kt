@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -43,6 +44,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget.Companion.toRawPath
+import io.homeassistant.companion.android.launch.link.isValidFrontendRawPath
 import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
@@ -268,19 +270,29 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
     }
 
     if (viewModel.shortcuts[i].type.value == "lovelace") {
+        val path = viewModel.shortcuts[i].path.value
+        val pathValid = path.isEmpty() || isValidFrontendRawPath(path)
         TextField(
-            value = viewModel.shortcuts[i].path.value,
+            value = path,
             onValueChange = { viewModel.shortcuts[i].path.value = it },
             label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
+            isError = !pathValid,
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Done,
                 autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Uri,
             ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
+            modifier = Modifier.fillMaxWidth(),
         )
+        if (!pathValid) {
+            Text(
+                text = stringResource(id = R.string.shortcut_path_invalid),
+                color = MaterialTheme.colors.error,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        Spacer(modifier = Modifier.padding(bottom = 16.dp))
     } else {
         // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
         HATheme {
@@ -326,6 +338,7 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             shortcut.label.value.isNotEmpty() &&
             shortcut.desc.value.isNotEmpty() &&
             shortcut.path.value.isNotEmpty() &&
+            isValidFrontendRawPath(shortcut.path.value) &&
             viewModel.servers.any { it.id == shortcut.serverId.value },
     ) {
         Text(

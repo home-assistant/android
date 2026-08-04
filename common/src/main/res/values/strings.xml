@@ -832,6 +832,7 @@
     <string name="shortcut_pinned_list">Select a pinned shortcut ID to edit</string>
     <string name="shortcut_pinned_note">Make sure to change the ID below for each new shortcut you want to add otherwise the existing ID will be updated. There are no limits to the amount of pinned shortcuts you can create.</string>
     <string name="shortcut_type">Select shortcut type</string>
+    <string name="shortcut_path_invalid">The path contains characters that are not allowed in a URL</string>
     <string name="shortcut_updated">Shortcut updated</string>
     <string name="shortcut">Shortcut</string>
     <string name="shortcuts_choose">Choose shortcuts</string>

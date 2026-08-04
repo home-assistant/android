@@ -18,8 +18,6 @@ import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
-import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
@@ -62,10 +60,6 @@ open class HomeAssistantApplication : Application() {
 
     @Inject
     lateinit var prefsRepository: PrefsRepository
-
-    @Inject
-    @NamedKeyChain
-    lateinit var keyChainRepository: KeyChainRepository
 
     @Inject
     lateinit var okHttpClientProvider: SuspendProvider<OkHttpClient>
@@ -146,10 +140,6 @@ open class HomeAssistantApplication : Application() {
             },
             ContextCompat.RECEIVER_EXPORTED,
         )
-
-        ioScope.launch {
-            keyChainRepository.load(applicationContext)
-        }
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
