@@ -51,4 +51,4 @@ internal data class TemplateWidgetConfigureState(
         get() = textSize.toFloatOrNull()?.takeIf { it.isFinite() && it > 0 }
 }
 
-internal const val DEFAULT_TEXT_SIZE = "12"
+private const val DEFAULT_TEXT_SIZE = "12"

@@ -82,35 +82,6 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
         }
     }
 
-    /**
-     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
-     */
-    private suspend fun restoreConfiguration() {
-        val widget = templateWidgetDao.get(widgetId)
-
-        if (widget == null) {
-            _state.update {
-                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
-            }
-            return
-        }
-
-        _state.update {
-            it.copy(
-                selectedServerId = widget.serverId,
-                template = widget.template,
-                textSize = widget.textSize.toInt().toString(),
-                selectedBackgroundType = widget.backgroundType,
-                textColorHex = widget.textColor,
-                isUpdateWidget = true,
-            )
-        }
-
-        if (widget.template.isNotBlank()) {
-            renderTemplate(widget.template, widget.serverId)
-        }
-    }
-
     fun onServerSelected(serverId: Int) {
         if (serverId == _state.value.selectedServerId) return
 
@@ -141,33 +112,6 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
 
     internal fun onTextColorSelected(colorHex: String) {
         _state.update { it.copy(textColorHex = colorHex) }
-    }
-
-    /** Renders [template] against [serverId], cancelling any render already in flight. */
-    private fun renderTemplate(template: String, serverId: Int) {
-        renderJob?.cancel()
-        // Marked before launching so `isActionEnabled` can't stay true on a stale render while
-        // this one is in flight (see `TemplateWidgetConfigureState.isActionEnabled`).
-        _state.update { it.copy(isRenderingPreview = true) }
-        renderJob = viewModelScope.launch {
-            val preview = try {
-                val rendered = serverManager.integrationRepository(serverId).renderTemplate(template, mapOf())
-                TemplatePreview.Rendered(rendered.toString())
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Exception while rendering template")
-                // A SerializationException suggests that the rendered result is not a String (= error)
-                TemplatePreview.Error(
-                    if (e.cause is SerializationException) {
-                        commonR.string.template_error
-                    } else {
-                        commonR.string.template_render_error
-                    },
-                )
-            }
-            _state.update { it.copy(preview = preview, isRenderingPreview = false) }
-        }
     }
 
     /**
@@ -275,6 +219,62 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
             _errors.emit(commonR.string.widget_creation_error)
         }
         return requestAccepted
+    }
+
+    /**
+     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
+     */
+    private suspend fun restoreConfiguration() {
+        val widget = templateWidgetDao.get(widgetId)
+
+        if (widget == null) {
+            _state.update {
+                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
+            }
+            return
+        }
+
+        _state.update {
+            it.copy(
+                selectedServerId = widget.serverId,
+                template = widget.template,
+                textSize = widget.textSize.toInt().toString(),
+                selectedBackgroundType = widget.backgroundType,
+                textColorHex = widget.textColor,
+                isUpdateWidget = true,
+            )
+        }
+
+        if (widget.template.isNotBlank()) {
+            renderTemplate(widget.template, widget.serverId)
+        }
+    }
+
+    /** Renders [template] against [serverId], cancelling any render already in flight. */
+    private fun renderTemplate(template: String, serverId: Int) {
+        renderJob?.cancel()
+        // Marked before launching so `isActionEnabled` can't stay true on a stale render while
+        // this one is in flight (see `TemplateWidgetConfigureState.isActionEnabled`).
+        _state.update { it.copy(isRenderingPreview = true) }
+        renderJob = viewModelScope.launch {
+            val preview = try {
+                val rendered = serverManager.integrationRepository(serverId).renderTemplate(template, mapOf())
+                TemplatePreview.Rendered(rendered.toString())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Exception while rendering template")
+                // A SerializationException suggests that the rendered result is not a String (= error)
+                TemplatePreview.Error(
+                    if (e.cause is SerializationException) {
+                        commonR.string.template_error
+                    } else {
+                        commonR.string.template_render_error
+                    },
+                )
+            }
+            _state.update { it.copy(preview = preview, isRenderingPreview = false) }
+        }
     }
 
     @AssistedFactory
