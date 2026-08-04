@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.template
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,7 +32,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -41,6 +41,8 @@ import io.homeassistant.companion.android.common.compose.composable.HASettingsCa
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HASize
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
@@ -136,18 +138,12 @@ internal fun TemplateWidgetConfigureContent(
                 preview = state.preview,
                 onTemplateChanged = onTemplateChanged,
             )
-            HATextField(
-                value = state.textSize,
-                onValueChange = onTextSizeChanged,
-                label = { Text(stringResource(commonR.string.widget_text_size_label)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                maxLines = 1,
-                modifier = Modifier.formControlWidth(),
-            )
             AppearanceSection(
+                textSize = state.textSize,
                 selectedBackgroundType = state.selectedBackgroundType,
                 dynamicColorAvailable = state.dynamicColorAvailable,
                 textColorHex = state.textColorHex,
+                onTextSizeChanged = onTextSizeChanged,
                 onBackgroundTypeSelected = onBackgroundTypeSelected,
                 onTextColorSelected = onTextColorSelected,
             )
@@ -177,24 +173,25 @@ private fun ServerSelector(
         label = stringResource(commonR.string.server_select),
         placeholder = stringResource(commonR.string.server_select),
         modifier = Modifier.formControlWidth(),
-        enabled = items.isNotEmpty(),
     )
 }
 
 @Composable
-private fun TemplateSection(template: String, preview: TemplatePreview, onTemplateChanged: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
-        HATextField(
-            value = template,
-            onValueChange = onTemplateChanged,
-            label = { Text(stringResource(commonR.string.template)) },
-            placeholder = { Text(stringResource(commonR.string.template_widget_default)) },
-            minLines = TEMPLATE_FIELD_MIN_LINES,
-            modifier = Modifier.formControlWidth(),
-        )
+private fun ColumnScope.TemplateSection(
+    template: String,
+    preview: TemplatePreview,
+    onTemplateChanged: (String) -> Unit,
+) {
+    HATextField(
+        value = template,
+        onValueChange = onTemplateChanged,
+        label = { Text(stringResource(commonR.string.template)) },
+        placeholder = { Text(stringResource(commonR.string.template_widget_default)) },
+        minLines = TEMPLATE_FIELD_MIN_LINES,
+        modifier = Modifier.formControlWidth(),
+    )
 
-        TemplatePreviewCard(preview = preview)
-    }
+    TemplatePreviewCard(preview = preview)
 }
 
 /** Shows [preview] labelled as such, so it doesn't get mistaken for another input field. */
@@ -212,14 +209,19 @@ private fun TemplatePreviewCard(preview: TemplatePreview) {
                     imageVector = Icons.Default.Visibility,
                     contentDescription = null,
                     tint = colorScheme.colorTextSecondary,
-                    modifier = Modifier.size(HAPreviewIconSize),
+                    modifier = Modifier.size(HASize.M),
                 )
                 Text(
                     text = stringResource(commonR.string.template_preview_label),
+                    style = HATextStyle.BodyMedium,
                     color = colorScheme.colorTextSecondary,
                 )
             }
-            Text(text = preview.toAnnotatedString(), color = colorScheme.colorTextPrimary)
+            Text(
+                text = preview.toAnnotatedString(),
+                style = HATextStyle.BodyMedium,
+                color = colorScheme.colorTextPrimary,
+            )
         }
     }
 }
@@ -232,13 +234,23 @@ private fun TemplatePreview.toAnnotatedString(): AnnotatedString = when (this) {
 }
 
 @Composable
-private fun AppearanceSection(
+private fun ColumnScope.AppearanceSection(
+    textSize: String,
     selectedBackgroundType: WidgetBackgroundType,
     dynamicColorAvailable: Boolean,
     textColorHex: String?,
+    onTextSizeChanged: (String) -> Unit,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
     onTextColorSelected: (colorHex: String) -> Unit,
 ) {
+    HATextField(
+        value = textSize,
+        onValueChange = onTextSizeChanged,
+        label = { Text(stringResource(commonR.string.widget_text_size_label)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        maxLines = 1,
+        modifier = Modifier.formControlWidth(),
+    )
     WidgetBackgroundTypeDropdown(
         selected = selectedBackgroundType,
         dynamicColorAvailable = dynamicColorAvailable,
@@ -264,7 +276,6 @@ private fun Modifier.formControlWidth(): Modifier = this
     .fillMaxWidth()
 
 private const val TEMPLATE_FIELD_MIN_LINES = 3
-private val HAPreviewIconSize = 16.dp
 
 @Preview
 @Composable

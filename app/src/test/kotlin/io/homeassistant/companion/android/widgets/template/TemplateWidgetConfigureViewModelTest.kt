@@ -75,6 +75,7 @@ class TemplateWidgetConfigureViewModelTest {
 
         assertEquals(TemplatePreview.Empty, viewModel.state.value.preview)
         assertFalse(viewModel.state.value.isActionEnabled)
+        coVerify(exactly = 0) { integrationRepository.renderTemplate(any(), any()) }
     }
 
     @Test
@@ -99,6 +100,18 @@ class TemplateWidgetConfigureViewModelTest {
 
         assertEquals(TemplatePreview.Rendered("2"), viewModel.state.value.preview)
         assertTrue(viewModel.state.value.isActionEnabled)
+        coVerify(exactly = 1) { integrationRepository.renderTemplate("{{ 1 + 1 }}", emptyMap()) }
+    }
+
+    @Test
+    fun `Given a template cleared when changed then no render is invoked`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onTemplateChanged("")
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { integrationRepository.renderTemplate(any(), any()) }
     }
 
     @Test
@@ -121,6 +134,10 @@ class TemplateWidgetConfigureViewModelTest {
 
         assertEquals(TemplatePreview.Rendered("2"), viewModel.state.value.preview)
         assertTrue(viewModel.state.value.isActionEnabled)
+        // The stale "1" render must not be re-collected once superseded, i.e. it was cancelled
+        // rather than left to complete and race with the new one.
+        coVerify(exactly = 1) { integrationRepository.renderTemplate("{{ 1 }}", emptyMap()) }
+        coVerify(exactly = 1) { integrationRepository.renderTemplate("{{ 2 }}", emptyMap()) }
     }
 
     @Test
@@ -217,9 +234,7 @@ class TemplateWidgetConfigureViewModelTest {
         backgroundType = WidgetBackgroundType.TRANSPARENT,
         textColor = BLACK_HEX,
     )
-
-    companion object {
-        /** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
-        private const val BLACK_HEX = "#3A3A3A"
-    }
 }
+
+/** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
+private const val BLACK_HEX = "#3A3A3A"
