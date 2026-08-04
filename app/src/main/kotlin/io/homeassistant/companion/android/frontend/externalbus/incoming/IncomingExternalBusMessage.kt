@@ -290,7 +290,7 @@ data class EntityAddToPayload(
  * The app is expected to run the commissioning flow.
  *
  * Will not be sent by the frontend when the device reports
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canCommissionMatter] = `false`.
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canCommissionMatter] = `false`.
  */
 @Serializable
 @SerialName("matter/commission")
@@ -305,7 +305,7 @@ data class MatterCommissionMessage(override val id: Int? = null) : IncomingExter
  * [id] (success or failure).
  *
  * Will not be sent by the frontend when the device reports
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canImportThreadCredentials] = `false`.
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canImportThreadCredentials] = `false`.
  */
 @Serializable
 @SerialName("thread/import_credentials")

@@ -5,8 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -32,9 +34,11 @@ import io.homeassistant.companion.android.common.compose.composable.ButtonVarian
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.developer.catalog.HAComposeCatalogActivity
 import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
+import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import kotlinx.coroutines.launch
@@ -68,6 +72,7 @@ private fun DevPlayGroundScreen(context: Context? = null) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showBarcodeScanner by remember { mutableStateOf(false) }
+    var showLoading by remember { mutableStateOf(false) }
 
     HATheme {
         Scaffold(
@@ -166,6 +171,12 @@ private fun DevPlayGroundScreen(context: Context? = null) {
                     },
                     variant = ButtonVariant.WARNING,
                 )
+                HAFilledButton(
+                    text = "Show loading",
+                    onClick = {
+                        showLoading = true
+                    },
+                )
             }
             if (showBarcodeScanner) {
                 BarcodeScanner(
@@ -179,6 +190,17 @@ private fun DevPlayGroundScreen(context: Context? = null) {
                         showBarcodeScanner = false
                     },
                 )
+            }
+            if (showLoading) {
+                LoadingScreen(
+                    modifier = Modifier.background(
+                        LocalHAColorScheme.current.colorSurfaceDefault,
+                    ),
+                    showBrand = true,
+                )
+                BackHandler {
+                    showLoading = false
+                }
             }
         }
     }

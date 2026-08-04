@@ -9,7 +9,10 @@ import com.wifi.improv.ImprovManagerCallback
  * Exists so the repository does not have to hold an Android `Context` — the factory closes over
  * the application context at the Hilt provision site, leaving the repository fully unit-testable
  * with a mock factory.
+ *
+ * Returns `null` on devices without a Bluetooth adapter: [ImprovManager] dereferences the adapter
+ * at construction and would crash.
  */
 fun interface ImprovManagerFactory {
-    fun create(callback: ImprovManagerCallback): ImprovManager
+    fun create(callback: ImprovManagerCallback): ImprovManager?
 }
