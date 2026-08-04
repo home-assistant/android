@@ -13,9 +13,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
@@ -29,7 +27,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 @Composable
 fun SetThermostatTileView(
     tile: ThermostatTile?,
-    entities: List<Entity>?,
+    entityItem: EntityDisplay?,
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit,
     onNameEnabled: (Int, Boolean) -> Unit,
@@ -40,10 +38,7 @@ fun SetThermostatTileView(
                 ListHeader(commonR.string.thermostat_tile)
             }
             item {
-                val entity = tile?.entityId?.let { tileEntityId ->
-                    entities?.firstOrNull { it.entityId == tileEntityId }
-                }
-                val icon = entity?.getIcon() ?: CommunityMaterial.Icon3.cmd_thermostat
+                val icon = entityItem?.icon ?: CommunityMaterial.Icon3.cmd_thermostat
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
@@ -59,7 +54,7 @@ fun SetThermostatTileView(
                         )
                     },
                     secondaryLabel = {
-                        Text(entity?.friendlyName ?: tile?.entityId ?: "")
+                        Text(entityItem?.name ?: tile?.entityId ?: "")
                     },
                     onClick = onSelectEntity,
                 )
