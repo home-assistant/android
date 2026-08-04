@@ -85,12 +85,13 @@ private val previewEntityWidgetConfigureState = EntityWidgetConfigureState(
             EntityDisplayWithContext(
                 EntityDisplayWithoutContext(
                     previewEntity1,
+                    name = "Preview Entity 1",
                 ),
             ),
         ),
     ),
     selectedEntityId = previewEntity1.entityId,
-    availableAttributes = listOf("brightness", "friendly_name"),
+    availableAttributes = listOf("brightness", "power"),
     selectedAttributeIds = listOf("brightness"),
     label = "Office light",
     textSize = "30",
