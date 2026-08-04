@@ -75,6 +75,30 @@ class TemplateWidgetConfigureScreenshotTest {
             )
         }
     }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `TemplateWidgetConfigureContent single server`() {
+        HAThemeForPreview {
+            TemplateWidgetConfigureContent(
+                state = previewTemplateWidgetConfigureState.copy(
+                    serversDropdownItems = listOf(
+                        HADropdownItem(key = previewServer1.id, label = previewServer1.friendlyName),
+                    ),
+                ),
+                snackbarHostState = remember { SnackbarHostState() },
+                canNavigateBack = false,
+                onNavigate = {},
+                onServerSelected = {},
+                onTemplateChanged = {},
+                onTextSizeChanged = {},
+                onBackgroundTypeSelected = {},
+                onTextColorSelected = {},
+                onActionClick = {},
+            )
+        }
+    }
 }
 
 private val previewTemplateWidgetConfigureState = TemplateWidgetConfigureState(
@@ -82,8 +106,8 @@ private val previewTemplateWidgetConfigureState = TemplateWidgetConfigureState(
     serversDropdownItems = listOf(previewServer1, previewServer2).map {
         HADropdownItem(key = it.id, label = it.friendlyName)
     },
-    template = "{{ states('sensor.example') }}",
-    preview = TemplatePreview.Rendered("42"),
+    template = "{{ states('sensor.temperature') }}\n{{ states('sensor.humidity') }}",
+    preview = TemplatePreview.Rendered("<font color=\"#4CAF50\">22.5°C</font>\nHumidity: <b>45%</b>"),
     selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
     dynamicColorAvailable = true,
 )

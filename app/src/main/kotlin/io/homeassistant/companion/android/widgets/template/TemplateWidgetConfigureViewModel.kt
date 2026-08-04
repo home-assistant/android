@@ -139,29 +139,6 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
     }
 
     /**
-     * Builds the widget to persist from the current configuration, or null when it is incomplete.
-     */
-    internal suspend fun getPendingDaoEntity(): TemplateWidgetEntity? {
-        val current = _state.value
-        if (!current.isActionEnabled) {
-            Timber.e("Cannot build the widget, the current configuration is invalid")
-            return null
-        }
-
-        return TemplateWidgetEntity(
-            id = widgetId,
-            serverId = current.selectedServerId,
-            template = current.template,
-            textSize = current.textSizeOrDefault,
-            lastUpdate = templateWidgetDao.get(widgetId)?.lastUpdate ?: "Loading",
-            backgroundType = current.selectedBackgroundType,
-            textColor = current.textColorHex.takeIf {
-                current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
-            },
-        )
-    }
-
-    /**
      * Asks the launcher to pin the configured widget and suspends until it is added, reporting
      * through [errors] and returning false when the widget cannot be requested at all.
      */
@@ -275,6 +252,29 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
             }
             _state.update { it.copy(preview = preview, isRenderingPreview = false) }
         }
+    }
+
+    /**
+     * Builds the widget to persist from the current configuration, or null when it is incomplete.
+     */
+    private suspend fun getPendingDaoEntity(): TemplateWidgetEntity? {
+        val current = _state.value
+        if (!current.isActionEnabled) {
+            Timber.e("Cannot build the widget, the current configuration is invalid")
+            return null
+        }
+
+        return TemplateWidgetEntity(
+            id = widgetId,
+            serverId = current.selectedServerId,
+            template = current.template,
+            textSize = current.textSizeOrDefault,
+            lastUpdate = templateWidgetDao.get(widgetId)?.lastUpdate ?: "Loading",
+            backgroundType = current.selectedBackgroundType,
+            textColor = current.textColorHex.takeIf {
+                current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
+            },
+        )
     }
 
     @AssistedFactory

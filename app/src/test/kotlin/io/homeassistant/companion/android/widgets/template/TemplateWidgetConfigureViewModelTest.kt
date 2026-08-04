@@ -169,6 +169,8 @@ class TemplateWidgetConfigureViewModelTest {
 
         assertEquals(TemplatePreview.Empty, viewModel.state.value.preview)
         assertFalse(viewModel.state.value.isActionEnabled)
+        // Only the earlier "{{ 1 }}" render happened; clearing the template didn't trigger another.
+        coVerify(exactly = 1) { integrationRepository.renderTemplate(any(), any()) }
     }
 
     @Test
@@ -183,6 +185,8 @@ class TemplateWidgetConfigureViewModelTest {
 
         assertEquals(TemplatePreview.Empty, viewModel.state.value.preview)
         assertFalse(viewModel.state.value.isActionEnabled)
+        // Only the earlier "{{ 1 }}" render happened; the whitespace-only change didn't trigger another.
+        coVerify(exactly = 1) { integrationRepository.renderTemplate(any(), any()) }
     }
 
     @Test
