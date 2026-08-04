@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.parseHtml
@@ -199,6 +200,8 @@ private fun TemplateSection(template: String, preview: TemplatePreview, onTempla
 /** Shows [preview] labelled as such, so it doesn't get mistaken for another input field. */
 @Composable
 private fun TemplatePreviewCard(preview: TemplatePreview) {
+    val colorScheme = LocalHAColorScheme.current
+
     HASettingsCard(modifier = Modifier.formControlWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
             Row(
@@ -208,11 +211,15 @@ private fun TemplatePreviewCard(preview: TemplatePreview) {
                 Icon(
                     imageVector = Icons.Default.Visibility,
                     contentDescription = null,
+                    tint = colorScheme.colorTextSecondary,
                     modifier = Modifier.size(HAPreviewIconSize),
                 )
-                Text(text = stringResource(commonR.string.template_preview_label))
+                Text(
+                    text = stringResource(commonR.string.template_preview_label),
+                    color = colorScheme.colorTextSecondary,
+                )
             }
-            Text(text = preview.toAnnotatedString())
+            Text(text = preview.toAnnotatedString(), color = colorScheme.colorTextPrimary)
         }
     }
 }
