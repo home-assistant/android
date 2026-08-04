@@ -39,13 +39,16 @@ internal data class TemplateWidgetConfigureState(
     // Guards against saving a template that hasn't been (re-)validated yet: without
     // `!isRenderingPreview`, editing an already-valid template would keep the action enabled
     // using the *previous* render's result while the new one is still in flight.
-    val isActionEnabled = preview is TemplatePreview.Rendered && !isRenderingPreview
+    val isActionEnabled = preview is TemplatePreview.Rendered && !isRenderingPreview && validTextSize != null
 
     @StringRes
     val actionButtonLabel = if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget
 
     val textSizeOrDefault: Float
-        get() = textSize.toFloatOrNull()?.takeIf { it.isFinite() && it > 0 } ?: DEFAULT_TEXT_SIZE.toFloat()
+        get() = validTextSize ?: DEFAULT_TEXT_SIZE.toFloat()
+
+    private val validTextSize: Float?
+        get() = textSize.toFloatOrNull()?.takeIf { it.isFinite() && it > 0 }
 }
 
 internal const val DEFAULT_TEXT_SIZE = "12"

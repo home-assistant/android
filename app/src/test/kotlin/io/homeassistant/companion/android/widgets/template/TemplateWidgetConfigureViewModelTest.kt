@@ -107,6 +107,20 @@ class TemplateWidgetConfigureViewModelTest {
     }
 
     @Test
+    fun `Given a rendered template with an emptied text size then the action is disabled`() = runTest {
+        coEvery { integrationRepository.renderTemplate("{{ 1 }}", emptyMap()) } returns "1"
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onTemplateChanged("{{ 1 }}")
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.isActionEnabled)
+
+        viewModel.onTextSizeChanged("")
+
+        assertFalse(viewModel.state.value.isActionEnabled)
+    }
+
+    @Test
     fun `Given a template cleared when changed then no render is invoked`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()

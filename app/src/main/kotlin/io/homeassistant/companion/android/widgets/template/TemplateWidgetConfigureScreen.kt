@@ -232,7 +232,9 @@ private fun TemplatePreviewCard(preview: TemplatePreview) {
 private fun TemplatePreview.toAnnotatedString(): AnnotatedString = when (this) {
     is TemplatePreview.Empty -> AnnotatedString(stringResource(commonR.string.empty_template))
     is TemplatePreview.Error -> AnnotatedString(stringResource(messageRes))
-    is TemplatePreview.Rendered -> parseHtml(text)
+    // Only the parsing itself is remembered: stringResource() above can't be called from within
+    // remember's calculation lambda since it disallows composable calls.
+    is TemplatePreview.Rendered -> remember(text) { parseHtml(text) }
 }
 
 @Composable
