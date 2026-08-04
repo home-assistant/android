@@ -248,18 +248,16 @@ class EntityWidgetConfigureViewModelTest {
         textColor = BLACK_HEX,
     )
 
-    companion object {
-        private fun displayStateOf(vararg items: EntityDisplayWithContext) = EntityDisplayState.Loaded(items.toList())
+    private fun createEntity(entityId: String, attributes: Map<String, Any?>) = Entity(
+        entityId = entityId,
+        state = "on",
+        attributes = attributes,
+        lastChanged = LocalDateTime.MIN,
+        lastUpdated = LocalDateTime.MIN,
+    )
 
-        /** Display name comes from the entity registry in production, so it is set explicitly here. */
-        private fun Entity.toDisplayItem(name: String) = EntityDisplayWithContext(EntityDisplayWithoutContext(this, name = name))
+    private fun displayStateOf(vararg items: EntityDisplayWithContext) = EntityDisplayState.Loaded(items.toList())
 
-        private fun createEntity(entityId: String, attributes: Map<String, Any?>) = Entity(
-            entityId = entityId,
-            state = "on",
-            attributes = attributes,
-            lastChanged = LocalDateTime.MIN,
-            lastUpdated = LocalDateTime.MIN,
-        )
-    }
+    /** Display name comes from the entity registry in production, so it is set explicitly here. */
+    private fun Entity.toDisplayItem(name: String) = EntityDisplayWithContext(EntityDisplayWithoutContext(this, name = name))
 }
