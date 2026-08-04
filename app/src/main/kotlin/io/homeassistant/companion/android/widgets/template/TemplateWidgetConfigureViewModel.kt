@@ -110,7 +110,7 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
         _state.update { it.copy(selectedBackgroundType = backgroundType) }
     }
 
-    internal fun onTextColorSelected(colorHex: String) {
+    fun onTextColorSelected(colorHex: String) {
         _state.update { it.copy(textColorHex = colorHex) }
     }
 
