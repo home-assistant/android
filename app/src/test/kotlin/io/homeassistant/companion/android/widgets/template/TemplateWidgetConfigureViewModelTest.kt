@@ -23,6 +23,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
+/** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
+private const val BLACK_HEX = "#3A3A3A"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class TemplateWidgetConfigureViewModelTest {
@@ -235,6 +238,3 @@ class TemplateWidgetConfigureViewModelTest {
         textColor = BLACK_HEX,
     )
 }
-
-/** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
-private const val BLACK_HEX = "#3A3A3A"

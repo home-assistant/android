@@ -54,6 +54,8 @@ import io.homeassistant.companion.android.widgets.WidgetBackgroundTypeDropdown
 import io.homeassistant.companion.android.widgets.WidgetTextColor
 import io.homeassistant.companion.android.widgets.WidgetTextColorDropdown
 
+private const val TEMPLATE_FIELD_MIN_LINES = 3
+
 /**
  * Configuration screen of the template widget, bound to its [TemplateWidgetConfigureViewModel].
  *
@@ -274,8 +276,6 @@ private fun ColumnScope.AppearanceSection(
 private fun Modifier.formControlWidth(): Modifier = this
     .widthIn(max = MaxButtonWidth)
     .fillMaxWidth()
-
-private const val TEMPLATE_FIELD_MIN_LINES = 3
 
 @Preview
 @Composable
