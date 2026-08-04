@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.RemoteException
-import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.color.DynamicColors
@@ -20,7 +19,6 @@ import io.homeassistant.companion.android.common.compose.composable.HADropdownIt
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
@@ -48,53 +46,6 @@ import timber.log.Timber
  * sure a reconfigured request replaces the previously registered extras.
  */
 private const val PIN_WIDGET_REQUEST_CODE = 0
-
-/**
- * Complete UI state for the Media Player Controls widget configuration screen.
- *
- * [availableEntities] are the media players that can still be added (the picker options, already
- * filtered to exclude the selection) and [selectedEntities] are the chosen players with their
- * resolved display information. Both are precomputed here so the UI never filters or resolves
- * names itself.
- */
-@Stable
-internal data class MediaPlayerControlsWidgetConfigureState(
-    val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
-    val serversDropdownItems: List<HADropdownItem<Int>> = emptyList(),
-    val selectedEntityIds: List<String> = emptyList(),
-    val entityDisplayState: EntityDisplayState<EntityDisplayWithContext> = EntityDisplayState.Loading,
-    val label: String = "",
-    val showVolume: Boolean = true,
-    val showSkip: Boolean = true,
-    val showSeek: Boolean = true,
-    val showSource: Boolean = true,
-    val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
-    val dynamicColorAvailable: Boolean = false,
-    val isUpdateWidget: Boolean = false,
-) {
-    val showServerSelector = serversDropdownItems.size > 1 ||
-        serversDropdownItems.none { it.key == selectedServerId }
-
-    val showConfiguration = selectedEntityIds.isNotEmpty()
-
-    val selectedEntities = (entityDisplayState as? EntityDisplayState.Loaded)?.let { state ->
-        selectedEntityIds.mapNotNull { state.entity(it) }
-    } ?: emptyList()
-
-    val availableEntities = if (entityDisplayState is EntityDisplayState.Loaded) {
-        entityDisplayState.copy(entitiesById = entityDisplayState.entitiesById - selectedEntityIds.toSet())
-    } else {
-        entityDisplayState
-    }
-
-    val isActionEnabled = selectedEntities.isNotEmpty()
-
-    fun changeServer(serverId: Int): MediaPlayerControlsWidgetConfigureState = copy(
-        selectedServerId = serverId,
-        selectedEntityIds = emptyList(),
-        entityDisplayState = EntityDisplayState.Loading,
-    )
-}
 
 @HiltViewModel(assistedFactory = MediaPlayerControlsWidgetConfigureViewModel.Factory::class)
 class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(

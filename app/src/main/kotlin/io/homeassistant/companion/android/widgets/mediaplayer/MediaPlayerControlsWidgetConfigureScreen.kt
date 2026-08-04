@@ -100,9 +100,7 @@ internal fun MediaPlayerControlsWidgetConfigureScreen(
     )
 }
 
-/**
- * Stateless configuration screen for the Media Player Controls widget.
- */
+/** Stateless configuration screen for the Media Player Controls widget. */
 @Composable
 internal fun MediaPlayerControlsWidgetConfigureContent(
     state: MediaPlayerControlsWidgetConfigureState,
@@ -382,7 +380,6 @@ private fun SelectedEntityRow(entity: EntityDisplayWithContext, onRemove: () -> 
     }
 }
 
-/** Caps form controls at a readable width and centres them on large screens, matching #7007. */
 private fun Modifier.formControlWidth(): Modifier = this
     .widthIn(max = MaxButtonWidth)
     .fillMaxWidth()

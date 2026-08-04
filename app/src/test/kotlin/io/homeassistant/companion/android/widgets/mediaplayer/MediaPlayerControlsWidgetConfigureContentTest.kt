@@ -88,7 +88,7 @@ class MediaPlayerControlsWidgetConfigureContentTest {
                 onNodeWithContentDescription(activity.getString(commonR.string.delete))
                     .performScrollTo()
                     .performClick()
-                assertEquals(ENTITY.entityId, entityRemoved)
+                assertEquals(fakeMediaPlayerEntity.entityId, entityRemoved)
             }
         }
     }
@@ -230,7 +230,7 @@ class MediaPlayerControlsWidgetConfigureContentTest {
     }
 
     private companion object {
-        val ENTITY = Entity(
+        val fakeMediaPlayerEntity = Entity(
             entityId = "media_player.living_room",
             state = "playing",
             attributes = mapOf("friendly_name" to "Living room speaker"),
@@ -242,12 +242,12 @@ class MediaPlayerControlsWidgetConfigureContentTest {
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
             entityDisplayState = EntityDisplayState.Loaded(
-                listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(ENTITY), areaName = "Kitchen")),
+                listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(fakeMediaPlayerEntity), areaName = "Kitchen")),
             ),
         )
 
         val configuredState = newWidgetState.copy(
-            selectedEntityIds = listOf(ENTITY.entityId),
+            selectedEntityIds = listOf(fakeMediaPlayerEntity.entityId),
             label = "Living room",
             isUpdateWidget = true,
         )

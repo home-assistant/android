@@ -54,11 +54,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         // placement if the user closes the screen or presses the back button.
         setResult(RESULT_CANCELED)
 
-        val widgetId = intent.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
-
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
