@@ -32,6 +32,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 
+/** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
+private const val BLACK_HEX = "#3A3A3A"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class EntityWidgetConfigureViewModelTest {
@@ -246,9 +249,6 @@ class EntityWidgetConfigureViewModelTest {
     )
 
     companion object {
-        /** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
-        private const val BLACK_HEX = "#3A3A3A"
-
         private fun displayStateOf(vararg items: EntityDisplayWithContext) = EntityDisplayState.Loaded(items.toList())
 
         /** Display name comes from the entity registry in production, so it is set explicitly here. */
