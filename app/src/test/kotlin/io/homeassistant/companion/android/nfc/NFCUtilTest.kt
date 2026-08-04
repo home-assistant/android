@@ -7,6 +7,7 @@ import android.nfc.Tag
 import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
 import androidx.core.content.IntentCompat
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.BuildConfig
 import io.mockk.CapturingSlot
 import io.mockk.Runs
@@ -19,12 +20,14 @@ import io.mockk.unmockkAll
 import java.io.IOException
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertNotNull
+import junit.framework.TestCase.assertTrue
 import junit.framework.TestCase.fail
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 private const val TAG_URL = "https://www.home-assistant.io/tag/123e4567-e89b-12d3-a456-426614174000"
 
@@ -40,6 +43,7 @@ private const val NTAG215_TAG_SIZE_IN_BYTES = 504
  * are Android framework classes.
  */
 @RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
 class NFCUtilTest {
 
     /** List of test cases with tag size to expected number of records to be written */
@@ -78,7 +82,7 @@ class NFCUtilTest {
 
             val success = NFCUtil.createNFCMessage(TAG_URL, tagDiscoveredIntent)
 
-            assertEquals(true, success)
+            assertTrue(success)
             val message = messageSlot.captured
             assertNotNull(message.records)
             assertEquals(expectedNumberOfRecords, message.records.size)
@@ -131,7 +135,7 @@ class NFCUtilTest {
 
             val success = NFCUtil.createNFCMessage(TAG_URL, tagDiscoveredIntent)
 
-            assertEquals(true, success)
+            assertTrue(success)
             val message = messageSlot.captured
             assertNotNull(message.records)
             assertEquals(expectedNumberOfRecords, message.records.size)
