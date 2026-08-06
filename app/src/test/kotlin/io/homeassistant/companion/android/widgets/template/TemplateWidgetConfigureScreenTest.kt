@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.widgets.template
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -276,23 +275,21 @@ class TemplateWidgetConfigureScreenTest {
             dsl()
         }
     }
-
-    private companion object {
-        val singleServerState = TemplateWidgetConfigureState(
-            serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
-            selectedServerId = 1,
-        )
-
-        val multipleServersState = singleServerState.copy(
-            serversDropdownItems = listOf(
-                HADropdownItem(key = 1, label = "Home"),
-                HADropdownItem(key = 2, label = "Vacation home"),
-            ),
-        )
-
-        val renderedState = singleServerState.copy(
-            template = "{{ states('sensor.example') }}",
-            preview = TemplatePreview.Rendered("42"),
-        )
-    }
 }
+
+private val singleServerState = TemplateWidgetConfigureState(
+    serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
+    selectedServerId = 1,
+)
+
+private val multipleServersState = singleServerState.copy(
+    serversDropdownItems = listOf(
+        HADropdownItem(key = 1, label = "Home"),
+        HADropdownItem(key = 2, label = "Vacation home"),
+    ),
+)
+
+private val renderedState = singleServerState.copy(
+    template = "{{ states('sensor.example') }}",
+    preview = TemplatePreview.Rendered("42"),
+)
