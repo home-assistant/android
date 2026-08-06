@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.climate
 
+import android.util.Log
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -99,13 +100,15 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
                     Timber.d("Got an update of the entity $entity")
 
                     val attributes = entity.attributes
-                    val min = attributes["min_temp"] as? Double
-                    val max = attributes["max_temp"] as? Double
-                    val step = attributes["target_temp_step"] as? Double
-                    val currentTemp = attributes["current_temperature"] as? Double
-                    val climateTemp = attributes["temperature"] as? Double
+                    val min = attributes.toDouble("min_temp")
+                    val max = attributes.toDouble("max_temp")
+                    val step = attributes.toDouble("target_temp_step")
+                    val currentTemp = attributes.toDouble("current_temperature")
+                    val climateTemp = attributes.toDouble("temperature")
                     val hvacSupportedModes = attributes.getStringList("hvac_modes")
                     val fanSupportedModes = attributes.getStringList("fan_modes")
+
+                    Timber.d("newParsedEntity $min $max $step $currentTemp $climateTemp $hvacSupportedModes $fanSupportedModes")
 
                     // We update the DAO to keep it up to date for the next update of the widget
                     climateWidgetDao.updateWidgetLastUpdate(

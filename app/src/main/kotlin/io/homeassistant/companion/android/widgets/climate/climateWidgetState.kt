@@ -78,8 +78,8 @@ internal data class ClimateStateWithData(
             climateEntity: ClimateWidgetEntity,
             entity: Entity,
         ): ClimateStateWithData {
-            val currentTemp = entity.attributes["current_temperature"] as? Double
-            val climateTemp = entity.attributes["temperature"] as? Double ?: 0f
+            val currentTemp = entity.attributes.toDouble("current_temperature")
+            val climateTemp = entity.attributes.toDouble("temperature") ?: 0f
             val hvacSupportedModes = entity.attributes.toHvacModes("hvac_modes")
 
             return ClimateStateWithData(
@@ -142,3 +142,6 @@ fun Map<String, Any?>.getStringList(key: String): List<String> =
 fun Map<String, Any?>.toHvacModes(key: String): List<HvacMode> =
     ((this[key] as? List<*>) ?: emptyList<Any>())
         .mapNotNull { HvacMode.from(it as? String) }
+
+fun Map<String, Any?>.toDouble(key: String): Double? =
+    (this[key] as? Number)?.toDouble()

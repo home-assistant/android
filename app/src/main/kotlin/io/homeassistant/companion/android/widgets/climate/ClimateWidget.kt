@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.widgets.EntitiesPerServer
  * Otherwise the widgets won't update at all after the composition ends.
  */
 @AndroidEntryPoint
-class ClimateWidget : BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao>() {       // TODO: me falta la entity y la Dao para mi widget
+class ClimateWidget : BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao>() {
     override val glanceAppWidget: GlanceAppWidget = ClimateGlanceAppWidget()
 
     override suspend fun getWidgetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> {
