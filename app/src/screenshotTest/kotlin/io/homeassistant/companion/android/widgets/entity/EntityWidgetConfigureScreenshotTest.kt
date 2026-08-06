@@ -24,7 +24,7 @@ class EntityWidgetConfigureScreenshotTest {
     fun `EntityWidgetConfigureContent selected entity`() {
         HAThemeForPreview {
             EntityWidgetConfigureContent(
-                state = previewEntityWidgetConfigureState,
+                state = previewConfigureState,
                 snackbarHostState = remember { SnackbarHostState() },
                 canNavigateBack = false,
                 onNavigate = {},
@@ -52,7 +52,10 @@ class EntityWidgetConfigureScreenshotTest {
     fun `EntityWidgetConfigureContent no selected entity`() {
         HAThemeForPreview {
             EntityWidgetConfigureContent(
-                state = previewEntityWidgetConfigureState.copy(selectedEntityId = null),
+                state = previewConfigureState.copy(
+                    serversDropdownItems = previewConfigureState.serversDropdownItems.take(1),
+                    selectedEntityId = null,
+                ),
                 snackbarHostState = remember { SnackbarHostState() },
                 canNavigateBack = false,
                 onNavigate = {},
@@ -75,7 +78,7 @@ class EntityWidgetConfigureScreenshotTest {
     }
 }
 
-private val previewEntityWidgetConfigureState = EntityWidgetConfigureState(
+private val previewConfigureState = EntityWidgetConfigureState(
     selectedServerId = previewServer1.id,
     serversDropdownItems = listOf(previewServer1, previewServer2).map {
         HADropdownItem(key = it.id, label = it.friendlyName)

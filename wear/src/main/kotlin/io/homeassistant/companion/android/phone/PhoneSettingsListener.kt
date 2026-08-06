@@ -14,10 +14,7 @@ import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.authentication.ServerRegistrationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -65,12 +62,7 @@ class PhoneSettingsListener :
     lateinit var favoritesDao: FavoritesDao
 
     @Inject
-    @NamedKeyChain
-    lateinit var keyChainRepository: KeyChainRepository
-
-    @Inject
-    @NamedKeyStore
-    lateinit var keyStore: KeyChainRepository
+    lateinit var keyStoreRepository: KeyStoreRepository
 
     @Inject
     lateinit var appVersionProvider: AppVersionProvider
@@ -192,10 +184,7 @@ class PhoneSettingsListener :
                     val certificateChain = getCertificateChain(alias).filterIsInstance<X509Certificate>().toTypedArray()
                     val privateKey = getKey(alias, tlsClientCertificatePassword) as PrivateKey
 
-                    // we store the TLS Client key under a static alias because there is currently
-                    // no way to ask the user for the correct alias
-                    keyStore.setData(KeyStoreRepository.ALIAS, privateKey, certificateChain)
-                    keyChainRepository.load(applicationContext)
+                    keyStoreRepository.store(privateKey, certificateChain)
                 }
             }
 

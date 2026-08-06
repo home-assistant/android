@@ -31,8 +31,10 @@ sealed interface EntityDisplayState<out T : EntityDisplay> {
 }
 
 /**
- * Awaits the resolved items of a snapshot flow, null when they could not be retrieved, for the
- * callers resolving entities once rather than observing them.
+ * Awaits the first [EntityDisplayState.Loaded] of the flow, for the callers resolving entities once
+ * rather than observing them. The [EntityDisplayState.Loading] emitted first is skipped, and null is
+ * returned when the flow completes without a loaded state (an [EntityDisplayState.Error]). Collecting
+ * an observing flow stops it after the first loaded state.
  */
 suspend fun <T : EntityDisplay> Flow<EntityDisplayState<T>>.awaitLoadedOrNull(): EntityDisplayState.Loaded<T>? =
     filterIsInstance<EntityDisplayState.Loaded<T>>().firstOrNull()

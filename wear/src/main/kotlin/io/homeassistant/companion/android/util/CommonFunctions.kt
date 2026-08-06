@@ -47,10 +47,10 @@ fun onEntityClickedFeedback(
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean,
     context: Context,
-    friendlyName: String,
+    name: String,
     haptic: HapticFeedback,
 ) {
-    val message = context.getString(commonR.string.toast_message, friendlyName)
+    val message = context.getString(commonR.string.toast_message, name)
     onEntityFeedback(isToastEnabled, isHapticEnabled, message, context, haptic)
 }
 
