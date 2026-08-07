@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.dialog
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,7 +16,12 @@ internal fun SimpleConfirmDialog(pendingDialog: FrontendDialog.Confirm) {
     AlertDialog(
         onDismissRequest = pendingDialog.onCancel,
         title = { Text(text = stringResource(commonR.string.app_name), style = HATextStyle.HeadlineMedium) },
-        text = { Text(text = pendingDialog.message, style = HATextStyle.Body) },
+        text = {
+            Column {
+                Text(text = pendingDialog.message, style = HATextStyle.Body)
+                MoreInfoButton(pendingDialog.moreInfoUrl)
+            }
+        },
         confirmButton = {
             HAPlainButton(stringResource(commonR.string.ok), pendingDialog.onConfirm)
         },
@@ -30,5 +36,20 @@ internal fun SimpleConfirmDialog(pendingDialog: FrontendDialog.Confirm) {
 private fun PreviewSimpleConfirmDialog() {
     HAThemeForPreview {
         SimpleConfirmDialog(FrontendDialog.Confirm("Hello world", onConfirm = {}, onCancel = {}))
+    }
+}
+
+@Composable
+@Preview
+private fun PreviewSimpleConfirmDialogWithMoreInfo() {
+    HAThemeForPreview {
+        SimpleConfirmDialog(
+            FrontendDialog.Confirm(
+                "\"My network\" will be added to the Thread credentials stored on this phone. Continue?",
+                onConfirm = {},
+                onCancel = {},
+                moreInfoUrl = "https://companion.home-assistant.io/",
+            ),
+        )
     }
 }

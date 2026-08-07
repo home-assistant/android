@@ -14,16 +14,26 @@ sealed interface FrontendDialog {
      * @param message The message displayed in the dialog
      * @param onConfirm Called when the user taps confirm
      * @param onCancel Called when the user taps Cancel or dismisses
+     * @param moreInfoUrl Optional URL to documentation; when set, the dialog shows a
+     *   "Learn more" action that opens it without closing the dialog
      */
-    data class Confirm(val message: String, val onConfirm: () -> Unit, val onCancel: () -> Unit) : FrontendDialog
+    data class Confirm(
+        val message: String,
+        val onConfirm: () -> Unit,
+        val onCancel: () -> Unit,
+        val moreInfoUrl: String? = null,
+    ) : FrontendDialog
 
     /**
      * An informational dialog with a message and a single dismiss button.
      *
      * @param message The message displayed in the dialog
      * @param onDismiss Called when the user dismisses the dialog (button tap or outside tap)
+     * @param moreInfoUrl Optional URL to documentation; when set, the dialog shows a
+     *   "Learn more" action that opens it without closing the dialog
      */
-    data class Information(val message: String, val onDismiss: () -> Unit) : FrontendDialog
+    data class Information(val message: String, val onDismiss: () -> Unit, val moreInfoUrl: String? = null) :
+        FrontendDialog
 
     /**
      * An HTTP Basic Auth dialog with username, password, and remember fields.

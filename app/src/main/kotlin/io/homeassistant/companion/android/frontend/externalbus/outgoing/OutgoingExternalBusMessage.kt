@@ -92,6 +92,7 @@ object ConfigResultMessage {
         val hasExoPlayer: Boolean = true,
         val canCommissionMatter: Boolean,
         val canImportThreadCredentials: Boolean,
+        val canTransferThreadCredentialsToKeychain: Boolean,
         val hasAssist: Boolean = true,
         val hasBarCodeScanner: Int,
         val canSetupImprov: Boolean,
@@ -114,6 +115,9 @@ object ConfigResultMessage {
                 canWriteTag = hasNfc,
                 canCommissionMatter = canCommissionMatter,
                 canImportThreadCredentials = canExportThread,
+                // Same gate as canImportThreadCredentials: the HA -> Phone direction works on the
+                // same Android builds that already support the Phone -> HA direction.
+                canTransferThreadCredentialsToKeychain = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
                 canSetupImprov = canSetupImprov,
                 appVersion = appVersion.value,

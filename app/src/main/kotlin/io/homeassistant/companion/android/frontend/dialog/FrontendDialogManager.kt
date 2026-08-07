@@ -39,12 +39,16 @@ internal class FrontendDialogManager @Inject constructor() {
      *
      * Returns `true` if the user confirmed, `false` if they cancelled. The slot is freed
      * before returning, including on cancellation of the calling coroutine.
+     *
+     * Pass [moreInfoUrl] to offer a "Learn more" action that opens documentation without
+     * closing the dialog.
      */
-    suspend fun showConfirm(message: String): Boolean = queue.awaitResult { onResult ->
+    suspend fun showConfirm(message: String, moreInfoUrl: String? = null): Boolean = queue.awaitResult { onResult ->
         FrontendDialog.Confirm(
             message = message,
             onConfirm = { onResult(true) },
             onCancel = { onResult(false) },
+            moreInfoUrl = moreInfoUrl,
         )
     }
 
@@ -53,12 +57,16 @@ internal class FrontendDialogManager @Inject constructor() {
      * dismisses it. There is no result to return; callers use this purely to surface a message
      * (e.g. the frontend's `bar_code/notify`). The slot is freed before returning, including on
      * cancellation of the calling coroutine.
+     *
+     * Pass [moreInfoUrl] to offer a "Learn more" action that opens documentation without
+     * closing the dialog.
      */
-    suspend fun showInformation(message: String) {
+    suspend fun showInformation(message: String, moreInfoUrl: String? = null) {
         queue.awaitResult { onResult ->
             FrontendDialog.Information(
                 message = message,
                 onDismiss = { onResult(Unit) },
+                moreInfoUrl = moreInfoUrl,
             )
         }
     }
