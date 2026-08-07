@@ -174,7 +174,7 @@ GEM
     httpclient (2.9.0)
       mutex_m
     jmespath (1.6.2)
-    json (2.21.1)
+    json (2.21.2)
     jwt (3.2.0)
       base64
     logger (1.7.0)
@@ -303,7 +303,7 @@ CHECKSUMS
   http-cookie (1.0.8) sha256=b14fe0445cf24bf9ae098633e9b8d42e4c07c3c1f700672b09fbfe32ffd41aa6
   httpclient (2.9.0) sha256=4b645958e494b2f86c2f8a2f304c959baa273a310e77a2931ddb986d83e498c8
   jmespath (1.6.2) sha256=238d774a58723d6c090494c8879b5e9918c19485f7e840f2c1c7532cf84ebcb1
-  json (2.21.1) sha256=13a43df75d95641443f5702dff350f237164a9d811ff0f2c2800d4d980220583
+  json (2.21.2) sha256=1f1d3b7cf2b3ba1a69beca0bb6db13d5438b80bff3cd54cdaaa620b9b07c1c6a
   jwt (3.2.0) sha256=5419b1fe37b1da0982bd07051f573a8b8789ab724c2aa7e785e4784a3ed217d7
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   mini_magick (4.13.2) sha256=71d6258e0e8a3d04a9a0a09784d5d857b403a198a51dd4f882510435eb95ddd9
