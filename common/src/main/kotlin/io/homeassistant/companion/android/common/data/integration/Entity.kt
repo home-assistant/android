@@ -155,6 +155,15 @@ data class ColorTemperatureControl(val current: Float, val min: Float, val max: 
 @Immutable
 data class LightControls(val brightness: EntityPosition?, val colorTemperature: ColorTemperatureControl?)
 
+/** Controls of a climate entity, resolved from its state attributes, each null when it has none. */
+@Immutable
+data class ClimateControls(
+    val currentTemperature: Float?,
+    val targetTemperature: Float?,
+    val targetTemperatureStep: Float?,
+    val hvacAction: String?,
+)
+
 object EntityExt {
     const val TAG = "EntityExt"
 
@@ -442,6 +451,22 @@ fun Entity.getCoordinates(): EntityCoordinates? {
 }
 
 private fun Entity.floatAttributeOrNull(name: String): Float? = (attributes[name] as? Number)?.toFloat()
+
+/** Controls of a climate entity, null when the entity is not a climate one. */
+fun Entity.getClimateControls(): ClimateControls? {
+    if (domain != CLIMATE_DOMAIN) return null
+
+    /** Numeric attribute of the entity, accepting both a number and a numeric string, else null. */
+    fun Entity.numberAttributeOrNull(name: String): Float? =
+        floatAttributeOrNull(name) ?: attributes[name]?.toString()?.toFloatOrNull()
+
+    return ClimateControls(
+        currentTemperature = numberAttributeOrNull("current_temperature"),
+        targetTemperature = numberAttributeOrNull("temperature"),
+        targetTemperatureStep = numberAttributeOrNull("target_temp_step"),
+        hvacAction = attributes["hvac_action"]?.toString(),
+    )
+}
 
 fun Entity.getLightColor(): Int? {
     // https://github.com/home-assistant/frontend/blob/dev/src/panels/lovelace/cards/hui-light-card.ts#L243

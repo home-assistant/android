@@ -522,7 +522,7 @@ class FrontendScreenTest {
             val content: @Composable () -> Unit = {
                 FrontendScreenContent(
                     viewState = viewState,
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     errorStateProvider = errorStateProvider,
@@ -580,7 +580,7 @@ class FrontendScreenTest {
                         barcodeScanner = barcodeScanner,
                     ),
                     pendingDialog = pendingDialog,
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
@@ -727,7 +727,7 @@ class FrontendScreenTest {
                         url = "https://example.com",
                         error = error,
                     ),
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
@@ -770,7 +770,7 @@ class FrontendScreenTest {
                     url = "https://example.com",
                 ),
                 customView = View(context),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -814,7 +814,7 @@ class FrontendScreenTest {
                     url = "https://example.com",
                 ),
                 customView = View(context),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -846,7 +846,7 @@ class FrontendScreenTest {
                     serverId = 1,
                     url = "https://example.com",
                 ),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -875,7 +875,7 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -920,7 +920,7 @@ class FrontendScreenTest {
             if (visible.value) {
                 FrontendScreenContent(
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
@@ -959,7 +959,7 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -988,7 +988,7 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -1021,7 +1021,7 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -1056,7 +1056,7 @@ class FrontendScreenTest {
             if (visible.value) {
                 FrontendScreenContent(
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},

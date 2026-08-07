@@ -12,8 +12,8 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +25,7 @@ import timber.log.Timber
  * The created clients handle Home Assistant-specific concerns such as TLS client authentication,
  * error mapping to [FrontendConnectionError], and JavaScript injection into the WebView.
  */
-class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyChainRepository: KeyChainRepository) {
+class HAWebViewClientFactory @Inject constructor(private val keyChainRepository: KeyChainRepository) {
     /**
      * Creates a new [HAWebViewClient] with the specified configuration.
      *
@@ -49,7 +49,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      *        reporting the visited URL. Unlike [onPageFinished] this also fires for SPA history
      *        updates (`history.pushState`), so it tracks the URL actually shown to the user.
      */
-    fun create(
+    suspend fun create(
         currentUrlFlow: StateFlow<String?>,
         onFrontendError: (FrontendConnectionError) -> Unit,
         onCrash: (() -> Unit)? = null,
@@ -69,6 +69,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            clientCertProvider = keyChainRepository.getClientCertProvider(),
             currentUrlFlow = currentUrlFlow,
             onFrontendError = onFrontendError,
             onCrash = onCrash,
@@ -90,6 +91,7 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
  */
 class HAWebViewClient internal constructor(
     keyChainRepository: KeyChainRepository,
+    clientCertProvider: ClientCertProvider,
     private val currentUrlFlow: StateFlow<String?>,
     private val onFrontendError: (FrontendConnectionError) -> Unit,
     private val onCrash: (() -> Unit)?,
@@ -101,7 +103,7 @@ class HAWebViewClient internal constructor(
     private val onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
     private val onSubresourceSslError: ((url: String?) -> Unit)? = null,
     private val onUrlVisited: ((url: String?) -> Unit)? = null,
-) : TLSWebViewClient(keyChainRepository) {
+) : TLSWebViewClient(keyChainRepository, clientCertProvider) {
 
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
     private var lastResourceUrl: String? = null

@@ -201,9 +201,9 @@ class FrontendViewModelTest {
          * `android.net.Uri` (unavailable on the plain JVM these tests run on); tests covering that branch
          * mock [hasSameOrigin] directly. The origin parsing itself is covered by `UrlUtilTest`.
          */
-        private fun createViewModelWithUrlInterceptCapture(): Pair<FrontendViewModel, (Uri) -> Boolean> {
+        private suspend fun createViewModelWithUrlInterceptCapture(): Pair<FrontendViewModel, (Uri) -> Boolean> {
             var capturedCallback: ((Uri, Boolean) -> Boolean)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -222,6 +222,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
+            viewModel.getWebViewClient()
             return viewModel to { uri ->
                 val callback = capturedCallback
                 assertNotNull(callback)
@@ -1271,9 +1272,9 @@ class FrontendViewModelTest {
     @Nested
     inner class Zoom {
 
-        private fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
+        private suspend fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
             var capturedPageFinished: ((String?) -> Unit)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -1292,6 +1293,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
+            viewModel.getWebViewClient()
             return viewModel to { capturedPageFinished!!.invoke(null) }
         }
 
@@ -1409,9 +1411,9 @@ class FrontendViewModelTest {
             dialogManager = dialogManager,
         )
 
-        private fun createViewModelWithAuthCapture(): Pair<FrontendViewModel, (HttpAuthHandler, String, String, String) -> Unit> {
+        private suspend fun createViewModelWithAuthCapture(): Pair<FrontendViewModel, (HttpAuthHandler, String, String, String) -> Unit> {
             var capturedCallback: ((HttpAuthHandler, String, String, String) -> Unit)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -1429,6 +1431,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel(httpAuthHandler = httpAuthHandler, dialogManager = dialogManager)
+            viewModel.getWebViewClient()
             val callback = capturedCallback
             assertNotNull(callback)
             return viewModel to callback
@@ -1513,9 +1516,9 @@ class FrontendViewModelTest {
     @Nested
     inner class SubresourceSslError {
 
-        private fun createViewModelWithSubresourceSslErrorCapture(): Pair<FrontendViewModel, (String?) -> Unit> {
+        private suspend fun createViewModelWithSubresourceSslErrorCapture(): Pair<FrontendViewModel, (String?) -> Unit> {
             var capturedCallback: ((String?) -> Unit)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -1534,6 +1537,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
+            viewModel.getWebViewClient()
             val callback = capturedCallback
             assertNotNull(callback)
             return viewModel to callback
@@ -1575,9 +1579,9 @@ class FrontendViewModelTest {
     @Nested
     inner class BackNavigation {
 
-        private fun createViewModelWithCanGoBackCapture(): Pair<FrontendViewModel, (Boolean) -> Unit> {
+        private suspend fun createViewModelWithCanGoBackCapture(): Pair<FrontendViewModel, (Boolean) -> Unit> {
             var capturedCanGoBackChanged: ((Boolean) -> Unit)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -1596,6 +1600,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
+            viewModel.getWebViewClient()
             return viewModel to {
                 val callback = capturedCanGoBackChanged
                 assertNotNull(callback)
@@ -1685,7 +1690,7 @@ class FrontendViewModelTest {
 
             var capturedCanGoBackChanged: ((Boolean) -> Unit)? = null
             var capturedUrlVisited: ((String?) -> Unit)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -1704,6 +1709,8 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
+            // The WebView client is created lazily, so trigger it to wire up the callbacks.
+            viewModel.getWebViewClient()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
             messageFlow.emit(FrontendHandlerEvent.Connected)
             advanceUntilIdle()

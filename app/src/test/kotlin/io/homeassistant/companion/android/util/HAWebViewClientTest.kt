@@ -14,6 +14,8 @@ import android.webkit.WebViewClient.ERROR_TIMEOUT
 import android.webkit.WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME
 import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
+import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
@@ -35,6 +37,9 @@ import org.junit.jupiter.params.provider.ValueSource
 class HAWebViewClientTest {
 
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
+    private val clientCertProvider = object : ClientCertProvider {
+        override val certificate: ClientCertificate? = null
+    }
     private val currentUrlFlow = MutableStateFlow<String?>(null)
     private var capturedError: FrontendConnectionError? = null
     private val subresourceSslErrorUrls = mutableListOf<String?>()
@@ -47,6 +52,7 @@ class HAWebViewClientTest {
         subresourceSslErrorUrls.clear()
         webViewClient = HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            clientCertProvider = clientCertProvider,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = { capturedError = it },
             onCrash = null,
@@ -62,6 +68,7 @@ class HAWebViewClientTest {
         var finishedUrl: String? = null
         val client = HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            clientCertProvider = clientCertProvider,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = { capturedError = it },
             onCrash = null,
@@ -415,6 +422,7 @@ class HAWebViewClientTest {
         var capturedRealm: String? = null
         val client = HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            clientCertProvider = clientCertProvider,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = { capturedError = it },
             onCrash = null,
@@ -447,6 +455,7 @@ class HAWebViewClientTest {
         var captured: Boolean? = null
         val client = HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            clientCertProvider = clientCertProvider,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = { capturedError = it },
             onCrash = null,
@@ -467,6 +476,7 @@ class HAWebViewClientTest {
         var captured: String? = null
         val client = HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            clientCertProvider = clientCertProvider,
             currentUrlFlow = currentUrlFlow,
             onFrontendError = { capturedError = it },
             onCrash = null,
