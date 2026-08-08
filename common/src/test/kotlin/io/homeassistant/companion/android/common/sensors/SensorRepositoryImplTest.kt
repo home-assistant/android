@@ -5,6 +5,8 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.mockk.coEvery
@@ -24,7 +26,24 @@ class SensorRepositoryImplTest {
     private val serverDao: ServerDao = mockk(relaxed = true)
 
     private val basicSensors = setOf(
-        SensorManager.BasicSensor(id = "last_update", type = "sensor", enabledByDefault = true),
+        SensorManager.BasicSensor(
+            id = "last_update",
+            type = "sensor",
+            enabledByDefault = true,
+            settings = listOf(
+                SensorManager.BasicSensor.Setting(
+                    name = "add_new_intent",
+                    type = SensorSettingType.TOGGLE,
+                    defaultValue = "false",
+                ),
+                SensorManager.BasicSensor.Setting(
+                    name = "intent_1",
+                    type = SensorSettingType.STRING,
+                    defaultValue = "",
+                    enabledByDefault = false,
+                ),
+            ),
+        ),
         SensorManager.BasicSensor(id = "app_inactive", type = "sensor", enabledByDefault = false),
     )
     private val repository: SensorRepository = SensorRepositoryImpl(dao, serverDao, basicSensors)
@@ -250,5 +269,171 @@ class SensorRepositoryImplTest {
 
         // Only last_update's default-enabled state on the single configured server counts.
         assertEquals(1, result)
+    }
+
+    @Test
+    fun `Given no stored settings when getSettings then returns declarations without writing`() = runTest {
+        coEvery { dao.getSettings("last_update") } returns emptyList()
+
+        val result = repository.getSettings("last_update")
+
+        assertEquals(
+            listOf(
+                SensorSetting("last_update", "add_new_intent", "false", SensorSettingType.TOGGLE),
+                SensorSetting(
+                    "last_update",
+                    "intent_1",
+                    "",
+                    SensorSettingType.STRING,
+                    enabled = false,
+                ),
+            ),
+            result,
+        )
+        coVerify(exactly = 0) { dao.add(any<SensorSetting>()) }
+    }
+
+    @Test
+    fun `Given stored overrides and dynamic settings when getSettings then uses declaration metadata and order`() = runTest {
+        val storedOverride = SensorSetting(
+            "last_update",
+            "intent_1",
+            "override",
+            SensorSettingType.NUMBER,
+            enabled = true,
+            entries = listOf("stale"),
+        )
+        val dynamic = SensorSetting("last_update", "intent_2", "dynamic", SensorSettingType.STRING)
+        coEvery { dao.getSettings("last_update") } returns listOf(dynamic, storedOverride)
+
+        val result = repository.getSettings("last_update")
+
+        assertEquals(
+            listOf(
+                SensorSetting("last_update", "add_new_intent", "false", SensorSettingType.TOGGLE),
+                SensorSetting(
+                    "last_update",
+                    "intent_1",
+                    "override",
+                    SensorSettingType.STRING,
+                    enabled = true,
+                ),
+                dynamic,
+            ),
+            result,
+        )
+    }
+
+    @Test
+    fun `Given empty stored flow when getSettingsFlow then emits declared settings`() = runTest {
+        every { dao.getSettingsFlow("last_update") } returns flowOf(emptyList())
+
+        repository.getSettingsFlow("last_update").test {
+            assertEquals(2, awaitItem().size)
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `Given declaration-only setting when updating value then persists changed effective setting`() = runTest {
+        coEvery { dao.getSettings("last_update") } returns emptyList()
+
+        repository.updateSettingValue("last_update", "add_new_intent", "true")
+
+        coVerify {
+            dao.upsertSettingValue(
+                SensorSetting("last_update", "add_new_intent", "false", SensorSettingType.TOGGLE),
+                "true",
+            )
+        }
+    }
+
+    @Test
+    fun `Given concurrent explicit value when initializing setting then returns explicit value`() = runTest {
+        coEvery { dao.getSettings("last_update") } returns emptyList()
+        coEvery {
+            dao.getOrInitializeSettingValue(
+                SensorSetting("last_update", "intent_1", "", SensorSettingType.STRING, enabled = false),
+                "generated",
+            )
+        } returns "explicit"
+
+        val result = repository.getOrInitializeSettingValue("last_update", "intent_1", "generated")
+
+        assertEquals("explicit", result)
+    }
+
+    @Test
+    fun `Given missing setting declaration when initializing setting then fails fast and returns initial value`() = runTest {
+        var throwableCaptured: Throwable? = null
+        FailFast.setHandler { throwable, _ -> throwableCaptured = throwable }
+
+        val result = repository.getOrInitializeSettingValue("last_update", "unknown", "generated")
+
+        assertNotNull(throwableCaptured)
+        assertEquals("generated", result)
+    }
+
+    @Test
+    fun `Given declaration-only list setting when updating value then preserves declaration metadata`() = runTest {
+        val listSetting = SensorManager.BasicSensor.Setting(
+            name = "list_setting",
+            type = SensorSettingType.LIST,
+            defaultValue = "first",
+            enabledByDefault = false,
+            entries = listOf("first", "second"),
+        )
+        val repository = SensorRepositoryImpl(
+            dao,
+            serverDao,
+            setOf(SensorManager.BasicSensor("list_sensor", "sensor", settings = listOf(listSetting))),
+        )
+        coEvery { dao.getSettings("list_sensor") } returns emptyList()
+
+        repository.updateSettingValue("list_sensor", "list_setting", "second")
+
+        coVerify {
+            dao.upsertSettingValue(
+                SensorSetting(
+                    sensorId = "list_sensor",
+                    name = "list_setting",
+                    value = "first",
+                    valueType = SensorSettingType.LIST,
+                    enabled = false,
+                    entries = listOf("first", "second"),
+                ),
+                "second",
+            )
+        }
+    }
+
+    @Test
+    fun `Given declaration-only disabled setting when enabling then persists changed effective setting`() = runTest {
+        coEvery { dao.getSettings("last_update") } returns emptyList()
+
+        repository.updateSettingEnabled("last_update", "intent_1", true)
+
+        coVerify {
+            dao.upsertSettingEnabled(
+                SensorSetting(
+                    "last_update",
+                    "intent_1",
+                    "",
+                    SensorSettingType.STRING,
+                    enabled = false,
+                ),
+                true,
+            )
+        }
+    }
+
+    @Test
+    fun `Given stored dynamic setting when updating enabled then persists changed setting`() = runTest {
+        val dynamic = SensorSetting("last_update", "intent_2", "dynamic", SensorSettingType.STRING)
+        coEvery { dao.getSettings("last_update") } returns listOf(dynamic)
+
+        repository.updateSettingEnabled("last_update", "intent_2", false)
+
+        coVerify { dao.upsertSettingEnabled(dynamic, false) }
     }
 }

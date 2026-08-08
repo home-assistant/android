@@ -40,7 +40,6 @@ import io.homeassistant.companion.android.database.location.LocationHistoryItem
 import io.homeassistant.companion.android.database.location.LocationHistoryItemResult
 import io.homeassistant.companion.android.database.location.LocationHistoryItemTrigger
 import io.homeassistant.companion.android.database.sensor.Attribute
-import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
@@ -113,6 +112,49 @@ class LocationSensorManager @Inject constructor(
             commonR.string.sensor_description_location_background,
             "mdi:map-marker-multiple",
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
+            settings = listOf(
+                SensorManager.BasicSensor.Setting(
+                    SETTING_SEND_LOCATION_AS,
+                    SensorSettingType.LIST,
+                    SEND_LOCATION_AS_EXACT,
+                    entries = listOf(SEND_LOCATION_AS_EXACT, SEND_LOCATION_AS_ZONE_ONLY),
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTING_ACCURACY,
+                    SensorSettingType.NUMBER,
+                    DEFAULT_MINIMUM_ACCURACY.toString(),
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTING_HIGH_ACCURACY_MODE,
+                    SensorSettingType.TOGGLE,
+                    "false",
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
+                    SensorSettingType.NUMBER,
+                    DEFAULT_UPDATE_INTERVAL_HA_SECONDS.toString(),
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
+                    SensorSettingType.LIST_BLUETOOTH,
+                    "",
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTING_HIGH_ACCURACY_MODE_ZONE,
+                    SensorSettingType.LIST_ZONES,
+                    "",
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTING_HIGH_ACCURACY_BT_ZONE_COMBINED,
+                    SensorSettingType.TOGGLE,
+                    "false",
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE,
+                    SensorSettingType.NUMBER,
+                    DEFAULT_TRIGGER_RANGE_METERS.toString(),
+                ),
+            ),
         )
 
         @ProvidesSensor
@@ -123,6 +165,13 @@ class LocationSensorManager @Inject constructor(
             commonR.string.sensor_description_location_zone,
             "mdi:map-marker-radius",
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
+            settings = listOf(
+                SensorManager.BasicSensor.Setting(
+                    SETTING_ACCURACY,
+                    SensorSettingType.NUMBER,
+                    DEFAULT_MINIMUM_ACCURACY.toString(),
+                ),
+            ),
         )
 
         @ProvidesSensor
@@ -133,6 +182,23 @@ class LocationSensorManager @Inject constructor(
             commonR.string.sensor_description_location_accurate,
             "mdi:crosshairs-gps",
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
+            settings = listOf(
+                SensorManager.BasicSensor.Setting(
+                    SETTING_ACCURACY,
+                    SensorSettingType.NUMBER,
+                    DEFAULT_MINIMUM_ACCURACY.toString(),
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTING_ACCURATE_UPDATE_TIME,
+                    SensorSettingType.NUMBER,
+                    DEFAULT_LOCATION_INTERVAL.toString(),
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTING_INCLUDE_SENSOR_UPDATE,
+                    SensorSettingType.TOGGLE,
+                    "false",
+                ),
+            ),
         )
 
         @ProvidesSensor
@@ -206,24 +272,18 @@ class LocationSensorManager @Inject constructor(
         }
 
         suspend fun SensorRepository.setHighAccuracyModeSetting(enabled: Boolean) {
-            add(
-                SensorSetting(
-                    backgroundLocation.id,
-                    SETTING_HIGH_ACCURACY_MODE,
-                    enabled.toString(),
-                    SensorSettingType.TOGGLE,
-                ),
+            updateSettingValue(
+                backgroundLocation.id,
+                SETTING_HIGH_ACCURACY_MODE,
+                enabled.toString(),
             )
         }
 
         suspend fun SensorRepository.setHighAccuracyModeIntervalSetting(updateInterval: Int) {
-            add(
-                SensorSetting(
-                    backgroundLocation.id,
-                    SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
-                    updateInterval.toString(),
-                    SensorSettingType.NUMBER,
-                ),
+            updateSettingValue(
+                backgroundLocation.id,
+                SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
+                updateInterval.toString(),
             )
         }
     }
@@ -470,12 +530,8 @@ class LocationSensorManager @Inject constructor(
     }
 
     private suspend fun getHighAccuracyModeUpdateInterval(): Int {
-        val updateIntervalHighAccuracySeconds = getSetting(
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
-            SensorSettingType.NUMBER,
-            DEFAULT_UPDATE_INTERVAL_HA_SECONDS.toString(),
-        )
+        val updateIntervalHighAccuracySeconds =
+            getSetting(backgroundLocation, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL)
 
         var updateIntervalHighAccuracySecondsInt = if (updateIntervalHighAccuracySeconds.isEmpty()) {
             DEFAULT_UPDATE_INTERVAL_HA_SECONDS
@@ -523,12 +579,8 @@ class LocationSensorManager @Inject constructor(
     }
 
     private suspend fun shouldEnableHighAccuracyMode(): Boolean {
-        val highAccuracyModeBTDevicesSetting = getSetting(
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
-            SensorSettingType.LIST_BLUETOOTH,
-            "",
-        )
+        val highAccuracyModeBTDevicesSetting =
+            getSetting(backgroundLocation, SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES)
         val highAccuracyModeBTDevices = highAccuracyModeBTDevicesSetting
             .split(", ")
             .mapNotNull { it.trim().ifBlank { null } }
@@ -567,13 +619,10 @@ class LocationSensorManager @Inject constructor(
                 }
             }
             if (updatedBtDeviceNames) {
-                sensorRepository.add(
-                    SensorSetting(
-                        backgroundLocation.id,
-                        SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
-                        highAccuracyModeBTDevices.joinToString().replace("[", "").replace("]", ""),
-                        SensorSettingType.LIST_BLUETOOTH,
-                    ),
+                sensorRepository.updateSettingValue(
+                    backgroundLocation.id,
+                    SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
+                    highAccuracyModeBTDevices.joinToString().replace("[", "").replace("]", ""),
                 )
             }
 
@@ -631,35 +680,16 @@ class LocationSensorManager @Inject constructor(
     }
 
     private suspend fun getHighAccuracyModeSetting(): Boolean {
-        return getSetting(
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE,
-            SensorSettingType.TOGGLE,
-            "false",
-        ).toBoolean()
+        return getToggleSetting(backgroundLocation, SETTING_HIGH_ACCURACY_MODE)
     }
 
     private suspend fun getHighAccuracyBTZoneCombinedSetting(): Boolean {
-        return getSetting(
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_BT_ZONE_COMBINED,
-            SensorSettingType.TOGGLE,
-            "false",
-        ).toBoolean()
+        return getToggleSetting(backgroundLocation, SETTING_HIGH_ACCURACY_BT_ZONE_COMBINED)
     }
 
     private suspend fun getSendLocationAsSetting(serverId: Int): String {
         return if (serverManager.getServer(serverId)?.version?.isAtLeast(2022, 2, 0) == true) {
-            getSetting(
-                sensor = backgroundLocation,
-                settingName = SETTING_SEND_LOCATION_AS,
-                settingType = SensorSettingType.LIST,
-                entries = listOf(
-                    SEND_LOCATION_AS_EXACT,
-                    SEND_LOCATION_AS_ZONE_ONLY,
-                ),
-                default = SEND_LOCATION_AS_EXACT,
-            )
+            getSetting(backgroundLocation, SETTING_SEND_LOCATION_AS)
         } else {
             SEND_LOCATION_AS_EXACT
         }
@@ -753,18 +783,7 @@ class LocationSensorManager @Inject constructor(
             lastLocationReceived[it] = System.currentTimeMillis()
         }
         LocationResult.extractResult(intent)?.lastLocation?.let { location ->
-            val sensorSettings = sensorRepository.getSettings(backgroundLocation.id)
-            val minAccuracy = sensorSettings
-                .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-                ?: DEFAULT_MINIMUM_ACCURACY
-            sensorRepository.add(
-                SensorSetting(
-                    backgroundLocation.id,
-                    SETTING_ACCURACY,
-                    minAccuracy.toString(),
-                    SensorSettingType.NUMBER,
-                ),
-            )
+            val minAccuracy = getNumberSetting(backgroundLocation, SETTING_ACCURACY)
             val trigger =
                 if (intent.action == ACTION_PROCESS_HIGH_ACCURACY_LOCATION) {
                     LocationUpdateTrigger.HIGH_ACCURACY_LOCATION
@@ -872,13 +891,7 @@ class LocationSensorManager @Inject constructor(
             }
         }
 
-        val sensorSettings = sensorRepository.getSettings(zoneLocation.id)
-        val minAccuracy = sensorSettings
-            .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-            ?: DEFAULT_MINIMUM_ACCURACY
-        sensorRepository.add(
-            SensorSetting(zoneLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER),
-        )
+        val minAccuracy = getNumberSetting(zoneLocation, SETTING_ACCURACY)
 
         val trigger = when (geofencingEvent.geofenceTransition) {
             Geofence.GEOFENCE_TRANSITION_ENTER -> LocationUpdateTrigger.GEOFENCE_ENTER
@@ -1037,12 +1050,10 @@ class LocationSensorManager @Inject constructor(
             return
         }
 
-        val geocodeIncludeLocation = getSetting(
+        val geocodeIncludeLocation = getToggleSetting(
             GeocodeSensorManager.geocodedLocation,
             GeocodeSensorManager.SETTINGS_INCLUDE_LOCATION,
-            SensorSettingType.TOGGLE,
-            "false",
-        ).toBoolean()
+        )
 
         ioScope.launch {
             try {
@@ -1181,24 +1192,17 @@ class LocationSensorManager @Inject constructor(
 
         if (!enabled) return 0
 
-        val highAccuracyTriggerRange = getSetting(
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE,
-            SensorSettingType.NUMBER,
-            DEFAULT_TRIGGER_RANGE_METERS.toString(),
-        )
+        val highAccuracyTriggerRange =
+            getSetting(backgroundLocation, SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE)
 
         var highAccuracyTriggerRangeInt = highAccuracyTriggerRange.toIntOrNull() ?: DEFAULT_TRIGGER_RANGE_METERS
         if (highAccuracyTriggerRangeInt < 0) {
             highAccuracyTriggerRangeInt = DEFAULT_TRIGGER_RANGE_METERS
 
-            sensorRepository.add(
-                SensorSetting(
-                    backgroundLocation.id,
-                    SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE,
-                    highAccuracyTriggerRangeInt.toString(),
-                    SensorSettingType.NUMBER,
-                ),
+            sensorRepository.updateSettingValue(
+                backgroundLocation.id,
+                SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE,
+                highAccuracyTriggerRangeInt.toString(),
             )
         }
 
@@ -1210,12 +1214,7 @@ class LocationSensorManager @Inject constructor(
 
         if (!enabled) return emptyList()
 
-        val highAccuracyZones = getSetting(
-            backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE_ZONE,
-            SensorSettingType.LIST_ZONES,
-            "",
-        )
+        val highAccuracyZones = getSetting(backgroundLocation, SETTING_HIGH_ACCURACY_MODE_ZONE)
 
         return if (highAccuracyZones.isNotEmpty()) {
             val expanded = if (expandedZones) "_expanded" else ""
@@ -1241,29 +1240,8 @@ class LocationSensorManager @Inject constructor(
             fullSensor?.attributes?.firstOrNull { it.name == "lastAccurateLocationRequest" }?.value?.toLongOrNull()
                 ?: 0L
 
-        val sensorSettings = sensorRepository.getSettings(singleAccurateLocation.id)
-        val minAccuracy = sensorSettings
-            .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-            ?: DEFAULT_MINIMUM_ACCURACY
-        sensorRepository.add(
-            SensorSetting(
-                singleAccurateLocation.id,
-                SETTING_ACCURACY,
-                minAccuracy.toString(),
-                SensorSettingType.NUMBER,
-            ),
-        )
-        val minTimeBetweenUpdates = sensorSettings
-            .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
-            ?: 60000
-        sensorRepository.add(
-            SensorSetting(
-                singleAccurateLocation.id,
-                SETTING_ACCURATE_UPDATE_TIME,
-                minTimeBetweenUpdates.toString(),
-                SensorSettingType.NUMBER,
-            ),
-        )
+        val minAccuracy = getNumberSetting(singleAccurateLocation, SETTING_ACCURACY)
+        val minTimeBetweenUpdates = getNumberSetting(singleAccurateLocation, SETTING_ACCURATE_UPDATE_TIME)
 
         // Only update accurate location at most once a minute
         if (now < latestAccurateLocation + minTimeBetweenUpdates) {
@@ -1406,22 +1384,10 @@ class LocationSensorManager @Inject constructor(
             setupLocationTracking()
         }
         cleanupLocationHistory()
-        val sensorSetting = sensorRepository.getSettings(singleAccurateLocation.id)
-        val includeSensorUpdate =
-            sensorSetting.firstOrNull { it.name == SETTING_INCLUDE_SENSOR_UPDATE }?.value ?: "false"
-        if (includeSensorUpdate == "true") {
+        if (getToggleSetting(singleAccurateLocation, SETTING_INCLUDE_SENSOR_UPDATE)) {
             if (isEnabled(singleAccurateLocation)) {
                 applicationContext.sendBroadcast(createRequestAccurateLocationUpdateIntent(applicationContext))
             }
-        } else {
-            sensorRepository.add(
-                SensorSetting(
-                    singleAccurateLocation.id,
-                    SETTING_INCLUDE_SENSOR_UPDATE,
-                    "false",
-                    SensorSettingType.TOGGLE,
-                ),
-            )
         }
     }
 
