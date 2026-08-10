@@ -43,6 +43,7 @@ class FrontendMatterThreadHandlerTest {
         dialogManager = dialogManager,
         externalBusRepository = externalBusRepository,
         serverManager = serverManager,
+        applicationContext = mockk(relaxed = true),
     )
 
     private fun givenServerVersion(version: HomeAssistantVersion?) {

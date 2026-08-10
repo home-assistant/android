@@ -2,6 +2,7 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.8.2 - Main" versioncode="3">
+        <change>Store Thread credentials from Home Assistant on this device via the frontend Thread panel</change>
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
         <change>Modernized settings for entity widgets and tiles</change>
