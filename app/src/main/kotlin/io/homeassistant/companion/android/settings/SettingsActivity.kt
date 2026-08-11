@@ -69,7 +69,9 @@ class SettingsActivity : BaseActivity() {
         data object Developer : Deeplink
         data class HomeNetwork(val serverId: Int) : Deeplink
         data object NotificationHistory : Deeplink
-        data class QSTile(val tileId: String) : Deeplink
+
+        /** Opens the tile settings, preselecting [tileId] when one is given. */
+        data class QSTile(val tileId: String? = null) : Deeplink
         data class Sensor(val sensorId: String) : Deeplink
         data object Websocket : Deeplink
         data object AssistSettings : Deeplink
