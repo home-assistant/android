@@ -9,10 +9,8 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -20,13 +18,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Switch
-import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -34,15 +29,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -54,8 +49,6 @@ import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExpos
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import io.homeassistant.companion.android.util.getHexForColor
-import io.homeassistant.companion.android.util.previewEntity1
-import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
@@ -164,16 +157,13 @@ class ClimateWidgetConfigureActivity : BaseActivity() {
 @Composable
 private fun ClimateWidgetConfigureScreen(viewModel: ClimateWidgetConfigureViewModel, onActionClick: () -> Unit) {
     val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
-    val entities by viewModel.entities.collectAsStateWithLifecycle()
-    val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
-    val deviceRegistry by viewModel.deviceRegistry.collectAsStateWithLifecycle()
-    val areaRegistry by viewModel.areaRegistry.collectAsStateWithLifecycle()
+    val entitiesState by viewModel.displayEntities.collectAsStateWithLifecycle()
 
     ClimateWidgetConfigureView(
         servers = servers,
         selectedServerId = viewModel.selectedServerId,
         onServerSelected = viewModel::setServer,
-        entities = entities,
+        entitiesState = entitiesState,
         selectedEntityId = viewModel.selectedEntityId,
         onEntitySelected = { viewModel.selectedEntityId = it },
         showCompleted = viewModel.showCompletedState,
@@ -183,9 +173,6 @@ private fun ClimateWidgetConfigureScreen(viewModel: ClimateWidgetConfigureViewMo
         onTextColorSelected = { viewModel.textColorIndex = it },
         isUpdateWidget = viewModel.isUpdateWidget,
         onActionClick = onActionClick,
-        entityRegistry = entityRegistry,
-        deviceRegistry = deviceRegistry,
-        areaRegistry = areaRegistry,
     )
 }
 
@@ -194,7 +181,7 @@ private fun ClimateWidgetConfigureView(
     servers: List<Server>,
     selectedServerId: Int,
     onServerSelected: (Int) -> Unit,
-    entities: List<Entity>,
+    entitiesState: EntityDisplayState<EntityDisplayWithContext>,
     selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
     showCompleted: Boolean,
@@ -204,9 +191,6 @@ private fun ClimateWidgetConfigureView(
     onTextColorSelected: (Int) -> Unit,
     isUpdateWidget: Boolean,
     onActionClick: () -> Unit,
-    entityRegistry: List<EntityRegistryResponse>? = null,
-    deviceRegistry: List<DeviceRegistryResponse>? = null,
-    areaRegistry: List<AreaRegistryResponse>? = null,
 ) {
     Scaffold(
         topBar = {
@@ -239,14 +223,20 @@ private fun ClimateWidgetConfigureView(
 
             // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6303
             HATheme {
+//                EntityPicker(
+//                    entities = entities,
+//                    selectedEntityId = selectedEntityId,
+//                    onEntitySelectedId = { onEntitySelected(it) },
+//                    onEntityCleared = { onEntitySelected(null) },
+//                    entityRegistry = entityRegistry,
+//                    deviceRegistry = deviceRegistry,
+//                    areaRegistry = areaRegistry,
+//                    addButtonText = stringResource(commonR.string.climate_widget_select_entity),
+//                )
                 EntityPicker(
-                    entities = entities,
+                    displayState = entitiesState,
                     selectedEntityId = selectedEntityId,
-                    onEntitySelectedId = { onEntitySelected(it) },
-                    onEntityCleared = { onEntitySelected(null) },
-                    entityRegistry = entityRegistry,
-                    deviceRegistry = deviceRegistry,
-                    areaRegistry = areaRegistry,
+                    onSelectionChanged = onEntitySelected,
                     addButtonText = stringResource(commonR.string.climate_widget_select_entity),
                 )
             }
@@ -291,11 +281,12 @@ private fun ClimateWidgetConfigureViewPreview() {
             ),
             selectedServerId = 0,
             onServerSelected = {},
-            entities = listOf(
-                previewEntity1,
-                previewEntity2,
-            ),
-            selectedEntityId = previewEntity1.entityId,
+            entitiesState = EntityDisplayState.Loaded(previewDisplayEntities),
+//            entities = listOf(
+//                previewEntity1,
+//                previewEntity2,
+//            ),
+            selectedEntityId = previewDisplayEntities.first().entityId,
             onEntitySelected = {},
             showCompleted = true,
             selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
@@ -307,3 +298,21 @@ private fun ClimateWidgetConfigureViewPreview() {
         )
     }
 }
+
+private val previewDisplayEntities = listOf(
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "climate.air1",
+            name = "Samsung HVAC",
+            icon = CommunityMaterial.Icon.cmd_air_conditioner,
+        ),
+        areaName = "Kitchen",
+    ),
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "climate.air2",
+            name = "BGH HVAC",
+            icon = CommunityMaterial.Icon.cmd_air_conditioner,
+        ),
+    ),
+)

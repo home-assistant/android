@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -18,8 +17,11 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -39,6 +41,8 @@ import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -51,6 +55,7 @@ import timber.log.Timber
 class ClimateWidgetConfigureViewModel @AssistedInject constructor(
     private val climateWidgetDao: ClimateWidgetDao,
     private val serverManager: ServerManager,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     @Assisted preSelectedEntityId: String?,
 ) : ViewModel() {
     private var supportedTextColors: List<String> = emptyList()
@@ -59,27 +64,21 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
     var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
         private set
 
+    /**
+     * Picker state with the server's todo entities, resolved again whenever the selected
+     * server changes and starting as [EntityDisplayState.Loading].
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val entities: StateFlow<List<Entity>> = snapshotFlow { selectedServerId }
+    val displayEntities: StateFlow<EntityDisplayState<EntityDisplayWithContext>> = snapshotFlow { selectedServerId }
         .distinctUntilChanged()
-        .mapLatest { serverId ->
+        .flatMapLatest { serverId ->
             if (serverManager.isRegistered()) {
-                try {
-                    serverManager.integrationRepository(serverId)
-                        .getEntities()
-                        .orEmpty()
-                        .filter { entity -> entity.domain == CLIMATE_DOMAIN }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get entities")
-                    emptyList()
-                }
+                entitiesForDisplayManager.snapshotInContext(serverId = serverId) { it.domain == CLIMATE_DOMAIN }
             } else {
                 Timber.w("No server registered")
-                emptyList()
+                flowOf(EntityDisplayState.Loaded(emptyList<EntityDisplayWithContext>()))
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), emptyList())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), EntityDisplayState.Loading)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val entityRegistry: StateFlow<List<EntityRegistryResponse>?> = snapshotFlow { selectedServerId }
@@ -151,10 +150,11 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            entities.collect { entities ->
+            displayEntities.collect { state ->
+                if (state !is EntityDisplayState.Loaded) return@collect
                 selectedEntityMutex.withLock {
                     if (selectedEntityId == null) {
-                        selectedEntityId = entities.firstOrNull()?.entityId
+                        selectedEntityId = state.entities.firstOrNull()?.entityId
                     }
                 }
             }
@@ -194,7 +194,8 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
     suspend fun isValidSelection(): Boolean {
         selectedEntityMutex.withLock {
             return serverManager.getServer(selectedServerId) != null &&
-                selectedEntityId in entities.value.map { it.entityId }
+                selectedEntityId in
+                (displayEntities.value as? EntityDisplayState.Loaded)?.entities.orEmpty().map { it.entityId }
         }
     }
 
