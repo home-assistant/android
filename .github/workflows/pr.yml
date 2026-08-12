@@ -353,8 +353,8 @@ jobs:
         with:
           name: emulator-wtf-inputs
           # A partial re-run re-triggers "PR Emulator.wtf" without rebuilding these
-          # APKs, so they must outlive the original run. Beyond a week it skips itself.
-          retention-days: 7
+          # APKs, so they must outlive the original run. Past that it skips itself.
+          retention-days: 3
           if-no-files-found: error
           path: |
             app/build/outputs/apk/full/debug/app-full-debug.apk
