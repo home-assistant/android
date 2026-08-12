@@ -16,7 +16,7 @@ jobs:
   validate_localize_setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -64,7 +64,7 @@ jobs:
   yamllint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -78,7 +78,7 @@ jobs:
   lockfiles:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -109,7 +109,7 @@ jobs:
     needs: [lockfiles]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -120,11 +120,11 @@ jobs:
 
       - name: Generate aboutlibraries JSON
         run: |
-          ./gradlew :app:exportLibraryDefinitionsFullDebug \
-            :app:exportLibraryDefinitionsMinimalDebug \
-            :automotive:exportLibraryDefinitionsFullDebug \
-            :automotive:exportLibraryDefinitionsMinimalDebug \
-            :wear:exportLibraryDefinitionsDebug
+          ./gradlew :app:prepareLibraryDefinitionsFullDebug \
+            :app:prepareLibraryDefinitionsMinimalDebug \
+            :automotive:prepareLibraryDefinitionsFullDebug \
+            :automotive:prepareLibraryDefinitionsMinimalDebug \
+            :wear:prepareLibraryDefinitionsDebug
 
       - name: Check licenses
         run: |
@@ -141,7 +141,7 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -165,7 +165,7 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -194,7 +194,7 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -216,12 +216,13 @@ jobs:
         if: always()
         with:
           test-name: Screenshot test
+          job-status: ${{ job.status }}
 
   pr_build:
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -267,7 +268,7 @@ jobs:
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -301,7 +302,7 @@ jobs:
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -318,13 +319,14 @@ jobs:
         if: always()
         with:
           test-name: Unit test
+          job-status: ${{ job.status }}
 
   build_emulator_wtf_apks:
     name: "Build Emulator.wtf APKs"
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -398,7 +400,7 @@ jobs:
           docker-images: false # Takes 16s, enable if needed in the future
           large-packages: false # includes google-cloud-sdk and it's slow
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -415,7 +417,7 @@ jobs:
           ls /dev/kvm
 
       - name: Build projects and run instrumentation tests
-        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.configuration.api-level }}
           arch: ${{ matrix.configuration.arch }}
@@ -433,3 +435,4 @@ jobs:
         if: always()
         with:
           test-name: Instrumentation test (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
+          job-status: ${{ job.status }}

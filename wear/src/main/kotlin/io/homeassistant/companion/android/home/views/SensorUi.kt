@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.home.views
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.health.connect.HealthPermissions
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,7 +30,31 @@ import io.homeassistant.companion.android.util.batterySensorManager
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 import kotlinx.coroutines.runBlocking
 
+/**
+ * A permission that must be requested in two steps from [minSdk]: [background] can only be
+ * requested once [foreground] is granted.
+ */
+private data class TwoStepPermission(val foreground: String, val background: String, val minSdk: Int)
+
 @SuppressLint("InlinedApi")
+private val TWO_STEP_PERMISSIONS = listOf(
+    TwoStepPermission(
+        foreground = Manifest.permission.ACCESS_FINE_LOCATION,
+        background = Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+        minSdk = Build.VERSION_CODES.R,
+    ),
+    TwoStepPermission(
+        foreground = Manifest.permission.BODY_SENSORS,
+        background = Manifest.permission.BODY_SENSORS_BACKGROUND,
+        minSdk = Build.VERSION_CODES.TIRAMISU,
+    ),
+    TwoStepPermission(
+        foreground = HealthPermissions.READ_HEART_RATE,
+        background = HealthPermissions.READ_HEALTH_DATA_IN_BACKGROUND,
+        minSdk = Build.VERSION_CODES.BAKLAVA,
+    ),
+)
+
 @Composable
 fun SensorUi(
     sensor: Sensor?,
@@ -44,40 +69,21 @@ fun SensorUi(
             perm = it
         }
 
-    val context = LocalContext.current
     val permissionLaunch = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { isGranted ->
         var allGranted = true
-        isGranted.forEach {
+        isGranted.forEach { (permission, granted) ->
+            val twoStep = TWO_STEP_PERMISSIONS.firstOrNull { it.foreground == permission }
             if (
-                it.key == Manifest.permission.ACCESS_FINE_LOCATION &&
-                SdkVersion.isAtLeast(Build.VERSION_CODES.R) &&
-                manager.requiredPermissions(
-                    context,
-                    basicSensor.id,
-                ).contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-                manager.requiredPermissions(
-                    context,
-                    basicSensor.id,
-                ).contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                twoStep != null &&
+                SdkVersion.isAtLeast(twoStep.minSdk) &&
+                manager.requiredPermissions(basicSensor.id).contains(twoStep.background)
             ) {
-                backgroundRequest.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                backgroundRequest.launch(twoStep.background)
                 return@forEach
             }
-            if (
-                it.key == Manifest.permission.BODY_SENSORS &&
-                SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &&
-                manager.requiredPermissions(context, basicSensor.id).contains(Manifest.permission.BODY_SENSORS) &&
-                manager.requiredPermissions(
-                    context,
-                    basicSensor.id,
-                ).contains(Manifest.permission.BODY_SENSORS_BACKGROUND)
-            ) {
-                backgroundRequest.launch(Manifest.permission.BODY_SENSORS_BACKGROUND)
-                return@forEach
-            }
-            if (!it.value) {
+            if (!granted) {
                 allGranted = false
             }
         }
@@ -85,29 +91,22 @@ fun SensorUi(
         perm = allGranted
     }
 
-    LaunchedEffect(Unit) { perm = manager.checkPermission(context, basicSensor.id) }
+    LaunchedEffect(Unit) { perm = manager.checkPermission(basicSensor.id) }
     val isChecked = (sensor == null && basicSensor.enabledByDefault) ||
         (sensor?.enabled == true && perm)
     SwitchButton(
         checked = isChecked,
         onCheckedChange = { enabled ->
-            val permissions = manager.requiredPermissions(context, basicSensor.id)
+            val permissions = manager.requiredPermissions(basicSensor.id)
             if (perm || !enabled) {
                 onSensorClicked(basicSensor.id, enabled)
             } else {
+                val backgroundPermissions = TWO_STEP_PERMISSIONS.map { it.background }
                 permissionLaunch.launch(
-                    if (permissions.size == 1 &&
-                        (
-                            permissions[0] == Manifest.permission.ACCESS_BACKGROUND_LOCATION ||
-                                permissions[0] == Manifest.permission.BODY_SENSORS_BACKGROUND
-                            )
-                    ) {
+                    if (permissions.size == 1 && permissions[0] in backgroundPermissions) {
                         permissions
                     } else {
-                        permissions.toSet()
-                            .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                            .minus(Manifest.permission.BODY_SENSORS_BACKGROUND)
-                            .toTypedArray()
+                        permissions.filterNot { it in backgroundPermissions }.toTypedArray()
                     },
                 )
             }
@@ -144,7 +143,8 @@ fun SensorUi(
 @Composable
 private fun PreviewSensorUI() {
     val context = LocalContext.current
-    val batterySensors = runBlocking { batterySensorManager.getAvailableSensors(context) }
+    val batterySensorManager = batterySensorManager(context)
+    val batterySensors = runBlocking { batterySensorManager.getAvailableSensors() }
     CompositionLocalProvider {
         ThemeLazyColumn {
             item {

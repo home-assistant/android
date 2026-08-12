@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.frontend.addto.ExternalEntityAddToAction
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -99,6 +99,8 @@ object ConfigResultMessage {
         val appVersion: String,
         val hasEntityAddTo: Boolean = true,
         val hasAssistSettings: Boolean = true,
+        val hasSplashscreen: Boolean = true,
+        val hasMatterStatusReport: Boolean = true,
     ) {
         companion object {
             fun create(
@@ -120,44 +122,6 @@ object ConfigResultMessage {
     }
 }
 
-/**
- * Configuration result payload for config/get requests.
- *
- * Contains the app's capabilities that the frontend needs to know about.
- */
-@Serializable
-data class ConfigResult(
-    val hasSettingsScreen: Boolean = true,
-    val canWriteTag: Boolean,
-    val hasExoPlayer: Boolean = true,
-    val canCommissionMatter: Boolean,
-    val canImportThreadCredentials: Boolean,
-    val hasAssist: Boolean = true,
-    val hasBarCodeScanner: Int,
-    val canSetupImprov: Boolean = true,
-    val downloadFileSupported: Boolean = true,
-    val appVersion: String,
-    val hasEntityAddTo: Boolean = true,
-    val hasAssistSettings: Boolean = true,
-) {
-    companion object {
-        fun create(
-            hasNfc: Boolean,
-            canCommissionMatter: Boolean,
-            canExportThread: Boolean,
-            hasBarCodeScanner: Int,
-            canSetupImprov: Boolean,
-            appVersion: AppVersion,
-        ) = ConfigResult(
-            canWriteTag = hasNfc,
-            canCommissionMatter = canCommissionMatter,
-            canImportThreadCredentials = canExportThread,
-            hasBarCodeScanner = hasBarCodeScanner,
-            canSetupImprov = canSetupImprov,
-            appVersion = appVersion.value,
-        )
-    }
-}
 object EntityAddToActionsResultMessage {
     /**
      * Creates a response with available EntityAddTo actions.

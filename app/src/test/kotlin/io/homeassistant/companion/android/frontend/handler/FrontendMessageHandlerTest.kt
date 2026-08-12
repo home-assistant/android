@@ -9,6 +9,8 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
+import io.homeassistant.companion.android.frontend.addto.EntityAddToAction
+import io.homeassistant.companion.android.frontend.addto.ExternalEntityAddToAction
 import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
@@ -31,6 +33,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlaye
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizeMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerStopMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.FrontendLoaded
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
@@ -57,8 +60,6 @@ import io.homeassistant.companion.android.frontend.session.RevokeAuthResult
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
-import io.homeassistant.companion.android.webview.addto.EntityAddToAction
-import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -83,7 +84,6 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class, EvaluateJavascriptUsage::class)
@@ -138,8 +138,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.Connected)
+            assertInstanceOf(FrontendHandlerEvent.Connected::class.java, awaitItem())
             expectNoEvents()
         }
     }
@@ -153,8 +152,18 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.Disconnected)
+            assertInstanceOf(FrontendHandlerEvent.Disconnected::class.java, awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given frontend loaded message when messageResults then emits Loaded`() = runTest {
+        val message = FrontendLoaded(id = 3)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            assertInstanceOf(FrontendHandlerEvent.Loaded::class.java, awaitItem())
             expectNoEvents()
         }
     }
@@ -169,8 +178,7 @@ class FrontendMessageHandlerTest {
         coEvery { externalBusRepository.send(capture(responseSlot)) } returns Unit
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.ConfigSent)
+            assertInstanceOf(FrontendHandlerEvent.ConfigSent::class.java, awaitItem())
             expectNoEvents()
         }
 
@@ -211,7 +219,7 @@ class FrontendMessageHandlerTest {
             expectNoEvents()
         }
 
-        val configResult = (responseSlot.captured as ResultMessage).result.jsonObject
+        val configResult = assertInstanceOf(ResultMessage::class.java, responseSlot.captured).result.jsonObject
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(true, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(true, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
@@ -252,7 +260,7 @@ class FrontendMessageHandlerTest {
             expectNoEvents()
         }
 
-        val configResult = (responseSlot.captured as ResultMessage).result.jsonObject
+        val configResult = assertInstanceOf(ResultMessage::class.java, responseSlot.captured).result.jsonObject
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(false, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
@@ -270,9 +278,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.ShowAssist)
-            val showAssist = result as FrontendHandlerEvent.ShowAssist
+            val showAssist = assertInstanceOf(FrontendHandlerEvent.ShowAssist::class.java, awaitItem())
             assertEquals("abc", showAssist.pipelineId)
             assertEquals(false, showAssist.startListening)
             expectNoEvents()
@@ -285,8 +291,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.OpenSettings)
+            assertInstanceOf(FrontendHandlerEvent.OpenSettings::class.java, awaitItem())
             expectNoEvents()
         }
     }
@@ -297,8 +302,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.OpenAssistSettings)
+            assertInstanceOf(FrontendHandlerEvent.OpenAssistSettings::class.java, awaitItem())
             expectNoEvents()
         }
     }
@@ -309,8 +313,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.ThemeUpdated)
+            assertInstanceOf(FrontendHandlerEvent.ThemeUpdated::class.java, awaitItem())
             expectNoEvents()
         }
     }
@@ -321,9 +324,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.WriteNfcTag)
-            val nfcEvent = result as FrontendHandlerEvent.WriteNfcTag
+            val nfcEvent = assertInstanceOf(FrontendHandlerEvent.WriteNfcTag::class.java, awaitItem())
             assertEquals(42, nfcEvent.messageId)
             assertEquals("abc-123", nfcEvent.tagId)
             expectNoEvents()
@@ -336,9 +337,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.WriteNfcTag)
-            val nfcEvent = result as FrontendHandlerEvent.WriteNfcTag
+            val nfcEvent = assertInstanceOf(FrontendHandlerEvent.WriteNfcTag::class.java, awaitItem())
             assertEquals(7, nfcEvent.messageId)
             assertEquals(null, nfcEvent.tagId)
             expectNoEvents()
@@ -351,9 +350,8 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.WriteNfcTag)
-            assertEquals(-1, (result as FrontendHandlerEvent.WriteNfcTag).messageId)
+            val nfcEvent = assertInstanceOf(FrontendHandlerEvent.WriteNfcTag::class.java, awaitItem())
+            assertEquals(-1, nfcEvent.messageId)
             expectNoEvents()
         }
     }
@@ -364,8 +362,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.StartImprovScan)
+            assertInstanceOf(FrontendHandlerEvent.StartImprovScan::class.java, awaitItem())
             expectNoEvents()
         }
     }
@@ -379,9 +376,8 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.ConfigureImprovDevice)
-            assertEquals("Smart Plug", (result as FrontendHandlerEvent.ConfigureImprovDevice).deviceName)
+            val configureEvent = assertInstanceOf(FrontendHandlerEvent.ConfigureImprovDevice::class.java, awaitItem())
+            assertEquals("Smart Plug", configureEvent.deviceName)
             expectNoEvents()
         }
     }
@@ -392,8 +388,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.StartMatterCommissioning)
+            assertInstanceOf(FrontendHandlerEvent.StartMatterCommissioning::class.java, awaitItem())
             expectNoEvents()
         }
     }
@@ -404,8 +399,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.ImportThreadCredentials)
+            assertInstanceOf(FrontendHandlerEvent.ImportThreadCredentials::class.java, awaitItem())
             expectNoEvents()
         }
     }
@@ -423,9 +417,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.ShowBarcodeScanner)
-            val show = result as FrontendHandlerEvent.ShowBarcodeScanner
+            val show = assertInstanceOf(FrontendHandlerEvent.ShowBarcodeScanner::class.java, awaitItem())
             assertEquals(60, show.messageId)
             assertEquals("Scan code", show.title)
             assertEquals("Point the camera", show.description)
@@ -443,9 +435,8 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.ShowBarcodeScanner)
-            assertEquals(-1, (result as FrontendHandlerEvent.ShowBarcodeScanner).messageId)
+            val show = assertInstanceOf(FrontendHandlerEvent.ShowBarcodeScanner::class.java, awaitItem())
+            assertEquals(-1, show.messageId)
             expectNoEvents()
         }
     }
@@ -498,8 +489,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.UnknownMessage)
+            assertInstanceOf(FrontendHandlerEvent.UnknownMessage::class.java, awaitItem())
             expectNoEvents()
         }
     }
@@ -543,8 +533,7 @@ class FrontendMessageHandlerTest {
         }
 
         coVerify { externalBusRepository.send(any()) }
-        val configResult = (responseSlot.captured as? ResultMessage)?.result
-        assertNotNull(configResult)
+        val configResult = assertInstanceOf(ResultMessage::class.java, responseSlot.captured).result
         assertEquals(0, configResult.jsonObject["hasBarCodeScanner"]?.jsonPrimitive?.int)
     }
 
@@ -577,8 +566,7 @@ class FrontendMessageHandlerTest {
         }
 
         coVerify { externalBusRepository.send(any()) }
-        val configResult = (responseSlot.captured as? ResultMessage)?.result
-        assertNotNull(configResult)
+        val configResult = assertInstanceOf(ResultMessage::class.java, responseSlot.captured).result
         assertEquals(0, configResult.jsonObject["hasBarCodeScanner"]?.jsonPrimitive?.int)
     }
 
@@ -598,7 +586,7 @@ class FrontendMessageHandlerTest {
     @Test
     fun `Given failed auth with error when getExternalAuth then evaluates callback and emits AuthError`() = runTest {
         val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
-        val error = FrontendConnectionError.AuthenticationError(
+        val error = FrontendConnectionError.AuthRevoked(
             message = commonR.string.error_connection_failed,
             errorDetails = "Auth failed",
             rawErrorType = "ExternalAuthFailed",
@@ -612,9 +600,8 @@ class FrontendMessageHandlerTest {
         handler.messageResults().test {
             handler.getExternalAuth(authPayload, serverId = 1)
 
-            val event = awaitItem()
-            assertTrue(event is FrontendHandlerEvent.AuthError)
-            assertEquals(error, (event as FrontendHandlerEvent.AuthError).error)
+            val authError = assertInstanceOf(FrontendHandlerEvent.AuthError::class.java, awaitItem())
+            assertEquals(error, authError.error)
             expectNoEvents()
         }
 
@@ -689,9 +676,9 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns messages
 
         handler.messageResults().test {
-            assertEquals(HapticType.Success, (awaitItem() as FrontendHandlerEvent.PerformHaptic).hapticType)
-            assertEquals(HapticType.Light, (awaitItem() as FrontendHandlerEvent.PerformHaptic).hapticType)
-            assertEquals(HapticType.Heavy, (awaitItem() as FrontendHandlerEvent.PerformHaptic).hapticType)
+            assertEquals(HapticType.Success, assertInstanceOf(FrontendHandlerEvent.PerformHaptic::class.java, awaitItem()).hapticType)
+            assertEquals(HapticType.Light, assertInstanceOf(FrontendHandlerEvent.PerformHaptic::class.java, awaitItem()).hapticType)
+            assertEquals(HapticType.Heavy, assertInstanceOf(FrontendHandlerEvent.PerformHaptic::class.java, awaitItem()).hapticType)
             expectNoEvents()
         }
     }
@@ -716,9 +703,8 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(HandleBlobMessage(data = testData, filename = testFilename))
 
         handler.messageResults().test {
-            val event = awaitItem()
-            assertTrue(event is FrontendHandlerEvent.DownloadCompleted)
-            assertEquals(DownloadResult.Forwarded, (event as FrontendHandlerEvent.DownloadCompleted).result)
+            val downloadCompleted = assertInstanceOf(FrontendHandlerEvent.DownloadCompleted::class.java, awaitItem())
+            assertEquals(DownloadResult.Forwarded, downloadCompleted.result)
             expectNoEvents()
         }
 
@@ -741,9 +727,7 @@ class FrontendMessageHandlerTest {
         coEvery { externalBusRepository.send(capture(responseSlot)) } returns Unit
 
         handler.messageResults().test {
-            val event = awaitItem()
-            assertTrue(event is FrontendHandlerEvent.ExoPlayerAction.PlayHls)
-            val playHls = event as FrontendHandlerEvent.ExoPlayerAction.PlayHls
+            val playHls = assertInstanceOf(FrontendHandlerEvent.ExoPlayerAction.PlayHls::class.java, awaitItem())
             assertEquals(9, playHls.messageId)
             assertEquals(mockUri, playHls.url)
             assertEquals(true, playHls.muted)
@@ -751,7 +735,7 @@ class FrontendMessageHandlerTest {
         }
 
         coVerify { externalBusRepository.send(any()) }
-        val result = responseSlot.captured as ResultMessage
+        val result = assertInstanceOf(ResultMessage::class.java, responseSlot.captured)
         assertEquals(9, result.id)
         assertEquals(true, result.success)
     }
@@ -762,8 +746,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val event = awaitItem()
-            assertTrue(event is FrontendHandlerEvent.UnknownMessage)
+            assertInstanceOf(FrontendHandlerEvent.UnknownMessage::class.java, awaitItem())
             expectNoEvents()
         }
 
@@ -789,9 +772,7 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val event = awaitItem()
-            assertTrue(event is FrontendHandlerEvent.ExoPlayerAction.Resize)
-            val resize = event as FrontendHandlerEvent.ExoPlayerAction.Resize
+            val resize = assertInstanceOf(FrontendHandlerEvent.ExoPlayerAction.Resize::class.java, awaitItem())
             assertEquals(1.5, resize.left)
             assertEquals(2.5, resize.top)
             assertEquals(100.5, resize.right)
@@ -822,14 +803,13 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.EntityAddToActionsSent)
+            assertInstanceOf(FrontendHandlerEvent.EntityAddToActionsSent::class.java, awaitItem())
             expectNoEvents()
         }
 
         val sentSlot = slot<OutgoingExternalBusMessage>()
         coVerify { externalBusRepository.send(capture(sentSlot)) }
-        val sent = sentSlot.captured as ResultMessage
+        val sent = assertInstanceOf(ResultMessage::class.java, sentSlot.captured)
         assertEquals(20, sent.id)
         assertTrue(sent.success)
     }
@@ -853,10 +833,8 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            val result = awaitItem()
-            assertTrue(result is FrontendHandlerEvent.EntityAddToExecuted)
-            val event = (result as FrontendHandlerEvent.EntityAddToExecuted).event
-            assertTrue(event is FrontendEvent.ShowSnackbar)
+            val executed = assertInstanceOf(FrontendHandlerEvent.EntityAddToExecuted::class.java, awaitItem())
+            assertInstanceOf(FrontendEvent.ShowSnackbar::class.java, executed.event)
             expectNoEvents()
         }
     }

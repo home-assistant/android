@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 53,
-    "identityHash": "d5eac5535163a89bd11f94ba610f1c33",
+    "identityHash": "265c4166ed87c4c3c6c06c933f6b8741",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -554,61 +554,6 @@
         }
       },
       {
-        "tableName": "climate_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `show_completed` INTEGER NOT NULL DEFAULT true, `latest_update_data` TEXT, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "serverId",
-            "columnName": "server_id",
-            "affinity": "INTEGER",
-            "notNull": true,
-            "defaultValue": "0"
-          },
-          {
-            "fieldPath": "entityId",
-            "columnName": "entity_id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "backgroundType",
-            "columnName": "background_type",
-            "affinity": "TEXT",
-            "notNull": true,
-            "defaultValue": "'DAYNIGHT'"
-          },
-          {
-            "fieldPath": "textColor",
-            "columnName": "text_color",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "showCompleted",
-            "columnName": "show_completed",
-            "affinity": "INTEGER",
-            "notNull": true,
-            "defaultValue": "true"
-          },
-          {
-            "fieldPath": "latestUpdateData",
-            "columnName": "latest_update_data",
-            "affinity": "TEXT"
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        }
-      },
-      {
         "tableName": "template_widgets",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `template` TEXT NOT NULL, `text_size` REAL NOT NULL DEFAULT 12.0, `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
@@ -884,7 +829,7 @@
       },
       {
         "tableName": "favorite_cache",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `friendly_name` TEXT NOT NULL, `icon` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `icon` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -893,8 +838,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "friendlyName",
-            "columnName": "friendly_name",
+            "fieldPath": "name",
+            "columnName": "name",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -1207,7 +1152,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd5eac5535163a89bd11f94ba610f1c33')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '265c4166ed87c4c3c6c06c933f6b8741')"
     ]
   }
 }

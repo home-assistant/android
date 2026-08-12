@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
+import io.homeassistant.companion.android.frontend.addto.ExternalEntityAddToAction
 import io.homeassistant.companion.android.frontend.addto.FrontendEntityAddToManager
 import io.homeassistant.companion.android.frontend.download.FrontendDownloadManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
@@ -20,6 +21,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.EntityAd
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerPlayHlsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerResizeMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ExoPlayerStopMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.FrontendLoaded
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HandleBlobMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDeviceMessage
@@ -45,7 +47,6 @@ import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.sensitive
-import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -161,6 +162,10 @@ class FrontendMessageHandler @Inject constructor(
                 } else {
                     FrontendHandlerEvent.Disconnected
                 }
+            }
+            is FrontendLoaded -> {
+                Timber.d("Frontend is loaded and ready to be displayed")
+                FrontendHandlerEvent.Loaded
             }
 
             is ConfigGetMessage -> {

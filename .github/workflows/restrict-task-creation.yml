@@ -11,7 +11,7 @@ jobs:
       issues: write
     runs-on: ubuntu-latest
     # Only run if this is a Task issue type (from the issue form)
-    if: github.event.issue.type.name == 'Task'
+    if: github.repository == 'home-assistant/android' && github.event.issue.type.name == 'Task'
     steps:
       - name: Check if user is authorized
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0

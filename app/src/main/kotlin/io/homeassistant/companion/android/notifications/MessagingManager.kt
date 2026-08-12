@@ -66,6 +66,8 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
@@ -79,10 +81,14 @@ import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
+import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeSetting
+import io.homeassistant.companion.android.sensors.LocationSensorReceiver
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -94,7 +100,6 @@ import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
 import java.net.URL
 import java.net.URLDecoder
@@ -122,13 +127,14 @@ class MessagingManager @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
-    private val sensorDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val settingsDao: SettingsDao,
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
     private val permissionRequestMediator: PermissionRequestMediator,
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
+    private val bluetoothSensorManager: BluetoothSensorManager,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -451,13 +457,13 @@ class MessagingManager @Inject constructor(
                         }
 
                         DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                            if (!commandBleTransmitter(context, jsonData, sensorDao)) {
+                            if (!commandBleTransmitter(jsonData, sensorRepository, bluetoothSensorManager)) {
                                 sendNotification(jsonData)
                             }
                         }
 
                         DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-                            if (!commandBeaconMonitor(context, jsonData)) {
+                            if (!commandBeaconMonitor(jsonData, bluetoothSensorManager)) {
                                 sendNotification(jsonData)
                             }
                         }
@@ -770,15 +776,16 @@ class MessagingManager @Inject constructor(
 
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
-                    DeviceCommandData.TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
-                    DeviceCommandData.TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
-                    FORCE_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
-                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(
-                        context,
+                    DeviceCommandData.TURN_OFF -> sensorRepository.setHighAccuracyModeSetting(false)
+                    DeviceCommandData.TURN_ON,
+                    FORCE_ON,
+                    -> sensorRepository.setHighAccuracyModeSetting(true)
+
+                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> sensorRepository.setHighAccuracyModeIntervalSetting(
                         data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt(),
                     )
                 }
-                val intent = Intent(context, LocationSensorManager::class.java)
+                val intent = Intent(context, LocationSensorReceiver::class.java)
                 intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY
                 intent.putExtra("command", command)
                 context.sendBroadcast(intent)
@@ -1311,7 +1318,7 @@ class MessagingManager @Inject constructor(
         builder.setAutoCancel(!sticky)
     }
 
-    private fun handleSubject(builder: NotificationCompat.Builder, data: Map<String, String>) {
+    private suspend fun handleSubject(builder: NotificationCompat.Builder, data: Map<String, String>) {
         val subject = data[SUBJECT]
         if (!subject.isNullOrBlank()) {
             builder.setContentText(prepareText(subject))
@@ -1691,7 +1698,7 @@ class MessagingManager @Inject constructor(
         val otherApp = needsPackage || UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             }
 
             uri.startsWith(APP_PREFIX) -> {
@@ -1711,7 +1718,7 @@ class MessagingManager @Inject constructor(
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
                     SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NotificationHistory)
                 } else {
-                    WebViewActivity.newInstance(context, null, serverId)
+                    context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
                 }
             }
 
@@ -1726,9 +1733,9 @@ class MessagingManager @Inject constructor(
             }
 
             else -> {
-                WebViewActivity.newInstance(context, uri, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(uri), serverId)
             }
-        } ?: WebViewActivity.newInstance(context, null, serverId)
+        } ?: context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!otherApp) {
@@ -1993,9 +2000,9 @@ class MessagingManager @Inject constructor(
         try {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val intent = if (title.isNullOrEmpty()) {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             } else {
-                WebViewActivity.newInstance(context, title, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
             }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -2054,29 +2061,25 @@ class MessagingManager @Inject constructor(
         when (mode.uppercase()) {
             WebsocketSetting.NEVER.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.NEVER
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.NEVER))
                 }
             }
 
             WebsocketSetting.ALWAYS.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.ALWAYS
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.ALWAYS))
                 }
             }
 
             WebsocketSetting.HOME_WIFI.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.HOME_WIFI
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.HOME_WIFI))
                 }
             }
 
             WebsocketSetting.SCREEN_ON.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.SCREEN_ON
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.SCREEN_ON))
                 }
             }
         }

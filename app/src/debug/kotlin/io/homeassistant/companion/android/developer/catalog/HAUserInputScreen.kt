@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
@@ -20,21 +21,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.composable.HAInputChip
 import io.homeassistant.companion.android.common.compose.composable.HARadioGroup
+import io.homeassistant.companion.android.common.compose.composable.HASearchField
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.RadioOption
+import io.homeassistant.companion.android.common.compose.composable.rememberSearchFieldState
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedDropdownKey
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import java.time.LocalDateTime
 
@@ -44,6 +48,7 @@ fun LazyListScope.catalogUserInputSection() {
     entityPicker()
     switches()
     checkboxes()
+    inputChips()
     radioGroupSection()
 }
 
@@ -58,6 +63,7 @@ private fun LazyListScope.input() {
             var value4 by remember { mutableStateOf("") }
             var value5 by remember { mutableStateOf("error") }
             var value6 by remember { mutableStateOf("super secret") }
+            val searchState = rememberSearchFieldState()
             CatalogRow {
                 HATextField(
                     value = value1,
@@ -174,7 +180,31 @@ private fun LazyListScope.input() {
                         )
                     },
                 )
+                HASearchField(state = searchState)
             }
+        }
+    }
+}
+
+private fun LazyListScope.inputChips() {
+    catalogSection(title = "Input chips") {
+        CatalogRow {
+            var selected by remember { mutableStateOf(false) }
+            HAInputChip(
+                text = "toggle me",
+                onClick = { selected = !selected },
+                selected = selected,
+                trailingIcon = if (selected) Icons.Default.Close else Icons.Default.Add,
+                trailingIconContentDescription = null,
+            )
+            HAInputChip(text = "without icon", onClick = {})
+            HAInputChip(
+                text = "disabled",
+                onClick = {},
+                enabled = false,
+                trailingIcon = Icons.Default.Add,
+                trailingIconContentDescription = null,
+            )
         }
     }
 }
@@ -287,18 +317,26 @@ private fun LazyListScope.dropdownMenu() {
 }
 
 private fun LazyListScope.entityPicker() {
-    catalogSection(title = "Entity Pickers") {
-        var selectedEntityId by remember { mutableStateOf<String?>(null) }
+    catalogSection(title = "Entity Pickers (loaded, loading, error)") {
+        CatalogRow {
+            var selectedEntityId by remember { mutableStateOf<String?>(null) }
 
-        EntityPicker(
-            entities = sampleEntities,
-            entityRegistry = sampleEntityRegistry,
-            deviceRegistry = sampleDeviceRegistry,
-            areaRegistry = sampleAreaRegistry,
-            selectedEntityId = selectedEntityId,
-            onEntitySelectedId = { selectedEntityId = it },
-            onEntityCleared = { selectedEntityId = null },
-        )
+            EntityPicker(
+                displayState = EntityDisplayState.Loaded(sampleDisplayEntities),
+                selectedEntityId = selectedEntityId,
+                onSelectionChanged = { selectedEntityId = it },
+            )
+            EntityPicker(
+                displayState = EntityDisplayState.Loading,
+                selectedEntityId = "light.living_room",
+                onSelectionChanged = {},
+            )
+            EntityPicker(
+                displayState = EntityDisplayState.Error,
+                selectedEntityId = "light.living_room",
+                onSelectionChanged = {},
+            )
+        }
     }
 }
 
@@ -308,61 +346,51 @@ private val sampleDropdownItems = (1..30).map { index ->
     HADropdownItem(key = index, label = "Server $index")
 }
 
-private val sampleAreaRegistry = listOf(
-    AreaRegistryResponse(areaId = "living_room", name = "Living Room"),
-    AreaRegistryResponse(areaId = "bedroom", name = "Bedroom"),
-)
-
-private val sampleDeviceRegistry = listOf(
-    DeviceRegistryResponse(id = "device_1", name = "Smart Bulb Pro", areaId = "living_room"),
-)
-
-private val sampleEntityRegistry = listOf(
-    EntityRegistryResponse(entityId = "light.living_room", deviceId = "device_1", areaId = "living_room"),
-)
-
-private val sampleEntities = listOf(
-    Entity(
-        entityId = "light.living_room",
-        state = "on",
-        attributes = mapOf("friendly_name" to "Living Room Light", "icon" to "mdi:lightbulb"),
-        lastChanged = now,
-        lastUpdated = now,
+private val sampleDisplayEntities = listOf(
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.living_room",
+            name = "Living Room Light",
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        ),
+        areaName = "Living Room",
+        deviceName = "Smart Bulb Pro",
     ),
-    Entity(
-        entityId = "light.bedroom",
-        state = "off",
-        attributes = mapOf("friendly_name" to "Bedroom Light"),
-        lastChanged = now,
-        lastUpdated = now,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.bedroom",
+            name = "Bedroom Light",
+            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        ),
+        areaName = "Bedroom",
     ),
-    Entity(
-        entityId = "sensor.temperature",
-        state = "22.5",
-        attributes = mapOf("friendly_name" to "Temperature Sensor", "unit_of_measurement" to "°C"),
-        lastChanged = now,
-        lastUpdated = now,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "sensor.temperature",
+            name = "Temperature Sensor",
+            icon = CommunityMaterial.Icon3.cmd_thermometer,
+        ),
     ),
-    Entity(
-        entityId = "switch.fan",
-        state = "off",
-        attributes = mapOf("friendly_name" to "Ceiling Fan"),
-        lastChanged = now,
-        lastUpdated = now,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "switch.fan",
+            name = "Ceiling Fan",
+            icon = CommunityMaterial.Icon2.cmd_fan,
+        ),
     ),
-    Entity(
-        entityId = "binary_sensor.motion",
-        state = "off",
-        attributes = mapOf("friendly_name" to "Motion Sensor", "device_class" to "motion"),
-        lastChanged = now,
-        lastUpdated = now,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "binary_sensor.motion",
+            name = "Motion Sensor",
+            icon = CommunityMaterial.Icon3.cmd_motion_sensor,
+        ),
     ),
-    Entity(
-        entityId = "cover.garage_door",
-        state = "closed",
-        attributes = mapOf("friendly_name" to "Garage Door", "device_class" to "garage"),
-        lastChanged = now,
-        lastUpdated = now,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "cover.garage_door",
+            name = "Garage Door",
+            icon = CommunityMaterial.Icon2.cmd_garage,
+        ),
     ),
 )
 

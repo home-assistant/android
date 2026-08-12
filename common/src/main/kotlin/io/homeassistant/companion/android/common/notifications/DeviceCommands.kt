@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.common.notifications
 
-import android.content.Context
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
-import io.homeassistant.companion.android.common.sensors.SensorUpdateReceiver
-import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import java.util.UUID
 import timber.log.Timber
 
@@ -105,7 +103,7 @@ private fun checkCommandFormat(data: Map<String, String>): Boolean {
     }
 }
 
-suspend fun commandBeaconMonitor(context: Context, data: Map<String, String>): Boolean {
+suspend fun commandBeaconMonitor(data: Map<String, String>, bluetoothSensorManager: BluetoothSensorManager): Boolean {
     if (!checkCommandFormat(data)) {
         Timber.d(
             "Invalid beacon monitor command received, posting notification to device",
@@ -115,15 +113,19 @@ suspend fun commandBeaconMonitor(context: Context, data: Map<String, String>): B
     val command = data[NotificationData.COMMAND]
     Timber.d("Processing command: ${data[NotificationData.MESSAGE]}")
     if (command == DeviceCommandData.TURN_OFF) {
-        BluetoothSensorManager.enableDisableBeaconMonitor(context, false)
+        bluetoothSensorManager.enableDisableBeaconMonitor(false)
     }
     if (command == DeviceCommandData.TURN_ON) {
-        BluetoothSensorManager.enableDisableBeaconMonitor(context, true)
+        bluetoothSensorManager.enableDisableBeaconMonitor(true)
     }
     return true
 }
 
-suspend fun commandBleTransmitter(context: Context, data: Map<String, String>, sensorDao: SensorDao): Boolean {
+suspend fun commandBleTransmitter(
+    data: Map<String, String>,
+    sensorRepository: SensorRepository,
+    bluetoothSensorManager: BluetoothSensorManager,
+): Boolean {
     if (!checkCommandFormat(data)) {
         Timber.d(
             "Invalid ble transmitter command received, posting notification to device",
@@ -133,13 +135,13 @@ suspend fun commandBleTransmitter(context: Context, data: Map<String, String>, s
     val command = data[NotificationData.COMMAND]
     Timber.d("Processing command: ${data[NotificationData.MESSAGE]}")
     if (command == DeviceCommandData.TURN_OFF) {
-        BluetoothSensorManager.enableDisableBLETransmitter(context, false)
+        bluetoothSensorManager.enableDisableBLETransmitter(false)
     }
     if (command == DeviceCommandData.TURN_ON) {
-        BluetoothSensorManager.enableDisableBLETransmitter(context, true)
+        bluetoothSensorManager.enableDisableBLETransmitter(true)
     }
     if (command in DeviceCommandData.BLE_COMMANDS) {
-        sensorDao.updateSettingValue(
+        sensorRepository.updateSettingValue(
             BluetoothSensorManager.bleTransmitter.id,
             when (command) {
                 DeviceCommandData.BLE_SET_ADVERTISE_MODE -> BluetoothSensorManager.SETTING_BLE_ADVERTISE_MODE
@@ -178,13 +180,13 @@ suspend fun commandBleTransmitter(context: Context, data: Map<String, String>, s
         )
 
         // Force the transmitter to restart and send updated attributes
-        sensorDao.updateLastSentStatesAndIcons(
+        sensorRepository.updateLastSentStatesAndIcons(
             BluetoothSensorManager.bleTransmitter.id,
             null,
             null,
         )
     }
-    BluetoothSensorManager().requestSensorUpdate(context)
-    SensorUpdateReceiver.updateSensors(context)
+    bluetoothSensorManager.requestSensorUpdate()
+    bluetoothSensorManager.sendBluetoothSensorUpdate()
     return true
 }

@@ -8,6 +8,7 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
+import androidx.annotation.MainThread
 import androidx.annotation.VisibleForTesting
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,12 +21,20 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import timber.log.Timber
+
+/**
+ * Process-wide instance shared by every [HAWebView], mirroring the global scope of
+ * [WebView.pauseTimers]/[WebView.resumeTimers].
+ */
+private val webViewTimersManager = WebViewTimersManager()
 
 const val BLANK_URL = "about:blank"
 
@@ -114,6 +123,8 @@ fun HAWebView(
                 webview = null
             },
         )
+
+        WebViewLifecycleEffect(webView = webview)
     }
 
     // To avoid checking doUpdateVisitedHistory from the webViewClient we simply delegate the back button handling
@@ -121,6 +132,64 @@ fun HAWebView(
     // handle by the navHost.
     BackHandler(onBackPressed != null) {
         webview.takeIf { it?.canGoBack() == true }?.goBack() ?: onBackPressed?.invoke()
+    }
+}
+
+/**
+ * Freezes the [webView] while its screen is not visible: pauses the view's own processing and,
+ * through the [manager], the global WebView timers once no other WebView screen is started either.
+ *
+ * Scoped to the composition's lifecycle owner, so leaving the screen, the app, or the composition freezes the view.
+ */
+@VisibleForTesting
+@Composable
+internal fun WebViewLifecycleEffect(webView: WebView?, manager: WebViewTimersManager = webViewTimersManager) {
+    if (webView != null) {
+        LifecycleStartEffect(webView) {
+            Timber.d("Webview started")
+            manager.onWebViewStarted(webView)
+            webView.onResume()
+            onStopOrDispose {
+                Timber.d("Webview stopped")
+                webView.onPause()
+                manager.onWebViewStopped(webView)
+            }
+        }
+    }
+}
+
+/**
+ * Reference-counts the started WebView screens to drive the process-global
+ * [WebView.pauseTimers]/[WebView.resumeTimers] pair.
+ *
+ * Those calls affect every WebView in the process, so a screen must not pause timers while another
+ * WebView screen is still visible (activity transitions overlap: the new activity starts before the
+ * old one stops). Timers are paused when the last started screen stops and resumed when the first
+ * one starts.
+ */
+@MainThread
+internal class WebViewTimersManager {
+
+    private var startedWebViews = 0
+
+    /** Registers a started WebView screen, resuming global timers if it is the first one. */
+    fun onWebViewStarted(webView: WebView) {
+        if (startedWebViews == 0) {
+            webView.resumeTimers()
+        }
+        startedWebViews++
+    }
+
+    /** Unregisters a started WebView screen, pausing global timers if it was the last one. */
+    fun onWebViewStopped(webView: WebView) {
+        if (startedWebViews == 0) {
+            FailFast.fail { "onWebViewStopped called without a matching onWebViewStarted" }
+            return
+        }
+        startedWebViews--
+        if (startedWebViews == 0) {
+            webView.pauseTimers()
+        }
     }
 }
 

@@ -55,13 +55,13 @@ class LinkViewModel @Inject constructor(
                     _navigationEvents.trySend(LinkNavigationEvent.OpenInvitation(destination.serverUrl))
                 is LinkDestination.Webview ->
                     _navigationEvents.trySend(
-                        LinkNavigationEvent.NavigateToWebView(destination.path, destination.serverId),
+                        LinkNavigationEvent.NavigateToWebView(destination.target, destination.serverId),
                     )
                 is LinkDestination.ServerPicker ->
                     serverChooserItemsUseCase(destination.servers).collect { items ->
                         _uiState.value = LinkUiState.ChoosingServer(
                             items = items,
-                            path = destination.path,
+                            target = destination.target,
                         )
                     }
             }
@@ -70,7 +70,7 @@ class LinkViewModel @Inject constructor(
 
     fun onServerSelected(serverId: Int) {
         val state = _uiState.value as? LinkUiState.ChoosingServer ?: return
-        _navigationEvents.trySend(LinkNavigationEvent.NavigateToWebView(path = state.path, serverId = serverId))
+        _navigationEvents.trySend(LinkNavigationEvent.NavigateToWebView(target = state.target, serverId = serverId))
     }
 
     fun onServerChooserDismissed() {

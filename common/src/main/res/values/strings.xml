@@ -248,6 +248,10 @@
     <string name="entity_picker_add_entity">Add entity</string>
     <string name="entity_widget_desc">View any entity\'s current state and toggle it</string>
     <string name="todo_widget_desc">View any configured to-do list and mark items as completed</string>
+    <string name="error_action_clear_credentials">Clear credentials</string>
+    <string name="error_action_install_certificate">Install certificate</string>
+    <string name="error_action_remove_server">Remove server</string>
+    <string name="error_action_update_webview">Update WebView</string>
     <string name="climate_widget_desc">View and control a configured climate entity</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
@@ -255,6 +259,8 @@
     <string name="error_connection_failed_no_network">Network unavailable, please check your connection</string>
     <string name="error_loading_entities">Error loading entities</string>
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error. Please ensure your certificate is valid.</string>
+    <string name="error_ssl_subresource">Some content on this page could not be loaded securely.</string>
+    <string name="error_ssl_subresource_host">Content from %1$s could not be loaded securely.</string>
     <string name="error_with_registration">The \'Mobile App\' integration is required to use the app, but it is not available on your Home Assistant server. Please check your server configuration and try again.</string>
     <string name="errors">Errors</string>
     <string name="event_error">Failed to notify HA of picked option.</string>
@@ -607,7 +613,7 @@
     <string name="sensor_description_battery_level">The current battery level of the device</string>
     <string name="sensor_description_battery_state">The current charging state of the battery</string>
     <string name="sensor_description_battery_temperature">The current battery temperature</string>
-    <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32–mqtt–room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\n\nSettings allow for specifying:\n– \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 – 65535), to tailor identifiers and groups. The default Minor value 40004 has the special meaning of forcing the beacon to be recognized by the iBeacon Tracker integration\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)\n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nIt is also possible to set beacons to only be transmitted when connected to a Home network, which may be desirable for privacy and battery life.\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
+    <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32–mqtt–room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\n\nSettings allow for specifying:\n– \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 – 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)\n- \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nIt is also possible to set beacons to only be transmitted when connected to a Home network, which may be desirable for privacy and battery life.\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
     <string name="sensor_description_bluetooth_ble_beacon_monitor">Scans for iBeacons and shows the IDs of nearby beacons and their distance in meters. A notification will be shown on the device when scanning is actively running.\n\nWarning: this can affect battery life, especially with a short \"Scan Interval\".\n\nSettings allow for specifying:\n– \"Filter Iterations\" (should be 1 – 100, default: 10), higher values will result in more stable measurements but also less responsiveness.\n– \"Filter RSSI Multiplier\" (should be 1.0 – 2.0, default: 1.05), can be used to achieve more stable measurements when beacons are farther away. This will also affect responsiveness.\n- \"Scan Interval\" (default: 500) milliseconds between scans. Shorter intervals will drain the battery more quickly.\n- \"Scan Period\" (default: 1100) milliseconds to scan for beacons. Most beacons will send a signal every second so this value should be at least 1100ms.\n- \"UUID Filter\" allows to restrict the reported beacons by including (or excluding) those with the selected UUIDs.\n- \"Exclude selected UUIDs\", if false (default) only the beacons with the selected UUIDs are reported. If true all beacons except the selected ones are reported. Not available when \"UUID Filter\" is empty.\n\nNote:\nAdditionally a separate setting exists (\"Enable Beacon Monitor\") to stop or start scanning.</string>
     <string name="sensor_description_bluetooth_connection">Information about currently connected Bluetooth devices</string>
     <string name="sensor_description_bluetooth_state">Whether Bluetooth is enabled on the device</string>
@@ -810,10 +816,12 @@
     <string name="shortcut_n">Shortcut %d</string>
     <string name="shortcut_pinned_desc">Pinned shortcut description</string>
     <string name="shortcut_pinned_id">Pinned shortcut ID</string>
+    <string name="shortcut_pinned_id_reserved">This ID is reserved for dynamic shortcuts</string>
     <string name="shortcut_pinned_label">Pinned shortcut label</string>
     <string name="shortcut_pinned_list">Select a pinned shortcut ID to edit</string>
     <string name="shortcut_pinned_note">Make sure to change the ID below for each new shortcut you want to add otherwise the existing ID will be updated. There are no limits to the amount of pinned shortcuts you can create.</string>
     <string name="shortcut_type">Select shortcut type</string>
+    <string name="shortcut_path_invalid">The path contains characters that are not allowed in a URL</string>
     <string name="shortcut_updated">Shortcut updated</string>
     <string name="shortcut">Shortcut</string>
     <string name="shortcuts_choose">Choose shortcuts</string>
@@ -946,11 +954,13 @@
     <string name="tile_add">Add tile</string>
     <string name="tile_added">Tile added</string>
     <string name="tile_data_missing">You need to set up the tile before using it</string>
-    <string name="tile_entity">Select an entity to toggle or call (required)</string>
-    <string name="tile_label">Tile label (required)</string>
+    <string name="tile_entity">Select an entity to toggle or call*</string>
+    <string name="tile_label">Tile label*</string>
     <string name="tile_not_setup">Requires setup</string>
+    <string name="tile_required_field_hint">* Indicates a required field</string>
     <string name="tile_save">Update tile data</string>
-    <string name="tile_server">Select a server (required)</string>
+    <string name="tile_server">Select a server*</string>
+    <string name="tile_slot_label">%1$s (%2$s)</string>
     <string name="tile_subtitle">Tile subtitle</string>
     <string name="tile_updated">Tile data updated</string>
     <string name="tiles">Tiles</string>
@@ -999,6 +1009,7 @@
     <string name="webview_creation_failed">WebView failed to initialize, please check and update your system WebView.</string>
     <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
     <string name="widget_attribute_separator_label">Separator between attributes:</string>
+    <string name="widget_attribute_add">Add attribute</string>
     <string name="widget_background_type_title">Select widget theme</string>
     <string name="widget_background_type_label">Widget theme:</string>
     <string name="widget_background_type_daynight">Light/dark theme</string>
@@ -1058,6 +1069,7 @@
     <string name="widget_template_error">Unable to render the template</string>
     <string name="widget_text_hint_label">Label</string>
     <string name="widget_text_size_default">30</string>
+    <string name="widget_text_size_error">Enter a whole number greater than 0</string>
     <string name="widget_text_size_label">Widget text size:</string>
     <string name="widget_text_size_template">12</string>
     <string name="widget_text_color_black">Black</string>
@@ -1094,7 +1106,6 @@
     <string name="enable_change_log_popup">Show change log after updating</string>
     <string name="enable_change_log_popup_summary">Allow the change log dialog to automatically appear when the app is updated</string>
     <string name="tile_icon">Tile icon</string>
-    <string name="tile_icon_original">Use entity icon</string>
     <string name="tile_select">Select a tile to edit</string>
     <string name="tile_fetch_entity_error">Cannot fetch entity</string>
     <string name="shortcut_pinned">Pinned shortcuts</string>
@@ -1151,6 +1162,8 @@
     <string name="sensor_description_volume_accessibility">Volume level for accessibility prompts on the device</string>
     <string name="sensor_name_volume_dtmf">Volume level DTMF</string>
     <string name="sensor_description_volume_dtmf">Volume level for DTMF tones on the device</string>
+    <string name="sensor_name_volume_assistant">Volume level assistant</string>
+    <string name="sensor_description_volume_assistant">Volume level for digital assistant app on the device</string>
     <string name="basic_sensor_name_high_accuracy_interval">High accuracy update interval</string>
     <string name="sensor_description_high_accuracy_interval">The update interval set for high accuracy mode</string>
     <string name="update">Update</string>
@@ -1414,6 +1427,7 @@
     <string name="connection_security_less_secure">Less secure: Do not allow this app to know when you\'re home</string>
     <string name="home_assistant_branding_icon_content_description">Home\u00A0Assistant branding icon</string>
     <string name="loading_content_description">Loading</string>
+    <string name="loading_screen_project_from">A project from the</string>
     <string name="searching_home_network">Searching on\nhome network</string>
     <string name="server_discovery_no_server_info">Check that your Home\u00A0Assistant server is powered on and you\'re connected to the same network. You can enter the address manually if you know it.</string>
     <string name="server_discovery_connect">Connect</string>
@@ -1499,10 +1513,14 @@
     <string name="connection_check_home_assistant">Home Assistant verification</string>
     <string name="connection_check_home_assistant_success">Verified as Home Assistant</string>
     <string name="connection_check_error_not_home_assistant">Server is not Home Assistant</string>
+    <string name="entity_picker_loading_failed">Failed to load entities</string>
     <string name="entity_picker_no_entity_found">No entity found</string>
     <string name="entity_picker_no_entity_found_for">No entity found for %s</string>
     <string name="fail_to_navigate_to_uri">No app available to open %s</string>
+    <string name="security_settings">the device security settings</string>
+    <string name="system_webview">the system WebView</string>
     <string name="experimental">Experimental</string>
     <string name="learn_more">Learn more</string>
     <string name="default_assistant_required">Home Assistant must be your default assistant to perform %s.</string>
+    <string name="hidden_entity">Hidden entity</string>
 </resources>

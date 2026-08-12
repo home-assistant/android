@@ -8,7 +8,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="233"
+            line="241"
             column="13"/>
     </issue>
 
@@ -19,14 +19,14 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="238"
+            line="246"
             column="17"/>
     </issue>
 
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates("
+        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
         errorLine2="                        ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
@@ -37,7 +37,7 @@
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates("
+        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
         errorLine2="                        ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
@@ -48,7 +48,7 @@
     <issue
         id="MissingPermission"
         message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(context).requestSleepSegmentUpdates("
+        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
         errorLine2="                        ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
@@ -74,7 +74,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="128"
+            line="129"
             column="17"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1113"
+            line="1120"
             column="17"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="115"
+            line="116"
             column="26"/>
     </issue>
 
@@ -118,7 +118,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="116"
+            line="117"
             column="25"/>
     </issue>
 
@@ -437,7 +437,7 @@
         errorLine2="            ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="76"
+            line="78"
             column="13"/>
     </issue>
 
@@ -448,7 +448,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="251"
+            line="253"
             column="9"/>
     </issue>
 
@@ -459,7 +459,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="252"
+            line="254"
             column="9"/>
     </issue>
 
@@ -470,7 +470,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="347"
+            line="352"
             column="9"/>
     </issue>
 
@@ -481,7 +481,7 @@
         errorLine2="                ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="157"
+            line="162"
             column="17"/>
     </issue>
 
@@ -503,7 +503,7 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="86"
+            line="88"
             column="7"/>
     </issue>
 
@@ -668,7 +668,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="118"
+            line="123"
             column="17"/>
     </issue>
 
@@ -679,7 +679,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="119"
+            line="124"
             column="17"/>
     </issue>
 
@@ -690,7 +690,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="369"
+            line="385"
             column="38"/>
     </issue>
 
@@ -756,7 +756,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="53"
+            line="54"
             column="9"/>
     </issue>
 
@@ -767,7 +767,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/location/HighAccuracyLocationService.kt"
-            line="55"
+            line="56"
             column="9"/>
     </issue>
 
@@ -1070,28 +1070,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.dimen.activity_margin` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;activity_margin&quot;>16dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="3"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.ic_baseline_info_24` appears to be unused"
-        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/drawable/ic_baseline_info_24.xml"
-            line="1"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.drawable.ic_delete` appears to be unused"
         errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
@@ -1308,7 +1286,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/ManageShortcutsViewModel.kt"
-            line="217"
+            line="184"
             column="13"/>
     </issue>
 
@@ -1341,7 +1319,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="85"
+            line="87"
             column="1"/>
     </issue>
 
