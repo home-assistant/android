@@ -27,17 +27,12 @@ import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.ColorTemperatureControl
 import io.homeassistant.companion.android.common.data.integration.EntityExt
-import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.integration.getFanSpeed
-import io.homeassistant.companion.android.common.data.integration.getFanSteps
-import io.homeassistant.companion.android.common.data.integration.getIcon
-import io.homeassistant.companion.android.common.data.integration.getLightBrightness
-import io.homeassistant.companion.android.common.data.integration.isActive
-import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
-import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
-import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
+import io.homeassistant.companion.android.common.data.integration.EntityPosition
+import io.homeassistant.companion.android.common.data.integration.FanControls
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.util.formatForLocal
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getInlineSliderDefaultColors
@@ -54,7 +49,7 @@ import java.time.format.FormatStyle
 
 @Composable
 fun DetailsPanelView(
-    entity: Entity,
+    entity: EntityDisplay,
     onEntityToggled: (String, String) -> Unit,
     onFanSpeedChanged: (Float) -> Unit,
     onBrightnessChanged: (Float) -> Unit,
@@ -67,21 +62,19 @@ fun DetailsPanelView(
 
     WearAppTheme {
         ThemeLazyColumn {
-            val attributes = entity.attributes as Map<*, *>
-
             item {
                 // Style similar to icon on frontend tile card
-                val isChecked = entity.isActive()
+                val isChecked = entity.isActive
                 if (entity.domain in EntityExt.DOMAINS_TOGGLE) {
                     IconToggleButton(
                         checked = isChecked,
                         onCheckedChange = {
-                            onEntityToggled(entity.entityId, entity.state)
+                            onEntityToggled(entity.entityId, entity.rawState)
                             onEntityClickedFeedback(
                                 isToastEnabled,
                                 isHapticEnabled,
                                 context,
-                                entity.friendlyName,
+                                entity.name,
                                 haptic,
                             )
                         },
@@ -92,7 +85,7 @@ fun DetailsPanelView(
                         modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
                     ) {
                         Image(
-                            asset = entity.getIcon(),
+                            asset = entity.icon,
                             colorFilter = ColorFilter.tint(
                                 if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface,
                             ),
@@ -104,35 +97,28 @@ fun DetailsPanelView(
                     }
                 } else {
                     Image(
-                        asset = entity.getIcon(),
+                        asset = entity.icon,
                         colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                     )
                 }
             }
             item {
-                ListHeader(entity.friendlyName)
+                ListHeader(entity.name)
             }
 
-            if (entity.domain == "fan") {
-                if (entity.supportsFanSetSpeed()) {
-                    item {
-                        FanSpeedSlider(entity, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
-                    }
+            entity.fanControls?.let { fanControls ->
+                item {
+                    FanSpeedSlider(fanControls, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
                 }
             }
-            if (entity.domain == "light") {
-                if (entity.supportsLightBrightness()) {
-                    item {
-                        BrightnessSlider(entity, onBrightnessChanged, isToastEnabled, isHapticEnabled)
-                    }
+            entity.lightControls?.brightness?.let { brightness ->
+                item {
+                    BrightnessSlider(brightness, onBrightnessChanged, isToastEnabled, isHapticEnabled)
                 }
-
-                if (entity.supportsLightColorTemperature() &&
-                    attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP
-                ) {
-                    item {
-                        ColorTempSlider(attributes, onColorTempChanged, isToastEnabled, isHapticEnabled)
-                    }
+            }
+            entity.lightControls?.colorTemperature?.let { colorTemperature ->
+                item {
+                    ColorTempSlider(colorTemperature, onColorTempChanged, isToastEnabled, isHapticEnabled)
                 }
             }
 
@@ -141,14 +127,14 @@ fun DetailsPanelView(
             }
             item {
                 Text(
-                    stringResource(R.string.state_name, entity.state),
+                    stringResource(R.string.state_name, entity.rawState),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp),
                 )
             }
             item {
-                val lastChanged = entity.lastChanged.formatForLocal(FormatStyle.MEDIUM)
+                val lastChanged = entity.lastChanged?.formatForLocal(FormatStyle.MEDIUM).orEmpty()
                 Text(
                     stringResource(R.string.last_changed, lastChanged),
                     modifier = Modifier
@@ -157,7 +143,7 @@ fun DetailsPanelView(
                 )
             }
             item {
-                val lastUpdated = entity.lastUpdated.formatForLocal(FormatStyle.MEDIUM)
+                val lastUpdated = entity.lastUpdated?.formatForLocal(FormatStyle.MEDIUM).orEmpty()
                 Text(
                     stringResource(R.string.last_updated, lastUpdated),
                     modifier = Modifier
@@ -179,15 +165,15 @@ fun DetailsPanelView(
 
 @Composable
 fun FanSpeedSlider(
-    entity: Entity,
+    controls: FanControls,
     onFanSpeedChanged: (Float) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean,
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
-    val position = entity.getFanSpeed() ?: return
-    val steps = entity.getFanSteps() ?: return
+    val position = controls.speed
+    val steps = controls.steps
 
     Column {
         Text(
@@ -233,14 +219,13 @@ fun FanSpeedSlider(
 
 @Composable
 fun BrightnessSlider(
-    entity: Entity,
+    position: EntityPosition,
     onBrightnessChanged: (Float) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean,
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
-    val position = entity.getLightBrightness() ?: return
 
     Column {
         Text(
@@ -286,7 +271,7 @@ fun BrightnessSlider(
 
 @Composable
 fun ColorTempSlider(
-    attributes: Map<*, *>,
+    controls: ColorTemperatureControl,
     onColorTempChanged: (Float, Boolean) -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean,
@@ -294,20 +279,10 @@ fun ColorTempSlider(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
 
-    val useKelvin = attributes.containsKey("color_temp_kelvin") // Added in 2022.11
-
-    val minValue =
-        ((if (useKelvin) attributes["min_color_temp_kelvin"] else attributes["min_mireds"]) as? Number)?.toFloat() ?: 0f
-    val maxValue =
-        ((if (useKelvin) attributes["max_color_temp_kelvin"] else attributes["max_mireds"]) as? Number)?.toFloat() ?: 0f
-    var currentValue =
-        ((if (useKelvin) attributes["color_temp_kelvin"] else attributes["color_temp"]) as? Number)?.toFloat() ?: 0f
-    if (currentValue < minValue) {
-        currentValue = minValue
-    }
-    if (currentValue > maxValue) {
-        currentValue = maxValue
-    }
+    val useKelvin = controls.isKelvin
+    val minValue = controls.min
+    val maxValue = controls.max
+    val currentValue = controls.current
 
     Column {
         Text(
@@ -388,7 +363,7 @@ private fun onSliderChangedFeedback(
 private fun PreviewDetailsPaneViewEntityFanOn() {
     CompositionLocalProvider {
         DetailsPanelView(
-            entity = previewEntity4,
+            entity = EntityDisplayWithoutContext(previewEntity4),
             onEntityToggled = { _, _ -> },
             onFanSpeedChanged = {},
             onBrightnessChanged = {},
@@ -404,7 +379,7 @@ private fun PreviewDetailsPaneViewEntityFanOn() {
 private fun PreviewDetailsPaneViewEntityLightOn() {
     CompositionLocalProvider {
         DetailsPanelView(
-            entity = previewEntity1,
+            entity = EntityDisplayWithoutContext(previewEntity1),
             onEntityToggled = { _, _ -> },
             onFanSpeedChanged = {},
             onBrightnessChanged = {},
@@ -420,7 +395,7 @@ private fun PreviewDetailsPaneViewEntityLightOn() {
 private fun PreviewDetailsPaneViewEntityLightOff() {
     CompositionLocalProvider {
         DetailsPanelView(
-            entity = previewEntity2,
+            entity = EntityDisplayWithoutContext(previewEntity2),
             onEntityToggled = { _, _ -> },
             onFanSpeedChanged = {},
             onBrightnessChanged = {},

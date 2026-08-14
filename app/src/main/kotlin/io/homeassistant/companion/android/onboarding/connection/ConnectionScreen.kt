@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.connection
 
 import android.webkit.WebChromeClient
+import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
@@ -16,8 +17,12 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -54,7 +59,7 @@ internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionView
         url = url,
         isLoading = isLoading,
         isError = isError,
-        webViewClient = viewModel.webViewClient,
+        getWebViewClient = viewModel::getWebViewClient,
         webChromeClient = viewModel.webChromeClient,
         pendingFileChooser = pendingFileChooser,
         onBackClick = onBackClick,
@@ -68,7 +73,7 @@ internal fun ConnectionScreen(
     url: String?,
     isLoading: Boolean,
     isError: Boolean,
-    webViewClient: WebViewClient,
+    getWebViewClient: suspend () -> WebViewClient,
     webChromeClient: WebChromeClient,
     onBackClick: () -> Unit,
     onWebViewCreationFailed: (Throwable) -> Unit,
@@ -88,18 +93,24 @@ internal fun ConnectionScreen(
         )
         if (!isError) {
             url?.let {
+                var webView by remember { mutableStateOf<WebView?>(null) }
                 HAWebView(
                     modifier = Modifier
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.safeDrawing),
                     configure = {
-                        this.webViewClient = webViewClient
                         this.webChromeClient = webChromeClient
-                        loadUrl(url)
+                        webView = this
                     },
                     onBackPressed = onBackClick,
                     onWebViewCreationFailed = onWebViewCreationFailed,
                 )
+                webView?.let { view ->
+                    LaunchedEffect(view, url) {
+                        view.webViewClient = getWebViewClient()
+                        view.loadUrl(url)
+                    }
+                }
             } ?: Timber.i("ConnectionScreen: url is null")
         } else {
             ErrorPlaceholder()
@@ -137,7 +148,7 @@ private fun ConnectionScreenPreview() {
             url = "https://www.home-assistant.io",
             isLoading = false,
             isError = false,
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             onBackClick = {},
             onWebViewCreationFailed = {},
