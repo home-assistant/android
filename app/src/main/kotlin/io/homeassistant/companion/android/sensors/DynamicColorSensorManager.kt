@@ -29,14 +29,16 @@ class DynamicColorSensorManager @Inject constructor(
     companion object {
         // See https://source.android.com/docs/core/display/dynamic-color#dynamic-13
         private val TONAL_PALETTE_STYLES = listOf(
-            "TONAL_SPOT",
-            "SPRITZ",
-            "MONOCHROMATIC",
-            "VIBRANT",
             "EXPRESSIVE",
             "FRUIT_SALAD",
+            "MONOCHROMATIC",
             "RAINBOW",
-        ).sorted()
+            "SPRITZ",
+            "TONAL_SPOT",
+            "VIBRANT",
+        )
+        private const val THEME_OVERLAY_JSON = "theme_customization_overlay_packages"
+        private const val THEME_STYLE = "android.theme.customization.theme_style"
 
         @ProvidesSensor
         val accentColorSensor = SensorManager.BasicSensor(
@@ -122,20 +124,16 @@ class DynamicColorSensorManager @Inject constructor(
             )
         }
 
-        // See https://source.android.com/docs/core/display/dynamic-color#dynamic-13
-        val jsonKey = "theme_customization_overlay_packages"
-        val styleKey = "android.theme.customization.theme_style"
-
         val jsonString = try {
-            Settings.Secure.getString(applicationContext.contentResolver, jsonKey)
+            Settings.Secure.getString(applicationContext.contentResolver, THEME_OVERLAY_JSON)
         } catch (ex: Exception) {
-            Timber.w(ex, "Exception reading %s", jsonKey)
+            Timber.w(ex, "Exception reading %s", THEME_OVERLAY_JSON)
             updateState(STATE_UNAVAILABLE)
             return
         }
 
         if (jsonString == null) {
-            Timber.w("No value found for %s", jsonKey)
+            Timber.w("No value found for %s", THEME_OVERLAY_JSON)
             updateState(STATE_UNAVAILABLE)
             return
         }
@@ -143,15 +141,15 @@ class DynamicColorSensorManager @Inject constructor(
         val jsonObject = try {
             JSONObject(jsonString)
         } catch (ex: JSONException) {
-            Timber.w(ex, "Exception parsing JSON for %s", jsonKey)
+            Timber.w(ex, "Exception parsing JSON for %s", THEME_OVERLAY_JSON)
             updateState(STATE_UNKNOWN)
             return
         }
 
         val themeStyle = try {
-            jsonObject.getString(styleKey)
+            jsonObject.getString(THEME_STYLE)
         } catch (ex: JSONException) {
-            Timber.w(ex, "Missing %s in JSON for %s", styleKey, jsonKey)
+            Timber.w(ex, "Missing %s in JSON for %s", THEME_STYLE, THEME_OVERLAY_JSON)
             updateState(STATE_UNKNOWN)
             return
         }
