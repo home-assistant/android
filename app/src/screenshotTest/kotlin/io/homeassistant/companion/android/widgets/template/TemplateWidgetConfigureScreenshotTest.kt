@@ -40,7 +40,13 @@ class TemplateWidgetConfigureScreenshotTest {
     fun `TemplateWidgetConfigureContent empty template`() {
         HAThemeForPreview {
             TemplateWidgetConfigureContent(
-                state = previewTemplateWidgetConfigureState.copy(template = "", preview = TemplatePreview.Empty),
+                state = previewTemplateWidgetConfigureState.copy(
+                    template = "",
+                    preview = TemplatePreview.Empty,
+                    serversDropdownItems = listOf(
+                        HADropdownItem(key = previewServer1.id, label = previewServer1.friendlyName),
+                    ),
+                ),
                 snackbarHostState = remember { SnackbarHostState() },
                 canNavigateBack = false,
                 onNavigate = {},
@@ -62,30 +68,6 @@ class TemplateWidgetConfigureScreenshotTest {
             TemplateWidgetConfigureContent(
                 state = previewTemplateWidgetConfigureState.copy(
                     preview = TemplatePreview.Error(commonR.string.template_render_error),
-                ),
-                snackbarHostState = remember { SnackbarHostState() },
-                canNavigateBack = false,
-                onNavigate = {},
-                onServerSelected = {},
-                onTemplateChanged = {},
-                onTextSizeChanged = {},
-                onBackgroundTypeSelected = {},
-                onTextColorSelected = {},
-                onActionClick = {},
-            )
-        }
-    }
-
-    @PreviewTest
-    @HAPreviews
-    @Composable
-    fun `TemplateWidgetConfigureContent single server`() {
-        HAThemeForPreview {
-            TemplateWidgetConfigureContent(
-                state = previewTemplateWidgetConfigureState.copy(
-                    serversDropdownItems = listOf(
-                        HADropdownItem(key = previewServer1.id, label = previewServer1.friendlyName),
-                    ),
                 ),
                 snackbarHostState = remember { SnackbarHostState() },
                 canNavigateBack = false,
