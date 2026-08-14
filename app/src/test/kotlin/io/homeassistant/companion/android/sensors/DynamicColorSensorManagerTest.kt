@@ -48,30 +48,30 @@ class DynamicColorSensorManagerTest {
 
     @Config(maxSdk = Build.VERSION_CODES.R)
     @Test
-    fun `Given SDK is lower than Android 12 sensor is absent`() {
+    fun `Given SDK is lower than Android 12 then sensor is absent`() {
         assertFalse(dynamicColorSensor.hasSensor())
     }
 
     @Config(minSdk = Build.VERSION_CODES.S)
     @Test
-    fun `Given SDK is at least Android 12 sensor is present`() {
+    fun `Given SDK is at least Android 12 then sensor is present`() {
         assertTrue(dynamicColorSensor.hasSensor())
     }
 
     @Test
-    fun `Available sensors includes color sensor`() = runTest {
+    fun `Given dynamic color sensor when available sensors then includes color sensor`() = runTest {
         val availableSensors = dynamicColorSensor.getAvailableSensors()
         assertTrue(availableSensors.contains(DynamicColorSensorManager.accentColorSensor))
     }
 
     @Test
-    fun `Available sensors includes palette sensor`() = runTest {
+    fun `Given dynamic color sensor when available sensors then includes palette sensor`() = runTest {
         val availableSensors = dynamicColorSensor.getAvailableSensors()
         assertTrue(availableSensors.contains(DynamicColorSensorManager.tonalPaletteSensor))
     }
 
     @Test
-    fun `Color sensor does not require any special permissions`() {
+    fun `Given accent color sensor when required permissions then none specified`() {
         assertArrayEquals(
             emptyArray<String>(),
             dynamicColorSensor.requiredPermissions(DynamicColorSensorManager.accentColorSensor.id),
@@ -79,7 +79,7 @@ class DynamicColorSensorManagerTest {
     }
 
     @Test
-    fun `Palette sensor does not require any special permissions`() {
+    fun `Given tonal palette sensor when required permissions then none specified`() {
         assertArrayEquals(
             emptyArray<String>(),
             dynamicColorSensor.requiredPermissions(DynamicColorSensorManager.tonalPaletteSensor.id),
@@ -87,7 +87,7 @@ class DynamicColorSensorManagerTest {
     }
 
     @Test
-    fun `Given color sensor is enabled then request update sets theme color`() = runTest {
+    fun `Given enabled color sensor when request update then sets theme color`() = runTest {
         val id = DynamicColorSensorManager.accentColorSensor.id
         sensorRepository.setSensorEnabled(id, listOf(1), true)
 
@@ -100,7 +100,7 @@ class DynamicColorSensorManagerTest {
     }
 
     @Test
-    fun `Given color sensor is enabled then request update sets rgb color attribute`() = runTest {
+    fun `Given enabled accent color sensor when request update then sets rgb color attribute`() = runTest {
         val id = DynamicColorSensorManager.accentColorSensor.id
         sensorRepository.setSensorEnabled(id, listOf(1), true)
 
@@ -115,7 +115,7 @@ class DynamicColorSensorManagerTest {
     }
 
     @Test
-    fun `Given color sensor is disabled then request update does not update state`() = runTest {
+    fun `Given disabled color sensor when request update then does not update state`() = runTest {
         val id = DynamicColorSensorManager.accentColorSensor.id
         sensorRepository.setSensorEnabled(id, listOf(1), false)
 
@@ -125,7 +125,7 @@ class DynamicColorSensorManagerTest {
     }
 
     @Test
-    fun `Given palette sensor is enabled then request update sets palette variant`() = runTest {
+    fun `Given palette sensor when request update then sets palette variant`() = runTest {
         val id = DynamicColorSensorManager.tonalPaletteSensor.id
         sensorRepository.setSensorEnabled(id, listOf(1), true)
 
@@ -141,7 +141,7 @@ class DynamicColorSensorManagerTest {
     }
 
     @Test
-    fun `Given palette sensor receives malformed input then state unknown`() = runTest {
+    fun `Given palette sensor when receives malformed input then state is unknown`() = runTest {
         val id = DynamicColorSensorManager.tonalPaletteSensor.id
         sensorRepository.setSensorEnabled(id, listOf(1), true)
 
@@ -157,7 +157,7 @@ class DynamicColorSensorManagerTest {
     }
 
     @Test
-    fun `Given palette sensor receives null input then state is unavailable`() = runTest {
+    fun `Given palette sensor when receives null input then state is unavailable`() = runTest {
         val id = DynamicColorSensorManager.tonalPaletteSensor.id
         sensorRepository.setSensorEnabled(id, listOf(1), true)
 
@@ -173,7 +173,7 @@ class DynamicColorSensorManagerTest {
     }
 
     @Test
-    fun `Given palette sensor is updated then options are exhaustive`() = runTest {
+    fun `Given palette sensor when updated then options are exhaustive`() = runTest {
         val id = DynamicColorSensorManager.tonalPaletteSensor.id
         sensorRepository.setSensorEnabled(id, listOf(1), true)
 
