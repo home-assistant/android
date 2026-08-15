@@ -32,6 +32,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 
+/** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
+private const val BLACK_HEX = "#3A3A3A"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class EntityWidgetConfigureViewModelTest {
@@ -245,21 +248,16 @@ class EntityWidgetConfigureViewModelTest {
         textColor = BLACK_HEX,
     )
 
-    companion object {
-        /** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
-        private const val BLACK_HEX = "#3A3A3A"
+    private fun createEntity(entityId: String, attributes: Map<String, Any?>) = Entity(
+        entityId = entityId,
+        state = "on",
+        attributes = attributes,
+        lastChanged = LocalDateTime.MIN,
+        lastUpdated = LocalDateTime.MIN,
+    )
 
-        private fun displayStateOf(vararg items: EntityDisplayWithContext) = EntityDisplayState.Loaded(items.toList())
+    private fun displayStateOf(vararg items: EntityDisplayWithContext) = EntityDisplayState.Loaded(items.toList())
 
-        /** Display name comes from the entity registry in production, so it is set explicitly here. */
-        private fun Entity.toDisplayItem(name: String) = EntityDisplayWithContext(EntityDisplayWithoutContext(this, name = name))
-
-        private fun createEntity(entityId: String, attributes: Map<String, Any?>) = Entity(
-            entityId = entityId,
-            state = "on",
-            attributes = attributes,
-            lastChanged = LocalDateTime.MIN,
-            lastUpdated = LocalDateTime.MIN,
-        )
-    }
+    /** Display name comes from the entity registry in production, so it is set explicitly here. */
+    private fun Entity.toDisplayItem(name: String) = EntityDisplayWithContext(EntityDisplayWithoutContext(this, name = name))
 }

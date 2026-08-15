@@ -275,7 +275,6 @@
     <ID>UnsafeCallOnNullableType:DeviceCommands.kt:data[DeviceCommandData.BLE_MEASURED_POWER]?.toInt()!!</ID>
     <ID>UnsafeCallOnNullableType:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$it.newState!!</ID>
     <ID>UnsafeCallOnNullableType:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$it.toState!!</ID>
-    <ID>UnsafeCallOnNullableType:KeyChainRepositoryImpl.kt:KeyChainRepositoryImpl$alias!!</ID>
     <ID>UnsafeCallOnNullableType:KeyguardSensorManager.kt:KeyguardSensorManager$applicationContext.getSystemService&lt;KeyguardManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:LightSensorManager.kt:LightSensorManager$applicationContext.getSystemService()!!</ID>
     <ID>UnsafeCallOnNullableType:MonitoringManager.kt:MonitoringManager$context.getSystemService&lt;NotificationManager&gt;()!!</ID>

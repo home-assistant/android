@@ -243,11 +243,10 @@
     <ID>LongParameterList:EntityWidget.kt:EntityWidget$private suspend fun resolveTextToShow: ResolvedText</ID>
     <ID>LongParameterList:FrontendMessageHandler.kt:FrontendMessageHandler</ID>
     <ID>LongParameterList:FrontendNavigation.kt:internal fun NavGraphBuilder.frontendScreen</ID>
-    <ID>LongParameterList:FrontendScreen.kt:@SuppressLint("ClickableViewAccessibility") private fun WebView.configureForFrontend</ID>
     <ID>LongParameterList:FrontendViewModel.kt:FrontendViewModel</ID>
     <ID>LongParameterList:FrontendViewModel.kt:FrontendViewModel$constructor</ID>
     <ID>LongParameterList:HAWebViewClient.kt:HAWebViewClient</ID>
-    <ID>LongParameterList:HAWebViewClient.kt:HAWebViewClientFactory$fun create: HAWebViewClient</ID>
+    <ID>LongParameterList:HAWebViewClient.kt:HAWebViewClientFactory$suspend fun create: HAWebViewClient</ID>
     <ID>LongParameterList:HaControlsProviderService.kt:HaControlsProviderService$private suspend fun sendEntitiesToSubscriber</ID>
     <ID>LongParameterList:HaShortcutManager.kt:HaShortcutManager$fun buildShortcutInfo: ShortcutInfoCompat</ID>
     <ID>LongParameterList:LaunchViewModel.kt:LaunchViewModel</ID>
@@ -427,7 +426,7 @@
     <ID>ReturnCount:EntityPickerFilter.kt:internal fun fuzzyMatch: Double</ID>
     <ID>ReturnCount:EntityWidget.kt:EntityWidget$private suspend fun resolveTextToShow: ResolvedText</ID>
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$@SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs. suspend fun requestWidgetCreation: Boolean</ID>
-    <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$internal suspend fun getPendingDaoEntity: StaticWidgetEntity?</ID>
+    <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$private suspend fun getPendingDaoEntity: StaticWidgetEntity?</ID>
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:FrontendGestureManager.kt:FrontendGestureManager$private suspend fun switchServerBy: GestureResult</ID>
     <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun buildUrl: UrlLoadResult</ID>
@@ -442,6 +441,7 @@
     <ID>ReturnCount:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$private suspend fun callFastForwardAction</ID>
     <ID>ReturnCount:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$private suspend fun callRewindAction</ID>
     <ID>ReturnCount:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$private suspend fun getEntity: Entity?</ID>
+    <ID>ReturnCount:NFCUtil.kt:NFCUtil$@Throws(IllegalArgumentException::class, IOException::class, Exception::class) private fun writeMessageToTag: Boolean</ID>
     <ID>ReturnCount:PermissionManager.kt:PermissionManager$suspend fun checkImprovPermissions: Boolean</ID>
     <ID>ReturnCount:PermissionManager.kt:PermissionManager$suspend fun checkLocalNetworkPermission: Boolean</ID>
     <ID>ReturnCount:PermissionManager.kt:PermissionManager$suspend fun checkStoragePermissionForDownload: Boolean</ID>
@@ -478,11 +478,8 @@
     <ID>SwallowedException:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$e: Exception</ID>
     <ID>ThrowingExceptionsWithoutMessageOrCause:HaControlsProviderService.kt:HaControlsProviderService$Exception()</ID>
     <ID>ThrowsCount:CameraWidget.kt:CameraWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
-    <ID>ThrowsCount:NFCUtil.kt:NFCUtil$@Throws(Exception::class) private fun writeMessageToTag: Boolean</ID>
+    <ID>ThrowsCount:NFCUtil.kt:NFCUtil$@Throws(IllegalArgumentException::class, IOException::class, Exception::class) private fun writeMessageToTag: Boolean</ID>
     <ID>ThrowsCount:ThreadManagerImpl.kt:ThreadManagerImpl$private suspend fun fullSyncPreferredDataset: ThreadManager.SyncResult</ID>
-    <ID>TooGenericExceptionThrown:NFCUtil.kt:NFCUtil$throw Exception("Failed to format tag", e)</ID>
-    <ID>TooGenericExceptionThrown:NFCUtil.kt:NFCUtil$throw Exception("Message is too large")</ID>
-    <ID>TooGenericExceptionThrown:NFCUtil.kt:NFCUtil$throw Exception("NFC tag is read-only")</ID>
     <ID>TooManyFunctions:ActivitySensorManager.kt:ActivitySensorManager : SensorManager</ID>
     <ID>TooManyFunctions:AppSensorModule.kt:AppSensorModule</ID>
     <ID>TooManyFunctions:AssistViewModel.kt:AssistViewModel : AssistViewModelBase</ID>

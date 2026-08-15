@@ -6,9 +6,9 @@
     <ID>ComplexCondition:HealthServicesSensorManager.kt:HealthServicesSensorManager$!activityStateEnabled &amp;&amp; !dailyFloorEnabled &amp;&amp; !dailyDistanceEnabled &amp;&amp; !dailyCaloriesEnabled &amp;&amp; !dailyStepsEnabled</ID>
     <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$private suspend fun setPipeline: Boolean</ID>
     <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
-    <ID>CyclomaticComplexMethod:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
     <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private fun getActivityIcon: String</ID>
     <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private suspend fun updateHealthServices</ID>
+    <ID>CyclomaticComplexMethod:HomeView.kt:@Composable fun LoadHomePage</ID>
     <ID>CyclomaticComplexMethod:MainView.kt:@Composable fun MainView</ID>
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$fun handleMessage</ID>
     <ID>CyclomaticComplexMethod:SensorUi.kt:@Composable fun SensorUi</ID>
@@ -23,9 +23,7 @@
     <ID>LongMethod:ComplicationConfigMainView.kt:@Composable fun MainConfigView</ID>
     <ID>LongMethod:ConversationView.kt:@Composable fun ConversationResultView</ID>
     <ID>LongMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
-    <ID>LongMethod:DetailsPanelView.kt:@Composable fun ColorTempSlider</ID>
     <ID>LongMethod:DetailsPanelView.kt:@Composable fun DetailsPanelView</ID>
-    <ID>LongMethod:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
     <ID>LongMethod:EntityUi.kt:@Composable fun EntityUi</ID>
     <ID>LongMethod:HomeAssistantApplication.kt:HomeAssistantApplication$override fun onCreate</ID>
     <ID>LongMethod:HomeView.kt:@Composable fun LoadHomePage</ID>
@@ -54,7 +52,6 @@
     <ID>MagicNumber:HealthServicesSensorManager.kt:HealthServicesSensorManager$1800000</ID>
     <ID>MagicNumber:HeartRateSensorManager.kt:HeartRateSensorManager$10</ID>
     <ID>MagicNumber:HeartRateSensorManager.kt:HeartRateSensorManager$60000</ID>
-    <ID>MagicNumber:MainViewModel.kt:MainViewModel$1000</ID>
     <ID>MagicNumber:SelectShortcutsTileView.kt:1111</ID>
     <ID>MagicNumber:SelectShortcutsTileView.kt:2222</ID>
     <ID>MagicNumber:SelectShortcutsTileView.kt:7</ID>

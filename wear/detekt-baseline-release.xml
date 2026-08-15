@@ -8,9 +8,9 @@
     <ID>ComplexCondition:HealthServicesSensorManager.kt:HealthServicesSensorManager$!activityStateEnabled &amp;&amp; !dailyFloorEnabled &amp;&amp; !dailyDistanceEnabled &amp;&amp; !dailyCaloriesEnabled &amp;&amp; !dailyStepsEnabled</ID>
     <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$private suspend fun setPipeline: Boolean</ID>
     <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
-    <ID>CyclomaticComplexMethod:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
     <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private fun getActivityIcon: String</ID>
     <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private suspend fun updateHealthServices</ID>
+    <ID>CyclomaticComplexMethod:HomeView.kt:@Composable fun LoadHomePage</ID>
     <ID>CyclomaticComplexMethod:MainView.kt:@Composable fun MainView</ID>
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$fun handleMessage</ID>
     <ID>CyclomaticComplexMethod:SensorUi.kt:@Composable fun SensorUi</ID>
@@ -30,7 +30,6 @@
     <ID>InjectDispatcher:HeartRateSensorManager.kt:HeartRateSensorManager$IO</ID>
     <ID>InjectDispatcher:HomeAssistantApplication.kt:HomeAssistantApplication$IO</ID>
     <ID>InjectDispatcher:MainViewModel.kt:MainViewModel$Default</ID>
-    <ID>InjectDispatcher:MainViewModel.kt:MainViewModel$IO</ID>
     <ID>InjectDispatcher:OnBodySensorManager.kt:OnBodySensorManager$IO</ID>
     <ID>InjectDispatcher:OnboardingActivity.kt:OnboardingActivity$IO</ID>
     <ID>InjectDispatcher:PhoneSettingsListener.kt:PhoneSettingsListener$IO</ID>
@@ -38,16 +37,13 @@
     <ID>InjectDispatcher:TemplateTile.kt:TemplateTile$IO</ID>
     <ID>InjectDispatcher:ThermostatTile.kt:ThermostatTile$IO</ID>
     <ID>InjectDispatcher:TileActionReceiver.kt:TileActionReceiver$Default</ID>
-    <ID>InstanceOfCheckForException:EntityStateDataSourceService.kt:EntityStateDataSourceService$t is HttpException</ID>
     <ID>InstanceOfCheckForException:OnboardingActivity.kt:OnboardingActivity$e is RemoteActivityHelper.RemoteIntentException</ID>
     <ID>LongMethod:CameraTile.kt:CameraTile$override fun onTileResourcesRequest: ListenableFuture&lt;Resources&gt;</ID>
     <ID>LongMethod:ChooseEntityView.kt:@Composable fun ChooseEntityView</ID>
     <ID>LongMethod:ComplicationConfigMainView.kt:@Composable fun MainConfigView</ID>
     <ID>LongMethod:ConversationView.kt:@Composable fun ConversationResultView</ID>
     <ID>LongMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
-    <ID>LongMethod:DetailsPanelView.kt:@Composable fun ColorTempSlider</ID>
     <ID>LongMethod:DetailsPanelView.kt:@Composable fun DetailsPanelView</ID>
-    <ID>LongMethod:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
     <ID>LongMethod:EntityUi.kt:@Composable fun EntityUi</ID>
     <ID>LongMethod:HomeAssistantApplication.kt:HomeAssistantApplication$override fun onCreate</ID>
     <ID>LongMethod:HomeView.kt:@Composable fun LoadHomePage</ID>
@@ -80,7 +76,6 @@
     <ID>MagicNumber:HealthServicesSensorManager.kt:HealthServicesSensorManager$1800000</ID>
     <ID>MagicNumber:HeartRateSensorManager.kt:HeartRateSensorManager$10</ID>
     <ID>MagicNumber:HeartRateSensorManager.kt:HeartRateSensorManager$60000</ID>
-    <ID>MagicNumber:MainViewModel.kt:MainViewModel$1000</ID>
     <ID>MagicNumber:SelectShortcutsTileView.kt:1111</ID>
     <ID>MagicNumber:SelectShortcutsTileView.kt:2222</ID>
     <ID>MagicNumber:SelectShortcutsTileView.kt:7</ID>
@@ -115,9 +110,6 @@
     <ID>NoNameShadowing:HomeView.kt:{ mainViewModel.setWearFavoritesOnly(it) }</ID>
     <ID>NoNameShadowing:HomeView.kt:{ swipeDismissableNavController.navigate("$SCREEN_SINGLE_SENSOR_MANAGER/${it.id()}") }</ID>
     <ID>NoNameShadowing:InstanceViewHolder.kt:InstanceViewHolder${ onClick(it) }</ID>
-    <ID>NoNameShadowing:MainViewModel.kt:MainViewModel${ it.copy(area = homePresenter.getAreaRegistry().orEmpty()) }</ID>
-    <ID>NoNameShadowing:MainViewModel.kt:MainViewModel${ it.copy(device = homePresenter.getDeviceRegistry().orEmpty()) }</ID>
-    <ID>NoNameShadowing:MainViewModel.kt:MainViewModel${ it.copy(entity = homePresenter.getEntityRegistry().orEmpty()) }</ID>
     <ID>ReturnCount:ColorTemperature.kt:fun getColorTemperature: Color</ID>
     <ID>ReturnCount:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
     <ID>ReturnCount:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
@@ -147,14 +139,13 @@
     <ID>UnsafeCallOnNullableType:SelectCameraTileView.kt:tile.entityId!!</ID>
     <ID>UnsafeCallOnNullableType:SelectThermostatTileView.kt:tile.entityId!!</ID>
     <ID>UnsafeCallOnNullableType:ThermostatTile.kt:ThermostatTile$tileConfig.refreshInterval!!</ID>
+    <ID>UnusedPrivateProperty:HomeActivity.kt:HomeActivity$private var entityUpdateJob: Job? = null</ID>
     <ID>UnusedVariable:PhoneSettingsListener.kt:PhoneSettingsListener$val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")</ID>
     <ID>UnusedVariable:PhoneSettingsListener.kt:PhoneSettingsListener$val notificationsEnabled = dataMap.getBoolean("Notifications")</ID>
     <ID>UseAnyOrNoneInsteadOfFind:SensorManagerUi.kt:firstOrNull { availableSensor -&gt; sensor.id == availableSensor.id }</ID>
     <ID>UseCheckNotNull:ThermostatTile.kt:ThermostatTile$check(entity != null)</ID>
     <ID>UseOrEmpty:CameraTile.kt:CameraTile$picture ?: ""</ID>
-    <ID>UseOrEmpty:ChooseEntityView.kt:attributes["icon"] as String? ?: ""</ID>
-    <ID>UseOrEmpty:ComplicationConfigMainView.kt:entity?.friendlyName ?: ""</ID>
-    <ID>UseOrEmpty:ComplicationConfigViewModel.kt:ComplicationConfigViewModel$fullEntity.attributes["icon"] as? String ?: ""</ID>
+    <ID>UseOrEmpty:ComplicationConfigMainView.kt:entity?.name ?: ""</ID>
     <ID>UseOrEmpty:ConversationActivity.kt:ConversationActivity$it?.get(0) ?: ""</ID>
     <ID>UseOrEmpty:HomeView.kt:uiState.shortcutEntitiesMap[tileId] ?: emptyList()</ID>
     <ID>UseOrEmpty:HomeView.kt:uiState.templateTiles[tileId]?.template ?: ""</ID>
@@ -164,8 +155,9 @@
     <ID>UseOrEmpty:PhoneSettingsListener.kt:PhoneSettingsListener$serverManager.getServer()?.connection?.externalUrl ?: ""</ID>
     <ID>UseOrEmpty:PhoneSettingsListener.kt:PhoneSettingsListener$serverManager.getServer()?.connection?.webhookId ?: ""</ID>
     <ID>UseOrEmpty:PhoneSettingsListener.kt:PhoneSettingsListener$serverManager.getServer()?.session?.refreshToken ?: ""</ID>
-    <ID>UseOrEmpty:SetCameraTileView.kt:entity?.friendlyName ?: tile?.entityId ?: ""</ID>
-    <ID>UseOrEmpty:SetThermostatTileView.kt:entity?.friendlyName ?: tile?.entityId ?: ""</ID>
+    <ID>UseOrEmpty:SetCameraTileView.kt:entityItem?.name ?: tile?.entityId ?: ""</ID>
+    <ID>UseOrEmpty:SetThermostatTileView.kt:entityItem?.name ?: tile?.entityId ?: ""</ID>
+    <ID>VarCouldBeVal:HomeActivity.kt:HomeActivity$private var entityUpdateJob: Job? = null</ID>
     <ID>VarCouldBeVal:ManualSetupPresenterImpl.kt:ManualSetupPresenterImpl$private var codeVerifier = CodeVerifier()</ID>
     <ID>VarCouldBeVal:OnboardingPresenterImpl.kt:OnboardingPresenterImpl$private var codeVerifier = CodeVerifier()</ID>
   </CurrentIssues>
