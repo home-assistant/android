@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.widgets.climate
 
 import android.util.Log
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
@@ -14,7 +16,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onCompletion
@@ -28,54 +29,15 @@ import timber.log.Timber
 internal class ClimateWidgetStateUpdater @Inject constructor(
     val climateWidgetDao: ClimateWidgetDao,
     val serverManager: ServerManager,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
 ) {
-    private fun getClimateEntityOnConfigurationChange(widgetId: Int): Flow<ClimateWidgetEntity> {
-        // The flow starts with a null dao entity until the configuration is done
-        // We emit again when the configuration f the widget change
-        return climateWidgetDao.getFlow(widgetId).filterNotNull().distinctUntilChanged { old, new ->
-            old.isSameConfiguration(new)
-        }
-    }
-
-    private suspend fun getAndSubscribeEntityUpdates(serverId: Int, listEntityId: String): Flow<Entity?>? {
-        if (serverManager.getServer(serverId) == null) {
-            Timber.w("Server has been removed and the widget needs to be reconfigured")
-            return null
-        }
-
-        // Since we might be re-subscribing we might not have get the entity update when subscribing so we query it first
-        val currentEntity = serverManager.integrationRepository(serverId).getEntity(listEntityId)
-
-        val entityUpdateFlow = serverManager.integrationRepository(serverId).getEntityUpdates(listOf(listEntityId))
-
-        if (entityUpdateFlow == null) {
-            Timber.w("Integration return null for entity update the widget won't update")
-        }
-
-        return entityUpdateFlow?.onStart {
-            currentEntity?.let {
-                emit(currentEntity)
-            }
-        }
-    }
-
-    private fun getInitialStateFlow(widgetId: Int): Flow<ClimateState> {
-        return suspend { climateWidgetDao.get(widgetId) }.asFlow().map {
-            if (it == null) {
-                Timber.d("Error empty climate widget")
-                EmptyClimateState
-            } else {
-                ClimateStateWithData.from(it)
-            }
-        }
-    }
-
     /**
      * Observes and provides the state of the widget identified by the given [widgetId].
      *
      * ### Flow details:
      * 1. **Initial state flow**: Emits the current state of the widget using the data in the database. If no configuration exists, it emits an empty state.
      * 2. **Watch for changes flow**: Listens for changes in the widget's configuration or updates from the server. When a change is detected:
+     *    - It fetches the latest entity and climateEntity from the server.
      *    - Updates the database with the latest data.
      *    - Emits the updated state.
      *
@@ -93,40 +55,45 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
                 Timber.d("Got a new entity to watch $climateEntity")
                 val serverId = climateEntity.serverId
                 val listEntityId = climateEntity.entityId
-                getAndSubscribeEntityUpdates(
-                    serverId,
-                    listEntityId,
-                )?.filterNotNull()?.distinctUntilChanged()?.map { entity ->
-                    Timber.d("Got an update of the entity $entity")
 
-                    val attributes = entity.attributes
-                    val min = attributes.toDouble("min_temp")
-                    val max = attributes.toDouble("max_temp")
-                    val step = attributes.toDouble("target_temp_step")
-                    val currentTemp = attributes.toDouble("current_temperature")
-                    val climateTemp = attributes.toDouble("temperature")
-                    val hvacSupportedModes = attributes.getStringList("hvac_modes")
-                    val fanSupportedModes = attributes.getStringList("fan_modes")
+                // Every emission is a change of the entity or of its name, so each one refreshes
+                entitiesForDisplayManager.observe(serverId, listOf(listEntityId))
+                    .map { state ->
+                        val displayEntity = when (state) {
+                            // Nothing was ever loaded for this widget, so there is nothing to show yet
+                            EntityDisplayState.Loading if climateEntity.latestUpdateData == null -> {
+                                return@map LoadingClimateState
+                            }
+                            // Still loading, or the entity is gone (removed server, deleted list),
+                            // so the widget keeps showing the data of the database
+                            EntityDisplayState.Loading, EntityDisplayState.Error -> {
+                                return@map ClimateStateWithData.from(climateEntity)
+                            }
+                            is EntityDisplayState.Loaded -> state.entity(listEntityId)
+                                ?: return@map ClimateStateWithData.from(climateEntity)
+                        }
+                        Timber.d("Got an update of the entity ${displayEntity.entityId} getting climates")
 
-                    Timber.d("newParsedEntity $min $max $step $currentTemp $climateTemp $hvacSupportedModes $fanSupportedModes")
+                        val step = displayEntity.climateControls?.targetTemperatureStep
+                        val currentTemp = displayEntity.climateControls?.currentTemperature
+                        val climateTemp = displayEntity.climateControls?.targetTemperature
 
-                    // We update the DAO to keep it up to date for the next update of the widget
-                    climateWidgetDao.updateWidgetLastUpdate(
-                        widgetId = widgetId,
-                        lastUpdateData = ClimateWidgetEntity.LastUpdateData(
-                            entityName = entity.friendlyName,
+                        // We update the DAO to keep it up to date for the next update of the widget
+                        climateWidgetDao.updateWidgetLastUpdate(
+                            widgetId = widgetId,
+                            lastUpdateData = ClimateWidgetEntity.LastUpdateData(
+                            entityName = displayEntity.name,
                             climateTemp = climateTemp,
-                            currentTemp = currentTemp,
-                            minTemp = min,
-                            maxTemp = max,
+                            currentTemp = currentTemp ?: 0f,
+                            minTemp = displayEntity.climateControls?.minTemperature,
+                            maxTemp = displayEntity.climateControls?.maxTemperature,
                             stepTemp = step,
-                            stateClimate = entity.state,
-                            hvacModesSupported = hvacSupportedModes,
-                            fanModes = fanSupportedModes
-                        ),
-                    )
-                    ClimateStateWithData.from(climateEntity, entity)
-                } ?: flowOf(ClimateStateWithData.from(climateEntity))
+                            stateClimate = displayEntity.rawState,
+                            hvacModesSupported = displayEntity.climateControls?.hvacSupportedModes,
+                            ),
+                        )
+                        ClimateStateWithData.from(climateEntity, displayEntity)
+                    }
             }
 
         // Initial state should emit before watch but if an issue occur make it explicit in the flow
@@ -135,6 +102,25 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
             Timber.e(it, "Error while watching for changes for widget $widgetId")
         }.onCompletion {
             Timber.d("Stop watching for changes for widget $widgetId")
+        }
+    }
+
+    private fun getClimateEntityOnConfigurationChange(widgetId: Int): Flow<ClimateWidgetEntity> {
+        // The flow starts with a null dao entity until the configuration is done
+        // We emit again when the configuration f the widget change
+        return climateWidgetDao.getFlow(widgetId).filterNotNull().distinctUntilChanged { old, new ->
+            old.isSameConfiguration(new)
+        }
+    }
+
+    private fun getInitialStateFlow(widgetId: Int): Flow<ClimateState> {
+        return suspend { climateWidgetDao.get(widgetId) }.asFlow().map {
+            if (it == null) {
+                Timber.d("Error empty climate widget")
+                EmptyClimateState
+            } else {
+                ClimateStateWithData.from(it)
+            }
         }
     }
 }

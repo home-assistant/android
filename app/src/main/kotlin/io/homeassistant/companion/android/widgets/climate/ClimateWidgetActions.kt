@@ -13,6 +13,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.data.integration.HvacMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
 import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
@@ -178,7 +179,7 @@ class ControlClimateAction : ActionCallback {
         }
     }
 
-    private fun ClimateWidgetEntity.LastUpdateData.calculateNewTemp(isIncrease: Boolean): Double? {
+    private fun ClimateWidgetEntity.LastUpdateData.calculateNewTemp(isIncrease: Boolean): Float? {
         val current = this.climateTemp ?: return null
         val step = this.stepTemp ?: return null
         val newTemp = current + if (isIncrease) step else -step

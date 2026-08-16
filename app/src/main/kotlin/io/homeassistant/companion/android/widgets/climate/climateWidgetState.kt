@@ -9,6 +9,8 @@ import androidx.glance.GlanceTheme
 import androidx.glance.color.ColorProviders
 import androidx.glance.material.ColorProviders
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.HvacMode
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
@@ -76,22 +78,21 @@ internal data class ClimateStateWithData(
          */
         fun from(
             climateEntity: ClimateWidgetEntity,
-            entity: Entity,
+            entity: EntityDisplay,
         ): ClimateStateWithData {
-            val currentTemp = entity.attributes.toDouble("current_temperature")
-            val climateTemp = entity.attributes.toDouble("temperature") ?: 0f
-            val hvacSupportedModes = entity.attributes.toHvacModes("hvac_modes")
+            val climateControls = entity.climateControls
+            val hvacSupportedModes = climateControls?.hvacSupportedModes?.mapNotNull { HvacMode.from(it) }
 
             return ClimateStateWithData(
                 backgroundType = climateEntity.backgroundType,
                 textColor = climateEntity.textColor,
                 serverId = climateEntity.serverId,
                 listEntityId = entity.entityId,
-                climateName = entity.friendlyName,
-                currentTemp = currentTemp?.toFloat(),
-                climateTemp = climateTemp.toFloat(),
-                hvacSelectedMode = HvacMode.from(entity.state),
-                hvacSupportedModes = hvacSupportedModes,
+                climateName = entity.name,
+                currentTemp = climateControls?.currentTemperature,
+                climateTemp = climateControls?.targetTemperature,
+                hvacSelectedMode = HvacMode.from(entity.rawState),
+                hvacSupportedModes = hvacSupportedModes ?: emptyList(),
                 outOfSync = false,
                 showComplete = climateEntity.showCompleted,
             )
@@ -116,28 +117,6 @@ internal data class ClimateStateWithData(
         }
     }
 }
-
-
-enum class HvacMode(
-    val key: String,
-    val displayName: String,
-) {
-    OFF("off", "Off"),
-    AUTO("auto", "Auto"),
-    COOL("cool", "Cool"),
-    HEAT("heat", "Heat"),
-    DRY("dry", "Dry"),
-    FAN("fan_only", "Fan");
-
-    companion object {
-        fun from(value: String?): HvacMode? {
-            return entries.firstOrNull { it.key == value }
-        }
-    }
-}
-
-fun Map<String, Any?>.getStringList(key: String): List<String> =
-    (this[key] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
 
 fun Map<String, Any?>.toHvacModes(key: String): List<HvacMode> =
     ((this[key] as? List<*>) ?: emptyList<Any>())

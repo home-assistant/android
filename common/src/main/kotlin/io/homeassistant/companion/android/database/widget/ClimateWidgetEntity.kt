@@ -34,11 +34,11 @@ data class ClimateWidgetEntity(
         // For historical reasons the field is not using snake_case
         @JsonNames("entityName")
         val entityName: String? = null,
-        val climateTemp: Double? = null,
-        val currentTemp: Double? = null,
-        val minTemp: Double? = null,
-        val maxTemp: Double? = null,
-        val stepTemp: Double? = null,
+        val climateTemp: Float? = null,
+        val currentTemp: Float? = null,
+        val minTemp: Float? = null,
+        val maxTemp: Float? = null,
+        val stepTemp: Float? = null,
         val stateClimate: String? = null,
         val hvacModesSupported: List<String>? = null,
         val fanModes: List<String>? = null

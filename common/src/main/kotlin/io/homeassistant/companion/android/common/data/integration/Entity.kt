@@ -8,6 +8,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon2
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
+import io.homeassistant.companion.android.common.data.integration.HvacMode.Companion.toHvacModes
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
@@ -26,6 +27,7 @@ import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.getIconByMdiName
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import kotlin.collections.emptyList
 import kotlin.math.round
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
@@ -162,7 +164,33 @@ data class ClimateControls(
     val targetTemperature: Float?,
     val targetTemperatureStep: Float?,
     val hvacAction: String?,
+    val minTemperature: Float?,
+    val maxTemperature: Float?,
+    val hvacSupportedModes: List<String>?,
 )
+
+enum class HvacMode(
+    val key: String,
+    val displayName: String,
+) {
+    OFF("off", "Off"),
+    AUTO("auto", "Auto"),
+    COOL("cool", "Cool"),
+    HEAT("heat", "Heat"),
+    DRY("dry", "Dry"),
+    FAN("fan_only", "Fan");
+
+    companion object {
+        fun from(value: String?): HvacMode? {
+            return entries.firstOrNull { it.key == value }
+        }
+
+        fun toHvacModes(attributes: Map<String, Any?>, key: String): List<HvacMode> =
+            (attributes[key] as? List<*>)
+                ?.mapNotNull { from(it as? String) }
+                .orEmpty()
+    }
+}
 
 object EntityExt {
     const val TAG = "EntityExt"
@@ -464,7 +492,11 @@ fun Entity.getClimateControls(): ClimateControls? {
         currentTemperature = numberAttributeOrNull("current_temperature"),
         targetTemperature = numberAttributeOrNull("temperature"),
         targetTemperatureStep = numberAttributeOrNull("target_temp_step"),
+        minTemperature = numberAttributeOrNull("min_temp"),
+        maxTemperature = numberAttributeOrNull("max_temp"),
         hvacAction = attributes["hvac_action"]?.toString(),
+        hvacSupportedModes = (attributes["hvac_modes"] as? List<*>)?.filterIsInstance<String>().orEmpty()
+
     )
 }
 
