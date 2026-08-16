@@ -89,42 +89,6 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
         }
     }
 
-    /**
-     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
-     */
-    private suspend fun restoreConfiguration() {
-        val widget = if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID && _state.value.selectedEntityId == null) {
-            staticWidgetDao.get(widgetId)
-        } else {
-            null
-        }
-
-        if (widget != null) {
-            _state.update {
-                it.copy(
-                    selectedServerId = widget.serverId,
-                    selectedEntityId = widget.entityId,
-                    selectedAttributeIds = widget.attributeIds.toAttributeIdsList(),
-                    label = widget.label.orEmpty(),
-                    textSize = widget.textSize.toInt().toString(),
-                    stateSeparator = widget.stateSeparator,
-                    attributeSeparator = widget.attributeSeparator,
-                    selectedTapAction = widget.tapAction,
-                    selectedBackgroundType = widget.backgroundType,
-                    textColorHex = widget.textColor,
-                    isUpdateWidget = true,
-                )
-            }
-        } else {
-            _state.update {
-                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
-            }
-        }
-
-        loadEntities(_state.value.selectedServerId)
-        loadAttributes(_state.value.selectedEntityId)
-    }
-
     fun onServerSelected(serverId: Int) {
         if (serverId == _state.value.selectedServerId) return
 
@@ -207,8 +171,133 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
         _state.update { it.copy(selectedBackgroundType = backgroundType) }
     }
 
-    internal fun onTextColorSelected(colorHex: String) {
+    fun onTextColorSelected(colorHex: String) {
         _state.update { it.copy(textColorHex = colorHex) }
+    }
+
+    /**
+     * Persists the current configuration, reporting through [errors] and returning false when it
+     * cannot be saved.
+     */
+    suspend fun updateWidgetConfiguration(): Boolean {
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            Timber.e("Cannot save the widget configuration, the widget ID is invalid")
+            _errors.emit(commonR.string.widget_update_error)
+            return false
+        }
+        val widget = getPendingDaoEntity()
+        if (widget == null) {
+            _errors.emit(commonR.string.widget_update_error)
+            return false
+        }
+
+        staticWidgetDao.add(widget)
+        return true
+    }
+
+    /** Asks the already placed widgets to redraw with the configuration that was just saved. */
+    fun updateWidget(context: Context) {
+        context.sendBroadcast(
+            Intent(context, EntityWidget::class.java).apply {
+                action = BaseWidgetProvider.UPDATE_WIDGETS
+            },
+        )
+    }
+
+    /**
+     * Asks the launcher to pin the configured widget and suspends until it is added, reporting
+     * through [errors] and returning false when the widget cannot be requested at all.
+     */
+    @SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs.
+    suspend fun requestWidgetCreation(context: Context): Boolean {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+            Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val pinningSupported = try {
+            appWidgetManager.isRequestPinAppWidgetSupported
+        } catch (e: RemoteException) {
+            Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
+            false
+        }
+        if (!pinningSupported) {
+            Timber.e("Cannot pin the widget, the launcher does not support it")
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        val widget = getPendingDaoEntity()
+        if (widget == null) {
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        var requestAccepted = false
+        staticWidgetDao.getWidgetCountFlow()
+            // We drop the first value since we only care about knowing when the widget is actually added
+            .drop(1)
+            .onStart {
+                requestAccepted = appWidgetManager.requestPinAppWidget(
+                    ComponentName(context, EntityWidget::class.java),
+                    null,
+                    PendingIntent.getBroadcast(
+                        context,
+                        System.currentTimeMillis().toInt(),
+                        Intent(context, EntityWidget::class.java).apply {
+                            action = ACTION_APPWIDGET_CREATED
+                            putExtra(EXTRA_WIDGET_ENTITY, widget)
+                        },
+                        PendingIntent.FLAG_MUTABLE,
+                    ),
+                )
+                // A rejected request never adds a widget, so emit to stop waiting for one
+                if (!requestAccepted) emit(0)
+            }.first()
+
+        if (!requestAccepted) {
+            Timber.e("The launcher rejected the widget pin request")
+            _errors.emit(commonR.string.widget_creation_error)
+        }
+        return requestAccepted
+    }
+
+    /**
+     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
+     */
+    private suspend fun restoreConfiguration() {
+        val widget = if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID && _state.value.selectedEntityId == null) {
+            staticWidgetDao.get(widgetId)
+        } else {
+            null
+        }
+
+        if (widget != null) {
+            _state.update {
+                it.copy(
+                    selectedServerId = widget.serverId,
+                    selectedEntityId = widget.entityId,
+                    selectedAttributeIds = widget.attributeIds.toAttributeIdsList(),
+                    label = widget.label.orEmpty(),
+                    textSize = widget.textSize.toInt().toString(),
+                    stateSeparator = widget.stateSeparator,
+                    attributeSeparator = widget.attributeSeparator,
+                    selectedTapAction = widget.tapAction,
+                    selectedBackgroundType = widget.backgroundType,
+                    textColorHex = widget.textColor,
+                    isUpdateWidget = true,
+                )
+            }
+        } else {
+            _state.update {
+                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
+            }
+        }
+
+        loadEntities(_state.value.selectedServerId)
+        loadAttributes(_state.value.selectedEntityId)
     }
 
     private fun loadEntities(serverId: Int) {
@@ -277,38 +366,9 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
     }
 
     /**
-     * Persists the current configuration, reporting through [errors] and returning false when it
-     * cannot be saved.
-     */
-    suspend fun updateWidgetConfiguration(): Boolean {
-        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            Timber.e("Cannot save the widget configuration, the widget ID is invalid")
-            _errors.emit(commonR.string.widget_update_error)
-            return false
-        }
-        val widget = getPendingDaoEntity()
-        if (widget == null) {
-            _errors.emit(commonR.string.widget_update_error)
-            return false
-        }
-
-        staticWidgetDao.add(widget)
-        return true
-    }
-
-    /** Asks the already placed widgets to redraw with the configuration that was just saved. */
-    fun updateWidget(context: Context) {
-        context.sendBroadcast(
-            Intent(context, EntityWidget::class.java).apply {
-                action = BaseWidgetProvider.UPDATE_WIDGETS
-            },
-        )
-    }
-
-    /**
      * Builds the widget to persist from the current configuration, or null when it is incomplete.
      */
-    internal suspend fun getPendingDaoEntity(): StaticWidgetEntity? {
+    private suspend fun getPendingDaoEntity(): StaticWidgetEntity? {
         if (!isValidSelection()) {
             Timber.e("Cannot build the widget, the current configuration is invalid")
             return null
@@ -338,66 +398,6 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
                 current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
             },
         )
-    }
-
-    /**
-     * Asks the launcher to pin the configured widget and suspends until it is added, reporting
-     * through [errors] and returning false when the widget cannot be requested at all.
-     */
-    @SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs.
-    suspend fun requestWidgetCreation(context: Context): Boolean {
-        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-            Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
-            _errors.emit(commonR.string.widget_creation_error)
-            return false
-        }
-
-        val appWidgetManager = AppWidgetManager.getInstance(context)
-        val pinningSupported = try {
-            appWidgetManager.isRequestPinAppWidgetSupported
-        } catch (e: RemoteException) {
-            Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
-            false
-        }
-        if (!pinningSupported) {
-            Timber.e("Cannot pin the widget, the launcher does not support it")
-            _errors.emit(commonR.string.widget_creation_error)
-            return false
-        }
-
-        val widget = getPendingDaoEntity()
-        if (widget == null) {
-            _errors.emit(commonR.string.widget_creation_error)
-            return false
-        }
-
-        var requestAccepted = false
-        staticWidgetDao.getWidgetCountFlow()
-            // We drop the first value since we only care about knowing when the widget is actually added
-            .drop(1)
-            .onStart {
-                requestAccepted = appWidgetManager.requestPinAppWidget(
-                    ComponentName(context, EntityWidget::class.java),
-                    null,
-                    PendingIntent.getBroadcast(
-                        context,
-                        System.currentTimeMillis().toInt(),
-                        Intent(context, EntityWidget::class.java).apply {
-                            action = ACTION_APPWIDGET_CREATED
-                            putExtra(EXTRA_WIDGET_ENTITY, widget)
-                        },
-                        PendingIntent.FLAG_MUTABLE,
-                    ),
-                )
-                // A rejected request never adds a widget, so emit to stop waiting for one
-                if (!requestAccepted) emit(0)
-            }.first()
-
-        if (!requestAccepted) {
-            Timber.e("The launcher rejected the widget pin request")
-            _errors.emit(commonR.string.widget_creation_error)
-        }
-        return requestAccepted
     }
 
     @AssistedFactory
