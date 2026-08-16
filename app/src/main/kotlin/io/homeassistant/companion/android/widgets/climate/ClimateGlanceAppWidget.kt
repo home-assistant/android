@@ -157,15 +157,11 @@ private fun Screen(state: ClimateStateWithData) {
         horizontalPadding = 0.dp,
         modifier = GlanceModifier.climateWidgetBackground().semantics { testTag = "Screen" },
     ) {
-        if (state.hasDisplayableItems()) {
-            ShowClimateContent(
-                climateTemp = state.climateTemp!!,
-                hvacMode = state.hvacSelectedMode,
-                hvacSupportedModes = state.hvacSupportedModes
-            )
-        } else {
-            LoadingScreen()
-        }
+        ShowClimateContent(
+            climateTemp = state.climateTemp,
+            hvacMode = state.hvacSelectedMode,
+            hvacSupportedModes = state.hvacSupportedModes
+        )
     }
 }
 
@@ -294,7 +290,7 @@ private fun hvacModeIcon(hvacMode: HvacMode): ImageProvider {
         HvacMode.AUTO -> R.drawable.hvac_mode_auto
         else -> null
     }
-    return ImageProvider(drawable ?: R.drawable.ic_bug_report)  // TODO: revisar el failsafe del icon
+    return ImageProvider(drawable ?: R.drawable.ic_bug_report)
 }
 
 @Composable
@@ -345,8 +341,7 @@ private fun ScreenPreview() {
                 climateTemp = 12f,
                 hvacSelectedMode = HvacMode.HEAT,
                 hvacSupportedModes = listOf(HvacMode.OFF, HvacMode.HEAT, HvacMode.COOL, HvacMode.DRY),
-                outOfSync = false,
-                showComplete = true,
+                outOfSync = false
             )
         )
     }
@@ -368,8 +363,7 @@ private fun ScreenPreviewPowerOff() {
                 climateTemp = 12f,
                 hvacSelectedMode = HvacMode.OFF,
                 hvacSupportedModes = listOf(HvacMode.OFF, HvacMode.HEAT, HvacMode.COOL, HvacMode.DRY),
-                outOfSync = true,
-                showComplete = true,
+                outOfSync = true
             ),
         )
     }
@@ -391,8 +385,7 @@ private fun ScreenPreviewOutOfSync() {
                 climateTemp = 12f,
                 hvacSelectedMode = HvacMode.HEAT,
                 hvacSupportedModes = listOf(HvacMode.OFF, HvacMode.HEAT, HvacMode.COOL, HvacMode.DRY),
-                outOfSync = true,
-                showComplete = true,
+                outOfSync = true
             ),
         )
     }

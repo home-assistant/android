@@ -22,8 +22,6 @@ data class ClimateWidgetEntity(
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     @ColumnInfo(name = "text_color")
     override val textColor: String? = null,
-    @ColumnInfo(name = "show_completed", defaultValue = "true")
-    val showCompleted: Boolean = true,
     @ColumnInfo(name = "latest_update_data") val latestUpdateData: LastUpdateData? = null,
 ) : WidgetEntity<ClimateWidgetEntity>,
     ThemeableWidgetEntity {
@@ -41,7 +39,6 @@ data class ClimateWidgetEntity(
         val stepTemp: Float? = null,
         val stateClimate: String? = null,
         val hvacModesSupported: List<String>? = null,
-        val fanModes: List<String>? = null
     ) : java.io.Serializable
 
     fun isSameConfiguration(other: ClimateWidgetEntity): Boolean {

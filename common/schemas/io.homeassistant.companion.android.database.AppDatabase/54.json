@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 54,
-    "identityHash": "3faccb8ee28059894ce5c010dcbceb49",
+    "identityHash": "bdeb218e95d547bb3b50199504359d56",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -555,7 +555,7 @@
       },
       {
         "tableName": "climate_widget",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `show_completed` INTEGER NOT NULL DEFAULT true, `latest_update_data` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `entity_id` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `latest_update_data` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -587,13 +587,6 @@
             "fieldPath": "textColor",
             "columnName": "text_color",
             "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "showCompleted",
-            "columnName": "show_completed",
-            "affinity": "INTEGER",
-            "notNull": true,
-            "defaultValue": "true"
           },
           {
             "fieldPath": "latestUpdateData",
@@ -1207,7 +1200,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3faccb8ee28059894ce5c010dcbceb49')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bdeb218e95d547bb3b50199504359d56')"
     ]
   }
 }

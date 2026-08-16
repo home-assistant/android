@@ -145,7 +145,6 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
         },
     )
     var textColorIndex by mutableIntStateOf(0)
-    var showCompletedState by mutableStateOf(true)
     var isUpdateWidget by mutableStateOf(false)
 
     init {
@@ -179,7 +178,6 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
                     selectedBackgroundType = it.backgroundType
                     val colorIndex = supportedTextColors.indexOf(it.textColor)
                     textColorIndex = if (colorIndex == -1) 0 else colorIndex
-                    showCompletedState = it.showCompleted
                 }
             }
         }
@@ -234,7 +232,6 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
                 entityId = selectedEntityId!!,
                 backgroundType = selectedBackgroundType,
                 textColor = textColor,
-                showCompleted = showCompletedState,
                 latestUpdateData = ClimateWidgetEntity.LastUpdateData(entityName = name),
             )
         }

@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.widgets.climate
 import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidget
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.database.widget.TodoWidgetDao
-import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
+import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
+import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
 import io.homeassistant.companion.android.widgets.BaseGlanceEntityWidgetReceiver
 import io.homeassistant.companion.android.widgets.EntitiesPerServer
 
@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.widgets.EntitiesPerServer
  * Otherwise the widgets won't update at all after the composition ends.
  */
 @AndroidEntryPoint
-class ClimateWidget : BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao>() {
+class ClimateWidget : BaseGlanceEntityWidgetReceiver<ClimateWidgetEntity, ClimateWidgetDao>() {
     override val glanceAppWidget: GlanceAppWidget = ClimateGlanceAppWidget()
 
     override suspend fun getWidgetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> {

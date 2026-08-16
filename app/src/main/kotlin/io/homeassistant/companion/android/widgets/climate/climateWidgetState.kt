@@ -63,13 +63,7 @@ internal data class ClimateStateWithData(
     val hvacSupportedModes: List<HvacMode> = emptyList(),
     val lastUpdate: String? = null,
     val outOfSync: Boolean,
-    val showComplete: Boolean,
 ) : ClimateState {
-
-    fun hasDisplayableItems(): Boolean {
-        return showComplete  && climateTemp != null
-
-    }
 
     companion object {
         /**
@@ -93,8 +87,7 @@ internal data class ClimateStateWithData(
                 climateTemp = climateControls?.targetTemperature,
                 hvacSelectedMode = HvacMode.from(entity.rawState),
                 hvacSupportedModes = hvacSupportedModes ?: emptyList(),
-                outOfSync = false,
-                showComplete = climateEntity.showCompleted,
+                outOfSync = false
             )
         }
 
@@ -108,19 +101,13 @@ internal data class ClimateStateWithData(
                 textColor = climateEntity.textColor,
                 serverId = climateEntity.serverId,
                 listEntityId = climateEntity.entityId,
-                climateName = "",
-                climateTemp = 10f,
-                hvacSelectedMode = null,
-                outOfSync = true,
-                showComplete = climateEntity.showCompleted,
+                climateName = climateEntity.latestUpdateData?.entityName.orEmpty(),
+                climateTemp = climateEntity.latestUpdateData?.climateTemp,
+                currentTemp = climateEntity.latestUpdateData?.currentTemp,
+                hvacSelectedMode = HvacMode.from(climateEntity.latestUpdateData?.stateClimate),
+                hvacSupportedModes = climateEntity.latestUpdateData?.hvacModesSupported?.mapNotNull(HvacMode::from).orEmpty(),
+                outOfSync = true
             )
         }
     }
 }
-
-fun Map<String, Any?>.toHvacModes(key: String): List<HvacMode> =
-    ((this[key] as? List<*>) ?: emptyList<Any>())
-        .mapNotNull { HvacMode.from(it as? String) }
-
-fun Map<String, Any?>.toDouble(key: String): Double? =
-    (this[key] as? Number)?.toDouble()
