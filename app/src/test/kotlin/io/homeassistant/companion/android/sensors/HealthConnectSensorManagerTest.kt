@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.NutritionRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import io.mockk.every
 import io.mockk.mockk
@@ -105,5 +106,15 @@ class HealthConnectSensorManagerTest {
 
         val result = sensorManager.calculateSleepDurationInMinutes(mockSleepStages)
         assertEquals(300L, result)
+    }
+
+    @Test
+    fun `Given a nutrition sensor when getting permission then requests nutrition records`() {
+        val permissions = sensorManager.requiredPermissions(HealthConnectSensorManager.nutritionCalories.id)
+
+        assertEquals(
+            true,
+            permissions.contains(HealthPermission.getReadPermission(NutritionRecord::class)),
+        )
     }
 }

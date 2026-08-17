@@ -29,6 +29,7 @@ import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.HydrationRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
 import androidx.health.connect.client.records.MealType
+import androidx.health.connect.client.records.NutritionRecord
 import androidx.health.connect.client.records.OxygenSaturationRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.RespiratoryRateRecord
@@ -282,6 +283,55 @@ class HealthConnectSensorManager @Inject constructor(
         )
 
         @ProvidesSensor
+        val nutritionCalories = SensorManager.BasicSensor(
+            id = "health_connect_nutrition_calories",
+            type = "sensor",
+            commonR.string.basic_sensor_name_nutrition_calories,
+            commonR.string.sensor_description_nutrition_calories,
+            "mdi:fire",
+            "energy",
+            unitOfMeasurement = "kcal",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val nutritionCarbohydrates = SensorManager.BasicSensor(
+            id = "health_connect_nutrition_carbohydrates",
+            type = "sensor",
+            commonR.string.basic_sensor_name_nutrition_carbohydrates,
+            commonR.string.sensor_description_nutrition_carbohydrates,
+            "mdi:bread-slice",
+            unitOfMeasurement = "g",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val nutritionFat = SensorManager.BasicSensor(
+            id = "health_connect_nutrition_fat",
+            type = "sensor",
+            commonR.string.basic_sensor_name_nutrition_fat,
+            commonR.string.sensor_description_nutrition_fat,
+            "mdi:oil",
+            unitOfMeasurement = "g",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val nutritionProtein = SensorManager.BasicSensor(
+            id = "health_connect_nutrition_protein",
+            type = "sensor",
+            commonR.string.basic_sensor_name_nutrition_protein,
+            commonR.string.sensor_description_nutrition_protein,
+            "mdi:food-drumstick",
+            unitOfMeasurement = "g",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
         val oxygenSaturation = SensorManager.BasicSensor(
             id = "health_connect_oxygen_saturation",
             type = "sensor",
@@ -404,6 +454,10 @@ class HealthConnectSensorManager @Inject constructor(
             height.id to HeightRecord::class,
             hydration.id to HydrationRecord::class,
             leanBodyMass.id to LeanBodyMassRecord::class,
+            nutritionCalories.id to NutritionRecord::class,
+            nutritionCarbohydrates.id to NutritionRecord::class,
+            nutritionFat.id to NutritionRecord::class,
+            nutritionProtein.id to NutritionRecord::class,
             oxygenSaturation.id to OxygenSaturationRecord::class,
             respiratoryRate.id to RespiratoryRateRecord::class,
             restingHeartRate.id to RestingHeartRateRecord::class,
@@ -488,6 +542,14 @@ class HealthConnectSensorManager @Inject constructor(
         }
         if (isEnabled(leanBodyMass)) {
             updateLeanBodyMassSensor()
+        }
+        if (
+            isEnabled(nutritionCalories) ||
+            isEnabled(nutritionCarbohydrates) ||
+            isEnabled(nutritionFat) ||
+            isEnabled(nutritionProtein)
+        ) {
+            updateNutritionSensors()
         }
         if (isEnabled(oxygenSaturation)) {
             updateOxygenSaturationSensor()
@@ -933,6 +995,47 @@ class HealthConnectSensorManager @Inject constructor(
         )
     }
 
+    private suspend fun updateNutritionSensors() {
+        val healthConnectClient = getOrCreateHealthConnectClient() ?: return
+        val nutritionRequest = healthConnectClient.aggregateOrNull(
+            buildNutritionAggregationRequest(),
+        ) ?: return
+        val attributes = buildAggregationAttributes(nutritionRequest)
+
+        nutritionRequest[NutritionRecord.ENERGY_TOTAL]?.inKilocalories?.let {
+            onSensorUpdated(
+                nutritionCalories,
+                BigDecimal(it).setScale(2, RoundingMode.HALF_EVEN),
+                nutritionCalories.statelessIcon,
+                attributes = attributes,
+            )
+        }
+        nutritionRequest[NutritionRecord.PROTEIN_TOTAL]?.inGrams?.let {
+            onSensorUpdated(
+                nutritionProtein,
+                BigDecimal(it).setScale(2, RoundingMode.HALF_EVEN),
+                nutritionProtein.statelessIcon,
+                attributes = attributes,
+            )
+        }
+        nutritionRequest[NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL]?.inGrams?.let {
+            onSensorUpdated(
+                nutritionCarbohydrates,
+                BigDecimal(it).setScale(2, RoundingMode.HALF_EVEN),
+                nutritionCarbohydrates.statelessIcon,
+                attributes = attributes,
+            )
+        }
+        nutritionRequest[NutritionRecord.TOTAL_FAT_TOTAL]?.inGrams?.let {
+            onSensorUpdated(
+                nutritionFat,
+                BigDecimal(it).setScale(2, RoundingMode.HALF_EVEN),
+                nutritionFat.statelessIcon,
+                attributes = attributes,
+            )
+        }
+    }
+
     private suspend fun updateVo2MaxSensor() {
         val healthConnectClient = getOrCreateHealthConnectClient() ?: return
         val vo2MaxRequest = buildReadRecordsRequest(Vo2MaxRecord::class)
@@ -994,6 +1097,10 @@ class HealthConnectSensorManager @Inject constructor(
                 height,
                 hydration,
                 leanBodyMass,
+                nutritionCalories,
+                nutritionCarbohydrates,
+                nutritionFat,
+                nutritionProtein,
                 oxygenSaturation,
                 respiratoryRate,
                 restingHeartRate,
@@ -1053,6 +1160,21 @@ class HealthConnectSensorManager @Inject constructor(
     private fun buildAggregationRequest(metric: AggregateMetric<*>): AggregateRequest {
         return AggregateRequest(
             metrics = setOf(metric),
+            timeRangeFilter = TimeRangeFilter.between(
+                LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
+                LocalDateTime.of(LocalDate.now(), LocalTime.MAX),
+            ),
+        )
+    }
+
+    private fun buildNutritionAggregationRequest(): AggregateRequest {
+        return AggregateRequest(
+            metrics = setOf(
+                NutritionRecord.ENERGY_TOTAL,
+                NutritionRecord.PROTEIN_TOTAL,
+                NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL,
+                NutritionRecord.TOTAL_FAT_TOTAL,
+            ),
             timeRangeFilter = TimeRangeFilter.between(
                 LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
                 LocalDateTime.of(LocalDate.now(), LocalTime.MAX),
