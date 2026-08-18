@@ -1,0 +1,222 @@
+name: E2E
+
+on: # yamllint disable-line rule:truthy
+  schedule:
+    # Every morning at 05:00 UTC, on the default branch.
+    - cron: "0 5 * * *"
+  # Manual run on any branch carrying this workflow.
+  workflow_dispatch:
+    inputs:
+      home-assistant-version:
+        description: "Home Assistant image tag to test against"
+        required: false
+        default: "dev"
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Runs the Maestro onboarding flow against a real Home Assistant instance on
+# one emulator per supported API level.
+jobs:
+  maestro:
+    name: "Maestro onboarding"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ui-test
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      E2E_FORWARD_IP: 172.16.0.2
+      E2E_HOME_ASSISTANT_VERSION: ${{ inputs.home-assistant-version || 'dev' }}
+      # The hostname must not start with something resembling a dictionary
+      # word: some emulator images ship Gboard with autocorrect enabled, which
+      # rewrites e.g. ha.internal to have.internal while the flow types the
+      # URL.
+      E2E_HOME_ASSISTANT_HOST: homeassistant.internal
+      E2E_HOME_ASSISTANT_URL: http://homeassistant.internal:8123
+      E2E_HOME_ASSISTANT_USERNAME: citest
+      E2E_HOME_ASSISTANT_PASSWORD: "h7jk99&U"
+      MAESTRO_VERSION: 2.7.0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      # StrictMode is disabled.
+      - name: Assemble app fullDebug
+        run: ./gradlew :app:assembleFullDebug -PnoStrictMode -Pabis=x86,x86_64
+
+      - name: Install Maestro CLI
+        run: |
+          export MAESTRO_VERSION
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      # One emulator per supported API level, floored at E2E_MIN_API: on older
+      # images the bundled WebView (Chromium 69 on API 26-28) renders the
+      # frontend but its content never surfaces to Maestro's view-hierarchy
+      # polling, failing every WebView assertion. The instrumentation tests in
+      # PR CI still cover the full range down to the app's min SDK.
+      - name: Build device list
+        id: devices
+        env:
+          E2E_MIN_API: 29
+        run: |
+          MIN=$(grep '^androidSdk-min' gradle/libs.versions.toml | cut -d'"' -f2)
+          MAX=$(grep '^androidSdk-target' gradle/libs.versions.toml | cut -d'"' -f2)
+          MIN=$((MIN < E2E_MIN_API ? E2E_MIN_API : MIN))
+          for v in $(seq "$MIN" "$MAX"); do
+            echo "model=Pixel7,version=$v"
+          done > devices.txt
+          {
+            echo 'list<<DEVICES_EOF'
+            cat devices.txt
+            echo 'DEVICES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Start Home Assistant
+        id: homeassistant
+        uses: ludeeus/setup-homeassistant@27c93bb42c944a9973941bd05d32b3a451017073 # main
+        with:
+          tag: ${{ env.E2E_HOME_ASSISTANT_VERSION }}
+          config-dir: .github/e2e/homeassistant
+
+      - name: Verify Home Assistant setup
+        env:
+          HOME_ASSISTANT_TOKEN: ${{ steps.homeassistant.outputs.token }}
+          HOME_ASSISTANT_URL: ${{ steps.homeassistant.outputs.url }}
+        run: |
+          curl -sSf \
+            -H "Authorization: Bearer $HOME_ASSISTANT_TOKEN" \
+            "$HOME_ASSISTANT_URL/api/config" \
+            > homeassistant-config.json
+
+          jq -e '.components | index("mobile_app") != null' homeassistant-config.json >/dev/null
+
+      - uses: emulator-wtf/actions/configure-credentials@72f86422814fad7432a286a1b29699cc9e73d561 # v1.1.0
+        with:
+          oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
+
+      - name: Start emulators
+        id: emulator
+        uses: emulator-wtf/actions/use-emulator@72f86422814fad7432a286a1b29699cc9e73d561 # v1.1.0
+        with:
+          devices: ${{ steps.devices.outputs.list }}
+          egress-tunnel: true
+          egress-localhost-fwd-ip: ${{ env.E2E_FORWARD_IP }}
+          dns-override: |
+            ${{ env.E2E_HOME_ASSISTANT_HOST }}=${{ env.E2E_FORWARD_IP }}
+          max-time-limit: 15m
+
+      - name: Wait for emulators
+        id: device
+        run: |
+          ADB="$ANDROID_HOME/platform-tools/adb"
+          EXPECTED=$(grep -c . devices.txt)
+
+          # Up to 3 minutes; a slower start would not leave enough of the 15m session for the flows.
+          for _ in $(seq 1 36); do
+            SERIALS=$($ADB devices | awk 'NR > 1 && $2 == "device" { print $1 }')
+            if [ "$(echo "$SERIALS" | grep -c .)" -eq "$EXPECTED" ]; then
+              break
+            fi
+            sleep 5
+          done
+
+          COUNT=$(echo "$SERIALS" | grep -c .)
+          if [ "$COUNT" -ne "$EXPECTED" ]; then
+            echo "::error::Expected $EXPECTED emulators connected through adb, got $COUNT"
+            $ADB devices
+            exit 1
+          fi
+
+          # Bounded so a session dying mid-boot fails the step instead of hanging the job.
+          for SERIAL in $SERIALS; do
+            BOOTED=""
+            for _ in $(seq 1 120); do
+              if [ "$($ADB -s "$SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
+                BOOTED=1
+                break
+              fi
+              sleep 1
+            done
+            if [ -z "$BOOTED" ]; then
+              echo "::error::Emulator $SERIAL did not finish booting"
+              $ADB devices
+              exit 1
+            fi
+          done
+
+          echo "serials=$(echo $SERIALS | xargs)" >> "$GITHUB_OUTPUT"
+
+      - name: Install APK
+        env:
+          SERIALS: ${{ steps.device.outputs.serials }}
+        run: |
+          ADB="$ANDROID_HOME/platform-tools/adb"
+          PIDS=""
+          for SERIAL in $SERIALS; do
+            $ADB -s "$SERIAL" install -r app/build/outputs/apk/full/debug/app-full-debug.apk &
+            PIDS="$PIDS $!"
+          done
+          for PID in $PIDS; do
+            wait "$PID"
+          done
+
+      # --shard-all runs the flow on every connected device in parallel.
+      - name: Run Maestro onboarding flow
+        env:
+          HOME_ASSISTANT_URL: ${{ env.E2E_HOME_ASSISTANT_URL }}
+          HOME_ASSISTANT_USERNAME: ${{ env.E2E_HOME_ASSISTANT_USERNAME }}
+          HOME_ASSISTANT_PASSWORD: ${{ env.E2E_HOME_ASSISTANT_PASSWORD }}
+        run: |
+          export PATH="$PATH:$HOME/.maestro/bin"
+
+          maestro test \
+            --shard-all "$(grep -c . devices.txt)" \
+            --test-output-dir maestro-results \
+            -e HOME_ASSISTANT_URL="$HOME_ASSISTANT_URL" \
+            -e HOME_ASSISTANT_USERNAME="$HOME_ASSISTANT_USERNAME" \
+            -e HOME_ASSISTANT_PASSWORD="$HOME_ASSISTANT_PASSWORD" \
+            .maestro/onboarding.yaml
+
+      - name: Capture Android logs
+        if: always() && steps.device.outputs.serials != ''
+        env:
+          SERIALS: ${{ steps.device.outputs.serials }}
+        run: |
+          ADB="$ANDROID_HOME/platform-tools/adb"
+          for SERIAL in $SERIALS; do
+            $ADB -s "$SERIAL" logcat -d > "logcat-${SERIAL//:/-}.txt"
+          done
+
+      - name: Capture Home Assistant logs
+        if: always() && steps.homeassistant.outputs.containername != ''
+        run: docker logs --timestamps ${{ steps.homeassistant.outputs.containername }} > homeassistant.log 2>&1
+
+      - name: Capture Home Assistant container details
+        if: always() && steps.homeassistant.outputs.containername != ''
+        run: docker inspect ${{ steps.homeassistant.outputs.containername }} > homeassistant-container.json
+
+      - name: Upload E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-artifacts
+          if-no-files-found: warn
+          path: |
+            homeassistant-config.json
+            homeassistant.log
+            homeassistant-container.json
+            logcat-*.txt
+            maestro-results
