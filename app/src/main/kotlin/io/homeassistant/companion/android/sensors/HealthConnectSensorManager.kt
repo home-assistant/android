@@ -289,9 +289,8 @@ class HealthConnectSensorManager @Inject constructor(
             commonR.string.basic_sensor_name_nutrition_calories,
             commonR.string.sensor_description_nutrition_calories,
             "mdi:fire",
-            "energy",
             unitOfMeasurement = "kcal",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -303,7 +302,7 @@ class HealthConnectSensorManager @Inject constructor(
             commonR.string.sensor_description_nutrition_carbohydrates,
             "mdi:bread-slice",
             unitOfMeasurement = "g",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -315,7 +314,7 @@ class HealthConnectSensorManager @Inject constructor(
             commonR.string.sensor_description_nutrition_fat,
             "mdi:oil",
             unitOfMeasurement = "g",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -327,7 +326,7 @@ class HealthConnectSensorManager @Inject constructor(
             commonR.string.sensor_description_nutrition_protein,
             "mdi:food-drumstick",
             unitOfMeasurement = "g",
-            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -1005,7 +1004,7 @@ class HealthConnectSensorManager @Inject constructor(
         nutritionRequest[NutritionRecord.ENERGY_TOTAL]?.inKilocalories?.let {
             onSensorUpdated(
                 nutritionCalories,
-                BigDecimal(it).setScale(2, RoundingMode.HALF_EVEN),
+                BigDecimal.valueOf(it).setScale(2, RoundingMode.HALF_EVEN),
                 nutritionCalories.statelessIcon,
                 attributes = attributes,
             )
@@ -1013,7 +1012,7 @@ class HealthConnectSensorManager @Inject constructor(
         nutritionRequest[NutritionRecord.PROTEIN_TOTAL]?.inGrams?.let {
             onSensorUpdated(
                 nutritionProtein,
-                BigDecimal(it).setScale(2, RoundingMode.HALF_EVEN),
+                BigDecimal.valueOf(it).setScale(2, RoundingMode.HALF_EVEN),
                 nutritionProtein.statelessIcon,
                 attributes = attributes,
             )
@@ -1021,7 +1020,7 @@ class HealthConnectSensorManager @Inject constructor(
         nutritionRequest[NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL]?.inGrams?.let {
             onSensorUpdated(
                 nutritionCarbohydrates,
-                BigDecimal(it).setScale(2, RoundingMode.HALF_EVEN),
+                BigDecimal.valueOf(it).setScale(2, RoundingMode.HALF_EVEN),
                 nutritionCarbohydrates.statelessIcon,
                 attributes = attributes,
             )
@@ -1029,7 +1028,7 @@ class HealthConnectSensorManager @Inject constructor(
         nutritionRequest[NutritionRecord.TOTAL_FAT_TOTAL]?.inGrams?.let {
             onSensorUpdated(
                 nutritionFat,
-                BigDecimal(it).setScale(2, RoundingMode.HALF_EVEN),
+                BigDecimal.valueOf(it).setScale(2, RoundingMode.HALF_EVEN),
                 nutritionFat.statelessIcon,
                 attributes = attributes,
             )
@@ -1168,6 +1167,8 @@ class HealthConnectSensorManager @Inject constructor(
     }
 
     private fun buildNutritionAggregationRequest(): AggregateRequest {
+        val now = LocalDateTime.now()
+        val today = now.toLocalDate()
         return AggregateRequest(
             metrics = setOf(
                 NutritionRecord.ENERGY_TOTAL,
@@ -1176,8 +1177,8 @@ class HealthConnectSensorManager @Inject constructor(
                 NutritionRecord.TOTAL_FAT_TOTAL,
             ),
             timeRangeFilter = TimeRangeFilter.between(
-                LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT),
-                LocalDateTime.of(LocalDate.now(), LocalTime.MAX),
+                LocalDateTime.of(today, LocalTime.MIDNIGHT),
+                now,
             ),
         )
     }
