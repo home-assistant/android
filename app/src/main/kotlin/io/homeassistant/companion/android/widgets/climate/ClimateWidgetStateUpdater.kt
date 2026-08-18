@@ -8,6 +8,8 @@ import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
 import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
+import io.homeassistant.companion.android.database.widget.MAX_TEMP_CLIMATE_FALLBACK
+import io.homeassistant.companion.android.database.widget.MIN_TEMP_CLIMATE_FALLBACK
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -84,9 +86,9 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
                             lastUpdateData = ClimateWidgetEntity.LastUpdateData(
                             entityName = displayEntity.name,
                             climateTemp = climateTemp,
-                            currentTemp = currentTemp ?: 0f,
-                            minTemp = displayEntity.climateControls?.minTemperature,
-                            maxTemp = displayEntity.climateControls?.maxTemperature,
+                            currentTemp = currentTemp,
+                            minTemp = displayEntity.climateControls?.minTemperature ?: MIN_TEMP_CLIMATE_FALLBACK,
+                            maxTemp = displayEntity.climateControls?.maxTemperature ?: MAX_TEMP_CLIMATE_FALLBACK,
                             stepTemp = step,
                             stateClimate = displayEntity.rawState,
                             hvacModesSupported = displayEntity.climateControls?.hvacSupportedModes,

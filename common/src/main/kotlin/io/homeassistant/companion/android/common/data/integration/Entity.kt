@@ -8,7 +8,6 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon2
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
-import io.homeassistant.companion.android.common.data.integration.HvacMode.Companion.toHvacModes
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
@@ -27,7 +26,6 @@ import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.getIconByMdiName
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import kotlin.collections.emptyList
 import kotlin.math.round
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
@@ -171,14 +169,13 @@ data class ClimateControls(
 
 enum class HvacMode(
     val key: String,
-    val displayName: String,
 ) {
-    OFF("off", "Off"),
-    AUTO("auto", "Auto"),
-    COOL("cool", "Cool"),
-    HEAT("heat", "Heat"),
-    DRY("dry", "Dry"),
-    FAN("fan_only", "Fan");
+    OFF("off"),
+    AUTO("auto"),
+    COOL("cool"),
+    HEAT("heat"),
+    DRY("dry"),
+    FAN("fan_only");
 
     companion object {
         fun from(value: String?): HvacMode? {

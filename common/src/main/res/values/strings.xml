@@ -1061,6 +1061,18 @@
     <string name="widget_climate_format_temp">%.0f °C</string>
     <string name="widget_climate_empty_temp">- - °C</string>
     <string name="widget_climate_refresh">Refresh climate</string>
+    <string name="widget_climate_hvac_selector_description_off">Turn climate control off</string>
+    <string name="widget_climate_hvac_selector_description_heat">Set climate mode to heat</string>
+    <string name="widget_climate_hvac_selector_description_cool">Set climate mode to cool</string>
+    <string name="widget_climate_hvac_selector_description_dry">Set climate mode to dry</string>
+    <string name="widget_climate_hvac_selector_description_fan">Set climate mode to fan only</string>
+    <string name="widget_climate_hvac_selector_description_auto">Set climate mode to automatic</string>
+    <string name="widget_climate_hvac_name_off">Off</string>
+    <string name="widget_climate_hvac_name_auto">Auto</string>
+    <string name="widget_climate_hvac_name_cool">Cool</string>
+    <string name="widget_climate_hvac_name_heat">Heat</string>
+    <string name="widget_climate_hvac_name_dry">Dry</string>
+    <string name="widget_climate_hvac_name_fan">Fan</string>
 
 
     <string name="widget_tap_action_label">Tap action:</string>

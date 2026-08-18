@@ -87,7 +87,7 @@ class ClimateWidgetActionsTest {
         coEvery {
             entryPoints.serverManager().webSocketRepository(42).setClimateTemperature(
                 "climate.test",
-                "25.0",
+                25f,
             )
         } returns true
 
@@ -102,7 +102,7 @@ class ClimateWidgetActionsTest {
             entryPoints.climateDao().get(widgetId)
             entryPoints.serverManager().webSocketRepository(42)
             entryPoints.serverManager().webSocketRepository(42)
-                .setClimateTemperature("climate.test", "25.0")
+                .setClimateTemperature("climate.test", 25f)
         }
     }
 
@@ -132,7 +132,7 @@ class ClimateWidgetActionsTest {
         coEvery { entryPoints.serverManager().getServer(42) } returns mockk()
         coEvery {
             entryPoints.serverManager().webSocketRepository(42)
-                .setClimateTemperature("climate.test", "30.0")
+                .setClimateTemperature("climate.test", 30f)
         } returns true
 
         try {
@@ -148,7 +148,7 @@ class ClimateWidgetActionsTest {
 
         coVerify(exactly = 1) {
             entryPoints.serverManager().webSocketRepository(42)
-                .setClimateTemperature("climate.test", "30.0")
+                .setClimateTemperature("climate.test", 30f)
         }
     }
 
@@ -178,7 +178,7 @@ class ClimateWidgetActionsTest {
         coEvery { entryPoints.serverManager().getServer(42) } returns mockk()
         coEvery {
             entryPoints.serverManager().webSocketRepository(42)
-                .setClimateTemperature("climate.test", "15.0")
+                .setClimateTemperature("climate.test", 15f)
         } returns true
 
         try {
@@ -194,7 +194,7 @@ class ClimateWidgetActionsTest {
 
         coVerify(exactly = 1) {
             entryPoints.serverManager().webSocketRepository(42)
-                .setClimateTemperature("climate.test", "15.0")
+                .setClimateTemperature("climate.test", 15f)
         }
     }
 

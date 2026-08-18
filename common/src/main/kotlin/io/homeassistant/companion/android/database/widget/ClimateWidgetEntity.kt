@@ -34,8 +34,8 @@ data class ClimateWidgetEntity(
         val entityName: String? = null,
         val climateTemp: Float? = null,
         val currentTemp: Float? = null,
-        val minTemp: Float? = null,
-        val maxTemp: Float? = null,
+        val minTemp: Float = MIN_TEMP_CLIMATE_FALLBACK,
+        val maxTemp: Float = MAX_TEMP_CLIMATE_FALLBACK,
         val stepTemp: Float? = null,
         val stateClimate: String? = null,
         val hvacModesSupported: List<String>? = null,
@@ -54,3 +54,6 @@ data class ClimateWidgetEntity(
         return copy(id = appWidgetId)
     }
 }
+
+const val MIN_TEMP_CLIMATE_FALLBACK = 15f
+const val MAX_TEMP_CLIMATE_FALLBACK = 30f

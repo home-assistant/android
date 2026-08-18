@@ -139,10 +139,10 @@ class ClimateGlanceAppWidgetTest {
             onNode(hasTextEqualTo("24 °C"))
                 .assertExists()
 
-            onNode(hasTextEqualTo(HvacMode.HEAT.displayName))
+            onNode(hasTextEqualTo(context.getString(HvacMode.HEAT.toStringName())))
                 .assertExists()
 
-            onNode(hasTextEqualTo(HvacMode.COOL.displayName))
+            onNode(hasTextEqualTo(context.getString(HvacMode.COOL.toStringName())))
                 .assertExists()
         }
 
@@ -178,7 +178,7 @@ class ClimateGlanceAppWidgetTest {
             onNode(hasTextEqualTo("24 °C"))
                 .assertDoesNotExist()
 
-            onNode(hasTextEqualTo(HvacMode.OFF.displayName))
+            onNode(hasTextEqualTo(context.getString(HvacMode.OFF.toStringName())))
                 .assertExists()
         }
 

@@ -5,9 +5,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
 import io.homeassistant.companion.android.common.data.integration.HvacMode
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.COMPLETED_STATUS
 import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
-import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -15,7 +13,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class TodoWidgetStateTest {
+class ClimateWidgetStateTest {
 
     @Test
     fun `Given ClimateWidgetEntity and Entity when invoking from then returns ClimateStateWithData with synced data`() {

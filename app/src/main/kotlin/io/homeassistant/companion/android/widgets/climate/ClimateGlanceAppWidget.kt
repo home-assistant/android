@@ -186,14 +186,13 @@ private fun ShowClimateContent(
                 modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize)
                     .semantics { testTag = "Substract" },
                 imageProvider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_minus),
-                contentDescription = LocalContext.current.getString(commonR.string.widget_climate_plus),
+                contentDescription = LocalContext.current.getString(commonR.string.widget_climate_minus),
                 backgroundColor = GlanceTheme.colors.primary,
                 enabled = isControlTempEnabled,
                 onClick =  if (isControlTempEnabled) actionDecreaseTemp() else actionNoOp()     // For some reason the enabled param doesn't prevent clicks being triggered
             )
 
-            val tempString = if (isControlTempEnabled) commonR.string.widget_climate_format_temp
-                    else commonR.string.widget_climate_empty_temp
+            val tempString = if (isControlTempEnabled && climateTemp != null) commonR.string.widget_climate_format_temp else commonR.string.widget_climate_empty_temp
             Text(
                 modifier = GlanceModifier.padding(horizontal = 16.dp),
                 text = LocalContext.current.getString(tempString, climateTemp),
@@ -207,7 +206,7 @@ private fun ShowClimateContent(
                 modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize)
                     .semantics { testTag = "Add" },
                 imageProvider = ImageProvider(R.drawable.ic_plus),
-                contentDescription = LocalContext.current.getString(commonR.string.widget_climate_minus),
+                contentDescription = LocalContext.current.getString(commonR.string.widget_climate_plus),
                 backgroundColor = GlanceTheme.colors.primary,
                 enabled = isControlTempEnabled,
                 onClick = if (isControlTempEnabled) actionIncreaseTemp() else actionNoOp()          // For some reason the enabled param doesn't prevent clicks being triggered
@@ -239,14 +238,23 @@ private fun HvacModeSelector(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 val selected = mode == hvacSelectedMode
+                val contentDescriptionRes = when (hvacSelectedMode) {
+                    HvacMode.OFF -> commonR.string.widget_climate_hvac_selector_description_off
+                    HvacMode.HEAT -> commonR.string.widget_climate_hvac_selector_description_heat
+                    HvacMode.COOL -> commonR.string.widget_climate_hvac_selector_description_cool
+                    HvacMode.DRY -> commonR.string.widget_climate_hvac_selector_description_dry
+                    HvacMode.FAN -> commonR.string.widget_climate_hvac_selector_description_fan
+                    HvacMode.AUTO -> commonR.string.widget_climate_hvac_selector_description_auto
+                    null -> null
+                }
 
                 SquareIconButton(
                     modifier = GlanceModifier
                         .size(48.dp)
                         .padding(horizontal = 4.dp),
-                    imageProvider = hvacModeIcon(mode),
+                    imageProvider = mode.toIcon(),
                     enabled = !selected,
-                    contentDescription = "Selector mode button",
+                    contentDescription = contentDescriptionRes?.let { LocalContext.current.getString(it) } ?: "" ,
                     backgroundColor =
                         if (selected)
                             GlanceTheme.colors.secondary
@@ -268,7 +276,7 @@ private fun HvacModeSelector(
 
                 Text(
                     modifier = GlanceModifier.padding(horizontal = 4.dp),
-                    text = mode.displayName,
+                    text = LocalContext.current.getString(mode.toStringName()),
                     maxLines = 1,
                     style = HomeAssistantGlanceTypography.bodySmall.copy(
                         textAlign = TextAlign.Center,
@@ -278,19 +286,6 @@ private fun HvacModeSelector(
             }
         }
     }
-}
-
-private fun hvacModeIcon(hvacMode: HvacMode): ImageProvider {
-    val drawable = when (hvacMode) {
-        HvacMode.OFF -> R.drawable.hvac_mode_off
-        HvacMode.HEAT -> R.drawable.hvac_mode_heat
-        HvacMode.COOL -> R.drawable.hvac_mode_cool
-        HvacMode.DRY -> R.drawable.hvac_mode_dry
-        HvacMode.FAN-> R.drawable.hvac_mode_fan
-        HvacMode.AUTO -> R.drawable.hvac_mode_auto
-        else -> null
-    }
-    return ImageProvider(drawable ?: R.drawable.ic_bug_report)
 }
 
 @Composable
@@ -322,6 +317,30 @@ private fun TitleBar(climateName: String, outOfSync: Boolean) {
             backgroundColor = GlanceTheme.colors.widgetBackground,
             onClick = actionRefreshClimate()
         )
+    }
+}
+
+private fun HvacMode.toIcon(): ImageProvider {
+    val drawable = when (this) {
+        HvacMode.OFF -> R.drawable.hvac_mode_off
+        HvacMode.HEAT -> R.drawable.hvac_mode_heat
+        HvacMode.COOL -> R.drawable.hvac_mode_cool
+        HvacMode.DRY -> R.drawable.hvac_mode_dry
+        HvacMode.FAN-> R.drawable.hvac_mode_fan
+        HvacMode.AUTO -> R.drawable.hvac_mode_auto
+        else -> null
+    }
+    return ImageProvider(drawable ?: R.drawable.ic_bug_report)
+}
+
+fun HvacMode.toStringName(): Int {
+    return when (this) {
+        HvacMode.OFF -> commonR.string.widget_climate_hvac_name_off
+        HvacMode.AUTO -> commonR.string.widget_climate_hvac_name_auto
+        HvacMode.COOL -> commonR.string.widget_climate_hvac_name_cool
+        HvacMode.HEAT -> commonR.string.widget_climate_hvac_name_heat
+        HvacMode.DRY -> commonR.string.widget_climate_hvac_name_dry
+        HvacMode.FAN -> commonR.string.widget_climate_hvac_name_fan
     }
 }
 

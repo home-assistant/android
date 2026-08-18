@@ -70,7 +70,7 @@ interface WebSocketRepository {
     suspend fun getTodos(entityId: String): GetTodosResponse?
     suspend fun updateTodo(entityId: String, todoItem: String, newName: String?, status: String?): Boolean
 
-    suspend fun setClimateTemperature(entityId: String, newTemp: String): Boolean
+    suspend fun setClimateTemperature(entityId: String, newTemp: Float): Boolean
     suspend fun setClimateHvacMode(entityId: String, hvacMode: String): Boolean
 
     /**

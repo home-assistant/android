@@ -119,7 +119,7 @@ class WebSocketRepositoryImpl internal constructor(
         return response?.success == true
     }
 
-    override suspend fun setClimateTemperature(entityId: String, newTemp: String): Boolean  {
+    override suspend fun setClimateTemperature(entityId: String, newTemp: Float): Boolean  {
         val response = webSocketCore.sendMessage(
             mapOf(
                 "type" to "call_service",

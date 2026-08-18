@@ -8,10 +8,8 @@ import androidx.core.graphics.toColorInt
 import androidx.glance.GlanceTheme
 import androidx.glance.color.ColorProviders
 import androidx.glance.material.ColorProviders
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.HvacMode
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
-import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType

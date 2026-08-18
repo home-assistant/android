@@ -218,7 +218,7 @@ class ClimateWidgetConfigureViewModel @AssistedInject constructor(
         val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
             supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
         } else {
-            ""
+            null
         }
         selectedEntityMutex.withLock {
             val listEntityId = selectedEntityId!!

@@ -36,8 +36,8 @@ internal fun actionDecreaseTemp(): Action {
 /**
  * Get an Action that will set the given temp of a Climate widget once given to Glance.
  */
-internal fun actionSetHvacMode(hvcaMode: HvacMode): Action {
-    return actionRunCallback<ControlClimateAction>(actionParametersOf(HVAC_MODE_KEY to hvcaMode))
+internal fun actionSetHvacMode(hvacMode: HvacMode): Action {
+    return actionRunCallback<ControlClimateAction>(actionParametersOf(HVAC_MODE_KEY to hvacMode))
 }
 
 /**
@@ -147,16 +147,15 @@ class ControlClimateAction : ActionCallback {
     ) {
         val newTemp = widgetEntity.latestUpdateData?.calculateNewTemp(isIncrease)
 
-        if (newTemp == null) {
+        if (newTemp == null || newTemp == 0f) {
             Timber.w("Aborting set temp action, newTemp calculation is null")
             return
         }
 
         val result = webSocketRepository(widgetEntity.serverId).setClimateTemperature(
-                entityId = widgetEntity.entityId,
-                newTemp = newTemp.toString()
-            )
-
+            entityId = widgetEntity.entityId,
+            newTemp = newTemp
+        )
 
         if (!result) {
             Timber.e("Failed to setClimateTemperature")
