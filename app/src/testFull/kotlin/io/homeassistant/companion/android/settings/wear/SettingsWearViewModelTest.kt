@@ -3,14 +3,16 @@ package io.homeassistant.companion.android.settings.wear
 import android.app.Application
 import app.cash.turbine.turbineScope
 import com.google.android.gms.wearable.Node
-import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.fakes.FakeCapabilityClient
 import io.homeassistant.companion.android.fakes.FakeNodeClient
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -40,12 +42,12 @@ class SettingsWearViewModelTest {
 
     @Test
     fun `Given viewModel initialized when collecting wearNodesWithApp then emits empty set`() {
-        Assertions.assertEquals(emptySet<Node>(), viewModel.wearNodesWithApp.value)
+        assertEquals(emptySet<Node>(), viewModel.wearNodesWithApp.value)
     }
 
     @Test
     fun `Given viewModel initialized when collecting allConnectedNodes then emits empty list`() {
-        Assertions.assertEquals(emptyList<Node>(), viewModel.allConnectedNodes.value)
+        assertEquals(emptyList<Node>(), viewModel.allConnectedNodes.value)
     }
 
     @Test
@@ -54,12 +56,9 @@ class SettingsWearViewModelTest {
             val uiState = viewModel.settingsWearOnboardingViewUiState.testIn(backgroundScope)
             // Initial State, This is from a combined flow
             val initialState = uiState.awaitItem()
-            Assertions.assertEquals(
-                R.string.message_no_connected_nodes,
-                initialState.infoTextResourceId,
-            )
-            Assertions.assertTrue(initialState.shouldShowRemoteInstallButton)
-            Assertions.assertFalse(initialState.installedOnDevices)
+            assertEquals(commonR.string.message_no_connected_nodes, initialState.infoTextResourceId)
+            assertTrue(initialState.shouldShowRemoteInstallButton)
+            assertFalse(initialState.installedOnDevices)
         }
     }
 
@@ -70,7 +69,7 @@ class SettingsWearViewModelTest {
         val expectedNodes = capabilityClient.getNodes(CAPABILITY_WEAR_APP)
         viewModel.findWearDevicesWithApp(capabilityClient)
 
-        Assertions.assertEquals(expectedNodes, viewModel.wearNodesWithApp.value)
+        assertEquals(expectedNodes, viewModel.wearNodesWithApp.value)
     }
 
     @Test
@@ -79,10 +78,10 @@ class SettingsWearViewModelTest {
 
         val expectedNodes: List<Node?>? = nodeClient.connectedNodes.result
         // Verify that the test is properly setup
-        Assertions.assertEquals(3, expectedNodes?.size)
+        assertEquals(3, expectedNodes?.size)
         viewModel.findAllWearDevices(nodeClient)
 
-        Assertions.assertEquals(expectedNodes, viewModel.allConnectedNodes.value)
+        assertEquals(expectedNodes, viewModel.allConnectedNodes.value)
     }
 
     @Test
@@ -92,12 +91,12 @@ class SettingsWearViewModelTest {
             viewModel.findAllWearDevices(nodeClient)
 
             val nodes = viewModel.allConnectedNodes.value
-            Assertions.assertEquals(nodes, nodeClient.connectedNodes.result)
+            assertEquals(nodes, nodeClient.connectedNodes.result)
 
             val newState = uiState.expectMostRecentItem()
-            Assertions.assertEquals(R.string.message_missing_all, newState.infoTextResourceId)
-            Assertions.assertTrue(newState.shouldShowRemoteInstallButton)
-            Assertions.assertFalse(newState.installedOnDevices)
+            assertEquals(commonR.string.message_missing_all, newState.infoTextResourceId)
+            assertTrue(newState.shouldShowRemoteInstallButton)
+            assertFalse(newState.installedOnDevices)
         }
     }
 
@@ -108,7 +107,7 @@ class SettingsWearViewModelTest {
             viewModel.findAllWearDevices(nodeClient)
             viewModel.findWearDevicesWithApp(capabilityClient)
             val newState = uiState.expectMostRecentItem()
-            Assertions.assertTrue(newState.installedOnDevices)
+            assertTrue(newState.installedOnDevices)
         }
     }
 
@@ -120,15 +119,15 @@ class SettingsWearViewModelTest {
 
             viewModel.findAllWearDevices(nodeClient)
             val expectedNodesWithoutApp = nodeClient.connectedNodes.result
-            Assertions.assertEquals(expectedNodesWithoutApp, viewModel.allConnectedNodes.value)
+            assertEquals(expectedNodesWithoutApp, viewModel.allConnectedNodes.value)
 
             capabilityClient.capabilities[CAPABILITY_WEAR_APP] = setOf("1234")
             val expectedNodesWithApp = capabilityClient.getNodes(CAPABILITY_WEAR_APP)
             viewModel.findWearDevicesWithApp(capabilityClient)
-            Assertions.assertEquals(expectedNodesWithApp, viewModel.wearNodesWithApp.value)
+            assertEquals(expectedNodesWithApp, viewModel.wearNodesWithApp.value)
 
             val newState = uiState.expectMostRecentItem()
-            Assertions.assertTrue(newState.installedOnDevices)
+            assertTrue(newState.installedOnDevices)
         }
     }
 }
