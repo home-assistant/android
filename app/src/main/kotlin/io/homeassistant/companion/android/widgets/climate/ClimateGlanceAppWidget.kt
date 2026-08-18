@@ -99,9 +99,9 @@ class ClimateGlanceAppWidget : GlanceAppWidget() {
 private fun GlanceModifier.climateWidgetBackground(): GlanceModifier {
     return this.appWidgetBackground().fillMaxSize()
         .background(
-        GlanceTheme
-            .colors.widgetBackground,
-    )
+            GlanceTheme
+                .colors.widgetBackground,
+        )
 }
 
 @Composable
@@ -160,7 +160,7 @@ private fun Screen(state: ClimateStateWithData) {
         ShowClimateContent(
             climateTemp = state.climateTemp,
             hvacMode = state.hvacSelectedMode,
-            hvacSupportedModes = state.hvacSupportedModes
+            hvacSupportedModes = state.hvacSupportedModes,
         )
     }
 }
@@ -189,16 +189,17 @@ private fun ShowClimateContent(
                 contentDescription = LocalContext.current.getString(commonR.string.widget_climate_minus),
                 backgroundColor = GlanceTheme.colors.primary,
                 enabled = isControlTempEnabled,
-                onClick =  if (isControlTempEnabled) actionDecreaseTemp() else actionNoOp()     // For some reason the enabled param doesn't prevent clicks being triggered
+                onClick = if (isControlTempEnabled) actionDecreaseTemp() else actionNoOp(),     // For some reason the enabled param doesn't prevent clicks being triggered
             )
 
-            val tempString = if (isControlTempEnabled && climateTemp != null) commonR.string.widget_climate_format_temp else commonR.string.widget_climate_empty_temp
+            val tempString =
+                if (isControlTempEnabled && climateTemp != null) commonR.string.widget_climate_format_temp else commonR.string.widget_climate_empty_temp
             Text(
                 modifier = GlanceModifier.padding(horizontal = 16.dp),
                 text = LocalContext.current.getString(tempString, climateTemp),
                 style = HomeAssistantGlanceTypography.titleLarge.copy(
                     fontSize = 42.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 ),
             )
 
@@ -209,7 +210,7 @@ private fun ShowClimateContent(
                 contentDescription = LocalContext.current.getString(commonR.string.widget_climate_plus),
                 backgroundColor = GlanceTheme.colors.primary,
                 enabled = isControlTempEnabled,
-                onClick = if (isControlTempEnabled) actionIncreaseTemp() else actionNoOp()          // For some reason the enabled param doesn't prevent clicks being triggered
+                onClick = if (isControlTempEnabled) actionIncreaseTemp() else actionNoOp(),          // For some reason the enabled param doesn't prevent clicks being triggered
             )
         }
 
@@ -228,14 +229,14 @@ private fun HvacModeSelector(
             .padding(8.dp)
             .wrapContentWidth()
             .background(GlanceTheme.colors.surface)
-            .cornerRadius(16.dp)
+            .cornerRadius(16.dp),
     ) {
         supportedModes.forEach { mode ->
             Column(
                 modifier = GlanceModifier
                     .padding(horizontal = 4.dp)
                     .width(56.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 val selected = mode == hvacSelectedMode
                 val contentDescriptionRes = when (hvacSelectedMode) {
@@ -254,7 +255,7 @@ private fun HvacModeSelector(
                         .padding(horizontal = 4.dp),
                     imageProvider = mode.toIcon(),
                     enabled = !selected,
-                    contentDescription = contentDescriptionRes?.let { LocalContext.current.getString(it) } ?: "" ,
+                    contentDescription = contentDescriptionRes?.let { LocalContext.current.getString(it) } ?: "",
                     backgroundColor =
                         if (selected)
                             GlanceTheme.colors.secondary
@@ -271,7 +272,7 @@ private fun HvacModeSelector(
                         actionSetHvacMode(mode)
                     } else {
                         actionNoOp()
-                    }
+                    },
                 )
 
                 Text(
@@ -315,7 +316,7 @@ private fun TitleBar(climateName: String, outOfSync: Boolean) {
             },
             contentDescription = LocalContext.current.getString(commonR.string.widget_climate_refresh),
             backgroundColor = GlanceTheme.colors.widgetBackground,
-            onClick = actionRefreshClimate()
+            onClick = actionRefreshClimate(),
         )
     }
 }
@@ -326,7 +327,7 @@ private fun HvacMode.toIcon(): ImageProvider {
         HvacMode.HEAT -> R.drawable.hvac_mode_heat
         HvacMode.COOL -> R.drawable.hvac_mode_cool
         HvacMode.DRY -> R.drawable.hvac_mode_dry
-        HvacMode.FAN-> R.drawable.hvac_mode_fan
+        HvacMode.FAN -> R.drawable.hvac_mode_fan
         HvacMode.AUTO -> R.drawable.hvac_mode_auto
         else -> null
     }
@@ -360,8 +361,8 @@ private fun ScreenPreview() {
                 climateTemp = 12f,
                 hvacSelectedMode = HvacMode.HEAT,
                 hvacSupportedModes = listOf(HvacMode.OFF, HvacMode.HEAT, HvacMode.COOL, HvacMode.DRY),
-                outOfSync = false
-            )
+                outOfSync = false,
+            ),
         )
     }
 }
@@ -382,7 +383,7 @@ private fun ScreenPreviewPowerOff() {
                 climateTemp = 12f,
                 hvacSelectedMode = HvacMode.OFF,
                 hvacSupportedModes = listOf(HvacMode.OFF, HvacMode.HEAT, HvacMode.COOL, HvacMode.DRY),
-                outOfSync = true
+                outOfSync = true,
             ),
         )
     }
@@ -404,7 +405,7 @@ private fun ScreenPreviewOutOfSync() {
                 climateTemp = 12f,
                 hvacSelectedMode = HvacMode.HEAT,
                 hvacSupportedModes = listOf(HvacMode.OFF, HvacMode.HEAT, HvacMode.COOL, HvacMode.DRY),
-                outOfSync = true
+                outOfSync = true,
             ),
         )
     }

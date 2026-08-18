@@ -71,6 +71,7 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
                             EntityDisplayState.Loading, EntityDisplayState.Error -> {
                                 return@map ClimateStateWithData.from(climateEntity)
                             }
+
                             is EntityDisplayState.Loaded -> state.entity(listEntityId)
                                 ?: return@map ClimateStateWithData.from(climateEntity)
                         }
@@ -84,14 +85,14 @@ internal class ClimateWidgetStateUpdater @Inject constructor(
                         climateWidgetDao.updateWidgetLastUpdate(
                             widgetId = widgetId,
                             lastUpdateData = ClimateWidgetEntity.LastUpdateData(
-                            entityName = displayEntity.name,
-                            climateTemp = climateTemp,
-                            currentTemp = currentTemp,
-                            minTemp = displayEntity.climateControls?.minTemperature ?: MIN_TEMP_CLIMATE_FALLBACK,
-                            maxTemp = displayEntity.climateControls?.maxTemperature ?: MAX_TEMP_CLIMATE_FALLBACK,
-                            stepTemp = step,
-                            stateClimate = displayEntity.rawState,
-                            hvacModesSupported = displayEntity.climateControls?.hvacSupportedModes,
+                                entityName = displayEntity.name,
+                                climateTemp = climateTemp,
+                                currentTemp = currentTemp,
+                                minTemp = displayEntity.climateControls?.minTemperature ?: MIN_TEMP_CLIMATE_FALLBACK,
+                                maxTemp = displayEntity.climateControls?.maxTemperature ?: MAX_TEMP_CLIMATE_FALLBACK,
+                                stepTemp = step,
+                                stateClimate = displayEntity.rawState,
+                                hvacModesSupported = displayEntity.climateControls?.hvacSupportedModes,
                             ),
                         )
                         ClimateStateWithData.from(climateEntity, displayEntity)

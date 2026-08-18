@@ -51,7 +51,7 @@ class NoOpAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
-        parameters: ActionParameters
+        parameters: ActionParameters,
     ) {
         // nada
     }
@@ -143,7 +143,7 @@ class ControlClimateAction : ActionCallback {
 
     private suspend fun ServerManager.setClimateTemp(
         widgetEntity: ClimateWidgetEntity,
-        isIncrease: Boolean
+        isIncrease: Boolean,
     ) {
         val newTemp = widgetEntity.latestUpdateData?.calculateNewTemp(isIncrease)
 
@@ -154,7 +154,7 @@ class ControlClimateAction : ActionCallback {
 
         val result = webSocketRepository(widgetEntity.serverId).setClimateTemperature(
             entityId = widgetEntity.entityId,
-            newTemp = newTemp
+            newTemp = newTemp,
         )
 
         if (!result) {
@@ -168,7 +168,7 @@ class ControlClimateAction : ActionCallback {
 
         val result = webSocketRepository(widgetEntity.serverId).setClimateHvacMode(
             entityId = widgetEntity.entityId,
-            hvacMode = hvacMode.key
+            hvacMode = hvacMode.key,
         )
 
         if (!result) {
@@ -188,7 +188,9 @@ class ControlClimateAction : ActionCallback {
 
 @VisibleForTesting
 internal val SET_TEMP_KEY = ActionParameters.Key<Double>("TEMP_SETTING_KEY")
+
 @VisibleForTesting
 internal val IS_INCREASE_KEY = ActionParameters.Key<Boolean>("IS_INCREASY_KEY")
+
 @VisibleForTesting
 internal val HVAC_MODE_KEY = ActionParameters.Key<HvacMode>("HVAC_MODE_KEY")

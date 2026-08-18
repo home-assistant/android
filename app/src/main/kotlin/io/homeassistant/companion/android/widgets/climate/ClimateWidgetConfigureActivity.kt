@@ -214,7 +214,8 @@ private fun ClimateWidgetConfigureView(
                     current = selectedServerId,
                     onSelected = {
                         Timber.d("onServerSelected: $it")
-                        onServerSelected(it) },
+                        onServerSelected(it)
+                    },
                     modifier = Modifier.padding(bottom = 16.dp),
                 )
             }
