@@ -51,12 +51,15 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
+import io.homeassistant.companion.android.frontend.url.FrontendUrlParams
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.util.hasSameOrigin
+import io.homeassistant.companion.android.util.toRelativeUrl
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
@@ -242,6 +245,16 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     private var latestSafeAreaInsets: SafeAreaInsets? = null
 
+    /**
+     * Last URL reported by the WebView, including SPA history updates (`history.pushState`),
+     * so it reflects the page actually shown to the user. Used to preserve the current relative
+     * URL when the base URL switches (internal <-> external) on the same server.
+     *
+     * Only accessed on the main thread: writes come from the WebView client callback and reads
+     * from the URL flow collection in [viewModelScope] (the main dispatcher).
+     */
+    private var lastVisitedUrl: String? = null
+
     override val urlFlow: StateFlow<String?> =
         _viewState.map { it.url }
             .distinctUntilChanged()
@@ -299,6 +312,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         FrontendEvent.ShowSnackbar(commonR.string.error_ssl_subresource)
                     },
                 )
+            },
+            onUrlVisited = { url ->
+                if (url != null && url != BLANK_URL) lastVisitedUrl = url
             },
         )
     }
@@ -578,6 +594,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     fun switchServer(serverId: Int) {
+        // Drop the previous server's visited URL so its path is not carried over to the new server.
+        lastVisitedUrl = null
         _viewState.update {
             FrontendViewState.LoadServer(serverId = serverId)
         }
@@ -798,6 +816,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             urlManager.serverUrlFlow(
                 serverId = currentState.serverId,
                 target = target,
+                currentRelativeUrl = {
+                    // external_auth is re-added by the URL manager; more-info-entity-id is a
+                    // one-shot deep-link parameter that must not reopen the dialog after a switch.
+                    lastVisitedUrl?.toUri()?.toRelativeUrl(
+                        excludeParams = setOf(FrontendUrlParams.EXTERNAL_AUTH, FrontendUrlParams.MORE_INFO_ENTITY_ID),
+                    )
+                },
             ).collect { result ->
                 handleUrlResult(result)
             }
@@ -1120,6 +1145,18 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     ),
                 ),
             )
+        }
+    }
+
+    /**
+     * Handles the system back gesture.
+     */
+    fun onBackPressed() {
+        val state = _viewState.value
+        if (state is FrontendViewState.Content && state.canGoBack) {
+            // Prefer the actually-visited URL (which tracks in-frontend SPA navigation) over the
+            // last URL the ViewModel loaded, so back resolution reflects the page the user is on.
+            viewModelScope.launch { _webViewActions.emit(WebViewAction.NavigateBack(lastVisitedUrl ?: state.url)) }
         }
     }
 

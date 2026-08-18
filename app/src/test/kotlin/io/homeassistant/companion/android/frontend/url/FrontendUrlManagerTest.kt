@@ -394,6 +394,109 @@ class FrontendUrlManagerTest {
     }
 
     @Test
+    fun `Given base URL switch when serverUrlFlow then preserves current relative URL`() = runTest {
+        val server = createTestServer(id = 1, externalUrl = "https://external.example.com")
+        coEvery { serverManager.getServer(1) } returns server
+        coEvery { sessionManager.isSessionConnected(1) } returns true
+        coEvery { serverManager.activateServer(1) } just runs
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
+            UrlState.HasUrl(URL("http://internal.local:8123")),
+            UrlState.HasUrl(URL("https://external.example.com")),
+        )
+
+        urlManager.serverUrlFlow(
+            serverId = 1,
+            target = FrontendTarget.Default,
+            currentRelativeUrl = { "/history?start_date=2026-01-01" },
+        ).test {
+            val first = awaitItem() as UrlLoadResult.Success
+            assertEquals("http://internal.local:8123/?external_auth=1", first.url)
+
+            val second = awaitItem() as UrlLoadResult.Success
+            assertEquals(
+                "https://external.example.com/history?start_date=2026-01-01&external_auth=1",
+                second.url,
+            )
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `Given base URL switch with unknown relative URL when serverUrlFlow then loads base URL`() = runTest {
+        val server = createTestServer(id = 1, externalUrl = "https://external.example.com")
+        coEvery { serverManager.getServer(1) } returns server
+        coEvery { sessionManager.isSessionConnected(1) } returns true
+        coEvery { serverManager.activateServer(1) } just runs
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
+            UrlState.HasUrl(URL("http://internal.local:8123")),
+            UrlState.HasUrl(URL("https://external.example.com")),
+        )
+
+        urlManager.serverUrlFlow(
+            serverId = 1,
+            target = FrontendTarget.Default,
+            currentRelativeUrl = { null },
+        ).test {
+            awaitItem()
+            val second = awaitItem() as UrlLoadResult.Success
+            assertEquals("https://external.example.com/?external_auth=1", second.url)
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `Given same base URL re-emission when serverUrlFlow then does not apply relative URL`() = runTest {
+        val server = createTestServer(id = 1, externalUrl = "https://home.example.com")
+        coEvery { serverManager.getServer(1) } returns server
+        coEvery { sessionManager.isSessionConnected(1) } returns true
+        coEvery { serverManager.activateServer(1) } just runs
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
+            UrlState.HasUrl(URL("https://home.example.com")),
+            UrlState.HasUrl(URL("https://home.example.com")),
+        )
+
+        urlManager.serverUrlFlow(
+            serverId = 1,
+            target = FrontendTarget.Default,
+            currentRelativeUrl = { "/history?start_date=2026-01-01" },
+        ).test {
+            awaitItem()
+            val second = awaitItem() as UrlLoadResult.Success
+            assertEquals("https://home.example.com/?external_auth=1", second.url)
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `Given deep link target and base URL switch on second emission when serverUrlFlow then target wins over relative URL`() = runTest {
+        val server = createTestServer(id = 1, externalUrl = "https://external.example.com")
+        coEvery { serverManager.getServer(1) } returns server
+        coEvery { sessionManager.isSessionConnected(1) } returns true
+        coEvery { serverManager.activateServer(1) } just runs
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
+            UrlState.HasUrl(URL("http://internal.local:8123")),
+            UrlState.HasUrl(URL("https://external.example.com")),
+        )
+
+        urlManager.serverUrlFlow(
+            serverId = 1,
+            target = FrontendTarget.Path("/dashboard"),
+            currentRelativeUrl = { "/history" },
+        ).test {
+            val first = awaitItem() as UrlLoadResult.Success
+            assertTrue(first.url.contains("/dashboard"), "First emission should contain deep link path")
+
+            val second = awaitItem() as UrlLoadResult.Success
+            assertTrue(second.url.contains("/history"), "Switch should preserve current relative URL")
+            awaitComplete()
+        }
+    }
+
+    @Test
     fun `Given path with InsecureState first when serverUrlFlow then path is preserved for subsequent HasUrl`() = runTest {
         val server = createTestServer(id = 1, externalUrl = "https://home.example.com")
         coEvery { serverManager.getServer(1) } returns server
