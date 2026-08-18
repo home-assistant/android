@@ -17,10 +17,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
@@ -59,9 +56,9 @@ class SettingsWearRepositoryTest {
 
             val urls = server.getBaseUrls()
 
-            assertEquals(2, urls.size)
-            assertEquals("https://cloud.nabu.casa/".toHttpUrl(), urls[0])
-            assertEquals("https://external.local:8123/".toHttpUrl(), urls[1])
+            Assertions.assertEquals(2, urls.size)
+            Assertions.assertEquals("https://cloud.nabu.casa/".toHttpUrl(), urls[0])
+            Assertions.assertEquals("https://external.local:8123/".toHttpUrl(), urls[1])
         }
 
         @Test
@@ -73,8 +70,8 @@ class SettingsWearRepositoryTest {
 
             val urls = server.getBaseUrls()
 
-            assertEquals(1, urls.size)
-            assertEquals("https://external.local:8123/".toHttpUrl(), urls[0])
+            Assertions.assertEquals(1, urls.size)
+            Assertions.assertEquals("https://external.local:8123/".toHttpUrl(), urls[0])
         }
 
         @Test
@@ -86,7 +83,7 @@ class SettingsWearRepositoryTest {
 
             val urls = server.getBaseUrls()
 
-            assertTrue(urls.isEmpty())
+            Assertions.assertTrue(urls.isEmpty())
         }
 
         @Test
@@ -99,9 +96,12 @@ class SettingsWearRepositoryTest {
 
             val urls = server.getWebhookUrls()
 
-            assertEquals(2, urls.size)
-            assertEquals("https://hooks.nabu.casa/webhook123".toHttpUrl(), urls[0])
-            assertEquals("https://external.local:8123/api/webhook/webhook_abc".toHttpUrl(), urls[1])
+            Assertions.assertEquals(2, urls.size)
+            Assertions.assertEquals("https://hooks.nabu.casa/webhook123".toHttpUrl(), urls[0])
+            Assertions.assertEquals(
+                "https://external.local:8123/api/webhook/webhook_abc".toHttpUrl(),
+                urls[1],
+            )
         }
 
         @Test
@@ -114,8 +114,11 @@ class SettingsWearRepositoryTest {
 
             val urls = server.getWebhookUrls()
 
-            assertEquals(1, urls.size)
-            assertEquals("https://external.local:8123/api/webhook/webhook_abc".toHttpUrl(), urls[0])
+            Assertions.assertEquals(1, urls.size)
+            Assertions.assertEquals(
+                "https://external.local:8123/api/webhook/webhook_abc".toHttpUrl(),
+                urls[0],
+            )
         }
 
         @Test
@@ -127,7 +130,7 @@ class SettingsWearRepositoryTest {
 
             val urls = server.getWebhookUrls()
 
-            assertTrue(urls.isEmpty())
+            Assertions.assertTrue(urls.isEmpty())
         }
     }
 
@@ -147,9 +150,9 @@ class SettingsWearRepositoryTest {
 
             val result = repository.registerRefreshToken(server, refreshToken)
 
-            assertEquals(newAccessToken, result.accessToken)
-            assertEquals(server.externalUrl, result.externalUrl)
-            assertTrue(urlSlot.captured.encodedPath.endsWith("/auth/token"))
+            Assertions.assertEquals(newAccessToken, result.accessToken)
+            Assertions.assertEquals(server.externalUrl, result.externalUrl)
+            Assertions.assertTrue(urlSlot.captured.encodedPath.endsWith("/auth/token"))
             coVerify {
                 authenticationService.refreshToken(
                     any(),
@@ -170,9 +173,9 @@ class SettingsWearRepositoryTest {
 
             try {
                 repository.registerRefreshToken(server, "refresh_token")
-                fail("Expected IntegrationException to be thrown")
+                Assertions.fail("Expected IntegrationException to be thrown")
             } catch (e: IntegrationException) {
-                assertInstanceOf(AuthorizationException::class.java, e.cause)
+                Assertions.assertInstanceOf(AuthorizationException::class.java, e.cause)
             }
         }
 
@@ -186,7 +189,7 @@ class SettingsWearRepositoryTest {
 
             try {
                 repository.registerRefreshToken(server, "refresh_token")
-                fail("Expected IntegrationException to be thrown")
+                Assertions.fail("Expected IntegrationException to be thrown")
             } catch (_: IntegrationException) {
                 // Continue
             }
@@ -208,7 +211,7 @@ class SettingsWearRepositoryTest {
 
             val result = repository.renderTemplate(server, template)
 
-            assertEquals(expectedResult, result)
+            Assertions.assertEquals(expectedResult, result)
         }
 
         @Test
@@ -235,7 +238,7 @@ class SettingsWearRepositoryTest {
 
             val result = repository.renderTemplate(server, "{{ states | tojson }}")
 
-            assertEquals(jsonObject.toString(), result)
+            Assertions.assertEquals(jsonObject.toString(), result)
         }
     }
 
@@ -258,11 +261,11 @@ class SettingsWearRepositoryTest {
 
             val result = repository.getEntities(server)
 
-            assertEquals(2, result.size)
-            assertEquals("light.living_room", result[0].entityId)
-            assertEquals("on", result[0].state)
-            assertEquals("sensor.temp", result[1].entityId)
-            assertTrue(urlSlot.captured.encodedPath.endsWith("/api/states"))
+            Assertions.assertEquals(2, result.size)
+            Assertions.assertEquals("light.living_room", result[0].entityId)
+            Assertions.assertEquals("on", result[0].state)
+            Assertions.assertEquals("sensor.temp", result[1].entityId)
+            Assertions.assertTrue(urlSlot.captured.encodedPath.endsWith("/api/states"))
             coVerify {
                 integrationService.getStates(any(), "Bearer valid_token")
             }
@@ -279,8 +282,8 @@ class SettingsWearRepositoryTest {
 
             val result = repository.getEntities(server)
 
-            assertTrue(failFastTriggered)
-            assertTrue(result.isEmpty())
+            Assertions.assertTrue(failFastTriggered)
+            Assertions.assertTrue(result.isEmpty())
             coVerify(exactly = 0) { integrationService.getStates(any(), any()) }
         }
 
@@ -294,7 +297,7 @@ class SettingsWearRepositoryTest {
 
             val result = repository.getEntities(server)
 
-            assertTrue(result.isEmpty())
+            Assertions.assertTrue(result.isEmpty())
         }
     }
 }
