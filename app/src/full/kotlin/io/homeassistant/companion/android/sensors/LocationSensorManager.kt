@@ -924,7 +924,9 @@ class LocationSensorManager @Inject constructor(
             val inZones = zones
                 .filter {
                     val radius = it.attributes["radius"] as? Number
-                    return@filter radius != null && it.containsWithAccuracy(location)
+                    val matchesGps = radius != null && it.containsWithAccuracy(location)
+                    val matchesGeofence = lastEnteredGeoZones.contains("${serverId}_${it.entityId}")
+                    return@filter matchesGps || matchesGeofence
                 }.sortedWith(
                     // Smallest zone (radius) first; when two zones share the same radius, prefer the one
                     // whose center is closest to the current location to break the tie deterministically.
@@ -958,11 +960,20 @@ class LocationSensorManager @Inject constructor(
             )
             updateLocationString = locationName
         } else {
+            val enteredZoneIds = getZones(serverId).map { it.entityId }.filter { entityId ->
+                lastEnteredGeoZones.contains("${serverId}_$entityId")
+            }
             updateLocation = UpdateLocation(
                 gps = listOf(location.latitude, location.longitude),
                 gpsAccuracy = accuracy,
                 locationName = null,
-                inZones = null,
+                inZones = if (enteredZoneIds.isNotEmpty() &&
+                    serverManager.getServer(serverId)?.version?.isAtLeast(2026, 6, 0) == true
+                ) {
+                    enteredZoneIds
+                } else {
+                    null
+                },
                 speed = location.speed.toInt(),
                 altitude = location.altitude.toInt(),
                 course = location.bearing.toInt(),
@@ -989,7 +1000,7 @@ class LocationSensorManager @Inject constructor(
             return
         }
 
-        if (location.time < (lastLocationSend[serverId] ?: 0)) {
+        if (location.time < (lastLocationSend[serverId] ?: 0) && trigger?.isGeofence != true) {
             Timber.d(
                 "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastLocationSend",
             )
@@ -1002,7 +1013,7 @@ class LocationSensorManager @Inject constructor(
                 "Received location that is ${now - location.time} milliseconds old, ${location.time} compared to $now with source ${location.provider}",
             )
             if (lastUpdateLocation[serverId] == updateLocationString) {
-                if (now < (lastLocationSend[serverId] ?: 0) + 900000) {
+                if (now < (lastLocationSend[serverId] ?: 0) + 900000 && trigger?.isGeofence != true) {
                     Timber.d("Duplicate location received, not sending to HA")
                     logLocationUpdate(
                         location,
