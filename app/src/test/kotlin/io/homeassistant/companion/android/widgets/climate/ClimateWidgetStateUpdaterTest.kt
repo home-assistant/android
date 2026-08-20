@@ -130,7 +130,7 @@ Watch for update
                 minTemperature = 15f,
                 maxTemperature = 30f,
                 hvacAction = "heat",
-                hvacSupportedModes = listOf("off", "heat")
+                hvacSupportedModes = listOf("off", "heat"),
             ),
         )
 
@@ -152,7 +152,7 @@ Watch for update
             assertEquals(
                 ClimateStateWithData.from(
                     climateWidgetEntity,
-                    displayEntity
+                    displayEntity,
                 ),
                 awaitItem(),
             )
@@ -172,7 +172,7 @@ Watch for update
                     minTemp = 15f,
                     maxTemp = 30f,
                     stateClimate = "heat",
-                    hvacModesSupported = listOf("off", "heat")
+                    hvacModesSupported = listOf("off", "heat"),
                 ),
             )
         }
@@ -194,7 +194,7 @@ Watch for update
                 minTemperature = 15f,
                 maxTemperature = 30f,
                 hvacAction = "heat",
-                hvacSupportedModes = listOf("off", "heat")
+                hvacSupportedModes = listOf("off", "heat"),
             ),
         )
 
@@ -249,112 +249,112 @@ Watch for update
         }
     }
 
-   @Test
-   fun `Given widgetID in DAO when subscribing to stateFlow without entity to observe then it emits dao entity with out of sync`() = runTest {
-       val widgetId = 42
-       val entityId = "test"
-       val climateWidgetEntity = ClimateWidgetEntity(widgetId, 1, entityId)
+    @Test
+    fun `Given widgetID in DAO when subscribing to stateFlow without entity to observe then it emits dao entity with out of sync`() = runTest {
+        val widgetId = 42
+        val entityId = "test"
+        val climateWidgetEntity = ClimateWidgetEntity(widgetId, 1, entityId)
 
-       mockInitialStateForEmpty()
+        mockInitialStateForEmpty()
 
-       coEvery { dao.getFlow(widgetId) } returns channelFlow {
-           send(climateWidgetEntity)
-           awaitClose()
-       }
-       coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
+        coEvery { dao.getFlow(widgetId) } returns channelFlow {
+            send(climateWidgetEntity)
+            awaitClose()
+        }
+        coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
 
-       mockDisplayEntities(entityId) { send(EntityDisplayState.Error) }
+        mockDisplayEntities(entityId) { send(EntityDisplayState.Error) }
 
-       updater.stateFlow(widgetId).test {
-           awaitEmptyClimateState()
-           assertEquals(
-               ClimateStateWithData.from(
-                   climateWidgetEntity,
-               ),
-               awaitItem(),
-           )
-           expectNoEvents()
-       }
-   }
+        updater.stateFlow(widgetId).test {
+            awaitEmptyClimateState()
+            assertEquals(
+                ClimateStateWithData.from(
+                    climateWidgetEntity,
+                ),
+                awaitItem(),
+            )
+            expectNoEvents()
+        }
+    }
 
-   @Test
-   fun `Given widget without data in DAO when loading then emits loading state`() = runTest {
-       val widgetId = 42
-       val entityId = "test"
-       val climateWidgetEntity = ClimateWidgetEntity(widgetId, 1, entityId)
-       val displayEntity = fakeEntityDisplay(
-           entityId = entityId,
-           name = "My HVAC",
-           rawState = "heat",
-           climateControls = ClimateControls(
-               currentTemperature = 22f,
-               targetTemperature = 24f,
-               targetTemperatureStep = 1f,
-               minTemperature = 15f,
-               maxTemperature = 30f,
-               hvacAction = "heat",
-               hvacSupportedModes = listOf("off", "heat")
-           ),
-       )
+    @Test
+    fun `Given widget without data in DAO when loading then emits loading state`() = runTest {
+        val widgetId = 42
+        val entityId = "test"
+        val climateWidgetEntity = ClimateWidgetEntity(widgetId, 1, entityId)
+        val displayEntity = fakeEntityDisplay(
+            entityId = entityId,
+            name = "My HVAC",
+            rawState = "heat",
+            climateControls = ClimateControls(
+                currentTemperature = 22f,
+                targetTemperature = 24f,
+                targetTemperatureStep = 1f,
+                minTemperature = 15f,
+                maxTemperature = 30f,
+                hvacAction = "heat",
+                hvacSupportedModes = listOf("off", "heat"),
+            ),
+        )
 
-       mockInitialStateForEmpty()
+        mockInitialStateForEmpty()
 
-       coEvery { dao.getFlow(widgetId) } returns channelFlow {
-           send(climateWidgetEntity)
-           awaitClose()
-       }
-       coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
+        coEvery { dao.getFlow(widgetId) } returns channelFlow {
+            send(climateWidgetEntity)
+            awaitClose()
+        }
+        coJustRun { dao.updateWidgetLastUpdate(any(), any()) }
 
-       mockDisplayEntities(entityId) {
-           send(EntityDisplayState.Loading)
-           send(loaded(displayEntity))
-           awaitClose()
-       }
+        mockDisplayEntities(entityId) {
+            send(EntityDisplayState.Loading)
+            send(loaded(displayEntity))
+            awaitClose()
+        }
 
-       updater.stateFlow(widgetId).test {
-           awaitEmptyClimateState()
-           // Nothing was ever loaded for this widget, an empty list would be misleading
-           assertEquals(LoadingClimateState, awaitItem())
-           assertEquals(ClimateStateWithData.from(climateWidgetEntity, displayEntity), awaitItem())
-           expectNoEvents()
-       }
-   }
+        updater.stateFlow(widgetId).test {
+            awaitEmptyClimateState()
+            // Nothing was ever loaded for this widget, an empty list would be misleading
+            assertEquals(LoadingClimateState, awaitItem())
+            assertEquals(ClimateStateWithData.from(climateWidgetEntity, displayEntity), awaitItem())
+            expectNoEvents()
+        }
+    }
 
-   @Test
-   fun `Given widget with data in DAO when loading then emits the DAO data instead of loading`() = runTest {
-       val widgetId = 42
-       val entityId = "test"
-       val climateWidgetEntity = ClimateWidgetEntity(widgetId, 1, entityId).copy(
-           latestUpdateData = ClimateWidgetEntity.LastUpdateData(
-               entityName = "My HVAC",
-               currentTemp = 22f,
-               climateTemp = 24f,
-               stepTemp = 1f,
-               minTemp = 15f,
-               maxTemp = 30f,
-               stateClimate = "heat",
-               hvacModesSupported = listOf("off", "heat")
-           ),
-       )
+    @Test
+    fun `Given widget with data in DAO when loading then emits the DAO data instead of loading`() = runTest {
+        val widgetId = 42
+        val entityId = "test"
+        val climateWidgetEntity = ClimateWidgetEntity(widgetId, 1, entityId).copy(
+            latestUpdateData = ClimateWidgetEntity.LastUpdateData(
+                entityName = "My HVAC",
+                currentTemp = 22f,
+                climateTemp = 24f,
+                stepTemp = 1f,
+                minTemp = 15f,
+                maxTemp = 30f,
+                stateClimate = "heat",
+                hvacModesSupported = listOf("off", "heat"),
+            ),
+        )
 
-       coEvery { dao.getFlow(widgetId) } returns channelFlow {
-           send(climateWidgetEntity)
-           awaitClose()
-       }
-       coEvery { dao.get(widgetId) } returns climateWidgetEntity
+        coEvery { dao.getFlow(widgetId) } returns channelFlow {
+            send(climateWidgetEntity)
+            awaitClose()
+        }
+        coEvery { dao.get(widgetId) } returns climateWidgetEntity
 
-       mockDisplayEntities(entityId) {
-           send(EntityDisplayState.Loading)
-           awaitClose()
-       }
+        mockDisplayEntities(entityId) {
+            send(EntityDisplayState.Loading)
+            awaitClose()
+        }
 
-       updater.stateFlow(widgetId).test {
-           // The cached data is shown while loading rather than a spinner over readable content
-           assertEquals(ClimateStateWithData.from(climateWidgetEntity), awaitItem())
-           assertEquals(ClimateStateWithData.from(climateWidgetEntity), awaitItem())
-           expectNoEvents()
-       }
-   }
+        updater.stateFlow(widgetId).test {
+            // The cached data is shown while loading rather than a spinner over readable content
+            assertEquals(ClimateStateWithData.from(climateWidgetEntity), awaitItem())
+            assertEquals(ClimateStateWithData.from(climateWidgetEntity), awaitItem())
+            expectNoEvents()
+        }
+    }
 
     private fun fakeEntityDisplay(
         entityId: String,

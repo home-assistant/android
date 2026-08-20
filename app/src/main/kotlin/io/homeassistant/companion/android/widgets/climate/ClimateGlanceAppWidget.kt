@@ -166,11 +166,7 @@ private fun Screen(state: ClimateStateWithData) {
 }
 
 @Composable
-private fun ShowClimateContent(
-    climateTemp: Float?,
-    hvacMode: HvacMode?,
-    hvacSupportedModes: List<HvacMode>,
-) {
+private fun ShowClimateContent(climateTemp: Float?, hvacMode: HvacMode?, hvacSupportedModes: List<HvacMode>) {
     val isControlTempEnabled = hvacMode == HvacMode.HEAT || hvacMode == HvacMode.COOL
     Column(
         modifier = GlanceModifier.fillMaxSize(),
@@ -189,11 +185,17 @@ private fun ShowClimateContent(
                 contentDescription = LocalContext.current.getString(commonR.string.widget_climate_minus),
                 backgroundColor = GlanceTheme.colors.primary,
                 enabled = isControlTempEnabled,
-                onClick = if (isControlTempEnabled) actionDecreaseTemp() else actionNoOp(),     // For some reason the enabled param doesn't prevent clicks being triggered
+                onClick = if (isControlTempEnabled) actionDecreaseTemp() else actionNoOp()
             )
 
             val tempString =
-                if (isControlTempEnabled && climateTemp != null) commonR.string.widget_climate_format_temp else commonR.string.widget_climate_empty_temp
+                if (isControlTempEnabled &&
+                    climateTemp != null
+                ) {
+                    commonR.string.widget_climate_format_temp
+                } else {
+                    commonR.string.widget_climate_empty_temp
+                }
             Text(
                 modifier = GlanceModifier.padding(horizontal = 16.dp),
                 text = LocalContext.current.getString(tempString, climateTemp),
@@ -210,7 +212,7 @@ private fun ShowClimateContent(
                 contentDescription = LocalContext.current.getString(commonR.string.widget_climate_plus),
                 backgroundColor = GlanceTheme.colors.primary,
                 enabled = isControlTempEnabled,
-                onClick = if (isControlTempEnabled) actionIncreaseTemp() else actionNoOp(),          // For some reason the enabled param doesn't prevent clicks being triggered
+                onClick = if (isControlTempEnabled) actionIncreaseTemp() else actionNoOp(),
             )
         }
 
@@ -219,10 +221,7 @@ private fun ShowClimateContent(
 }
 
 @Composable
-private fun HvacModeSelector(
-    hvacSelectedMode: HvacMode?,
-    supportedModes: List<HvacMode>,
-) {
+private fun HvacModeSelector(hvacSelectedMode: HvacMode?, supportedModes: List<HvacMode>) {
     Row(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = GlanceModifier
@@ -257,16 +256,17 @@ private fun HvacModeSelector(
                     enabled = !selected,
                     contentDescription = contentDescriptionRes?.let { LocalContext.current.getString(it) } ?: "",
                     backgroundColor =
-                        if (selected)
-                            GlanceTheme.colors.secondary
-                        else
-                            GlanceTheme.colors.surface,
+                    if (selected) {
+                        GlanceTheme.colors.secondary
+                    } else {
+                        GlanceTheme.colors.surface
+                    },
                     contentColor =
-                        if (selected)
-                            GlanceTheme.colors.onPrimary
-                        else
-                            GlanceTheme.colors.onSurface,
-
+                    if (selected) {
+                        GlanceTheme.colors.onPrimary
+                    } else {
+                        GlanceTheme.colors.onSurface
+                    },
 
                     onClick = if (!selected) {
                         actionSetHvacMode(mode)

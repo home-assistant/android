@@ -68,10 +68,7 @@ internal data class ClimateStateWithData(
          * Create a complete [ClimateStateWithData] from the DB and from the server. Set the flag [outOfSync] to false, since the data
          * includes an updated state from the server.
          */
-        fun from(
-            climateEntity: ClimateWidgetEntity,
-            entity: EntityDisplay,
-        ): ClimateStateWithData {
+        fun from(climateEntity: ClimateWidgetEntity, entity: EntityDisplay): ClimateStateWithData {
             val climateControls = entity.climateControls
             val hvacSupportedModes = climateControls?.hvacSupportedModes?.mapNotNull { HvacMode.from(it) }
 
@@ -85,7 +82,7 @@ internal data class ClimateStateWithData(
                 climateTemp = climateControls?.targetTemperature,
                 hvacSelectedMode = HvacMode.from(entity.rawState),
                 hvacSupportedModes = hvacSupportedModes ?: emptyList(),
-                outOfSync = false
+                outOfSync = false,
             )
         }
 
@@ -103,8 +100,10 @@ internal data class ClimateStateWithData(
                 climateTemp = climateEntity.latestUpdateData?.climateTemp,
                 currentTemp = climateEntity.latestUpdateData?.currentTemp,
                 hvacSelectedMode = HvacMode.from(climateEntity.latestUpdateData?.stateClimate),
-                hvacSupportedModes = climateEntity.latestUpdateData?.hvacModesSupported?.mapNotNull(HvacMode::from).orEmpty(),
-                outOfSync = true
+                hvacSupportedModes = climateEntity.latestUpdateData?.hvacModesSupported?.mapNotNull(
+                    HvacMode::from,
+                ).orEmpty(),
+                outOfSync = true,
             )
         }
     }

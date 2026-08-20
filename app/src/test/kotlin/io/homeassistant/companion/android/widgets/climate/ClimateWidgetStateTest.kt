@@ -32,7 +32,7 @@ class ClimateWidgetStateTest {
                 minTemperature = 1f,
                 maxTemperature = 1f,
                 hvacAction = "heat",
-                hvacSupportedModes = listOf("off", "heat", "cool")
+                hvacSupportedModes = listOf("off", "heat", "cool"),
             ),
             rawState = "heat",
         )

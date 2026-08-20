@@ -167,25 +167,23 @@ data class ClimateControls(
     val hvacSupportedModes: List<String>?,
 )
 
-enum class HvacMode(
-    val key: String,
-) {
+enum class HvacMode(val key: String) {
     OFF("off"),
     AUTO("auto"),
     COOL("cool"),
     HEAT("heat"),
     DRY("dry"),
-    FAN("fan_only");
+    FAN("fan_only"),
+    ;
 
     companion object {
         fun from(value: String?): HvacMode? {
             return entries.firstOrNull { it.key == value }
         }
 
-        fun toHvacModes(attributes: Map<String, Any?>, key: String): List<HvacMode> =
-            (attributes[key] as? List<*>)
-                ?.mapNotNull { from(it as? String) }
-                .orEmpty()
+        fun toHvacModes(attributes: Map<String, Any?>, key: String): List<HvacMode> = (attributes[key] as? List<*>)
+            ?.mapNotNull { from(it as? String) }
+            .orEmpty()
     }
 }
 
@@ -492,7 +490,7 @@ fun Entity.getClimateControls(): ClimateControls? {
         minTemperature = numberAttributeOrNull("min_temp"),
         maxTemperature = numberAttributeOrNull("max_temp"),
         hvacAction = attributes["hvac_action"]?.toString(),
-        hvacSupportedModes = (attributes["hvac_modes"] as? List<*>)?.filterIsInstance<String>().orEmpty()
+        hvacSupportedModes = (attributes["hvac_modes"] as? List<*>)?.filterIsInstance<String>().orEmpty(),
 
     )
 }

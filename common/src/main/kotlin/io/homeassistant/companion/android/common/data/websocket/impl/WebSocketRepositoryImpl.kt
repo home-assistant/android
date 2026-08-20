@@ -55,7 +55,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.intOrNull
 import okhttp3.WebSocketListener
-import timber.log.Timber
 
 private val matterTimeout = 2.minutes
 
@@ -119,7 +118,7 @@ class WebSocketRepositoryImpl internal constructor(
         return response?.success == true
     }
 
-    override suspend fun setClimateTemperature(entityId: String, newTemp: Float): Boolean  {
+    override suspend fun setClimateTemperature(entityId: String, newTemp: Float): Boolean {
         val response = webSocketCore.sendMessage(
             mapOf(
                 "type" to "call_service",
@@ -130,13 +129,13 @@ class WebSocketRepositoryImpl internal constructor(
                 ),
                 "service_data" to mapOf(
                     "temperature" to newTemp,
-                )
+                ),
             ),
         )
         return response?.success == true
     }
 
-    override suspend fun setClimateHvacMode(entityId: String, hvacMode: String): Boolean  {
+    override suspend fun setClimateHvacMode(entityId: String, hvacMode: String): Boolean {
         val response = webSocketCore.sendMessage(
             mapOf(
                 "type" to "call_service",
@@ -146,8 +145,8 @@ class WebSocketRepositoryImpl internal constructor(
                     "entity_id" to entityId,
                 ),
                 "service_data" to mapOf(
-                    "hvac_mode" to hvacMode
-                )
+                    "hvac_mode" to hvacMode,
+                ),
             ),
         )
         return response?.success == true

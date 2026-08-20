@@ -49,6 +49,7 @@ data class ClimateWidgetEntity(
          */
         return other.copy(latestUpdateData = null) == this.copy(latestUpdateData = null)
     }
+
 //
     override fun copyWithWidgetId(appWidgetId: Int): ClimateWidgetEntity {
         return copy(id = appWidgetId)

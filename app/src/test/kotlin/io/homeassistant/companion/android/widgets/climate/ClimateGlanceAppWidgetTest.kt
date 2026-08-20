@@ -99,121 +99,118 @@ class ClimateGlanceAppWidgetTest {
     }
 
     @Test
-    fun `Given ClimateState with heat mode when ScreenForState then it displays climate screen`() =
-        runGlanceAppWidgetUnitTest {
-            setContext(context)
-            val expectedTitle = "Hello world HA"
+    fun `Given ClimateState with heat mode when ScreenForState then it displays climate screen`() = runGlanceAppWidgetUnitTest {
+        setContext(context)
+        val expectedTitle = "Hello world HA"
 
-            provideComposable {
-                ScreenForState(
-                    ClimateStateWithData(
-                        backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
-                        textColor = null,
-                        serverId = 1,
-                        listEntityId = "",
-                        climateName = expectedTitle,
-                        currentTemp = 22f,
-                        climateTemp = 24f,
-                        hvacSelectedMode = HvacMode.HEAT,
-                        hvacSupportedModes = listOf(
-                            HvacMode.OFF,
-                            HvacMode.HEAT,
-                            HvacMode.COOL,
-                        ),
-                        outOfSync = false,
+        provideComposable {
+            ScreenForState(
+                ClimateStateWithData(
+                    backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
+                    textColor = null,
+                    serverId = 1,
+                    listEntityId = "",
+                    climateName = expectedTitle,
+                    currentTemp = 22f,
+                    climateTemp = 24f,
+                    hvacSelectedMode = HvacMode.HEAT,
+                    hvacSupportedModes = listOf(
+                        HvacMode.OFF,
+                        HvacMode.HEAT,
+                        HvacMode.COOL,
                     ),
-                )
-            }
-
-            onNode(hasTestTag("EmptyScreen"))
-                .assertDoesNotExist()
-
-            onNode(hasTestTag("LoadingScreen"))
-                .assertDoesNotExist()
-
-            onNode(hasTestTag("Screen"))
-                .assertExists()
-
-            assertTitleBar(expectedTitle)
-
-            onNode(hasTextEqualTo("24 °C"))
-                .assertExists()
-
-            onNode(hasTextEqualTo(context.getString(HvacMode.HEAT.toStringName())))
-                .assertExists()
-
-            onNode(hasTextEqualTo(context.getString(HvacMode.COOL.toStringName())))
-                .assertExists()
+                    outOfSync = false,
+                ),
+            )
         }
+
+        onNode(hasTestTag("EmptyScreen"))
+            .assertDoesNotExist()
+
+        onNode(hasTestTag("LoadingScreen"))
+            .assertDoesNotExist()
+
+        onNode(hasTestTag("Screen"))
+            .assertExists()
+
+        assertTitleBar(expectedTitle)
+
+        onNode(hasTextEqualTo("24 °C"))
+            .assertExists()
+
+        onNode(hasTextEqualTo(context.getString(HvacMode.HEAT.toStringName())))
+            .assertExists()
+
+        onNode(hasTextEqualTo(context.getString(HvacMode.COOL.toStringName())))
+            .assertExists()
+    }
 
     @Test
-    fun `Given ClimateState with off mode when ScreenForState then temperature is not displayed`() =
-        runGlanceAppWidgetUnitTest {
-            setContext(context)
+    fun `Given ClimateState with off mode when ScreenForState then temperature is not displayed`() = runGlanceAppWidgetUnitTest {
+        setContext(context)
 
-            provideComposable {
-                ScreenForState(
-                    ClimateStateWithData(
-                        backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
-                        textColor = null,
-                        serverId = 1,
-                        listEntityId = "",
-                        climateName = "Air conditioner",
-                        currentTemp = 22f,
-                        climateTemp = 24f,
-                        hvacSelectedMode = HvacMode.OFF,
-                        hvacSupportedModes = listOf(
-                            HvacMode.OFF,
-                            HvacMode.HEAT,
-                            HvacMode.COOL,
-                        ),
-                        outOfSync = false,
+        provideComposable {
+            ScreenForState(
+                ClimateStateWithData(
+                    backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
+                    textColor = null,
+                    serverId = 1,
+                    listEntityId = "",
+                    climateName = "Air conditioner",
+                    currentTemp = 22f,
+                    climateTemp = 24f,
+                    hvacSelectedMode = HvacMode.OFF,
+                    hvacSupportedModes = listOf(
+                        HvacMode.OFF,
+                        HvacMode.HEAT,
+                        HvacMode.COOL,
                     ),
-                )
-            }
-
-            onNode(hasTestTag("Screen"))
-                .assertExists()
-
-            onNode(hasTextEqualTo("24 °C"))
-                .assertDoesNotExist()
-
-            onNode(hasTextEqualTo(context.getString(HvacMode.OFF.toStringName())))
-                .assertExists()
+                    outOfSync = false,
+                ),
+            )
         }
+
+        onNode(hasTestTag("Screen"))
+            .assertExists()
+
+        onNode(hasTextEqualTo("24 °C"))
+            .assertDoesNotExist()
+
+        onNode(hasTextEqualTo(context.getString(HvacMode.OFF.toStringName())))
+            .assertExists()
+    }
 
     @Test
-    fun `Given ClimateState with fan mode when ScreenForState then temperature is not displayed`() =
-        runGlanceAppWidgetUnitTest {
-            setContext(context)
+    fun `Given ClimateState with fan mode when ScreenForState then temperature is not displayed`() = runGlanceAppWidgetUnitTest {
+        setContext(context)
 
-            provideComposable {
-                ScreenForState(
-                    ClimateStateWithData(
-                        backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
-                        textColor = null,
-                        serverId = 1,
-                        listEntityId = "",
-                        climateName = "Air conditioner",
-                        currentTemp = 22f,
-                        climateTemp = 24f,
-                        hvacSelectedMode = HvacMode.FAN,
-                        hvacSupportedModes = listOf(
-                            HvacMode.OFF,
-                            HvacMode.COOL,
-                            HvacMode.FAN,
-                        ),
-                        outOfSync = false
+        provideComposable {
+            ScreenForState(
+                ClimateStateWithData(
+                    backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
+                    textColor = null,
+                    serverId = 1,
+                    listEntityId = "",
+                    climateName = "Air conditioner",
+                    currentTemp = 22f,
+                    climateTemp = 24f,
+                    hvacSelectedMode = HvacMode.FAN,
+                    hvacSupportedModes = listOf(
+                        HvacMode.OFF,
+                        HvacMode.COOL,
+                        HvacMode.FAN,
                     ),
-                )
-            }
-
-            onNode(hasTestTag("Screen"))
-                .assertExists()
-
-            onNode(hasTextEqualTo("24 °C"))
-                .assertDoesNotExist()
+                    outOfSync = false,
+                ),
+            )
         }
+
+        onNode(hasTestTag("Screen"))
+            .assertExists()
+
+        onNode(hasTextEqualTo("24 °C"))
+            .assertDoesNotExist()
+    }
 
     private fun GlanceAppWidgetUnitTest.assertTitleBar(title: String) {
         onNode(hasTextEqualTo(title))
@@ -224,7 +221,6 @@ class ClimateGlanceAppWidgetTest {
         onNode(hasTestTag("Refresh"))
             .assertExists()
             .assertHasClickAction()
-
             .assertExists()
         onNode(hasTestTag("Add"))
             .assertExists()

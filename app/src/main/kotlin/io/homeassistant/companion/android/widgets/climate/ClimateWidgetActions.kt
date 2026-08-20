@@ -48,11 +48,7 @@ internal fun actionRefreshClimate(): Action {
 }
 
 class NoOpAction : ActionCallback {
-    override suspend fun onAction(
-        context: Context,
-        glanceId: GlanceId,
-        parameters: ActionParameters,
-    ) {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         // nada
     }
 }
@@ -61,7 +57,6 @@ class NoOpAction : ActionCallback {
  * Get a dummy Action that does nothing.
  */
 fun actionNoOp(): Action = actionRunCallback<NoOpAction>()
-
 
 /**
  * Basic action that will refresh the given widget. Use [actionRefreshClimate] to get the
@@ -74,7 +69,6 @@ fun actionNoOp(): Action = actionRunCallback<NoOpAction>()
  */
 class RefreshAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-
         Timber.d("ON ACTION REFRESH CLIMATE")
         ClimateGlanceAppWidget().update(context, glanceId)
     }
@@ -141,10 +135,7 @@ class ControlClimateAction : ActionCallback {
         ClimateGlanceAppWidget().update(context, glanceId)
     }
 
-    private suspend fun ServerManager.setClimateTemp(
-        widgetEntity: ClimateWidgetEntity,
-        isIncrease: Boolean,
-    ) {
+    private suspend fun ServerManager.setClimateTemp(widgetEntity: ClimateWidgetEntity, isIncrease: Boolean) {
         val newTemp = widgetEntity.latestUpdateData?.calculateNewTemp(isIncrease)
 
         if (newTemp == null || newTemp == 0f) {
@@ -165,7 +156,6 @@ class ControlClimateAction : ActionCallback {
     }
 
     private suspend fun ServerManager.setClimateHvacMode(widgetEntity: ClimateWidgetEntity, hvacMode: HvacMode) {
-
         val result = webSocketRepository(widgetEntity.serverId).setClimateHvacMode(
             entityId = widgetEntity.entityId,
             hvacMode = hvacMode.key,
