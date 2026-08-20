@@ -7,7 +7,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.toColorInt
 import androidx.glance.GlanceTheme
 import androidx.glance.color.ColorProviders
-import androidx.glance.material.ColorProviders
 import io.homeassistant.companion.android.common.data.integration.HvacMode
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -32,7 +31,7 @@ internal sealed interface ClimateState {
             return when (backgroundType) {
                 WidgetBackgroundType.DYNAMICCOLOR -> GlanceTheme.colors
                 WidgetBackgroundType.DAYNIGHT -> HomeAssistantGlanceTheme.colors
-                WidgetBackgroundType.TRANSPARENT -> ColorProviders(
+                WidgetBackgroundType.TRANSPARENT -> androidx.glance.material.ColorProviders(
                     glanceHaLightColors
                         .copy(
                             background = Color.Transparent,

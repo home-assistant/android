@@ -185,7 +185,7 @@ private fun ShowClimateContent(climateTemp: Float?, hvacMode: HvacMode?, hvacSup
                 contentDescription = LocalContext.current.getString(commonR.string.widget_climate_minus),
                 backgroundColor = GlanceTheme.colors.primary,
                 enabled = isControlTempEnabled,
-                onClick = if (isControlTempEnabled) actionDecreaseTemp() else actionNoOp()
+                onClick = if (isControlTempEnabled) actionDecreaseTemp() else actionNoOp(),
             )
 
             val tempString =
