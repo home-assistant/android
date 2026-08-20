@@ -312,7 +312,8 @@ jobs:
           mock-google-services: "true"
 
       - name: Run test
-        # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet than app. Minimal and Full are the same in unit tests for now
+        # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet as app.
+        # Adjust if minimal flavor specific tests are added to also include testMinimal*.
         run: ./gradlew testDebugUnitTest :app:testFullDebugUnitTest :lint:test
 
       - uses: ./.github/actions/upload-test-results
