@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -125,7 +124,6 @@ class ClimateWidgetConfigureActivity : BaseActivity() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun requestPinWidget() {
         val context = this@ClimateWidgetConfigureActivity
         lifecycleScope.launch {
@@ -222,16 +220,6 @@ private fun ClimateWidgetConfigureView(
 
             // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6303
             HATheme {
-//                EntityPicker(
-//                    entities = entities,
-//                    selectedEntityId = selectedEntityId,
-//                    onEntitySelectedId = { onEntitySelected(it) },
-//                    onEntityCleared = { onEntitySelected(null) },
-//                    entityRegistry = entityRegistry,
-//                    deviceRegistry = deviceRegistry,
-//                    areaRegistry = areaRegistry,
-//                    addButtonText = stringResource(commonR.string.climate_widget_select_entity),
-//                )
                 EntityPicker(
                     displayState = entitiesState,
                     selectedEntityId = selectedEntityId,
