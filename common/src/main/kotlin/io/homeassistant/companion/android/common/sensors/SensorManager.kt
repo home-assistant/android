@@ -11,10 +11,10 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AnySerializer
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.sensor.Attribute
-import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
@@ -56,7 +56,16 @@ interface SensorManager {
         val entityCategory: String? = null,
         val updateType: UpdateType = UpdateType.WORKER,
         val enabledByDefault: Boolean = false,
+        val settings: List<Setting> = emptyList(),
     ) {
+        data class Setting(
+            val name: String,
+            val type: SensorSettingType,
+            val defaultValue: String,
+            val enabledByDefault: Boolean = true,
+            val entries: List<String> = emptyList(),
+        )
+
         enum class UpdateType {
             INTENT,
             INTENT_ONLY,
@@ -172,67 +181,29 @@ interface SensorManager {
         }
     }
 
-    suspend fun getToggleSetting(
-        sensor: BasicSensor,
-        settingName: String,
-        default: Boolean,
-        enabled: Boolean = true,
-    ): Boolean {
-        return getSetting(
-            sensor,
-            settingName,
-            SensorSettingType.TOGGLE,
-            default.toString(),
-            enabled,
-        ).toBoolean()
+    suspend fun getToggleSetting(sensor: BasicSensor, settingName: String): Boolean {
+        return getSetting(sensor, settingName).toBoolean()
     }
 
-    suspend fun getNumberSetting(
-        sensor: BasicSensor,
-        settingName: String,
-        default: Int,
-        enabled: Boolean = true,
-    ): Int {
-        return getSetting(
-            sensor,
-            settingName,
-            SensorSettingType.NUMBER,
-            default.toString(),
-            enabled,
-        ).toIntOrNull()
-            ?: default
+    suspend fun getNumberSetting(sensor: BasicSensor, settingName: String): Int {
+        val value = getSetting(sensor, settingName)
+        return value.toIntOrNull() ?: settingDefinition(sensor, settingName)?.defaultValue?.toIntOrNull() ?: 0
     }
 
-    /**
-     * Get the stored setting value for...
-     * @param default Value to use if the setting does not exist
-     */
-    suspend fun getSetting(
-        sensor: BasicSensor,
-        settingName: String,
-        settingType: SensorSettingType,
-        default: String,
-        enabled: Boolean = true,
-        entries: List<String> = arrayListOf(),
-    ): String {
-        val setting = sensorRepository
+    /** Get the effective value of a declared setting. */
+    suspend fun getSetting(sensor: BasicSensor, settingName: String): String {
+        val value = sensorRepository
             .getSettings(sensor.id)
             .firstOrNull { it.name == settingName }
             ?.value
-        if (setting == null) {
-            sensorRepository.add(
-                SensorSetting(
-                    sensor.id,
-                    settingName,
-                    default,
-                    settingType,
-                    enabled,
-                    entries = entries,
-                ),
-            )
-        }
+        if (value != null) return value
 
-        return setting ?: default
+        FailFast.fail { "No setting defined for sensor id=${sensor.id}, name=$settingName" }
+        return ""
+    }
+
+    private fun settingDefinition(sensor: BasicSensor, settingName: String): BasicSensor.Setting? {
+        return sensor.settings.firstOrNull { it.name == settingName }
     }
 
     suspend fun onSensorUpdated(
