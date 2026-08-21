@@ -960,7 +960,9 @@ class LocationSensorManager @Inject constructor(
             )
             updateLocationString = locationName
         } else {
-            val enteredZoneIds = if (serverManager.getServer(serverId)?.version?.isAtLeast(2026, 6, 0) == true) {
+            val enteredZoneIds = if (lastEnteredGeoZones.isNotEmpty() &&
+                serverManager.getServer(serverId)?.version?.isAtLeast(2026, 6, 0) == true
+            ) {
                 getZones(serverId).map { it.entityId }.filter { entityId ->
                     lastEnteredGeoZones.contains("${serverId}_$entityId")
                 }
