@@ -960,20 +960,20 @@ class LocationSensorManager @Inject constructor(
             )
             updateLocationString = locationName
         } else {
-            val enteredZoneIds = getZones(serverId).map { it.entityId }.filter { entityId ->
-                lastEnteredGeoZones.contains("${serverId}_$entityId")
+            val enteredZoneIds = if (serverManager.getServer(serverId)?.version?.isAtLeast(2026, 6, 0) == true) {
+                getZones(serverId).map { it.entityId }.filter { entityId ->
+                    lastEnteredGeoZones.contains("${serverId}_$entityId")
+                }
+            } else {
+                emptyList()
             }
             updateLocation = UpdateLocation(
                 gps = listOf(location.latitude, location.longitude),
                 gpsAccuracy = accuracy,
                 locationName = null,
-                inZones = if (enteredZoneIds.isNotEmpty() &&
-                    serverManager.getServer(serverId)?.version?.isAtLeast(2026, 6, 0) == true
-                ) {
-                    enteredZoneIds
-                } else {
-                    null
-                },
+                // Send `in_zones` only to versions that support it 
+                // (https://github.com/home-assistant/architecture/discussions/1387).
+                inZones = enteredZoneIds.takeIf { it.isNotEmpty() },
                 speed = location.speed.toInt(),
                 altitude = location.altitude.toInt(),
                 course = location.bearing.toInt(),
