@@ -2,25 +2,19 @@ package io.homeassistant.companion.android.settings.wear.views
 
 import android.content.Intent
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material.IconButton
-import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.safeTopWindowInsets
@@ -114,34 +108,17 @@ fun SettingsWearTopAppBar(
     docsLink: String? = null,
 ) {
     val context = LocalContext.current
-    TopAppBar(
+    HATopBar(
         title = title,
         modifier = modifier.windowInsetsPadding(safeTopWindowInsets()),
-        navigationIcon = {
-            IconButton(onClick = onBackClicked) {
-                Image(
-                    asset = CommunityMaterial.Icon.cmd_arrow_left,
-                    colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
-                )
+        onBackClick = onBackClicked,
+        onHelpClick = if (!docsLink.isNullOrBlank()) {
+            {
+                val intent = Intent(Intent.ACTION_VIEW, docsLink.toUri())
+                context.startActivity(intent)
             }
+        } else {
+            null
         },
-        actions = {
-            if (!docsLink.isNullOrBlank()) {
-                IconButton(
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, docsLink.toUri())
-                        context.startActivity(intent)
-                    },
-                ) {
-                    Image(
-                        asset = CommunityMaterial.Icon2.cmd_help_circle_outline,
-                        contentDescription = stringResource(commonR.string.help),
-                        colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
-                    )
-                }
-            }
-        },
-        backgroundColor = colorResource(id = commonR.color.colorBackground),
-        contentColor = colorResource(id = commonR.color.colorOnBackground),
     )
 }
