@@ -1,8 +1,10 @@
+import dev.detekt.gradle.Detekt
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 val kotlinVersion = libs.versions.kotlin.get()
 
 plugins {
+    alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
 
     alias(libs.plugins.aboutlibraries).apply(false)
@@ -20,6 +22,7 @@ plugins {
 }
 
 allprojects {
+    apply(plugin = rootProject.libs.plugins.detekt.get().pluginId)
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
 
     // TODO this has been added until https://youtrack.jetbrains.com/issue/KT-87220/Kotlin-Gradle-plugin-resolves-kotlinAbiValidationCompatClasspath-to-newer-beta-Kotlin-artifacts-during-dependency-locking is addressed
@@ -51,6 +54,19 @@ allprojects {
         reporters {
             reporter(ReporterType.SARIF)
             reporter(ReporterType.PLAIN)
+        }
+    }
+
+    detekt {
+        baseline = project.file("detekt-baseline.xml")
+        config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+        buildUponDefaultConfig = true
+    }
+
+    tasks.withType<Detekt>().configureEach {
+        reports {
+            html.required.set(true)
+            sarif.required.set(true)
         }
     }
 

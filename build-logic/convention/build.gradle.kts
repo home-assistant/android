@@ -1,8 +1,10 @@
+import dev.detekt.gradle.Detekt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
     `kotlin-dsl`
+    alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
 }
 
@@ -23,6 +25,19 @@ allprojects {
         filter {
             exclude { it.file.path.contains("build${File.separator}generated-sources") }
         }
+    }
+}
+
+detekt {
+    baseline = project.file("detekt-baseline.xml")
+    config.setFrom(rootProject.file("../config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true
+}
+
+tasks.withType<Detekt>().configureEach {
+    reports {
+        html.required.set(true)
+        sarif.required.set(true)
     }
 }
 

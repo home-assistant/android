@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:ConversationViewModel.kt:ConversationViewModel$(onConversationVersion &amp;&amp; !onPipelineVersion &amp;&amp; config == null) || (onPipelineVersion &amp;&amp; config == null)</ID>
+    <ID>ComplexCondition:HealthServicesSensorManager.kt:HealthServicesSensorManager$!activityStateEnabled &amp;&amp; !dailyFloorEnabled &amp;&amp; !dailyDistanceEnabled &amp;&amp; !dailyCaloriesEnabled &amp;&amp; !dailyStepsEnabled</ID>
+    <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$private suspend fun setPipeline: Boolean</ID>
+    <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
+    <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private fun getActivityIcon: String</ID>
+    <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private suspend fun updateHealthServices</ID>
+    <ID>CyclomaticComplexMethod:HomeView.kt:@Composable fun LoadHomePage</ID>
+    <ID>CyclomaticComplexMethod:MainView.kt:@Composable fun MainView</ID>
+    <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$fun handleMessage</ID>
+    <ID>CyclomaticComplexMethod:SensorUi.kt:@Composable fun SensorUi</ID>
+    <ID>CyclomaticComplexMethod:ThermostatTile.kt:ThermostatTile$override fun onTileRequest: ListenableFuture&lt;Tile&gt;</ID>
+    <ID>CyclomaticComplexMethod:ThermostatTile.kt:ThermostatTile$private fun timeline: Timeline</ID>
+    <ID>CyclomaticComplexMethod:WearToggleChip.kt:WearToggleChip$@Composable fun entityToggleChipBackgroundColors: ToggleChipColors</ID>
+    <ID>CyclomaticComplexMethod:WearToggleChip.kt:WearToggleChipColors$override fun equals: Boolean</ID>
+    <ID>ForbiddenComment:MainViewModel.kt:MainViewModel$// TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments</ID>
+    <ID>FunctionOnlyReturningConstant:ApplicationModule.kt:ApplicationModule$@Provides @Singleton @PushWebsocketSupport fun providesPushWebsocketSupport: Boolean</ID>
+    <ID>LongMethod:CameraTile.kt:CameraTile$override fun onTileResourcesRequest: ListenableFuture&lt;Resources&gt;</ID>
+    <ID>LongMethod:ChooseEntityView.kt:@Composable fun ChooseEntityView</ID>
+    <ID>LongMethod:ComplicationConfigMainView.kt:@Composable fun MainConfigView</ID>
+    <ID>LongMethod:ConversationView.kt:@Composable fun ConversationResultView</ID>
+    <ID>LongMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
+    <ID>LongMethod:DetailsPanelView.kt:@Composable fun DetailsPanelView</ID>
+    <ID>LongMethod:EntityUi.kt:@Composable fun EntityUi</ID>
+    <ID>LongMethod:HomeAssistantApplication.kt:HomeAssistantApplication$override fun onCreate</ID>
+    <ID>LongMethod:HomeView.kt:@Composable fun LoadHomePage</ID>
+    <ID>LongMethod:MainView.kt:@Composable fun MainView</ID>
+    <ID>LongMethod:MainViewModel.kt:MainViewModel$private suspend fun updateEntityDomains</ID>
+    <ID>LongMethod:PhoneInstallView.kt:@Composable fun PhoneInstallView</ID>
+    <ID>LongMethod:PhoneSettingsListener.kt:PhoneSettingsListener$private fun login</ID>
+    <ID>LongMethod:SensorUi.kt:@Composable fun SensorUi</ID>
+    <ID>LongMethod:SetThermostatTileView.kt:@Composable fun SetThermostatTileView</ID>
+    <ID>LongMethod:SettingsView.kt:@Composable fun SettingsView</ID>
+    <ID>LongMethod:ThermostatTile.kt:ThermostatTile$override fun onTileRequest: ListenableFuture&lt;Tile&gt;</ID>
+    <ID>LongMethod:ThermostatTile.kt:ThermostatTile$private fun timeline: Timeline</ID>
+    <ID>LongMethod:WearToggleChip.kt:WearToggleChip$@Composable fun entityToggleChipBackgroundColors: ToggleChipColors</ID>
+    <ID>LongMethod:WearToggleChip.kt:WearToggleChip$@Composable private fun defaultChipColors: WearToggleChipColors</ID>
+    <ID>MagicNumber:ColorTemperature.kt:0xffa6d1ff</ID>
+    <ID>MagicNumber:ConversationActivity.kt:ConversationActivity$3</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$16f</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$20f</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$24f</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$40f</ID>
+    <ID>MagicNumber:ConversationTile.kt:ConversationTile$8f</ID>
+    <ID>MagicNumber:ConversationViewModel.kt:ConversationViewModel$2023</ID>
+    <ID>MagicNumber:ConversationViewModel.kt:ConversationViewModel$5</ID>
+    <ID>MagicNumber:DetailsPanelView.kt:100</ID>
+    <ID>MagicNumber:DetailsPanelView.kt:255</ID>
+    <ID>MagicNumber:HealthServicesSensorManager.kt:HealthServicesSensorManager$1800000</ID>
+    <ID>MagicNumber:HeartRateSensorManager.kt:HeartRateSensorManager$10</ID>
+    <ID>MagicNumber:HeartRateSensorManager.kt:HeartRateSensorManager$60000</ID>
+    <ID>MagicNumber:SelectShortcutsTileView.kt:1111</ID>
+    <ID>MagicNumber:SelectShortcutsTileView.kt:2222</ID>
+    <ID>MagicNumber:SelectShortcutsTileView.kt:7</ID>
+    <ID>MagicNumber:SelectTemplateTileView.kt:10</ID>
+    <ID>MagicNumber:SelectTemplateTileView.kt:1111</ID>
+    <ID>MagicNumber:SelectTemplateTileView.kt:20</ID>
+    <ID>MagicNumber:SelectTemplateTileView.kt:2222</ID>
+    <ID>MagicNumber:ServerListAdapter.kt:ServerListAdapter$3</ID>
+    <ID>MagicNumber:ServerListAdapter.kt:ServerListAdapter$4</ID>
+    <ID>MagicNumber:SetShortcutsTileView.kt:7</ID>
+    <ID>MagicNumber:ShortcutsTile.kt:ShortcutsTile$5</ID>
+    <ID>MagicNumber:ShortcutsTile.kt:ShortcutsTile$7</ID>
+    <ID>MagicNumber:TemplateTile.kt:TemplateTile$10</ID>
+    <ID>MagicNumber:TemplateTile.kt:TemplateTile$1_000</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$10f</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$180f</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$20f</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$30f</ID>
+    <ID>MagicNumber:ThermostatTile.kt:ThermostatTile$360f</ID>
+    <ID>MagicNumber:TileViews.kt:180f</ID>
+    <ID>MagicNumber:TileViews.kt:200</ID>
+    <ID>MagicNumber:TileViews.kt:24f</ID>
+    <ID>MagicNumber:TileViews.kt:3</ID>
+    <ID>MagicNumber:TileViews.kt:4</ID>
+    <ID>NestedBlockDepth:TemplateTile.kt:TemplateTile$private fun parseHtml: LayoutElementBuilders.Spannable</ID>
+    <ID>ReturnCount:ColorTemperature.kt:fun getColorTemperature: Color</ID>
+    <ID>ReturnCount:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
+    <ID>ReturnCount:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
+    <ID>SwallowedException:MobileAppIntegrationPresenterImpl.kt:MobileAppIntegrationPresenterImpl$e: Exception</ID>
+    <ID>SwallowedException:WearDnsTest.kt:WearDnsTest$e: UnknownHostException</ID>
+    <ID>ThrowsCount:WearDns.kt:WearDns$private suspend fun attemptLookupViaMobile: List&lt;InetAddress&gt;</ID>
+    <ID>TooManyFunctions:ConversationViewModel.kt:ConversationViewModel : AssistViewModelBase</ID>
+    <ID>TooManyFunctions:HomePresenter.kt:HomePresenter</ID>
+    <ID>TooManyFunctions:HomePresenterImpl.kt:HomePresenterImpl : HomePresenter</ID>
+    <ID>TooManyFunctions:MainViewModel.kt:MainViewModel : AndroidViewModel</ID>
+    <ID>TooManyFunctions:OnboardingActivity.kt:OnboardingActivity : AppCompatActivityOnboardingView</ID>
+    <ID>TooManyFunctions:PreviewSensorManager.kt:PreviewSensorRepository : SensorRepository</ID>
+    <ID>TooManyFunctions:PreviewSensorManager.kt:PreviewServerManager : ServerManager</ID>
+  </CurrentIssues>
+</SmellBaseline>
