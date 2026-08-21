@@ -3,14 +3,25 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
+import androidx.health.connect.client.aggregate.AggregationResult
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.NutritionRecord
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.units.Energy
+import androidx.health.connect.client.units.Mass
+import io.homeassistant.companion.android.common.sensors.SensorRepository
+import io.homeassistant.companion.android.database.sensor.Sensor
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.slot
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -22,7 +33,8 @@ class HealthConnectSensorManagerTest {
         every { applicationContext } returns this
     }
 
-    private val sensorManager = HealthConnectSensorManager(context, mockk(), mockk())
+    private val sensorRepository = mockk<SensorRepository>(relaxed = true)
+    private val sensorManager = HealthConnectSensorManager(context, sensorRepository, mockk())
     private val healthConnectClient = mockk<HealthConnectClient>(relaxed = true)
 
     @BeforeEach
@@ -105,5 +117,61 @@ class HealthConnectSensorManagerTest {
 
         val result = sensorManager.calculateSleepDurationInMinutes(mockSleepStages)
         assertEquals(300L, result)
+    }
+
+    @Test
+    fun `Given nutrition sensors when getting permission then requests nutrition records`() {
+        val nutritionSensors = listOf(
+            HealthConnectSensorManager.nutritionCalories,
+            HealthConnectSensorManager.nutritionCarbohydrates,
+            HealthConnectSensorManager.nutritionFat,
+            HealthConnectSensorManager.nutritionProtein,
+        )
+
+        nutritionSensors.forEach { sensor ->
+            val permissions = sensorManager.requiredPermissions(sensor.id)
+            assertTrue(permissions.contains(HealthPermission.getReadPermission(NutritionRecord::class)))
+        }
+    }
+
+    @Test
+    fun `Given nutrition aggregate when requesting update then updates all nutrition sensors`() = runTest {
+        val nutritionPermission = HealthPermission.getReadPermission(NutritionRecord::class)
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returns setOf(nutritionPermission)
+        mockkObject(healthConnectClient.features)
+        every {
+            healthConnectClient.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
+        } returns HealthConnectFeatures.FEATURE_STATUS_UNAVAILABLE
+
+        val expectedStates = mapOf(
+            HealthConnectSensorManager.nutritionCalories.id to "420.13",
+            HealthConnectSensorManager.nutritionProtein.id to "21.13",
+            HealthConnectSensorManager.nutritionCarbohydrates.id to "58.13",
+            HealthConnectSensorManager.nutritionFat.id to "12.13",
+        )
+        expectedStates.keys.forEach { sensorId ->
+            coEvery { sensorRepository.get(sensorId) } returns listOf(
+                Sensor(id = sensorId, serverId = 0, enabled = true, state = ""),
+            )
+        }
+
+        val aggregateResult = mockk<AggregationResult>()
+        every { aggregateResult[NutritionRecord.ENERGY_TOTAL] } returns Energy.kilocalories(420.126)
+        every { aggregateResult[NutritionRecord.PROTEIN_TOTAL] } returns Mass.grams(21.126)
+        every { aggregateResult[NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL] } returns Mass.grams(58.126)
+        every { aggregateResult[NutritionRecord.TOTAL_FAT_TOTAL] } returns Mass.grams(12.126)
+        every { aggregateResult.dataOrigins } returns emptySet()
+        coEvery { healthConnectClient.aggregate(any()) } returns aggregateResult
+
+        val updatedStates = mutableMapOf<String, String>()
+        val updatedSensor = slot<Sensor>()
+        coEvery { sensorRepository.update(capture(updatedSensor)) } answers {
+            updatedStates[updatedSensor.captured.id] = updatedSensor.captured.state
+        }
+
+        sensorManager.requestSensorUpdate()
+
+        assertEquals(expectedStates, updatedStates)
+        coVerify(exactly = expectedStates.size) { sensorRepository.update(any()) }
     }
 }
