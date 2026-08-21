@@ -162,7 +162,30 @@ data class ClimateControls(
     val targetTemperature: Float?,
     val targetTemperatureStep: Float?,
     val hvacAction: String?,
+    val minTemperature: Float?,
+    val maxTemperature: Float?,
+    val hvacSupportedModes: List<String>?,
 )
+
+enum class HvacMode(val key: String) {
+    OFF("off"),
+    AUTO("auto"),
+    COOL("cool"),
+    HEAT("heat"),
+    DRY("dry"),
+    FAN("fan_only"),
+    ;
+
+    companion object {
+        fun from(value: String?): HvacMode? {
+            return entries.firstOrNull { it.key == value }
+        }
+
+        fun toHvacModes(attributes: Map<String, Any?>, key: String): List<HvacMode> = (attributes[key] as? List<*>)
+            ?.mapNotNull { from(it as? String) }
+            .orEmpty()
+    }
+}
 
 object EntityExt {
     const val TAG = "EntityExt"
@@ -464,7 +487,11 @@ fun Entity.getClimateControls(): ClimateControls? {
         currentTemperature = numberAttributeOrNull("current_temperature"),
         targetTemperature = numberAttributeOrNull("temperature"),
         targetTemperatureStep = numberAttributeOrNull("target_temp_step"),
+        minTemperature = numberAttributeOrNull("min_temp"),
+        maxTemperature = numberAttributeOrNull("max_temp"),
         hvacAction = attributes["hvac_action"]?.toString(),
+        hvacSupportedModes = (attributes["hvac_modes"] as? List<*>)?.filterIsInstance<String>().orEmpty(),
+
     )
 }
 

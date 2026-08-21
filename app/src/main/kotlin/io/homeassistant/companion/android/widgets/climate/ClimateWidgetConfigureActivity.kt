@@ -1,0 +1,300 @@
+package io.homeassistant.companion.android.widgets.climate
+
+import android.appwidget.AppWidgetManager
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Button
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
+import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
+import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
+import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
+import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
+import io.homeassistant.companion.android.util.compose.entity.EntityPicker
+import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
+import io.homeassistant.companion.android.util.getHexForColor
+import io.homeassistant.companion.android.util.previewServer1
+import io.homeassistant.companion.android.util.previewServer2
+import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import io.homeassistant.companion.android.util.safeTopWindowInsets
+import kotlinx.coroutines.launch
+import timber.log.Timber
+
+@AndroidEntryPoint
+class ClimateWidgetConfigureActivity : BaseActivity() {
+    companion object {
+        private const val FOR_ENTITY = "for_entity"
+
+        fun newInstance(context: Context, entityId: String): Intent {
+            return Intent(context, ClimateWidgetConfigureActivity::class.java).apply {
+                putExtra(FOR_ENTITY, entityId)
+                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+        }
+    }
+
+    private val viewModel: ClimateWidgetConfigureViewModel by viewModels(
+        extrasProducer = {
+            defaultViewModelCreationExtras.withCreationCallback<ClimateWidgetConfigureViewModel.Factory> { factory ->
+                factory.create(intent.extras?.getString(FOR_ENTITY, null))
+            }
+        },
+    )
+
+    private val supportedTextColors: List<String>
+        get() = listOf(
+            application.getHexForColor(commonR.color.colorWidgetButtonLabelBlack),
+            application.getHexForColor(android.R.color.white),
+        )
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdgeCompat()
+        super.onCreate(savedInstanceState)
+
+        // Set the result to CANCELED.  This will cause the widget host to cancel
+        // out of the widget placement if the user presses the back button.
+        setResult(RESULT_CANCELED)
+        val widgetId = intent.extras?.getInt(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID,
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+
+        viewModel.onSetup(widgetId, supportedTextColors)
+
+        setContent {
+            HomeAssistantAppTheme {
+                ClimateWidgetConfigureScreen(
+                    viewModel = viewModel,
+                    onActionClick = { onActionClick() },
+                )
+            }
+        }
+    }
+
+    private fun onActionClick() {
+        lifecycleScope.launch {
+            if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
+                if (
+                    SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
+                    viewModel.isValidSelection()
+                ) {
+                    requestPinWidget()
+                } else {
+                    showAddWidgetError()
+                }
+            } else {
+                onUpdateWidget()
+            }
+        }
+    }
+
+    private fun requestPinWidget() {
+        val context = this@ClimateWidgetConfigureActivity
+        lifecycleScope.launch {
+            viewModel.requestWidgetCreation(context)
+            finish()
+        }
+    }
+
+    private suspend fun onUpdateWidget() {
+        try {
+            viewModel.updateWidgetConfiguration()
+            setResult(RESULT_OK)
+            viewModel.updateWidget(this@ClimateWidgetConfigureActivity)
+            finish()
+        } catch (_: Exception) {
+            showUpdateWidgetError()
+        }
+    }
+
+    private fun showAddWidgetError() {
+        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showUpdateWidgetError() {
+        Toast.makeText(applicationContext, commonR.string.widget_update_error, Toast.LENGTH_LONG).show()
+    }
+}
+
+@Composable
+private fun ClimateWidgetConfigureScreen(viewModel: ClimateWidgetConfigureViewModel, onActionClick: () -> Unit) {
+    val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
+    val entitiesState by viewModel.displayEntities.collectAsStateWithLifecycle()
+
+    ClimateWidgetConfigureView(
+        servers = servers,
+        selectedServerId = viewModel.selectedServerId,
+        onServerSelected = viewModel::setServer,
+        entitiesState = entitiesState,
+        selectedEntityId = viewModel.selectedEntityId,
+        onEntitySelected = { viewModel.selectedEntityId = it },
+        selectedBackgroundType = viewModel.selectedBackgroundType,
+        onBackgroundTypeSelected = { viewModel.selectedBackgroundType = it },
+        textColorIndex = viewModel.textColorIndex,
+        onTextColorSelected = { viewModel.textColorIndex = it },
+        isUpdateWidget = viewModel.isUpdateWidget,
+        onActionClick = onActionClick,
+    )
+}
+
+@Composable
+private fun ClimateWidgetConfigureView(
+    servers: List<Server>,
+    selectedServerId: Int,
+    onServerSelected: (Int) -> Unit,
+    entitiesState: EntityDisplayState<EntityDisplayWithContext>,
+    selectedEntityId: String?,
+    onEntitySelected: (String?) -> Unit,
+    selectedBackgroundType: WidgetBackgroundType,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+    textColorIndex: Int,
+    onTextColorSelected: (Int) -> Unit,
+    isUpdateWidget: Boolean,
+    onActionClick: () -> Unit,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(commonR.string.widget_climate_label)) },
+                windowInsets = safeTopWindowInsets(),
+                backgroundColor = colorResource(commonR.color.colorBackground),
+                contentColor = colorResource(commonR.color.colorOnBackground),
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(safeBottomWindowInsets())
+                .padding(padding)
+                .padding(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (servers.size > 1) {
+                ServerExposedDropdownMenu(
+                    servers = servers,
+                    current = selectedServerId,
+                    onSelected = {
+                        Timber.d("onServerSelected: $it")
+                        onServerSelected(it)
+                    },
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+            }
+
+            // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6303
+            HATheme {
+                EntityPicker(
+                    displayState = entitiesState,
+                    selectedEntityId = selectedEntityId,
+                    onSelectionChanged = onEntitySelected,
+                    addButtonText = stringResource(commonR.string.climate_widget_select_entity),
+                )
+            }
+
+            WidgetBackgroundTypeExposedDropdownMenu(
+                current = selectedBackgroundType,
+                onSelected = { onBackgroundTypeSelected(it) },
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+
+            if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+                ExposedDropdownMenu(
+                    label = stringResource(commonR.string.widget_text_color_title),
+                    keys = listOf(
+                        stringResource(commonR.string.widget_text_color_black),
+                        stringResource(commonR.string.widget_text_color_white),
+                    ),
+                    currentIndex = textColorIndex,
+                    onSelected = { onTextColorSelected(it) },
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+            }
+
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { onActionClick() },
+            ) {
+                Text(stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget))
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ClimateWidgetConfigureViewPreview() {
+    HomeAssistantAppTheme {
+        ClimateWidgetConfigureView(
+            servers = listOf(
+                previewServer1,
+                previewServer2,
+            ),
+            selectedServerId = 0,
+            onServerSelected = {},
+            entitiesState = EntityDisplayState.Loaded(previewDisplayEntities),
+            selectedEntityId = previewDisplayEntities.first().entityId,
+            onEntitySelected = {},
+            selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
+            onBackgroundTypeSelected = {},
+            textColorIndex = 0,
+            onTextColorSelected = {},
+            isUpdateWidget = true,
+            onActionClick = {},
+        )
+    }
+}
+
+private val previewDisplayEntities = listOf(
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "climate.air1",
+            name = "Samsung HVAC",
+            icon = CommunityMaterial.Icon.cmd_air_conditioner,
+        ),
+        areaName = "Kitchen",
+    ),
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "climate.air2",
+            name = "BGH HVAC",
+            icon = CommunityMaterial.Icon.cmd_air_conditioner,
+        ),
+    ),
+)
