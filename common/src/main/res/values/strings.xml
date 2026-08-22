@@ -946,7 +946,7 @@
     <string name="tile_4">Tile 4</string>
     <string name="tile_40">Tile 40</string>
     <string name="tile_5">Tile 5</string>
-    <string name="tile_6">Tile 6</string>
+<string name="tile_6">Tile 6</string>
     <string name="tile_7">Tile 7</string>
     <string name="tile_8">Tile 8</string>
     <string name="tile_9">Tile 9</string>
@@ -1353,6 +1353,26 @@
     <string name="sensor_description_floors_climbed">Total floors climbed since midnight from Health Connect</string>
     <string name="basic_sensor_name_sleep_duration">Sleep duration</string>
     <string name="sensor_description_sleep_duration">Last recorded sleep duration in minutes from Health Connect</string>
+    <string name="basic_sensor_name_sleep_start">Sleep start</string>
+    <string name="sensor_description_sleep_start">Start time of the latest sleep session from Health Connect</string>
+    <string name="basic_sensor_name_sleep_end">Sleep end</string>
+    <string name="sensor_description_sleep_end">End time of the latest sleep session from Health Connect</string>
+    <string name="basic_sensor_name_sleep_light_duration">Light sleep duration</string>
+    <string name="sensor_description_sleep_light_duration">Duration of light sleep in the latest sleep session from Health Connect</string>
+    <string name="basic_sensor_name_sleep_deep_duration">Deep sleep duration</string>
+    <string name="sensor_description_sleep_deep_duration">Duration of deep sleep in the latest sleep session from Health Connect</string>
+    <string name="basic_sensor_name_sleep_rem_duration">REM sleep duration</string>
+    <string name="sensor_description_sleep_rem_duration">Duration of REM sleep in the latest sleep session from Health Connect</string>
+    <string name="basic_sensor_name_sleep_awake_duration">Awake duration</string>
+    <string name="sensor_description_sleep_awake_duration">Duration reported as awake in the latest sleep session from Health Connect</string>
+    <string name="basic_sensor_name_sleep_awake_in_bed_duration">Awake in bed duration</string>
+    <string name="sensor_description_sleep_awake_in_bed_duration">Duration reported as awake in bed in the latest sleep session from Health Connect</string>
+    <string name="basic_sensor_name_sleep_out_of_bed_duration">Out of bed duration</string>
+    <string name="sensor_description_sleep_out_of_bed_duration">Duration reported as out of bed in the latest sleep session from Health Connect</string>
+    <string name="basic_sensor_name_sleep_unspecified_duration">Unspecified sleep duration</string>
+    <string name="sensor_description_sleep_unspecified_duration">Duration reported as sleeping without a specific sleep stage in the latest sleep session from Health Connect</string>
+    <string name="basic_sensor_name_sleep_unknown_duration">Unknown sleep stage duration</string>
+    <string name="sensor_description_sleep_unknown_duration">Duration reported with an unknown sleep stage in the latest sleep session from Health Connect</string>
     <string name="sensor_description_steps">Total steps taken since midnight from Health Connect</string>
     <string name="basic_sensor_name_blood_glucose">Blood glucose</string>
     <string name="sensor_description_blood_glucose">Last recorded blood glucose reading in milligrams per deciliter from Health Connect</string>
@@ -1512,3 +1532,4 @@
     <string name="default_assistant_required">Home Assistant must be your default assistant to perform %s.</string>
     <string name="hidden_entity">Hidden entity</string>
 </resources>
+
