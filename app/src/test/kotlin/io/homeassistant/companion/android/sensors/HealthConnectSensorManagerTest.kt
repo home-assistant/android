@@ -189,7 +189,7 @@ class HealthConnectSensorManagerTest {
     }
 
     @Test
-    fun `Given sleep stages when analyzed then complete ordered timeline is preserved`() {
+    fun `Given sleep stages when analyzed then complete ordered timeline is preserved as primitive lists`() {
         val midnight = Instant.parse("2026-07-01T00:00:00Z")
         val stages = listOf(
             SleepSessionRecord.Stage(
@@ -206,12 +206,24 @@ class HealthConnectSensorManagerTest {
 
         val result = sensorManager.analyzeSleepStages(stages)
 
-        assertEquals(2, result.timeline.size)
-        assertEquals("light", result.timeline[0]["type"])
-        assertEquals(SleepSessionRecord.STAGE_TYPE_LIGHT, result.timeline[0]["stageType"])
-        assertEquals(midnight, result.timeline[0]["startTime"])
-        assertEquals(midnight.plus(30, ChronoUnit.MINUTES), result.timeline[0]["endTime"])
-        assertEquals("deep", result.timeline[1]["type"])
-        assertEquals(SleepSessionRecord.STAGE_TYPE_DEEP, result.timeline[1]["stageType"])
+        assertEquals(listOf("light", "deep"), result.stageTypes)
+        assertEquals(
+            listOf(SleepSessionRecord.STAGE_TYPE_LIGHT, SleepSessionRecord.STAGE_TYPE_DEEP),
+            result.stageTypeIds,
+        )
+        assertEquals(
+            listOf(
+                midnight.toString(),
+                midnight.plus(30, ChronoUnit.MINUTES).toString(),
+            ),
+            result.stageStartTimes,
+        )
+        assertEquals(
+            listOf(
+                midnight.plus(30, ChronoUnit.MINUTES).toString(),
+                midnight.plus(1, ChronoUnit.HOURS).toString(),
+            ),
+            result.stageEndTimes,
+        )
     }
 }

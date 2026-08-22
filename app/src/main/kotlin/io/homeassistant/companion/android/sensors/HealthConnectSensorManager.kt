@@ -1118,27 +1118,21 @@ class HealthConnectSensorManager @Inject constructor(
     ): Map<String, Any?> = mapOf(
         "startTime" to sleepRecord.startTime,
         "endTime" to sleepRecord.endTime,
-        "startZoneOffset" to sleepRecord.startZoneOffset?.toString(),
-        "endZoneOffset" to sleepRecord.endZoneOffset?.toString(),
-        "title" to sleepRecord.title,
-        "notes" to sleepRecord.notes,
         "sources" to sleepRecord.metadata.dataOrigin.packageName,
-        "recordId" to sleepRecord.metadata.id,
-        "lastModifiedTime" to sleepRecord.metadata.lastModifiedTime,
-        "clientRecordId" to sleepRecord.metadata.clientRecordId,
-        "clientRecordVersion" to sleepRecord.metadata.clientRecordVersion,
-        "recordingMethod" to sleepRecord.metadata.recordingMethod,
-        "deviceType" to sleepRecord.metadata.device?.type,
-        "deviceManufacturer" to sleepRecord.metadata.device?.manufacturer,
-        "deviceModel" to sleepRecord.metadata.device?.model,
-        "stages" to analysis.timeline,
+        "stageTypes" to analysis.stageTypes,
+        "stageTypeIds" to analysis.stageTypeIds,
+        "stageStartTimes" to analysis.stageStartTimes,
+        "stageEndTimes" to analysis.stageEndTimes,
     )
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     internal data class SleepStageAnalysis(
         val sleepDurationInMinutes: Long,
         val durationInMinutesByStage: Map<Int, Long>,
-        val timeline: List<Map<String, Any>>,
+        val stageTypes: List<String>,
+        val stageTypeIds: List<Int>,
+        val stageStartTimes: List<String>,
+        val stageEndTimes: List<String>,
     )
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
@@ -1162,14 +1156,10 @@ class HealthConnectSensorManager @Inject constructor(
             durationInMinutesByStage = durationSecondsByStage.mapValues { (_, durationSeconds) ->
                 durationSeconds.toDuration(DurationUnit.SECONDS).inWholeMinutes
             },
-            timeline = stages.map { stage ->
-                mapOf(
-                    "type" to getSleepStageType(stage.stage),
-                    "stageType" to stage.stage,
-                    "startTime" to stage.startTime,
-                    "endTime" to stage.endTime,
-                )
-            },
+            stageTypes = stages.map { stage -> getSleepStageType(stage.stage) },
+            stageTypeIds = stages.map { stage -> stage.stage },
+            stageStartTimes = stages.map { stage -> stage.startTime.toString() },
+            stageEndTimes = stages.map { stage -> stage.endTime.toString() },
         )
     }
 
