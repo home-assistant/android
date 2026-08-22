@@ -960,14 +960,16 @@ class LocationSensorManager @Inject constructor(
             )
             updateLocationString = locationName
         } else {
-            val enteredZoneIds = if (lastEnteredGeoZones.isNotEmpty() &&
-                serverManager.getServer(serverId)?.version?.isAtLeast(2026, 6, 0) == true
-            ) {
-                getZones(serverId).map { it.entityId }.filter { entityId ->
-                    lastEnteredGeoZones.contains("${serverId}_$entityId")
+            val enteredZoneIds = if (serverManager.getServer(serverId)?.version?.isAtLeast(2026, 6, 0) == true) {
+                if (lastEnteredGeoZones.isEmpty()) {
+                    emptyList()
+                } else {
+                    getZones(serverId).map { it.entityId }.filter { entityId ->
+                        lastEnteredGeoZones.contains("${serverId}_$entityId")
+                    }
                 }
             } else {
-                emptyList()
+                null
             }
             updateLocation = UpdateLocation(
                 gps = listOf(location.latitude, location.longitude),
@@ -975,7 +977,7 @@ class LocationSensorManager @Inject constructor(
                 locationName = null,
                 // Send `in_zones` only to versions that support it
                 // (https://github.com/home-assistant/architecture/discussions/1387).
-                inZones = enteredZoneIds.takeIf { it.isNotEmpty() },
+                inZones = enteredZoneIds,
                 speed = location.speed.toInt(),
                 altitude = location.altitude.toInt(),
                 course = location.bearing.toInt(),
@@ -1004,7 +1006,7 @@ class LocationSensorManager @Inject constructor(
 
         if (location.time < (lastLocationSend[serverId] ?: 0) && trigger?.isGeofence != true) {
             Timber.d(
-                "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastLocationSend",
+                "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: ${lastLocationSend[serverId] ?: 0}",
             )
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_NOT_LATEST)
             return
