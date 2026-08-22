@@ -973,7 +973,7 @@ class LocationSensorManager @Inject constructor(
                 gps = listOf(location.latitude, location.longitude),
                 gpsAccuracy = accuracy,
                 locationName = null,
-                // Send `in_zones` only to versions that support it 
+                // Send `in_zones` only to versions that support it
                 // (https://github.com/home-assistant/architecture/discussions/1387).
                 inZones = enteredZoneIds.takeIf { it.isNotEmpty() },
                 speed = location.speed.toInt(),
