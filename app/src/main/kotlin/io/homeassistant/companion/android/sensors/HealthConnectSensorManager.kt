@@ -1232,7 +1232,7 @@ class HealthConnectSensorManager @Inject constructor(
             vo2Max.statelessIcon,
             attributes = mapOf(
                 "date" to response.records.last().time,
-"measurementMethod" to getMeasurementMethod(response.records.last().measurementMethod),
+                "measurementMethod" to getMeasurementMethod(response.records.last().measurementMethod),
                 "source" to response.records.last().metadata.dataOrigin.packageName,
             ),
         )
@@ -1461,4 +1461,3 @@ class HealthConnectSensorManager @Inject constructor(
         }
     }
 }
-
