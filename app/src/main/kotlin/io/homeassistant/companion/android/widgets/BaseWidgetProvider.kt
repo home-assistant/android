@@ -19,6 +19,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 import timber.log.Timber
 
 /**
@@ -33,8 +34,8 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
             "io.homeassistant.companion.android.widgets.UPDATE_WIDGETS"
 
         private var widgetScope: CoroutineScope = newCoroutineScopeProvider()
-        private val widgetEntities = mutableMapOf<Int, List<String>>()
-        private val widgetJobs = mutableMapOf<Int, Job>()
+        private val widgetEntities = ConcurrentHashMap<Int, List<String>>()
+        private val widgetJobs = ConcurrentHashMap<Int, Job>()
 
         private fun newCoroutineScopeProvider() = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
@@ -120,7 +121,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
             widgetsWithChangedSubscriptions.forEach { (id, pair) ->
                 widgetJobs[id]?.cancel()
 
-                val (serverId, entities) = pair.first to pair.second
+                val (serverId, entities) = pair
                 if (entities.isEmpty()) {
                     widgetEntities.remove(id)
                     widgetJobs.remove(id)

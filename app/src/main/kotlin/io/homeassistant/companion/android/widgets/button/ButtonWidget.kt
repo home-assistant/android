@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.widgets.button
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -14,7 +13,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
-import androidx.core.os.BundleCompat
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.IconicsSize
@@ -25,7 +23,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.getIconByMdiName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -189,6 +186,14 @@ class ButtonWidget : BaseWidgetProvider<ButtonWidgetEntity, ButtonWidgetDao>() {
                     R.id.widgetLayout,
                     "setBackgroundResource",
                     R.drawable.widget_button_background_toggle_on,
+                )
+            }
+
+            widget.isToggleWidget() -> {
+                views.setInt(
+                    R.id.widgetLayout,
+                    "setBackgroundResource",
+                    R.drawable.widget_button_background_toggle_off,
                 )
             }
 
