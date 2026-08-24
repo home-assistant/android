@@ -312,9 +312,14 @@ jobs:
           mock-google-services: "true"
 
       - name: Run test
-        # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet as app.
-        # Adjust if minimal flavor specific tests are added to also include testMinimal*.
-        run: ./gradlew testDebugUnitTest :app:testFullDebugUnitTest :lint:test
+        # Only run expected tests to minimize CI usage. `automotive` shares the same sourceSet as `app`.
+        # No minimal flavor specific tests currently exist, but minimal is compiled to avoid breaking
+        # it silently.
+        run: |
+          ./gradlew test \
+            -x :automotive:test \
+            -x :app:testMinimalDebugUnitTest \
+            :app:compileMinimalDebugUnitTestKotlin
 
       - uses: ./.github/actions/upload-test-results
         if: always()
