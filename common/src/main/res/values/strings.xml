@@ -553,6 +553,7 @@
     <string name="pref_connection_title">Connection information</string>
     <string name="pref_connection_url">Home Assistant URL</string>
     <string name="pref_connection_homenetwork">Home network</string>
+    <string name="pref_connection_use_any_wifi_for_internal">Detect any Wi-Fi connection</string>
     <string name="prioritize_internal_title">When loading dashboard and unknown if connected to home network</string>
     <string name="prioritize_internal_on">Use internal connection URL</string>
     <string name="prioritize_internal_on_expanded">Use internal connection URL (use this if you typically turn location access off)</string>

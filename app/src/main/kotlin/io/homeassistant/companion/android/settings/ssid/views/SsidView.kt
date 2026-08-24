@@ -71,6 +71,7 @@ fun SsidView(
     wifiSsids: List<String>,
     canReadWifi: Boolean,
     ethernet: Boolean?,
+    anyWifi: Boolean,
     vpn: Boolean?,
     prioritizeInternal: Boolean,
     usingWifi: Boolean,
@@ -80,6 +81,7 @@ fun SsidView(
     onRemoveWifiSsid: (String) -> Unit,
     onRequestPermission: () -> Unit,
     onSetEthernet: (Boolean) -> Unit,
+    onSetAnyWifi: (Boolean) -> Unit,
     onSetVpn: (Boolean) -> Unit,
     onSetPrioritize: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -218,7 +220,16 @@ fun SsidView(
             }
         }
 
-        if (wifiSsids.isNotEmpty() || ethernet == true || vpn == true) {
+        item("any_wifi") {
+            SsidSubheader(
+                title = stringResource(commonR.string.pref_connection_use_any_wifi_for_internal),
+                icon = Icons.Default.Wifi,
+                checked = anyWifi,
+                onClicked = onSetAnyWifi,
+            )
+        }
+
+        if (wifiSsids.isNotEmpty() || ethernet == true || anyWifi || vpn == true) {
             item("warn") {
                 Box(
                     Modifier
@@ -403,6 +414,7 @@ private fun PreviewSsidViewEmpty() {
         wifiSsids = emptyList(),
         canReadWifi = true,
         ethernet = null,
+        anyWifi = false,
         vpn = null,
         prioritizeInternal = false,
         activeSsid = "home-assistant-wifi",
@@ -412,6 +424,7 @@ private fun PreviewSsidViewEmpty() {
         onRemoveWifiSsid = {},
         onRequestPermission = {},
         onSetEthernet = {},
+        onSetAnyWifi = {},
         onSetVpn = {},
         onSetPrioritize = {},
     )
@@ -424,6 +437,7 @@ private fun PreviewSsidViewItems() {
         wifiSsids = listOf("home-assistant-wifi", "wifi-one", "BSSID:1A:2B:3C:4D:5E:6F"),
         canReadWifi = true,
         ethernet = false,
+        anyWifi = true,
         vpn = true,
         prioritizeInternal = false,
         activeSsid = "home-assistant-wifi",
@@ -433,6 +447,7 @@ private fun PreviewSsidViewItems() {
         onRemoveWifiSsid = {},
         onRequestPermission = {},
         onSetEthernet = {},
+        onSetAnyWifi = {},
         onSetVpn = {},
         onSetPrioritize = {},
     )

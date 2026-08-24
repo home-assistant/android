@@ -20,6 +20,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -66,6 +67,7 @@ class ServerConnectionStateProviderImplTest {
         webhookId: String? = null,
         useCloud: Boolean = false,
         internalSsids: List<String> = emptyList(),
+        useAnyWifiForInternal: Boolean = false,
         internalEthernet: Boolean? = null,
         internalVpn: Boolean? = null,
         prioritizeInternal: Boolean = false,
@@ -79,6 +81,7 @@ class ServerConnectionStateProviderImplTest {
             webhookId = webhookId,
             useCloud = useCloud,
             internalSsids = internalSsids,
+            useAnyWifiForInternal = useAnyWifiForInternal,
             internalEthernet = internalEthernet,
             internalVpn = internalVpn,
             prioritizeInternal = prioritizeInternal,
@@ -181,6 +184,29 @@ class ServerConnectionStateProviderImplTest {
                 internalSsids = listOf("HomeWiFi"),
             )
             every { wifiHelper.isUsingSpecificWifi(listOf("HomeWiFi")) } returns true
+            every { wifiHelper.isUsingWifi() } returns false
+
+            assertFalse(provider.isInternal())
+        }
+
+        @Test
+        fun `Given any WiFi detection enabled and using WiFi when calling isInternal then returns true`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                internalUrl = "http://192.168.1.1:8123",
+                useAnyWifiForInternal = true,
+            )
+            every { wifiHelper.isUsingWifi() } returns true
+
+            assertTrue(provider.isInternal())
+            verify(exactly = 0) { wifiHelper.isUsingSpecificWifi(any()) }
+        }
+
+        @Test
+        fun `Given any WiFi detection enabled and using mobile data when calling isInternal then returns false`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                internalUrl = "http://192.168.1.1:8123",
+                useAnyWifiForInternal = true,
+            )
             every { wifiHelper.isUsingWifi() } returns false
 
             assertFalse(provider.isInternal())

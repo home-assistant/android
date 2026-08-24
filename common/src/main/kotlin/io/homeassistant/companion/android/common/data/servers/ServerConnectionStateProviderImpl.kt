@@ -62,7 +62,9 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
             if (usesVpn) return true
         }
 
-        return if (connection.internalSsids.isNotEmpty()) {
+        return if (connection.useAnyWifiForInternal) {
+            wifiHelper.isUsingWifi()
+        } else if (connection.internalSsids.isNotEmpty()) {
             val usesInternalSsid = wifiHelper.isUsingSpecificWifi(connection.internalSsids)
             val usesWifi = wifiHelper.isUsingWifi()
             Timber.d("usesInternalSsid is: $usesInternalSsid, usesWifi is: $usesWifi")

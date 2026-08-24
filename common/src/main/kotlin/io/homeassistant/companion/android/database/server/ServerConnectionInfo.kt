@@ -25,6 +25,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  *   home network.
  * @property internalSsids List of Wi-Fi network names (SSIDs) that indicate the device is on
  *   the home network.
+ * @property useAnyWifiForInternal Whether any Wi-Fi connection is treated as being on the home
+ *   network.
  * @property internalEthernet When `true`, Ethernet connections are treated as being on the home
  *   network. `null` means the user hasn't configured this setting.
  * @property internalVpn When `true`, VPN connections are treated as being on the home network.
@@ -52,6 +54,8 @@ data class ServerConnectionInfo(
     val useCloud: Boolean = false,
     @ColumnInfo(name = "internal_ssids")
     val internalSsids: List<String> = emptyList(),
+    @ColumnInfo(name = "use_any_wifi_for_internal", defaultValue = "0")
+    val useAnyWifiForInternal: Boolean = false,
     @ColumnInfo(name = "internal_ethernet")
     val internalEthernet: Boolean? = null,
     @ColumnInfo(name = "internal_vpn")
@@ -98,12 +102,14 @@ data class ServerConnectionInfo(
      * Indicates whether the user has configured any home network detection method.
      *
      * Returns `true` if at least one of the following is set:
+    * - Any Wi-Fi connection
      * - One or more internal SSIDs
      * - Ethernet as internal network (`internalEthernet = true`)
      * - VPN as internal network (`internalVpn = true`)
      */
     @Ignore
-    val hasHomeNetworkSetup: Boolean = internalSsids.isNotEmpty() ||
+    val hasHomeNetworkSetup: Boolean = useAnyWifiForInternal ||
+        internalSsids.isNotEmpty() ||
         internalVpn == true ||
         internalEthernet == true
 

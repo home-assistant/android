@@ -47,6 +47,7 @@ class SsidFragment : Fragment() {
                         wifiSsids = viewModel.wifiSsids,
                         canReadWifi = canReadWifi,
                         ethernet = viewModel.ethernet,
+                        anyWifi = viewModel.anyWifi,
                         vpn = viewModel.vpn,
                         prioritizeInternal = viewModel.prioritizeInternal,
                         usingWifi = viewModel.usingWifi,
@@ -56,6 +57,7 @@ class SsidFragment : Fragment() {
                         onRemoveWifiSsid = viewModel::removeHomeWifiSsid,
                         onRequestPermission = { onRequestLocationPermission() },
                         onSetEthernet = viewModel::setInternalWithEthernet,
+                        onSetAnyWifi = viewModel::setInternalWithAnyWifi,
                         onSetVpn = viewModel::setInternalWithVpn,
                         onSetPrioritize = viewModel::setPrioritize,
                     )

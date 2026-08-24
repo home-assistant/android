@@ -155,9 +155,17 @@ class ServerSettingsPresenterImpl @Inject constructor(
             val connection = serverManager.getServer(serverId)?.connection
             val ssids = connection?.internalSsids.orEmpty()
             view.enableInternalConnection(
-                ssids.isNotEmpty() || connection?.internalEthernet == true || connection?.internalVpn == true,
+                ssids.isNotEmpty() ||
+                    connection?.useAnyWifiForInternal == true ||
+                    connection?.internalEthernet == true ||
+                    connection?.internalVpn == true,
             )
-            view.updateHomeNetwork(ssids, connection?.internalEthernet, connection?.internalVpn)
+            view.updateHomeNetwork(
+                ssids,
+                connection?.internalEthernet,
+                connection?.internalVpn,
+                connection?.useAnyWifiForInternal == true,
+            )
         }
     }
 

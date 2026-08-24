@@ -29,6 +29,9 @@ class SsidViewModel @Inject constructor(
     var ethernet by mutableStateOf<Boolean?>(null)
         private set
 
+    var anyWifi by mutableStateOf(false)
+        private set
+
     var vpn by mutableStateOf<Boolean?>(null)
         private set
 
@@ -53,6 +56,7 @@ class SsidViewModel @Inject constructor(
             wifiSsids.clear()
             wifiSsids.addAll(server?.connection?.internalSsids.orEmpty())
             ethernet = server?.connection?.internalEthernet
+            anyWifi = server?.connection?.useAnyWifiForInternal == true
             vpn = server?.connection?.internalVpn
             server?.connection?.prioritizeInternal?.let { prioritizeInternal = it }
 
@@ -111,6 +115,21 @@ class SsidViewModel @Inject constructor(
                     ),
                 )
                 ethernet = eth
+            }
+        }
+    }
+
+    fun setInternalWithAnyWifi(enabled: Boolean) {
+        viewModelScope.launch {
+            serverManager.getServer(serverId)?.let {
+                serverManager.updateServer(
+                    it.copy(
+                        connection = it.connection.copy(
+                            useAnyWifiForInternal = enabled,
+                        ),
+                    ),
+                )
+                anyWifi = enabled
             }
         }
     }

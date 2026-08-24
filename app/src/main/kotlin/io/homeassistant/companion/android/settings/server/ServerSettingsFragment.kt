@@ -338,15 +338,16 @@ class ServerSettingsFragment :
         }
     }
 
-    override fun updateHomeNetwork(ssids: List<String>, ethernet: Boolean?, vpn: Boolean?) {
+    override fun updateHomeNetwork(ssids: List<String>, ethernet: Boolean?, vpn: Boolean?, anyWifi: Boolean) {
         findPreference<Preference>("connection_internal_ssids")?.let {
             it.summary =
-                if (ssids.isEmpty() && ethernet != true && vpn != true) {
+                if (ssids.isEmpty() && ethernet != true && vpn != true && !anyWifi) {
                     getString(commonR.string.not_set)
                 } else {
                     val options = ssids.toMutableList()
                     if (ethernet == true) options += getString(commonR.string.manage_ssids_ethernet)
                     if (vpn == true) options += getString(commonR.string.manage_ssids_vpn)
+                    if (anyWifi) options += getString(commonR.string.pref_connection_use_any_wifi_for_internal)
 
                     options.joinToString()
                 }
