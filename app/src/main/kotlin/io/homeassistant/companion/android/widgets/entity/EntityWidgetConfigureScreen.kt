@@ -255,7 +255,6 @@ private fun ServerSelector(
         label = stringResource(commonR.string.server_select),
         placeholder = stringResource(commonR.string.server_select),
         modifier = Modifier.formControlWidth(),
-        enabled = items.isNotEmpty(),
     )
 }
 

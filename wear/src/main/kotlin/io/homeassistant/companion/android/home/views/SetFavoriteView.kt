@@ -10,8 +10,7 @@ import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getSwitchButtonColors
 import io.homeassistant.companion.android.theme.wearColorScheme
@@ -22,7 +21,7 @@ import io.homeassistant.companion.android.views.rememberExpandedStates
 
 @Composable
 fun SetFavoritesView(
-    entitiesByDomain: Map<String, List<Entity>>,
+    entitiesByDomain: Map<String, List<EntityDisplay>>,
     domainNames: Map<String, String>,
     favoriteEntityIds: List<String>,
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit,
@@ -61,12 +60,11 @@ fun SetFavoritesView(
 
 @Composable
 private fun FavoriteToggleChip(
-    entity: Entity,
+    entity: EntityDisplay,
     favoriteEntityIds: List<String>,
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit,
 ) {
-    val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = entity.getIcon()
+    val iconBitmap = entity.icon
 
     val entityId = entity.entityId
     val checked = favoriteEntityIds.contains(entityId)
@@ -85,7 +83,7 @@ private fun FavoriteToggleChip(
         },
         label = {
             Text(
-                text = attributes["friendly_name"].toString(),
+                text = entity.name,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )

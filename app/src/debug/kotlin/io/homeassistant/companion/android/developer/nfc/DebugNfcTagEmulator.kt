@@ -41,7 +41,7 @@ object DebugNfcTagEmulatorState {
     /** Replaces the tag content with what the app writes to a real tag for [tagId]. */
     @Synchronized
     fun setTagId(tagId: String) {
-        val message = NFCUtil.createTagMessage(NFCUtil.createTagUrl(tagId))
+        val message = NFCUtil.createTagMessages(NFCUtil.createTagUrl(tagId)).first()
         val bytes = message.toByteArray()
         if (bytes.size > MAX_NDEF_FILE_SIZE - 2) {
             Timber.w("Tag message of ${bytes.size} bytes exceeds the emulated file size")
