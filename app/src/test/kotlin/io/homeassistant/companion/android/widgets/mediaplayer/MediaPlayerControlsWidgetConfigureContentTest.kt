@@ -44,6 +44,35 @@ class MediaPlayerControlsWidgetConfigureContentTest {
     @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
+    private val fakeMediaPlayerEntity = Entity(
+        entityId = "media_player.living_room",
+        state = "playing",
+        attributes = mapOf("friendly_name" to "Living room speaker"),
+        lastChanged = LocalDateTime.MIN,
+        lastUpdated = LocalDateTime.MIN,
+    )
+
+    private val newWidgetState = MediaPlayerControlsWidgetConfigureState(
+        serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
+        selectedServerId = 1,
+        entityDisplayState = EntityDisplayState.Loaded(
+            listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(fakeMediaPlayerEntity), areaName = "Kitchen")),
+        ),
+    )
+
+    private val configuredState = newWidgetState.copy(
+        selectedEntityIds = listOf(fakeMediaPlayerEntity.entityId),
+        label = "Living room",
+        isUpdateWidget = true,
+    )
+
+    private val multipleServersState = configuredState.copy(
+        serversDropdownItems = listOf(
+            HADropdownItem(key = 1, label = "Home"),
+            HADropdownItem(key = 2, label = "Vacation home"),
+        ),
+    )
+
     @Test
     fun `Given no entity selected when displayed then the add action is disabled and no configuration available`() {
         composeTestRule.apply {
@@ -227,36 +256,5 @@ class MediaPlayerControlsWidgetConfigureContentTest {
             }
             dsl()
         }
-    }
-
-    private companion object {
-        val fakeMediaPlayerEntity = Entity(
-            entityId = "media_player.living_room",
-            state = "playing",
-            attributes = mapOf("friendly_name" to "Living room speaker"),
-            lastChanged = LocalDateTime.MIN,
-            lastUpdated = LocalDateTime.MIN,
-        )
-
-        val newWidgetState = MediaPlayerControlsWidgetConfigureState(
-            serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
-            selectedServerId = 1,
-            entityDisplayState = EntityDisplayState.Loaded(
-                listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(fakeMediaPlayerEntity), areaName = "Kitchen")),
-            ),
-        )
-
-        val configuredState = newWidgetState.copy(
-            selectedEntityIds = listOf(fakeMediaPlayerEntity.entityId),
-            label = "Living room",
-            isUpdateWidget = true,
-        )
-
-        val multipleServersState = configuredState.copy(
-            serversDropdownItems = listOf(
-                HADropdownItem(key = 1, label = "Home"),
-                HADropdownItem(key = 2, label = "Vacation home"),
-            ),
-        )
     }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -34,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -59,6 +62,9 @@ import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.widgets.WidgetBackgroundTypeDropdown
+
+// Size of the glyph drawn by the Material checkbox; not exposed publicly by Material.
+private val CheckboxGlyphSize = 20.dp
 
 /**
  * Stateful entry point that connects [MediaPlayerControlsWidgetConfigureViewModel] to the stateless
@@ -317,18 +323,20 @@ private fun MediaControlsOptions(
 
 @Composable
 private fun CheckboxRow(text: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    // The checkbox centers its glyph inside the minimum touch target, leaving a built-in
+    // inset on each side. Pull the row towards the start by that inset so the glyph is
+    // start aligned with the other form controls.
+    val checkboxInset = (LocalMinimumInteractiveComponentSize.current - CheckboxGlyphSize) / 2
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .offset(x = -checkboxInset)
             .toggleable(
                 value = checked,
                 role = Role.Checkbox,
-                indication = null,
-                interactionSource = null,
                 onValueChange = onCheckedChange,
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
     ) {
         HACheckbox(
             checked = checked,

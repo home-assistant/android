@@ -281,17 +281,15 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         backgroundType = WidgetBackgroundType.TRANSPARENT,
     )
 
-    private companion object {
-        fun displayStateOf(vararg items: EntityDisplayWithContext) = EntityDisplayState.Loaded(items.toList())
+    private fun displayStateOf(vararg items: EntityDisplayWithContext) = EntityDisplayState.Loaded(items.toList())
 
-        fun Entity.toDisplayItem() = EntityDisplayWithContext(EntityDisplayWithoutContext(this))
+    private fun Entity.toDisplayItem() = EntityDisplayWithContext(EntityDisplayWithoutContext(this))
 
-        fun createEntity(entityId: String) = Entity(
-            entityId = entityId,
-            state = "playing",
-            attributes = mapOf("friendly_name" to "Living Room"),
-            lastChanged = LocalDateTime.MIN,
-            lastUpdated = LocalDateTime.MIN,
-        )
-    }
+    private fun createEntity(entityId: String) = Entity(
+        entityId = entityId,
+        state = "playing",
+        attributes = mapOf("friendly_name" to "Living Room"),
+        lastChanged = LocalDateTime.MIN,
+        lastUpdated = LocalDateTime.MIN,
+    )
 }

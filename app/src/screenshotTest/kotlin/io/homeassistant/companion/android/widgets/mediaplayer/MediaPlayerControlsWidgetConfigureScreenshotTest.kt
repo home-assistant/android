@@ -19,34 +19,6 @@ class MediaPlayerControlsWidgetConfigureScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `MediaPlayerControlsWidgetConfigureScreen single server`() {
-        HAThemeForPreview {
-            MediaPlayerControlsWidgetConfigureContent(
-                state = previewState.copy(
-                    serversDropdownItems = listOf(previewServer1).map {
-                        HADropdownItem(key = it.id, label = it.friendlyName)
-                    },
-                    selectedEntityIds = listOf(previewEntity1.entityId),
-                ),
-                canNavigateBack = false,
-                onNavigate = {},
-                onServerSelected = {},
-                onEntityAdded = {},
-                onEntityRemoved = {},
-                onLabelChanged = {},
-                onShowVolumeChanged = {},
-                onShowSkipChanged = {},
-                onShowSeekChanged = {},
-                onShowSourceChanged = {},
-                onBackgroundTypeSelected = {},
-                onActionClick = {},
-            )
-        }
-    }
-
-    @PreviewTest
-    @HAPreviews
-    @Composable
     fun `MediaPlayerControlsWidgetConfigureScreen multiple servers updating`() {
         HAThemeForPreview {
             MediaPlayerControlsWidgetConfigureContent(
@@ -80,7 +52,12 @@ class MediaPlayerControlsWidgetConfigureScreenshotTest {
     fun `MediaPlayerControlsWidgetConfigureScreen no selected entity`() {
         HAThemeForPreview {
             MediaPlayerControlsWidgetConfigureContent(
-                state = previewState.copy(selectedEntityIds = emptyList()),
+                state = previewState.copy(
+                    serversDropdownItems = listOf(previewServer1).map {
+                        HADropdownItem(key = it.id, label = it.friendlyName)
+                    },
+                    selectedEntityIds = emptyList(),
+                ),
                 canNavigateBack = false,
                 onNavigate = {},
                 onServerSelected = {},
