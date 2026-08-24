@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
@@ -270,7 +271,7 @@ fun SsidSubheader(
     val subheaderModifier = if (onClicked != null) {
         modifier.then(
             Modifier
-                .clickable { checked?.let { onClicked(!it) } ?: onClicked(true) }
+                .clickable(role = Role.Checkbox) { checked?.let { onClicked(!it) } ?: onClicked(true) }
                 .heightIn(min = 56.dp)
                 .padding(horizontal = 16.dp),
         )

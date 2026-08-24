@@ -122,17 +122,17 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
 
     override suspend fun getSecurityState(): SecurityState {
         val connection = connection()
-
-        val hasLocationPermission = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED
-        val isLocationEnabled = DisabledLocationHandler.isLocationEnabled(context)
+        val locationEnabled = connection.internalSsids.isEmpty() ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+            ) == PackageManager.PERMISSION_GRANTED &&
+            DisabledLocationHandler.isLocationEnabled(context)
 
         return SecurityState(
             isOnHomeNetwork = isInternal(requiresUrl = false),
             hasHomeSetup = connection.hasHomeNetworkSetup,
-            locationEnabled = hasLocationPermission && isLocationEnabled,
+            locationEnabled = locationEnabled,
         )
     }
 

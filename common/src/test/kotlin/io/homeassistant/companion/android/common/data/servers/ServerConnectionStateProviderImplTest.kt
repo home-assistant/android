@@ -373,16 +373,33 @@ class ServerConnectionStateProviderImplTest {
         }
 
         @Test
+        fun `Given any WiFi detection only and location unavailable then locationEnabled is true`() = runTest {
+            val repository = createServerConnectionStateProvider(
+                externalUrl = "http://external.example.com",
+                internalUrl = "http://192.168.1.1:8123",
+                useAnyWifiForInternal = true,
+            )
+            every { wifiHelper.isUsingWifi() } returns false
+
+            val result = repository.getSecurityState()
+
+            assertTrue(result.hasHomeSetup)
+            assertTrue(result.locationEnabled)
+        }
+
+        @Test
         fun `Given location permission denied then locationEnabled is false`() = runTest {
             val repository = createServerConnectionStateProvider(
                 externalUrl = "http://external.example.com",
                 internalUrl = "http://192.168.1.1:8123",
                 internalVpn = false,
                 internalEthernet = false,
+                internalSsids = listOf("HomeWiFi"),
             )
             every { networkHelper.isUsingEthernet() } returns false
             every { networkHelper.isUsingVpn() } returns false
             every { wifiHelper.isUsingSpecificWifi(any()) } returns false
+            every { wifiHelper.isUsingWifi() } returns false
             every {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
             } returns PackageManager.PERMISSION_DENIED
@@ -401,10 +418,12 @@ class ServerConnectionStateProviderImplTest {
                 internalUrl = "http://192.168.1.1:8123",
                 internalVpn = false,
                 internalEthernet = false,
+                internalSsids = listOf("HomeWiFi"),
             )
             every { networkHelper.isUsingEthernet() } returns false
             every { networkHelper.isUsingVpn() } returns false
             every { wifiHelper.isUsingSpecificWifi(any()) } returns false
+            every { wifiHelper.isUsingWifi() } returns false
             every {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
             } returns PackageManager.PERMISSION_GRANTED
@@ -423,10 +442,12 @@ class ServerConnectionStateProviderImplTest {
                 internalUrl = "http://192.168.1.1:8123",
                 internalVpn = false,
                 internalEthernet = false,
+                internalSsids = listOf("HomeWiFi"),
             )
             every { networkHelper.isUsingEthernet() } returns false
             every { networkHelper.isUsingVpn() } returns false
             every { wifiHelper.isUsingSpecificWifi(any()) } returns false
+            every { wifiHelper.isUsingWifi() } returns false
             every {
                 ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
             } returns PackageManager.PERMISSION_DENIED

@@ -37,6 +37,16 @@ class ServerConnectionInfoTest {
         }
 
         @Test
+        fun `Given any WiFi detection enabled then hasHomeNetworkSetup is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                useAnyWifiForInternal = true,
+            )
+
+            assertTrue(connection.hasHomeNetworkSetup)
+        }
+
+        @Test
         fun `Given internalVpn enabled then hasHomeNetworkSetup is true`() {
             val connection = ServerConnectionInfo(
                 externalUrl = "https://example.com",

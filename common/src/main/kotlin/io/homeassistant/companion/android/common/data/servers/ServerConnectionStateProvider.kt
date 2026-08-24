@@ -107,6 +107,7 @@ interface ServerConnectionStateProvider {
      * When on the home network, the internal URL should be used.
      *
      * Home network detection is based on the server's configuration:
+    * - Connected to any Wi-Fi network (if enabled in settings)
      * - Connected to a configured Wi-Fi SSID (requires location permission)
      * - Connected via Ethernet (if enabled in settings)
      * - Connected via VPN (if enabled in settings)
