@@ -51,7 +51,7 @@ class NameYourDeviceViewModelTest {
     private val serverRegistrationRepository: ServerRegistrationRepository = mockk()
     private val authenticationRepository: AuthenticationRepository = mockk()
     private val appVersionProvider: AppVersionProvider = AppVersionProvider {
-        AppVersion.from("test", 42)
+        AppVersion("test", 42)
     }
     private val messagingTokenProvider: MessagingTokenProvider = MessagingTokenProvider {
         return@MessagingTokenProvider MessagingToken("test_messaging_token")

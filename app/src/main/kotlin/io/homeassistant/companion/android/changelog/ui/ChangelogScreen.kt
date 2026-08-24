@@ -192,7 +192,6 @@ private fun ColumnScope.ChangelogHeader(
 }
 
 @Composable
-@Suppress("UnusedReceiverParameter") // Scopes the multi-element emission to a Column
 private fun ColumnScope.ChangelogSectionContent(
     section: ChangelogSection,
     currentPlatform: ChangelogPlatform,

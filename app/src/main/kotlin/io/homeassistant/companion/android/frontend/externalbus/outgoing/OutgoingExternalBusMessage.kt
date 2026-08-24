@@ -116,7 +116,7 @@ object ConfigResultMessage {
                 canImportThreadCredentials = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
                 canSetupImprov = canSetupImprov,
-                appVersion = appVersion.value,
+                appVersion = appVersion.toString(),
             )
         }
     }

@@ -107,7 +107,7 @@ class FrontendMessageHandlerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
         every { matterManager.appSupportsCommissioning() } returns false
         every { threadManager.appSupportsThread() } returns false
-        every { appVersionProvider() } returns AppVersion.from("1.0.0", 1)
+        every { appVersionProvider() } returns AppVersion("1.0.0", 1)
         every { externalBusRepository.webViewActions() } returns emptyFlow()
 
         handler = FrontendMessageHandler(
@@ -193,7 +193,7 @@ class FrontendMessageHandlerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
         every { matterManager.appSupportsCommissioning() } returns true
         every { threadManager.appSupportsThread() } returns true
-        every { appVersionProvider() } returns AppVersion.from("2.0.0", 200)
+        every { appVersionProvider() } returns AppVersion("2.0.0", 200)
 
         val testHandler = FrontendMessageHandler(
             externalBusRepository = externalBusRepository,

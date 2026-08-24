@@ -212,7 +212,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     private suspend fun persistDeviceRegistration(deviceRegistration: DeviceRegistration) {
         if (deviceRegistration.appVersion != null) {
-            localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion.value)
+            localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion.toString())
         }
         if (deviceRegistration.deviceName != null) {
             serverManager.updateServer(server().copy(deviceName = deviceRegistration.deviceName))

@@ -24,7 +24,7 @@ class SensorUpdaterTest {
 
     private val context = mockk<Context>(relaxed = true)
     private val sensorRepository = mockk<SensorRepository>(relaxed = true)
-    private val appVersion = AppVersion.from("1.0", 1)
+    private val appVersion = AppVersion("1.0", 1)
     private val appVersionProvider = AppVersionProvider { appVersion }
     private val settingsIntentProvider = SensorSettingsIntentProvider { _, _, _, _ -> null }
 
@@ -236,7 +236,7 @@ class SensorUpdaterTest {
         state = "",
         lastSentState = "",
         lastSentIcon = "",
-        appRegistration = appVersion.value,
+        appRegistration = appVersion.toString(),
         coreRegistration = haVersion,
     )
 
@@ -249,7 +249,7 @@ class SensorUpdaterTest {
         state = "on",
         lastSentState = null,
         lastSentIcon = null,
-        appRegistration = appVersion.value,
+        appRegistration = appVersion.toString(),
         coreRegistration = haVersion,
     )
 
@@ -277,7 +277,7 @@ class SensorUpdaterTest {
         state = "",
         lastSentState = "",
         lastSentIcon = "",
-        appRegistration = appVersion.value,
+        appRegistration = appVersion.toString(),
         coreRegistration = haVersion,
     )
 }

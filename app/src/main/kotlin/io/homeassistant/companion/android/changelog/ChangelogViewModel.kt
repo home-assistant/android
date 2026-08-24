@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,9 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 private const val RELEASE_TAG_URL_PREFIX = "https://github.com/home-assistant/android/releases/tag/"
-
-/** Flavor suffixes appended to the version name that are meaningless to the user. */
-private val FLAVOR_SUFFIXES = listOf("-full", "-minimal")
 
 /**
  * @property versionName The version of the app currently running, without the flavor suffix.
@@ -41,22 +40,22 @@ data class ChangelogUiState(
 class ChangelogViewModel @VisibleForTesting constructor(
     prefsRepository: PrefsRepository,
     isAutomotive: Boolean,
-    rawVersionName: String,
-    currentVersionCode: Int,
+    appVersion: AppVersion,
 ) : ViewModel() {
 
     @Inject
     constructor(
         prefsRepository: PrefsRepository,
         @IsAutomotive isAutomotive: Boolean,
-    ) : this(prefsRepository, isAutomotive, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
+        appVersionProvider: AppVersionProvider,
+    ) : this(prefsRepository, isAutomotive, appVersionProvider.invoke())
 
     val uiState: StateFlow<ChangelogUiState> = MutableStateFlow(
         run {
-            val versionName = FLAVOR_SUFFIXES.fold(rawVersionName, String::removeSuffix)
+            val versionWithoutFlavor = appVersion.name.removeSuffix("-${BuildConfig.FLAVOR}")
             ChangelogUiState(
-                versionName = versionName,
-                releaseUrl = RELEASE_TAG_URL_PREFIX + versionName,
+                versionName = versionWithoutFlavor,
+                releaseUrl = RELEASE_TAG_URL_PREFIX + versionWithoutFlavor,
                 currentPlatform = if (isAutomotive) ChangelogPlatform.AUTOMOTIVE else ChangelogPlatform.APP,
                 sections = currentChangelog.toSections(),
             )
@@ -65,7 +64,7 @@ class ChangelogViewModel @VisibleForTesting constructor(
 
     init {
         viewModelScope.launch {
-            prefsRepository.markChangelogSeen(currentVersionCode)
+            prefsRepository.markChangelogSeen(appVersion.code)
         }
     }
 }

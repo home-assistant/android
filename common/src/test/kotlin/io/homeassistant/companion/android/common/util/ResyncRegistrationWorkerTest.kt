@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
-private val appVersion = AppVersion.from("1.1.1.", 1)
+private val appVersion = AppVersion("1.1.1.", 1)
 private val messagingToken = MessagingToken("hello")
 
 class ResyncRegistrationWorkerTest {

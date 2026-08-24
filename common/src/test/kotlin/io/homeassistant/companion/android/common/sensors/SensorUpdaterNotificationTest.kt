@@ -34,7 +34,7 @@ class SensorUpdaterNotificationTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val sensorRepository = mockk<SensorRepository>(relaxed = true)
-    private val appVersion = AppVersion.from("1.0", 1)
+    private val appVersion = AppVersion("1.0", 1)
     private val appVersionProvider = AppVersionProvider { appVersion }
     private val settingsIntentProvider = SensorSettingsIntentProvider { _, _, _, _ -> null }
 
@@ -102,7 +102,7 @@ class SensorUpdaterNotificationTest {
         state = "",
         lastSentState = "",
         lastSentIcon = "",
-        appRegistration = appVersion.value,
+        appRegistration = appVersion.toString(),
         coreRegistration = haVersion,
     )
 

@@ -116,7 +116,7 @@ class SensorUpdater @VisibleForTesting internal constructor(
             }
         }
 
-        val appVersion = appVersionProvider().value
+        val appVersion = appVersionProvider().toString()
         try {
             coroutineScope {
                 serverManager.servers().map { server ->

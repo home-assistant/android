@@ -41,7 +41,7 @@ class ApplicationModuleTest {
     fun `Given injected appVersionProvider when invoking it returns current version`() {
         assertEquals(
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-            appVersionProvider().value,
+            appVersionProvider().toString(),
         )
     }
 
