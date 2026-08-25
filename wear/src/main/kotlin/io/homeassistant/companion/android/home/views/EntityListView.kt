@@ -10,7 +10,8 @@ import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getPrimaryButtonColors
 import io.homeassistant.companion.android.util.playPreviewEntityScene1
@@ -25,9 +26,9 @@ import io.homeassistant.companion.android.views.rememberExpandedStates
 
 @Composable
 fun EntityViewList(
-    entityLists: Map<String, List<Entity>>,
+    entityLists: Map<String, List<EntityDisplay>>,
     entityListsOrder: List<String>,
-    entityListFilter: (Entity) -> Boolean,
+    entityListFilter: (EntityDisplay) -> Boolean,
     onEntityClicked: (String, String) -> Unit,
     onEntityLongClicked: (String) -> Unit,
     isHapticEnabled: Boolean,
@@ -90,7 +91,10 @@ fun EntityViewList(
 @Composable
 private fun PreviewEntityListView() {
     EntityViewList(
-        entityLists = mapOf(stringResource(commonR.string.lights) to listOf(previewEntity1, previewEntity2)),
+        entityLists = mapOf(
+            stringResource(commonR.string.lights) to
+                listOf(EntityDisplayWithoutContext(previewEntity1), EntityDisplayWithoutContext(previewEntity2)),
+        ),
         entityListsOrder = listOf(stringResource(commonR.string.lights)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
@@ -106,7 +110,11 @@ private fun PreviewEntityListScenes() {
     EntityViewList(
         entityLists = mapOf(
             stringResource(commonR.string.scenes) to
-                listOf(playPreviewEntityScene1, playPreviewEntityScene2, playPreviewEntityScene3),
+                listOf(
+                    EntityDisplayWithoutContext(playPreviewEntityScene1),
+                    EntityDisplayWithoutContext(playPreviewEntityScene2),
+                    EntityDisplayWithoutContext(playPreviewEntityScene3),
+                ),
         ),
         entityListsOrder = listOf(stringResource(commonR.string.scenes)),
         entityListFilter = { true },
@@ -121,7 +129,9 @@ private fun PreviewEntityListScenes() {
 @Composable
 private fun PreviewEntityListEmpty() {
     EntityViewList(
-        entityLists = mapOf(stringResource(commonR.string.scenes) to listOf(playPreviewEntityScene1)),
+        entityLists = mapOf(
+            stringResource(commonR.string.scenes) to listOf(EntityDisplayWithoutContext(playPreviewEntityScene1)),
+        ),
         entityListsOrder = listOf(stringResource(commonR.string.scenes)),
         entityListFilter = { false },
         onEntityClicked = { _, _ -> },
