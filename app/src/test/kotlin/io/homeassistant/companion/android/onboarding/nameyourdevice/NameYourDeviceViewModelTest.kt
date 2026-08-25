@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.database.server.Server
@@ -50,9 +49,7 @@ class NameYourDeviceViewModelTest {
 
     private val serverRegistrationRepository: ServerRegistrationRepository = mockk()
     private val authenticationRepository: AuthenticationRepository = mockk()
-    private val appVersionProvider: AppVersionProvider = AppVersionProvider {
-        AppVersion("test", 42)
-    }
+    private val appVersion = AppVersion("test", 42)
     private val messagingTokenProvider: MessagingTokenProvider = MessagingTokenProvider {
         return@MessagingTokenProvider MessagingToken("test_messaging_token")
     }
@@ -89,7 +86,7 @@ class NameYourDeviceViewModelTest {
             route,
             serverManager,
             serverRegistrationRepository,
-            appVersionProvider,
+            appVersion,
             messagingTokenProvider,
             defaultName = DEFAULT_DEVICE_NAME,
         )
@@ -155,7 +152,7 @@ class NameYourDeviceViewModelTest {
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     DEFAULT_DEVICE_NAME,
                     messagingTokenProvider(),
                 ),
@@ -201,7 +198,7 @@ class NameYourDeviceViewModelTest {
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     customDeviceName,
                     messagingTokenProvider(),
                 ),
@@ -224,7 +221,7 @@ class NameYourDeviceViewModelTest {
             coVerify {
                 integrationRepository.registerDevice(
                     DeviceRegistration(
-                        appVersionProvider(),
+                        appVersion,
                         customDeviceName,
                         messagingTokenProvider(),
                     ),
@@ -241,7 +238,7 @@ class NameYourDeviceViewModelTest {
             secureRoute,
             serverManager,
             serverRegistrationRepository,
-            appVersionProvider,
+            appVersion,
             messagingTokenProvider,
             defaultName = DEFAULT_DEVICE_NAME,
         )
@@ -259,7 +256,7 @@ class NameYourDeviceViewModelTest {
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     DEFAULT_DEVICE_NAME,
                     messagingTokenProvider(),
                 ),

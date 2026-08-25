@@ -167,7 +167,7 @@ class ResyncRegistrationWorkerTest {
             EntryPoints.get(any(), ResyncRegistrationWorkerEntryPoint::class.java)
         } returns mockk(relaxed = true) {
             every { serverManager() } returns serverManager
-            every { appVersionProvider() } returns AppVersionProvider { appVersion }
+            every { appVersion() } returns appVersion
             every { pushToken() } returns MessagingTokenProvider { return@MessagingTokenProvider messagingToken }
             every { pushWebsocketSupport() } returns pushWebsocketSupport
         }

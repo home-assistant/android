@@ -78,7 +78,7 @@ internal class ChangelogScreenTest {
         composeTestRule.apply {
             onNodeWithText(VERSION_NAME).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.changelog_entry_bug_fixes)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.changelog_category_new).uppercase()).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.changelog_category_new)).assertIsDisplayed()
             onNodeWithText(
                 activity.getString(
                     commonR.string.changelog_platform_this_device,

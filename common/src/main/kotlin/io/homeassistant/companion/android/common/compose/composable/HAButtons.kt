@@ -27,6 +27,7 @@ import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -230,6 +231,10 @@ fun HAPlainButton(
                 .minimumInteractiveComponentSize()
                 .clip(buttonShape)
                 .combinedClickable(
+                    interactionSource = null,
+                    // The Material ripple honoring LocalRippleConfiguration, like the clickable
+                    // Surface of the Material buttons uses, without relying on LocalIndication
+                    indication = ripple(),
                     enabled = enabled,
                     role = Role.Button,
                     onLongClickLabel = onLongClickLabel,

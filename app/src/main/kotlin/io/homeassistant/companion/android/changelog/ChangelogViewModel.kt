@@ -1,13 +1,11 @@
 package io.homeassistant.companion.android.changelog
 
-import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,18 +35,11 @@ data class ChangelogUiState(
  * current app version regardless of how the user leaves the screen.
  */
 @HiltViewModel
-class ChangelogViewModel @VisibleForTesting constructor(
+class ChangelogViewModel @Inject constructor(
     prefsRepository: PrefsRepository,
-    isAutomotive: Boolean,
+    @IsAutomotive isAutomotive: Boolean,
     appVersion: AppVersion,
 ) : ViewModel() {
-
-    @Inject
-    constructor(
-        prefsRepository: PrefsRepository,
-        @IsAutomotive isAutomotive: Boolean,
-        appVersionProvider: AppVersionProvider,
-    ) : this(prefsRepository, isAutomotive, appVersionProvider.invoke())
 
     val uiState: StateFlow<ChangelogUiState> = MutableStateFlow(
         run {

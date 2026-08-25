@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
-import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_SYNC
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -62,7 +62,7 @@ class SensorUpdater @VisibleForTesting internal constructor(
     private val context: Context,
     private val serverManager: ServerManager,
     private val sensorRepository: SensorRepository,
-    private val appVersionProvider: AppVersionProvider,
+    private val appVersion: AppVersion,
     private val managers: Set<@JvmSuppressWildcards SensorManager>,
     private val sensorSettingsIntentProvider: SensorSettingsIntentProvider,
     private val notificationManager: NotificationManager?,
@@ -73,14 +73,14 @@ class SensorUpdater @VisibleForTesting internal constructor(
         @ApplicationContext context: Context,
         serverManager: ServerManager,
         sensorRepository: SensorRepository,
-        appVersionProvider: AppVersionProvider,
+        appVersion: AppVersion,
         managers: Set<@JvmSuppressWildcards SensorManager>,
         sensorSettingsIntentProvider: SensorSettingsIntentProvider,
     ) : this(
         context,
         serverManager,
         sensorRepository,
-        appVersionProvider,
+        appVersion,
         managers,
         sensorSettingsIntentProvider,
         context.getSystemService(),
@@ -116,11 +116,10 @@ class SensorUpdater @VisibleForTesting internal constructor(
             }
         }
 
-        val appVersion = appVersionProvider().toString()
         try {
             coroutineScope {
                 serverManager.servers().map { server ->
-                    async { syncSensorsWithServer(server, managers, appVersion, getSensorSettingsIntent) }
+                    async { syncSensorsWithServer(server, managers, appVersion.toString(), getSensorSettingsIntent) }
                 }.awaitAll()
             }
             Timber.i("Sensor updates and sync completed")

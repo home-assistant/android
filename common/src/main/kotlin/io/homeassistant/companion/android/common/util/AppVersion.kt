@@ -56,7 +56,3 @@ internal object AppVersionSerializer : KSerializer<AppVersion> {
 
     override fun deserialize(decoder: Decoder): AppVersion = from(decoder.decodeString())
 }
-
-fun interface AppVersionProvider {
-    operator fun invoke(): AppVersion
-}

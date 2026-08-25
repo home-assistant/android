@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.server.Server
 import io.mockk.coEvery
@@ -35,7 +34,6 @@ class SensorUpdaterNotificationTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val sensorRepository = mockk<SensorRepository>(relaxed = true)
     private val appVersion = AppVersion("1.0", 1)
-    private val appVersionProvider = AppVersionProvider { appVersion }
     private val settingsIntentProvider = SensorSettingsIntentProvider { _, _, _, _ -> null }
 
     private val haVersion = "2022.6.0"
@@ -59,7 +57,7 @@ class SensorUpdaterNotificationTest {
             context,
             serverManager,
             sensorRepository,
-            appVersionProvider,
+            appVersion,
             setOf(manager),
             settingsIntentProvider,
             notificationManager,
