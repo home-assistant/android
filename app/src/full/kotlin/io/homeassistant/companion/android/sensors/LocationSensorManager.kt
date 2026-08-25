@@ -989,7 +989,7 @@ class LocationSensorManager @Inject constructor(
             return
         }
 
-        if (location.time < (lastLocationSend[serverId] ?: 0) && trigger?.isGeofence != true) {
+        if (location.time < (lastLocationSend[serverId] ?: 0)) {
             Timber.d(
                 "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: ${lastLocationSend[serverId] ?: 0}",
             )
@@ -1002,7 +1002,7 @@ class LocationSensorManager @Inject constructor(
                 "Received location that is ${now - location.time} milliseconds old, ${location.time} compared to $now with source ${location.provider}",
             )
             if (lastUpdateLocation[serverId] == updateLocationString) {
-                if (now < (lastLocationSend[serverId] ?: 0) + 900000 && trigger?.isGeofence != true) {
+                if (now < (lastLocationSend[serverId] ?: 0) + 900000) {
                     Timber.d("Duplicate location received, not sending to HA")
                     logLocationUpdate(
                         location,
