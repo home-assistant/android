@@ -12,18 +12,59 @@ concurrency:
 permissions: {}
 
 jobs:
+  # A partial re-run of "Pull Request" re-triggers this workflow without
+  # rebuilding the emulator.wtf inputs, so they may already be gone. Skip
+  # emulator_wtf rather than failing it, so no red check appears on the PR.
+  check_inputs:
+    name: "Check emulator.wtf inputs"
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.event == 'pull_request'
+      && github.event.workflow_run.conclusion == 'success'
+    permissions:
+      actions: read  # Needed for listing the artifacts of the triggering run
+    outputs:
+      available: ${{ steps.inputs.outputs.available }}
+    steps:
+      - name: Check whether the inputs artifact is still available
+        id: inputs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          # Expired artifacts stay in the listing with `expired: true` rather than
+          # disappearing, so this covers both expiry and a missing upload.
+          available=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts?name=emulator-wtf-inputs" \
+            --jq '[.artifacts[] | select(.expired == false)] | length > 0')
+          echo "available=$available" >> "$GITHUB_OUTPUT"
+          if [ "$available" != "true" ]; then
+            echo "::error title=Instrumentation tests skipped::The emulator.wtf inputs from $RUN_URL are no longer available. A maintainer needs to re-run all jobs of that workflow to rebuild them."
+          fi
+
   emulator_wtf:
     name: "Instrumentation Test app"
     runs-on: ubuntu-latest
     environment: ui-test
-    if: >
-      github.event.workflow_run.event == 'pull_request'
-      && github.event.workflow_run.conclusion == 'success'
+    needs: [check_inputs]
+    if: needs.check_inputs.outputs.available == 'true'
     permissions:
       id-token: write  # Needed for OIDC authentication
       actions: read  # Needed for retrieving artifacts
       checks: write  # Needed to publish this job's status as a PR check
     steps:
+      # Kept ahead of the check run: the artifact can still expire between the
+      # check_inputs preflight and this download, and failing before the check
+      # run exists leaves the PR clean, same as a check_inputs skip.
+      - name: Download emulator.wtf inputs
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: emulator-wtf-inputs
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: emulator-wtf-inputs
+
       # Surface this job's own success/failure as a check on the PR commit.
       # workflow_run jobs are detached from the PR, so the status is not shown
       # otherwise. A check run created via the API for a PR-head SHA gets grouped
@@ -86,14 +127,6 @@ jobs:
             echo "job_url=$JOB_URL"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Download emulator.wtf inputs
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: emulator-wtf-inputs
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: emulator-wtf-inputs
-
       - name: Load device list
         id: devices
         # The artifact comes from a PR build that may originate from a fork; validate
@@ -152,8 +185,8 @@ jobs:
           name: Instrumentation Test app reports
           path: build/test-results/**
 
-      # job.status reflects everything above (check creation, downloads, test runs) and is
-      # one of success/failure/cancelled, all valid check-run conclusions.
+      # job.status reflects everything above (input download, check creation, test
+      # runs) and is one of success/failure/cancelled, all valid check-run conclusions.
       # We re-send the same output.summary link so the completed check page
       # keeps the deep-link to the emulator.wtf job logs (see the Create step
       # for why this matters on PR-context check_suites).
@@ -188,14 +221,18 @@ jobs:
       actions: read
       contents: read
     steps:
+      # Exclude emulator-wtf-inputs (APKs, no test XML): it is the only artifact
+      # here with a short retention, and download-artifact errors on an expired
+      # one, which would sink the pr.yml results too. Minimatch reads "!" as negation.
       - name: Download artifacts from pr.yml run
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
+          pattern: "!emulator-wtf-inputs"
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: pr-artifacts
 
-      # If emulator_wtf was skipped (non-PR trigger or triggering workflow did not succeed) or
+      # If emulator_wtf was skipped (non-PR trigger, triggering workflow did not succeed, or inputs expired) or
       # cancelled/failed before running tests, it uploads no results artifact, and
       # downloading it by name errors. Tolerate that so we still publish the
       # pr.yml results below. We cannot gate on needs.emulator_wtf.result because
