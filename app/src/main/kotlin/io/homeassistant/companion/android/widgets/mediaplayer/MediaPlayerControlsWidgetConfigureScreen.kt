@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -327,6 +328,8 @@ private fun CheckboxRow(text: String, checked: Boolean, onCheckedChange: (Boolea
     // inset on each side. Pull the row towards the start by that inset so the glyph is
     // start aligned with the other form controls.
     val checkboxInset = (LocalMinimumInteractiveComponentSize.current - CheckboxGlyphSize) / 2
+    // Shared with the checkbox so presses anywhere on the row drive its press animation.
+    val interactionSource = remember { MutableInteractionSource() }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -335,12 +338,15 @@ private fun CheckboxRow(text: String, checked: Boolean, onCheckedChange: (Boolea
                 value = checked,
                 role = Role.Checkbox,
                 onValueChange = onCheckedChange,
+                indication = null,
+                interactionSource = interactionSource,
             ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HACheckbox(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            interactionSource = interactionSource,
         )
         Text(
             text = text,
