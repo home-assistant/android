@@ -38,13 +38,18 @@ class PrefsRepositoryImplTest {
         }
     }
     private val integrationStorage = mockk<LocalStorage>()
+    private var hadLegacyChangelogPref = false
 
     private lateinit var repository: PrefsRepositoryImpl
 
     @BeforeEach
     fun setup() {
         coEvery { localStorage.getInt(MIGRATION_PREF) } returns MIGRATION_VERSION
-        repository = PrefsRepositoryImpl(localStorage = localStorage, integrationStorage = integrationStorage)
+        repository = PrefsRepositoryImpl(
+            localStorage = localStorage,
+            integrationStorage = integrationStorage,
+            hadLegacyChangelogPref = { hadLegacyChangelogPref },
+        )
     }
 
     @Nested
@@ -382,6 +387,16 @@ class PrefsRepositoryImplTest {
             assertFalse(repository.wasAppUpdatedSinceChangelogSeen(currentVersionCode))
 
             coVerify { localStorage.putInt(key, currentVersionCode) }
+        }
+
+        @Test
+        fun `Given no stored version but legacy changelog pref when checking if the app was updated then returns true without storing`() = runTest {
+            coEvery { localStorage.getInt(key) } returns null
+            hadLegacyChangelogPref = true
+
+            assertTrue(repository.wasAppUpdatedSinceChangelogSeen(currentVersionCode))
+
+            coVerify(exactly = 0) { localStorage.putInt(any(), any()) }
         }
 
         @Test

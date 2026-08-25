@@ -7,7 +7,9 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl.
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl.Companion.MIGRATION_VERSION
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedLegacyChangelogPref
 import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -104,6 +106,7 @@ private class LocalStorageWithMigration(
 internal class PrefsRepositoryImpl @Inject constructor(
     @NamedThemesStorage localStorage: LocalStorage,
     @NamedIntegrationStorage integrationStorage: LocalStorage,
+    @NamedLegacyChangelogPref private val hadLegacyChangelogPref: SuspendProvider<Boolean>,
 ) : PrefsRepository {
 
     companion object {
@@ -388,6 +391,12 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun wasAppUpdatedSinceChangelogSeen(currentVersionCode: Int): Boolean {
         val lastSeenVersionCode = localStorage().getInt(PREF_LAST_SEEN_CHANGELOG_VERSION) ?: run {
+            // The changelog was previously tracked by a library with its own storage: the
+            // presence of its pref means the app was updated from such a version, so show the
+            // changelog and only mark it seen once the user saw it.
+            if (hadLegacyChangelogPref()) {
+                return true
+            }
             markChangelogSeen(currentVersionCode)
             return false
         }
