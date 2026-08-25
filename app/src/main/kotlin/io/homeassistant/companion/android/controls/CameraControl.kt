@@ -31,8 +31,9 @@ object CameraControl : HaControl {
         item: EntityDisplayWithContext,
         info: HaControlInfo,
     ): Control.StatefulBuilder {
-        val image = if (info.baseUrl != null && item.entityPicturePath != null) {
-            getThumbnail(info.baseUrl + item.entityPicturePath)
+        val entityPicturePath = item.cameraControls?.entityPicturePath
+        val image = if (info.baseUrl != null && entityPicturePath != null) {
+            getThumbnail(info.baseUrl + entityPicturePath)
         } else {
             null
         }

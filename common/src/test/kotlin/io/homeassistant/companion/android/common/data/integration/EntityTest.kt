@@ -368,6 +368,19 @@ class EntityTest {
         }
 
         @Test
+        fun `Given a camera when getting camera controls then the entity picture is resolved`() {
+            val camera = createEntity(
+                entityId = "camera.door",
+                attributes = mapOf("entity_picture" to "/api/camera_proxy/camera.door"),
+            )
+            val withoutPicture = createEntity(entityId = "camera.door")
+
+            assertEquals("/api/camera_proxy/camera.door", checkNotNull(camera.getCameraControls()).entityPicturePath)
+            assertNull(checkNotNull(withoutPicture.getCameraControls()).entityPicturePath)
+            assertNull(createEntity().getCameraControls())
+        }
+
+        @Test
         fun `Given a climate entity when getting climate controls then range unit and modes are resolved`() {
             val entity = createEntity(
                 entityId = "climate.thermostat",

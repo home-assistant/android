@@ -185,6 +185,13 @@ data class CoverControls(val position: EntityPosition?, val supportsSetPosition:
 @Immutable
 data class VacuumControls(val supportsTurnOn: Boolean)
 
+/**
+ * Controls of a camera entity. [entityPicturePath] updates when the camera is controlled, like
+ * taking a snapshot of a live stream or refreshing.
+ */
+@Immutable
+data class CameraControls(val entityPicturePath: String?)
+
 object EntityExt {
     const val TAG = "EntityExt"
 
@@ -534,6 +541,15 @@ fun Entity.getVacuumControls(): VacuumControls? {
 
     return VacuumControls(
         supportsTurnOn = supportsFeature(EntityExt.VACUUM_SUPPORT_TURN_ON),
+    )
+}
+
+/** Controls of a camera entity, null for other domains. */
+fun Entity.getCameraControls(): CameraControls? {
+    if (domain != CAMERA_DOMAIN) return null
+
+    return CameraControls(
+        entityPicturePath = entityPicturePath(),
     )
 }
 

@@ -36,6 +36,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+private const val FAILED_STATE_NOT_FOUND = "notfound"
+private const val FAILED_STATE_EXCEPTION = "exception"
+
 @RequiresApi(Build.VERSION_CODES.R)
 @AndroidEntryPoint
 class HaControlsProviderService : ControlsProviderService() {
@@ -399,6 +402,3 @@ class HaControlsProviderService : ControlsProviderService() {
         return prefsRepository.getControlsEnableStructure()
     }
 }
-
-private const val FAILED_STATE_NOT_FOUND = "notfound"
-private const val FAILED_STATE_EXCEPTION = "exception"
