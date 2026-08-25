@@ -1,7 +1,6 @@
-package io.homeassistant.companion.android.matter.ui
+package io.homeassistant.companion.android.matter
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import io.homeassistant.companion.android.matter.MatterCommissioningViewModel
 
 class MatterCommissioningScreenPreviewStates :
     PreviewParameterProvider<MatterCommissioningViewModel.CommissioningFlowStep> {

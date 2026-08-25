@@ -17,7 +17,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.startLaunchWithNavigateTo
-import io.homeassistant.companion.android.matter.ui.MatterCommissioningScreen
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import kotlinx.coroutines.launch
 import timber.log.Timber

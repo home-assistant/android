@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.matter.ui
+package io.homeassistant.companion.android.matter
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement

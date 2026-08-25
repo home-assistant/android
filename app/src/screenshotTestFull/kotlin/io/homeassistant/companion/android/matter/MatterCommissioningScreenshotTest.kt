@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.matter.ui
+package io.homeassistant.companion.android.matter
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewParameter
