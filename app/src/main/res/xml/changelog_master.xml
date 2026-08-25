@@ -2,7 +2,6 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2026.8.4 - Main" versioncode="3">
-        <change>Fix missing zone on the first location update after high accuracy mode turns off</change>
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
         <change>Modernized settings for entity widgets and tiles and Matter device commissioning</change>
@@ -13,7 +12,6 @@
         <change>Bug fixes and dependency updates</change>
     </release>
     <release version="2026.8.4 - Automotive" versioncode="1">
-        <change>Fix missing zone on the first location update after high accuracy mode turns off</change>
         <change>Android 17: added assistant volume level sensor + notification command for control</change>
         <change>Health Connect sleep duration sensor now ignores awake and out of bed time</change>
         <change>Bug fixes and dependency updates</change>
