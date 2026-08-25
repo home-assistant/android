@@ -252,6 +252,7 @@
     <string name="error_action_install_certificate">Install certificate</string>
     <string name="error_action_remove_server">Remove server</string>
     <string name="error_action_update_webview">Update WebView</string>
+    <string name="climate_widget_desc">View and control a configured climate entity</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_connection_failed_to">Unable to connect to %1$s</string>
@@ -1051,6 +1052,29 @@
     <string name="widget_todo_label">To-do list</string>
     <string name="widget_todo_empty">You have no to-do items!</string>
     <string name="widget_todo_show_completed">Show completed items</string>
+
+    <!--    Climate widget-->
+    <string name="widget_climate_label">Climate control</string>
+    <string name="climate_widget_select_entity">Select climate</string>
+    <string name="widget_climate_plus">Plus temperature</string>
+    <string name="widget_climate_minus">Minus temperature</string>
+    <string name="widget_climate_format_temp">%.0f °C</string>
+    <string name="widget_climate_empty_temp">- - °C</string>
+    <string name="widget_climate_refresh">Refresh climate</string>
+    <string name="widget_climate_hvac_selector_description_off">Turn climate control off</string>
+    <string name="widget_climate_hvac_selector_description_heat">Set climate mode to heat</string>
+    <string name="widget_climate_hvac_selector_description_cool">Set climate mode to cool</string>
+    <string name="widget_climate_hvac_selector_description_dry">Set climate mode to dry</string>
+    <string name="widget_climate_hvac_selector_description_fan">Set climate mode to fan only</string>
+    <string name="widget_climate_hvac_selector_description_auto">Set climate mode to automatic</string>
+    <string name="widget_climate_hvac_name_off">Off</string>
+    <string name="widget_climate_hvac_name_auto">Auto</string>
+    <string name="widget_climate_hvac_name_cool">Cool</string>
+    <string name="widget_climate_hvac_name_heat">Heat</string>
+    <string name="widget_climate_hvac_name_dry">Dry</string>
+    <string name="widget_climate_hvac_name_fan">Fan</string>
+
+
     <string name="widget_tap_action_label">Tap action:</string>
     <string name="widget_tap_action_open">Open</string>
     <string name="widget_tap_action_toggle">Toggle</string>

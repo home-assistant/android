@@ -76,7 +76,7 @@ class ToggleTodoAction : ActionCallback {
     @InstallIn(SingletonComponent::class)
     interface ToggleTodoActionEntryPoint {
         fun serverManager(): ServerManager
-        fun dao(): TodoWidgetDao
+        fun todoDao(): TodoWidgetDao
     }
 
     @VisibleForTesting
@@ -99,7 +99,9 @@ class ToggleTodoAction : ActionCallback {
         val serverManager = entryPoints.serverManager()
         val glanceManager = getGlanceManager(context)
         val appWidgetId = glanceManager.getAppWidgetId(glanceId)
-        val dao = entryPoints.dao()
+        val dao = entryPoints.todoDao()
+
+        Timber.d("onAction TODO LIST")
 
         val todoItem = parameters[TOGGLE_KEY]
 
