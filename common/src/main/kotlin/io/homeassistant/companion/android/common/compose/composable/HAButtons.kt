@@ -2,10 +2,14 @@
 
 package io.homeassistant.companion.android.common.compose.composable
 
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -13,21 +17,25 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.RippleConfiguration
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -172,14 +180,19 @@ fun HAFilledButton(
  * Displays a plain button, which is typically a text-only button with no background fill.
  * The button's appearance is determined by the [variant] and the current theme.
  *
+ * Material buttons only support clicks, so this replicates their appearance with a [Surface] and
+ * [Modifier.combinedClickable] to also support long clicks.
+ *
  * [Design Website](https://design.home-assistant.io/#components/ha-button)
  *
  * @param text The text label displayed on the button.
  * @param onClick The lambda function to be executed when the button is clicked.
  * @param modifier Optional [androidx.compose.ui.Modifier] to be applied to the button.
+ * @param onLongClick Optional lambda function to be executed when the button is long clicked.
+ * @param onLongClickLabel Semantic description of the long click action, for accessibility services.
  * @param variant The [ButtonVariant] that determines the button's color scheme. Defaults to [ButtonVariant.PRIMARY].
  * @param enabled Controls the enabled state of the button. When `false`, the button will not be clickable.
- * @param size The size of the button. Defaults to [ButtonSize.LARGE].
+ * @param size The size of the button. Defaults to [ButtonSize.MEDIUM].
  * @param textOverflow How visual overflow should be handled. Defaults to [TextOverflow.Clip].
  * @param maxLines An optional maximum number of lines for the text to span, wrapping if necessary.
  *  If the text exceeds the given number of lines, it will be truncated according to [textOverflow].
@@ -191,6 +204,8 @@ fun HAPlainButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
     variant: ButtonVariant = ButtonVariant.PRIMARY,
     enabled: Boolean = true,
     size: ButtonSize = ButtonSize.MEDIUM,
@@ -202,24 +217,43 @@ fun HAPlainButton(
     val colors = LocalHAColorScheme.current.plainButtonColorsFromVariant(variant)
 
     RippleConfigurationLocalProvider(colors.rippleColor) {
-        TextButton(
-            onClick = onClick,
-            enabled = enabled,
-            colors = colors.buttonColors,
+        Surface(
+            shape = buttonShape,
+            color = if (enabled) colors.buttonColors.containerColor else colors.buttonColors.disabledContainerColor,
+            contentColor = if (enabled) colors.buttonColors.contentColor else colors.buttonColors.disabledContentColor,
             modifier = Modifier
                 .widthIn(max = MaxButtonWidth)
                 .then(modifier)
-                .heightIn(min = size.value),
-            contentPadding = PaddingValues.Zero,
-            shape = buttonShape,
+                .heightIn(min = size.value)
+                // Applied by the clickable Surface of the Material buttons, so apply it here
+                // too for consistent sizing
+                .minimumInteractiveComponentSize()
+                .clip(buttonShape)
+                .combinedClickable(
+                    enabled = enabled,
+                    role = Role.Button,
+                    onLongClickLabel = onLongClickLabel,
+                    onLongClick = onLongClick,
+                    onClick = onClick,
+                ),
         ) {
-            ButtonContent(
-                text = text,
-                prefix = prefix,
-                suffix = suffix,
-                textOverflow = textOverflow,
-                maxLines = maxLines,
-            )
+            Row(
+                // Same minimum content size as the Material buttons
+                modifier = Modifier.defaultMinSize(
+                    minWidth = ButtonDefaults.MinWidth,
+                    minHeight = ButtonDefaults.MinHeight,
+                ),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ButtonContent(
+                    text = text,
+                    prefix = prefix,
+                    suffix = suffix,
+                    textOverflow = textOverflow,
+                    maxLines = maxLines,
+                )
+            }
         }
     }
 }
