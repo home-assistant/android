@@ -341,19 +341,6 @@ class SettingsFragment(
             }
         }
 
-        findPreference<Preference>("changelog_github")?.let {
-            val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL")) {
-                "https://github.com/home-assistant/android/releases"
-            } else {
-                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace(
-                    "-full",
-                    "",
-                ).replace("-minimal", "")}"
-            }
-            it.summary = link
-            it.intent = Intent(Intent.ACTION_VIEW, link.toUri())
-        }
-
         findPreference<Preference>("changelog_prompt")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {
                 replace(R.id.content, ChangelogFragment::class.java, null)

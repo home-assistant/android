@@ -15,8 +15,12 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 internal val currentChangelog = Changelog(
     new = listOf(
         ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_assistant_volume,
+            contentRes = commonR.string.changelog_entry_assistant_volume_sensor,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE, ChangelogPlatform.WEAR),
+        ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_assistant_volume_command,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
     ),
     improved = listOf(

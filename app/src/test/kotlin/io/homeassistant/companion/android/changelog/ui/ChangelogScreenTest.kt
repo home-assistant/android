@@ -52,7 +52,7 @@ internal class ChangelogScreenTest {
                 category = ChangelogCategory.NEW,
                 entries = listOf(
                     ChangelogEntry(
-                        contentRes = commonR.string.changelog_entry_entity_widgets,
+                        contentRes = commonR.string.changelog_entry_bug_fixes,
                         platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.WEAR),
                         action = action,
                     ),
@@ -60,9 +60,6 @@ internal class ChangelogScreenTest {
             ),
         ),
     )
-
-    /** The rendered plain text of [commonR.string.changelog_entry_entity_widgets] once the HTML is parsed. */
-    private val entryText = "Modernized settings for entity widgets"
 
     private fun setContent(action: ChangelogAction? = null) {
         composeTestRule.setContent {
@@ -80,7 +77,7 @@ internal class ChangelogScreenTest {
 
         composeTestRule.apply {
             onNodeWithText(VERSION_NAME).assertIsDisplayed()
-            onNodeWithText(entryText).assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.changelog_entry_bug_fixes)).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.changelog_category_new).uppercase()).assertIsDisplayed()
             onNodeWithText(
                 activity.getString(
@@ -89,8 +86,7 @@ internal class ChangelogScreenTest {
                 ),
             ).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.changelog_platform_wear)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.changelog_subtitle_platforms), substring = true)
-                .assertIsDisplayed()
+            onNodeWithText(stringResource(commonR.string.changelog_show_full_changelog)).assertIsDisplayed()
         }
     }
 
@@ -99,7 +95,7 @@ internal class ChangelogScreenTest {
         val action = ChangelogAction.OpenUrl(ACTION_URL)
         setContent(action = action)
 
-        composeTestRule.onNodeWithText(entryText).performClick()
+        composeTestRule.apply { onNodeWithText(stringResource(commonR.string.changelog_entry_bug_fixes)).performClick() }
 
         assertEquals(listOf<ChangelogAction>(action), clickedActions)
     }
@@ -108,7 +104,7 @@ internal class ChangelogScreenTest {
     fun `Given entry without action when tapping it then nothing happens`() {
         setContent()
 
-        composeTestRule.onNodeWithText(entryText).performClick()
+        composeTestRule.apply { onNodeWithText(stringResource(commonR.string.changelog_entry_bug_fixes)).performClick() }
 
         assertTrue(clickedActions.isEmpty())
     }

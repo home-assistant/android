@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.changelog.ui
 
+import android.content.ClipData
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,17 +8,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -29,16 +29,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withLink
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.changelog.ChangelogAction
@@ -49,8 +51,10 @@ import io.homeassistant.companion.android.changelog.ChangelogUiState
 import io.homeassistant.companion.android.changelog.ChangelogViewModel
 import io.homeassistant.companion.android.changelog.currentChangelog
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HALabel
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.composable.HAVerticalDivider
 import io.homeassistant.companion.android.common.compose.composable.LabelSize
@@ -60,6 +64,7 @@ import io.homeassistant.companion.android.common.compose.theme.HASize
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import kotlinx.coroutines.launch
 
 /**
  * Displays what changed in the current app version, for the app itself and its Wear OS and
@@ -131,10 +136,12 @@ internal fun ChangelogContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
         ) {
-            ChangelogHeader(
-                versionName = uiState.versionName,
-                releaseUrl = uiState.releaseUrl,
-                onActionClick = onActionClick,
+            Text(
+                text = uiState.versionName,
+                style = HATextStyle.Headline.copy(textAlign = TextAlign.Start),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = HADimens.SPACE4),
             )
             uiState.sections.forEach { section ->
                 ChangelogSectionContent(
@@ -143,6 +150,11 @@ internal fun ChangelogContent(
                     onActionClick = onActionClick,
                 )
             }
+            ShowFullChangelog(
+                releaseUrl = uiState.releaseUrl,
+                onActionClick = onActionClick,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
         }
 
         HAAccentButton(
@@ -157,37 +169,27 @@ internal fun ChangelogContent(
 }
 
 @Composable
-private fun ColumnScope.ChangelogHeader(
-    versionName: String,
+private fun ShowFullChangelog(
     releaseUrl: String,
     onActionClick: (ChangelogAction) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Text(
-        text = versionName,
-        style = HATextStyle.Headline.copy(textAlign = TextAlign.Start),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = HADimens.SPACE4),
-    )
+    val clipboard = LocalClipboard.current
+    val coroutineScope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
 
-    val linkStyles = HATextStyle.Link
-    val subtitle = buildAnnotatedString {
-        append(stringResource(commonR.string.changelog_subtitle_platforms))
-        append(" · ")
-        withLink(
-            LinkAnnotation.Url(
-                url = releaseUrl,
-                styles = linkStyles,
-                linkInteractionListener = { onActionClick(ChangelogAction.OpenUrl(releaseUrl)) },
-            ),
-        ) {
-            append(stringResource(commonR.string.changelog_release_notes))
-        }
-    }
-    Text(
-        text = subtitle,
-        style = HATextStyle.UserInput,
-        modifier = Modifier.fillMaxWidth(),
+    HAPlainButton(
+        text = stringResource(commonR.string.changelog_show_full_changelog),
+        size = ButtonSize.SMALL,
+        onClick = { onActionClick(ChangelogAction.OpenUrl(releaseUrl)) },
+        onLongClickLabel = stringResource(commonR.string.changelog_copy_release_url),
+        onLongClick = {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            coroutineScope.launch {
+                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(releaseUrl, releaseUrl)))
+            }
+        },
+        modifier = modifier,
     )
 }
 
@@ -197,38 +199,36 @@ private fun ColumnScope.ChangelogSectionContent(
     currentPlatform: ChangelogPlatform,
     onActionClick: (ChangelogAction) -> Unit,
 ) {
+    val sectionMarkerSize = HASize.X2S
+    val sectionMarkerSpacing = HADimens.SPACE2
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
+        horizontalArrangement = Arrangement.spacedBy(sectionMarkerSpacing),
         modifier = Modifier.padding(top = HADimens.SPACE4),
     ) {
         Box(
             modifier = Modifier
-                .size(HASize.X2S)
+                .size(sectionMarkerSize)
                 .background(color = section.category.markerColor(LocalHAColorScheme.current), shape = CircleShape),
         )
         Text(
-            text = stringResource(section.category.labelRes).uppercase(),
+            text = stringResource(section.category.labelRes),
             style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
         )
     }
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
-        // Bound the height to the entries so the divider can fill it
-        modifier = Modifier.height(IntrinsicSize.Min),
-    ) {
-        // As wide as the section marker above, so the divider is centered under it and the
-        // entries align with the section label
-        Box(
-            contentAlignment = Alignment.Center,
+    // A Box instead of a Row with an intrinsic height: intrinsic measurements underestimate the
+    // height of wrapping content (multi line text, flowing tags) on some widths and font metrics,
+    // cutting the end of the last entry. The divider overlays the entries and matches their
+    // height exactly instead.
+    Box {
+        Column(
             modifier = Modifier
-                .width(HASize.X2S)
-                .fillMaxHeight(),
+                .fillMaxWidth()
+                // Aligns the entries with the section label above
+                .padding(start = sectionMarkerSize + sectionMarkerSpacing),
         ) {
-            HAVerticalDivider(modifier = Modifier.fillMaxHeight())
-        }
-        Column {
             section.entries.forEach { entry ->
                 ChangelogEntryContent(
                     entry = entry,
@@ -236,6 +236,16 @@ private fun ColumnScope.ChangelogSectionContent(
                     onActionClick = onActionClick,
                 )
             }
+        }
+        // As wide as the section marker above, so the divider is centered under it
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .matchParentSize()
+                .wrapContentWidth(Alignment.Start)
+                .width(sectionMarkerSize),
+        ) {
+            HAVerticalDivider(modifier = Modifier.fillMaxHeight())
         }
     }
 }

@@ -11,6 +11,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 
 private const val CURRENT_VERSION_CODE = 42
 
@@ -47,16 +49,12 @@ class ChangelogViewModelTest {
         assertEquals("2026.7.6", state.versionName)
     }
 
-    @Test
-    fun `Given phone app when reading state then current platform is app with the authored content`() {
-        val state = createViewModel(isAutomotive = false).uiState.value
+    @ParameterizedTest
+    @EnumSource(ChangelogPlatform::class, names = ["APP", "AUTOMOTIVE"])
+    fun `Given specific platform when reading state then current platform is the specific platform with the authored content`(platform: ChangelogPlatform) {
+        val state = createViewModel(isAutomotive = platform == ChangelogPlatform.AUTOMOTIVE).uiState.value
 
-        assertEquals(ChangelogPlatform.APP, state.currentPlatform)
+        assertEquals(platform, state.currentPlatform)
         assertEquals(currentChangelog.toSections(), state.sections)
-    }
-
-    @Test
-    fun `Given automotive when reading state then current platform is automotive`() {
-        assertEquals(ChangelogPlatform.AUTOMOTIVE, createViewModel(isAutomotive = true).uiState.value.currentPlatform)
     }
 }
