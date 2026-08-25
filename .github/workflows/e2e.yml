@@ -1,6 +1,10 @@
 name: E2E
 
 on: # yamllint disable-line rule:truthy
+  # TOREVERT: temporary trigger to exercise this PR's version of the workflow.
+  pull_request:
+    paths:
+      - .github/workflows/e2e.yml
   schedule:
     # Every morning at 05:00 UTC, on the default branch.
     - cron: "0 5 * * *"
