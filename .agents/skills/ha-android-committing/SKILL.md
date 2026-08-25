@@ -11,7 +11,7 @@ Use this skill when finalizing a change and preparing it for commit or a pull re
 
 1. Format: `./gradlew :build-logic:convention:ktlintFormat ktlintFormat`
 2. Tests: `./gradlew test`
-3. If the change is visible to end users or changes behavior, add it to `app/src/main/kotlin/io/homeassistant/companion/android/changelog/ChangelogContent.kt`.
+3. If the change adds a feature or changes behavior visibly for end users, add it to `app/src/main/kotlin/io/homeassistant/companion/android/changelog/ChangelogContent.kt`. Small bug fixes don't get their own entry — the standing "Bug fixes and dependency updates" entry already covers them.
 4. After adding or updating any dependency (in `gradle/libs.versions.toml` or module declarations), run `./gradlew alldependencies --write-locks`.
 5. Run the `ha-android-review` skill over the diff before handing it off.
 
