@@ -58,9 +58,13 @@ jobs:
 
       - name: Install Maestro CLI
         run: |
-          export MAESTRO_VERSION
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+          curl -fsSL --output "$RUNNER_TEMP/maestro.zip" \
+            "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
+          curl -fsSL --output "$RUNNER_TEMP/checksums_sha256.txt" \
+            "https://github.com/mobile-dev-inc/Maestro/releases/download/cli-${MAESTRO_VERSION}/checksums_sha256.txt"
+          (cd "$RUNNER_TEMP" && grep ' maestro.zip$' checksums_sha256.txt | sha256sum --check -)
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$HOME"
+          echo "$HOME/maestro/bin" >> "$GITHUB_PATH"
 
       # One emulator per supported API level, floored at E2E_MIN_API: on older
       # images the bundled WebView (Chromium 69 on API 26-28) renders the
