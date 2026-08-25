@@ -534,12 +534,15 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
      * reconnection.
      *
      * A collector joining an already active shared subscription misses those initial states, so
-     * on the first diff without a known state the current states are fetched once on the
-     * websocket, which are at least as recent as the diff.
+     * the current states are always fetched before collecting the events. The fetch must not
+     * happen while handling an event: the websocket processes messages sequentially, so
+     * suspending the event delivery on a fetch would deadlock, its response could never be
+     * processed. A diff that still cannot be resolved is dropped, its entity converges again on
+     * its next event.
      */
     private fun Flow<CompressedStateChangedEvent>.toEntityUpdates(entityIds: Set<String>? = null): Flow<Entity> = flow {
         val entities = mutableMapOf<String, Entity>()
-        var seeded = false
+        entities.seedCurrentStates(entityIds)
         collect { event ->
             event.added?.forEach { (entityId, state) ->
                 val entity = state.toEntity(entityId)
@@ -547,15 +550,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 emit(entity)
             }
             event.changed?.forEach { (entityId, diff) ->
-                var entity = entities[entityId]?.applyCompressedStateDiff(diff)
-                if (entity == null && !seeded) {
-                    seeded = entities.seedCurrentStates(entityIds)
-                    // The seeded state is at least as recent as the diff, don't apply it
-                    entity = entities[entityId]
-                }
+                val entity = entities[entityId]?.applyCompressedStateDiff(diff)
                 if (entity != null) {
                     entities[entityId] = entity
                     emit(entity)
+                } else {
+                    Timber.w("Dropping state diff for $entityId without a known state")
                 }
             }
             event.removed?.forEach { entityId ->
@@ -566,20 +566,18 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     /**
      * Seeds with the current state of every subscribed entity, limited to [entityIds]
-     * when not null, fetched on the websocket. Returns whether the fetch succeeded so a failure
-     * can be retried on a later diff.
+     * when not null, fetched on the websocket.
      */
-    private suspend fun MutableMap<String, Entity>.seedCurrentStates(entityIds: Set<String>?): Boolean {
+    private suspend fun MutableMap<String, Entity>.seedCurrentStates(entityIds: Set<String>?) {
         val states = webSocketRepository().getStates() ?: run {
             Timber.w("Unable to fetch the current states to resolve state diffs")
-            return false
+            return
         }
         states.forEach { response ->
             if (entityIds == null || response.entityId in entityIds) {
                 put(response.entityId, response.toEntity())
             }
         }
-        return true
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {

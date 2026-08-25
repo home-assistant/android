@@ -292,6 +292,8 @@ class IntegrationRepositoryImplTest {
         fun setUpWebSocket() {
             coEvery { serverManager.webSocketRepository(serverID) } returns webSocketRepository
             every { server.version } returns HomeAssistantVersion(2022, 4, 0)
+            // The current states are always fetched before collecting the subscription
+            coEvery { webSocketRepository.getStates() } returns emptyList()
         }
 
         private fun compressedState(state: String, attributes: Map<String, Any?> = emptyMap()) = CompressedEntityState(
@@ -330,11 +332,11 @@ class IntegrationRepositoryImplTest {
             assertEquals(listOf("on", "off"), updates.map { it.state })
             // The diff keeps the attributes of the state it applies to
             assertEquals(mapOf<String, Any?>("brightness" to 100), updates[1].attributes)
-            coVerify(exactly = 0) { webSocketRepository.getStates() }
+            coVerify(exactly = 1) { webSocketRepository.getStates() }
         }
 
         @Test
-        fun `Given a collector joining after the initial states when collecting entity updates then the current states are fetched to resolve the diff`() = runTest {
+        fun `Given a collector joining after the initial states when collecting entity updates then the seeded states resolve the diff`() = runTest {
             coEvery { webSocketRepository.getCompressedStateAndChanges() } returns flowOf(changedEvent("off"))
             givenCurrentStatesFetchReturns("off")
 
@@ -354,17 +356,16 @@ class IntegrationRepositoryImplTest {
         }
 
         @Test
-        fun `Given a diff for a removed entity when collecting entity updates then the current states are fetched again`() = runTest {
+        fun `Given a diff for a removed entity when collecting entity updates then the diff is dropped`() = runTest {
             coEvery { webSocketRepository.getCompressedStateAndChanges() } returns flowOf(
                 addedEvent("on"),
                 CompressedStateChangedEvent(removed = listOf(entityId)),
                 changedEvent("off"),
             )
-            givenCurrentStatesFetchReturns("off")
 
             val updates = checkNotNull(repository.getEntityUpdates()).toList()
 
-            assertEquals(listOf("on", "off"), updates.map { it.state })
+            assertEquals(listOf("on"), updates.map { it.state })
             coVerify(exactly = 1) { webSocketRepository.getStates() }
         }
 
