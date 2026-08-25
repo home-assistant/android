@@ -1,9 +1,8 @@
-package io.homeassistant.companion.android.matter.views
+package io.homeassistant.companion.android.matter
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import io.homeassistant.companion.android.matter.MatterCommissioningViewModel
 
-class MatterCommissioningViewPreviewStates :
+class MatterCommissioningScreenPreviewStates :
     PreviewParameterProvider<MatterCommissioningViewModel.CommissioningFlowStep> {
     override val values = sequenceOf(
         MatterCommissioningViewModel.CommissioningFlowStep.NotRegistered,
