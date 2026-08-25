@@ -1,13 +1,21 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl.Companion.PREF_ASK_NOTIFICATION_PERMISSION
+import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.mockk.Runs
@@ -17,7 +25,9 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.spyk
+import java.time.LocalDateTime
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -270,6 +280,148 @@ class IntegrationRepositoryImplTest {
             )
 
             coVerify { spyRepository.registerDevice(any()) }
+        }
+    }
+
+    @Nested
+    inner class EntityUpdates {
+        private val webSocketRepository = mockk<WebSocketRepository>()
+        private val entityId = "light.bed"
+
+        @BeforeEach
+        fun setUpWebSocket() {
+            coEvery { serverManager.webSocketRepository(serverID) } returns webSocketRepository
+            every { server.version } returns HomeAssistantVersion(2022, 4, 0)
+        }
+
+        private fun compressedState(state: String, attributes: Map<String, Any?> = emptyMap()) = CompressedEntityState(
+            state = JsonPrimitive(state),
+            attributes = attributes,
+            lastChanged = 1_700_000_000.0,
+        )
+
+        private fun addedEvent(state: String, attributes: Map<String, Any?> = emptyMap()) = CompressedStateChangedEvent(added = mapOf(entityId to compressedState(state, attributes)))
+
+        private fun changedEvent(state: String) = CompressedStateChangedEvent(
+            changed = mapOf(entityId to CompressedStateDiff(plus = CompressedEntityState(state = JsonPrimitive(state)))),
+        )
+
+        private fun givenCurrentStatesFetchReturns(state: String) {
+            coEvery { webSocketRepository.getStates() } returns listOf(
+                EntityResponse(
+                    entityId = entityId,
+                    state = state,
+                    attributes = emptyMap(),
+                    lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                    lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                ),
+            )
+        }
+
+        @Test
+        fun `Given compressed state changes when collecting entity updates then added entities and resolved diffs are emitted`() = runTest {
+            coEvery { webSocketRepository.getCompressedStateAndChanges() } returns flowOf(
+                addedEvent("on", attributes = mapOf("brightness" to 100)),
+                changedEvent("off"),
+            )
+
+            val updates = checkNotNull(repository.getEntityUpdates()).toList()
+
+            assertEquals(listOf("on", "off"), updates.map { it.state })
+            // The diff keeps the attributes of the state it applies to
+            assertEquals(mapOf<String, Any?>("brightness" to 100), updates[1].attributes)
+            coVerify(exactly = 0) { webSocketRepository.getStates() }
+        }
+
+        @Test
+        fun `Given a collector joining after the initial states when collecting entity updates then the current states are fetched to resolve the diff`() = runTest {
+            coEvery { webSocketRepository.getCompressedStateAndChanges() } returns flowOf(changedEvent("off"))
+            givenCurrentStatesFetchReturns("off")
+
+            val updates = checkNotNull(repository.getEntityUpdates()).toList()
+
+            assertEquals("off", updates.single().state)
+        }
+
+        @Test
+        fun `Given a diff for an unknown entity and a failing states fetch when collecting entity updates then the diff is skipped`() = runTest {
+            coEvery { webSocketRepository.getCompressedStateAndChanges() } returns flowOf(changedEvent("off"))
+            coEvery { webSocketRepository.getStates() } returns null
+
+            val updates = checkNotNull(repository.getEntityUpdates()).toList()
+
+            assertTrue(updates.isEmpty())
+        }
+
+        @Test
+        fun `Given a diff for a removed entity when collecting entity updates then the current states are fetched again`() = runTest {
+            coEvery { webSocketRepository.getCompressedStateAndChanges() } returns flowOf(
+                addedEvent("on"),
+                CompressedStateChangedEvent(removed = listOf(entityId)),
+                changedEvent("off"),
+            )
+            givenCurrentStatesFetchReturns("off")
+
+            val updates = checkNotNull(repository.getEntityUpdates()).toList()
+
+            assertEquals(listOf("on", "off"), updates.map { it.state })
+            coVerify(exactly = 1) { webSocketRepository.getStates() }
+        }
+
+        @Test
+        fun `Given a states fetch when collecting entity updates for ids then only the subscribed entities are kept`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 4, 0)
+            coEvery { webSocketRepository.getCompressedStateAndChanges(listOf(entityId)) } returns flowOf(
+                changedEvent("off"),
+            )
+            coEvery { webSocketRepository.getStates() } returns listOf(
+                EntityResponse(
+                    entityId = entityId,
+                    state = "off",
+                    attributes = emptyMap(),
+                    lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                    lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                ),
+                EntityResponse(
+                    entityId = "light.other",
+                    state = "on",
+                    attributes = emptyMap(),
+                    lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                    lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                ),
+            )
+
+            val updates = checkNotNull(repository.getEntityUpdates(listOf(entityId))).toList()
+
+            assertEquals(listOf(entityId), updates.map { it.entityId })
+        }
+
+        @Test
+        fun `Given compressed state changes when collecting entity updates for ids then the subscription filters without admin rights`() = runTest {
+            every { server.user.isAdmin } returns false
+            coEvery { webSocketRepository.getCompressedStateAndChanges(listOf(entityId)) } returns flowOf(addedEvent("on"))
+
+            val updates = checkNotNull(repository.getEntityUpdates(listOf(entityId))).toList()
+
+            assertEquals("on", updates.single().state)
+        }
+
+        @Test
+        fun `Given an older server when collecting entity updates then state changed events are used`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+            val entity = Entity(
+                entityId = entityId,
+                state = "on",
+                attributes = emptyMap(),
+                lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+            )
+            coEvery { webSocketRepository.getStateChanges() } returns flowOf(StateChangedEvent(entityId, newState = entity))
+
+            val updates = checkNotNull(repository.getEntityUpdates()).toList()
+
+            assertEquals(entity, updates.single())
+            coVerify(exactly = 0) { webSocketRepository.getCompressedStateAndChanges() }
         }
     }
 }
