@@ -40,7 +40,7 @@ jobs:
             --jq '[.artifacts[] | select(.expired == false)] | length > 0')
           echo "available=$available" >> "$GITHUB_OUTPUT"
           if [ "$available" != "true" ]; then
-            echo "::warning::The emulator.wtf inputs from $RUN_URL are no longer available, so instrumentation tests were skipped. Re-run all jobs of that workflow to rebuild them."
+            echo "::error title=Instrumentation tests skipped::The emulator.wtf inputs from $RUN_URL are no longer available. A maintainer needs to re-run all jobs of that workflow to rebuild them."
           fi
 
   emulator_wtf:
