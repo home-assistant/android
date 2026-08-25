@@ -13,12 +13,15 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
+import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -55,8 +58,11 @@ import org.junit.jupiter.params.provider.ValueSource
 class ConnectionViewModelTest {
 
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
+    private val clientCertProvider = object : ClientCertProvider {
+        override val certificate: ClientCertificate? = null
+    }
     private val webViewClientFactory: HAWebViewClientFactory = mockk {
-        every {
+        coEvery {
             create(
                 currentUrlFlow = any<StateFlow<String?>>(),
                 onFrontendError = any(),
@@ -64,9 +70,10 @@ class ConnectionViewModelTest {
                 onUrlIntercepted = any(),
                 onPageFinished = any(),
             )
-        } answers {
+        } coAnswers {
             HAWebViewClient(
                 keyChainRepository = keyChainRepository,
+                clientCertProvider = clientCertProvider,
                 currentUrlFlow = firstArg(),
                 onFrontendError = secondArg(),
                 onCrash = thirdArg(),
@@ -106,7 +113,7 @@ class ConnectionViewModelTest {
 
             assertEquals(expectedAuthUrl, urlFlow.awaitItem())
 
-            viewModel.webViewClient.onPageFinished(mockk(), null)
+            viewModel.getWebViewClient().onPageFinished(mockk(), null)
 
             assertFalse(isLoadingFlow.awaitItem())
             errorFlow.expectNoEvents()
@@ -173,9 +180,9 @@ class ConnectionViewModelTest {
 
             assertNull(errorFlow.awaitItem())
 
-            viewModel.webViewClient.isTLSClientAuthNeeded = requireMTLS
+            viewModel.getWebViewClient().isTLSClientAuthNeeded = requireMTLS
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
                 null,
                 stringUri,
             )
@@ -207,9 +214,9 @@ class ConnectionViewModelTest {
 
             // Landing page redirects the WebView to the core on a new port, same host.
             // Port 80 is http's default, so the normalized stored URL drops it.
-            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+            viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:80/onboarding")
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -234,9 +241,9 @@ class ConnectionViewModelTest {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
             // Same IPv6 host, new port: the produced origin must keep the brackets to stay a valid URL
-            viewModel.webViewClient.onPageFinished(null, "http://[::1]:80/onboarding")
+            viewModel.getWebViewClient().onPageFinished(null, "http://[::1]:80/onboarding")
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -260,9 +267,9 @@ class ConnectionViewModelTest {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
             // A redirect that downgrades https -> http on the same host must be ignored
-            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:80/onboarding")
+            viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:80/onboarding")
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -286,9 +293,9 @@ class ConnectionViewModelTest {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
             // An upgrade http -> https on the same host is allowed and adopted
-            viewModel.webViewClient.onPageFinished(null, "https://homeassistant.local/onboarding")
+            viewModel.getWebViewClient().onPageFinished(null, "https://homeassistant.local/onboarding")
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -312,9 +319,9 @@ class ConnectionViewModelTest {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
             // A redirect to a different host must NOT change the stored URL
-            viewModel.webViewClient.onPageFinished(null, "http://other.local:80/onboarding")
+            viewModel.getWebViewClient().onPageFinished(null, "http://other.local:80/onboarding")
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -337,7 +344,7 @@ class ConnectionViewModelTest {
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -360,7 +367,7 @@ class ConnectionViewModelTest {
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -386,11 +393,11 @@ class ConnectionViewModelTest {
 
             // Several hops on the same host; the last one wins. The final port is non-default,
             // so it is kept explicitly in the stored URL.
-            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:8123/")
-            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:80/onboarding")
-            viewModel.webViewClient.onPageFinished(null, "http://homeassistant.local:8080/onboarding")
+            viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:8123/")
+            viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:80/onboarding")
+            viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:8080/onboarding")
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -410,7 +417,7 @@ class ConnectionViewModelTest {
 
             assertNull(errorFlow.awaitItem())
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
                 null,
                 stringUri,
             )
@@ -438,7 +445,7 @@ class ConnectionViewModelTest {
 
             assertNull(errorFlow.awaitItem())
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
                 null,
                 stringUri,
             )
@@ -464,7 +471,7 @@ class ConnectionViewModelTest {
 
             assertNull(errorFlow.awaitItem())
 
-            val result = viewModel.webViewClient.shouldOverrideUrlLoading(
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
                 null,
                 stringUri,
             )
@@ -552,7 +559,7 @@ class ConnectionViewModelTest {
         }
 
         // When
-        viewModel.webViewClient.onReceivedError(
+        viewModel.getWebViewClient().onReceivedError(
             webView,
             request,
             mockk<WebResourceError> {

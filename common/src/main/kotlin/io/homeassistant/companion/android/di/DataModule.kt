@@ -17,11 +17,11 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
+import io.homeassistant.companion.android.common.data.keychain.ClientCertificateManager
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositoryImpl
+import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
@@ -70,21 +70,13 @@ internal abstract class DataModule {
         fun providesRealDataSourceFactory(
             @ApplicationContext appContext: Context,
             okHttpClientProvider: SuspendProvider<OkHttpClient>,
-            @NamedKeyChain keyChainRepository: KeyChainRepository,
-            @NamedKeyStore keyStoreRepository: KeyChainRepository,
+            clientCertificateManager: ClientCertificateManager,
         ): SuspendProvider<DataSource.Factory> = SuspendProvider {
+            val clientCert = clientCertificateManager.getClientCertProvider()
             MtlsAwareDataSourceFactory(
                 context = appContext,
                 okHttpClient = okHttpClientProvider(),
-                usesMtls = {
-                    val keyChainHasClientCert =
-                        keyChainRepository.getPrivateKey() != null &&
-                            !keyChainRepository.getCertificateChain().isNullOrEmpty()
-                    val keyStoreHasClientCert =
-                        keyStoreRepository.getPrivateKey() != null &&
-                            !keyStoreRepository.getCertificateChain().isNullOrEmpty()
-                    keyChainHasClientCert || keyStoreHasClientCert
-                },
+                usesMtls = { clientCert.certificate != null },
             )
         }
 
@@ -172,13 +164,11 @@ internal abstract class DataModule {
 
     @Binds
     @Singleton
-    @NamedKeyChain
     internal abstract fun bindKeyChainRepository(keyChainRepository: KeyChainRepositoryImpl): KeyChainRepository
 
     @Binds
     @Singleton
-    @NamedKeyStore
-    internal abstract fun bindKeyStore(keyStore: KeyStoreRepositoryImpl): KeyChainRepository
+    internal abstract fun bindKeyStoreRepository(keyStoreRepository: KeyStoreRepositoryImpl): KeyStoreRepository
 
     @Multibinds
     abstract fun bindOkHttpClientConfigurator(): Set<@JvmSuppressWildcards OkHttpConfigurator>

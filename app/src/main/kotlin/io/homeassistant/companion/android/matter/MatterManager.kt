@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.matter
 
 import android.content.IntentSender
+import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 
 interface MatterManager {
@@ -25,6 +26,23 @@ interface MatterManager {
          * resolving the request. The caller should surface a user-facing error.
          */
         data class Error(val cause: Throwable) : CommissioningResult
+    }
+
+    /**
+     * Terminal outcome of the platform commissioning request launched from
+     * [CommissioningResult.Ready.intentSender], derived from its `ActivityResult` by
+     * [parseCommissioningIntentResult].
+     */
+    sealed interface CommissioningRequestResult {
+
+        /**
+         * The device was commissioned. [deviceName] is the name the user entered during the
+         * platform request, or `null` when none was provided.
+         */
+        data class Success(val deviceName: String?) : CommissioningRequestResult
+
+        /** The request was cancelled by the user or failed before the device was commissioned. */
+        data object Failed : CommissioningRequestResult
     }
 
     /**
@@ -64,4 +82,10 @@ interface MatterManager {
      * @return [MatterCommissionResponse], or `null` if it wasn't possible to complete the request.
      */
     suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse?
+
+    /**
+     * Interpret the `ActivityResult` of the commissioning flow launched from
+     * [CommissioningResult.Ready.intentSender].
+     */
+    fun parseCommissioningIntentResult(result: ActivityResult): CommissioningRequestResult
 }

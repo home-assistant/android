@@ -32,7 +32,7 @@ import androidx.wear.compose.material3.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -56,7 +56,7 @@ fun MainView(
     onNavigationClicked: (
         entityIdLists: Map<String, List<String>>,
         listOrder: List<String>,
-        filter: (Entity) -> Boolean,
+        filter: (EntityDisplay) -> Boolean,
     ) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
@@ -85,7 +85,7 @@ fun MainView(
                 if (expandedFavorites) {
                     items(favoriteEntityIds.size) { index ->
                         val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
-                        if (uiState.entities.isEmpty()) {
+                        if (uiState.displayItems.isEmpty()) {
                             // when we don't have the state of the entity, create a Chip from cache as we don't have the state yet
                             val cached = uiState.favoriteCaches.find { it.id == favoriteEntityID }
                             Button(
@@ -99,7 +99,7 @@ fun MainView(
                                 },
                                 label = {
                                     Text(
-                                        text = cached?.friendlyName ?: favoriteEntityID,
+                                        text = cached?.name ?: favoriteEntityID,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis,
                                     )
@@ -117,7 +117,7 @@ fun MainView(
                                 colors = getFilledTonalButtonColors(),
                             )
                         } else {
-                            uiState.entities[favoriteEntityID]?.let {
+                            uiState.displayItems[favoriteEntityID]?.let {
                                 EntityUi(
                                     it,
                                     onEntityClicked,
@@ -181,7 +181,7 @@ fun MainView(
                         }
                     }
                     MainViewModel.LoadingState.READY -> {
-                        if (uiState.entities.isEmpty()) {
+                        if (uiState.displayItems.isEmpty()) {
                             item {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
@@ -213,7 +213,7 @@ fun MainView(
                                 ListHeader(id = commonR.string.areas)
                             }
                             for (area in uiState.areas) {
-                                val areaEntityIds = uiState.entitiesByArea[area.areaId]
+                                val areaEntityIds = uiState.entitiesByArea[area]
                                 val entitiesToShow = areaEntityIds?.filter { entityId ->
                                     entityId !in entitiesWithCategory &&
                                         entityId !in entitiesHidden
@@ -222,11 +222,11 @@ fun MainView(
                                     item {
                                         Button(
                                             modifier = Modifier.fillMaxWidth(),
-                                            label = { Text(area.name) },
+                                            label = { Text(area) },
                                             onClick = {
                                                 onNavigationClicked(
-                                                    mapOf(area.name to areaEntityIds),
-                                                    listOf(area.name),
+                                                    mapOf(area to areaEntityIds),
+                                                    listOf(area),
                                                 ) {
                                                     it.entityId !in entitiesWithCategory &&
                                                         it.entityId !in entitiesHidden
@@ -276,7 +276,7 @@ fun MainView(
                             Spacer(modifier = Modifier.height(32.dp))
                         }
                         // All entities regardless of area
-                        if (uiState.entities.isNotEmpty()) {
+                        if (uiState.displayItems.isNotEmpty()) {
                             item {
                                 Button(
                                     modifier = Modifier

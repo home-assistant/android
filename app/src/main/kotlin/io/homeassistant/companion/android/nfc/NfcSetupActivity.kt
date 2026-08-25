@@ -36,7 +36,8 @@ class NfcSetupActivity : BaseActivity() {
 
     companion object {
         private const val EXTRA_TAG_VALUE = "tag_value"
-        private const val EXTRA_MESSAGE_ID = "message_id"
+
+        private const val EXTRA_MESSAGE_ID = "io.homeassistant.companion.android.extra.MESSAGE_ID"
 
         const val NAV_WELCOME = "nfc_welcome"
         const val NAV_READ = "nfc_read"

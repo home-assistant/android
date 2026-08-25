@@ -77,7 +77,6 @@ object HATextStyle {
         )
 
     val Button
-        @Composable
         get() = TextStyle(
             fontStyle = FontStyle.Normal,
             fontSize = HAFontSize.M,
