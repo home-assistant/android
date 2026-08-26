@@ -1,16 +1,21 @@
 package io.homeassistant.companion.android.assist.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -97,9 +102,16 @@ private const val MIC_RIPPLE_START_ALPHA = 0.5f
 
 private const val BUBBLE_ENTER_DURATION_MS = 220
 
+// A text input adds the user message and the response placeholder at once, so the list anchor can
+// lag at most two items behind the newest message while it is still at the bottom.
+private const val SCROLL_SNAP_ITEM_THRESHOLD = 2
+
 private const val TYPING_DOT_COUNT = 3
-private const val TYPING_DOT_PULSE_DURATION_MS = 300
-private const val TYPING_DOT_MIN_ALPHA = 0.3f
+private const val TYPING_DOT_CYCLE_DURATION_MS = 1500
+private const val TYPING_DOT_PULSE_DURATION_MS = 600
+private const val TYPING_DOT_STAGGER_MS = 150
+private const val TYPING_DOT_MIN_ALPHA = 0.4f
+private const val TYPING_DOT_MIN_SCALE = 0.75f
 
 /**
  * Modal bottom sheet hosting the Assist conversation: a header with the pipeline selector, the
@@ -312,16 +324,52 @@ private fun pipelineDisplayName(pipeline: AssistUiPipeline, showServerName: Bool
 @Composable
 private fun AssistConversation(conversation: List<AssistMessage>, modifier: Modifier = Modifier) {
     val lazyListState = rememberLazyListState()
-    LaunchedEffect(conversation.size, conversation.lastOrNull()?.message?.length) {
-        lazyListState.animateScrollToItem(conversation.size)
+    LaunchedEffect(conversation.size) {
+        if (conversation.isEmpty()) return@LaunchedEffect
+        // At the bottom the position is corrected instantly so that only the enter and placement
+        // animations play; when the user scrolled up, the new message is brought into view with a
+        // scroll animation instead.
+        if (lazyListState.firstVisibleItemIndex <= SCROLL_SNAP_ITEM_THRESHOLD) {
+            lazyListState.scrollToItem(0)
+        } else {
+            lazyListState.animateScrollToItem(0)
+        }
     }
 
+    // Enter transitions are hoisted out of the lazy items: state remembered inside an item is lost
+    // whenever the item leaves composition (scrolled away, or the sheet resizing), which would
+    // replay the animation on messages that were already shown. In inspection mode (previews and
+    // screenshot tests) bubbles start visible, otherwise the static frame would capture them
+    // before they animated in.
+    val startVisible = LocalInspectionMode.current
+    val enterTransitions = remember { mutableMapOf<Int, MutableTransitionState<Boolean>>() }
+    LaunchedEffect(conversation.size) {
+        enterTransitions.keys.removeAll { it >= conversation.size }
+    }
+
+    // The reversed list is anchored to its bottom edge, so while the newest bubble grows (the
+    // typing indicator being replaced by the response, or streaming updates) the end of the
+    // message stays visible without having to coordinate scrolling with the size animation.
+    // Keys stay the message's index in [conversation] so they are stable when messages are added.
+    val reversedConversation = conversation.asReversed()
     LazyColumn(
         state = lazyListState,
+        reverseLayout = true,
         modifier = modifier.padding(vertical = HADimens.SPACE4),
     ) {
-        itemsIndexed(conversation, key = { index, _ -> index }) { _, message ->
-            SpeechBubble(message = message, modifier = Modifier.animateItem())
+        itemsIndexed(reversedConversation, key = { index, _ -> conversation.lastIndex - index }) { index, message ->
+            SpeechBubble(
+                message = message,
+                enterTransition = enterTransitions.getOrPut(conversation.lastIndex - index) {
+                    MutableTransitionState(startVisible).apply { targetState = true }
+                },
+                // The placement animation matches the enter animation of the new bubble, so a new
+                // message and the older messages it pushes up move in lockstep.
+                modifier = Modifier.animateItem(
+                    fadeInSpec = null,
+                    placementSpec = tween(BUBBLE_ENTER_DURATION_MS),
+                ),
+            )
         }
     }
 }
@@ -486,7 +534,11 @@ private fun AssistMicrophoneButton(isActive: Boolean, onClick: () -> Unit, modif
 }
 
 @Composable
-private fun SpeechBubble(message: AssistMessage, modifier: Modifier = Modifier) {
+private fun SpeechBubble(
+    message: AssistMessage,
+    modifier: Modifier = Modifier,
+    enterTransition: MutableTransitionState<Boolean> = remember { MutableTransitionState(true) },
+) {
     val colorScheme = LocalHAColorScheme.current
     val isInput = message.isInput
     val backgroundColor = when {
@@ -500,15 +552,10 @@ private fun SpeechBubble(message: AssistMessage, modifier: Modifier = Modifier) 
         else -> colorScheme.colorTextPrimary
     }
 
-    // Animate each bubble in once, when it first appears in the conversation.
-    // In inspection mode (previews and screenshot tests) start visible, otherwise the static
-    // frame would capture the bubble before it animated in.
-    val startVisible = LocalInspectionMode.current
-    val enterTransition = remember { MutableTransitionState(startVisible).apply { targetState = true } }
     AnimatedVisibility(
         visibleState = enterTransition,
         enter = fadeIn(tween(BUBBLE_ENTER_DURATION_MS)) +
-            slideInVertically(tween(BUBBLE_ENTER_DURATION_MS)) { it / 2 },
+            slideInVertically(tween(BUBBLE_ENTER_DURATION_MS)) { it },
         modifier = modifier,
     ) {
         Row(
@@ -533,15 +580,28 @@ private fun SpeechBubble(message: AssistMessage, modifier: Modifier = Modifier) 
                             bottomEnd = if (isInput) HARadius.S else HARadius.XL,
                         ),
                     )
+                    .animateContentSize(tween(BUBBLE_ENTER_DURATION_MS))
                     .padding(horizontal = HADimens.SPACE3, vertical = HADimens.SPACE2),
             ) {
-                if (message.isPlaceholder) {
-                    TypingIndicator(color = contentColor)
-                } else {
-                    Text(
-                        text = message.message,
-                        style = HATextStyle.Body.copy(textAlign = TextAlign.Start, color = contentColor),
-                    )
+                // animateContentSize on the bubble animates its size for both the placeholder to
+                // response swap and streaming text updates, so the AnimatedContent SizeTransform
+                // is disabled to not animate the size twice.
+                AnimatedContent(
+                    targetState = message.isPlaceholder,
+                    transitionSpec = {
+                        (fadeIn(tween(BUBBLE_ENTER_DURATION_MS)) togetherWith fadeOut(tween(BUBBLE_ENTER_DURATION_MS)))
+                            .using(null)
+                    },
+                    label = "bubbleContent",
+                ) { isPlaceholder ->
+                    if (isPlaceholder) {
+                        TypingIndicator(color = contentColor)
+                    } else {
+                        Text(
+                            text = message.message,
+                            style = HATextStyle.Body.copy(textAlign = TextAlign.Start, color = contentColor),
+                        )
+                    }
                 }
             }
         }
@@ -549,8 +609,8 @@ private fun SpeechBubble(message: AssistMessage, modifier: Modifier = Modifier) 
 }
 
 /**
- * Three dots pulsing one after the other, shown while waiting for the other side of the
- * conversation, mirroring the typing indicator on iOS.
+ * Three dots scaling and fading one after the other, with a rest between cycles, shown while
+ * waiting for the other side of the conversation.
  */
 @Composable
 private fun TypingIndicator(color: Color, modifier: Modifier = Modifier) {
@@ -561,20 +621,29 @@ private fun TypingIndicator(color: Color, modifier: Modifier = Modifier) {
         modifier = modifier.heightIn(min = HADimens.SPACE6),
     ) {
         repeat(TYPING_DOT_COUNT) { index ->
-            val alpha by transition.animateFloat(
-                initialValue = TYPING_DOT_MIN_ALPHA,
-                targetValue = 1f,
+            val pulseStart = index * TYPING_DOT_STAGGER_MS
+            val progress by transition.animateFloat(
+                initialValue = 0f,
+                targetValue = 0f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(TYPING_DOT_PULSE_DURATION_MS * TYPING_DOT_COUNT),
-                    repeatMode = RepeatMode.Reverse,
-                    initialStartOffset = StartOffset(index * TYPING_DOT_PULSE_DURATION_MS),
+                    animation = keyframes {
+                        durationMillis = TYPING_DOT_CYCLE_DURATION_MS
+                        0f at pulseStart
+                        1f at pulseStart + TYPING_DOT_PULSE_DURATION_MS / 2
+                        0f at pulseStart + TYPING_DOT_PULSE_DURATION_MS
+                    },
                 ),
-                label = "typingDotAlpha$index",
+                label = "typingDot$index",
             )
             Box(
                 modifier = Modifier
                     .size(HASize.X2S)
-                    .graphicsLayer { this.alpha = alpha }
+                    .graphicsLayer {
+                        alpha = TYPING_DOT_MIN_ALPHA + (1f - TYPING_DOT_MIN_ALPHA) * progress
+                        val scale = TYPING_DOT_MIN_SCALE + (1f - TYPING_DOT_MIN_SCALE) * progress
+                        scaleX = scale
+                        scaleY = scale
+                    }
                     .background(color = color, shape = CircleShape),
             )
         }
