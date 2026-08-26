@@ -3,7 +3,9 @@ package io.homeassistant.companion.android.common.data.integration.display
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.LayoutDirection
 import com.mikepenz.iconics.typeface.IIcon
+import io.homeassistant.companion.android.common.data.integration.CameraControls
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
+import io.homeassistant.companion.android.common.data.integration.CoverControls
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityCoordinates
 import io.homeassistant.companion.android.common.data.integration.EntityPosition
@@ -11,18 +13,27 @@ import io.homeassistant.companion.android.common.data.integration.FanControls
 import io.homeassistant.companion.android.common.data.integration.FriendlyState
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains
 import io.homeassistant.companion.android.common.data.integration.LightControls
+import io.homeassistant.companion.android.common.data.integration.MediaPlayerControls
+import io.homeassistant.companion.android.common.data.integration.NumberControls
+import io.homeassistant.companion.android.common.data.integration.VacuumControls
+import io.homeassistant.companion.android.common.data.integration.deviceClass
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
+import io.homeassistant.companion.android.common.data.integration.getCameraControls
 import io.homeassistant.companion.android.common.data.integration.getClimateControls
 import io.homeassistant.companion.android.common.data.integration.getColorTemperature
 import io.homeassistant.companion.android.common.data.integration.getCoordinates
+import io.homeassistant.companion.android.common.data.integration.getCoverControls
 import io.homeassistant.companion.android.common.data.integration.getCoverPosition
 import io.homeassistant.companion.android.common.data.integration.getFanSpeed
 import io.homeassistant.companion.android.common.data.integration.getFanSteps
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.getLightBrightness
 import io.homeassistant.companion.android.common.data.integration.getLightColor
+import io.homeassistant.companion.android.common.data.integration.getMediaPlayerControls
+import io.homeassistant.companion.android.common.data.integration.getNumberControls
 import io.homeassistant.companion.android.common.data.integration.getStatelessIcon
+import io.homeassistant.companion.android.common.data.integration.getVacuumControls
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
@@ -95,6 +106,24 @@ interface EntityDisplay {
     /** Controls of the entity, null when it is not a climate one. */
     val climateControls: ClimateControls?
 
+    /** Value range of the entity, null when it is not a number one. */
+    val numberControls: NumberControls?
+
+    /** Volume control of the entity, null when it is not a media player. */
+    val mediaPlayerControls: MediaPlayerControls?
+
+    /** Controls of the entity, null when it is not a cover. */
+    val coverControls: CoverControls?
+
+    /** Controls of the entity, null when it is not a vacuum. */
+    val vacuumControls: VacuumControls?
+
+    /** Controls of the entity, null when it is not a camera. */
+    val cameraControls: CameraControls?
+
+    /** The `device_class` of the entity, null when it has none. */
+    val deviceClass: String?
+
     /**
      * When the state of the entity last changed.
      *
@@ -133,6 +162,12 @@ data class EntityDisplayWithoutContext(
     override val fanControls: FanControls? = null,
     override val lightControls: LightControls? = null,
     override val climateControls: ClimateControls? = null,
+    override val numberControls: NumberControls? = null,
+    override val mediaPlayerControls: MediaPlayerControls? = null,
+    override val coverControls: CoverControls? = null,
+    override val vacuumControls: VacuumControls? = null,
+    override val cameraControls: CameraControls? = null,
+    override val deviceClass: String? = null,
     override val lastChanged: LocalDateTime? = null,
     override val lastUpdated: LocalDateTime? = null,
     override val isHidden: Boolean = false,
@@ -170,6 +205,12 @@ data class EntityDisplayWithoutContext(
         fanControls = entity.fanControls(),
         lightControls = entity.lightControls(),
         climateControls = entity.getClimateControls(),
+        numberControls = entity.getNumberControls(),
+        mediaPlayerControls = entity.getMediaPlayerControls(),
+        coverControls = entity.getCoverControls(),
+        vacuumControls = entity.getVacuumControls(),
+        cameraControls = entity.getCameraControls(),
+        deviceClass = entity.deviceClass(),
         lastChanged = entity.lastChanged,
         lastUpdated = entity.lastUpdated,
         isHidden = isHidden,
