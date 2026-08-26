@@ -32,6 +32,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
@@ -179,7 +180,13 @@ private fun ServerUrlTextField(
                 color = LocalHAColorScheme.current.colorOnNeutralNormal,
             )
         },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        // Uri keyboard without autocorrection: keyboards with aggressive autocorrect rewrite
+        // hostnames while they are typed (e.g. homeassistant.internal to home assistant.internal)
+        keyboardOptions = KeyboardOptions(
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Uri,
+            imeAction = ImeAction.Done,
+        ),
         keyboardActions = KeyboardActions(
             onDone = {
                 focusRequester.freeFocus()
