@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.developer.nfc
 
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.nfc.NFCUtil
 import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -29,7 +30,12 @@ class DebugNfcTagEmulatorServiceTest {
 
     @Before
     fun setup() {
-        DebugNfcTagEmulatorState.setTagId(TAG_ID)
+        setTag(TAG_ID)
+    }
+
+    /** Sets the emulated content to the largest message the app writes for [tagId]. */
+    private fun setTag(tagId: String) {
+        DebugNfcTagEmulatorState.setTagMessage(NFCUtil.createTagMessages(NFCUtil.createTagUrl(tagId)).first())
     }
 
     private fun readBinary(offset: Int, length: Int) = service.processCommandApdu(
@@ -76,9 +82,9 @@ class DebugNfcTagEmulatorServiceTest {
         assertArrayEquals(STATUS_OK, service.processCommandApdu(SELECT_NDEF_FILE, null))
 
         // Write a new NDEF message for another tag id like a real writer would: content then length
-        DebugNfcTagEmulatorState.setTagId("placeholder")
+        setTag("placeholder")
         val newContent = DebugNfcTagEmulatorState.read(0, DebugNfcTagEmulatorState.MAX_NDEF_FILE_SIZE)
-        DebugNfcTagEmulatorState.setTagId(TAG_ID)
+        setTag(TAG_ID)
 
         val messageLength = ((newContent[0].toInt() and 0xFF) shl 8) or (newContent[1].toInt() and 0xFF)
         assertArrayEquals(STATUS_OK, updateBinary(offset = 2, data = newContent.copyOfRange(2, 2 + messageLength)))
@@ -114,7 +120,7 @@ class DebugNfcTagEmulatorServiceTest {
 
     @Test
     fun `Given a too long tag id when set then the content reports it instead of crashing`() {
-        DebugNfcTagEmulatorState.setTagId("x".repeat(DebugNfcTagEmulatorState.MAX_NDEF_FILE_SIZE))
+        setTag("x".repeat(DebugNfcTagEmulatorState.MAX_NDEF_FILE_SIZE))
 
         assertTrue(DebugNfcTagEmulatorState.content.value.summary.contains("too large"))
     }
