@@ -129,6 +129,8 @@ private const val TYPING_DOT_MIN_SCALE = 0.75f
  * @param onMicrophoneInput Invoked when the user taps the microphone button.
  * @param onHide Invoked when the user dismisses the sheet.
  * @param bottomSheetState State of the sheet, exposed so tests can provide an already expanded state.
+ * @param initialInputText Initial content of the text input, exposed so screenshots can capture a
+ * filled field.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,6 +148,7 @@ fun AssistSheet(
     onHide: () -> Unit,
     modifier: Modifier = Modifier,
     bottomSheetState: SheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true),
+    initialInputText: String = "",
 ) {
     HAModalBottomSheet(
         bottomSheetState = bottomSheetState,
@@ -164,6 +167,7 @@ fun AssistSheet(
             onChangeInput = onChangeInput,
             onTextInput = onTextInput,
             onMicrophoneInput = onMicrophoneInput,
+            initialInputText = initialInputText,
         )
     }
 }
@@ -180,6 +184,7 @@ private fun AssistSheetContent(
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
     onMicrophoneInput: () -> Unit,
+    initialInputText: String,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -206,6 +211,7 @@ private fun AssistSheetContent(
             onChangeInput = onChangeInput,
             onTextInput = onTextInput,
             onMicrophoneInput = onMicrophoneInput,
+            initialInputText = initialInputText,
         )
         Spacer(modifier = Modifier.height(HADimens.SPACE2))
     }
@@ -380,6 +386,7 @@ private fun AssistSheetControls(
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
     onMicrophoneInput: () -> Unit,
+    initialInputText: String,
     modifier: Modifier = Modifier,
 ) = Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()) {
     if (inputMode == null) { // Pipeline info has not yet loaded, empty space for now
@@ -404,6 +411,7 @@ private fun AssistSheetControls(
             focusRequester = focusRequester,
             onChangeInput = onChangeInput,
             onTextInput = onTextInput,
+            initialInputText = initialInputText,
         )
     } else {
         AssistVoiceInput(
@@ -420,8 +428,9 @@ private fun RowScope.AssistTextInput(
     focusRequester: FocusRequester,
     onChangeInput: () -> Unit,
     onTextInput: (String) -> Unit,
+    initialInputText: String,
 ) {
-    var text by rememberSaveable { mutableStateOf("") }
+    var text by rememberSaveable { mutableStateOf(initialInputText) }
     val submit = {
         if (text.isNotBlank()) {
             onTextInput(text)
@@ -479,30 +488,7 @@ private fun AssistMicrophoneButton(isActive: Boolean, onClick: () -> Unit, modif
         contentAlignment = Alignment.Center,
     ) {
         if (isActive) {
-            val transition = rememberInfiniteTransition(label = "micRipples")
-            repeat(MIC_RIPPLE_COUNT) { index ->
-                val progress by transition.animateFloat(
-                    initialValue = 0f,
-                    targetValue = 1f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(MIC_RIPPLE_DURATION_MS, easing = LinearEasing),
-                        repeatMode = RepeatMode.Restart,
-                        initialStartOffset = StartOffset(index * MIC_RIPPLE_DURATION_MS / MIC_RIPPLE_COUNT),
-                    ),
-                    label = "micRipple$index",
-                )
-                Box(
-                    modifier = Modifier
-                        .size(MIC_BUTTON_SIZE)
-                        .graphicsLayer {
-                            val scale = 1f + (MIC_RIPPLE_MAX_SCALE - 1f) * progress
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = MIC_RIPPLE_START_ALPHA * (1f - progress)
-                        }
-                        .background(color = colorScheme.colorFillPrimaryLoudResting, shape = CircleShape),
-                )
-            }
+            MicrophoneRipples()
         }
         val buttonBackground = if (isActive) {
             Modifier.background(color = colorScheme.colorFillPrimaryLoudResting, shape = CircleShape)
@@ -530,6 +516,44 @@ private fun AssistMicrophoneButton(isActive: Boolean, onClick: () -> Unit, modif
                 modifier = Modifier.size(MIC_ICON_SIZE),
             )
         }
+    }
+}
+
+/**
+ * Ripples expanding and fading out from behind the microphone button while it is listening.
+ */
+@Composable
+private fun MicrophoneRipples(modifier: Modifier = Modifier) {
+    val colorScheme = LocalHAColorScheme.current
+    // In inspection mode (previews and screenshot tests) the ripples are drawn at fixed points of
+    // the cycle, otherwise the static frame would capture them at their invisible start.
+    val transition = if (LocalInspectionMode.current) null else rememberInfiniteTransition(label = "micRipples")
+    repeat(MIC_RIPPLE_COUNT) { index ->
+        val progress = if (transition == null) {
+            remember { mutableStateOf((index + 1f) / (MIC_RIPPLE_COUNT + 1)) }
+        } else {
+            transition.animateFloat(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(MIC_RIPPLE_DURATION_MS, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                    initialStartOffset = StartOffset(index * MIC_RIPPLE_DURATION_MS / MIC_RIPPLE_COUNT),
+                ),
+                label = "micRipple$index",
+            )
+        }
+        Box(
+            modifier = modifier
+                .size(MIC_BUTTON_SIZE)
+                .graphicsLayer {
+                    val scale = 1f + (MIC_RIPPLE_MAX_SCALE - 1f) * progress.value
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = MIC_RIPPLE_START_ALPHA * (1f - progress.value)
+                }
+                .background(color = colorScheme.colorFillPrimaryLoudResting, shape = CircleShape),
+        )
     }
 }
 

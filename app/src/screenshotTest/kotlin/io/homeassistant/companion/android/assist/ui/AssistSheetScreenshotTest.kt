@@ -90,6 +90,27 @@ class AssistSheetScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
+    fun `Assist text only input without voice support`() {
+        AssistSheetScreenshot(
+            conversation = shortConversation,
+            inputMode = AssistInputMode.TEXT_ONLY,
+        )
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `Assist text input with entered text`() {
+        AssistSheetScreenshot(
+            conversation = shortConversation,
+            inputMode = AssistInputMode.TEXT,
+            initialInputText = "Turn off the lights",
+        )
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
     fun `Assist text input with pipelines from multiple servers`() {
         AssistSheetScreenshot(
             conversation = shortConversation,
@@ -159,6 +180,7 @@ class AssistSheetScreenshotTest {
         pipelines: List<AssistUiPipeline> = singleServerPipelines,
         currentPipeline: AssistUiPipeline? = singleServerPipelines.first(),
         fromFrontend: Boolean = true,
+        initialInputText: String = "",
     ) {
         HAThemeForPreview(modifier = Modifier.fillMaxSize()) {
             AssistSheet(
@@ -182,6 +204,7 @@ class AssistSheetScreenshotTest {
                         initialValue = SheetValue.Expanded,
                     )
                 },
+                initialInputText = initialInputText,
             )
         }
     }
