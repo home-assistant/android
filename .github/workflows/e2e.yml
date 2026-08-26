@@ -94,7 +94,7 @@ jobs:
 
       - name: Start Home Assistant
         id: homeassistant
-        uses: ludeeus/setup-homeassistant@27c93bb42c944a9973941bd05d32b3a451017073 # main
+        uses: ludeeus/setup-homeassistant@c326e6e244b4bc92cf61579165051122a008fef7 # main
         with:
           tag: ${{ env.E2E_HOME_ASSISTANT_VERSION }}
           config-dir: .github/e2e/homeassistant
