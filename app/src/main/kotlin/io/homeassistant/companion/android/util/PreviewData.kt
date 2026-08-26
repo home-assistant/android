@@ -13,7 +13,6 @@ val notificationItem = NotificationItem(1, 1636389288682, "testing", "{\"message
 val wearDeviceName = "Device Name"
 
 val attributes: Map<String, *> = mapOf(
-    "friendly_name" to "Testing",
     "icon" to "mdi:cellphone",
 )
 

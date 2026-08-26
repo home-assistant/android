@@ -162,17 +162,49 @@ data class ClimateControls(
     val targetTemperature: Float?,
     val targetTemperatureStep: Float?,
     val hvacAction: String?,
+    val minTemperature: Float?,
+    val maxTemperature: Float?,
+    val temperatureUnit: String?,
+    val hvacModes: List<String>,
+    val supportsTargetTemperature: Boolean,
 )
+
+/** Value range of a number entity, resolved from its state and attributes. */
+@Immutable
+data class NumberControls(val range: EntityPosition, val step: Float)
+
+/** Volume control of a media player entity, [volume] null when it cannot be set. */
+@Immutable
+data class MediaPlayerControls(val volume: EntityPosition?, val volumeStep: Float)
+
+/** Controls of a cover entity, [position] null when it is not set. */
+@Immutable
+data class CoverControls(val position: EntityPosition?, val supportsSetPosition: Boolean)
+
+/** Controls of a vacuum entity. */
+@Immutable
+data class VacuumControls(val supportsTurnOn: Boolean)
+
+/**
+ * Controls of a camera entity. [entityPicturePath] updates when the camera is controlled, like
+ * taking a snapshot of a live stream or refreshing.
+ */
+@Immutable
+data class CameraControls(val entityPicturePath: String?)
 
 object EntityExt {
     const val TAG = "EntityExt"
 
+    const val CLIMATE_SUPPORT_TARGET_TEMPERATURE = 1
+    const val CLIMATE_SUPPORT_TARGET_TEMPERATURE_RANGE = 2
+    const val COVER_SUPPORT_SET_POSITION = 4
     const val FAN_SUPPORT_SET_SPEED = 1
     const val LIGHT_MODE_COLOR_TEMP = "color_temp"
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
+    const val VACUUM_SUPPORT_TURN_ON = 1
 
     val DOMAINS_PRESS = listOf("button", "input_button")
     val DOMAINS_TOGGLE = listOf(
@@ -298,16 +330,7 @@ fun Entity.getCoverPosition(): EntityPosition? {
     }
 }
 
-fun Entity.supportsFanSetSpeed(): Boolean {
-    return try {
-        if (domain != FAN_DOMAIN) return false
-        (attributes["supported_features"] as Number).toInt() and
-            EntityExt.FAN_SUPPORT_SET_SPEED == EntityExt.FAN_SUPPORT_SET_SPEED
-    } catch (e: Exception) {
-        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsFanSetSpeed")
-        false
-    }
-}
+fun Entity.supportsFanSetSpeed(): Boolean = domain == FAN_DOMAIN && supportsFeature(EntityExt.FAN_SUPPORT_SET_SPEED)
 
 fun Entity.getFanSpeed(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-fan.js#L48
@@ -365,9 +388,7 @@ fun Entity.supportsLightBrightness(): Boolean {
             } else {
                 (supportedColorModes - EntityExt.LIGHT_MODE_NO_BRIGHTNESS_SUPPORT.toSet()).isNotEmpty()
             }
-        val supportedFeatures = (attributes["supported_features"] as Number).toInt()
-        supportsBrightness ||
-            (supportedFeatures and EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR == EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR)
+        supportsBrightness || supportsFeature(EntityExt.LIGHT_SUPPORT_BRIGHTNESS_DEPR)
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsLightBrightness")
         false
@@ -411,9 +432,7 @@ fun Entity.supportsLightColorTemperature(): Boolean {
             attributes["supported_color_modes"] as? List<String>
         val supportsColorTemp =
             supportedColorModes?.contains(EntityExt.LIGHT_MODE_COLOR_TEMP) == true
-        val supportedFeatures = (attributes["supported_features"] as Number).toInt()
-        supportsColorTemp ||
-            (supportedFeatures and EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR == EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR)
+        supportsColorTemp || supportsFeature(EntityExt.LIGHT_SUPPORT_COLOR_TEMP_DEPR)
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsLightColorTemperature")
         false
@@ -452,6 +471,13 @@ fun Entity.getCoordinates(): EntityCoordinates? {
 
 private fun Entity.floatAttributeOrNull(name: String): Float? = (attributes[name] as? Number)?.toFloat()
 
+/**
+ * Whether the entity reports any bit of [feature] in its `supported_features` bitmask, like the
+ * frontend `supportsFeature` does.
+ */
+internal fun Entity.supportsFeature(feature: Int): Boolean =
+    ((attributes["supported_features"] as? Number)?.toInt() ?: 0) and feature != 0
+
 /** Controls of a climate entity, null when the entity is not a climate one. */
 fun Entity.getClimateControls(): ClimateControls? {
     if (domain != CLIMATE_DOMAIN) return null
@@ -465,8 +491,73 @@ fun Entity.getClimateControls(): ClimateControls? {
         targetTemperature = numberAttributeOrNull("temperature"),
         targetTemperatureStep = numberAttributeOrNull("target_temp_step"),
         hvacAction = attributes["hvac_action"]?.toString(),
+        minTemperature = numberAttributeOrNull("min_temp"),
+        maxTemperature = numberAttributeOrNull("max_temp"),
+        temperatureUnit = attributes["temperature_unit"]?.toString(),
+        hvacModes = (attributes["hvac_modes"] as? List<*>)?.filterIsInstance<String>().orEmpty(),
+        supportsTargetTemperature = supportsFeature(
+            EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE or EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE_RANGE,
+        ),
     )
 }
+
+/** Value range of a number or input_number entity, null for other domains. */
+fun Entity.getNumberControls(): NumberControls? {
+    if (domain != "number" && domain != "input_number") return null
+
+    return NumberControls(
+        range = EntityPosition(
+            value = state.toFloatOrNull() ?: 0f,
+            min = floatAttributeOrNull("min") ?: 0f,
+            max = floatAttributeOrNull("max") ?: 1f,
+        ),
+        step = floatAttributeOrNull("step") ?: 1f,
+    )
+}
+
+/** Volume control of a media player entity, null for other domains. */
+fun Entity.getMediaPlayerControls(): MediaPlayerControls? {
+    if (domain != MEDIA_PLAYER_DOMAIN) return null
+
+    return MediaPlayerControls(
+        volume = if (supportsVolumeSet()) getVolumeLevel() else null,
+        volumeStep = getVolumeStep(),
+    )
+}
+
+/** Controls of a cover entity, null for other domains. */
+fun Entity.getCoverControls(): CoverControls? {
+    if (domain != COVER_DOMAIN) return null
+
+    return CoverControls(
+        position = getCoverPosition(),
+        supportsSetPosition = supportsFeature(EntityExt.COVER_SUPPORT_SET_POSITION),
+    )
+}
+
+/** Controls of a vacuum entity, null for other domains. */
+fun Entity.getVacuumControls(): VacuumControls? {
+    if (domain != "vacuum") return null
+
+    return VacuumControls(
+        supportsTurnOn = supportsFeature(EntityExt.VACUUM_SUPPORT_TURN_ON),
+    )
+}
+
+/** Controls of a camera entity, null for other domains. */
+fun Entity.getCameraControls(): CameraControls? {
+    if (domain != CAMERA_DOMAIN) return null
+
+    return CameraControls(
+        entityPicturePath = entityPicturePath(),
+    )
+}
+
+/** The `device_class` attribute of the entity, or null when it has none. */
+fun Entity.deviceClass(): String? = attributes["device_class"] as? String
+
+/** The `entity_picture` attribute of the entity, or null when it has none or it is blank. */
+fun Entity.entityPicturePath(): String? = (attributes["entity_picture"] as? String)?.takeIf { it.isNotBlank() }
 
 fun Entity.getLightColor(): Int? {
     // https://github.com/home-assistant/frontend/blob/dev/src/panels/lovelace/cards/hui-light-card.ts#L243
@@ -487,16 +578,8 @@ fun Entity.getLightColor(): Int? {
     }
 }
 
-fun Entity.supportsVolumeSet(): Boolean {
-    return try {
-        if (domain != MEDIA_PLAYER_DOMAIN) return false
-        (attributes["supported_features"] as Number).toInt() and
-            EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET == EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
-    } catch (e: Exception) {
-        Timber.tag(EntityExt.TAG).e(e, "Unable to get supportsVolumeSet")
-        false
-    }
-}
+fun Entity.supportsVolumeSet(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    supportsFeature(EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET)
 
 fun Entity.getVolumeLevel(): EntityPosition? {
     return try {
@@ -1057,7 +1140,7 @@ suspend fun onEntityPressedWithoutState(entityId: String, integrationRepository:
     "The friendly name is no longer used for display, as it ignores the entity registry. Resolve the " +
         "display name with EntitiesForDisplayManager, which reads it from EntityDisplay.name.",
 )
-val Entity.friendlyName: String
+internal val Entity.friendlyName: String
     get() = attributes["friendly_name"]?.toString()?.takeIf { it.isNotBlank() } ?: entityId
 
 /**
