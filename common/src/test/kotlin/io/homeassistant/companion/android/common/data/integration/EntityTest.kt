@@ -436,4 +436,24 @@ class EntityTest {
             assertNull(entity.entityPicturePath())
         }
     }
+
+    @Nested
+    inner class CompressedEntityStateToEntity {
+        @Test
+        fun `Given a compressed entity state without lastUpdated when converting to an entity then lastUpdated falls back to lastChanged`() {
+            val compressed = CompressedEntityState(
+                state = JsonPrimitive("on"),
+                attributes = mapOf("brightness" to 128),
+                lastChanged = newDateTimeEpoch,
+            )
+
+            val entity = compressed.toEntity("light.bed")
+
+            assertEquals("light.bed", entity.entityId)
+            assertEquals("on", entity.state)
+            assertEquals(mapOf<String, Any?>("brightness" to 128), entity.attributes)
+            assertEquals(newDateTime, entity.lastChanged)
+            assertEquals(newDateTime, entity.lastUpdated)
+        }
+    }
 }
