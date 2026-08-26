@@ -596,9 +596,9 @@ class LocationSensorManager @Inject constructor(
 
             if (!forceHighAccuracyModeOn && !forceHighAccuracyModeOff) {
                 if (!needHighAccuracyMode) {
-                    Timber.d("High accuracy mode disabled, because not in zone $highAccuracyExpZones")
+                    Timber.d("High accuracy mode disabled, because not in high accuracy zone")
                 } else {
-                    Timber.d("High accuracy mode enabled, because in zone $highAccuracyExpZones")
+                    Timber.d("High accuracy mode enabled, because in zone high accuracy zone")
                 }
             }
         }
