@@ -762,7 +762,9 @@ class LocationSensorManager @Inject constructor(
                 logLocationUpdate(location, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             } else {
                 HighAccuracyLocationService.updateNotificationAddress(applicationContext, location)
-                updateNeedHighAccuracyMode(location)
+                ioScope.launch {
+                    updateNeedHighAccuracyMode(location)
+                }
                 // Send new location to Home Assistant
                 serverIds.forEach {
                     ioScope.launch { sendLocationUpdate(location, it, trigger) }
@@ -873,7 +875,9 @@ class LocationSensorManager @Inject constructor(
             )
             requestSingleAccurateLocation()
         } else {
-            updateNeedHighAccuracyMode(geofencingEvent.triggeringLocation!!)
+            ioScope.launch {
+                updateNeedHighAccuracyMode(geofencingEvent.triggeringLocation!!)
+            }
             getEnabledServers(zoneLocation).forEach {
                 ioScope.launch { sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger) }
             }
