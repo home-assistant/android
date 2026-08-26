@@ -532,16 +532,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
      * against the last known state of each entity. The full states the subscription sends when it
      * starts are emitted too, so collectors also converge back to the server state after a
      * reconnection.
-     *
-     * A collector joining an already active shared subscription misses those initial states, so
-     * the current states are always fetched before collecting the events. The fetch must not
-     * happen while handling an event: the websocket processes messages sequentially, so
-     * suspending the event delivery on a fetch would deadlock, its response could never be
-     * processed. A diff that still cannot be resolved is dropped, its entity converges again on
-     * its next event.
      */
     private fun Flow<CompressedStateChangedEvent>.toEntityUpdates(entityIds: Set<String>? = null): Flow<Entity> = flow {
         val entities = mutableMapOf<String, Entity>()
+        // Seed before collecting: a collector joining an already active shared subscription missed
+        // its initial full states, and fetching while handling an event would deadlock because the
+        // websocket processes messages sequentially, so the fetch response could never arrive.
         entities.seedCurrentStates(entityIds)
         collect { event ->
             event.added?.forEach { (entityId, state) ->
@@ -555,6 +551,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     entities[entityId] = entity
                     emit(entity)
                 } else {
+                    // The entity converges again on its next full state event.
                     Timber.w("Dropping state diff for $entityId without a known state")
                 }
             }

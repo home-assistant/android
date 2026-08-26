@@ -302,7 +302,9 @@ class IntegrationRepositoryImplTest {
             lastChanged = 1_700_000_000.0,
         )
 
-        private fun addedEvent(state: String, attributes: Map<String, Any?> = emptyMap()) = CompressedStateChangedEvent(added = mapOf(entityId to compressedState(state, attributes)))
+        private fun addedEvent(state: String, attributes: Map<String, Any?> = emptyMap()) = CompressedStateChangedEvent(
+            added = mapOf(entityId to compressedState(state, attributes)),
+        )
 
         private fun changedEvent(state: String) = CompressedStateChangedEvent(
             changed = mapOf(entityId to CompressedStateDiff(plus = CompressedEntityState(state = JsonPrimitive(state)))),
@@ -371,7 +373,6 @@ class IntegrationRepositoryImplTest {
 
         @Test
         fun `Given a states fetch when collecting entity updates for ids then only the subscribed entities are kept`() = runTest {
-            every { server.version } returns HomeAssistantVersion(2022, 4, 0)
             coEvery { webSocketRepository.getCompressedStateAndChanges(listOf(entityId)) } returns flowOf(
                 changedEvent("off"),
             )
