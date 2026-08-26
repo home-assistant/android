@@ -24,7 +24,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.PowerManager
 import android.provider.Settings
 import android.view.KeyEvent
 import android.widget.RemoteViews
@@ -96,6 +95,8 @@ import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
+import io.homeassistant.companion.android.util.ScreenOffAdminRequestActivity
+import io.homeassistant.companion.android.util.ScreenOffHelper
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
@@ -131,6 +132,7 @@ class MessagingManager @Inject constructor(
     private val settingsDao: SettingsDao,
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
+    private val screenOffHelper: ScreenOffHelper,
     private val permissionRequestMediator: PermissionRequestMediator,
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
@@ -186,6 +188,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_SCREEN_ON = "command_screen_on"
+        const val COMMAND_SCREEN_OFF = "command_screen_off"
         const val COMMAND_MEDIA = "command_media"
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
@@ -247,6 +250,7 @@ class MessagingManager @Inject constructor(
             COMMAND_ACTIVITY,
             COMMAND_WEBVIEW,
             COMMAND_SCREEN_ON,
+            COMMAND_SCREEN_OFF,
             COMMAND_MEDIA,
             DeviceCommandData.COMMAND_UPDATE_SENSORS,
             COMMAND_LAUNCH_APP,
@@ -543,7 +547,7 @@ class MessagingManager @Inject constructor(
                             handleDeviceCommands(jsonData)
                         }
 
-                        COMMAND_SCREEN_ON -> {
+                        COMMAND_SCREEN_ON, COMMAND_SCREEN_OFF -> {
                             handleDeviceCommands(jsonData)
                         }
 
@@ -830,15 +834,39 @@ class MessagingManager @Inject constructor(
                     )
                 }
 
-                val powerManager = context.getSystemService<PowerManager>()
-                val wakeLock = powerManager?.newWakeLock(
-                    PowerManager.FULL_WAKE_LOCK or
-                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                        PowerManager.ON_AFTER_RELEASE,
-                    "HomeAssistant::NotificationScreenOnWakeLock",
-                )
-                wakeLock?.acquire(1 * 30 * 1000L) // 30 seconds
-                wakeLock?.release()
+                screenOffHelper.turnScreenOn()
+            }
+
+            COMMAND_SCREEN_OFF -> {
+                if (context.isAutomotive()) {
+                    // Automotive has no device admin settings, so the screen can never be
+                    // turned off; tell the user instead of failing silently
+                    Timber.w("$COMMAND_SCREEN_OFF is not supported on this device")
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            context,
+                            context.getString(commonR.string.screen_off_unsupported),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                } else if (screenOffHelper.isSecureKeyguardSet()) {
+                    // The command refuses to lock a device behind credentials, so requesting
+                    // the device admin would ask for an invasive permission that can never be
+                    // used; tell the user why instead
+                    Timber.w("$COMMAND_SCREEN_OFF is not available with a secure lock screen")
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            context,
+                            context.getString(commonR.string.screen_off_secure_keyguard),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                } else if (!screenOffHelper.canTurnScreenOff()) {
+                    notifyMissingPermission(type = message, serverId = serverId)
+                } else if (!screenOffHelper.turnScreenOff()) {
+                    Timber.d("Unable to turn the screen off, posting notification to device")
+                    sendNotification(data)
+                }
             }
 
             COMMAND_MEDIA -> {
@@ -1801,6 +1829,13 @@ class MessagingManager @Inject constructor(
         context.startActivity(intent)
     }
 
+    private fun requestDeviceAdminPermission() {
+        // The activation screen only opens from an activity, see ScreenOffAdminRequestActivity
+        val intent = ScreenOffAdminRequestActivity.newInstance(context)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
+    }
+
     private fun requestNotificationPermission() {
         val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -2129,6 +2164,8 @@ class MessagingManager @Inject constructor(
                     } else {
                         when (type) {
                             COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> requestSystemAlertPermission()
+
+                            COMMAND_SCREEN_OFF -> requestDeviceAdminPermission()
 
                             COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> requestDNDPermission()
 
