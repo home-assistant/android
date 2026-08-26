@@ -15,6 +15,12 @@ import androidx.core.content.IntentCompat
 import io.homeassistant.companion.android.BuildConfig
 import java.io.IOException
 
+/**
+ * A candidate NDEF [message] for a Home Assistant NFC tag, with a human readable [name]
+ * describing which application records it includes.
+ */
+data class TagMessage(val name: String, val message: NdefMessage)
+
 object NFCUtil {
     fun extractUrlFromNFCIntent(intent: Intent): Uri? {
         if (intent.action != NfcAdapter.ACTION_NDEF_DISCOVERED && intent.action != NfcAdapter.ACTION_TECH_DISCOVERED) {
@@ -42,7 +48,7 @@ object NFCUtil {
      * largest to smallest (fewer or no application records), so callers should write the first
      * message that fits on the tag.
      */
-    fun createTagMessages(url: String): List<NdefMessage> {
+    fun createTagMessages(url: String): List<TagMessage> {
         val nfcRecord = NdefRecord.createUri(url)
         val applicationFlavorsRecords = BuildConfig.APPLICATION_IDS.map {
             NdefRecord.createApplicationRecord(it)
@@ -50,9 +56,12 @@ object NFCUtil {
         val thisApplicationRecord = NdefRecord.createApplicationRecord(BuildConfig.APPLICATION_ID)
 
         return listOf(
-            NdefMessage(arrayOf(nfcRecord) + applicationFlavorsRecords),
-            NdefMessage(arrayOf(nfcRecord, thisApplicationRecord)),
-            NdefMessage(arrayOf(nfcRecord)),
+            TagMessage("All flavors", NdefMessage(arrayOf(nfcRecord) + applicationFlavorsRecords)),
+            TagMessage(
+                "Current flavor (${BuildConfig.FLAVOR})",
+                NdefMessage(arrayOf(nfcRecord, thisApplicationRecord)),
+            ),
+            TagMessage("No flavor", NdefMessage(arrayOf(nfcRecord))),
         )
     }
 
@@ -74,7 +83,7 @@ object NFCUtil {
         val nfcMessages = createTagMessages(url)
         intent?.let {
             val tag = IntentCompat.getParcelableExtra(it, NfcAdapter.EXTRA_TAG, Tag::class.java)
-            return writeMessageToTag(nfcMessages, tag)
+            return writeMessageToTag(nfcMessages.map(TagMessage::message), tag)
         }
         return false
     }

@@ -32,6 +32,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
@@ -40,6 +42,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAFontSize
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.nfc.NFCUtil
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 
 /**
@@ -91,6 +94,13 @@ class DebugNfcTagEmulatorActivity : AppCompatActivity() {
 @Composable
 private fun DebugNfcTagEmulatorScreen() {
     var tagId by remember { mutableStateOf("") }
+    val tagMessages =
+        remember(tagId) {
+            tagId.takeIf { it.isNotBlank() }?.let { NFCUtil.createTagMessages(NFCUtil.createTagUrl(it)) }
+        }
+    // The selection is tracked by name so it survives the messages being rebuilt on every tagId change.
+    var selectedName by remember { mutableStateOf<String?>(null) }
+    val selectedTagMessage = tagMessages?.firstOrNull { it.name == selectedName } ?: tagMessages?.firstOrNull()
     val tagContent by DebugNfcTagEmulatorState.content.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
 
@@ -135,10 +145,18 @@ private fun DebugNfcTagEmulatorScreen() {
                     }
                 },
             )
+            HADropdownMenu(
+                items = tagMessages?.map {
+                    HADropdownItem(it, it.name)
+                } ?: emptyList(),
+                selectedKey = selectedTagMessage,
+                onItemSelected = { selectedName = it.name },
+                enabled = tagMessages != null,
+            )
             HAFilledButton(
                 text = "Set emulated NFC tag",
-                enabled = tagId.isNotBlank(),
-                onClick = { DebugNfcTagEmulatorState.setTagId(tagId) },
+                enabled = selectedTagMessage != null,
+                onClick = { selectedTagMessage?.let(DebugNfcTagEmulatorState::setTagMessage) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = HADimens.SPACE4),

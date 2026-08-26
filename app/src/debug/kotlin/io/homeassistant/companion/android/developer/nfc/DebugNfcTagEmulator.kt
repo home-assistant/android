@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.developer.nfc
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.os.Bundle
-import io.homeassistant.companion.android.nfc.NFCUtil
+import io.homeassistant.companion.android.nfc.TagMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,10 +38,10 @@ object DebugNfcTagEmulatorState {
     /** The current tag content, for the Dev Playground. */
     val content: StateFlow<EmulatedTagContent> = _content.asStateFlow()
 
-    /** Replaces the tag content with what the app writes to a real tag for [tagId]. */
+    /** Replaces the tag content with [tagMessage], as the app would write it to a real tag. */
     @Synchronized
-    fun setTagId(tagId: String) {
-        val message = NFCUtil.createTagMessages(NFCUtil.createTagUrl(tagId)).first()
+    fun setTagMessage(tagMessage: TagMessage) {
+        val message = tagMessage.message
         val bytes = message.toByteArray()
         if (bytes.size > MAX_NDEF_FILE_SIZE - 2) {
             Timber.w("Tag message of ${bytes.size} bytes exceeds the emulated file size")
