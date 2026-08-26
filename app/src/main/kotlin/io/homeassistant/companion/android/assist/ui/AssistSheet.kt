@@ -59,6 +59,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -529,20 +530,16 @@ private fun MicrophoneRipples(modifier: Modifier = Modifier) {
     // the cycle, otherwise the static frame would capture them at their invisible start.
     val transition = if (LocalInspectionMode.current) null else rememberInfiniteTransition(label = "micRipples")
     repeat(MIC_RIPPLE_COUNT) { index ->
-        val progress = if (transition == null) {
-            remember { mutableStateOf((index + 1f) / (MIC_RIPPLE_COUNT + 1)) }
-        } else {
-            transition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(MIC_RIPPLE_DURATION_MS, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart,
-                    initialStartOffset = StartOffset(index * MIC_RIPPLE_DURATION_MS / MIC_RIPPLE_COUNT),
-                ),
-                label = "micRipple$index",
-            )
-        }
+        val progress = transition?.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(MIC_RIPPLE_DURATION_MS, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+                initialStartOffset = StartOffset(index * MIC_RIPPLE_DURATION_MS / MIC_RIPPLE_COUNT),
+            ),
+            label = "micRipple$index",
+        ) ?: remember { mutableFloatStateOf((index + 1f) / (MIC_RIPPLE_COUNT + 1)) }
         Box(
             modifier = modifier
                 .size(MIC_BUTTON_SIZE)
