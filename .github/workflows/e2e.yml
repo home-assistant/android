@@ -41,7 +41,7 @@ jobs:
       E2E_HOME_ASSISTANT_URL: http://homeassistant.internal:8123
       E2E_HOME_ASSISTANT_USERNAME: citest
       E2E_HOME_ASSISTANT_PASSWORD: "h7jk99&U"
-      MAESTRO_VERSION: 2.7.0
+      MAESTRO_VERSION: 2.8.0
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
