@@ -7,6 +7,8 @@
     <string name="changelog_entry_assistant_volume_command">Added a notification command to set the &lt;b&gt;assistant volume&lt;/b&gt; (Android 17+)</string>
     <string name="changelog_entry_health_connect">&lt;b&gt;Health Connect&lt;/b&gt; sleep duration now ignores awake and out-of-bed time</string>
     <string name="changelog_entry_entity_widgets">Modernized settings for &lt;b&gt;entity widgets&lt;/b&gt;</string>
+    <string name="changelog_entry_media_player_widgets">Modernized settings for &lt;b&gt;media player widgets&lt;/b&gt;</string>
+    <string name="changelog_entry_matter_commissioning">Modernized adding &lt;b&gt;Matter devices&lt;/b&gt;</string>
     <string name="changelog_entry_tiles">Modernized settings for &lt;b&gt;tiles&lt;/b&gt;</string>
     <string name="changelog_entry_bug_fixes">Bug fixes and dependency updates everywhere</string>
 </resources>
