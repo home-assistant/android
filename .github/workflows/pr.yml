@@ -193,6 +193,9 @@ jobs:
     name: "Screenshot Tests"
     needs: [lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -217,6 +220,65 @@ jobs:
         with:
           test-name: Screenshot test
           job-status: ${{ job.status }}
+
+      - name: Install gh preview build with --attach support
+        # TODO: Remove this step once the runner image ships a gh release with --attach
+        # (https://github.com/cli/cli/issues/13256). The pinned commit is the cli/cli trunk
+        # after the attachment stack landed.
+        continue-on-error: true
+        if: >-
+          failure() &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_CLI_COMMIT: 2c5ff72f937ff1873a4e348bea9e430f1684f4c3
+        run: |
+          if gh pr comment --help | grep -q -- '--attach'; then
+            echo "$(gh --version | head -1) already supports --attach, skipping the preview build"
+            exit 0
+          fi
+          mkdir -p "$RUNNER_TEMP/gh-cli" && cd "$RUNNER_TEMP/gh-cli"
+          git init -q && git remote add origin https://github.com/cli/cli.git
+          git fetch -q --depth 1 origin "$GH_CLI_COMMIT"
+          git checkout -q FETCH_HEAD
+          go build -o "$RUNNER_TEMP/gh-preview/gh" ./cmd/gh
+          echo "$RUNNER_TEMP/gh-preview" >> "$GITHUB_PATH"
+
+      - name: Comment failing screenshots on the PR
+        # The GITHUB_TOKEN of pull requests from forks is read-only and cannot comment.
+        if: >-
+          failure() &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if ! gh pr comment --help | grep -q -- '--attach'; then
+            echo "::notice::$(gh --version | head -1) does not support --attach yet, skipping the screenshot comment"
+            exit 0
+          fi
+
+          BODY="$RUNNER_TEMP/screenshot-comment.md"
+          IMAGE_DIR="$RUNNER_TEMP/screenshot-diffs"
+          python3 .github/scripts/collect_screenshot_failures.py "$IMAGE_DIR" "$BODY"
+          if [ ! -f "$BODY" ]; then
+            exit 0
+          fi
+
+          attach_args=()
+          for image in "$IMAGE_DIR"/*.png; do
+            [ -f "$image" ] && attach_args+=(--attach "$image")
+          done
+
+          # Replace the comment from a previous run instead of stacking new ones.
+          gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+            --jq '.[] | select(.body | contains("<!-- screenshot-test-diffs -->")) | .id' |
+            while read -r comment_id; do
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id"
+            done
+
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file "$BODY" "${attach_args[@]}"
 
   pr_build:
     needs: [lockfiles, ktlint]
