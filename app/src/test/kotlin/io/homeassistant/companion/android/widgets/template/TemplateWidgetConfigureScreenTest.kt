@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -141,7 +142,7 @@ class TemplateWidgetConfigureScreenTest {
     fun `Given screen when typing a template then onTemplateChanged is triggered`() {
         composeTestRule.apply {
             testScreen(singleServerState) {
-                onNodeWithText(activity.getString(commonR.string.template), substring = true)
+                onNodeWithText(activity.getString(commonR.string.template))
                     .performTextInput("{{ 1 }}")
                 assertEquals("{{ 1 }}", template)
             }
@@ -154,7 +155,7 @@ class TemplateWidgetConfigureScreenTest {
             testScreen(singleServerState) {
                 onNodeWithText(activity.getString(commonR.string.widget_text_size_label), substring = true)
                     .performScrollTo()
-                    .performTextInput("24")
+                    .performTextReplacement("24")
                 assertEquals("24", textSize)
             }
         }
