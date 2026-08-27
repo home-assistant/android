@@ -1136,28 +1136,36 @@ class LocationSensorManager @Inject constructor(
      * Sets [needHighAccuracyMode] from GPS: true when the location is inside an expanded
      * high-accuracy fence but not yet inside the inner zone.
      */
-    private suspend fun updateNeedHighAccuracyMode(location: Location) {
+private suspend fun updateNeedHighAccuracyMode(location: Location) {
+    kotlinx.coroutines.withContext(Dispatchers.IO) {
+        val previousNeedHighAccuracyMode = needHighAccuracyMode
+
         val triggerRange = getHighAccuracyModeTriggerRange()
         val highAccuracyZones = getHighAccuracyModeZones(false)
-        
+
         if (triggerRange > 0) {
             for (serverId in getEnabledServers(zoneLocation)) {
-                 for (zone in getZones(serverId)) {
+                for (zone in getZones(serverId)) {
                     val requestId = "${serverId}_${zone.entityId}"
                     if (!highAccuracyZones.contains(requestId)) continue
-                    val inZone = isLocationInZone(location, zone)
-                    if (inZone) continue
-                    val inExpandedZone = isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())
-                    if (!inExpandedZone) continue
+                    if (isLocationInZone(location, zone)) continue
+                    if (!isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())) continue
+
                     needHighAccuracyMode = true
-                    Timber.d("Updated need high accuracy mode from GPS: true, in $requestId")
-                    return
+                    if (!previousNeedHighAccuracyMode) {
+                        Timber.d("Updated need high accuracy mode from GPS: true, in $requestId")
+                    }
+                    return@withContext
                 }
             }
-        }       
+        }
+
         needHighAccuracyMode = false
-        Timber.d("Updated need high accuracy mode from GPS: false")
+        if (previousNeedHighAccuracyMode) {
+            Timber.d("Updated need high accuracy mode from GPS: false")
+        }
     }
+}
 
     private fun isLocationInZone(
         location: Location,
