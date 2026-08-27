@@ -122,7 +122,7 @@ class AssistSheetTest {
     }
 
     @Test
-    fun `Given text input when submitting with the IME action then onTextInput is invoked`() {
+    fun `Given text input when submitting with the IME action then onTextInput is invoked and the field is cleared`() {
         var submittedText: String? = null
         setAssistSheetContent(onTextInput = { submittedText = it })
 
@@ -131,6 +131,8 @@ class AssistSheetTest {
             onNode(hasSetTextAction()).performImeAction()
 
             assertEquals("Turn off the lights", submittedText)
+            // Placeholder should be shown after the ImeAction is over since the message should be in the list.
+            onNodeWithText(stringResource(commonR.string.assist_enter_a_request)).assertIsDisplayed()
         }
     }
 
@@ -191,7 +193,7 @@ class AssistSheetTest {
     }
 
     @Test
-    fun `Given voice active input then the microphone button offers to stop listening`() {
+    fun `Given voice active input when the microphone button is clicked then onMicrophoneInput is invoked`() {
         var microphoneInputCalled = false
         setAssistSheetContent(
             inputMode = AssistInputMode.VOICE_ACTIVE,
@@ -255,7 +257,10 @@ class AssistSheetTest {
             currentPipeline = multiServerPipelines.first(),
         )
 
-        composeTestRule.onNodeWithText("Home: Preferred assistant").assertIsDisplayed()
+        composeTestRule.apply {
+            onNodeWithText("Home: Preferred assistant").assertIsDisplayed().performClick()
+            onNodeWithText("Vacation house: Preferred assistant").assertIsDisplayed()
+        }
     }
 
     @Test

@@ -333,9 +333,7 @@ private fun AssistConversation(conversation: List<AssistMessage>, modifier: Modi
     val lazyListState = rememberLazyListState()
     LaunchedEffect(conversation.size) {
         if (conversation.isEmpty()) return@LaunchedEffect
-        // At the bottom the position is corrected instantly so that only the enter and placement
-        // animations play; when the user scrolled up, the new message is brought into view with a
-        // scroll animation instead.
+        // Only animate scroll when not at the bottom of the list to avoid conflicting animations.
         if (lazyListState.firstVisibleItemIndex <= SCROLL_SNAP_ITEM_THRESHOLD) {
             lazyListState.scrollToItem(0)
         } else {
