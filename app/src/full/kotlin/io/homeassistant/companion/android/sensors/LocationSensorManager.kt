@@ -1140,15 +1140,17 @@ class LocationSensorManager @Inject constructor(
         val triggerRange = getHighAccuracyModeTriggerRange()
         val highAccuracyZones = getHighAccuracyModeZones(false)
         var inExpandedOnly = false
-
-        getEnabledServers(zoneLocation).forEach { serverId ->
-            getZones(serverId).forEach { zone ->
-                val requestId = "${serverId}_${zone.entityId}"
-                val inZone = isLocationInZone(location, zone)
-                if (triggerRange > 0 && highAccuracyZones.contains(requestId)) {
-                    val inExpandedZone = isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())
-                    if (inExpandedZone && !inZone) {
-                        inExpandedOnly = true
+        
+        if (triggerRange > 0) {
+            getEnabledServers(zoneLocation).forEach { serverId ->
+                getZones(serverId).forEach { zone ->
+                    val requestId = "${serverId}_${zone.entityId}"
+                    val inZone = isLocationInZone(location, zone)
+                    if (highAccuracyZones.contains(requestId)) {
+                        val inExpandedZone = isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())
+                        if (inExpandedZone && !inZone) {
+                            inExpandedOnly = true
+                        }
                     }
                 }
             }
