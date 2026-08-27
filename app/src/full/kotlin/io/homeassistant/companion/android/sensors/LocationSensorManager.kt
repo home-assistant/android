@@ -596,9 +596,9 @@ class LocationSensorManager @Inject constructor(
 
             if (!forceHighAccuracyModeOn && !forceHighAccuracyModeOff) {
                 if (!needHighAccuracyMode) {
-                    Timber.d("High accuracy mode disabled, because not in high accuracy zone")
+                    Timber.d("High accuracy mode disabled, because not in zone")
                 } else {
-                    Timber.d("High accuracy mode enabled, because in zone high accuracy zone")
+                    Timber.d("High accuracy mode enabled, because in zone")
                 }
             }
         }
@@ -1142,8 +1142,6 @@ class LocationSensorManager @Inject constructor(
     private suspend fun updateNeedHighAccuracyMode(location: Location) {
         val triggerRange = getHighAccuracyModeTriggerRange()
         val highAccuracyZones = getHighAccuracyModeZones(false)
-        val entered = mutableListOf<String>()
-        val exited = mutableListOf<String>()
         needHighAccuracyMode = false
 
         getEnabledServers(zoneLocation).forEach { serverId ->
