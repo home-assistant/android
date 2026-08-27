@@ -1152,7 +1152,6 @@ class LocationSensorManager @Inject constructor(
                 if (triggerRange > 0 && highAccuracyZones.contains(requestId)) {
                     val expandedRequestId = requestId + EXPANDED_GEOFENCE_SUFFIX
                     val inExpandedZone = isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())
-                    Timber.d("Expanded zone $expandedRequestId is ${if (inExpandedZone) "in" else "out"}side the zone")
                     if (inExpandedZone && !inZone) {
                         needHighAccuracyMode = true
                     }
