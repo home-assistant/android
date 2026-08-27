@@ -1139,26 +1139,24 @@ class LocationSensorManager @Inject constructor(
     private suspend fun updateNeedHighAccuracyMode(location: Location) {
         val triggerRange = getHighAccuracyModeTriggerRange()
         val highAccuracyZones = getHighAccuracyModeZones(false)
-        var inExpandedOnly = false
         
         if (triggerRange > 0) {
-            getEnabledServers(zoneLocation).forEach { serverId ->
-                getZones(serverId).forEach { zone ->
+            for (serverId in getEnabledServers(zoneLocation)) {
+                 for (zone in getZones(serverId)) {
                     val requestId = "${serverId}_${zone.entityId}"
-                    if (highAccuracyZones.contains(requestId)) {
-                        val inZone = isLocationInZone(location, zone)
-                        if (!inZone) {
-                            val inExpandedZone = isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())
-                            if (inExpandedZone) {
-                                inExpandedOnly = true
-                            }
-                        }
-                    }
+                    if (!highAccuracyZones.contains(requestId)) continue
+                    val inZone = isLocationInZone(location, zone)
+                    if (inZone) continue
+                    val inExpandedZone = isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())
+                    if (!inExpandedZone) continue
+                    needHighAccuracyMode = true
+                    Timber.d("Updated need high accuracy mode from GPS: true, in $requestId")
+                    return
                 }
             }
-        }
-        needHighAccuracyMode = inExpandedOnly
-        Timber.d("Updated need high accuracy mode from GPS: $needHighAccuracyMode")
+        }       
+        needHighAccuracyMode = false
+        Timber.d("Updated need high accuracy mode from GPS: false")
     }
 
     private fun isLocationInZone(
