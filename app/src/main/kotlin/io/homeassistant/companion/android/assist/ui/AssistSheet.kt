@@ -354,8 +354,8 @@ private fun AssistConversation(conversation: List<AssistMessage>, modifier: Modi
         enterTransitions.keys.removeAll { it >= conversation.size }
     }
 
-    // The reversed list is anchored to its bottom edge, so while the newest bubble grows (the
-    // typing indicator being replaced by the response, or streaming updates) the end of the
+    // The list is reversed to anchor it to its bottom edge, so that while the newest bubble grows
+    // (typing indicator being replaced by the response, or streaming updates) the end of the
     // message stays visible without having to coordinate scrolling with the size animation.
     // Keys stay the message's index in [conversation] so they are stable when messages are added.
     val reversedConversation = conversation.asReversed()
