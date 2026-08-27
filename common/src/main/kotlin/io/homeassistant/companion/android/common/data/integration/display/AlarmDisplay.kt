@@ -4,6 +4,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Immutable
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.supportsFeature
 
 @VisibleForTesting
 internal const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
@@ -51,14 +52,8 @@ private fun Entity.alarmCanBeArmedWithoutCode(): Boolean {
     return isAlarmControlPanelEntity() && attributes["code_arm_required"] as? Boolean == false
 }
 
-private fun Entity.supportsAlarmControlPanelArmAway(): Boolean {
-    if (!isAlarmControlPanelEntity()) {
-        return false
-    }
-
-    return (attributes["supported_features"] as Int) and
-        ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY == ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY
-}
+private fun Entity.supportsAlarmControlPanelArmAway(): Boolean =
+    isAlarmControlPanelEntity() && supportsFeature(ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY)
 
 private fun Entity.alarmIsDisarmed(): Boolean {
     return isAlarmControlPanelEntity() && state == "disarmed"

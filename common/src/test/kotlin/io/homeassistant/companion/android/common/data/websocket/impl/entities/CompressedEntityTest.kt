@@ -31,10 +31,10 @@ class CompressedEntityTest {
         val lastChanged = 42.0
         val lastUpdated = 41.1
         val attributes = mapOf(
-            "friendly_name" to Random.nextInt().toString(),
+            "dummy" to Random.nextInt().toString(),
             "icon" to Random.nextInt().toString(),
         )
-        val rawData = """{"s":"$state","lc":$lastChanged,"lu":$lastUpdated,"a":{"friendly_name":"${attributes["friendly_name"]}","icon":"${attributes["icon"]}"}}"""
+        val rawData = """{"s":"$state","lc":$lastChanged,"lu":$lastUpdated,"a":{"dummy":"${attributes["dummy"]}","icon":"${attributes["icon"]}"}}"""
         val expected = CompressedEntityState(state = JsonPrimitive(state), attributes = attributes, lastChanged = lastChanged, lastUpdated = lastUpdated)
         assertEquals(expected, kotlinJsonMapper.decodeFromString<CompressedEntityState>(rawData))
     }
