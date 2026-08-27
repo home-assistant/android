@@ -33,18 +33,6 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
                 imageDifferenceThreshold = 0.00025f // 0.025%
             }
 
-            // Screenshot test worker memory grows with test count. Increase as needed.
-            // Tracking: https://issuetracker.google.com/issues/469819154
-            val maxHeapSizeScreenshotTesting = "3g"
-
-            tasks.withType<PreviewScreenshotValidationTask>().configureEach {
-                maxHeapSize = maxHeapSizeScreenshotTesting
-            }
-
-            tasks.withType<PreviewScreenshotUpdateTask>().configureEach {
-                maxHeapSize = maxHeapSizeScreenshotTesting
-            }
-
             androidConfig {
                 dependencies {
                     "implementation"(platform(libs.compose.bom))
