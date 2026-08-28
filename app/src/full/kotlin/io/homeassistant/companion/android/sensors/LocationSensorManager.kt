@@ -775,6 +775,7 @@ class LocationSensorManager @Inject constructor(
                 if (needHighAccuracyMode != previousNeedHighAccuracyMode) {
                     setupBackgroundLocation()
                 }
+            }
         }
     }
 
