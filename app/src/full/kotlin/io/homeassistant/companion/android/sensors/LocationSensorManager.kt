@@ -55,6 +55,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 @Singleton
@@ -169,6 +171,7 @@ class LocationSensorManager @Inject constructor(
         private var lastLocationReceived = mutableMapOf<Int, Long>()
         private var lastUpdateLocation = mutableMapOf<Int, String?>()
 
+        private val zonesMutex = Mutex()
         private var zones = mutableMapOf<Int, List<Entity>>()
         private var zonesLastReceived = mutableMapOf<Int, Long>()
 
@@ -1070,20 +1073,22 @@ class LocationSensorManager @Inject constructor(
     }
 
     private suspend fun getZones(serverId: Int, forceRefresh: Boolean = false): List<Entity> {
-        if (
-            forceRefresh ||
-            zones[serverId].isNullOrEmpty() ||
-            (zonesLastReceived[serverId] ?: 0) < (System.currentTimeMillis() - TimeUnit.HOURS.toMillis(4))
-        ) {
-            try {
-                zones[serverId] = serverManager.integrationRepository(serverId).getZones()
-                zonesLastReceived[serverId] = System.currentTimeMillis()
-            } catch (e: Exception) {
-                Timber.e(e, "Error receiving zones from Home Assistant")
-                if (forceRefresh) zones[serverId] = emptyList()
+        return zonesMutex.withLock {
+            if (
+                forceRefresh ||
+                zones[serverId].isNullOrEmpty() ||
+                (zonesLastReceived[serverId] ?: 0) < (System.currentTimeMillis() - TimeUnit.HOURS.toMillis(4))
+            ) {
+                try {
+                    zones[serverId] = serverManager.integrationRepository(serverId).getZones()
+                    zonesLastReceived[serverId] = System.currentTimeMillis()
+                } catch (e: Exception) {
+                    Timber.e(e, "Error receiving zones from Home Assistant")
+                    if (forceRefresh) zones[serverId] = emptyList()
+                }
             }
+            zones[serverId] ?: emptyList()
         }
-        return zones[serverId] ?: emptyList()
     }
 
     private suspend fun createGeofencingRequest(): GeofencingRequest? {
@@ -1137,33 +1142,31 @@ class LocationSensorManager @Inject constructor(
      * high-accuracy fence but not yet inside the inner zone.
      */
     private suspend fun updateNeedHighAccuracyMode(location: Location) {
-        kotlinx.coroutines.withContext(Dispatchers.IO) {
-            val previousNeedHighAccuracyMode = needHighAccuracyMode
+        val previousNeedHighAccuracyMode = needHighAccuracyMode
 
-            val triggerRange = getHighAccuracyModeTriggerRange()
-            val highAccuracyZones = getHighAccuracyModeZones(false)
+        val triggerRange = getHighAccuracyModeTriggerRange()
+        val highAccuracyZones = getHighAccuracyModeZones(false)
 
-            if (triggerRange > 0) {
-                for (serverId in getEnabledServers(zoneLocation)) {
-                    for (zone in getZones(serverId)) {
-                        val requestId = "${serverId}_${zone.entityId}"
-                        if (!highAccuracyZones.contains(requestId)) continue
-                        if (isLocationInZone(location, zone)) continue
-                        if (!isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())) continue
+        if (triggerRange > 0 && highAccuracyZones.isNotEmpty()) {
+            for (serverId in getEnabledServers(zoneLocation)) {
+                for (zone in getZones(serverId)) {
+                    val requestId = "${serverId}_${zone.entityId}"
+                    if (!highAccuracyZones.contains(requestId)) continue
+                    if (isLocationInZone(location, zone)) continue
+                    if (!isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())) continue
 
-                        needHighAccuracyMode = true
-                        if (!previousNeedHighAccuracyMode) {
-                            Timber.d("Updated need high accuracy mode from GPS: true, in $requestId")
-                        }
-                        return@withContext
+                    needHighAccuracyMode = true
+                    if (!previousNeedHighAccuracyMode) {
+                        Timber.d("Updated need high accuracy mode from GPS: true, in $requestId")
                     }
+                    return
                 }
             }
+        }
 
-            needHighAccuracyMode = false
-            if (previousNeedHighAccuracyMode) {
-                Timber.d("Updated need high accuracy mode from GPS: false")
-            }
+        needHighAccuracyMode = false
+        if (previousNeedHighAccuracyMode) {
+            Timber.d("Updated need high accuracy mode from GPS: false")
         }
     }
 
