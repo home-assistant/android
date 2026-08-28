@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.changelog.ui.ChangelogContent
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
@@ -61,6 +62,7 @@ class ChangelogFragment : Fragment() {
                 startActivity(SettingsActivity.newInstance(requireContext(), action.deeplink))
             is ChangelogAction.OpenWidgetConfig ->
                 startActivity(action.widgetType.toConfigureIntent(requireContext()))
+            ChangelogAction.OpenAssist -> startActivity(AssistActivity.newInstance(requireContext()))
         }
     }
 }
