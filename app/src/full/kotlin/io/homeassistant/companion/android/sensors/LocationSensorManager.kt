@@ -1136,42 +1136,38 @@ class LocationSensorManager @Inject constructor(
      * Sets [needHighAccuracyMode] from GPS: true when the location is inside an expanded
      * high-accuracy fence but not yet inside the inner zone.
      */
-private suspend fun updateNeedHighAccuracyMode(location: Location) {
-    kotlinx.coroutines.withContext(Dispatchers.IO) {
-        val previousNeedHighAccuracyMode = needHighAccuracyMode
+    private suspend fun updateNeedHighAccuracyMode(location: Location) {
+        kotlinx.coroutines.withContext(Dispatchers.IO) {
+            val previousNeedHighAccuracyMode = needHighAccuracyMode
 
-        val triggerRange = getHighAccuracyModeTriggerRange()
-        val highAccuracyZones = getHighAccuracyModeZones(false)
+            val triggerRange = getHighAccuracyModeTriggerRange()
+            val highAccuracyZones = getHighAccuracyModeZones(false)
 
-        if (triggerRange > 0) {
-            for (serverId in getEnabledServers(zoneLocation)) {
-                for (zone in getZones(serverId)) {
-                    val requestId = "${serverId}_${zone.entityId}"
-                    if (!highAccuracyZones.contains(requestId)) continue
-                    if (isLocationInZone(location, zone)) continue
-                    if (!isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())) continue
+            if (triggerRange > 0) {
+                for (serverId in getEnabledServers(zoneLocation)) {
+                    for (zone in getZones(serverId)) {
+                        val requestId = "${serverId}_${zone.entityId}"
+                        if (!highAccuracyZones.contains(requestId)) continue
+                        if (isLocationInZone(location, zone)) continue
+                        if (!isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())) continue
 
-                    needHighAccuracyMode = true
-                    if (!previousNeedHighAccuracyMode) {
-                        Timber.d("Updated need high accuracy mode from GPS: true, in $requestId")
+                        needHighAccuracyMode = true
+                        if (!previousNeedHighAccuracyMode) {
+                            Timber.d("Updated need high accuracy mode from GPS: true, in $requestId")
+                        }
+                        return@withContext
                     }
-                    return@withContext
                 }
             }
-        }
 
-        needHighAccuracyMode = false
-        if (previousNeedHighAccuracyMode) {
-            Timber.d("Updated need high accuracy mode from GPS: false")
+            needHighAccuracyMode = false
+            if (previousNeedHighAccuracyMode) {
+                Timber.d("Updated need high accuracy mode from GPS: false")
+            }
         }
     }
-}
 
-    private fun isLocationInZone(
-        location: Location,
-        zone: Entity,
-        extraRadiusMeters: Float = 0f,
-    ): Boolean {
+    private fun isLocationInZone(location: Location, zone: Entity, extraRadiusMeters: Float = 0f): Boolean {
         if (zone.attributes["radius"] !is Number) return false
         if (zone.attributes["latitude"] !is Number || zone.attributes["longitude"] !is Number) return false
         return zone.containsWithAccuracy(location, extraRadiusMeters = extraRadiusMeters)
