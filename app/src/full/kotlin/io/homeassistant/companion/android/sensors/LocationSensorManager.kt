@@ -539,13 +539,7 @@ class LocationSensorManager @Inject constructor(
             .toMutableList()
         val highAccuracyBtZoneCombined = getHighAccuracyBTZoneCombinedSetting()
 
-        val useTriggerRange = getHighAccuracyModeTriggerRange() > 0
         val highAccuracyZones = getHighAccuracyModeZones(false)
-        var highAccuracyExpZones = highAccuracyZones
-        if (useTriggerRange) {
-            // Use a trigger range, if defined
-            highAccuracyExpZones = getHighAccuracyModeZones(true)
-        }
 
         var btDevConnected = false
         var constraintsUsed = false
