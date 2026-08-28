@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.sensitive
 import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -152,7 +153,7 @@ class FrontendUrlManager @Inject constructor(
             .build()
             .toString()
 
-        Timber.d("Loading server URL: $urlWithAuth")
+        Timber.d("Loading server URL: ${ sensitive(urlWithAuth) }")
         return UrlLoadResult.Success(url = urlWithAuth, serverId = serverId, moreInfoEntityId = moreInfoEntityIdForJs)
     }
 
