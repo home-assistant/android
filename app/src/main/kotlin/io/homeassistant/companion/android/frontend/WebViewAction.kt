@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticTy
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.util.compose.webview.settings
 import io.homeassistant.companion.android.util.sensitive
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
@@ -141,15 +142,21 @@ sealed interface WebViewAction {
     @OptIn(EvaluateJavascriptUsage::class)
     data class PingUrl(val url: String) : AwaitableAction<Unit>() {
 
+        /**
+         * Per-action `window` variable set by the ping script once the request has completed, so
+         * a superseded ping completing late cannot overwrite this ping's completion.
+         */
+        private val completedFlag = "$PING_COMPLETED_FLAG_PREFIX${NEXT_PING_ID.getAndIncrement()}"
+
         override fun run(webView: WebView) {
             val urlJson = Json.encodeToString(url)
 
             // The completion variable holds the pinged URL rather than a boolean so a stale completion
             // from a previous ping cannot be mistaken for this one.
             val script = """
-                window.$PING_COMPLETED_FLAG = null;
+                window.$completedFlag = null;
                 fetch($urlJson, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' })
-                    .then(function() { window.$PING_COMPLETED_FLAG = $urlJson; }, function() { window.$PING_COMPLETED_FLAG = $urlJson; });
+                    .then(function() { window.$completedFlag = $urlJson; }, function() { window.$completedFlag = $urlJson; });
             """.trimIndent()
             webView.evaluateJavascript(script) { pollCompletion(webView, urlJson) }
         }
@@ -166,11 +173,11 @@ sealed interface WebViewAction {
 
         private fun pollCompletion(webView: WebView, urlJson: String) {
             if (!result.isActive) return
-            webView.evaluateJavascript("window.$PING_COMPLETED_FLAG") { value ->
+            webView.evaluateJavascript("window.$completedFlag") { value ->
                 if (value == urlJson) {
                     result.complete(Unit)
                 } else {
-                    // The variable [PING_COMPLETED_FLAG] is polled every [PING_POLL_INTERVAL] because there
+                    // The variable [completedFlag] is polled every [PING_POLL_INTERVAL] because there
                     // is no completion callback available: a synchronous XHR
                     // would block the renderer's JS thread, which the timeout cannot unblock.
                     webView.postDelayed(
@@ -185,11 +192,14 @@ sealed interface WebViewAction {
             /** Maximum time [await] waits for the request to finish before giving up. */
             internal val PING_TIMEOUT = 5.seconds
 
-            /** Interval between checks of [PING_COMPLETED_FLAG], also the detection lag after completion. */
+            /** Interval between checks of [completedFlag], also the detection lag after completion. */
             private val PING_POLL_INTERVAL = 5.milliseconds
 
-            /** Variable set on `window` by the ping script once the request has completed. */
-            private const val PING_COMPLETED_FLAG = "_haAndroidPingedUrl"
+            /** Prefix of the per-action completion variable, see [completedFlag]. */
+            private const val PING_COMPLETED_FLAG_PREFIX = "_haAndroidPingedUrl"
+
+            /** Distinguishes each ping's [completedFlag] within the process. */
+            private val NEXT_PING_ID = AtomicInteger()
         }
     }
 

@@ -76,6 +76,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -338,11 +339,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         if (keyChainRepository.getClientCertProvider().certificate == null) return
 
         val action = WebViewAction.PingUrl(manifestUrl.toString())
+        // An emission without subscribers is dropped: on a cold start this can run before the
+        // Screen's action collector has subscribed, so wait for the subscription first.
+        _webViewActions.subscriptionCount.first { it > 0 }
         _webViewActions.emit(action)
         try {
             action.await()
         } catch (e: TimeoutCancellationException) {
-            Timber.w(e, "TLS client certificate priming timed out, loading the frontend anyway.")
+            Timber.w(e, "TLS client certificate priming timed out, loading the frontend anyway")
         }
     }
 

@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -95,6 +96,16 @@ class WebViewActionPingUrlTest {
         evaluateCallbacks[2].onReceiveValue(TEST_URL_JSON)
 
         action.await()
+    }
+
+    @Test
+    fun `Given two pings then each uses its own completion variable so a superseded ping cannot overwrite the other`() = runTest {
+        WebViewAction.PingUrl(TEST_URL).run(webView)
+        WebViewAction.PingUrl(TEST_URL).run(webView)
+
+        val firstVariable = evaluatedScripts[0].substringAfter("window.").substringBefore(" =")
+        val secondVariable = evaluatedScripts[1].substringAfter("window.").substringBefore(" =")
+        assertNotEquals(firstVariable, secondVariable)
     }
 
     @Test

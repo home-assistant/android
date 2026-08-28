@@ -3210,6 +3210,25 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given the action collector subscribes late when preparing a url load then the priming action is not dropped`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            // Start preparing before anything collects the actions, like a cold start where the
+            // Screen's collector is not subscribed yet.
+            val prepare = launch { viewModel.prepareUrlLoad("https://example.com/") }
+            runCurrent()
+            assertFalse(prepare.isCompleted, "prepareUrlLoad should wait for a subscriber")
+
+            viewModel.webViewActions.test {
+                val action = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+                action.result.complete(Unit)
+                prepare.join()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
         fun `Given no client certificate when preparing a url load then no priming action is emitted`() = runTest {
             stubClientCert(null)
             val viewModel = createViewModel()
