@@ -766,13 +766,15 @@ class LocationSensorManager @Inject constructor(
                 logLocationUpdate(location, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             } else {
                 HighAccuracyLocationService.updateNotificationAddress(applicationContext, location)
+                val previousNeedHighAccuracyMode = needHighAccuracyMode
                 updateNeedHighAccuracyMode(location)
                 // Send new location to Home Assistant
                 serverIds.forEach {
                     ioScope.launch { sendLocationUpdate(location, it, trigger) }
                 }
-                setupBackgroundLocation()
-            }
+                if (needHighAccuracyMode != previousNeedHighAccuracyMode) {
+                    setupBackgroundLocation()
+                }
         }
     }
 
