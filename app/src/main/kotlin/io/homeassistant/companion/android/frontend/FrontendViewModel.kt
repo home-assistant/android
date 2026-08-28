@@ -62,6 +62,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -307,6 +308,43 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * Returns the WebViewClient, creating it on first call.
      */
     suspend fun getWebViewClient(): HAWebViewClient = webViewClient.get()
+
+    /**
+     * Primes the TLS client certificate for [url]'s host before the WebView loads it, when a
+     * client certificate is configured. No-op for other URLs (e.g. about:blank) or without a
+     * certificate.
+     *
+     * Without priming, on servers requiring a TLS client certificate (mTLS), the first load after
+     * a process start always fails and shows the retry screen. Three facts combine into that
+     * failure:
+     * - On a fresh process the frontend's app shell is served by its service worker without any
+     *   network fetch, so loading the page negotiates nothing.
+     * - The frontend's WebSocket is then the first connection to reach the server.
+     * - Chromium cannot invoke [android.webkit.WebViewClient.onReceivedClientCertRequest] during
+     *   a WebSocket handshake, so that connection fails instead of asking for the certificate.
+     *
+     * Requesting a small resource first ([WebViewAction.PingUrl]) makes the
+     * certificate negotiation happen on a regular request, and Chromium caches the selection per
+     * host for the rest of the process, so the frontend's WebSocket reuses it.
+     *
+     * The Screen must call this after setting the WebViewClient and before `loadUrl`: the
+     * certificate request must land in [HAWebViewClient], since the default client's cancel would
+     * be remembered as a denial for the whole process. Waits at most [WebViewAction.PingUrl.PING_TIMEOUT]
+     * so an unreachable server cannot delay the load; every failure mode degrades to loading
+     * without priming, which the load's own error handling reports, never to a broken state.
+     */
+    suspend fun prepareUrlLoad(url: String) {
+        val manifestUrl = url.toHttpUrlOrNull()?.resolve("/manifest.json") ?: return
+        if (keyChainRepository.getClientCertProvider().certificate == null) return
+
+        val action = WebViewAction.PingUrl(manifestUrl.toString())
+        _webViewActions.emit(action)
+        try {
+            action.await()
+        } catch (e: TimeoutCancellationException) {
+            Timber.w(e, "TLS client certificate priming timed out, loading the frontend anyway.")
+        }
+    }
 
     /** The current pending file chooser request from the WebView, or null if none. */
     val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
@@ -731,7 +769,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun navigateToDefaultDashboard(serverId: Int) {
         val clearHistory = WebViewAction.ClearHistory()
         _webViewActions.emit(clearHistory)
-        clearHistory.result.await()
+        clearHistory.await()
 
         val version = serverManager.getServer(serverId)?.version
         if (NavigateToMessage.isAvailable(version)) {
@@ -1253,7 +1291,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun updateThemeColors() {
         val action = WebViewAction.ReadThemeColors()
         _webViewActions.emit(action)
-        val colors = action.result.await()
+        val colors = action.await()
         if (colors == null) {
             Timber.w("Could not read theme colors from the frontend")
             return

@@ -18,6 +18,8 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
+import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
@@ -82,6 +84,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -3174,6 +3177,74 @@ class FrontendViewModelTest {
                 messageFlow.emit(FrontendHandlerEvent.Connected)
                 advanceUntilIdle()
                 expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    @OptIn(EvaluateJavascriptUsage::class)
+    inner class TlsClientCertPriming {
+        private fun stubClientCert(certificate: ClientCertificate?) {
+            coEvery { keyChainRepository.getClientCertProvider() } returns object : ClientCertProvider {
+                override val certificate = certificate
+            }
+        }
+
+        @Test
+        fun `Given a client certificate when preparing a url load then a priming action is emitted and awaited`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                val prepare = launch { viewModel.prepareUrlLoad("https://example.com/?external_auth=1") }
+                val action = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+                assertEquals("https://example.com/manifest.json", action.url)
+                runCurrent()
+                assertFalse(prepare.isCompleted, "prepareUrlLoad should wait for the priming action")
+
+                action.result.complete(Unit)
+                prepare.join()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given no client certificate when preparing a url load then no priming action is emitted`() = runTest {
+            stubClientCert(null)
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                viewModel.prepareUrlLoad("https://example.com/")
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a blank url when preparing a url load then no priming action is emitted`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                viewModel.prepareUrlLoad("about:blank")
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a priming action that never completes when preparing a url load then it times out and cancels the action`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                val prepare = launch { viewModel.prepareUrlLoad("https://example.com/") }
+                val action = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+
+                advanceTimeBy(WebViewAction.PingUrl.PING_TIMEOUT + 1.seconds)
+                prepare.join()
+                assertTrue(action.result.isCancelled, "the action's polling should be stopped")
                 cancelAndIgnoreRemainingEvents()
             }
         }

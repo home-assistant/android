@@ -120,7 +120,7 @@ class WebViewActionTest {
         // Simulate the WebView invoking the callback with a result
         callbackSlot.captured.onReceiveValue("\"ok\"")
         assertTrue(action.result.isCompleted)
-        assertEquals("\"ok\"", action.result.await())
+        assertEquals("\"ok\"", action.await())
     }
 
     @Test
@@ -132,7 +132,7 @@ class WebViewActionTest {
         action.run(webView)
 
         callbackSlot.captured.onReceiveValue(null)
-        assertEquals(null, action.result.await())
+        assertEquals(null, action.await())
     }
 
     @Test
