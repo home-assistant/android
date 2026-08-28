@@ -153,7 +153,7 @@ class FrontendUrlManager @Inject constructor(
             .build()
             .toString()
 
-        Timber.d("Loading server URL: ${ sensitive(urlWithAuth) }")
+        Timber.d("Loading server URL: ${sensitive(urlWithAuth)}")
         return UrlLoadResult.Success(url = urlWithAuth, serverId = serverId, moreInfoEntityId = moreInfoEntityIdForJs)
     }
 
