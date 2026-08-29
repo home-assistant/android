@@ -863,6 +863,8 @@ class LocationSensorManager @Inject constructor(
             Geofence.GEOFENCE_TRANSITION_DWELL -> LocationUpdateTrigger.GEOFENCE_DWELL
             else -> null
         }
+        var previousNeedHighAccuracyMode = needHighAccuracyMode
+        updateNeedHighAccuracyMode(geofencingEvent.triggeringLocation!!)
         if (geofencingEvent.triggeringLocation!!.accuracy > minAccuracy) {
             Timber.w("Geofence location accuracy didn't meet requirements, requesting new location.")
             logLocationUpdate(
@@ -874,13 +876,13 @@ class LocationSensorManager @Inject constructor(
             )
             requestSingleAccurateLocation()
         } else {
-            updateNeedHighAccuracyMode(geofencingEvent.triggeringLocation!!)
             getEnabledServers(zoneLocation).forEach {
                 ioScope.launch { sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger) }
             }
         }
-
-        setupBackgroundLocation()
+        if (needHighAccuracyMode != previousNeedHighAccuracyMode) {
+            setupBackgroundLocation()
+        }
     }
 
     private suspend fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
