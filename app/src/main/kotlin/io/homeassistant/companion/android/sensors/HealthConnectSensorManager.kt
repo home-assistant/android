@@ -331,6 +331,18 @@ class HealthConnectSensorManager @Inject constructor(
         )
 
         @ProvidesSensor
+        val nutritionSugar = SensorManager.BasicSensor(
+            id = "health_connect_nutrition_sugar",
+            type = "sensor",
+            commonR.string.basic_sensor_name_nutrition_sugar,
+            commonR.string.sensor_description_nutrition_sugar,
+            "mdi:spoon-sugar",
+            unitOfMeasurement = "g",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
         val oxygenSaturation = SensorManager.BasicSensor(
             id = "health_connect_oxygen_saturation",
             type = "sensor",
@@ -457,6 +469,7 @@ class HealthConnectSensorManager @Inject constructor(
             nutritionCarbohydrates.id to NutritionRecord::class,
             nutritionFat.id to NutritionRecord::class,
             nutritionProtein.id to NutritionRecord::class,
+            nutritionSugar.id to NutritionRecord::class,
             oxygenSaturation.id to OxygenSaturationRecord::class,
             respiratoryRate.id to RespiratoryRateRecord::class,
             restingHeartRate.id to RestingHeartRateRecord::class,
@@ -542,13 +555,40 @@ class HealthConnectSensorManager @Inject constructor(
         if (isEnabled(leanBodyMass)) {
             updateLeanBodyMassSensor()
         }
-        if (
-            isEnabled(nutritionCalories) ||
-            isEnabled(nutritionCarbohydrates) ||
-            isEnabled(nutritionFat) ||
-            isEnabled(nutritionProtein)
-        ) {
-            updateNutritionSensors()
+        if (isEnabled(nutritionCalories)) {
+            updateNutritionSensor(nutritionCalories, NutritionRecord.ENERGY_TOTAL) {
+                it[NutritionRecord.ENERGY_TOTAL]?.inKilocalories?.let { value ->
+                    BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_EVEN)
+                }
+            }
+        }
+        if (isEnabled(nutritionCarbohydrates)) {
+            updateNutritionSensor(nutritionCarbohydrates, NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL) {
+                it[NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL]?.inGrams?.let { value ->
+                    BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_EVEN)
+                }
+            }
+        }
+        if (isEnabled(nutritionFat)) {
+            updateNutritionSensor(nutritionFat, NutritionRecord.TOTAL_FAT_TOTAL) {
+                it[NutritionRecord.TOTAL_FAT_TOTAL]?.inGrams?.let { value ->
+                    BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_EVEN)
+                }
+            }
+        }
+        if (isEnabled(nutritionProtein)) {
+            updateNutritionSensor(nutritionProtein, NutritionRecord.PROTEIN_TOTAL) {
+                it[NutritionRecord.PROTEIN_TOTAL]?.inGrams?.let { value ->
+                    BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_EVEN)
+                }
+            }
+        }
+        if (isEnabled(nutritionSugar)) {
+            updateNutritionSensor(nutritionSugar, NutritionRecord.SUGAR_TOTAL) {
+                it[NutritionRecord.SUGAR_TOTAL]?.inGrams?.let { value ->
+                    BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_EVEN)
+                }
+            }
         }
         if (isEnabled(oxygenSaturation)) {
             updateOxygenSaturationSensor()
@@ -994,43 +1034,21 @@ class HealthConnectSensorManager @Inject constructor(
         )
     }
 
-    private suspend fun updateNutritionSensors() {
+    private suspend fun updateNutritionSensor(
+        sensor: SensorManager.BasicSensor,
+        metric: AggregateMetric<*>,
+        value: (AggregationResult) -> BigDecimal?,
+    ) {
         val healthConnectClient = getOrCreateHealthConnectClient() ?: return
         val nutritionRequest = healthConnectClient.aggregateOrNull(
-            buildNutritionAggregationRequest(),
+            buildNutritionAggregationRequest(metric),
         ) ?: return
-        val attributes = buildAggregationAttributes(nutritionRequest)
-
-        nutritionRequest[NutritionRecord.ENERGY_TOTAL]?.inKilocalories?.let {
+        value(nutritionRequest)?.let {
             onSensorUpdated(
-                nutritionCalories,
-                BigDecimal.valueOf(it).setScale(2, RoundingMode.HALF_EVEN),
-                nutritionCalories.statelessIcon,
-                attributes = attributes,
-            )
-        }
-        nutritionRequest[NutritionRecord.PROTEIN_TOTAL]?.inGrams?.let {
-            onSensorUpdated(
-                nutritionProtein,
-                BigDecimal.valueOf(it).setScale(2, RoundingMode.HALF_EVEN),
-                nutritionProtein.statelessIcon,
-                attributes = attributes,
-            )
-        }
-        nutritionRequest[NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL]?.inGrams?.let {
-            onSensorUpdated(
-                nutritionCarbohydrates,
-                BigDecimal.valueOf(it).setScale(2, RoundingMode.HALF_EVEN),
-                nutritionCarbohydrates.statelessIcon,
-                attributes = attributes,
-            )
-        }
-        nutritionRequest[NutritionRecord.TOTAL_FAT_TOTAL]?.inGrams?.let {
-            onSensorUpdated(
-                nutritionFat,
-                BigDecimal.valueOf(it).setScale(2, RoundingMode.HALF_EVEN),
-                nutritionFat.statelessIcon,
-                attributes = attributes,
+                sensor,
+                it,
+                sensor.statelessIcon,
+                attributes = buildAggregationAttributes(nutritionRequest),
             )
         }
     }
@@ -1100,6 +1118,7 @@ class HealthConnectSensorManager @Inject constructor(
                 nutritionCarbohydrates,
                 nutritionFat,
                 nutritionProtein,
+                nutritionSugar,
                 oxygenSaturation,
                 respiratoryRate,
                 restingHeartRate,
@@ -1166,16 +1185,11 @@ class HealthConnectSensorManager @Inject constructor(
         )
     }
 
-    private fun buildNutritionAggregationRequest(): AggregateRequest {
+    private fun buildNutritionAggregationRequest(metric: AggregateMetric<*>): AggregateRequest {
         val now = LocalDateTime.now()
         val today = now.toLocalDate()
         return AggregateRequest(
-            metrics = setOf(
-                NutritionRecord.ENERGY_TOTAL,
-                NutritionRecord.PROTEIN_TOTAL,
-                NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL,
-                NutritionRecord.TOTAL_FAT_TOTAL,
-            ),
+            metrics = setOf(metric),
             timeRangeFilter = TimeRangeFilter.between(
                 LocalDateTime.of(today, LocalTime.MIDNIGHT),
                 now,

@@ -126,6 +126,7 @@ class HealthConnectSensorManagerTest {
             HealthConnectSensorManager.nutritionCarbohydrates,
             HealthConnectSensorManager.nutritionFat,
             HealthConnectSensorManager.nutritionProtein,
+            HealthConnectSensorManager.nutritionSugar,
         )
 
         nutritionSensors.forEach { sensor ->
@@ -148,6 +149,7 @@ class HealthConnectSensorManagerTest {
             HealthConnectSensorManager.nutritionProtein.id to "21.13",
             HealthConnectSensorManager.nutritionCarbohydrates.id to "58.13",
             HealthConnectSensorManager.nutritionFat.id to "12.13",
+            HealthConnectSensorManager.nutritionSugar.id to "4.13",
         )
         expectedStates.keys.forEach { sensorId ->
             coEvery { sensorRepository.get(sensorId) } returns listOf(
@@ -160,6 +162,7 @@ class HealthConnectSensorManagerTest {
         every { aggregateResult[NutritionRecord.PROTEIN_TOTAL] } returns Mass.grams(21.126)
         every { aggregateResult[NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL] } returns Mass.grams(58.126)
         every { aggregateResult[NutritionRecord.TOTAL_FAT_TOTAL] } returns Mass.grams(12.126)
+        every { aggregateResult[NutritionRecord.SUGAR_TOTAL] } returns Mass.grams(4.126)
         every { aggregateResult.dataOrigins } returns emptySet()
         coEvery { healthConnectClient.aggregate(any()) } returns aggregateResult
 
@@ -173,5 +176,6 @@ class HealthConnectSensorManagerTest {
 
         assertEquals(expectedStates, updatedStates)
         coVerify(exactly = expectedStates.size) { sensorRepository.update(any()) }
+        coVerify(exactly = expectedStates.size) { healthConnectClient.aggregate(any()) }
     }
 }
