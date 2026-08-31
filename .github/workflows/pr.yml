@@ -204,13 +204,13 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews - app
-        run: ./gradlew :app:validateFullDebugScreenshotTest
+        run: ./gradlew :app:validateFullDebugScreenshotTest --max-workers=2
 
       - name: Validate Screenshot Previews - wear
-        run: ./gradlew :wear:validateDebugScreenshotTest
+        run: ./gradlew :wear:validateDebugScreenshotTest --max-workers=2
 
       - name: Validate Screenshot Previews - common
-        run: ./gradlew :common:validateDebugScreenshotTest
+        run: ./gradlew :common:validateDebugScreenshotTest --max-workers=2
 
       - uses: ./.github/actions/upload-test-results
         if: always()
