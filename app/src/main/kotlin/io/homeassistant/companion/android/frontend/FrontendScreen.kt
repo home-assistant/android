@@ -178,6 +178,7 @@ internal fun FrontendScreen(
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         getWebViewClient = viewModel::getWebViewClient,
+        prepareUrlLoad = viewModel::prepareUrlLoad,
         webChromeClient = webChromeClient,
         customView = customView,
         frontendJsCallback = viewModel.frontendJsCallback,
@@ -262,6 +263,7 @@ internal fun FrontendScreenContent(
     onImprovDismiss: () -> Unit = {},
     improvScanRequested: Boolean = false,
     processImprovScanRequests: suspend () -> Unit = {},
+    prepareUrlLoad: suspend (String) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
     val content = (viewState as? FrontendViewState.Content)
@@ -277,6 +279,7 @@ internal fun FrontendScreenContent(
         webView = webView,
         url = viewState.url,
         getWebViewClient = getWebViewClient,
+        prepareUrlLoad = prepareUrlLoad,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
         pendingFileChooser = pendingFileChooser,
@@ -361,6 +364,7 @@ private fun FrontendScreenEffects(
     webView: WebView?,
     url: String,
     getWebViewClient: suspend () -> WebViewClient,
+    prepareUrlLoad: suspend (String) -> Unit,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
     pendingFileChooser: FileChooserRequest?,
@@ -393,6 +397,7 @@ private fun FrontendScreenEffects(
         webView = webView,
         url = url,
         getWebViewClient = getWebViewClient,
+        prepareUrlLoad = prepareUrlLoad,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
@@ -732,6 +737,7 @@ private fun WebViewEffects(
     webView: WebView?,
     url: String,
     getWebViewClient: suspend () -> WebViewClient,
+    prepareUrlLoad: suspend (String) -> Unit,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
     autoPlayVideoEnabled: Boolean,
@@ -740,6 +746,9 @@ private fun WebViewEffects(
         LaunchedEffect(webView, url) {
             webView.webViewClient = getWebViewClient()
             frontendJsCallback.attachToWebView(webView)
+            // Must run after the WebViewClient is set and before loadUrl, see
+            // FrontendViewModel.prepareUrlLoad.
+            prepareUrlLoad(url)
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
         }
