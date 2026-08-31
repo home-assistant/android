@@ -201,7 +201,11 @@ jobs:
         run: |
           ADB="$ANDROID_HOME/platform-tools/adb"
           for SERIAL in $SERIALS; do
-            $ADB -s "$SERIAL" logcat -d > "logcat-${SERIAL//:/-}.txt"
+            # The API level is in the filename because it is the only thing
+            # tying a logcat back to a Maestro shard: serials are assigned by
+            # the emulator session, not by device definition.
+            API=$($ADB -s "$SERIAL" shell getprop ro.build.version.sdk 2>/dev/null | tr -d '\r')
+            $ADB -s "$SERIAL" logcat -d > "logcat-api${API:-unknown}-${SERIAL//:/-}.txt"
           done
 
       - name: Capture Home Assistant logs
@@ -224,3 +228,44 @@ jobs:
             homeassistant-container.json
             logcat-*.txt
             maestro-results
+
+  # Hands the failed run to the `E2E failure triage` agentic workflow, which reads the
+  # artifacts and opens or updates the `e2e-failure` issue. Dispatching from
+  # here rather than triggering on workflow_run keeps green nights free of an
+  # agent run.
+  triage-failure:
+    name: "Triage E2E failure"
+    needs: maestro
+    if: failure() && github.repository == 'home-assistant/android'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch triage
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run e2e-triage.lock.yml --field run-id="$GITHUB_RUN_ID"
+
+  # Closing the issue again needs no judgement, so it stays deterministic rather
+  # than costing a second agent run.
+  close-failure-issue:
+    name: "Close E2E failure issue"
+    needs: maestro
+    if: success() && github.repository == 'home-assistant/android'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close open E2E failure issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # Empty when the label does not exist yet, i.e. nothing ever failed.
+          NUMBERS=$(gh issue list --label e2e-failure --state open --json number --jq '.[].number' || true)
+          for NUMBER in $NUMBERS; do
+            gh issue comment "$NUMBER" --body "The E2E flow passed again in $RUN_URL, closing."
+            gh issue close "$NUMBER" --reason completed
+          done
