@@ -11,7 +11,6 @@ import android.os.Vibrator
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import androidx.core.service.quicksettings.PendingIntentActivityWrapper
 import androidx.core.service.quicksettings.TileServiceCompat
@@ -50,7 +49,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-@RequiresApi(Build.VERSION_CODES.N)
 @AndroidEntryPoint
 internal abstract class TileExtensions : TileService() {
 
