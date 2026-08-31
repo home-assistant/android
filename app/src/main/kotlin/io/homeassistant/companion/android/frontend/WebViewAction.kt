@@ -156,7 +156,7 @@ sealed interface WebViewAction {
             val script = """
                 window.$completedFlag = null;
                 fetch($urlJson, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' })
-                    .then(function() { window.$completedFlag = $urlJson; }, function() { window.$completedFlag = $urlJson; });
+                    .finally(function() { window.$completedFlag = $urlJson; });
             """.trimIndent()
             webView.evaluateJavascript(script) { pollCompletion(webView, urlJson) }
         }
@@ -164,7 +164,7 @@ sealed interface WebViewAction {
         override suspend fun await() {
             try {
                 val elapsed = withTimeout(PING_TIMEOUT) { measureTime { result.await() } }
-                Timber.d("Ping of ${sensitive { url }} completed in $elapsed")
+                Timber.d("Ping of ${sensitive(url)} completed in $elapsed")
             } finally {
                 // Stops the action's polling after a timeout or when this load gets superseded.
                 result.cancel()
@@ -193,7 +193,7 @@ sealed interface WebViewAction {
             internal val PING_TIMEOUT = 5.seconds
 
             /** Interval between checks of [completedFlag], also the detection lag after completion. */
-            private val PING_POLL_INTERVAL = 5.milliseconds
+            private val PING_POLL_INTERVAL = 15.milliseconds
 
             /** Prefix of the per-action completion variable, see [completedFlag]. */
             private const val PING_COMPLETED_FLAG_PREFIX = "_haAndroidPingedUrl"
