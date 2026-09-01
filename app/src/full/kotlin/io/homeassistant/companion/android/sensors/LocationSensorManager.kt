@@ -760,15 +760,12 @@ class LocationSensorManager @Inject constructor(
                 logLocationUpdate(location, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             } else {
                 HighAccuracyLocationService.updateNotificationAddress(applicationContext, location)
-                val previousNeedHighAccuracyMode = needHighAccuracyMode
                 updateNeedHighAccuracyMode(location)
                 // Send new location to Home Assistant
                 serverIds.forEach {
                     ioScope.launch { sendLocationUpdate(location, it, trigger) }
                 }
-                if (needHighAccuracyMode != previousNeedHighAccuracyMode) {
-                    setupBackgroundLocation()
-                }
+                setupBackgroundLocation()
             }
         }
     }
@@ -863,7 +860,6 @@ class LocationSensorManager @Inject constructor(
             Geofence.GEOFENCE_TRANSITION_DWELL -> LocationUpdateTrigger.GEOFENCE_DWELL
             else -> null
         }
-        var previousNeedHighAccuracyMode = needHighAccuracyMode
         updateNeedHighAccuracyMode(geofencingEvent.triggeringLocation!!)
         if (geofencingEvent.triggeringLocation!!.accuracy > minAccuracy) {
             Timber.w("Geofence location accuracy didn't meet requirements, requesting new location.")
@@ -880,9 +876,7 @@ class LocationSensorManager @Inject constructor(
                 ioScope.launch { sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger) }
             }
         }
-        if (needHighAccuracyMode != previousNeedHighAccuracyMode) {
-            setupBackgroundLocation()
-        }
+        setupBackgroundLocation()
     }
 
     private suspend fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
