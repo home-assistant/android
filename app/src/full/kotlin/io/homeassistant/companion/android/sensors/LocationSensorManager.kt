@@ -760,12 +760,15 @@ class LocationSensorManager @Inject constructor(
                 logLocationUpdate(location, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             } else {
                 HighAccuracyLocationService.updateNotificationAddress(applicationContext, location)
-                updateNeedHighAccuracyMode(location)
+                val newNeedHighAccuracyMode = isInHighAccuracyTriggerRange(location)
+                if (needHighAccuracyMode != newNeedHighAccuracyMode) {
+                    needHighAccuracyMode = newNeedHighAccuracyMode
+                    setupBackgroundLocation()
+                }
                 // Send new location to Home Assistant
                 serverIds.forEach {
                     ioScope.launch { sendLocationUpdate(location, it, trigger) }
                 }
-                setupBackgroundLocation()
             }
         }
     }
@@ -860,7 +863,7 @@ class LocationSensorManager @Inject constructor(
             Geofence.GEOFENCE_TRANSITION_DWELL -> LocationUpdateTrigger.GEOFENCE_DWELL
             else -> null
         }
-        updateNeedHighAccuracyMode(geofencingEvent.triggeringLocation!!)
+        needHighAccuracyMode = isInHighAccuracyTriggerRange(geofencingEvent.triggeringLocation!!)
         if (geofencingEvent.triggeringLocation!!.accuracy > minAccuracy) {
             Timber.w("Geofence location accuracy didn't meet requirements, requesting new location.")
             logLocationUpdate(
@@ -1132,12 +1135,10 @@ class LocationSensorManager @Inject constructor(
     }
 
     /**
-     * Sets [needHighAccuracyMode] from GPS: true when the location is inside an expanded
-     * high-accuracy fence but not yet inside the inner zone.
+     * Returns true when [location] is inside an expanded high-accuracy fence but not inside the
+     * inner zone.
      */
-    private suspend fun updateNeedHighAccuracyMode(location: Location) {
-        val previousNeedHighAccuracyMode = needHighAccuracyMode
-
+    private suspend fun isInHighAccuracyTriggerRange(location: Location): Boolean {
         val triggerRange = getHighAccuracyModeTriggerRange()
         val highAccuracyZones = getHighAccuracyModeZones(false)
 
@@ -1148,20 +1149,12 @@ class LocationSensorManager @Inject constructor(
                     if (!highAccuracyZones.contains(requestId)) continue
                     if (isLocationInZone(location, zone)) continue
                     if (!isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())) continue
-
-                    needHighAccuracyMode = true
-                    if (!previousNeedHighAccuracyMode) {
-                        Timber.d("Updated need high accuracy mode from GPS: true, in $requestId")
-                    }
-                    return
+                    return true
                 }
             }
         }
 
-        needHighAccuracyMode = false
-        if (previousNeedHighAccuracyMode) {
-            Timber.d("Updated need high accuracy mode from GPS: false")
-        }
+        return false
     }
 
     private fun isLocationInZone(location: Location, zone: Entity, extraRadiusMeters: Float = 0f): Boolean {
