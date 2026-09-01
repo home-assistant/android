@@ -876,6 +876,7 @@ class LocationSensorManager @Inject constructor(
                 ioScope.launch { sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger) }
             }
         }
+
         setupBackgroundLocation()
     }
 
