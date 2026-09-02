@@ -20,13 +20,6 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.Fullscreen
-import androidx.compose.material.icons.filled.FullscreenExit
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,6 +41,14 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
 import androidx.media3.ui.compose.state.rememberPresentationState
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Fullscreen
+import io.github.timoptr.mdiicons.generated.FullscreenExit
+import io.github.timoptr.mdiicons.generated.Pause
+import io.github.timoptr.mdiicons.generated.Play
+import io.github.timoptr.mdiicons.generated.VolumeHigh
+import io.github.timoptr.mdiicons.generated.VolumeOff
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import java.util.Locale
 import kotlin.time.Duration
@@ -260,7 +261,7 @@ private fun RowScope.FullscreenButton(isFullScreen: Boolean, onClickFullscreen: 
             .size(BottomControlsHeight),
     ) {
         Icon(
-            if (isFullScreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+            if (isFullScreen) Mdi.FullscreenExit.rememberImageVector() else Mdi.Fullscreen.rememberImageVector(),
             contentDescription = stringResource(R.string.fullscreen),
             modifier = Modifier.size(BottomControlButtonSize),
             tint = Color.White,
@@ -280,7 +281,7 @@ private fun RowScope.MuteButton(player: Player) {
                 .size(BottomControlsHeight),
         ) {
             Icon(
-                if (muteState.showMute) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
+                if (muteState.showMute) Mdi.VolumeOff.rememberImageVector() else Mdi.VolumeHigh.rememberImageVector(),
                 contentDescription = stringResource(R.string.mute_unmute),
                 modifier = Modifier.size(BottomControlButtonSize),
                 tint = Color.White,
@@ -319,7 +320,7 @@ private fun RowScope.TimeText(player: Player) {
 @OptIn(UnstableApi::class)
 private fun PlayPauseButton(player: Player, modifier: Modifier = Modifier) {
     val state = rememberPlayPauseButtonState(player)
-    val icon = if (state.showPlay) Icons.Default.PlayArrow else Icons.Default.Pause
+    val icon = if (state.showPlay) Mdi.Play.rememberImageVector() else Mdi.Pause.rememberImageVector()
     val contentDescription =
         if (state.showPlay) stringResource(R.string.play) else stringResource(R.string.pause)
     IconButton(

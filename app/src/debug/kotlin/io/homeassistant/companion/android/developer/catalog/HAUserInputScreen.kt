@@ -4,10 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -22,11 +18,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
 import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
 import io.github.timoptr.mdiicons.generated.Fan
 import io.github.timoptr.mdiicons.generated.Garage
+import io.github.timoptr.mdiicons.generated.InformationOutline
 import io.github.timoptr.mdiicons.generated.Lightbulb
 import io.github.timoptr.mdiicons.generated.MotionSensor
+import io.github.timoptr.mdiicons.generated.Plus
 import io.github.timoptr.mdiicons.generated.Thermometer
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
@@ -77,7 +77,7 @@ private fun LazyListScope.input() {
                         if (value1.isNotBlank()) {
                             IconButton(onClick = { value1 = "" }) {
                                 Icon(
-                                    imageVector = Icons.Default.Close,
+                                    imageVector = Mdi.Close.rememberImageVector(),
                                     contentDescription = null,
                                 )
                             }
@@ -125,7 +125,7 @@ private fun LazyListScope.input() {
                     onValueChange = { value5 = it },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Outlined.Info,
+                            imageVector = Mdi.InformationOutline.rememberImageVector(),
                             contentDescription = null,
                         )
                     },
@@ -199,7 +199,7 @@ private fun LazyListScope.inputChips() {
                 text = "toggle me",
                 onClick = { selected = !selected },
                 selected = selected,
-                trailingIcon = if (selected) Icons.Default.Close else Icons.Default.Add,
+                trailingIcon = if (selected) Mdi.Close.rememberImageVector() else Mdi.Plus.rememberImageVector(),
                 trailingIconContentDescription = null,
             )
             HAInputChip(text = "without icon", onClick = {})
@@ -207,7 +207,7 @@ private fun LazyListScope.inputChips() {
                 text = "disabled",
                 onClick = {},
                 enabled = false,
-                trailingIcon = Icons.Default.Add,
+                trailingIcon = Mdi.Plus.rememberImageVector(),
                 trailingIconContentDescription = null,
             )
         }

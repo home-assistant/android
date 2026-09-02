@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Lock
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -98,7 +99,7 @@ class HaControlsPanelActivity : AppCompatActivity() {
                 verticalArrangement = Arrangement.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Default.Lock,
+                    imageVector = Mdi.Lock.rememberImageVector(),
                     contentDescription = null,
                 )
                 Text(

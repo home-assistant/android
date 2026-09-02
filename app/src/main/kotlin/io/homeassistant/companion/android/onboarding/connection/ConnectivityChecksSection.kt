@@ -10,10 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.Circle
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -25,6 +21,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AlertCircleOutline
+import io.github.timoptr.mdiicons.generated.CheckCircleOutline
+import io.github.timoptr.mdiicons.generated.CircleOutline
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -125,19 +126,19 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
         ) { animatedResult ->
             when (animatedResult) {
                 is ConnectivityCheckResult.Success -> Icon(
-                    imageVector = Icons.Outlined.CheckCircle,
+                    imageVector = Mdi.CheckCircleOutline.rememberImageVector(),
                     contentDescription = stringResource(commonR.string.successful),
                     modifier = iconModifier,
                     tint = iconTint,
                 )
                 is ConnectivityCheckResult.Failure -> Icon(
-                    imageVector = Icons.Outlined.ErrorOutline,
+                    imageVector = Mdi.AlertCircleOutline.rememberImageVector(),
                     contentDescription = stringResource(commonR.string.state_error),
                     modifier = iconModifier,
                     tint = iconTint,
                 )
                 is ConnectivityCheckResult.NotApplicable -> Icon(
-                    imageVector = Icons.Outlined.Circle,
+                    imageVector = Mdi.CircleOutline.rememberImageVector(),
                     contentDescription = stringResource(
                         commonR.string.not_applicable_content_description,
                     ),

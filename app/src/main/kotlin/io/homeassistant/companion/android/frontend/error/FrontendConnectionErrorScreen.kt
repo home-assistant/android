@@ -19,9 +19,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Forum
-import androidx.compose.material.icons.outlined.Newspaper
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +37,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ForumOutline
+import io.github.timoptr.mdiicons.generated.NewspaperVariantOutline
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -356,7 +357,7 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: suspend (Uri) -> Unit) {
 
     Row {
         HAIconButton(
-            icon = Icons.Outlined.Newspaper,
+            icon = Mdi.NewspaperVariantOutline.rememberImageVector(),
             contentDescription = stringResource(commonR.string.connection_error_documentation_content_description),
             onClick = {
                 coroutineScope.launch {
@@ -365,7 +366,7 @@ private fun ColumnScope.GetMoreHelp(onOpenExternalLink: suspend (Uri) -> Unit) {
             },
         )
         HAIconButton(
-            icon = Icons.Outlined.Forum,
+            icon = Mdi.ForumOutline.rememberImageVector(),
             contentDescription = stringResource(commonR.string.connection_error_forum_content_description),
             onClick = {
                 coroutineScope.launch {

@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -40,6 +37,8 @@ import com.wifi.improv.ErrorState
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.github.timoptr.mdiicons.generated.Alert
+import io.github.timoptr.mdiicons.generated.Eye
+import io.github.timoptr.mdiicons.generated.EyeOff
 import io.github.timoptr.mdiicons.generated.WifiCheck
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
@@ -217,7 +216,7 @@ private fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> U
                 },
             ),
             trailingIcon = {
-                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val image = if (passwordVisible) Mdi.Eye.rememberImageVector() else Mdi.EyeOff.rememberImageVector()
                 val description = stringResource(
                     if (passwordVisible) commonR.string.hide_password else commonR.string.view_password,
                 )
