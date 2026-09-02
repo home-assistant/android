@@ -281,7 +281,11 @@ private fun RowScope.MuteButton(player: Player) {
                 .size(BottomControlsHeight),
         ) {
             Icon(
-                if (muteState.showMute) Mdi.VolumeOff.rememberImageVector() else Mdi.VolumeHigh.rememberImageVector(),
+                if (muteState.showMute) {
+                    Mdi.VolumeOff.rememberImageVector(autoMirror = true)
+                } else {
+                    Mdi.VolumeHigh.rememberImageVector(autoMirror = true)
+                },
                 contentDescription = stringResource(R.string.mute_unmute),
                 modifier = Modifier.size(BottomControlButtonSize),
                 tint = Color.White,

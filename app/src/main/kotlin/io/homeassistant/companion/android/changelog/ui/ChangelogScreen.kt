@@ -298,7 +298,7 @@ private fun ChangelogEntryContent(
         }
         if (action != null) {
             Icon(
-                imageVector = Mdi.ChevronRight.rememberImageVector(),
+                imageVector = Mdi.ChevronRight.rememberImageVector(autoMirror = true),
                 contentDescription = null,
                 tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
             )

@@ -299,7 +299,7 @@ private fun TileIconRow(
         Spacer(modifier = Modifier.weight(1f))
         if (showResetIcon) {
             HAIconButton(
-                icon = Mdi.Undo.rememberImageVector(),
+                icon = Mdi.Undo.rememberImageVector(autoMirror = true),
                 onClick = onResetIcon,
                 contentDescription = stringResource(commonR.string.undo),
             )
