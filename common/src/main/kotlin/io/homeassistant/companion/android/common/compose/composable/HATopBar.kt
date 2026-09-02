@@ -14,7 +14,6 @@ import androidx.compose.material3.TopAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
@@ -100,8 +99,9 @@ fun HATopBar(
             containerColor = LocalHAColorScheme.current.colorSurfaceDefault,
             navigationIconContentColor = LocalHAColorScheme.current.colorOnNeutralQuiet,
             actionIconContentColor = LocalHAColorScheme.current.colorOnNeutralQuiet,
-            // For now this color are not used we would need to decide with Design team which token to use here
-            scrolledContainerColor = Color.Unspecified,
+            // No distinct scrolled color yet, pending a token decision with the Design team. It must stay a real
+            // color: Material3 now draws the container with it, and Color.Unspecified fails Paint.setColor.
+            scrolledContainerColor = LocalHAColorScheme.current.colorSurfaceDefault,
             titleContentColor = LocalHAColorScheme.current.colorTextPrimary,
         ),
         modifier = modifier,
