@@ -91,7 +91,7 @@ fun LoadNfcView(
                         },
                     ) {
                         Icon(
-                            imageVector = Mdi.ArrowLeft.rememberImageVector(),
+                            imageVector = Mdi.ArrowLeft.rememberImageVector(autoMirror = true),
                             contentDescription = stringResource(commonR.string.navigate_up),
                         )
                     }
@@ -108,7 +108,7 @@ fun LoadNfcView(
                         },
                     ) {
                         Icon(
-                            imageVector = Mdi.HelpCircleOutline.rememberImageVector(),
+                            imageVector = Mdi.HelpCircleOutline.rememberImageVector(autoMirror = true),
                             contentDescription = stringResource(commonR.string.get_help),
                             tint = colorResource(commonR.color.colorOnBackground),
                         )

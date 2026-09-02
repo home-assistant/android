@@ -145,7 +145,7 @@ private fun TopBar(onRetry: () -> Unit, onHelpClick: suspend () -> Unit) {
                 },
             ) {
                 Icon(
-                    imageVector = Mdi.HelpCircleOutline.rememberImageVector(),
+                    imageVector = Mdi.HelpCircleOutline.rememberImageVector(autoMirror = true),
                     contentDescription = stringResource(commonR.string.get_help),
                 )
             }

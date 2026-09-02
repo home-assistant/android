@@ -450,7 +450,13 @@ private fun RowScope.AssistTextInput(
     )
     val inputIsSend = text.isNotBlank() || textOnly
     HAIconButton(
-        icon = if (inputIsSend) Mdi.Send.rememberImageVector() else Mdi.Microphone.rememberImageVector(),
+        icon = if (inputIsSend) {
+            Mdi.Send.rememberImageVector(
+                autoMirror = true,
+            )
+        } else {
+            Mdi.Microphone.rememberImageVector()
+        },
         contentDescription = stringResource(
             if (inputIsSend) commonR.string.assist_send_text else commonR.string.assist_start_listening,
         ),
