@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -8,7 +9,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
-import com.mikepenz.iconics.compose.Image
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -77,7 +78,8 @@ private fun FavoriteToggleChip(
             .fillMaxWidth(),
         icon = {
             Image(
-                asset = iconBitmap,
+                imageVector = iconBitmap.rememberImageVector(),
+                contentDescription = null,
                 colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
             )
         },

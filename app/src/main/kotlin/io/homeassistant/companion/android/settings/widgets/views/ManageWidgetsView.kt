@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.widgets.views
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,9 +32,16 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.CameraImage
+import io.github.timoptr.mdiicons.generated.ClipboardList
+import io.github.timoptr.mdiicons.generated.CodeBraces
+import io.github.timoptr.mdiicons.generated.GestureTap
+import io.github.timoptr.mdiicons.generated.PlayBoxMultiple
+import io.github.timoptr.mdiicons.generated.Shape
+import io.github.timoptr.mdiicons.generated.Widgets
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.widget.WidgetEntity
 import io.homeassistant.companion.android.settings.views.EmptyState
@@ -48,13 +56,13 @@ import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControl
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity
 
-enum class WidgetType(val widgetIcon: IIcon) {
-    BUTTON(CommunityMaterial.Icon2.cmd_gesture_tap),
-    CAMERA(CommunityMaterial.Icon.cmd_camera_image),
-    STATE(CommunityMaterial.Icon3.cmd_shape),
-    MEDIA(CommunityMaterial.Icon3.cmd_play_box_multiple),
-    TEMPLATE(CommunityMaterial.Icon.cmd_code_braces),
-    TODO(CommunityMaterial.Icon.cmd_clipboard_list),
+enum class WidgetType(val widgetIcon: MdiIcon) {
+    BUTTON(Mdi.GestureTap),
+    CAMERA(Mdi.CameraImage),
+    STATE(Mdi.Shape),
+    MEDIA(Mdi.PlayBoxMultiple),
+    TEMPLATE(Mdi.CodeBraces),
+    TODO(Mdi.ClipboardList),
     ;
 
     fun configureActivity() = when (this) {
@@ -126,7 +134,7 @@ fun ManageWidgetsView(viewModel: ManageWidgetsViewModel, modifier: Modifier = Mo
             ) {
                 item {
                     EmptyState(
-                        icon = CommunityMaterial.Icon3.cmd_widgets,
+                        icon = Mdi.Widgets,
                         title = stringResource(R.string.no_widgets),
                         subtitle = stringResource(R.string.no_widgets_summary),
                     )
@@ -226,7 +234,7 @@ private fun PopupWidgetRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
-                asset = widgetType.widgetIcon,
+                imageVector = widgetType.widgetIcon.rememberImageVector(),
                 colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
                 contentDescription = widgetLabel,
             )

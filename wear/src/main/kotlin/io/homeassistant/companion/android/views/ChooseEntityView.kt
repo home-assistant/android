@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -20,8 +21,9 @@ import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Delete
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
@@ -59,7 +61,7 @@ fun ChooseEntityView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
-                        icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
+                        icon = { Image(imageVector = Mdi.Delete.rememberImageVector(), contentDescription = null) },
                         label = { Text(stringResource(id = commonR.string.none)) },
                         onClick = onNoneClicked,
                         colors = ButtonDefaults.buttonColors(
@@ -126,7 +128,8 @@ private fun ChooseEntityChip(entity: EntityDisplay, onEntitySelected: (entity: S
             .fillMaxWidth(),
         icon = {
             Image(
-                asset = iconBitmap,
+                imageVector = iconBitmap.rememberImageVector(),
+                contentDescription = null,
                 colorFilter = ColorFilter.tint(Color.White),
             )
         },

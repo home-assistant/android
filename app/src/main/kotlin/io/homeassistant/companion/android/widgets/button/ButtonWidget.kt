@@ -11,23 +11,20 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
 import androidx.core.os.BundleCompat
 import com.google.android.material.color.DynamicColors
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.IconicsSize
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.padding
-import com.mikepenz.iconics.utils.size
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Flash
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
@@ -210,20 +207,14 @@ class ButtonWidget : AppWidgetProvider() {
             setLabelVisibility(this, widget)
 
             // Content
-            val iconData = widget?.iconName?.let { CommunityMaterial.getIconByMdiName(it) }
-                ?: CommunityMaterial.Icon2.cmd_flash // Lightning bolt
+            val iconData = widget?.iconName?.let { Mdi.fromHaName(it) }
+                ?: Mdi.Flash // Lightning bolt
 
-            val iconDrawable = IconicsDrawable(context, iconData).apply {
-                padding = IconicsSize.dp(2)
-                size = IconicsSize.dp(24)
-            }
-            val icon = DrawableCompat.wrap(iconDrawable)
             if (widget?.backgroundType == WidgetBackgroundType.TRANSPARENT) {
                 setInt(R.id.widgetImageButton, "setColorFilter", textColor)
             }
 
-            // Determine reasonable dimensions for drawing vector icon as a bitmap
-            val aspectRatio = iconDrawable.intrinsicWidth / iconDrawable.intrinsicHeight.toDouble()
+            // Determine reasonable dimensions for drawing the icon as a bitmap
             val awo = if (widget != null) AppWidgetManager.getInstance(context).getAppWidgetOptions(widget.id) else null
             val maxWidth = (
                 awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, DEFAULT_MAX_ICON_SIZE)
@@ -233,18 +224,9 @@ class ButtonWidget : AppWidgetProvider() {
                 awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, DEFAULT_MAX_ICON_SIZE)
                     ?: DEFAULT_MAX_ICON_SIZE
                 ).coerceAtLeast(16)
-            val width: Int
-            val height: Int
-            if (maxWidth > maxHeight) {
-                width = maxWidth
-                height = (maxWidth * (1 / aspectRatio)).toInt()
-            } else {
-                width = (maxHeight * aspectRatio).toInt()
-                height = maxHeight
-            }
 
-            // Render the icon into the Button's ImageView
-            setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap(width, height))
+            // Render the icon into the Button's ImageView, which tints it to the widget theme
+            setImageViewBitmap(R.id.widgetImageButton, iconData.toBitmap(maxOf(maxWidth, maxHeight), Color.WHITE))
 
             setOnClickPendingIntent(
                 R.id.widgetImageButtonLayout,

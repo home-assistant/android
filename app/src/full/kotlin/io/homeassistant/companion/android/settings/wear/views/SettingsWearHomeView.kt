@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.wear.views
 
 import android.content.Intent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.IconButton
 import androidx.compose.material.TopAppBar
@@ -18,8 +19,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ArrowLeft
+import io.github.timoptr.mdiicons.generated.HelpCircleOutline
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -120,7 +123,8 @@ fun SettingsWearTopAppBar(
         navigationIcon = {
             IconButton(onClick = onBackClicked) {
                 Image(
-                    asset = CommunityMaterial.Icon.cmd_arrow_left,
+                    imageVector = Mdi.ArrowLeft.rememberImageVector(),
+                    contentDescription = stringResource(commonR.string.navigate_up),
                     colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
                 )
             }
@@ -134,7 +138,7 @@ fun SettingsWearTopAppBar(
                     },
                 ) {
                     Image(
-                        asset = CommunityMaterial.Icon2.cmd_help_circle_outline,
+                        imageVector = Mdi.HelpCircleOutline.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.help),
                         colorFilter = ColorFilter.tint(colorResource(commonR.color.colorOnBackground)),
                     )

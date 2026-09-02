@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.ssid.views
 
 import android.net.wifi.WifiManager
 import android.os.Build
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,8 +56,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.WifiCheck
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.network.WifiHelper
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -163,7 +165,8 @@ fun SsidView(
             ) {
                 if (connected) {
                     Image(
-                        asset = CommunityMaterial.Icon3.cmd_wifi_check,
+                        imageVector = Mdi.WifiCheck.rememberImageVector(),
+                        contentDescription = null,
                         colorFilter = ColorFilter.tint(colorResource(commonR.color.colorAccent)),
                     )
                     Spacer(Modifier.width(16.dp))

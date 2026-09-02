@@ -31,6 +31,8 @@ ksp {
 }
 
 dependencies {
+    api(libs.mdi.icons)
+
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
     implementation(libs.kotlinx.coroutines.core)
@@ -56,9 +58,6 @@ dependencies {
     implementation(libs.okhttp.android)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.android.beacon.library)
-
-    implementation(libs.iconics.core)
-    implementation(libs.community.material.typeface)
 
     implementation(libs.emojiJava) {
         exclude(group = "org.json", module = "json")

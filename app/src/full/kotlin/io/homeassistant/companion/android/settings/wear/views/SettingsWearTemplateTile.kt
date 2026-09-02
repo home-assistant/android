@@ -7,6 +7,7 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,8 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.text.HtmlCompat.FROM_HTML_MODE_LEGACY
 import androidx.core.text.HtmlCompat.fromHtml
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.TimerCog
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.intervalToString
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
@@ -75,7 +77,8 @@ fun SettingsWearTemplateTile(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    asset = CommunityMaterial.Icon3.cmd_timer_cog,
+                    imageVector = Mdi.TimerCog.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(colorResource(commonR.color.colorPrimary)),
                     modifier = Modifier
                         .height(24.dp)
