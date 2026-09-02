@@ -176,6 +176,7 @@ class LocationSensorManager @Inject constructor(
 
         private var lastHighAccuracyMode = false
         private var lastHighAccuracyUpdateInterval = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
+        private var lastHighAccuracyModeStart = 0L
         private var forceHighAccuracyModeOn = false
         private var forceHighAccuracyModeOff = false
         private var highAccuracyModeEnabled = false
@@ -325,19 +326,26 @@ class LocationSensorManager @Inject constructor(
             val now = System.currentTimeMillis()
             if (
                 (!highAccuracyModeEnabled && isBackgroundLocationSetup) &&
-                (lastLocationReceived.all { (it.value + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2L)) < now })
+                lastLocationReceived.isNotEmpty() &&
+                lastLocationReceived.all { (it.value + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2L)) < now }
             ) {
                 Timber.d("Background location updates appear to have stopped, restarting location updates")
                 isBackgroundLocationSetup = false
                 fusedLocationProviderClient?.flushLocations()
                 removeBackgroundUpdateRequests()
-            } else if (
-                highAccuracyModeEnabled &&
-                (lastLocationReceived.all { (it.value + (getHighAccuracyModeUpdateInterval().toLong() * 2000L)) < now })
-            ) {
-                Timber.d("High accuracy mode appears to have stopped, restarting high accuracy mode")
-                isBackgroundLocationSetup = false
-                stopHighAccuracyService()
+            } else if (highAccuracyModeEnabled) {
+                val timeoutMs = getHighAccuracyModeUpdateInterval().toLong() * 2000L
+                val lastProgress = maxOf(
+                    lastHighAccuracyModeStart,
+                    lastLocationReceived.values.maxOrNull() ?: 0L,
+                )
+                // lastLocationReceived.all { stale } is true for an empty map, which previously
+                // restarted HAM on every startHighAccuracyService -> updateAllSensors cycle.
+                if (lastProgress > 0L && lastProgress + timeoutMs < now) {
+                    Timber.d("High accuracy mode appears to have stopped, restarting high accuracy mode")
+                    isBackgroundLocationSetup = false
+                    stopHighAccuracyService()
+                }
             }
 
             setupBackgroundLocation(backgroundEnabled, zoneEnabled)
@@ -443,6 +451,7 @@ class LocationSensorManager @Inject constructor(
     }
 
     private suspend fun startHighAccuracyService(intervalInSeconds: Int) {
+        lastHighAccuracyModeStart = System.currentTimeMillis()
         onSensorUpdated(
             highAccuracyMode,
             true,
