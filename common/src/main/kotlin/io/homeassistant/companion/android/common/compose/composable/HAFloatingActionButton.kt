@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.common.compose.composable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -12,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -87,7 +88,7 @@ private fun HAFloatingActionButtonPreview() {
         Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
             ButtonVariant.entries.forEach { variant ->
                 HAFloatingActionButton(
-                    icon = Icons.Default.Add,
+                    icon = Mdi.Plus.rememberImageVector(),
                     variant = variant,
                     contentDescription = null,
                     onClick = {},

@@ -19,8 +19,6 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +37,7 @@ import io.github.timoptr.mdiicons.generated.ClipboardList
 import io.github.timoptr.mdiicons.generated.CodeBraces
 import io.github.timoptr.mdiicons.generated.GestureTap
 import io.github.timoptr.mdiicons.generated.PlayBoxMultiple
+import io.github.timoptr.mdiicons.generated.Plus
 import io.github.timoptr.mdiicons.generated.Shape
 import io.github.timoptr.mdiicons.generated.Widgets
 import io.github.timoptr.mdiicons.rememberImageVector
@@ -86,7 +85,7 @@ fun ManageWidgetsView(viewModel: ManageWidgetsViewModel, modifier: Modifier = Mo
                     modifier = Modifier.padding(safeBottomPaddingValues(applyHorizontal = false)),
                     backgroundColor = MaterialTheme.colors.primary,
                     contentColor = MaterialTheme.colors.onPrimary,
-                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    icon = { Icon(Mdi.Plus.rememberImageVector(), contentDescription = null) },
                     text = { Text(stringResource(R.string.add_widget)) },
                     onClick = { expandedAddWidget = true },
                 )

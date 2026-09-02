@@ -43,8 +43,6 @@ dependencies {
 
     implementation(libs.activity.ktx)
     implementation(libs.activity.compose)
-    implementation(libs.compose.material.icons.core)
-    implementation(libs.compose.material.icons.extended)
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.compose.material)
     implementation(libs.wear.compose.navigation)

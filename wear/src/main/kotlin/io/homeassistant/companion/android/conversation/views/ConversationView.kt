@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.AbsoluteRoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,6 +51,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.ChevronRight
+import io.github.timoptr.mdiicons.generated.Microphone
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
@@ -223,7 +222,7 @@ fun ConversationResultView(
                         modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
                     ) {
                         Icon(
-                            Icons.Filled.Mic,
+                            Mdi.Microphone.rememberImageVector(),
                             contentDescription = stringResource(R.string.assist_start_listening),
                             modifier = Modifier.size(
                                 IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize),

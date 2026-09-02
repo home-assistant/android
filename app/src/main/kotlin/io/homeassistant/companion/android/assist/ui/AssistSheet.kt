@@ -44,12 +44,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -77,6 +71,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Check
+import io.github.timoptr.mdiicons.generated.ChevronDown
+import io.github.timoptr.mdiicons.generated.KeyboardOutline
+import io.github.timoptr.mdiicons.generated.Microphone
+import io.github.timoptr.mdiicons.generated.Send
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase.AssistInputMode
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
@@ -265,7 +266,7 @@ private fun AssistPipelineSelector(
                 style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
             )
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
+                imageVector = Mdi.ChevronDown.rememberImageVector(),
                 contentDescription = stringResource(commonR.string.assist_change_pipeline),
                 tint = colorScheme.colorTextSecondary,
                 modifier = Modifier
@@ -293,7 +294,7 @@ private fun AssistPipelineSelector(
                     trailingIcon = if (isSelected) {
                         {
                             Icon(
-                                imageVector = Icons.Default.Check,
+                                imageVector = Mdi.Check.rememberImageVector(),
                                 contentDescription = null,
                                 tint = colorScheme.colorFillPrimaryLoudResting,
                                 modifier = Modifier.size(HADimens.SPACE5),
@@ -449,7 +450,7 @@ private fun RowScope.AssistTextInput(
     )
     val inputIsSend = text.isNotBlank() || textOnly
     HAIconButton(
-        icon = if (inputIsSend) Icons.AutoMirrored.Filled.Send else Icons.Filled.Mic,
+        icon = if (inputIsSend) Mdi.Send.rememberImageVector() else Mdi.Microphone.rememberImageVector(),
         contentDescription = stringResource(
             if (inputIsSend) commonR.string.assist_send_text else commonR.string.assist_start_listening,
         ),
@@ -472,7 +473,7 @@ private fun RowScope.AssistVoiceInput(isActive: Boolean, onChangeInput: () -> Un
     AssistMicrophoneButton(isActive = isActive, onClick = onMicrophoneInput)
     Spacer(modifier = Modifier.weight(0.5f))
     HAIconButton(
-        icon = Icons.Outlined.Keyboard,
+        icon = Mdi.KeyboardOutline.rememberImageVector(),
         contentDescription = stringResource(commonR.string.assist_enter_text),
         onClick = onChangeInput,
         variant = ButtonVariant.NEUTRAL,
@@ -507,7 +508,7 @@ private fun AssistMicrophoneButton(isActive: Boolean, onClick: () -> Unit, modif
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Filled.Mic,
+                imageVector = Mdi.Microphone.rememberImageVector(),
                 contentDescription = stringResource(
                     if (isActive) commonR.string.assist_stop_listening else commonR.string.assist_start_listening,
                 ),

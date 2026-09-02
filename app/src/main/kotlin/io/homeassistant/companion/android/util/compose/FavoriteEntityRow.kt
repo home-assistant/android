@@ -16,9 +16,6 @@ import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -29,7 +26,9 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
 import io.github.timoptr.mdiicons.generated.DragHorizontalVariant
+import io.github.timoptr.mdiicons.generated.Plus
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
@@ -84,7 +83,7 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
             }
             IconButton(onClick = onClick) {
                 Icon(
-                    imageVector = if (checked) Icons.Default.Clear else Icons.Default.Add,
+                    imageVector = if (checked) Mdi.Close.rememberImageVector() else Mdi.Plus.rememberImageVector(),
                     contentDescription = stringResource(if (checked) R.string.delete else R.string.add_favorite),
                 )
             }
