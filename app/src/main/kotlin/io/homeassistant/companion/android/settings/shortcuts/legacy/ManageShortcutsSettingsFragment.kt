@@ -14,11 +14,8 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.util.fromHaName
-import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.shortcuts.legacy.views.ManageShortcutsView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -81,6 +78,6 @@ class ManageShortcutsSettingsFragment : Fragment() {
             "shortcut_5" -> 4
             else -> 5
         }
-        viewModel.shortcuts[index].selectedIcon.value = Mdi.fromHaName(selectedIcon.mdiName)
+        viewModel.shortcuts[index].selectedIcon.value = selectedIcon
     }
 }

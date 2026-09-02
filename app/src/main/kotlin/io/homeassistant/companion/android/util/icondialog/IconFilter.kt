@@ -37,6 +37,7 @@ class DefaultIconFilter(
      */
     private val queryNormalized: Boolean = true,
 ) : IconFilter {
+    val icons by lazy { Mdi.icons.sortedBy(MdiIcon::name) }
 
     /**
      * Get a list of all matching icons for a search [query].
@@ -45,8 +46,6 @@ class DefaultIconFilter(
      * that the returned list is sorted by ID.
      */
     override fun queryIcons(query: String?): List<MdiIcon> {
-        val icons = Mdi.icons.sortedBy(MdiIcon::name)
-
         if (query.isNullOrBlank()) {
             // No search query, return all icons.
             return icons

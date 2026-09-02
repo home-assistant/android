@@ -122,13 +122,12 @@ fun ChooseEntityView(
 
 @Composable
 private fun ChooseEntityChip(entity: EntityDisplay, onEntitySelected: (entity: SimplifiedEntity) -> Unit) {
-    val iconBitmap = entity.icon
     Button(
         modifier = Modifier
             .fillMaxWidth(),
         icon = {
             Image(
-                imageVector = iconBitmap.rememberImageVector(),
+                imageVector = entity.icon.rememberImageVector(),
                 contentDescription = null,
                 colorFilter = ColorFilter.tint(Color.White),
             )

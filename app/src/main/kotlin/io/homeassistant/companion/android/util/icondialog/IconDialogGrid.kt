@@ -73,7 +73,7 @@ fun IconDialogGrid(
     onClick: (MdiIcon) -> Unit,
 ) {
     var icons by remember { mutableStateOf<List<MdiIcon>>(emptyList()) }
-    LaunchedEffect(searchQuery) {
+    LaunchedEffect(iconFilter, searchQuery) {
         icons = withContext(Dispatchers.Default) { iconFilter.queryIcons(searchQuery) }
     }
 
