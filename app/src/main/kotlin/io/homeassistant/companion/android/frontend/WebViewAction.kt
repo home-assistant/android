@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend
 
 import android.webkit.WebView
+import androidx.annotation.VisibleForTesting
 import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.blue
 import androidx.core.graphics.green
@@ -12,7 +13,12 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticTy
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.util.compose.webview.settings
 import io.homeassistant.companion.android.util.sensitive
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTime
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 
@@ -43,26 +49,38 @@ private const val DEFAULT_PANEL_SIDEBAR_CLICK_SCRIPT = """
  * interface rather than passing the WebView reference to non-UI layers.
  *
  * The Screen collects these via [FrontendViewModel.webViewActions] and executes
- * the corresponding WebView method.
+ * the corresponding WebView method. Actions whose outcome matters to the emitter
+ * extend [AwaitableAction].
  */
 sealed interface WebViewAction {
 
-    sealed interface AwaitableAction<T> : WebViewAction {
+    /**
+     * A [WebViewAction] whose outcome can be awaited by its emitter.
+     *
+     * The emitter executes the action by calling [run], and observes the outcome through [await].
+     */
+    sealed class AwaitableAction<T> : WebViewAction {
+        /** Completed by [run], or a callback it starts, with the action's outcome. */
+        @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
+        internal val result: CompletableDeferred<T> = CompletableDeferred()
+
         /**
-         * Marker for actions that signal completion via [CompletableDeferred].
+         * Suspends until the action has been executed and returns its outcome. An implementation
+         * that fails throws instead, e.g. [PingUrl] throws
+         * [kotlinx.coroutines.TimeoutCancellationException] on timeout.
          *
-         * The Screen executes the action by calling [run], and the action
-         * implementation is responsible for completing [result] when processing has
-         * finished. Completion may happen directly inside [run] or asynchronously
-         * from a callback started by [run].
+         * An implementation that gives up cancels [result]; calling [await] again after that
+         * throws a [kotlinx.coroutines.CancellationException], so await an action at most once.
          */
-        val result: CompletableDeferred<T>
+        open suspend fun await(): T {
+            return result.await()
+        }
     }
 
     fun run(webView: WebView)
 
     /** Navigate forward in WebView history if possible. */
-    data class Forward(override val result: CompletableDeferred<Unit> = CompletableDeferred()) : AwaitableAction<Unit> {
+    class Forward : AwaitableAction<Unit>() {
         override fun run(webView: WebView) {
             if (webView.canGoForward()) webView.goForward()
             result.complete(Unit)
@@ -70,7 +88,7 @@ sealed interface WebViewAction {
     }
 
     /** Reload the current page. */
-    data class Reload(override val result: CompletableDeferred<Unit> = CompletableDeferred()) : AwaitableAction<Unit> {
+    class Reload : AwaitableAction<Unit>() {
         override fun run(webView: WebView) {
             webView.reload()
             result.complete(Unit)
@@ -78,8 +96,7 @@ sealed interface WebViewAction {
     }
 
     /** Perform haptic feedback on the WebView. */
-    data class Haptic(val type: HapticType, override val result: CompletableDeferred<Unit> = CompletableDeferred()) :
-        AwaitableAction<Unit> {
+    data class Haptic(val type: HapticType) : AwaitableAction<Unit>() {
         override fun run(webView: WebView) {
             HapticFeedbackPerformer.perform(webView, type)
             result.complete(Unit)
@@ -87,8 +104,7 @@ sealed interface WebViewAction {
     }
 
     /** Clear the WebView navigation history. */
-    data class ClearHistory(override val result: CompletableDeferred<Unit> = CompletableDeferred()) :
-        AwaitableAction<Unit> {
+    class ClearHistory : AwaitableAction<Unit>() {
         override fun run(webView: WebView) {
             webView.clearHistory()
             result.complete(Unit)
@@ -103,9 +119,7 @@ sealed interface WebViewAction {
             "external bus command. Prefer NavigateToMessage on supported servers; remove this once " +
             "the minimum supported server version is 2025.6 or later.",
     )
-    data class NavigateToDefaultPanelViaSidebar(
-        override val result: CompletableDeferred<Unit> = CompletableDeferred(),
-    ) : AwaitableAction<Unit> {
+    class NavigateToDefaultPanelViaSidebar : AwaitableAction<Unit>() {
         override fun run(webView: WebView) {
             @OptIn(EvaluateJavascriptUsage::class)
             webView.evaluateJavascript(DEFAULT_PANEL_SIDEBAR_CLICK_SCRIPT) { result.complete(Unit) }
@@ -113,14 +127,88 @@ sealed interface WebViewAction {
     }
 
     /**
+     * Pings [url] through the WebView network stack: a `HEAD` request that bypasses the HTTP
+     * cache and discards the response. Use this when reaching the server over the network is the
+     * goal.
+     *
+     * [await] returns once the request has finished, successfully or not: the response does not
+     * matter, only that the server was reached. After [PING_TIMEOUT] it stops the polling and
+     * throws [kotlinx.coroutines.TimeoutCancellationException], letting the emitter decide how
+     * to handle the failure.
+     */
+    // Opts into [EvaluateJavascriptUsage] because the request must go through the WebView's own
+    // network stack, and callers may run before the frontend is loaded, when no external bus
+    // exists.
+    @OptIn(EvaluateJavascriptUsage::class)
+    data class PingUrl(val url: String) : AwaitableAction<Unit>() {
+
+        /**
+         * Per-action `window` variable set by the ping script once the request has completed, so
+         * a superseded ping completing late cannot overwrite this ping's completion.
+         */
+        private val completedFlag = "$PING_COMPLETED_FLAG_PREFIX${NEXT_PING_ID.getAndIncrement()}"
+
+        override fun run(webView: WebView) {
+            val urlJson = Json.encodeToString(url)
+
+            // The completion variable holds the pinged URL rather than a boolean so a stale completion
+            // from a previous ping cannot be mistaken for this one.
+            val script = """
+                window.$completedFlag = null;
+                fetch($urlJson, { method: 'HEAD', cache: 'no-store', mode: 'no-cors' })
+                    .finally(function() { window.$completedFlag = $urlJson; });
+            """.trimIndent()
+            webView.evaluateJavascript(script) { pollCompletion(webView, urlJson) }
+        }
+
+        override suspend fun await() {
+            try {
+                val elapsed = withTimeout(PING_TIMEOUT) { measureTime { result.await() } }
+                Timber.d("Ping of ${sensitive(url)} completed in $elapsed")
+            } finally {
+                // Stops the action's polling after a timeout or when this load gets superseded.
+                result.cancel()
+            }
+        }
+
+        private fun pollCompletion(webView: WebView, urlJson: String) {
+            if (!result.isActive) return
+            webView.evaluateJavascript("window.$completedFlag") { value ->
+                if (value == urlJson) {
+                    result.complete(Unit)
+                } else {
+                    // The variable [completedFlag] is polled every [PING_POLL_INTERVAL] because there
+                    // is no completion callback available: a synchronous XHR
+                    // would block the renderer's JS thread, which the timeout cannot unblock.
+                    webView.postDelayed(
+                        { pollCompletion(webView, urlJson) },
+                        PING_POLL_INTERVAL.inWholeMilliseconds,
+                    )
+                }
+            }
+        }
+
+        companion object {
+            /** Maximum time [await] waits for the request to finish before giving up. */
+            internal val PING_TIMEOUT = 5.seconds
+
+            /** Interval between checks of [completedFlag], also the detection lag after completion. */
+            private val PING_POLL_INTERVAL = 15.milliseconds
+
+            /** Prefix of the per-action completion variable, see [completedFlag]. */
+            private const val PING_COMPLETED_FLAG_PREFIX = "_haAndroidPingedUrl"
+
+            /** Distinguishes each ping's [completedFlag] within the process. */
+            private val NEXT_PING_ID = AtomicInteger()
+        }
+    }
+
+    /**
      * Evaluate a JavaScript script in the WebView, the result of the execution is
-     * emitted through [result].
+     * returned by [await].
      */
     @EvaluateJavascriptUsage
-    data class EvaluateScript(
-        val script: String,
-        override val result: CompletableDeferred<String?> = CompletableDeferred(),
-    ) : AwaitableAction<String?> {
+    data class EvaluateScript(val script: String) : AwaitableAction<String?>() {
         override fun run(webView: WebView) {
             Timber.d("Evaluating script: ${sensitive(script)}")
             webView.evaluateJavascript(script) { scriptResult ->
@@ -130,11 +218,10 @@ sealed interface WebViewAction {
     }
 
     /**
-     * Reads the frontend's current theme colors (status bar and page background) and completes
-     * [result] with the parsed [ThemeColors], or `null` when the frontend response is unreadable.
+     * Reads the frontend's current theme colors (status bar and page background); [await] returns
+     * the parsed [ThemeColors], or `null` when the frontend response is unreadable.
      */
-    data class ReadThemeColors(override val result: CompletableDeferred<ThemeColors?> = CompletableDeferred()) :
-        AwaitableAction<ReadThemeColors.Companion.ThemeColors?> {
+    class ReadThemeColors : AwaitableAction<ReadThemeColors.Companion.ThemeColors?>() {
         /**
          * Opts into [EvaluateJavascriptUsage] because these values only exist as computed CSS custom
          * properties in the frontend; no external bus message exposes them.

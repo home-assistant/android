@@ -65,14 +65,20 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     companion object {
         private const val FOR_ENTITY = "for_entity"
 
-        fun newInstance(context: Context, entityId: String): Intent {
+        fun newInstance(context: Context, entityId: String? = null): Intent {
             return Intent(context, TodoWidgetConfigureActivity::class.java).apply {
-                putExtra(FOR_ENTITY, entityId)
+                entityId?.let { putExtra(FOR_ENTITY, it) }
                 putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
         }
     }
+
+    private val widgetId: Int
+        get() = intent.extras?.getInt(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID,
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
     private val viewModel: TodoWidgetConfigureViewModel by viewModels(
         extrasProducer = {
@@ -95,10 +101,6 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
-        val widgetId = intent.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
         viewModel.onSetup(widgetId, supportedTextColors)
 
@@ -141,7 +143,10 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     private suspend fun onUpdateWidget() {
         try {
             viewModel.updateWidgetConfiguration()
-            setResult(RESULT_OK)
+            setResult(
+                RESULT_OK,
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId),
+            )
             viewModel.updateWidget(this@TodoWidgetConfigureActivity)
             finish()
         } catch (_: Exception) {

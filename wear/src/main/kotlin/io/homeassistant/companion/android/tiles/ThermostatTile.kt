@@ -20,8 +20,9 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.ThermostatTile
@@ -29,6 +30,7 @@ import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -59,6 +61,9 @@ class ThermostatTile : TileService() {
 
     @Inject
     lateinit var thermostatTileDao: ThermostatTileDao
+
+    @Inject
+    lateinit var entitiesForDisplayManager: EntitiesForDisplayManager
 
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
@@ -101,20 +106,22 @@ class ThermostatTile : TileService() {
                 } else {
                     try {
                         val entity = tileConfig.entityId?.let {
-                            serverManager.integrationRepository().getEntity(it)
+                            entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(it))
+                                .awaitLoadedOrNull()
+                                ?.entity(it)
                         }
                         check(entity != null)
+                        val climateControls = entity.climateControls
 
                         val lastId = requestParams.currentState.lastClickableId
-                        var targetTemp =
-                            tileConfig.targetTemperature ?: entity.attributes["temperature"]?.toString()?.toFloat()
+                        var targetTemp = tileConfig.targetTemperature ?: climateControls?.targetTemperature
 
                         val config = serverManager.webSocketRepository().getConfig()
                         val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
 
                         if (targetTemp != null && (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN)) {
-                            val attrStepSize = (entity.attributes["target_temp_step"] as? Number)?.toFloat()
-                            val stepSize = attrStepSize ?: if (temperatureUnit == "°F") 1.0f else 0.5f
+                            val stepSize = climateControls?.targetTemperatureStep
+                                ?: if (temperatureUnit == "°F") 1.0f else 0.5f
                             val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
 
                             serverManager.integrationRepository().callAction(
@@ -133,14 +140,19 @@ class ThermostatTile : TileService() {
                             thermostatTileDao.add(updated)
                         }
 
+                        val name = if (tileConfig.showEntityName == true) entity.name else ""
+
                         tile.setTileTimeline(
                             timeline(
                                 tileConfig,
                                 entity,
+                                name,
                                 targetTemp,
                                 temperatureUnit,
                             ),
                         ).build()
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Unable to fetch entity ${tileConfig.entityId}")
 
@@ -196,13 +208,14 @@ class ThermostatTile : TileService() {
 
     private fun timeline(
         tileConfig: ThermostatTile,
-        entity: Entity,
+        entity: EntityDisplay,
+        entityName: String,
         targetTemperature: Float?,
         temperatureUnit: String,
     ): Timeline = Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
-            val currentTemperature = entity.attributes["current_temperature"]
-            val hvacAction = entity.attributes["hvac_action"].toString()
+            val currentTemperature = entity.climateControls?.currentTemperature
+            val hvacAction = entity.climateControls?.hvacAction.toString()
 
             val hvacActionColor = when (hvacAction) {
                 "heating" -> getColor(commonR.color.colorDeviceControlsThermostatHeat)
@@ -263,14 +276,14 @@ class ThermostatTile : TileService() {
                     .addContent(
                         LayoutElementBuilders.Row.Builder()
                             .addContent(
-                                getTempButton(hvacAction != "off" && entity.state != "unavailable", TAP_ACTION_DOWN),
+                                getTempButton(hvacAction != "off" && entity.rawState != "unavailable", TAP_ACTION_DOWN),
                             )
                             .addContent(
                                 LayoutElementBuilders.Spacer.Builder()
                                     .setWidth(DimensionBuilders.dp(20f)).build(),
                             )
                             .addContent(
-                                getTempButton(hvacAction != "off" && entity.state != "unavailable", TAP_ACTION_UP),
+                                getTempButton(hvacAction != "off" && entity.rawState != "unavailable", TAP_ACTION_UP),
                             )
                             .build(),
                     )
@@ -303,7 +316,7 @@ class ThermostatTile : TileService() {
                         )
                         .addContent(
                             LayoutElementBuilders.ArcText.Builder()
-                                .setText(entity.friendlyName)
+                                .setText(entityName)
                                 .build(),
                         )
                         .build(),

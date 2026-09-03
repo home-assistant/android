@@ -3,9 +3,7 @@ package io.homeassistant.companion.android.common.data
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
-import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
+import io.homeassistant.companion.android.common.data.keychain.ClientCertificateManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import java.io.IOException
@@ -30,10 +28,7 @@ import timber.log.Timber
  * Helper to configure an [OkHttpClient] for server-certificate validation (with a
  * user-installed CA fallback) and the client certificate for mutual TLS (mTLS).
  */
-class TLSHelper @Inject constructor(
-    @NamedKeyChain private val keyChainRepository: KeyChainRepository,
-    @NamedKeyStore private val keyStore: KeyChainRepository,
-) {
+class TLSHelper @Inject constructor(private val clientCertificateManager: ClientCertificateManager) {
 
     /**
      * Configures [builder] to validate server certificates.
@@ -48,7 +43,9 @@ class TLSHelper @Inject constructor(
      * whenever the default rejects a certificate (see [withUserInstalledCaFallback]). This relies on
      * the app opting into user CAs via `<certificates src="user"/>` in `network_security_config.xml`.
      *
-     * Runs on [Dispatchers.IO] because it may read keystores from disk.
+     * Runs on [Dispatchers.IO] because it may read keystores from disk, and awaits the mTLS client
+     * certificate load (see [ClientCertificateManager.getClientCertProvider]) so it is available
+     * before the first handshake.
      */
     suspend fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) = withContext(Dispatchers.IO) {
         val platformTrustManager = defaultX509TrustManager() ?: run {
@@ -102,7 +99,9 @@ class TLSHelper @Inject constructor(
         null
     }
 
-    private fun getMTLSKeyManagerForOKHTTP(): X509ExtendedKeyManager {
+    @VisibleForTesting
+    internal suspend fun getMTLSKeyManagerForOKHTTP(): X509ExtendedKeyManager {
+        val clientCertProvider = clientCertificateManager.getClientCertProvider()
         return object : X509ExtendedKeyManager() {
             override fun getClientAliases(p0: String?, p1: Array<out Principal>?): Array<String> {
                 return emptyArray()
@@ -121,11 +120,11 @@ class TLSHelper @Inject constructor(
             }
 
             override fun getCertificateChain(p0: String?): Array<X509Certificate>? {
-                return keyChainRepository.getCertificateChain() ?: keyStore.getCertificateChain()
+                return clientCertProvider.certificate?.chain
             }
 
             override fun getPrivateKey(p0: String?): PrivateKey? {
-                return keyChainRepository.getPrivateKey() ?: keyStore.getPrivateKey()
+                return clientCertProvider.certificate?.privateKey
             }
         }
     }

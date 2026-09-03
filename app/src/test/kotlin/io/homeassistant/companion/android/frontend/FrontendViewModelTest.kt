@@ -18,6 +18,8 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
+import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
@@ -82,6 +84,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -201,9 +204,9 @@ class FrontendViewModelTest {
          * `android.net.Uri` (unavailable on the plain JVM these tests run on); tests covering that branch
          * mock [hasSameOrigin] directly. The origin parsing itself is covered by `UrlUtilTest`.
          */
-        private fun createViewModelWithUrlInterceptCapture(): Pair<FrontendViewModel, (Uri) -> Boolean> {
+        private suspend fun createViewModelWithUrlInterceptCapture(): Pair<FrontendViewModel, (Uri) -> Boolean> {
             var capturedCallback: ((Uri, Boolean) -> Boolean)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -221,6 +224,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
+            viewModel.getWebViewClient()
             return viewModel to { uri ->
                 val callback = capturedCallback
                 assertNotNull(callback)
@@ -1270,9 +1274,9 @@ class FrontendViewModelTest {
     @Nested
     inner class Zoom {
 
-        private fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
+        private suspend fun createViewModelWithPageFinishedCapture(): Pair<FrontendViewModel, () -> Unit> {
             var capturedPageFinished: ((String?) -> Unit)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -1290,6 +1294,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
+            viewModel.getWebViewClient()
             return viewModel to { capturedPageFinished!!.invoke(null) }
         }
 
@@ -1407,9 +1412,9 @@ class FrontendViewModelTest {
             dialogManager = dialogManager,
         )
 
-        private fun createViewModelWithAuthCapture(): Pair<FrontendViewModel, (HttpAuthHandler, String, String, String) -> Unit> {
+        private suspend fun createViewModelWithAuthCapture(): Pair<FrontendViewModel, (HttpAuthHandler, String, String, String) -> Unit> {
             var capturedCallback: ((HttpAuthHandler, String, String, String) -> Unit)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -1426,6 +1431,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel(httpAuthHandler = httpAuthHandler, dialogManager = dialogManager)
+            viewModel.getWebViewClient()
             val callback = capturedCallback
             assertNotNull(callback)
             return viewModel to callback
@@ -1510,9 +1516,9 @@ class FrontendViewModelTest {
     @Nested
     inner class SubresourceSslError {
 
-        private fun createViewModelWithSubresourceSslErrorCapture(): Pair<FrontendViewModel, (String?) -> Unit> {
+        private suspend fun createViewModelWithSubresourceSslErrorCapture(): Pair<FrontendViewModel, (String?) -> Unit> {
             var capturedCallback: ((String?) -> Unit)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -1530,6 +1536,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
+            viewModel.getWebViewClient()
             val callback = capturedCallback
             assertNotNull(callback)
             return viewModel to callback
@@ -1571,9 +1578,9 @@ class FrontendViewModelTest {
     @Nested
     inner class BackNavigation {
 
-        private fun createViewModelWithCanGoBackCapture(): Pair<FrontendViewModel, (Boolean) -> Unit> {
+        private suspend fun createViewModelWithCanGoBackCapture(): Pair<FrontendViewModel, (Boolean) -> Unit> {
             var capturedCanGoBackChanged: ((Boolean) -> Unit)? = null
-            every {
+            coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
                     onFrontendError = any(),
@@ -1591,6 +1598,7 @@ class FrontendViewModelTest {
             }
 
             val viewModel = createViewModel()
+            viewModel.getWebViewClient()
             return viewModel to {
                 val callback = capturedCanGoBackChanged
                 assertNotNull(callback)
@@ -3169,6 +3177,93 @@ class FrontendViewModelTest {
                 messageFlow.emit(FrontendHandlerEvent.Connected)
                 advanceUntilIdle()
                 expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    @OptIn(EvaluateJavascriptUsage::class)
+    inner class TlsClientCertPriming {
+        private fun stubClientCert(certificate: ClientCertificate?) {
+            coEvery { keyChainRepository.getClientCertProvider() } returns object : ClientCertProvider {
+                override val certificate = certificate
+            }
+        }
+
+        @Test
+        fun `Given a client certificate when preparing a url load then a priming action is emitted and awaited`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                val prepare = launch { viewModel.prepareUrlLoad("https://example.com/?external_auth=1") }
+                val action = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+                assertEquals("https://example.com/manifest.json", action.url)
+                runCurrent()
+                assertFalse(prepare.isCompleted, "prepareUrlLoad should wait for the priming action")
+
+                action.result.complete(Unit)
+                prepare.join()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given the action collector subscribes late when preparing a url load then the priming action is not dropped`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            // Start preparing before anything collects the actions, like a cold start where the
+            // Screen's collector is not subscribed yet.
+            val prepare = launch { viewModel.prepareUrlLoad("https://example.com/") }
+            runCurrent()
+            assertFalse(prepare.isCompleted, "prepareUrlLoad should wait for a subscriber")
+
+            viewModel.webViewActions.test {
+                val action = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+                action.result.complete(Unit)
+                prepare.join()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given no client certificate when preparing a url load then no priming action is emitted`() = runTest {
+            stubClientCert(null)
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                viewModel.prepareUrlLoad("https://example.com/")
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a blank url when preparing a url load then no priming action is emitted`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                viewModel.prepareUrlLoad("about:blank")
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a priming action that never completes when preparing a url load then it times out and cancels the action`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                val prepare = launch { viewModel.prepareUrlLoad("https://example.com/") }
+                val action = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+
+                advanceTimeBy(WebViewAction.PingUrl.PING_TIMEOUT + 1.seconds)
+                prepare.join()
+                assertTrue(action.result.isCancelled, "the action's polling should be stopped")
                 cancelAndIgnoreRemainingEvents()
             }
         }

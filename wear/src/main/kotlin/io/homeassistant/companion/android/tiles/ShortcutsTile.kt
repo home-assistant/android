@@ -261,7 +261,7 @@ class ShortcutsTile : TileService() {
                 LayoutElementBuilders.Arc.Builder()
                     .addContent(
                         LayoutElementBuilders.ArcText.Builder()
-                            .setText(entity.friendlyName)
+                            .setText(entity.name)
                             .setFontStyle(
                                 LayoutElementBuilders.FontStyle.Builder()
                                     .setSize(sp(TEXT_SIZE))

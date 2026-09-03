@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationExc
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
+import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ActionRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.CallServiceIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
@@ -41,6 +42,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketReposit
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingToken
@@ -212,7 +214,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     private suspend fun persistDeviceRegistration(deviceRegistration: DeviceRegistration) {
         if (deviceRegistration.appVersion != null) {
-            localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion.value)
+            localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion.toString())
         }
         if (deviceRegistration.deviceName != null) {
             serverManager.updateServer(server().copy(deviceName = deviceRegistration.deviceName))
@@ -477,17 +479,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun getEntities(): List<Entity>? {
         val response = webSocketRepository().getStates()
 
-        return response?.map {
-            Entity(
-                it.entityId,
-                it.state,
-                it.attributes,
-                it.lastChanged,
-                it.lastUpdated,
-            )
-        }
-            ?.sortedBy { it.entityId }
-            ?.toList()
+        return response?.map { it.toEntity() }?.sortedBy { it.entityId }
     }
 
     override suspend fun getEntity(entityId: String): Entity? {
@@ -503,54 +495,85 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             url.newBuilder().addPathSegments("api/states/$entityId").build(),
             serverManager.authenticationRepository(serverId).buildBearerToken(),
         )
-        return Entity(
-            response.entityId,
-            response.state,
-            response.attributes,
-            response.lastChanged,
-            response.lastUpdated,
-        )
+        return response.toEntity()
     }
 
     override suspend fun getEntityUpdates(): Flow<Entity>? {
-        return webSocketRepository().getStateChanges()
-            ?.filter { it.newState != null }
-            ?.map {
-                Entity(
-                    it.newState!!.entityId,
-                    it.newState.state,
-                    it.newState.attributes,
-                    it.newState.lastChanged,
-                    it.newState.lastUpdated,
-                )
-            }
+        return if (supportsCompressedStateChanges()) {
+            webSocketRepository().getCompressedStateAndChanges()?.toEntityUpdates()
+        } else {
+            webSocketRepository().getStateChanges()
+                ?.filter { it.newState != null }
+                ?.map { it.newState!! }
+        }
     }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
-        return if (server().user.isAdmin == true) {
+        return if (supportsCompressedStateChanges()) {
+            // Contrary to the state trigger below, the subscription filters server side for any
+            // user, without requiring admin rights
+            webSocketRepository().getCompressedStateAndChanges(entityIds)?.toEntityUpdates(entityIds.toSet())
+        } else if (server().user.isAdmin == true) {
             webSocketRepository().getStateChanges(entityIds)
                 ?.filter { it.toState != null }
-                ?.map {
-                    Entity(
-                        it.toState!!.entityId,
-                        it.toState.state,
-                        it.toState.attributes,
-                        it.toState.lastChanged,
-                        it.toState.lastUpdated,
-                    )
-                }
+                ?.map { it.toState!! }
         } else {
             webSocketRepository().getStateChanges()
                 ?.filter { it.newState != null && entityIds.contains(it.entityId) }
-                ?.map {
-                    Entity(
-                        it.newState!!.entityId,
-                        it.newState.state,
-                        it.newState.attributes,
-                        it.newState.lastChanged,
-                        it.newState.lastUpdated,
-                    )
+                ?.map { it.newState!! }
+        }
+    }
+
+    /** Whether the server supports `subscribe_entities` (compressed state changes), added in 2022.4. */
+    private suspend fun supportsCompressedStateChanges(): Boolean = server().version?.isAtLeast(2022, 4, 0) == true
+
+    /**
+     * Converts compressed state change events to full [Entity] states, resolving the diffs
+     * against the last known state of each entity. The full states the subscription sends when it
+     * starts are emitted too, so collectors also converge back to the server state after a
+     * reconnection.
+     */
+    private fun Flow<CompressedStateChangedEvent>.toEntityUpdates(entityIds: Set<String>? = null): Flow<Entity> = flow {
+        val entities = mutableMapOf<String, Entity>()
+        // Seed before collecting: a collector joining an already active shared subscription missed
+        // its initial full states, and fetching while handling an event would deadlock because the
+        // websocket processes messages sequentially, so the fetch response could never arrive.
+        entities.seedCurrentStates(entityIds)
+        collect { event ->
+            event.added?.forEach { (entityId, state) ->
+                val entity = state.toEntity(entityId)
+                entities[entityId] = entity
+                emit(entity)
+            }
+            event.changed?.forEach { (entityId, diff) ->
+                val entity = entities[entityId]?.applyCompressedStateDiff(diff)
+                if (entity != null) {
+                    entities[entityId] = entity
+                    emit(entity)
+                } else {
+                    // The entity converges again on its next full state event.
+                    Timber.w("Dropping state diff for $entityId without a known state")
                 }
+            }
+            event.removed?.forEach { entityId ->
+                entities.remove(entityId)
+            }
+        }
+    }
+
+    /**
+     * Seeds with the current state of every subscribed entity, limited to [entityIds]
+     * when not null, fetched on the websocket.
+     */
+    private suspend fun MutableMap<String, Entity>.seedCurrentStates(entityIds: Set<String>?) {
+        val states = webSocketRepository().getStates() ?: run {
+            Timber.w("Unable to fetch the current states to resolve state diffs")
+            return
+        }
+        states.forEach { response ->
+            if (entityIds == null || response.entityId in entityIds) {
+                put(response.entityId, response.toEntity())
+            }
         }
     }
 
@@ -727,14 +750,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     private fun createZonesResponse(zones: List<EntityResponse>): List<Entity> {
-        return zones.map {
-            Entity(
-                it.entityId,
-                it.state,
-                it.attributes,
-                it.lastChanged,
-                it.lastUpdated,
-            )
-        }
+        return zones.map { it.toEntity() }
     }
 }

@@ -14,14 +14,11 @@ import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.authentication.ServerRegistrationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -65,15 +62,10 @@ class PhoneSettingsListener :
     lateinit var favoritesDao: FavoritesDao
 
     @Inject
-    @NamedKeyChain
-    lateinit var keyChainRepository: KeyChainRepository
+    lateinit var keyStoreRepository: KeyStoreRepository
 
     @Inject
-    @NamedKeyStore
-    lateinit var keyStore: KeyChainRepository
-
-    @Inject
-    lateinit var appVersionProvider: AppVersionProvider
+    lateinit var appVersion: AppVersion
 
     @Inject
     lateinit var messagingTokenProvider: MessagingTokenProvider
@@ -192,10 +184,7 @@ class PhoneSettingsListener :
                     val certificateChain = getCertificateChain(alias).filterIsInstance<X509Certificate>().toTypedArray()
                     val privateKey = getKey(alias, tlsClientCertificatePassword) as PrivateKey
 
-                    // we store the TLS Client key under a static alias because there is currently
-                    // no way to ask the user for the correct alias
-                    keyStore.setData(KeyStoreRepository.ALIAS, privateKey, certificateChain)
-                    keyChainRepository.load(applicationContext)
+                    keyStoreRepository.store(privateKey, certificateChain)
                 }
             }
 
@@ -210,7 +199,7 @@ class PhoneSettingsListener :
             serverId = serverManager.addServer(temporaryServer)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     deviceName,
                     messagingTokenProvider(),
                     false,

@@ -12,6 +12,8 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 
+private const val DEFAULT_TEXT_SIZE = "30"
+
 @Stable
 internal data class EntityWidgetConfigureState(
     val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
@@ -65,5 +67,3 @@ internal data class EntityWidgetConfigureState(
         entityDisplayState = EntityDisplayState.Loading,
     )
 }
-
-internal const val DEFAULT_TEXT_SIZE = "30"

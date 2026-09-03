@@ -12,9 +12,6 @@ import android.os.Build
 import android.os.PowerManager
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.HiltAndroidApp
-import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -32,10 +29,6 @@ import timber.log.Timber
 @HiltAndroidApp
 open class HomeAssistantApplication : Application() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
-
-    @Inject
-    @NamedKeyStore
-    lateinit var keyStore: KeyChainRepository
 
     @Inject
     lateinit var refreshIntervalMigration: RefreshIntervalMigration
@@ -57,7 +50,6 @@ open class HomeAssistantApplication : Application() {
         configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)
 
         ioScope.launch {
-            keyStore.load(applicationContext, KeyStoreRepository.ALIAS)
             refreshIntervalMigration.migrate()
         }
 

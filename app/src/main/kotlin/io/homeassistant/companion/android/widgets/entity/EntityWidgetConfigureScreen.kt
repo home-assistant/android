@@ -255,7 +255,6 @@ private fun ServerSelector(
         label = stringResource(commonR.string.server_select),
         placeholder = stringResource(commonR.string.server_select),
         modifier = Modifier.formControlWidth(),
-        enabled = items.isNotEmpty(),
     )
 }
 
@@ -511,7 +510,7 @@ private val previewEntityWidgetConfigureState = EntityWidgetConfigureState(
     },
     entityDisplayState = Loaded(listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity1)))),
     selectedEntityId = previewEntity1.entityId,
-    availableAttributes = listOf("brightness", "friendly_name"),
+    availableAttributes = listOf("brightness", "power"),
     selectedAttributeIds = listOf("brightness"),
     label = "Office light",
     textSize = "30",

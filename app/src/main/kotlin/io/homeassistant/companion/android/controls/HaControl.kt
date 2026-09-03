@@ -13,15 +13,11 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.sizeDp
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.friendlyState
-import io.homeassistant.companion.android.common.data.integration.getIcon
-import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
@@ -30,7 +26,7 @@ import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 interface HaControl {
 
     @SuppressLint("ResourceType")
-    fun createControl(context: Context, entity: Entity, info: HaControlInfo): Control {
+    fun createControl(context: Context, item: EntityDisplayWithContext, info: HaControlInfo): Control {
         val controlIntent =
             context.applicationContext.intentLaunchWithNavigateTo(
                 FrontendTarget.EntityMoreInfo(info.entityId),
@@ -46,79 +42,60 @@ interface HaControl {
                 PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE,
             ),
         )
-        control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
-        control.setSubtitle(info.area?.name ?: "")
-        control.setDeviceType(getDeviceType(entity))
+        control.setTitle(item.name)
+        control.setSubtitle(item.areaName ?: "")
+        control.setDeviceType(getDeviceType(item))
 
         if (info.splitMultiServerIntoStructure && info.serverName != null) {
-            control.setZone(info.area?.name ?: getDomainString(context, entity))
+            control.setZone(item.areaName ?: getDomainString(context, item))
             control.setStructure(info.serverName)
         } else {
             control.setZone(
                 (if (info.serverName != null) "${info.serverName}: " else "") +
-                    (info.area?.name ?: getDomainString(context, entity)),
+                    (item.areaName ?: getDomainString(context, item)),
             )
         }
         control.setStatus(Control.STATUS_OK)
-        control.setStatusText(entity.friendlyState(context))
+        control.setStatusText(item.state.resolve(context))
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
             control.setAuthRequired(info.authRequired)
         }
-        if (entity.attributes["icon"]?.toString()?.startsWith("mdi:") == true &&
-            !entity.attributes["icon"]?.toString()?.substringAfter(":").isNullOrBlank()
-        ) {
-            val iconName = entity.attributes["icon"]!!.toString().split(':')[1]
-            val iconDrawable =
-                IconicsDrawable(context, "cmd-$iconName").apply {
-                    sizeDp = 48
-                }
-            if (iconDrawable.icon != null) {
-                val colorTint = when {
-                    entity.domain == LIGHT_DOMAIN && entity.state == "on" -> R.color.colorDeviceControlsLightOn
-                    entity.domain == CAMERA_DOMAIN -> R.color.colorDeviceControlsCamera
-                    entity.domain == CLIMATE_DOMAIN && entity.state == "heat"
-                    -> R.color.colorDeviceControlsThermostatHeat
+        // Render the resolved icon to match the HA frontend rather than the provided device type
+        val iconDrawable = IconicsDrawable(context, item.icon).apply { sizeDp = 48 }
+        val colorTint = when {
+            item.domain == LIGHT_DOMAIN && item.rawState == "on" -> R.color.colorDeviceControlsLightOn
+            item.domain == CAMERA_DOMAIN -> R.color.colorDeviceControlsCamera
+            item.domain == CLIMATE_DOMAIN && item.rawState == "heat"
+            -> R.color.colorDeviceControlsThermostatHeat
 
-                    entity.state in listOf(
-                        "off",
-                        "unavailable",
-                        "unknown",
-                    ) -> R.color.colorDeviceControlsOff
+            item.rawState in listOf(
+                "off",
+                "unavailable",
+                "unknown",
+            ) -> R.color.colorDeviceControlsOff
 
-                    else -> R.color.colorDeviceControlsDefaultOn
-                }
-
-                iconDrawable.setTint(ContextCompat.getColor(context, colorTint))
-                control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
-            }
-        } else {
-            // Specific override for some domain icons to match HA frontend rather than provided device type
-            val iconOverride = listOf(MEDIA_PLAYER_DOMAIN, "number")
-            if (entity.domain in iconOverride) {
-                val icon = IconicsDrawable(context, entity.getIcon()).apply { sizeDp = 48 }
-                val tint = if (entity.isActive()) {
-                    R.color.colorDeviceControlsDefaultOn
-                } else {
-                    R.color.colorDeviceControlsOff
-                }
-                icon.setTint(ContextCompat.getColor(context, tint))
-                control.setCustomIcon(icon.toAndroidIconCompat().toIcon(context))
-            }
+            else -> R.color.colorDeviceControlsDefaultOn
         }
+        iconDrawable.setTint(ContextCompat.getColor(context, colorTint))
+        control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
 
-        return provideControlFeatures(context, control, entity, info).build()
+        return provideControlFeatures(context, control, item, info).build()
     }
 
     fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity,
+        item: EntityDisplayWithContext,
         info: HaControlInfo,
     ): Control.StatefulBuilder
 
-    fun getDeviceType(entity: Entity): Int
+    fun getDeviceType(item: EntityDisplayWithContext): Int
 
-    fun getDomainString(context: Context, entity: Entity): String
+    fun getDomainString(context: Context, item: EntityDisplayWithContext): String
 
-    suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
+    suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean
 }

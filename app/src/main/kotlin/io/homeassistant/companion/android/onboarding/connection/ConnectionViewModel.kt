@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.util.SuspendLazy
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
@@ -135,15 +136,22 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    val webViewClient: HAWebViewClient = webViewClientFactory.create(
-        currentUrlFlow = urlFlow,
-        onFrontendError = ::onError,
-        onUrlIntercepted = ::interceptRedirectIfRequired,
-        onPageFinished = { url ->
-            _isLoadingFlow.update { false }
-            updateEffectiveBaseUrl(url)
-        },
-    )
+    private val webViewClient = SuspendLazy {
+        webViewClientFactory.create(
+            currentUrlFlow = urlFlow,
+            onFrontendError = ::onError,
+            onUrlIntercepted = ::interceptRedirectIfRequired,
+            onPageFinished = { url ->
+                _isLoadingFlow.update { false }
+                updateEffectiveBaseUrl(url)
+            },
+        )
+    }
+
+    /**
+     * Returns the WebViewClient, creating it on first call.
+     */
+    suspend fun getWebViewClient(): HAWebViewClient = webViewClient.get()
 
     /**
      * [WebChromeClient][android.webkit.WebChromeClient] used by the onboarding WebView.

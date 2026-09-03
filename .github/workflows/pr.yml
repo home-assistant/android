@@ -159,6 +159,33 @@ jobs:
         with:
           category: "KTlint"
 
+  detekt:
+    needs: [lockfiles, yamllint]
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      # We use detektMain instead of the plain detekt task because it runs with type resolution:
+      # rules that need actual types (UnsafeCallOnNullableType, ImplicitDefaultLocale, ...) are
+      # silently skipped without it. This is also why the build compiles the analyzed variants.
+      # Since `build-logic` is added with `includeBuild` we have to call detektMain explicitly on `:convention`.
+      - name: Validate Detekt
+        run: ./gradlew detektMain :build-logic:convention:detektMain --continue
+
+      - uses: ./.github/actions/upload-sarif-results
+        if: always()
+        with:
+          category: "Detekt"
+
   lint:
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
@@ -191,7 +218,7 @@ jobs:
 
   screenshot_test:
     name: "Screenshot Tests"
-    needs: [lint, lockfiles, ktlint]
+    needs: [detekt, lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -204,13 +231,13 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews - app
-        run: ./gradlew :app:validateFullDebugScreenshotTest
+        run: ./gradlew :app:validateFullDebugScreenshotTest --max-workers=2
 
       - name: Validate Screenshot Previews - wear
-        run: ./gradlew :wear:validateDebugScreenshotTest
+        run: ./gradlew :wear:validateDebugScreenshotTest --max-workers=2
 
       - name: Validate Screenshot Previews - common
-        run: ./gradlew :common:validateDebugScreenshotTest
+        run: ./gradlew :common:validateDebugScreenshotTest --max-workers=2
 
       - uses: ./.github/actions/upload-test-results
         if: always()
@@ -299,7 +326,7 @@ jobs:
 
   unit_tests:
     name: "Unit Tests"
-    needs: [lint, lockfiles, ktlint]
+    needs: [detekt, lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -312,8 +339,14 @@ jobs:
           mock-google-services: "true"
 
       - name: Run test
-        # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet than app. Minimal and Full are the same in unit tests for now
-        run: ./gradlew testDebugUnitTest :app:testFullDebugUnitTest :lint:test
+        # Only run expected tests to minimize CI usage. `automotive` shares the same sourceSet as `app`.
+        # No minimal flavor specific tests currently exist, but minimal is compiled to avoid breaking
+        # it silently.
+        run: |
+          ./gradlew test \
+            -x :automotive:test \
+            -x :app:testMinimalDebugUnitTest \
+            :app:compileMinimalDebugUnitTestKotlin
 
       - uses: ./.github/actions/upload-test-results
         if: always()
@@ -323,7 +356,7 @@ jobs:
 
   build_emulator_wtf_apks:
     name: "Build Emulator.wtf APKs"
-    needs: [lint, lockfiles, ktlint]
+    needs: [detekt, lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -352,7 +385,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: emulator-wtf-inputs
-          retention-days: 1
+          # A partial re-run re-triggers "PR Emulator.wtf" without rebuilding these
+          # APKs, so they must outlive the original run. Past that it skips itself.
+          retention-days: 3
           if-no-files-found: error
           path: |
             app/build/outputs/apk/full/debug/app-full-debug.apk
@@ -363,7 +398,7 @@ jobs:
 
   instrumentation_test:
     name: "Instrumentation Tests"
-    needs: [lint, lockfiles, ktlint]
+    needs: [detekt, lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     strategy:
       # We want the result of each device to be reported, so we can't fail-fast
