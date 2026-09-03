@@ -201,7 +201,7 @@ class LogFragment : Fragment() {
                         // Also no issue template will be used
                         val excludedComponents =
                             getExcludedComponentsForPackageName(sendIntent, arrayOf("com.github.android"))
-                        if (excludedComponents.size > 0 && SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
+                        if (excludedComponents.isNotEmpty()) {
                             putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, excludedComponents.toTypedArray())
                         }
                     }

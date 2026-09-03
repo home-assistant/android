@@ -106,7 +106,6 @@ fun handleChannel(
     return channelID
 }
 
-@RequiresApi(Build.VERSION_CODES.N)
 fun handleImportance(data: Map<String, String>): Int {
     when (data[NotificationData.IMPORTANCE]) {
         "high" -> {

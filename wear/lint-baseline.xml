@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.2.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.2.1)" variant="all" version="9.2.1">
+<issues format="6" by="lint 9.3.2" type="baseline" client="gradle" dependencies="false" name="AGP (9.3.2)" variant="all" version="9.3.2">
 
     <issue
         id="CustomSplashScreen"
@@ -19,7 +19,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="291"
+            line="298"
             column="17"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="293"
+            line="300"
             column="17"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="295"
+            line="302"
             column="17"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="297"
+            line="304"
             column="17"/>
     </issue>
 
@@ -63,7 +63,7 @@
         errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/views/ChooseEntityView.kt"
-            line="101"
+            line="102"
             column="72"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/home/views/DetailsPanelView.kt"
-            line="207"
+            line="193"
             column="21"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/home/views/DetailsPanelView.kt"
-            line="260"
+            line="245"
             column="21"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/home/views/DetailsPanelView.kt"
-            line="330"
+            line="305"
             column="21"/>
     </issue>
 
@@ -371,7 +371,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="155"
+            line="162"
             column="35"/>
     </issue>
 
@@ -382,7 +382,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="176"
+            line="183"
             column="35"/>
     </issue>
 
@@ -393,7 +393,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="196"
+            line="203"
             column="35"/>
     </issue>
 
@@ -404,7 +404,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="230"
+            line="237"
             column="35"/>
     </issue>
 
@@ -450,7 +450,7 @@
         errorLine2="        ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="66"
+            line="73"
             column="9"/>
     </issue>
 
@@ -461,7 +461,7 @@
         errorLine2="        ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="68"
+            line="75"
             column="9"/>
     </issue>
 
@@ -472,7 +472,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="76"
+            line="83"
             column="9"/>
     </issue>
 
@@ -483,7 +483,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="77"
+            line="84"
             column="9"/>
     </issue>
 
@@ -494,7 +494,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="78"
+            line="85"
             column="9"/>
     </issue>
 
@@ -505,7 +505,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="79"
+            line="86"
             column="9"/>
     </issue>
 
@@ -516,7 +516,7 @@
         errorLine2="        ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="80"
+            line="87"
             column="9"/>
     </issue>
 
@@ -527,7 +527,7 @@
         errorLine2="        ^">
         <location
             file="src/main/AndroidManifest.xml"
-            line="89"
+            line="96"
             column="9"/>
     </issue>
 
@@ -538,7 +538,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="116"
+            line="123"
             column="9"/>
     </issue>
 
@@ -571,7 +571,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="225"
+            line="214"
             column="35"/>
     </issue>
 
@@ -582,7 +582,7 @@
         errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="225"
+            line="214"
             column="35"/>
     </issue>
 

@@ -157,10 +157,7 @@ class PhoneStateSensorManager @Inject constructor(
                     sim2DataNetworkType,
                 )
 
-            (
-                SdkVersion.isAtLeast(Build.VERSION_CODES.N) &&
-                    applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)
-                ) ->
+            applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS) ->
                 listOf(phoneState, sim_1, sim_2, sim1DataNetworkType, sim2DataNetworkType)
 
             else -> {
@@ -181,10 +178,8 @@ class PhoneStateSensorManager @Inject constructor(
             updateSignalStrength(0)
             updateSignalStrength(1)
         }
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-            updateDataNetworkType(0)
-            updateDataNetworkType(1)
-        }
+        updateDataNetworkType(0)
+        updateDataNetworkType(1)
     }
 
     @SuppressLint("MissingPermission")
@@ -316,7 +311,6 @@ class PhoneStateSensorManager @Inject constructor(
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
     private suspend fun updateDataNetworkType(slotIndex: Int) {
         val dataNetworkTypeSensor = when (slotIndex) {
             0 -> sim1DataNetworkType
