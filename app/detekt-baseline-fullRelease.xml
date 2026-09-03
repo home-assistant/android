@@ -24,7 +24,6 @@
     <ID>ComplexCondition:SsidView.kt:activeSsid?.isNotBlank() == true &amp;&amp; wifiSsids.none { it == activeSsid } &amp;&amp; (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || activeSsid !== WifiManager.UNKNOWN_SSID)</ID>
     <ID>ComplexCondition:TileExtensions.kt:TileExtensions$tileData != null &amp;&amp; tileData.isSetup &amp;&amp; tileData.entityId.split('.')[0] in toggleDomainsWithLock &amp;&amp; serverManager.getServer(tileData.serverId) != null</ID>
     <ID>ConstructorParameterNaming:FrontendViewModel.kt:FrontendViewModel.ViewStateManager$private val _state: MutableStateFlow&lt;FrontendViewState&gt; = MutableStateFlow(initialState)</ID>
-    <ID>CyclomaticComplexMethod:AssistSheetView.kt:@Composable fun AssistSheetControls</ID>
     <ID>CyclomaticComplexMethod:AssistViewModel.kt:AssistViewModel$fun onCreate</ID>
     <ID>CyclomaticComplexMethod:AssistViewModel.kt:AssistViewModel$private fun runAssistPipeline</ID>
     <ID>CyclomaticComplexMethod:AssistViewModel.kt:AssistViewModel$private suspend fun setPipeline</ID>
@@ -42,7 +41,6 @@
     <ID>CyclomaticComplexMethod:FrontendNavigation.kt:@Composable @VisibleForTesting internal fun FrontendEventHandler</ID>
     <ID>CyclomaticComplexMethod:FrontendViewModel.kt:FrontendViewModel$private suspend fun handleMessageResult</ID>
     <ID>CyclomaticComplexMethod:HaControl.kt:HaControl$@SuppressLint("ResourceType") fun createControl: Control</ID>
-    <ID>CyclomaticComplexMethod:HaControlsProviderService.kt:HaControlsProviderService$private suspend fun subscribeToEntitiesForServer</ID>
     <ID>CyclomaticComplexMethod:HealthConnectSensorManager.kt:HealthConnectSensorManager$override suspend fun requestSensorUpdate</ID>
     <ID>CyclomaticComplexMethod:HomeAssistantApplication.kt:HomeAssistantApplication$override fun onCreate</ID>
     <ID>CyclomaticComplexMethod:LocationSensorManager.kt:LocationSensorManager$private suspend fun handleGeoUpdate</ID>
@@ -53,9 +51,7 @@
     <ID>CyclomaticComplexMethod:LocationTrackingView.kt:@Composable fun LocationTrackingHistoryRow</ID>
     <ID>CyclomaticComplexMethod:ManageControlsView.kt:@Composable fun ManageControlsView</ID>
     <ID>CyclomaticComplexMethod:ManageShortcutsView.kt:@RequiresApi(Build.VERSION_CODES.N_MR1) @Composable private fun CreateShortcutView</ID>
-    <ID>CyclomaticComplexMethod:MatterCommissioningView.kt:@Composable fun MatterCommissioningView</ID>
     <ID>CyclomaticComplexMethod:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$override suspend fun getWidgetRemoteViews: RemoteViews</ID>
-    <ID>CyclomaticComplexMethod:MediaPlayerControlsWidgetConfigureActivity.kt:MediaPlayerControlsWidgetConfigureActivity$public override fun onCreate</ID>
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$fun handleMessage</ID>
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$private fun addExtrasToIntent</ID>
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$private fun createOpenUriPendingIntent: PendingIntent</ID>
@@ -78,9 +74,6 @@
     <ID>DoubleMutabilityForCollection:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$private var dynamicFields = ArrayList&lt;ActionFieldBinder&gt;()</ID>
     <ID>DoubleMutabilityForCollection:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$private var entities = mutableMapOf&lt;Int, HashMap&lt;String, Entity&gt;&gt;()</ID>
     <ID>DoubleMutabilityForCollection:CameraWidgetConfigureActivity.kt:CameraWidgetConfigureActivity$private var entities = mutableMapOf&lt;Int, List&lt;Entity&gt;&gt;()</ID>
-    <ID>DoubleMutabilityForCollection:HaControlsProviderService.kt:HaControlsProviderService$private var areaRegistry = mutableMapOf&lt;Int, List&lt;AreaRegistryResponse&gt;?&gt;()</ID>
-    <ID>DoubleMutabilityForCollection:HaControlsProviderService.kt:HaControlsProviderService$private var deviceRegistry = mutableMapOf&lt;Int, List&lt;DeviceRegistryResponse&gt;?&gt;()</ID>
-    <ID>DoubleMutabilityForCollection:HaControlsProviderService.kt:HaControlsProviderService$private var entityRegistry = mutableMapOf&lt;Int, List&lt;EntityRegistryResponse&gt;?&gt;()</ID>
     <ID>DoubleMutabilityForCollection:LocationSensorManager.kt:LocationSensorManager.Companion$private var geofenceRegistered = mutableSetOf&lt;Int&gt;()</ID>
     <ID>DoubleMutabilityForCollection:LocationSensorManager.kt:LocationSensorManager.Companion$private var lastEnteredGeoZones: MutableList&lt;String&gt; = ArrayList()</ID>
     <ID>DoubleMutabilityForCollection:LocationSensorManager.kt:LocationSensorManager.Companion$private var lastExitedGeoZones: MutableList&lt;String&gt; = ArrayList()</ID>
@@ -91,7 +84,6 @@
     <ID>DoubleMutabilityForCollection:LocationSensorManager.kt:LocationSensorManager.Companion$private var zonesLastReceived = mutableMapOf&lt;Int, Long&gt;()</ID>
     <ID>DoubleMutabilityForCollection:ManageShortcutsViewModel.kt:ManageShortcutsViewModel$var dynamicShortcuts = mutableListOf&lt;ShortcutInfoCompat&gt;() private set</ID>
     <ID>DoubleMutabilityForCollection:ManageShortcutsViewModel.kt:ManageShortcutsViewModel$var pinnedShortcuts = ShortcutManagerCompat.getShortcuts(app, ShortcutManagerCompat.FLAG_MATCH_PINNED) .filter { !it.id.startsWith(AssistShortcutActivity.SHORTCUT_PREFIX) } .toMutableList() private set</ID>
-    <ID>DoubleMutabilityForCollection:MediaPlayerControlsWidgetConfigureActivity.kt:MediaPlayerControlsWidgetConfigureActivity$private var entities = mutableMapOf&lt;Int, List&lt;Entity&gt;&gt;()</ID>
     <ID>DoubleMutabilityForCollection:SingleItemArrayAdapter.kt:SingleItemArrayAdapter$private var filterItems = ArrayList&lt;T&gt;()</ID>
     <ID>EmptyFunctionBlock:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity.&lt;no name provided&gt;${}</ID>
     <ID>EmptyFunctionBlock:FakePlayer.kt:FakePlayer${}</ID>
@@ -153,10 +145,9 @@
     <ID>LargeClass:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget : BaseWidgetProvider</ID>
     <ID>LargeClass:MessagingManager.kt:MessagingManager</ID>
     <ID>LongMethod:AndroidAutoFavoritesView.kt:@RequiresApi(Build.VERSION_CODES.O) @Composable fun AndroidAutoFavoritesSettings</ID>
-    <ID>LongMethod:AssistActivity.kt:AssistActivity$override fun onCreate</ID>
-    <ID>LongMethod:AssistSheetView.kt:@Composable fun AssistSheetControls</ID>
-    <ID>LongMethod:AssistSheetView.kt:@Composable fun AssistSheetHeader</ID>
-    <ID>LongMethod:AssistSheetView.kt:@OptIn(ExperimentalMaterialApi::class) @Composable fun AssistSheetView</ID>
+    <ID>LongMethod:AssistActivity.kt:AssistActivity$@OptIn(ExperimentalMaterial3Api::class) override fun onCreate</ID>
+    <ID>LongMethod:AssistSheet.kt:@Composable private fun AssistPipelineSelector</ID>
+    <ID>LongMethod:AssistSheet.kt:@Composable private fun SpeechBubble</ID>
     <ID>LongMethod:AssistShortcutView.kt:@Composable fun AssistShortcutView</ID>
     <ID>LongMethod:AssistViewModel.kt:AssistViewModel$fun onCreate</ID>
     <ID>LongMethod:ButtonWidget.kt:ButtonWidget$private suspend fun callConfiguredAction</ID>
@@ -177,7 +168,6 @@
     <ID>LongMethod:FrontendScreen.kt:@Composable internal fun FrontendScreenContent</ID>
     <ID>LongMethod:FrontendViewModel.kt:FrontendViewModel$private suspend fun handleMessageResult</ID>
     <ID>LongMethod:HANavHost.kt:@Composable internal fun HANavHost</ID>
-    <ID>LongMethod:HaControl.kt:HaControl$@SuppressLint("ResourceType") fun createControl: Control</ID>
     <ID>LongMethod:HaControlsProviderService.kt:HaControlsProviderService$override fun createPublisherForAllAvailable: Flow.Publisher&lt;Control&gt;</ID>
     <ID>LongMethod:HaControlsProviderService.kt:HaControlsProviderService$private suspend fun subscribeToEntitiesForServer</ID>
     <ID>LongMethod:HealthConnectSensorManager.kt:HealthConnectSensorManager$override suspend fun requestSensorUpdate</ID>
@@ -195,10 +185,9 @@
     <ID>LongMethod:ManageControlsView.kt:@Composable fun ManageControlsView</ID>
     <ID>LongMethod:ManageShortcutsView.kt:@RequiresApi(Build.VERSION_CODES.N_MR1) @Composable private fun CreateShortcutView</ID>
     <ID>LongMethod:ManageWidgetsView.kt:@Composable fun ManageWidgetsView</ID>
+    <ID>LongMethod:ManualServerScreen.kt:@Composable private fun ServerUrlTextField</ID>
     <ID>LongMethod:MapVehicleScreen.kt:MapVehicleScreen$override fun onGetTemplate: Template</ID>
-    <ID>LongMethod:MatterCommissioningView.kt:@Composable fun MatterCommissioningView</ID>
     <ID>LongMethod:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$override suspend fun getWidgetRemoteViews: RemoteViews</ID>
-    <ID>LongMethod:MediaPlayerControlsWidgetConfigureActivity.kt:MediaPlayerControlsWidgetConfigureActivity$public override fun onCreate</ID>
     <ID>LongMethod:MessagingManager.kt:MessagingManager$fun handleMessage</ID>
     <ID>LongMethod:MessagingManager.kt:MessagingManager$private fun addExtrasToIntent</ID>
     <ID>LongMethod:MessagingManager.kt:MessagingManager$private fun createOpenUriPendingIntent: PendingIntent</ID>
@@ -245,7 +234,7 @@
     <ID>LongParameterList:FrontendViewModel.kt:FrontendViewModel$constructor</ID>
     <ID>LongParameterList:HAWebViewClient.kt:HAWebViewClient</ID>
     <ID>LongParameterList:HAWebViewClient.kt:HAWebViewClientFactory$suspend fun create: HAWebViewClient</ID>
-    <ID>LongParameterList:HaControlsProviderService.kt:HaControlsProviderService$private suspend fun sendEntitiesToSubscriber</ID>
+    <ID>LongParameterList:HaControlsProviderService.kt:HaControlsProviderService$private suspend fun sendControl</ID>
     <ID>LongParameterList:HaShortcutManager.kt:HaShortcutManager$fun buildShortcutInfo: ShortcutInfoCompat</ID>
     <ID>LongParameterList:LaunchViewModel.kt:LaunchViewModel</ID>
     <ID>LongParameterList:LaunchViewModel.kt:LaunchViewModel$constructor</ID>
@@ -259,13 +248,12 @@
     <ID>LongParameterList:OutgoingExternalBusMessage.kt:ConfigResultMessage.ConfigResult.Companion$fun create</ID>
     <ID>LongParameterList:PermissionManager.kt:PermissionManager</ID>
     <ID>LongParameterList:SensorDetailViewModel.kt:SensorDetailViewModel</ID>
-    <ID>LongParameterList:SettingsPresenterImpl.kt:SettingsPresenterImpl</ID>
     <ID>LongParameterList:SettingsWearViewModel.kt:SettingsWearViewModel$fun sendAuthToWear</ID>
     <ID>LongParameterList:TemplateComponents.kt:@RequiresApi(Build.VERSION_CODES.O) fun getDomainList: ItemList.Builder</ID>
     <ID>LongParameterList:TemplateComponents.kt:@RequiresApi(Build.VERSION_CODES.O) fun getDomainsGridItem: GridItem.Builder</ID>
     <ID>LongParameterList:TemplateComponents.kt:fun getChangeServerGridItem: GridItem.Builder</ID>
     <ID>LoopWithTooManyJumpStatements:OnSwipeListener.kt:OnSwipeListener$for</ID>
-    <ID>MagicNumber:AssistSheetView.kt:0.5f</ID>
+    <ID>MagicNumber:AssistSheet.kt:0.5f</ID>
     <ID>MagicNumber:AssistShortcutViewModel.kt:AssistShortcutViewModel$2023</ID>
     <ID>MagicNumber:AssistShortcutViewModel.kt:AssistShortcutViewModel$5</ID>
     <ID>MagicNumber:AssistViewModel.kt:AssistViewModel$2023</ID>
@@ -280,7 +268,6 @@
     <ID>MagicNumber:DeveloperSettingsFragment.kt:DeveloperSettingsFragment$750L</ID>
     <ID>MagicNumber:EmptyState.kt:0.7f</ID>
     <ID>MagicNumber:EntityGridVehicleScreen.kt:EntityGridVehicleScreen$64</ID>
-    <ID>MagicNumber:FanControl.kt:FanControl$100f</ID>
     <ID>MagicNumber:FragmentExtensions.kt:0.03f</ID>
     <ID>MagicNumber:FrontendGestureManager.kt:FrontendGestureManager$2026</ID>
     <ID>MagicNumber:FrontendJsBridge.kt:FrontendJsBridge.Companion$2026</ID>
@@ -292,15 +279,12 @@
     <ID>MagicNumber:FrontendViewModel.kt:FrontendViewModel$8</ID>
     <ID>MagicNumber:GesturesScreen.kt:200</ID>
     <ID>MagicNumber:HAWebView.kt:5</ID>
-    <ID>MagicNumber:HaControlsProviderService.kt:HaControlsProviderService$2022</ID>
-    <ID>MagicNumber:HaControlsProviderService.kt:HaControlsProviderService$4</ID>
     <ID>MagicNumber:HealthConnectSensorManager.kt:HealthConnectSensorManager$30</ID>
     <ID>MagicNumber:HighAccuracyLocationService.kt:HighAccuracyLocationService.Companion$3600</ID>
     <ID>MagicNumber:HighAccuracyLocationService.kt:HighAccuracyLocationService.Companion$60</ID>
     <ID>MagicNumber:IconDialogFragment.kt:IconDialogFragment$0.9</ID>
     <ID>MagicNumber:IconDialogFragment.kt:IconDialogFragment$480f</ID>
     <ID>MagicNumber:IconDialogFragment.kt:IconDialogFragment$500f</ID>
-    <ID>MagicNumber:LightControl.kt:LightControl$100f</ID>
     <ID>MagicNumber:LocationSensorManager.kt:LocationSensorManager$100</ID>
     <ID>MagicNumber:LocationSensorManager.kt:LocationSensorManager$2000L</ID>
     <ID>MagicNumber:LocationSensorManager.kt:LocationSensorManager$2022</ID>
@@ -317,8 +301,7 @@
     <ID>MagicNumber:ManageShortcutsView.kt:5</ID>
     <ID>MagicNumber:ManageShortcutsView.kt:6</ID>
     <ID>MagicNumber:MapVehicleScreen.kt:MapVehicleScreen$64</ID>
-    <ID>MagicNumber:MatterCommissioningView.kt:0.67f</ID>
-    <ID>MagicNumber:MediaPlayerControl.kt:MediaPlayerControl$100f</ID>
+    <ID>MagicNumber:MediaPlayerControl.kt:MediaPlayerControl$0.1f</ID>
     <ID>MagicNumber:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$1024</ID>
     <ID>MagicNumber:MessagingManager.kt:MessagingManager$1000L</ID>
     <ID>MagicNumber:MessagingManager.kt:MessagingManager$3</ID>
@@ -365,11 +348,8 @@
     <ID>MapGetWithNotNullAssertionOperator:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity.&lt;no name provided&gt;$actions[selectedServerId]!!</ID>
     <ID>MapGetWithNotNullAssertionOperator:CarSensorManager.kt:CarSensorManager$listenerLastRegistered[listener]!!</ID>
     <ID>MapGetWithNotNullAssertionOperator:ClimateControl.kt:ClimateControl$temperatureControlModeFlags[it]!!</ID>
-    <ID>MapGetWithNotNullAssertionOperator:ClimateControl.kt:ClimateControl$temperatureControlModes[entity.state]!!</ID>
+    <ID>MapGetWithNotNullAssertionOperator:ClimateControl.kt:ClimateControl$temperatureControlModes[item.rawState]!!</ID>
     <ID>MapGetWithNotNullAssertionOperator:ClimateControl.kt:ClimateControl$this.climateStates[action.templateId]!!</ID>
-    <ID>MapGetWithNotNullAssertionOperator:HaControl.kt:HaControl$entity.attributes["icon"]!!</ID>
-    <ID>MapGetWithNotNullAssertionOperator:HaControlsProviderService.kt:HaControlsProviderService$domainToMinimumApi[it.second.domain]!!</ID>
-    <ID>MapGetWithNotNullAssertionOperator:HaControlsProviderService.kt:HaControlsProviderService.Companion$domainToMinimumApi[it]!!</ID>
     <ID>MapGetWithNotNullAssertionOperator:MessagingManager.kt:MessagingManager$data[HIGH_ACCURACY_UPDATE_INTERVAL]!!</ID>
     <ID>MapGetWithNotNullAssertionOperator:MessagingManager.kt:MessagingManager$data[PACKAGE_NAME]!!</ID>
     <ID>MapGetWithNotNullAssertionOperator:MessagingManager.kt:MessagingManager$data[THIS_SERVER_ID]!!</ID>
@@ -378,6 +358,7 @@
     <ID>MapGetWithNotNullAssertionOperator:MessagingManager.kt:MessagingManager$jsonData[PERSISTENT]!!</ID>
     <ID>MapGetWithNotNullAssertionOperator:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$actions[actionText]!!</ID>
     <ID>MatchingDeclarationName:AutomotiveNavigation.kt:AutomotiveRoute : HAStartDestinationRoute</ID>
+    <ID>MatchingDeclarationName:ChangelogNavigation.kt:ChangelogRoute</ID>
     <ID>MatchingDeclarationName:ConnectionNavigation.kt:ConnectionRoute</ID>
     <ID>MatchingDeclarationName:FrontendNavigation.kt:FrontendRoute : HAStartDestinationRoute</ID>
     <ID>MatchingDeclarationName:LocalFirstNavigation.kt:LocalFirstRoute</ID>
@@ -437,6 +418,9 @@
     <ID>ReturnCount:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$private suspend fun callFastForwardAction</ID>
     <ID>ReturnCount:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$private suspend fun callRewindAction</ID>
     <ID>ReturnCount:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$private suspend fun getEntity: Entity?</ID>
+    <ID>ReturnCount:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel$private suspend fun getPendingDaoEntity: MediaPlayerControlsWidgetEntity?</ID>
+    <ID>ReturnCount:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel$suspend fun requestWidgetCreation: Boolean</ID>
+    <ID>ReturnCount:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:NFCUtil.kt:NFCUtil$@Throws(IllegalArgumentException::class, IOException::class, Exception::class) private fun writeMessageToTag: Boolean</ID>
     <ID>ReturnCount:PermissionManager.kt:PermissionManager$suspend fun checkImprovPermissions: Boolean</ID>
     <ID>ReturnCount:PermissionManager.kt:PermissionManager$suspend fun checkLocalNetworkPermission: Boolean</ID>
@@ -472,12 +456,12 @@
     <ID>SwallowedException:SettingsWearActivity.kt:SettingsWearActivity$throwable: Throwable</ID>
     <ID>SwallowedException:TLSWebViewClient.kt:TLSWebViewClient$ex: CertificateException</ID>
     <ID>SwallowedException:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$e: Exception</ID>
-    <ID>ThrowingExceptionsWithoutMessageOrCause:HaControlsProviderService.kt:HaControlsProviderService$Exception()</ID>
     <ID>ThrowsCount:CameraWidget.kt:CameraWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
     <ID>ThrowsCount:NFCUtil.kt:NFCUtil$@Throws(IllegalArgumentException::class, IOException::class, Exception::class) private fun writeMessageToTag: Boolean</ID>
     <ID>ThrowsCount:ThreadManagerImpl.kt:ThreadManagerImpl$private suspend fun fullSyncPreferredDataset: ThreadManager.SyncResult</ID>
     <ID>TooManyFunctions:ActivitySensorManager.kt:ActivitySensorManager : SensorManager</ID>
     <ID>TooManyFunctions:AppSensorModule.kt:AppSensorModule</ID>
+    <ID>TooManyFunctions:AssistSheet.kt:io.homeassistant.companion.android.assist.ui.AssistSheet.kt</ID>
     <ID>TooManyFunctions:AssistViewModel.kt:AssistViewModel : AssistViewModelBase</ID>
     <ID>TooManyFunctions:AssistVoiceInteractionService.kt:AssistVoiceInteractionService : VoiceInteractionService</ID>
     <ID>TooManyFunctions:BarcodeScanner.kt:io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner.kt</ID>
@@ -496,6 +480,7 @@
     <ID>TooManyFunctions:LocationSensorManager.kt:LocationSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:ManageTilesViewModel.kt:ManageTilesViewModel : ViewModel</ID>
     <ID>TooManyFunctions:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget : BaseWidgetProvider</ID>
+    <ID>TooManyFunctions:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel : ViewModel</ID>
     <ID>TooManyFunctions:MessagingManager.kt:MessagingManager</ID>
     <ID>TooManyFunctions:NotificationListenerSensorManager.kt:NotificationListenerSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:SensorDetailViewModel.kt:SensorDetailViewModel : AndroidViewModel</ID>
@@ -514,6 +499,7 @@
     <ID>UnnecessaryApply:MessagingManager.kt:MessagingManager$apply { notify(tag, messageId, notificationBuilder) }</ID>
     <ID>UnnecessaryApply:MessagingManager.kt:MessagingManager$apply { notify(tag, messageId, notificationBuilder.build()) }</ID>
     <ID>UnnecessaryApply:NotificationMenuProvider.kt:NotificationMenuProvider$apply { intent = Intent( Intent.ACTION_VIEW, "https://companion.home-assistant.io/docs/notifications/notifications-basic".toUri(), ) }</ID>
+    <ID>UnnecessaryNotNullOperator:NfcSetupActivity.kt:NfcSetupActivity$nfcTagToWriteUUID!!</ID>
     <ID>UnsafeCallOnNullableType:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$actions[server.id]!!</ID>
     <ID>UnsafeCallOnNullableType:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$entities[server.id]!!</ID>
     <ID>UnsafeCallOnNullableType:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity.&lt;no name provided&gt;$actions[selectedServerId]!!</ID>
@@ -528,13 +514,10 @@
     <ID>UnsafeCallOnNullableType:CarSensorManager.kt:CarSensorManager$data.rangeRemainingMeters.value!!</ID>
     <ID>UnsafeCallOnNullableType:CarSensorManager.kt:CarSensorManager$listenerLastRegistered[listener]!!</ID>
     <ID>UnsafeCallOnNullableType:ClimateControl.kt:ClimateControl$temperatureControlModeFlags[it]!!</ID>
-    <ID>UnsafeCallOnNullableType:ClimateControl.kt:ClimateControl$temperatureControlModes[entity.state]!!</ID>
+    <ID>UnsafeCallOnNullableType:ClimateControl.kt:ClimateControl$temperatureControlModes[item.rawState]!!</ID>
     <ID>UnsafeCallOnNullableType:ClimateControl.kt:ClimateControl$this.climateStates[action.templateId]!!</ID>
     <ID>UnsafeCallOnNullableType:ForegroundServiceLauncher.kt:ForegroundServiceLauncher$context.getSystemService()!!</ID>
-    <ID>UnsafeCallOnNullableType:HaControl.kt:HaControl$entity.attributes["icon"]!!</ID>
-    <ID>UnsafeCallOnNullableType:HaControlsProviderService.kt:HaControlsProviderService$domainToMinimumApi[it.second.domain]!!</ID>
     <ID>UnsafeCallOnNullableType:HaControlsProviderService.kt:HaControlsProviderService$serverManager.servers().firstOrNull()!!</ID>
-    <ID>UnsafeCallOnNullableType:HaControlsProviderService.kt:HaControlsProviderService.Companion$domainToMinimumApi[it]!!</ID>
     <ID>UnsafeCallOnNullableType:LastAppSensorManager.kt:LastAppSensorManager$applicationContext.getSystemService&lt;UsageStatsManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:LocationSensorManager.kt:LocationSensorManager$geofencingEvent.triggeringGeofences!!</ID>
     <ID>UnsafeCallOnNullableType:LocationSensorManager.kt:LocationSensorManager$geofencingEvent.triggeringLocation!!</ID>
@@ -542,7 +525,6 @@
     <ID>UnsafeCallOnNullableType:ManageControlsViewModel.kt:ManageControlsViewModel$it.key!!</ID>
     <ID>UnsafeCallOnNullableType:ManageShortcutsView.kt:shortcut.id.value!!</ID>
     <ID>UnsafeCallOnNullableType:MapVehicleScreen.kt:MapVehicleScreen$it.coordinates!!</ID>
-    <ID>UnsafeCallOnNullableType:MediaPlayerControlsWidgetConfigureActivity.kt:MediaPlayerControlsWidgetConfigureActivity$selectedServerId!!</ID>
     <ID>UnsafeCallOnNullableType:MessagingManager.kt:MessagingManager$(smallFrame.getCompressedFrame())!!</ID>
     <ID>UnsafeCallOnNullableType:MessagingManager.kt:MessagingManager$audioManager!!</ID>
     <ID>UnsafeCallOnNullableType:MessagingManager.kt:MessagingManager$command!!</ID>
@@ -555,7 +537,6 @@
     <ID>UnsafeCallOnNullableType:MessagingManager.kt:MessagingManager$jsonData[NotificationData.CHANNEL]!!</ID>
     <ID>UnsafeCallOnNullableType:MessagingManager.kt:MessagingManager$jsonData[PERSISTENT]!!</ID>
     <ID>UnsafeCallOnNullableType:MessagingManager.kt:MessagingManager$title!!</ID>
-    <ID>UnsafeCallOnNullableType:NfcSetupActivity.kt:NfcSetupActivity$nfcTagToWriteUUID!!</ID>
     <ID>UnsafeCallOnNullableType:NotificationActionReceiver.kt:NotificationActionReceiver$text!!</ID>
     <ID>UnsafeCallOnNullableType:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$applicationContext.getSystemService&lt;MediaSessionManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:NotificationViewModel.kt:NotificationViewModel$application.applicationContext.getSystemService&lt;NotificationManager&gt;()!!</ID>
@@ -579,10 +560,15 @@
     <ID>UnusedParameter:FrontendViewModel.kt:FrontendViewModel$url: String?</ID>
     <ID>UnusedParameter:ImprovPermission.kt:modifier: Modifier = Modifier</ID>
     <ID>UnusedParameter:QuestSensorManager.kt:QuestSensorManager$applicationContext: Context</ID>
+    <ID>UnusedPrivateProperty:ConnectionViewModel.kt:ConnectionViewModel$private val fileChooserManager: FileChooserManager</ID>
+    <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val nsdManager: NsdManager</ID>
+    <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val wifiManager: WifiManager?</ID>
+    <ID>UnusedPrivateProperty:LaunchViewModel.kt:LaunchViewModel$private val prefsRepository: PrefsRepository</ID>
+    <ID>UnusedPrivateProperty:SensorDetailViewModel.kt:SensorDetailViewModel$private val managers: Set&lt;@JvmSuppressWildcards SensorManager&gt;</ID>
     <ID>UnusedPrivateProperty:SettingsPresenterImpl.kt:SettingsPresenterImpl$private val settingsDao: SettingsDao</ID>
+    <ID>UnusedPrivateProperty:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$private val entitiesForDisplayManager: EntitiesForDisplayManager</ID>
     <ID>UseCheckOrError:AssistVoiceInteractionService.kt:AssistVoiceInteractionService$throw IllegalStateException("No wake word models found in assets")</ID>
     <ID>UseCheckOrError:CameraWidget.kt:CameraWidget$throw IllegalStateException("No URL available to retrieve picture")</ID>
-    <ID>UseCheckOrError:MediaPlayerControlsWidgetConfigureActivity.kt:MediaPlayerControlsWidgetConfigureActivity$throw IllegalStateException("No valid entities selected")</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$server?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverManager.getServer(selectedServerId)?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverPipelines?.pipelines ?: emptyList()</ID>
@@ -590,13 +576,14 @@
     <ID>UseOrEmpty:CameraWidget.kt:CameraWidget$urlState.url?.toString()?.removeSuffix("/") ?: ""</ID>
     <ID>UseOrEmpty:CameraWidgetConfigureActivity.kt:CameraWidgetConfigureActivity$it?.entityId ?: ""</ID>
     <ID>UseOrEmpty:CarSensorManager.kt:CarSensorManager$carSensorsList.firstOrNull { it.sensor.id == sensorId }?.let { if (isAutomotive) { it.automotivePermissions.toTypedArray() } else { it.autoPermissions.toTypedArray() } } ?: emptyArray()</ID>
-    <ID>UseOrEmpty:ClimateControl.kt:ClimateControl$temperatureControlModes.entries.find { it.value == ((action as? ModeAction)?.newMode ?: -1) }?.key ?: ""</ID>
+    <ID>UseOrEmpty:ClimateControl.kt:ClimateControl$controls?.temperatureUnit ?: ""</ID>
+    <ID>UseOrEmpty:ClimateControl.kt:ClimateControl$temperatureControlModes.entries.find { it.value == action.newMode }?.key ?: ""</ID>
     <ID>UseOrEmpty:EntityWidget.kt:EntityWidget$entity.attributes as? Map&lt;*, *&gt; ?: mapOf&lt;String, String&gt;()</ID>
     <ID>UseOrEmpty:ExposedDropdownMenu.kt:currentIndex?.let { keys[it] } ?: ""</ID>
     <ID>UseOrEmpty:ExternalUrlInputView.kt:urlInput ?: ""</ID>
     <ID>UseOrEmpty:GesturesListView.kt:action?.let { stringResource(it.description) } ?: ""</ID>
     <ID>UseOrEmpty:HAWebViewClient.kt:HAWebViewClient$context?.getString( commonR.string.connection_error_more_details_description_content, code.toString(), description?.takeIf { it.isNotEmpty() } ?: context.getString(commonR.string.no_description), ) ?: ""</ID>
-    <ID>UseOrEmpty:HaControl.kt:HaControl$info.area?.name ?: ""</ID>
+    <ID>UseOrEmpty:HaControl.kt:HaControl$item.areaName ?: ""</ID>
     <ID>UseOrEmpty:HaControlsProviderService.kt:HaControlsProviderService$serverManager.connectionStateProvider(serverId).urlFlow().firstUrlOrNull()?.toString()?.removeSuffix("/") ?: ""</ID>
     <ID>UseOrEmpty:HealthConnectSensorManager.kt:HealthConnectSensorManager$permissions ?: emptyArray()</ID>
     <ID>UseOrEmpty:ImprovSheet.kt:activeSsid ?: ""</ID>
@@ -606,7 +593,8 @@
     <ID>UseOrEmpty:ManageControlsView.kt:panelSetting?.first ?: ""</ID>
     <ID>UseOrEmpty:ManageShortcutsView.kt:viewModel.shortcuts[i].id.value ?: ""</ID>
     <ID>UseOrEmpty:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$try { serverManager.connectionStateProvider( widget.serverId, ) } catch (e: CancellationException) { throw e } catch (e: IllegalStateException) { Timber.e(e, "The server does not exist anymore, could have been removed") null }?.urlFlow()?.firstUrlOrNull()?.toString()?.removeSuffix("/") ?: ""</ID>
-    <ID>UseOrEmpty:MediaPlayerControlsWidgetConfigureActivity.kt:MediaPlayerControlsWidgetConfigureActivity$it?.entityId ?: ""</ID>
+    <ID>UseOrEmpty:MediaPlayerControlsWidgetConfigureState.kt:MediaPlayerControlsWidgetConfigureState$(entityDisplayState as? EntityDisplayState.Loaded)?.let { state -&gt; selectedEntityIds.mapNotNull { state.entity(it) } } ?: emptyList()</ID>
+    <ID>UseOrEmpty:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel$preselectedEntityId?.let { listOf(it) } ?: emptyList()</ID>
     <ID>UseOrEmpty:MicroWakeWordModelConfig.kt:MicroWakeWordModelConfig.Companion$context.assets.list(WAKEWORD_ASSET_DIR) ?: emptyArray()</ID>
     <ID>UseOrEmpty:NfcEditView.kt:identifier ?: ""</ID>
     <ID>UseOrEmpty:NfcWriteView.kt:identifier ?: ""</ID>
@@ -626,9 +614,6 @@
     <ID>VarCouldBeVal:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$private var entities = mutableMapOf&lt;Int, HashMap&lt;String, Entity&gt;&gt;()</ID>
     <ID>VarCouldBeVal:CameraWidget.kt:CameraWidget.Companion$private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())</ID>
     <ID>VarCouldBeVal:CameraWidgetConfigureActivity.kt:CameraWidgetConfigureActivity$private var entities = mutableMapOf&lt;Int, List&lt;Entity&gt;&gt;()</ID>
-    <ID>VarCouldBeVal:HaControlsProviderService.kt:HaControlsProviderService$private var areaRegistry = mutableMapOf&lt;Int, List&lt;AreaRegistryResponse&gt;?&gt;()</ID>
-    <ID>VarCouldBeVal:HaControlsProviderService.kt:HaControlsProviderService$private var deviceRegistry = mutableMapOf&lt;Int, List&lt;DeviceRegistryResponse&gt;?&gt;()</ID>
-    <ID>VarCouldBeVal:HaControlsProviderService.kt:HaControlsProviderService$private var entityRegistry = mutableMapOf&lt;Int, List&lt;EntityRegistryResponse&gt;?&gt;()</ID>
     <ID>VarCouldBeVal:LocationSensorManager.kt:LocationSensorManager.Companion$private var geofenceRegistered = mutableSetOf&lt;Int&gt;()</ID>
     <ID>VarCouldBeVal:LocationSensorManager.kt:LocationSensorManager.Companion$private var lastEnteredGeoZones: MutableList&lt;String&gt; = ArrayList()</ID>
     <ID>VarCouldBeVal:LocationSensorManager.kt:LocationSensorManager.Companion$private var lastExitedGeoZones: MutableList&lt;String&gt; = ArrayList()</ID>
@@ -637,7 +622,6 @@
     <ID>VarCouldBeVal:LocationSensorManager.kt:LocationSensorManager.Companion$private var lastUpdateLocation = mutableMapOf&lt;Int, String?&gt;()</ID>
     <ID>VarCouldBeVal:LocationSensorManager.kt:LocationSensorManager.Companion$private var zones = mutableMapOf&lt;Int, List&lt;Entity&gt;&gt;()</ID>
     <ID>VarCouldBeVal:LocationSensorManager.kt:LocationSensorManager.Companion$private var zonesLastReceived = mutableMapOf&lt;Int, Long&gt;()</ID>
-    <ID>VarCouldBeVal:MediaPlayerControlsWidgetConfigureActivity.kt:MediaPlayerControlsWidgetConfigureActivity$private var entities = mutableMapOf&lt;Int, List&lt;Entity&gt;&gt;()</ID>
     <ID>VarCouldBeVal:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$/** Whether the notification listener service is currently connected, set by the service. */ private var listenerConnected = AtomicBoolean(false)</ID>
     <ID>VarCouldBeVal:NotificationViewModel.kt:NotificationViewModel$private var notificationManager = application.applicationContext.getSystemService&lt;NotificationManager&gt;()!!</ID>
     <ID>VarCouldBeVal:OnSwipeListener.kt:OnSwipeListener$private var handler = Handler(Looper.getMainLooper())</ID>

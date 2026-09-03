@@ -89,9 +89,12 @@ android {
     }
 }
 
-detekt {
-    // Automotive reuses the app's Kotlin source sets, which are already analyzed by :app.
-    ignoredFlavors = listOf("full", "minimal")
+// Automotive has no Kotlin sources of its own; it reuses the app's source sets, which are already analyzed by :app.
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    enabled = false
+}
+tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
+    enabled = false
 }
 
 dependencies {

@@ -58,9 +58,11 @@ allprojects {
     }
 
     detekt {
-        baseline = project.file("detekt-baseline.xml")
-        config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+        config.setFrom(rootProject.file(".detekt/detekt.yml"))
         buildUponDefaultConfig = true
+        // Debug variants only add debug-only dev tooling on top of what release compiles; analyzing
+        // release covers everything that ships and halves the type-resolution work.
+        ignoredBuildTypes = listOf("debug")
     }
 
     tasks.withType<Detekt>().configureEach {

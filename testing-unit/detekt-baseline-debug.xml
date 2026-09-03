@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>ForbiddenVoid:FakeCapabilityClient.kt:FakeCapabilityClient$Void?</ID>
-    <ID>TooManyFunctions:FakeTask.kt:FakeTask&lt;T&gt; : Task</ID>
-  </CurrentIssues>
-</SmellBaseline>

@@ -106,7 +106,6 @@
     <ID>MagicNumber:AuthenticationRepositoryImpl.kt:AuthenticationRepositoryImpl$9</ID>
     <ID>MagicNumber:BatterySensorManager.kt:BatterySensorManager$100.0f</ID>
     <ID>MagicNumber:BatterySensorManager.kt:BatterySensorManager$10f</ID>
-    <ID>MagicNumber:CompressedEntity.kt:CompressedEntityState$1000</ID>
     <ID>MagicNumber:DatabaseMigration.kt:MIGRATION6to7$6</ID>
     <ID>MagicNumber:DatabaseMigration.kt:MIGRATION6to7$7</ID>
     <ID>MagicNumber:DatabaseMigration.kt:Migration16to17$16</ID>
@@ -134,6 +133,7 @@
     <ID>MagicNumber:ExoPlayerExt.kt:8.0f</ID>
     <ID>MagicNumber:IBeaconMonitor.kt:IBeaconMonitor$0.5</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$1000</ID>
+    <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$2022</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$2023</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$4</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$5</ID>
@@ -196,7 +196,7 @@
     <ID>ReturnCount:EntityDisplay.kt:EntityDisplayWithoutContext.Companion$private fun Entity.fanControls: FanControls?</ID>
     <ID>ReturnCount:NetworkCapabilitiesChecker.kt:NetworkCapabilitiesChecker$private fun fallbackHasTransport: Boolean</ID>
     <ID>ReturnCount:NotificationFunctions.kt:@RequiresApi(Build.VERSION_CODES.N) fun handleImportance: Int</ID>
-    <ID>ReturnCount:RegistriesDataHandler.kt:RegistriesDataHandler$fun getAreaForEntity: AreaRegistryResponse?</ID>
+    <ID>ReturnCount:PrefsRepositoryImpl.kt:PrefsRepositoryImpl$override suspend fun wasAppUpdatedSinceChangelogSeen: Boolean</ID>
     <ID>ReturnCount:SensorRepositoryImpl.kt:SensorRepositoryImpl$override suspend fun getFull: Map&lt;Sensor, List&lt;Attribute&gt;&gt;</ID>
     <ID>ReturnCount:SensorUpdater.kt:SensorUpdater$private suspend fun loadSensorReconcilingPermission: SensorWithAttributes?</ID>
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun canSafelySendCredentials: Boolean</ID>
@@ -301,6 +301,11 @@
     <ID>UnsafeCallOnNullableType:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$it.connection.webhookId!!</ID>
     <ID>UnusedParameter:LastRebootSensorManager.kt:LastRebootSensorManager$applicationContext: Context</ID>
     <ID>UnusedParameter:MonitoringManager.kt:MonitoringManager$context: Context</ID>
+    <ID>UnusedPrivateProperty:NetworkChangeObserver.kt:NetworkChangeObserverImpl$private val connectivityManager: ConnectivityManager</ID>
+    <ID>UnusedPrivateProperty:ServerManagerImpl.kt:ServerManagerImpl$private val authenticationRepositoryFactory: AuthenticationRepositoryFactory</ID>
+    <ID>UnusedPrivateProperty:ServerManagerImpl.kt:ServerManagerImpl$private val integrationRepositoryFactory: IntegrationRepositoryFactory</ID>
+    <ID>UnusedPrivateProperty:ServerManagerImpl.kt:ServerManagerImpl$private val serverConnectionStateProviderFactory: ServerConnectionStateProviderFactory</ID>
+    <ID>UnusedPrivateProperty:ServerManagerImpl.kt:ServerManagerImpl$private val webSocketRepositoryFactory: WebSocketRepositoryFactory</ID>
     <ID>UseOrEmpty:HADropdownMenu.kt:selectedLabel ?: placeholder ?: ""</ID>
     <ID>UseOrEmpty:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$localStorage.getString(PREF_PUSH_TOKEN) ?: ""</ID>
     <ID>UseOrEmpty:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$server()._version ?: ""</ID>
