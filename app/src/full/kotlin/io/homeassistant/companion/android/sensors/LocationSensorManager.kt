@@ -89,6 +89,7 @@ class LocationSensorManager @Inject constructor(
         private const val DEFAULT_LOCATION_MAX_WAIT_TIME: Long = 200000
 
         private const val ZONE_NAME_NOT_HOME = "not_home"
+        private const val EXPANDED_GEOFENCE_SUFFIX = "_expanded"
 
         private const val HISTORY_DURATION = 60 * 60 * 48 * 1000L // 60(s) * 60(m) * 48(h) to millis
 
@@ -175,12 +176,13 @@ class LocationSensorManager @Inject constructor(
 
         private var lastHighAccuracyMode = false
         private var lastHighAccuracyUpdateInterval = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
+        private var lastHighAccuracyModeStart = 0L
         private var forceHighAccuracyModeOn = false
         private var forceHighAccuracyModeOff = false
         private var highAccuracyModeEnabled = false
 
-        private var lastEnteredGeoZones: MutableList<String> = ArrayList()
-        private var lastExitedGeoZones: MutableList<String> = ArrayList()
+        @Volatile
+        private var needHighAccuracyMode = false
 
         private var lastHighAccuracyTriggerRange: Int = 0
         private var lastHighAccuracyZones: List<String> = ArrayList()
@@ -324,19 +326,26 @@ class LocationSensorManager @Inject constructor(
             val now = System.currentTimeMillis()
             if (
                 (!highAccuracyModeEnabled && isBackgroundLocationSetup) &&
-                (lastLocationReceived.all { (it.value + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2L)) < now })
+                lastLocationReceived.isNotEmpty() &&
+                lastLocationReceived.all { (it.value + (DEFAULT_LOCATION_MAX_WAIT_TIME * 2L)) < now }
             ) {
                 Timber.d("Background location updates appear to have stopped, restarting location updates")
                 isBackgroundLocationSetup = false
                 fusedLocationProviderClient?.flushLocations()
                 removeBackgroundUpdateRequests()
-            } else if (
-                highAccuracyModeEnabled &&
-                (lastLocationReceived.all { (it.value + (getHighAccuracyModeUpdateInterval().toLong() * 2000L)) < now })
-            ) {
-                Timber.d("High accuracy mode appears to have stopped, restarting high accuracy mode")
-                isBackgroundLocationSetup = false
-                stopHighAccuracyService()
+            } else if (highAccuracyModeEnabled) {
+                val timeoutMs = getHighAccuracyModeUpdateInterval().toLong() * 2000L
+                val lastProgress = maxOf(
+                    lastHighAccuracyModeStart,
+                    lastLocationReceived.values.maxOrNull() ?: 0L,
+                )
+                // lastLocationReceived.all { stale } is true for an empty map, which previously
+                // restarted HAM on every startHighAccuracyService -> updateAllSensors cycle.
+                if (lastProgress > 0L && lastProgress + timeoutMs < now) {
+                    Timber.d("High accuracy mode appears to have stopped, restarting high accuracy mode")
+                    isBackgroundLocationSetup = false
+                    stopHighAccuracyService()
+                }
             }
 
             setupBackgroundLocation(backgroundEnabled, zoneEnabled)
@@ -442,6 +451,7 @@ class LocationSensorManager @Inject constructor(
     }
 
     private suspend fun startHighAccuracyService(intervalInSeconds: Int) {
+        lastHighAccuracyModeStart = System.currentTimeMillis()
         onSensorUpdated(
             highAccuracyMode,
             true,
@@ -535,16 +545,9 @@ class LocationSensorManager @Inject constructor(
             .toMutableList()
         val highAccuracyBtZoneCombined = getHighAccuracyBTZoneCombinedSetting()
 
-        val useTriggerRange = getHighAccuracyModeTriggerRange() > 0
         val highAccuracyZones = getHighAccuracyModeZones(false)
-        var highAccuracyExpZones = highAccuracyZones
-        if (useTriggerRange) {
-            // Use a trigger range, if defined
-            highAccuracyExpZones = getHighAccuracyModeZones(true)
-        }
 
         var btDevConnected = false
-        var inZone = false
         var constraintsUsed = false
 
         if (highAccuracyModeBTDevices.isNotEmpty()) {
@@ -595,22 +598,11 @@ class LocationSensorManager @Inject constructor(
         if (highAccuracyZones.isNotEmpty()) {
             constraintsUsed = true
 
-            // (Expanded) Zone entered
-            val zoneExpEntered =
-                lastEnteredGeoZones.isNotEmpty() && highAccuracyExpZones.containsAll(lastEnteredGeoZones)
-
-            // Exits events are only used if expended zones are used. The exit events are used to determine the enter of the expanded zone from the original zone
-            // Zone exited
-            val zoneExited =
-                useTriggerRange && lastExitedGeoZones.isNotEmpty() && highAccuracyZones.containsAll(lastExitedGeoZones)
-
-            inZone = zoneExpEntered || zoneExited
-
             if (!forceHighAccuracyModeOn && !forceHighAccuracyModeOff) {
-                if (!inZone) {
-                    Timber.d("High accuracy mode disabled, because not in zone $highAccuracyExpZones")
+                if (!needHighAccuracyMode) {
+                    Timber.d("High accuracy mode disabled, because not in expanded zone")
                 } else {
-                    Timber.d("High accuracy mode enabled, because in zone $highAccuracyExpZones")
+                    Timber.d("High accuracy mode enabled, because in expanded zone")
                 }
             }
         }
@@ -623,8 +615,8 @@ class LocationSensorManager @Inject constructor(
         // Else (NO BT dev connected and NOT in Zone), if min. one constraint is used ->  High accuracy mode disabled (false)
         //                                             if no constraint is used ->  High accuracy mode enabled (true)
         return when {
-            highAccuracyBtZoneCombined && btDevConnected && inZone -> true
-            !highAccuracyBtZoneCombined && (btDevConnected || inZone) -> true
+            highAccuracyBtZoneCombined && btDevConnected && needHighAccuracyMode -> true
+            !highAccuracyBtZoneCombined && (btDevConnected || needHighAccuracyMode) -> true
             highAccuracyBtZoneCombined && !constraintsUsed -> false
             else -> !constraintsUsed
         }
@@ -687,8 +679,6 @@ class LocationSensorManager @Inject constructor(
             val zoneIntent = getLocationUpdateIntent(true)
             geofencingClient?.removeGeofences(zoneIntent)
             geofenceRegistered.clear()
-            lastEnteredGeoZones.clear()
-            lastExitedGeoZones.clear()
         } else {
             Timber.d("Cannot remove geofence location requests. Geofence provider is not set.")
         }
@@ -776,6 +766,11 @@ class LocationSensorManager @Inject constructor(
                 logLocationUpdate(location, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             } else {
                 HighAccuracyLocationService.updateNotificationAddress(applicationContext, location)
+                val newNeedHighAccuracyMode = isInHighAccuracyTriggerRange(location)
+                if (needHighAccuracyMode != newNeedHighAccuracyMode) {
+                    needHighAccuracyMode = newNeedHighAccuracyMode
+                    setupBackgroundLocation()
+                }
                 // Send new location to Home Assistant
                 serverIds.forEach {
                     ioScope.launch { sendLocationUpdate(location, it, trigger) }
@@ -828,18 +823,6 @@ class LocationSensorManager @Inject constructor(
             for (triggeringGeofence in geofencingEvent.triggeringGeofences!!) {
                 val zone = triggeringGeofence.requestId
 
-                if (zoneStatusEvent == "android.zone_entered") {
-                    lastEnteredGeoZones.add(zone)
-                } else {
-                    lastEnteredGeoZones.remove(zone)
-                }
-
-                if (zoneStatusEvent == "android.zone_exited") {
-                    lastExitedGeoZones.add(zone)
-                } else {
-                    lastExitedGeoZones.remove(zone)
-                }
-
                 val zoneAttr = mapOf(
                     "accuracy" to geofencingEvent.triggeringLocation!!.accuracy,
                     "altitude" to geofencingEvent.triggeringLocation!!.altitude,
@@ -886,6 +869,7 @@ class LocationSensorManager @Inject constructor(
             Geofence.GEOFENCE_TRANSITION_DWELL -> LocationUpdateTrigger.GEOFENCE_DWELL
             else -> null
         }
+        needHighAccuracyMode = isInHighAccuracyTriggerRange(geofencingEvent.triggeringLocation!!)
         if (geofencingEvent.triggeringLocation!!.accuracy > minAccuracy) {
             Timber.w("Geofence location accuracy didn't meet requirements, requesting new location.")
             logLocationUpdate(
@@ -1154,13 +1138,42 @@ class LocationSensorManager @Inject constructor(
         return results[0]
     }
 
+    /**
+     * Returns true when [location] is inside an expanded high-accuracy fence but not inside the
+     * inner zone.
+     */
+    private suspend fun isInHighAccuracyTriggerRange(location: Location): Boolean {
+        val triggerRange = getHighAccuracyModeTriggerRange()
+        val highAccuracyZones = getHighAccuracyModeZones(false)
+
+        if (triggerRange > 0 && highAccuracyZones.isNotEmpty()) {
+            for (serverId in getEnabledServers(zoneLocation)) {
+                for (zone in getZones(serverId)) {
+                    val requestId = "${serverId}_${zone.entityId}"
+                    if (!highAccuracyZones.contains(requestId)) continue
+                    if (isLocationInZone(location, zone)) continue
+                    if (!isLocationInZone(location, zone, extraRadiusMeters = triggerRange.toFloat())) continue
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
+    private fun isLocationInZone(location: Location, zone: Entity, extraRadiusMeters: Float = 0f): Boolean {
+        if (zone.attributes["radius"] !is Number) return false
+        if (zone.attributes["latitude"] !is Number || zone.attributes["longitude"] !is Number) return false
+        return zone.containsWithAccuracy(location, extraRadiusMeters = extraRadiusMeters)
+    }
+
     private fun addGeofenceToBuilder(
         geofencingRequestBuilder: GeofencingRequest.Builder,
         serverId: Int,
         zone: Entity,
         triggerRange: Int = 0,
     ) {
-        val postRequestId = if (triggerRange > 0) "_expanded" else ""
+        val postRequestId = if (triggerRange > 0) EXPANDED_GEOFENCE_SUFFIX else ""
         geofencingRequestBuilder
             .addGeofence(
                 Geofence.Builder()
@@ -1218,7 +1231,7 @@ class LocationSensorManager @Inject constructor(
         )
 
         return if (highAccuracyZones.isNotEmpty()) {
-            val expanded = if (expandedZones) "_expanded" else ""
+            val expanded = if (expandedZones) EXPANDED_GEOFENCE_SUFFIX else ""
             highAccuracyZones.split(",").map { it.trim() + expanded }
         } else {
             emptyList()
