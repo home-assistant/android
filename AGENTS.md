@@ -46,6 +46,7 @@ Detailed guidance lives in project skills under `.agents/skills/`. Load the matc
 - `ha-android-concurrency`: coroutines, dispatchers, thread safety, and lifecycle scoping.
 - `ha-android-logging-errors`: Timber, sensitive data, FailFast, and exception handling.
 - `ha-android-testing`: JUnit, MockK, Robolectric, Turbine, screenshot tests, and test naming.
+- `ha-android-e2e-debugging`: triaging an E2E failure through the Maestro report, logcat, Home Assistant logs, and upstream changes.
 - `ha-android-review`: reviewing a diff for correctness, style, convention adherence, and security.
 - `ha-android-committing`: finalizing a change — format, tests, changelog, branch naming, and pull requests.
 - `ha-android-skill-maintenance`: updating AGENTS.md or the skills when guidance is missing, stale, or corrected.
