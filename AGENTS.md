@@ -11,6 +11,7 @@ Detailed developer documentation lives at https://developers.home-assistant.io/d
 ./gradlew test                                             # Unit tests (:common:test for one module)
 ./gradlew :build-logic:convention:ktlintFormat ktlintFormat  # Format code, run before committing
 ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --continue  # Check code style
+./gradlew detektMain :build-logic:convention:detektMain --continue  # Detekt static analysis (same as CI)
 ./gradlew lint --continue                                  # Android linter
 ./gradlew validateDebugScreenshotTest                      # Screenshot tests
 ./gradlew alldependencies --write-locks                    # Update dependency locks after any dependency change
