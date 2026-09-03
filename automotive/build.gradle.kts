@@ -89,14 +89,6 @@ android {
     }
 }
 
-// Automotive has no Kotlin sources of its own; it reuses the app's source sets, which are already analyzed by :app.
-tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
-    enabled = false
-}
-tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
-    enabled = false
-}
-
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:app` module.
     implementation(libs.car.automotive)

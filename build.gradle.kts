@@ -22,7 +22,14 @@ plugins {
 }
 
 allprojects {
-    apply(plugin = rootProject.libs.plugins.detekt.get().pluginId)
+    // :automotive has no Kotlin sources of its own; it reuses :app's, which are already analyzed
+    // there. Don't apply detekt to it at all: even disabled detekt tasks would still compile the
+    // module through their task dependencies.
+    val reusesAppSources = path == ":automotive"
+
+    if (!reusesAppSources) {
+        apply(plugin = rootProject.libs.plugins.detekt.get().pluginId)
+    }
     apply(plugin = rootProject.libs.plugins.ktlint.get().pluginId)
 
     // TODO this has been added until https://youtrack.jetbrains.com/issue/KT-87220/Kotlin-Gradle-plugin-resolves-kotlinAbiValidationCompatClasspath-to-newer-beta-Kotlin-artifacts-during-dependency-locking is addressed
@@ -55,20 +62,29 @@ allprojects {
             reporter(ReporterType.SARIF)
             reporter(ReporterType.PLAIN)
         }
+        if (reusesAppSources) {
+            // Only lint the module's own files (build scripts); the Kotlin sources belong to :app.
+            val appDir = rootDir.resolve("app").absolutePath + File.separator
+            filter {
+                exclude { it.file.absolutePath.startsWith(appDir) }
+            }
+        }
     }
 
-    detekt {
-        config.setFrom(rootProject.file(".detekt/detekt.yml"))
-        buildUponDefaultConfig = true
-        // Debug variants only add debug-only dev tooling on top of what release compiles; analyzing
-        // release covers everything that ships and halves the type-resolution work.
-        ignoredBuildTypes = listOf("debug")
-    }
+    if (!reusesAppSources) {
+        detekt {
+            config.setFrom(rootProject.file(".detekt/detekt.yml"))
+            buildUponDefaultConfig = true
+            // Debug variants only add debug-only dev tooling on top of what release compiles; analyzing
+            // release covers everything that ships and halves the type-resolution work.
+            ignoredBuildTypes = listOf("debug")
+        }
 
-    tasks.withType<Detekt>().configureEach {
-        reports {
-            html.required.set(true)
-            sarif.required.set(true)
+        tasks.withType<Detekt>().configureEach {
+            reports {
+                html.required.set(true)
+                sarif.required.set(true)
+            }
         }
     }
 
