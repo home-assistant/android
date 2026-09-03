@@ -445,11 +445,9 @@ jobs:
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
           system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
-          script: |
-            .github/actions/monitor-resources/monitor.sh &
-            MONITOR_PID=$!
-            trap 'kill "$MONITOR_PID" 2>/dev/null || true' EXIT
-            ./gradlew ${{ matrix.configuration.gradle_target }}
+          # emulator-runner executes every script line in a separate shell, so the monitor
+          # must be started and killed within a single command.
+          script: .github/actions/monitor-resources/run-with-monitor.sh ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - uses: ./.github/actions/upload-test-results
         if: always()
