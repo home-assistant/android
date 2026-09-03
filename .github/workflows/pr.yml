@@ -204,13 +204,19 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews - app
-        run: ./gradlew :app:validateFullDebugScreenshotTest --max-workers=2
+        uses: ./.github/actions/monitor-resources
+        with:
+          run: ./gradlew :app:validateFullDebugScreenshotTest
 
       - name: Validate Screenshot Previews - wear
-        run: ./gradlew :wear:validateDebugScreenshotTest --max-workers=2
+        uses: ./.github/actions/monitor-resources
+        with:
+          run: ./gradlew :wear:validateDebugScreenshotTest
 
       - name: Validate Screenshot Previews - common
-        run: ./gradlew :common:validateDebugScreenshotTest --max-workers=2
+        uses: ./.github/actions/monitor-resources
+        with:
+          run: ./gradlew :common:validateDebugScreenshotTest
 
       - uses: ./.github/actions/upload-test-results
         if: always()
@@ -288,14 +294,14 @@ jobs:
           -storepass android \
           -keypass android
       - name: Build Release
+        uses: ./.github/actions/monitor-resources
         env:
           KEYSTORE_PATH: /home/runner/work/android/android/ci_dummy_keystore.keystore
           KEYSTORE_ALIAS: androiddebugkey
           KEYSTORE_ALIAS_PASSWORD: android
           KEYSTORE_PASSWORD: android
-        # Disable lint tasks since we have a dedicated job for this in the workflow
-        run: |
-          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
+        with:
+          run: ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
   unit_tests:
     name: "Unit Tests"
@@ -426,6 +432,8 @@ jobs:
 
       - name: Build projects and run instrumentation tests
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          MONITOR_LABEL: instrumentation-${{ matrix.configuration.api-level }}-${{ matrix.configuration.profile }}
         with:
           api-level: ${{ matrix.configuration.api-level }}
           arch: ${{ matrix.configuration.arch }}
@@ -437,7 +445,9 @@ jobs:
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
           system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
-          script: ./gradlew ${{ matrix.configuration.gradle_target }}
+          # emulator-runner executes every script line in a separate shell, so the monitor
+          # must be started and killed within a single command.
+          script: .github/actions/monitor-resources/run-with-monitor.sh ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - uses: ./.github/actions/upload-test-results
         if: always()
