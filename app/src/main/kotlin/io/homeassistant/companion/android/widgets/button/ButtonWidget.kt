@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.widgets.button
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -14,7 +13,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
-import androidx.core.os.BundleCompat
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.IconicsSize
@@ -24,8 +22,7 @@ import com.mikepenz.iconics.utils.size
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.getIconByMdiName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -37,20 +34,21 @@ import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.WidgetAuthenticationActivity
+import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
-import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+private const val TOGGLE_SERVICE_SUFFIX = ".toggle"
+private val TOGGLE_STATE_RECONNECTION_DELAY = 2.seconds
+
 @AndroidEntryPoint
-class ButtonWidget : AppWidgetProvider() {
+class ButtonWidget : BaseWidgetProvider<ButtonWidgetEntity, ButtonWidgetDao>() {
     companion object {
         const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
@@ -59,107 +57,9 @@ class ButtonWidget : AppWidgetProvider() {
 
         // Vector icon rendering resolution fallback (if we can't infer via AppWidgetManager for some reason)
         private const val DEFAULT_MAX_ICON_SIZE = 512
-        private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    }
 
-    @Inject
-    lateinit var serverManager: ServerManager
-
-    @Inject
-    lateinit var buttonWidgetDao: ButtonWidgetDao
-
-    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        // There may be multiple widgets active, so update all of them
-        for (appWidgetId in appWidgetIds) {
-            widgetScope.launch {
-                val views = getWidgetRemoteViews(context, appWidgetId)
-                appWidgetManager.updateAppWidget(appWidgetId, views)
-            }
-        }
-    }
-
-    private suspend fun updateAllWidgets(context: Context) {
-        val appWidgetManager = AppWidgetManager.getInstance(context) ?: return
-        val systemWidgetIds = appWidgetManager.getAppWidgetIds(ComponentName(context, ButtonWidget::class.java))
-        val dbWidgetList = buttonWidgetDao.getAll()
-
-        val invalidWidgetIds = dbWidgetList
-            .filter { !systemWidgetIds.contains(it.id) }
-            .map { it.id }
-        if (invalidWidgetIds.isNotEmpty()) {
-            Timber.i("Found widgets $invalidWidgetIds in database, but not in AppWidgetManager - sending onDeleted")
-            onDeleted(context, invalidWidgetIds.toIntArray())
-        }
-
-        val buttonWidgetEntityList = dbWidgetList.filter { systemWidgetIds.contains(it.id) }
-        if (buttonWidgetEntityList.isNotEmpty()) {
-            Timber.d("Updating all widgets")
-            for (item in buttonWidgetEntityList) {
-                val views = getWidgetRemoteViews(context, item.id)
-
-                setLabelVisibility(views, item)
-                views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
-                views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
-                appWidgetManager.updateAppWidget(item.id, views)
-            }
-        }
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        // When the user deletes the widget, delete the preference associated with it.
-        widgetScope.launch {
-            buttonWidgetDao.deleteAll(appWidgetIds)
-        }
-    }
-
-    override fun onEnabled(context: Context) {
-        // Enter relevant functionality for when the first widget is created
-    }
-
-    override fun onDisabled(context: Context) {
-        // Enter relevant functionality for when the last widget is disabled
-    }
-
-    override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action
-        val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
-
-        Timber.d(
-            "Broadcast received: " + System.lineSeparator() +
-                "Broadcast action: " + action + System.lineSeparator() +
-                "AppWidgetId: " + appWidgetId,
-        )
-
-        super.onReceive(context, intent)
-        when (action) {
-            CALL_SERVICE_AUTH -> authThenCallConfiguredAction(context, appWidgetId)
-            CALL_SERVICE -> widgetScope.launch { callConfiguredAction(context, appWidgetId) }
-            BaseWidgetProvider.UPDATE_WIDGETS, Intent.ACTION_SCREEN_ON -> widgetScope.launch {
-                updateAllWidgets(
-                    context,
-                )
-            }
-
-            ACTION_APPWIDGET_CREATED -> {
-                widgetScope.launch {
-                    if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-                        FailFast.fail { "Missing appWidgetId in intent to add widget in DAO" }
-                    } else {
-                        val entity = intent.extras?.let {
-                            BundleCompat.getSerializable(
-                                it,
-                                EXTRA_WIDGET_ENTITY,
-                                ButtonWidgetEntity::class.java,
-                            )
-                        }
-                        entity?.let {
-                            buttonWidgetDao.add(entity.copyWithWidgetId(appWidgetId))
-                        } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
-                    }
-                    updateAllWidgets(context)
-                }
-            }
-        }
+        // Last known entity state per widget so renders don't block on a REST call
+        private val toggleStates = ConcurrentHashMap<Int, Entity>()
     }
 
     private fun authThenCallConfiguredAction(context: Context, appWidgetId: Int) {
@@ -171,13 +71,25 @@ class ButtonWidget : AppWidgetProvider() {
         context.startActivity(intent)
     }
 
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    override fun getWidgetProvider(context: Context): ComponentName = ComponentName(context, ButtonWidget::class.java)
+
+    override suspend fun getWidgetRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        suggestedEntity: Entity?,
+    ): RemoteViews {
         // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
         // and label need to be re-assigned, or the next time the layout updates
         // (e.g home screen rotation) the widget will fall back on its default layout
         // without any click listener being applied
 
-        val widget = buttonWidgetDao.get(appWidgetId)
+        val widget = dao.get(appWidgetId)
+        val toggleEntity = widget?.takeIf { it.isToggleWidget() }?.let { toggleWidget ->
+            val entity = suggestedEntity?.takeIf { it.entityId == getToggleEntityId(toggleWidget) }
+                ?: toggleStates[appWidgetId]
+                ?: getToggleEntity(toggleWidget)
+            entity?.also { toggleStates[appWidgetId] = it }
+        }
         val auth = widget?.requireAuthentication == true
 
         val intent = Intent(context, ButtonWidget::class.java).apply {
@@ -204,7 +116,7 @@ class ButtonWidget : AppWidgetProvider() {
                 widget.textColor?.let { textColor = it.toColorInt() }
                 setTextColor(R.id.widgetLabel, textColor)
             }
-            setWidgetBackground(this, widget)
+            setWidgetBackground(context, this, widget, toggleEntity)
 
             // Label
             setLabelVisibility(this, widget)
@@ -262,9 +174,30 @@ class ButtonWidget : AppWidgetProvider() {
         }
     }
 
-    private fun setWidgetBackground(views: RemoteViews, widget: ButtonWidgetEntity?) {
-        when (widget?.backgroundType) {
-            WidgetBackgroundType.TRANSPARENT -> {
+    private fun setWidgetBackground(
+        context: Context,
+        views: RemoteViews,
+        widget: ButtonWidgetEntity?,
+        toggleEntity: Entity?,
+    ) {
+        when {
+            widget.isToggleWidget() && toggleEntity?.state == "on" -> {
+                views.setInt(
+                    R.id.widgetLayout,
+                    "setBackgroundResource",
+                    R.drawable.widget_button_background_toggle_on,
+                )
+            }
+
+            widget.isToggleWidget() -> {
+                views.setInt(
+                    R.id.widgetLayout,
+                    "setBackgroundResource",
+                    R.drawable.widget_button_background_toggle_off,
+                )
+            }
+
+            widget?.backgroundType == WidgetBackgroundType.TRANSPARENT -> {
                 views.setInt(R.id.widgetLayout, "setBackgroundColor", Color.TRANSPARENT)
             }
 
@@ -272,6 +205,52 @@ class ButtonWidget : AppWidgetProvider() {
                 views.setInt(R.id.widgetLayout, "setBackgroundResource", R.drawable.widget_button_background)
             }
         }
+    }
+
+    private fun ButtonWidgetEntity?.isToggleWidget(): Boolean {
+        this ?: return false
+        return service == TOGGLE_SERVICE_SUFFIX.removePrefix(".") || service.endsWith(TOGGLE_SERVICE_SUFFIX)
+    }
+
+    private suspend fun getToggleEntity(widget: ButtonWidgetEntity): Entity? {
+        val entityId = getToggleEntityId(widget) ?: return null
+        return try {
+            serverManager.integrationRepository(widget.serverId).getEntity(entityId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Unable to read state for $entityId")
+            null
+        }
+    }
+
+    private fun getToggleEntityId(widget: ButtonWidgetEntity): String? {
+        if (!widget.isToggleWidget()) return null
+        val actionData = kotlinJsonMapper.decodeFromString<Map<String, Any?>>(
+            MapAnySerializer,
+            widget.serviceData,
+        )
+        return resolveSingleEntityId(actionData["entity_id"])
+    }
+
+    /** Fetches the current state over REST and re-renders only when it differs from the cached one. */
+    private suspend fun refreshToggleState(context: Context, appWidgetId: Int) {
+        val widget = dao.get(appWidgetId) ?: return
+        val entity = getToggleEntity(widget) ?: return
+        val previous = toggleStates.put(appWidgetId, entity)
+        if (previous?.state != entity.state) {
+            AppWidgetManager.getInstance(context)
+                .updateAppWidget(appWidgetId, getWidgetRemoteViews(context, appWidgetId, entity))
+        }
+    }
+
+    private fun resolveSingleEntityId(entityId: Any?): String? {
+        val value = when (entityId) {
+            is String -> entityId.removePrefix("[").removeSuffix("]")
+            is List<*> -> entityId.singleOrNull() as? String
+            else -> null
+        }?.trim()
+        return value?.takeIf { it != "all" && ',' !in it }
     }
 
     private fun setLabelVisibility(views: RemoteViews, widget: ButtonWidgetEntity?) {
@@ -291,7 +270,7 @@ class ButtonWidget : AppWidgetProvider() {
         loadingViews.setViewVisibility(R.id.widgetImageButtonLayout, View.GONE)
         appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
-        val widget = buttonWidgetDao.get(appWidgetId)
+        val widget = dao.get(appWidgetId)
         // Set default feedback as negative
         var feedbackColor = R.drawable.widget_button_background_red
         var feedbackIcon = R.drawable.ic_clear_black
@@ -360,13 +339,53 @@ class ButtonWidget : AppWidgetProvider() {
         feedbackViews.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
         appWidgetManager.partiallyUpdateAppWidget(appWidgetId, feedbackViews)
 
-        // Reload default views in the coroutine to pass to the post handler
-        val views = getWidgetRemoteViews(context, appWidgetId)
-
         // Set a timer to change it back after 1 second
         delay(1.seconds)
+        if (widget.isToggleWidget()) {
+            // Instant render from cache (updated by the WebSocket event), then verify over REST
+            appWidgetManager.updateAppWidget(appWidgetId, getWidgetRemoteViews(context, appWidgetId))
+            refreshToggleState(context, appWidgetId)
+            delay(TOGGLE_STATE_RECONNECTION_DELAY)
+            refreshToggleState(context, appWidgetId)
+            return
+        }
+
+        // Reload default views in the coroutine to pass to the post handler
+        val views = getWidgetRemoteViews(context, appWidgetId)
         setLabelVisibility(views, widget)
-        setWidgetBackground(views, widget)
         appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    override suspend fun getAllWidgetIdsWithEntities(context: Context): Map<Int, Pair<Int, List<String>>> {
+        return dao.getAll().associate { widget ->
+            widget.id to (widget.serverId to listOfNotNull(getToggleEntityId(widget)))
+        }
+    }
+
+    override suspend fun onEntityStateChanged(context: Context, appWidgetId: Int, entity: Entity) {
+        toggleStates[appWidgetId] = entity
+        val views = getWidgetRemoteViews(context, appWidgetId, entity)
+        AppWidgetManager.getInstance(context).updateAppWidget(appWidgetId, views)
+    }
+
+    override suspend fun onReceiveIntentNotHandled(context: Context, intent: Intent, appWidgetId: Int) {
+        when (intent.action) {
+            CALL_SERVICE_AUTH -> authThenCallConfiguredAction(context, appWidgetId)
+            CALL_SERVICE -> {
+                // Refresh the subscription in parallel so the action and spinner are not delayed
+                widgetScope.launch { onScreenOn(context, forceRefreshWidgetId = appWidgetId) }
+                callConfiguredAction(context, appWidgetId)
+            }
+        }
+    }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        widgetScope.launch {
+            dao.deleteAll(appWidgetIds)
+            appWidgetIds.forEach {
+                toggleStates.remove(it)
+                removeSubscription(it)
+            }
+        }
     }
 }
