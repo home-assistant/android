@@ -18,9 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -38,6 +35,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.FileUpload
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
@@ -207,7 +208,7 @@ private fun CertPicker(selectedFileName: String?, onSelectFileClicked: () -> Uni
         prefix = if (selectedFileName == null) {
             {
                 Icon(
-                    imageVector = Icons.Default.UploadFile,
+                    imageVector = Mdi.FileUpload.rememberImageVector(),
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -221,7 +222,7 @@ private fun CertPicker(selectedFileName: String?, onSelectFileClicked: () -> Uni
                     onClick = onResetFileSelected,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = Mdi.Close.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.wear_mtls_deselect_file),
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -258,7 +259,7 @@ private fun PasswordTextField(currentPassword: String, onPasswordChange: (String
             if (currentPassword.isNotEmpty()) {
                 IconButton(onClick = { onPasswordChange("") }) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = Mdi.Close.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.clear_text),
                     )
                 }

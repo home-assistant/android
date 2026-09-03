@@ -10,8 +10,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.TextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +26,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AlertCircle
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -74,7 +75,7 @@ fun ExternalUrlInputView(
             trailingIcon = if (urlError) {
                 {
                     Icon(
-                        imageVector = Icons.Default.Error,
+                        imageVector = Mdi.AlertCircle.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.url_invalid),
                     )
                 }

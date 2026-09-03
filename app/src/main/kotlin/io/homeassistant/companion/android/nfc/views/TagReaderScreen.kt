@@ -22,9 +22,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -51,6 +48,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.ContentCopy
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HABanner
@@ -225,7 +226,7 @@ private fun TagApprovalSheetHeader(onClose: () -> Unit, modifier: Modifier = Mod
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = Mdi.Close.rememberImageVector(),
                     contentDescription = null,
                     tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
                 )
@@ -308,7 +309,7 @@ private fun TagBanner(tagId: String, modifier: Modifier = Modifier) {
             },
         ) {
             Icon(
-                imageVector = Icons.Default.ContentCopy,
+                imageVector = Mdi.ContentCopy.rememberImageVector(),
                 contentDescription = null,
                 tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
             )

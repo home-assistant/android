@@ -15,9 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -37,6 +34,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -431,7 +432,7 @@ private fun AttributeSelector(
                     enabled = customAttribute.isNotBlank(),
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        imageVector = Mdi.Plus.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.widget_attribute_add),
                     )
                 }
@@ -467,7 +468,7 @@ private fun AttributeChips(attributeIds: List<String>, selected: Boolean, onClic
                 text = attributeId,
                 onClick = { onClick(attributeId) },
                 selected = selected,
-                trailingIcon = if (selected) Icons.Default.Close else Icons.Default.Add,
+                trailingIcon = if (selected) Mdi.Close.rememberImageVector() else Mdi.Plus.rememberImageVector(),
                 trailingIconContentDescription = stringResource(
                     if (selected) commonR.string.search_clear_selection else commonR.string.widget_attribute_add,
                 ),
