@@ -8,10 +8,10 @@ import org.junit.Test
 class LaunchActivityTest {
 
     @get:Rule(order = 1)
-    val composeTestRule = createAndroidComposeRule<LaunchActivity>()
+    val detectLeaksRule = DetectLeaksAfterTestSuccess()
 
     @get:Rule(order = 2)
-    val detectLeaksRule = DetectLeaksAfterTestSuccess()
+    val composeTestRule = createAndroidComposeRule<LaunchActivity>()
 
     @Test
     fun launchActivity() {
