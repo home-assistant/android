@@ -1398,6 +1398,16 @@
     <string name="sensor_description_heart_rate_variability">Last recorded heart rate variability from Health Connect</string>
     <string name="basic_sensor_name_hydration">Daily hydration</string>
     <string name="sensor_description_hydration">Total hydration in milliliters since midnight from Health Connect</string>
+    <string name="basic_sensor_name_nutrition_calories">Daily calories eaten</string>
+    <string name="sensor_description_nutrition_calories">Total calories consumed since midnight from Health Connect</string>
+    <string name="basic_sensor_name_nutrition_carbohydrates">Daily carbs eaten</string>
+    <string name="sensor_description_nutrition_carbohydrates">Total carbohydrates consumed since midnight from Health Connect</string>
+    <string name="basic_sensor_name_nutrition_fat">Daily fat eaten</string>
+    <string name="sensor_description_nutrition_fat">Total fat consumed since midnight from Health Connect</string>
+    <string name="basic_sensor_name_nutrition_protein">Daily protein eaten</string>
+    <string name="sensor_description_nutrition_protein">Total protein consumed since midnight from Health Connect</string>
+    <string name="basic_sensor_name_nutrition_sugar">Daily sugar eaten</string>
+    <string name="sensor_description_nutrition_sugar">Total sugar consumed since midnight from Health Connect</string>
     <string name="basic_sensor_name_resting_heart_rate">Resting heart rate</string>
     <string name="sensor_description_resting_heart_rate">Last recorded resting heart rate from Health Connect</string>
     <string name="domain_number">Number</string>
