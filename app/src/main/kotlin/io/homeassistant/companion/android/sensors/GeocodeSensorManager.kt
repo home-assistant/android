@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.instant
-import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.location.getLastLocation
@@ -70,6 +69,18 @@ class GeocodeSensorManager @Inject constructor(
             commonR.string.basic_sensor_name_geolocation,
             commonR.string.sensor_description_geocoded_location,
             "mdi:map",
+            settings = listOf(
+                SensorManager.BasicSensor.Setting(
+                    SETTING_ACCURACY,
+                    SensorSettingType.NUMBER,
+                    DEFAULT_MINIMUM_ACCURACY.toString(),
+                ),
+                SensorManager.BasicSensor.Setting(
+                    SETTINGS_INCLUDE_LOCATION,
+                    SensorSettingType.TOGGLE,
+                    "false",
+                ),
+            ),
         )
     }
 
@@ -113,14 +124,7 @@ class GeocodeSensorManager @Inject constructor(
         }
 
         var address: Address? = null
-        val sensorRepository = sensorRepository
-        val sensorSettings = sensorRepository.getSettings(geocodedLocation.id)
-        val minAccuracy = sensorSettings
-            .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-            ?: DEFAULT_MINIMUM_ACCURACY
-        sensorRepository.add(
-            SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER),
-        )
+        val minAccuracy = getNumberSetting(geocodedLocation, SETTING_ACCURACY)
 
         if (!location.isStillValid()) {
             return

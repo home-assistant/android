@@ -1,20 +1,15 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import androidx.core.app.NotificationManagerCompat
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
-import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
-import io.mockk.coEvery
-import io.mockk.every
+import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
@@ -23,9 +18,7 @@ private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
 
 class NotificationListenerSensorManagerTest {
 
-    private val context = mockk<Context> {
-        every { packageName } returns "io.homeassistant.companion.android"
-    }
+    private val context = mockk<Context>(relaxed = true)
     private val sensorRepository: SensorRepository = mockk(relaxed = true)
     private val manager = NotificationListenerSensorManager(
         context,
@@ -33,56 +26,39 @@ class NotificationListenerSensorManagerTest {
         mockk<ServerManager>(relaxed = true),
     )
 
-    @AfterEach
-    fun tearDown() {
-        unmockkStatic(NotificationManagerCompat::class)
-    }
-
     @ParameterizedTest
     @MethodSource("sensorIds")
-    fun `Given notification sensor enabled when requesting update then its settings are initialized`(
+    fun `Given notification sensor when inspected then its settings are declared`(
         sensorId: String,
-    ) = runTest {
-        prepareEnabledNotificationSensor(sensorId)
-        coEvery { sensorRepository.getSettings(any()) } returns emptyList()
-        val addedSettings = captureAddedSettings()
-
-        manager.requestSensorUpdate()
-
+    ) {
         assertEquals(
-            defaultSettings(sensorId),
-            addedSettings,
+            defaultSettings(),
+            notificationSensor(sensorId).settings,
         )
     }
 
-    @ParameterizedTest
-    @MethodSource("sensorIds")
-    fun `Given custom allow list when requesting update then existing value is preserved`(
-        sensorId: String,
-    ) = runTest {
-        val existingSetting = SensorSetting(
-            sensorId = sensorId,
-            name = SETTING_ALLOW_LIST,
-            value = "com.example.app",
-            valueType = SensorSettingType.LIST_APPS,
-        )
-        prepareEnabledNotificationSensor(sensorId)
-        coEvery { sensorRepository.getSettings(sensorId) } returns listOf(existingSetting)
-        val addedSettings = captureAddedSettings()
-
-        manager.requestSensorUpdate()
-
+    @Test
+    fun `Given active notification count sensor when inspected then content setting is declared`() {
         assertEquals(
             listOf(
-                SensorSetting(
-                    sensorId = sensorId,
-                    name = SETTING_DISABLE_ALLOW_LIST,
-                    value = "false",
-                    valueType = SensorSettingType.TOGGLE,
+                SensorManager.BasicSensor.Setting(
+                    name = "active_notification_count_content_attrs",
+                    type = SensorSettingType.TOGGLE,
+                    defaultValue = "true",
                 ),
             ),
-            addedSettings,
+            NotificationListenerSensorManager.activeNotificationCount.settings,
         )
+    }
+
+    @Test
+    fun `Given notification refresh when requested then settings are not persisted`() = runTest {
+        manager.requestSensorUpdate()
+
+        coVerify(exactly = 0) {
+            sensorRepository.updateSettingValue(any(), any(), any())
+            sensorRepository.addDynamicSetting(any())
+        }
     }
 
     companion object {
@@ -93,40 +69,23 @@ class NotificationListenerSensorManagerTest {
         )
     }
 
-    private fun prepareEnabledNotificationSensor(sensorId: String) {
-        mockkStatic(NotificationManagerCompat::class)
-        every { NotificationManagerCompat.getEnabledListenerPackages(context) } returns setOf(context.packageName)
-        coEvery { sensorRepository.get(any()) } returns emptyList()
-        coEvery { sensorRepository.get(sensorId) } returns listOf(
-            Sensor(
-                id = sensorId,
-                serverId = 1,
-                enabled = true,
-                state = "",
-            ),
-        )
-    }
-
-    private fun captureAddedSettings(): MutableList<SensorSetting> {
-        val addedSettings = mutableListOf<SensorSetting>()
-        coEvery { sensorRepository.add(any<SensorSetting>()) } answers {
-            addedSettings += firstArg<SensorSetting>()
-        }
-        return addedSettings
-    }
-
-    private fun defaultSettings(sensorId: String) = listOf(
-        SensorSetting(
-            sensorId = sensorId,
+    private fun defaultSettings() = listOf(
+        SensorManager.BasicSensor.Setting(
             name = SETTING_ALLOW_LIST,
-            value = "",
-            valueType = SensorSettingType.LIST_APPS,
+            type = SensorSettingType.LIST_APPS,
+            defaultValue = "",
         ),
-        SensorSetting(
-            sensorId = sensorId,
+        SensorManager.BasicSensor.Setting(
             name = SETTING_DISABLE_ALLOW_LIST,
-            value = "false",
-            valueType = SensorSettingType.TOGGLE,
+            type = SensorSettingType.TOGGLE,
+            defaultValue = "false",
         ),
     )
+
+    private fun notificationSensor(sensorId: String) = when (sensorId) {
+        NotificationListenerSensorManager.lastNotification.id -> NotificationListenerSensorManager.lastNotification
+        NotificationListenerSensorManager.lastRemovedNotification.id ->
+            NotificationListenerSensorManager.lastRemovedNotification
+        else -> error("Unknown notification sensor: $sensorId")
+    }
 }

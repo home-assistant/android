@@ -54,6 +54,9 @@ internal interface SensorDao {
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id")
     suspend fun getSettings(id: String): List<SensorSetting>
 
+    @Query("SELECT value FROM sensor_settings WHERE sensor_id = :sensorId AND name = :settingName")
+    suspend fun getSettingValue(sensorId: String, settingName: String): String?
+
     @Transaction
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id ORDER BY sensor_id")
     fun getSettingsFlow(id: String): Flow<List<SensorSetting>>
@@ -103,10 +106,37 @@ internal interface SensorDao {
     }
 
     @Query("UPDATE sensor_settings SET enabled = :enabled WHERE sensor_id = :sensorId AND name = :settingName")
-    suspend fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean)
+    suspend fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean): Int
 
     @Query("UPDATE sensor_settings SET value = :value WHERE sensor_id = :sensorId AND name = :settingName")
-    suspend fun updateSettingValue(sensorId: String, settingName: String, value: String)
+    suspend fun updateSettingValue(sensorId: String, settingName: String, value: String): Int
+
+    @Transaction
+    suspend fun upsertSettingEnabled(setting: SensorSetting, enabled: Boolean) {
+        if (updateSettingEnabled(setting.sensorId, setting.name, enabled) == 0) {
+            add(setting.copy(enabled = enabled))
+        }
+    }
+
+    @Transaction
+    suspend fun upsertSettingValue(setting: SensorSetting, value: String) {
+        if (updateSettingValue(setting.sensorId, setting.name, value) == 0) {
+            add(setting.copy(value = value))
+        }
+    }
+
+    @Transaction
+    suspend fun getOrInitializeSettingValue(setting: SensorSetting, initialValue: String): String {
+        val storedValue = getSettingValue(setting.sensorId, setting.name)
+        if (!storedValue.isNullOrEmpty()) return storedValue
+
+        if (storedValue == null) {
+            add(setting.copy(value = initialValue))
+        } else {
+            updateSettingValue(setting.sensorId, setting.name, initialValue)
+        }
+        return initialValue
+    }
 
     @Query(
         "UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId AND server_id = :serverId",
