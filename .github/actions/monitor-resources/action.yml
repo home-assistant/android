@@ -1,0 +1,35 @@
+name: "Monitor resources"
+description: >
+  Runs a command while streaming resource usage (memory, swap, CPU steal, memory pressure,
+  load, disk, top processes) into the step log. Streaming into the log preserves the state
+  right before a runner kill even when the VM dies, where a post step or an artifact upload
+  would never run.
+inputs:
+  run:
+    description: "The command to run under monitoring."
+    required: true
+  label:
+    description: >
+      Identifier printed on every sample line, so raw logs grepped across jobs still say
+      where the samples came from. Defaults to "<job id>/<run command>".
+    required: false
+    default: ""
+  interval-seconds:
+    description: "Seconds between two resource samples."
+    required: false
+    default: "10"
+runs:
+  using: "composite"
+  steps:
+    - name: Run command under resource monitor
+      shell: bash
+      env:
+        MONITOR_INTERVAL_SECONDS: ${{ inputs.interval-seconds }}
+        MONITOR_LABEL_INPUT: ${{ inputs.label }}
+        MONITOR_RUN_COMMAND: ${{ inputs.run }}
+      run: |
+        export MONITOR_LABEL="${MONITOR_LABEL_INPUT:-$GITHUB_JOB/$MONITOR_RUN_COMMAND}"
+        "${{ github.action_path }}/monitor.sh" &
+        MONITOR_PID=$!
+        trap 'kill "$MONITOR_PID" 2>/dev/null || true' EXIT
+        ${{ inputs.run }}

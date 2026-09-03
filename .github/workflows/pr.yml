@@ -202,68 +202,20 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      # This job is sometimes killed by the hosted runner without explanation, presumably
-      # because the VM runs out of memory. The monitor streams memory usage into the step
-      # log so the state right before a kill is preserved even when the VM dies (a post
-      # step or artifact upload would never run in that case).
-      - name: Prepare memory monitor
-        run: |
-          nproc
-          free -m
-          # Identify the hypervisor's balloon/dynamic-memory driver, if any (e.g. hv_balloon
-          # on Azure); its kernel log lines also reveal balloon activity before the job.
-          lsmod | grep -i balloon || echo "No balloon driver module loaded"
-          sudo dmesg | grep -iE 'balloon|dynamic memory' || echo "No balloon events in kernel log"
-          cat > "$RUNNER_TEMP/memory-monitor.sh" <<'EOF'
-          #!/usr/bin/env bash
-          while true; do
-            # total= would shrink below 16GB if the hypervisor reclaims guest memory (ballooning).
-            MEM=$(free -m | awk '/^Mem:/ {printf "total=%sMB used=%sMB available=%sMB", $2, $3, $7}')
-            SWAP=$(free -m | awk '/^Swap:/ {printf "swap-used=%sMB", $3}')
-            # steal= is the share of time the hypervisor did not schedule our vCPUs (host contention).
-            STEAL=$(vmstat 1 2 | awk 'NR==2 {for (i = 1; i <= NF; i++) if ($i == "st") c = i} END {printf "steal=%s%%", $c}')
-            # mem-stall= is the share of time tasks stalled waiting on memory (climbs before an OOM kill).
-            STALL=$(awk -F 'avg10=' '/^some/ {split($2, a, " "); printf "mem-stall=%s%%", a[1]}' /proc/pressure/memory)
-            LOAD=$(awk '{printf "load=%s", $1}' /proc/loadavg)
-            DISK=$(df -m --output=avail / | awk 'NR==2 {printf "disk-avail=%sMB", $1}')
-            # A gap between used= and proc-rss-sum= growing by gigabytes means memory is held
-            # by the kernel rather than by processes, which is how an inflating balloon looks
-            # from inside the guest when total= does not shrink.
-            PRS=$(ps -eo rss= | awk '{s += $1} END {printf "proc-rss-sum=%dMB", s / 1024}')
-            TOP=$(ps -eo rss=,comm= --sort=-rss | head -3 | awk '{printf "%s=%dMB ", $2, $1/1024}')
-            echo "memory-monitor $(date -u '+%H:%M:%S') $MEM $SWAP $PRS $STEAL $STALL $LOAD $DISK top: $TOP"
-            sleep 10
-          done
-          EOF
-          chmod +x "$RUNNER_TEMP/memory-monitor.sh"
-
       - name: Validate Screenshot Previews - app
-        run: |
-          "$RUNNER_TEMP/memory-monitor.sh" &
-          MONITOR_PID=$!
-          trap 'kill "$MONITOR_PID" 2>/dev/null || true' EXIT
-          ./gradlew :app:validateFullDebugScreenshotTest --max-workers=2
+        uses: ./.github/actions/monitor-resources
+        with:
+          run: ./gradlew :app:validateFullDebugScreenshotTest
 
       - name: Validate Screenshot Previews - wear
-        run: |
-          "$RUNNER_TEMP/memory-monitor.sh" &
-          MONITOR_PID=$!
-          trap 'kill "$MONITOR_PID" 2>/dev/null || true' EXIT
-          ./gradlew :wear:validateDebugScreenshotTest --max-workers=2
+        uses: ./.github/actions/monitor-resources
+        with:
+          run: ./gradlew :wear:validateDebugScreenshotTest
 
       - name: Validate Screenshot Previews - common
-        run: |
-          "$RUNNER_TEMP/memory-monitor.sh" &
-          MONITOR_PID=$!
-          trap 'kill "$MONITOR_PID" 2>/dev/null || true' EXIT
-          ./gradlew :common:validateDebugScreenshotTest --max-workers=2
-
-      # Distinguishes an in-guest OOM kill (kernel log entry, this step still runs) from
-      # the hypervisor killing the whole VM (no log entry, job ends before this step).
-      # Balloon lines show the hypervisor reclaiming guest memory during the run.
-      - name: Check kernel log for OOM kills and balloon events
-        if: always()
-        run: sudo dmesg | grep -iE 'out of memory|oom-kill|killed process|balloon' || echo "No OOM kill or balloon events in kernel log"
+        uses: ./.github/actions/monitor-resources
+        with:
+          run: ./gradlew :common:validateDebugScreenshotTest
 
       - uses: ./.github/actions/upload-test-results
         if: always()
@@ -341,14 +293,14 @@ jobs:
           -storepass android \
           -keypass android
       - name: Build Release
+        uses: ./.github/actions/monitor-resources
         env:
           KEYSTORE_PATH: /home/runner/work/android/android/ci_dummy_keystore.keystore
           KEYSTORE_ALIAS: androiddebugkey
           KEYSTORE_ALIAS_PASSWORD: android
           KEYSTORE_PASSWORD: android
-        # Disable lint tasks since we have a dedicated job for this in the workflow
-        run: |
-          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
+        with:
+          run: ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
   unit_tests:
     name: "Unit Tests"
@@ -479,6 +431,8 @@ jobs:
 
       - name: Build projects and run instrumentation tests
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          MONITOR_LABEL: instrumentation-${{ matrix.configuration.api-level }}-${{ matrix.configuration.profile }}
         with:
           api-level: ${{ matrix.configuration.api-level }}
           arch: ${{ matrix.configuration.arch }}
@@ -490,7 +444,11 @@ jobs:
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
           system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
-          script: ./gradlew ${{ matrix.configuration.gradle_target }}
+          script: |
+            .github/actions/monitor-resources/monitor.sh &
+            MONITOR_PID=$!
+            trap 'kill "$MONITOR_PID" 2>/dev/null || true' EXIT
+            ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - uses: ./.github/actions/upload-test-results
         if: always()
