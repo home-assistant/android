@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.frontend.improv.ui
 
 import android.net.wifi.WifiManager
 import android.os.Build
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -34,11 +35,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.wifi.improv.DeviceState
 import com.wifi.improv.ErrorState
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Alert
+import io.github.timoptr.mdiicons.generated.WifiCheck
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HALoading
@@ -157,7 +160,7 @@ private fun String?.takeIfDisplayable(): String? = takeIf {
 private fun ColumnScope.ErroredSection(error: ErrorState, onRestart: () -> Unit) {
     if (error != ErrorState.NO_ERROR) {
         ImprovAction(
-            icon = CommunityMaterial.Icon.cmd_alert,
+            icon = Mdi.Alert,
             text = stringResource(
                 when (error) {
                     ErrorState.UNABLE_TO_CONNECT -> commonR.string.improv_error_unable_to_connect
@@ -175,7 +178,7 @@ private fun ColumnScope.ErroredSection(error: ErrorState, onRestart: () -> Unit)
 @Composable
 private fun ColumnScope.ProvisionedSection(onDismiss: () -> Unit) {
     ImprovAction(
-        icon = CommunityMaterial.Icon3.cmd_wifi_check,
+        icon = Mdi.WifiCheck,
         text = stringResource(commonR.string.improv_device_provisioned),
         onButtonClick = onDismiss,
     )
@@ -237,13 +240,13 @@ private fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> U
 
 @Composable
 private fun ColumnScope.ImprovAction(
-    icon: IIcon,
+    icon: MdiIcon,
     text: String,
     onButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Image(
-        asset = icon,
+        imageVector = icon.rememberImageVector(),
         contentDescription = null,
         colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnNeutralNormal),
         modifier = Modifier.size(40.dp),

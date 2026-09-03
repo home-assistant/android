@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.controls.views
 
 import android.os.Build
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,8 +53,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.DipSwitch
+import io.github.timoptr.mdiicons.generated.ViewDashboard
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
@@ -322,7 +325,7 @@ fun ManageControlsEntity(
             onCheckedChange = null,
         )
         Image(
-            asset = entity.icon,
+            imageVector = entity.icon.rememberImageVector(),
             contentDescription = null,
             modifier = Modifier
                 .padding(end = 16.dp)
@@ -357,11 +360,11 @@ fun ManageControlsModeButton(isPanel: Boolean, selected: Boolean, onClick: () ->
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Image(
-                asset = if (isPanel) {
-                    CommunityMaterial.Icon3.cmd_view_dashboard
+                imageVector = if (isPanel) {
+                    Mdi.ViewDashboard
                 } else {
-                    CommunityMaterial.Icon.cmd_dip_switch
-                },
+                    Mdi.DipSwitch
+                }.rememberImageVector(),
                 contentDescription = null,
                 modifier = Modifier.size(36.dp),
                 colorFilter = ColorFilter.tint(LocalContentColor.current),

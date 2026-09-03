@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.data.integration
 
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Bookmark
+import io.github.timoptr.mdiicons.generated.Eye
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityRemoved
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
@@ -167,7 +169,7 @@ class EntityTest {
                 attributes = mapOf("icon" to iconAttr),
             )
             val icon = entity.getIcon()
-            assertEquals(Icon.cmd_bookmark, icon)
+            assertEquals(Mdi.Bookmark, icon)
         }
 
         @ParameterizedTest
@@ -179,7 +181,7 @@ class EntityTest {
                 attributes = mapOf("icon" to iconAttr),
             )
             val icon = entity.getIcon()
-            assertEquals(Icon.cmd_eye, icon)
+            assertEquals(Mdi.Eye, icon)
         }
     }
 

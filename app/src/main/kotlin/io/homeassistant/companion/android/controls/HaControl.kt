@@ -9,9 +9,8 @@ import android.service.controls.Control
 import android.service.controls.actions.ControlAction
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.utils.sizeDp
-import com.mikepenz.iconics.utils.toAndroidIconCompat
+import androidx.core.graphics.drawable.IconCompat
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
@@ -21,6 +20,8 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
+
+private const val CONTROL_ICON_SIZE_DP = 48
 
 @RequiresApi(Build.VERSION_CODES.R)
 interface HaControl {
@@ -61,7 +62,6 @@ interface HaControl {
             control.setAuthRequired(info.authRequired)
         }
         // Render the resolved icon to match the HA frontend rather than the provided device type
-        val iconDrawable = IconicsDrawable(context, item.icon).apply { sizeDp = 48 }
         val colorTint = when {
             item.domain == LIGHT_DOMAIN && item.rawState == "on" -> R.color.colorDeviceControlsLightOn
             item.domain == CAMERA_DOMAIN -> R.color.colorDeviceControlsCamera
@@ -76,8 +76,8 @@ interface HaControl {
 
             else -> R.color.colorDeviceControlsDefaultOn
         }
-        iconDrawable.setTint(ContextCompat.getColor(context, colorTint))
-        control.setCustomIcon(iconDrawable.toAndroidIconCompat().toIcon(context))
+        val iconBitmap = item.icon.toBitmap(context, CONTROL_ICON_SIZE_DP, ContextCompat.getColor(context, colorTint))
+        control.setCustomIcon(IconCompat.createWithBitmap(iconBitmap).toIcon(context))
 
         return provideControlFeatures(context, control, item, info).build()
     }

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.sensor.views
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -66,12 +67,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ClockFast
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.openSystemAppSettings
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -234,7 +236,7 @@ fun SensorDetailView(
                                     commonR.string.sensor_update_type_chip_custom
                             },
                         ),
-                        icon = CommunityMaterial.Icon.cmd_clock_fast,
+                        icon = Mdi.ClockFast,
                     ) {
                         sensorUpdateTypeInfo = true
                     }
@@ -384,15 +386,11 @@ fun SensorDetailTopPanel(
                         if (sensor?.enabled == true && sensor.icon.isNotBlank()) {
                             iconToUse = sensor.icon
                         }
-                        val mdiIcon = try {
-                            IconicsDrawable(context, "cmd-${iconToUse.split(":")[1]}").icon
-                        } catch (e: Exception) {
-                            null
-                        }
+                        val mdiIcon = Mdi.fromHaName(iconToUse)
 
                         if (mdiIcon != null) {
                             Image(
-                                asset = mdiIcon,
+                                imageVector = mdiIcon.rememberImageVector(),
                                 contentDescription = stringResource(commonR.string.icon),
                                 modifier = Modifier
                                     .size(24.dp)

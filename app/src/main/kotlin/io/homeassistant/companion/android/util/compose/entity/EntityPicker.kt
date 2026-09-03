@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -56,8 +57,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.EyeOff
+import io.github.timoptr.mdiicons.generated.Fan
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.TemperatureCelsius
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
@@ -332,9 +337,9 @@ private fun SelectedEntityChipContainer(
 private fun RowScope.EntityContent(entity: EntityDisplay, showHiddenIndicator: Boolean) {
     val colorScheme = LocalHAColorScheme.current
     Image(
-        asset = entity.icon,
-        colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
+        imageVector = entity.icon.rememberImageVector(),
         contentDescription = null,
+        colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
         modifier = Modifier.size(HADimens.SPACE6),
     )
     Column(modifier = Modifier.weight(1f)) {
@@ -359,7 +364,7 @@ private fun RowScope.EntityContent(entity: EntityDisplay, showHiddenIndicator: B
     }
     if (showHiddenIndicator && entity.isHidden) {
         Image(
-            asset = CommunityMaterial.Icon.cmd_eye_off,
+            imageVector = Mdi.EyeOff.rememberImageVector(),
             colorFilter = ColorFilter.tint(colorScheme.colorOnNeutralQuiet),
             contentDescription = stringResource(commonR.string.hidden_entity),
             modifier = Modifier
@@ -623,7 +628,7 @@ private fun previewEntities() = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "light.bed",
             name = "Bed Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            icon = Mdi.Lightbulb,
         ),
         areaName = "Bedroom",
         deviceName = "Device #1",
@@ -632,14 +637,14 @@ private fun previewEntities() = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "sensor.temperature",
             name = "Temperature",
-            icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+            icon = Mdi.TemperatureCelsius,
         ),
         areaName = "Living Room",
     ),
     EntityDisplayWithoutContext(
         entityId = "switch.fan",
         name = "Fan",
-        icon = CommunityMaterial.Icon2.cmd_fan,
+        icon = Mdi.Fan,
     ),
 )
 

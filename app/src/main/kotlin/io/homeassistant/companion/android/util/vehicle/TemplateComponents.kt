@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util.vehicle
 
+import android.graphics.Color
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
@@ -11,11 +12,13 @@ import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
 import androidx.car.app.model.Header
 import androidx.car.app.model.ItemList
+import androidx.core.graphics.drawable.IconCompat
 import androidx.lifecycle.LifecycleCoroutineScope
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.sizeDp
-import com.mikepenz.iconics.utils.toAndroidIconCompat
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.HomeSwitch
+import io.github.timoptr.mdiicons.generated.MapOutline
+import io.github.timoptr.mdiicons.generated.ViewList
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -59,12 +62,7 @@ fun getChangeServerGridItem(
         setTitle(carContext.getString(R.string.aa_change_server))
         setImage(
             CarIcon.Builder(
-                IconicsDrawable(
-                    carContext,
-                    CommunityMaterial.Icon2.cmd_home_switch,
-                ).apply {
-                    sizeDp = 64
-                }.toAndroidIconCompat(),
+                IconCompat.createWithBitmap(Mdi.HomeSwitch.toBitmap(carContext, 64, Color.WHITE)),
             )
                 .setTint(CarColor.DEFAULT)
                 .build(),
@@ -99,12 +97,7 @@ fun getNavigationGridItem(
         setTitle(carContext.getString(R.string.aa_navigation))
         setImage(
             CarIcon.Builder(
-                IconicsDrawable(
-                    carContext,
-                    CommunityMaterial.Icon3.cmd_map_outline,
-                ).apply {
-                    sizeDp = 64
-                }.toAndroidIconCompat(),
+                IconCompat.createWithBitmap(Mdi.MapOutline.toBitmap(carContext, 64, Color.WHITE)),
             )
                 .setTint(CarColor.DEFAULT)
                 .build(),
@@ -167,10 +160,7 @@ fun getDomainList(
                 GridItem.Builder().apply {
                     setImage(
                         CarIcon.Builder(
-                            IconicsDrawable(carContext, icon)
-                                .apply {
-                                    sizeDp = 64
-                                }.toAndroidIconCompat(),
+                            IconCompat.createWithBitmap(icon.toBitmap(carContext, 64, Color.WHITE)),
                         )
                             .setTint(CarColor.DEFAULT)
                             .build(),
@@ -217,12 +207,7 @@ fun getDomainsGridItem(
         setTitle(carContext.getString(R.string.all_entities))
         setImage(
             CarIcon.Builder(
-                IconicsDrawable(
-                    carContext,
-                    CommunityMaterial.Icon3.cmd_view_list,
-                ).apply {
-                    sizeDp = 64
-                }.toAndroidIconCompat(),
+                IconCompat.createWithBitmap(Mdi.ViewList.toBitmap(carContext, 64, Color.WHITE)),
             )
                 .setTint(CarColor.DEFAULT)
                 .build(),
