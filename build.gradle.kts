@@ -86,6 +86,11 @@ allprojects {
                 sarif.required.set(true)
             }
         }
+
+        // Only the type-resolved detektMain tasks are enforced and baselined. The plain detekt task
+        // (which `check` depends on) has no baseline, so it would re-report every baselined finding.
+        tasks.named("detekt") { enabled = false }
+        tasks.named("detektBaseline") { enabled = false }
     }
 
     dependencyLocking {

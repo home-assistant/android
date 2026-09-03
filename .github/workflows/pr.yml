@@ -174,6 +174,9 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
+      # We use detektMain instead of the plain detekt task because it runs with type resolution:
+      # rules that need actual types (UnsafeCallOnNullableType, ImplicitDefaultLocale, ...) are
+      # silently skipped without it. This is also why the build compiles the analyzed variants.
       # Since `build-logic` is added with `includeBuild` we have to call detektMain explicitly on `:convention`.
       - name: Validate Detekt
         run: ./gradlew detektMain :build-logic:convention:detektMain --continue

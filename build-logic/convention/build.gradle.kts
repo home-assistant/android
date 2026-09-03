@@ -40,6 +40,11 @@ tasks.withType<Detekt>().configureEach {
     }
 }
 
+// Only the type-resolved detektMain task is enforced and baselined. The plain detekt task
+// (which `check` depends on) has no baseline, so it would re-report every baselined finding.
+tasks.named("detekt") { enabled = false }
+tasks.named("detektBaseline") { enabled = false }
+
 // Configure the build-logic plugins to target JDK 17 and is not related to what is running on device.
 java {
     sourceCompatibility = JavaVersion.VERSION_17
