@@ -229,13 +229,13 @@ jobs:
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews - app
-        run: ./gradlew :app:validateFullDebugScreenshotTest
+        run: ./gradlew :app:validateFullDebugScreenshotTest --max-workers=2
 
       - name: Validate Screenshot Previews - wear
-        run: ./gradlew :wear:validateDebugScreenshotTest
+        run: ./gradlew :wear:validateDebugScreenshotTest --max-workers=2
 
       - name: Validate Screenshot Previews - common
-        run: ./gradlew :common:validateDebugScreenshotTest
+        run: ./gradlew :common:validateDebugScreenshotTest --max-workers=2
 
       - uses: ./.github/actions/upload-test-results
         if: always()
@@ -337,8 +337,14 @@ jobs:
           mock-google-services: "true"
 
       - name: Run test
-        # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet than app. Minimal and Full are the same in unit tests for now
-        run: ./gradlew testDebugUnitTest :app:testFullDebugUnitTest :lint:test
+        # Only run expected tests to minimize CI usage. `automotive` shares the same sourceSet as `app`.
+        # No minimal flavor specific tests currently exist, but minimal is compiled to avoid breaking
+        # it silently.
+        run: |
+          ./gradlew test \
+            -x :automotive:test \
+            -x :app:testMinimalDebugUnitTest \
+            :app:compileMinimalDebugUnitTestKotlin
 
       - uses: ./.github/actions/upload-test-results
         if: always()
@@ -377,7 +383,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: emulator-wtf-inputs
-          retention-days: 1
+          # A partial re-run re-triggers "PR Emulator.wtf" without rebuilding these
+          # APKs, so they must outlive the original run. Past that it skips itself.
+          retention-days: 3
           if-no-files-found: error
           path: |
             app/build/outputs/apk/full/debug/app-full-debug.apk

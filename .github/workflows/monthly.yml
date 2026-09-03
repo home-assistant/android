@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'home-assistant/android'
     permissions:
-      actions: write
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -26,14 +25,3 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.current-time.outputs.year }}.${{ steps.current-time.outputs.month }}.0
-
-      - name: Trigger Prepare Next Release
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'prepareNextRelease.yml',
-              ref: 'main',
-            })
