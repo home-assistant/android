@@ -1300,27 +1300,26 @@ class LocationSensorManager @Inject constructor(
 
                                 "Got single accurate location update: ${locationResult.lastLocation}",
                             )
-                            if (locationResult == null) {
+                            val location = locationResult.lastLocation
+                            if (location == null) {
                                 Timber.w("No location provided.")
                                 return
                             }
 
                             when {
-                                locationResult.lastLocation!!.accuracy <= minAccuracy -> {
+                                location.accuracy <= minAccuracy -> {
                                     Timber.d(
                                         "Location accurate enough, all done with high accuracy.",
                                     )
                                     ioScope.launch {
-                                        locationResult.lastLocation?.let {
-                                            getEnabledServers(
-                                                singleAccurateLocation,
-                                            ).forEach { serverId ->
-                                                sendLocationUpdate(
-                                                    it,
-                                                    serverId,
-                                                    LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION,
-                                                )
-                                            }
+                                        getEnabledServers(
+                                            singleAccurateLocation,
+                                        ).forEach { serverId ->
+                                            sendLocationUpdate(
+                                                location,
+                                                serverId,
+                                                LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION,
+                                            )
                                         }
                                     }
                                     if (wakeLock?.isHeld == true) wakeLock.release()
@@ -1330,13 +1329,13 @@ class LocationSensorManager @Inject constructor(
                                     Timber.d(
                                         "No location was accurate enough, sending our last location anyway",
                                     )
-                                    if (locationResult.lastLocation!!.accuracy <= minAccuracy * 2) {
+                                    if (location.accuracy <= minAccuracy * 2) {
                                         ioScope.launch {
                                             getEnabledServers(
                                                 singleAccurateLocation,
                                             ).forEach { serverId ->
                                                 sendLocationUpdate(
-                                                    locationResult.lastLocation!!,
+                                                    location,
                                                     serverId,
                                                     LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION,
                                                 )
