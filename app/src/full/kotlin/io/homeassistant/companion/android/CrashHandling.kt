@@ -44,7 +44,7 @@ fun initCrashReporting(context: Context, enabled: Boolean) {
         options.beforeSend = BeforeSendCallback { event, _ ->
             if (event.user != null) {
                 event.user = User().apply {
-                    // The only information we want to keep about the user is his ID
+                    // The only information we want to keep about the user is their ID
                     id = event.user?.id
                 }
             }
