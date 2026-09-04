@@ -19,4 +19,8 @@ data class NotificationItem(
     val source: String,
     @ColumnInfo(name = "server_id")
     val serverId: Int?,
-) : Serializable
+) : Serializable {
+    private companion object {
+        const val serialVersionUID = 1L
+    }
+}

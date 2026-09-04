@@ -89,7 +89,6 @@
     <ID>EmptyFunctionBlock:FakePlayer.kt:FakePlayer${}</ID>
     <ID>EmptyFunctionBlock:FrontendJsBridge.kt:FrontendJsBridge.Companion.&lt;no name provided&gt;${}</ID>
     <ID>EmptyFunctionBlock:LogFragment.kt:LogFragment.&lt;no name provided&gt;${}</ID>
-    <ID>EqualsNullCall:LocationSensorManager.kt:LocationSensorManager.&lt;no name provided&gt;$equals(null)</ID>
     <ID>ExplicitItLambdaMultipleParameters:SsidView.kt:{ _, it -&gt; val connected = remember(it, activeSsid, activeBssid, usingWifi) { usingWifi &amp;&amp; ( it == activeSsid || ( it.startsWith(WifiHelper.BSSID_PREFIX) &amp;&amp; it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true) ) ) } Row( modifier = Modifier .heightIn(min = 48.dp) .padding(horizontal = 16.dp) .animateItem(), verticalAlignment = Alignment.CenterVertically, ) { if (connected) { Image( asset = CommunityMaterial.Icon3.cmd_wifi_check, colorFilter = ColorFilter.tint(colorResource(commonR.color.colorAccent)), ) Spacer(Modifier.width(16.dp)) } Text( text = if (it.startsWith(WifiHelper.BSSID_PREFIX)) { it.removePrefix(WifiHelper.BSSID_PREFIX) } else { it }, fontFamily = if (it.startsWith(WifiHelper.BSSID_PREFIX)) { FontFamily.Monospace } else { null }, modifier = Modifier .padding(end = 16.dp) .weight(1f), ) Icon( imageVector = Icons.Default.Clear, contentDescription = stringResource(commonR.string.remove_ssid), tint = colorResource(commonR.color.colorWarning), modifier = Modifier .clickable { onRemoveWifiSsid(it) } .size(48.dp) .padding(all = 12.dp), ) } }</ID>
     <ID>FunctionOnlyReturningConstant:ApplicationModule.kt:ApplicationModule$@Provides @Singleton @PushWebsocketSupport fun providesPushWebsocketSupport: Boolean</ID>
     <ID>ImplicitDefaultLocale:ContextExtensions.kt:String.format("#%06X", 0xFFFFFF and color)</ID>
@@ -394,8 +393,6 @@
     <ID>NoNameShadowing:ServerSettingsPresenterImpl.kt:ServerSettingsPresenterImpl${ it.id != serverId }</ID>
     <ID>NoNameShadowing:SingleItemArrayAdapter.kt:SingleItemArrayAdapter.&lt;no name provided&gt;${ add(it) }</ID>
     <ID>NoNameShadowing:TemplateComponents.kt:serverId</ID>
-    <ID>ObjectLiteralToLambda:CrashHandling.kt:object : BeforeSendCallback { override fun execute(event: SentryEvent, p1: Hint): SentryEvent? { if (event.user != null) { event.user = User().apply { // The only information we want to keep about the user is his ID id = event.user?.id } } return event } }</ID>
-    <ID>PrintStackTrace:MessagingManager.kt:MessagingManager$e</ID>
     <ID>ReturnCount:ActivitySensorManager.kt:ActivitySensorManager$private fun getSubActivity: String</ID>
     <ID>ReturnCount:BackAction.kt:private fun resolveBackAction: BackAction</ID>
     <ID>ReturnCount:ConnectionViewModel.kt:ConnectionViewModel$private fun updateEffectiveBaseUrl</ID>
@@ -499,7 +496,6 @@
     <ID>UnnecessaryApply:MessagingManager.kt:MessagingManager$apply { notify(tag, messageId, notificationBuilder) }</ID>
     <ID>UnnecessaryApply:MessagingManager.kt:MessagingManager$apply { notify(tag, messageId, notificationBuilder.build()) }</ID>
     <ID>UnnecessaryApply:NotificationMenuProvider.kt:NotificationMenuProvider$apply { intent = Intent( Intent.ACTION_VIEW, "https://companion.home-assistant.io/docs/notifications/notifications-basic".toUri(), ) }</ID>
-    <ID>UnnecessaryNotNullOperator:NfcSetupActivity.kt:NfcSetupActivity$nfcTagToWriteUUID!!</ID>
     <ID>UnsafeCallOnNullableType:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$actions[server.id]!!</ID>
     <ID>UnsafeCallOnNullableType:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$entities[server.id]!!</ID>
     <ID>UnsafeCallOnNullableType:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity.&lt;no name provided&gt;$actions[selectedServerId]!!</ID>

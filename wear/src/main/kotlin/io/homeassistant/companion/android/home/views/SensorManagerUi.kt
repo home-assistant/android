@@ -35,9 +35,9 @@ fun SensorManagerUi(
                 ListHeader(id = sensorManager.name)
             }
             val currentSensors = allSensors?.filter { sensor ->
-                allAvailSensors?.firstOrNull { availableSensor ->
+                allAvailSensors?.any { availableSensor ->
                     sensor.id == availableSensor.id
-                } != null
+                } == true
             }
 
             if (allAvailSensors?.isEmpty() == true) {
