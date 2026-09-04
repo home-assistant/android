@@ -1562,7 +1562,6 @@ class MessagingManager @Inject constructor(
                     mediaRetriever.release()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
                 Timber.e(e, "Couldn't download video for notification")
             }
 

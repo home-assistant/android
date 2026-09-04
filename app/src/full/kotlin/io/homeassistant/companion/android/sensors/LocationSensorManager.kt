@@ -1300,7 +1300,7 @@ class LocationSensorManager @Inject constructor(
 
                                 "Got single accurate location update: ${locationResult.lastLocation}",
                             )
-                            if (locationResult.equals(null)) {
+                            if (locationResult == null) {
                                 Timber.w("No location provided.")
                                 return
                             }

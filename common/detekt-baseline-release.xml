@@ -186,7 +186,6 @@
     <ID>NestedBlockDepth:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
     <ID>NoNameShadowing:DatabaseMigration.kt:MIGRATION6to7${ it.put("id", cursor.getString(cursor.getColumnIndex("unique_id"))) it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled"))) it.put( "registered", cursor.getInt(cursor.getColumnIndex("registered")), ) it.put("state", "") it.put("state_type", "") it.put("type", "") it.put("icon", "") it.put("name", "") it.put("device_class", "") }</ID>
     <ID>NoNameShadowing:DatabaseMigration.kt:Migration9to10${ it.put("id", cursor.getString(cursor.getColumnIndex("id"))) it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled"))) it.put( "registered", cursor.getInt(cursor.getColumnIndex("registered")), ) it.put("state", "") it.put("last_sent_state", "") it.put("state_type", "") it.put("type", "") it.put("icon", "") it.put("name", "") }</ID>
-    <ID>RedundantHigherOrderMapUsage:SensorSetting.kt:EntriesTypeConverter$map</ID>
     <ID>ReturnCount:AlarmDisplay.kt:private fun Entity.alarmOnPressedAction: String?</ID>
     <ID>ReturnCount:AssistViewModelBase.kt:AssistViewModelBase$private fun handleError: Boolean</ID>
     <ID>ReturnCount:AudioSensorManager.kt:AudioSensorManager$private suspend fun areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching: Boolean</ID>
@@ -206,7 +205,6 @@
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun attemptWebSocketConnection: ConnectionAttemptResult</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun sendMessage: RawMessageSocketResponse?</ID>
-    <ID>SerialVersionUIDInSerializableClass:NotificationItem.kt:NotificationItem : Serializable</ID>
     <ID>SpreadOperator:DatabaseModule.kt:DatabaseModule$(*migrationPath(context))</ID>
     <ID>SuspendFunWithFlowReturnType:AssistAudioStrategy.kt:AssistAudioStrategy$suspend</ID>
     <ID>SuspendFunWithFlowReturnType:AssistAudioStrategy.kt:DefaultAssistAudioStrategy$suspend</ID>

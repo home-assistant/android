@@ -35,7 +35,7 @@ data class SensorSetting(
 class EntriesTypeConverter {
     @TypeConverter
     fun fromStringToList(value: String): List<String> {
-        return value.split("|").map { it }
+        return value.split("|")
     }
 
     @TypeConverter

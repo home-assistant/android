@@ -117,7 +117,8 @@ class NfcSetupActivity : BaseActivity() {
                     }
                 } else {
                     try {
-                        val nfcTagUrl = NFCUtil.createTagUrl(requireNotNull(nfcTagToWriteUUID))
+                        val tagIdentifier = requireNotNull(nfcTagToWriteUUID)
+                        val nfcTagUrl = NFCUtil.createTagUrl(tagIdentifier)
                         NFCUtil.createNFCMessage(nfcTagUrl, intent)
                         Timber.d("Wrote nfc tag with url: $nfcTagUrl")
 
@@ -131,7 +132,7 @@ class NfcSetupActivity : BaseActivity() {
                             setResult(messageId)
                             finish()
                         } else {
-                            viewModel.onNfcWriteSuccess(nfcTagToWriteUUID!!)
+                            viewModel.onNfcWriteSuccess(tagIdentifier)
                         }
                     } catch (e: Exception) {
                         viewModel.onNfcWriteFailure()
