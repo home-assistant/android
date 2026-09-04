@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.views.LoadNfcView
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -134,6 +135,8 @@ class NfcSetupActivity : BaseActivity() {
                         } else {
                             viewModel.onNfcWriteSuccess(tagIdentifier)
                         }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         viewModel.onNfcWriteFailure()
                         Timber.e(e, "Unable to write tag.")
