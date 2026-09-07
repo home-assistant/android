@@ -2,9 +2,8 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.sensors.SensorRepository
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -41,11 +40,7 @@ class NotificationListenerSensorManagerTest {
     fun `Given active notification count sensor when inspected then content setting is declared`() {
         assertEquals(
             listOf(
-                SensorManager.BasicSensor.Setting(
-                    name = "active_notification_count_content_attrs",
-                    type = SensorSettingType.TOGGLE,
-                    defaultValue = "true",
-                ),
+                Setting.Toggle(name = "active_notification_count_content_attrs", default = true),
             ),
             NotificationListenerSensorManager.activeNotificationCount.settings,
         )
@@ -70,16 +65,8 @@ class NotificationListenerSensorManagerTest {
     }
 
     private fun defaultSettings() = listOf(
-        SensorManager.BasicSensor.Setting(
-            name = SETTING_ALLOW_LIST,
-            type = SensorSettingType.LIST_APPS,
-            defaultValue = "",
-        ),
-        SensorManager.BasicSensor.Setting(
-            name = SETTING_DISABLE_ALLOW_LIST,
-            type = SensorSettingType.TOGGLE,
-            defaultValue = "false",
-        ),
+        Setting.Apps(name = SETTING_ALLOW_LIST),
+        Setting.Toggle(name = SETTING_DISABLE_ALLOW_LIST, default = false),
     )
 
     private fun notificationSensor(sensorId: String) = when (sensorId) {

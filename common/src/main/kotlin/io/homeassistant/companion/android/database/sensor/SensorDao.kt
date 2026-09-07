@@ -111,6 +111,8 @@ internal interface SensorDao {
     @Query("UPDATE sensor_settings SET value = :value WHERE sensor_id = :sensorId AND name = :settingName")
     suspend fun updateSettingValue(sensorId: String, settingName: String, value: String): Int
 
+    // Not @Upsert: [setting] is a snapshot read outside this transaction, writing all its columns back would
+    // undo a concurrent write to `value`.
     @Transaction
     suspend fun upsertSettingEnabled(setting: SensorSetting, enabled: Boolean) {
         if (updateSettingEnabled(setting.sensorId, setting.name, enabled) == 0) {
@@ -118,6 +120,8 @@ internal interface SensorDao {
         }
     }
 
+    // Not @Upsert: [setting] is a snapshot read outside this transaction, writing all its columns back would
+    // undo a concurrent write to `enabled`.
     @Transaction
     suspend fun upsertSettingValue(setting: SensorSetting, value: String) {
         if (updateSettingValue(setting.sensorId, setting.name, value) == 0) {

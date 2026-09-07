@@ -150,7 +150,7 @@ internal class SensorRepositoryImpl @Inject constructor(
         value = defaultValue,
         valueType = type,
         enabled = enabledByDefault,
-        entries = entries,
+        entries = if (this is SensorManager.BasicSensor.Setting.Options) entries else emptyList(),
     )
 
     /**

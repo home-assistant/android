@@ -1,8 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.location.Location
-import io.homeassistant.companion.android.common.sensors.SensorManager
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.time.Clock
@@ -22,16 +21,8 @@ class GeocodeSensorManagerTest {
     fun `Given geocoded location sensor when inspected then its settings are declared`() {
         assertEquals(
             listOf(
-                SensorManager.BasicSensor.Setting(
-                    name = "geocode_minimum_accuracy",
-                    type = SensorSettingType.NUMBER,
-                    defaultValue = "200",
-                ),
-                SensorManager.BasicSensor.Setting(
-                    name = GeocodeSensorManager.SETTINGS_INCLUDE_LOCATION,
-                    type = SensorSettingType.TOGGLE,
-                    defaultValue = "false",
-                ),
+                Setting.Number(name = "geocode_minimum_accuracy", default = 200),
+                Setting.Toggle(name = GeocodeSensorManager.SETTINGS_INCLUDE_LOCATION, default = false),
             ),
             GeocodeSensorManager.geocodedLocation.settings,
         )

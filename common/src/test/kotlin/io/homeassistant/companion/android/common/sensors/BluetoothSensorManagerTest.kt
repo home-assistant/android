@@ -4,13 +4,17 @@ import android.content.Context
 import android.content.pm.PackageManager
 import dagger.Lazy
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -73,6 +77,67 @@ class BluetoothSensorManagerTest {
         }
     }
 
+    @Test
+    fun `Given a stored number when reading it as a number then returns the stored value`() = runTest {
+        storedSetting(BluetoothSensorManager.SETTING_BLE_MEASURED_POWER, "-70")
+
+        assertEquals(
+            -70,
+            manager.getNumberSetting(
+                BluetoothSensorManager.bleTransmitter,
+                BluetoothSensorManager.SETTING_BLE_MEASURED_POWER,
+            ),
+        )
+    }
+
+    @Test
+    fun `Given an unparsable number when reading it as a number then returns the declared default`() = runTest {
+        storedSetting(BluetoothSensorManager.SETTING_BLE_MEASURED_POWER, "")
+
+        assertEquals(
+            BluetoothSensorManager.DEFAULT_MEASURED_POWER_AT_1M,
+            manager.getNumberSetting(
+                BluetoothSensorManager.bleTransmitter,
+                BluetoothSensorManager.SETTING_BLE_MEASURED_POWER,
+            ),
+        )
+    }
+
+    @Test
+    fun `Given a toggle setting when reading it as a number then fails fast`() = runTest {
+        var throwableCaptured: Throwable? = null
+        FailFast.setHandler { throwable, _ -> throwableCaptured = throwable }
+        storedSetting(BluetoothSensorManager.SETTING_BLE_HOME_WIFI_ONLY, "true")
+
+        val result = manager.getNumberSetting(
+            BluetoothSensorManager.bleTransmitter,
+            BluetoothSensorManager.SETTING_BLE_HOME_WIFI_ONLY,
+        )
+
+        assertEquals(0, result)
+        assertNotNull(throwableCaptured)
+    }
+
+    @Test
+    fun `Given the beacon monitor when inspected then the RSSI multiplier is its only decimal setting`() {
+        val decimals = BluetoothSensorManager.beaconMonitor.settings
+            .filterIsInstance<SensorManager.BasicSensor.Setting.Decimal>()
+
+        assertEquals(1, decimals.size)
+        assertEquals(1.05, decimals.single().default)
+        assertEquals(SensorSettingType.NUMBER, decimals.single().type)
+    }
+
+    private fun storedSetting(name: String, value: String) {
+        coEvery { sensorRepository.getSettings(BluetoothSensorManager.bleTransmitter.id) } returns
+            BluetoothSensorManager.bleTransmitter.settings.map {
+                it.toSensorSetting(
+                    BluetoothSensorManager.bleTransmitter.id,
+                    value = if (it.name == name) value else it.defaultValue,
+                )
+            }
+    }
+
     private fun SensorManager.BasicSensor.Setting.toSensorSetting(
         sensorId: String,
         value: String = defaultValue,
@@ -82,6 +147,6 @@ class BluetoothSensorManagerTest {
         value = value,
         valueType = type,
         enabled = enabledByDefault,
-        entries = entries,
+        entries = if (this is SensorManager.BasicSensor.Setting.Options) entries else emptyList(),
     )
 }

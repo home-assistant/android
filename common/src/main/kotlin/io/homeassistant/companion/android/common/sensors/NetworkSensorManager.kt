@@ -13,6 +13,7 @@ import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -73,11 +74,7 @@ class NetworkSensorManager @Inject constructor(
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             settings = listOf(
-                SensorManager.BasicSensor.Setting(
-                    SETTING_GET_CURRENT_BSSID,
-                    SensorSettingType.TOGGLE,
-                    "false",
-                ),
+                Setting.Toggle(SETTING_GET_CURRENT_BSSID, default = false),
             ),
         )
 

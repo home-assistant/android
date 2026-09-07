@@ -6,8 +6,8 @@ import android.os.SystemClock
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -40,11 +40,7 @@ class LastRebootSensorManager @Inject constructor(
             deviceClass = "timestamp",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             settings = listOf(
-                SensorManager.BasicSensor.Setting(
-                    SETTING_DEADBAND,
-                    SensorSettingType.NUMBER,
-                    DEFAULT_DEADBAND.toString(),
-                ),
+                Setting.Number(SETTING_DEADBAND, DEFAULT_DEADBAND),
             ),
         )
         private const val DEFAULT_DEADBAND = 60000

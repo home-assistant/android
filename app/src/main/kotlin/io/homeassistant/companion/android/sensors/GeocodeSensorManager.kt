@@ -12,11 +12,11 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.instant
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.location.getLastLocation
 import io.homeassistant.companion.android.sensors.GeocodeSensorManager.Companion.LOCATION_OUTDATED_THRESHOLD
@@ -70,16 +70,8 @@ class GeocodeSensorManager @Inject constructor(
             commonR.string.sensor_description_geocoded_location,
             "mdi:map",
             settings = listOf(
-                SensorManager.BasicSensor.Setting(
-                    SETTING_ACCURACY,
-                    SensorSettingType.NUMBER,
-                    DEFAULT_MINIMUM_ACCURACY.toString(),
-                ),
-                SensorManager.BasicSensor.Setting(
-                    SETTINGS_INCLUDE_LOCATION,
-                    SensorSettingType.TOGGLE,
-                    "false",
-                ),
+                Setting.Number(SETTING_ACCURACY, DEFAULT_MINIMUM_ACCURACY),
+                Setting.Toggle(SETTINGS_INCLUDE_LOCATION, default = false),
             ),
         )
     }

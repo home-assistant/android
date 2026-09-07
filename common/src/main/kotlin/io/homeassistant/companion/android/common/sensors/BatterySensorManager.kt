@@ -10,10 +10,10 @@ import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.math.RoundingMode
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -121,16 +121,8 @@ class BatterySensorManager @Inject constructor(
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             settings = listOf(
-                SensorManager.BasicSensor.Setting(
-                    SETTING_BATTERY_CURRENT_DIVISOR,
-                    SensorSettingType.NUMBER,
-                    DEFAULT_BATTERY_CURRENT_DIVISOR.toString(),
-                ),
-                SensorManager.BasicSensor.Setting(
-                    SETTING_BATTERY_VOLTAGE_DIVISOR,
-                    SensorSettingType.NUMBER,
-                    DEFAULT_BATTERY_VOLTAGE_DIVISOR.toString(),
-                ),
+                Setting.Number(SETTING_BATTERY_CURRENT_DIVISOR, DEFAULT_BATTERY_CURRENT_DIVISOR),
+                Setting.Number(SETTING_BATTERY_VOLTAGE_DIVISOR, DEFAULT_BATTERY_VOLTAGE_DIVISOR),
             ),
         )
 

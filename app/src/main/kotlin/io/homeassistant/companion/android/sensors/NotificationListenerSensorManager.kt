@@ -18,12 +18,12 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -47,16 +47,8 @@ class NotificationListenerSensorManager @Inject constructor(
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
         private const val SETTING_INCLUDE_CONTENTS_AS_ATTRS = "active_notification_count_content_attrs"
         private val notificationSettings = listOf(
-            SensorManager.BasicSensor.Setting(
-                SETTING_ALLOW_LIST,
-                SensorSettingType.LIST_APPS,
-                "",
-            ),
-            SensorManager.BasicSensor.Setting(
-                SETTING_DISABLE_ALLOW_LIST,
-                SensorSettingType.TOGGLE,
-                "false",
-            ),
+            Setting.Apps(SETTING_ALLOW_LIST),
+            Setting.Toggle(SETTING_DISABLE_ALLOW_LIST, default = false),
         )
 
         @ProvidesSensor
@@ -95,11 +87,7 @@ class NotificationListenerSensorManager @Inject constructor(
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             settings = listOf(
-                SensorManager.BasicSensor.Setting(
-                    SETTING_INCLUDE_CONTENTS_AS_ATTRS,
-                    SensorSettingType.TOGGLE,
-                    "true",
-                ),
+                Setting.Toggle(SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true),
             ),
         )
 

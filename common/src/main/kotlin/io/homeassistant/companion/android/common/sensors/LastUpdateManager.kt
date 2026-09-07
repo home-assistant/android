@@ -4,6 +4,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import javax.inject.Inject
@@ -30,11 +31,7 @@ class LastUpdateManager @Inject constructor(
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             settings = listOf(
-                SensorManager.BasicSensor.Setting(
-                    SETTING_ADD_NEW_INTENT,
-                    SensorSettingType.TOGGLE,
-                    "false",
-                ),
+                Setting.Toggle(SETTING_ADD_NEW_INTENT, default = false),
             ),
         )
     }

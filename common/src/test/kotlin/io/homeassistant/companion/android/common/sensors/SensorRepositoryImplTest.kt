@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.sensors
 
 import app.cash.turbine.test
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -31,17 +32,8 @@ class SensorRepositoryImplTest {
             type = "sensor",
             enabledByDefault = true,
             settings = listOf(
-                SensorManager.BasicSensor.Setting(
-                    name = "add_new_intent",
-                    type = SensorSettingType.TOGGLE,
-                    defaultValue = "false",
-                ),
-                SensorManager.BasicSensor.Setting(
-                    name = "intent_1",
-                    type = SensorSettingType.STRING,
-                    defaultValue = "",
-                    enabledByDefault = false,
-                ),
+                Setting.Toggle(name = "add_new_intent", default = false),
+                Setting.Text(name = "intent_1", enabledByDefault = false),
             ),
         ),
         SensorManager.BasicSensor(id = "app_inactive", type = "sensor", enabledByDefault = false),
@@ -376,12 +368,11 @@ class SensorRepositoryImplTest {
 
     @Test
     fun `Given declaration-only list setting when updating value then preserves declaration metadata`() = runTest {
-        val listSetting = SensorManager.BasicSensor.Setting(
+        val listSetting = Setting.Options(
             name = "list_setting",
-            type = SensorSettingType.LIST,
             defaultValue = "first",
-            enabledByDefault = false,
             entries = listOf("first", "second"),
+            enabledByDefault = false,
         )
         val repository = SensorRepositoryImpl(
             dao,

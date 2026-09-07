@@ -6,10 +6,10 @@ import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -39,11 +39,7 @@ class NextAlarmManager @Inject constructor(
             deviceClass = "timestamp",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             settings = listOf(
-                SensorManager.BasicSensor.Setting(
-                    SETTING_ALLOW_LIST,
-                    SensorSettingType.LIST_APPS,
-                    "",
-                ),
+                Setting.Apps(SETTING_ALLOW_LIST),
             ),
         )
     }
