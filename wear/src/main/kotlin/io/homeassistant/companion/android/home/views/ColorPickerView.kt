@@ -71,15 +71,16 @@ fun ColorPicker(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
 
-    val presets = listOf( // Wish there was a way to access favorite colors via API
+val presets = remember { // Wish there was a way to access favorite colors via API
+    listOf(
         Color(0xFFEF9A9A), // Red
         Color(0xFFA5D6A7), // Green
         Color(0xFF90CAF9), // Blue
         Color(0xFFCB9AEF), // Purple
         Color(0xFFEFCF9A), // Orange
         Color(0xFFFFFFFF), // White
-
     )
+}
 
     Column(
         modifier = Modifier
