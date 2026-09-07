@@ -24,8 +24,10 @@ internal class SensorRepositoryImpl @Inject constructor(
 
     // Sensor enabled-by-default per sensor id, used to synthesize a Sensor when no row exists.
     private val enabledByDefaultById: Map<String, Boolean> = basicSensors.associate { it.id to it.enabledByDefault }
-    private val settingDefinitionsBySensorId: Map<String, List<SensorManager.BasicSensor.Setting>> =
-        basicSensors.associate { it.id to it.settings }
+
+    // Declared settings per sensor id, keyed by setting name and kept in declaration order.
+    private val settingDefinitionsBySensorId: Map<String, Map<String, SensorManager.BasicSensor.Setting>> =
+        basicSensors.associate { sensor -> sensor.id to sensor.settings.associateBy { it.name } }
 
     // This could in theory return orphan sensors for removed servers where the DB was not cleared properly
     override suspend fun get(id: String): List<Sensor> = sensorsByServer(id, dao.get(id), configuredServerIds())
@@ -125,15 +127,16 @@ internal class SensorRepositoryImpl @Inject constructor(
 
     private fun settingsWithDefaults(id: String, stored: List<SensorSetting>): List<SensorSetting> {
         val definitions = settingDefinitionsBySensorId[id].orEmpty()
+        if (definitions.isEmpty()) return stored
+
         val storedByName = stored.associateBy { it.name }
-        val declaredNames = definitions.mapTo(mutableSetOf()) { it.name }
-        val declared = definitions.map { definition ->
+        val declared = definitions.values.map { definition ->
             val declaredSetting = definition.toSensorSetting(id)
             storedByName[definition.name]?.let {
                 declaredSetting.copy(value = it.value, enabled = it.enabled)
             } ?: declaredSetting
         }
-        return declared + stored.filterNot { it.name in declaredNames }
+        return declared + stored.filterNot { it.name in definitions }
     }
 
     private suspend fun settingForUpdate(sensorId: String, settingName: String): SensorSetting? {
