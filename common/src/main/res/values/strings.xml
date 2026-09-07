@@ -1059,7 +1059,7 @@
     <string name="widget_climate_plus">Plus temperature</string>
     <string name="widget_climate_minus">Minus temperature</string>
     <string name="widget_climate_format_temp">%.0f °C</string>
-    <string name="widget_climate_empty_temp">- - °C</string>
+    <string name="widget_climate_empty_temp">- -</string>
     <string name="widget_climate_refresh">Refresh climate</string>
     <string name="widget_climate_hvac_selector_description_off">Turn climate control off</string>
     <string name="widget_climate_hvac_selector_description_heat">Set climate mode to heat</string>

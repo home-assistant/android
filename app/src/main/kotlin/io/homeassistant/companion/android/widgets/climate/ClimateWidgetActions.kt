@@ -177,9 +177,6 @@ class ControlClimateAction : ActionCallback {
 }
 
 @VisibleForTesting
-internal val SET_TEMP_KEY = ActionParameters.Key<Double>("TEMP_SETTING_KEY")
-
-@VisibleForTesting
 internal val IS_INCREASE_KEY = ActionParameters.Key<Boolean>("IS_INCREASY_KEY")
 
 @VisibleForTesting
