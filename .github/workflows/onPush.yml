@@ -67,6 +67,9 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: |
           ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
@@ -74,7 +77,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-apks
-          path: ./**/*.apk
+          path: |
+            ./**/*.apk
+            ./**/build/outputs/mapping/**/mapping.txt
 
       - name: Create Version File
         if: github.event.inputs.beta == 'true'
@@ -93,6 +98,16 @@ jobs:
         run: |
           set -euo pipefail
 
+          # R8 mapping files are all named mapping.txt, so give them distinct asset names to
+          # be able to retrace crashes from these APKs. They compress ~93% so gzip them
+          # (gunzip before feeding them to retrace).
+          mkdir -p ./mappings
+          gzip -9 -c ./app/build/outputs/mapping/fullRelease/mapping.txt > ./mappings/app-full-release-mapping.txt.gz
+          gzip -9 -c ./app/build/outputs/mapping/minimalRelease/mapping.txt > ./mappings/app-minimal-release-mapping.txt.gz
+          gzip -9 -c ./wear/build/outputs/mapping/release/mapping.txt > ./mappings/wear-release-mapping.txt.gz
+          gzip -9 -c ./automotive/build/outputs/mapping/fullRelease/mapping.txt > ./mappings/automotive-full-release-mapping.txt.gz
+          gzip -9 -c ./automotive/build/outputs/mapping/minimalRelease/mapping.txt > ./mappings/automotive-minimal-release-mapping.txt.gz
+
           assets=(
             ./app/build/outputs/apk/full/release/app-full-release.apk
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
@@ -100,6 +115,7 @@ jobs:
             ./wear/build/outputs/apk/release/wear-release.apk
             ./automotive/build/outputs/apk/full/release/automotive-full-release.apk
             ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
+            ./mappings/*-mapping.txt.gz
             ./strings.zip
             ./app/src/main/res/xml/locales_config.xml
           )
@@ -210,6 +226,9 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         run: |
           ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
 

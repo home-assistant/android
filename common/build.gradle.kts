@@ -18,6 +18,8 @@ android {
         buildConfigField("String", "PUSH_URL", "\"$homeAssistantAndroidPushUrl\"")
         buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
         buildConfigField("String", "VERSION_NAME", "\"$versionName-$versionCode\"")
+
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     sourceSets {

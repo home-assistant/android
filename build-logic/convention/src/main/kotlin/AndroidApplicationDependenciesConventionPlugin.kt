@@ -1,8 +1,10 @@
 import com.android.build.api.dsl.ApplicationExtension
 import io.homeassistant.companion.android.getPluginId
+import io.sentry.android.gradle.extensions.SentryPluginExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.apply
+import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.exclude
 import org.gradle.kotlin.dsl.getByType
@@ -22,6 +24,8 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             apply(plugin = libs.plugins.android.application.getPluginId())
+
+            configureSentryMappingUpload()
 
             extensions.getByType<ApplicationExtension>().apply {
                 dependencies {
@@ -116,6 +120,27 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "lintChecks"(libs.compose.lint.checks)
                 }
             }
+        }
+    }
+
+    /**
+     * Uploads the R8 mapping of the `fullRelease` variant to Sentry so events get exact line
+     * numbers and inlined frames. Only the `full` flavor ships the Sentry SDK, so other variants
+     * have nothing to upload. The upload only runs when `SENTRY_AUTH_TOKEN` is set (CI release
+     * builds); without it the build still injects the ProGuard UUID for a later manual upload.
+     * Everything else the plugin can do (auto-instrumentation, dependency injection, telemetry)
+     * is disabled.
+     */
+    private fun Project.configureSentryMappingUpload() {
+        apply(plugin = libs.plugins.sentry.getPluginId())
+
+        extensions.configure<SentryPluginExtension> {
+            ignoredFlavors.set(setOf("minimal"))
+            ignoredBuildTypes.set(setOf("debug"))
+            autoUploadProguardMapping.set(System.getenv("SENTRY_AUTH_TOKEN") != null)
+            telemetry.set(false)
+            autoInstallation.enabled.set(false)
+            tracingInstrumentation.enabled.set(false)
         }
     }
 }

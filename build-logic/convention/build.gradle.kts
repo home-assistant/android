@@ -62,6 +62,8 @@ dependencies {
     compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(libs.compose.screenshot.gradle.plugin)
     compileOnly(libs.ksp.symbol.processing.gradle.plugin)
+    // implementation and not compileOnly since the modules don't apply it themselves.
+    implementation(libs.sentry.gradle.plugin)
 }
 
 tasks {
