@@ -170,6 +170,8 @@
     <string name="clear_webview_cache_failed">Reset failed</string>
     <string name="clear_webview_cache_success">Reset completed</string>
     <string name="close">Close</string>
+    <string name="color">Color</string>
+    <string name="color_changed">Color changed</string>
     <string name="color_temp">Color temperature: %1$s</string>
     <string name="collapse">Collapse</string>
     <string name="complication_entity_invalid">Invalid entity</string>
@@ -205,6 +207,7 @@
     <string name="crash_reporting_summary">Help the developers fix bugs and crashes by leaving this enabled. If the application crashes this will automatically generate and send a report. If you notice a crash also create an issue on GitHub!</string>
     <string name="crash_reporting">Crash reporting</string>
     <string name="create_template">Create template</string>
+    <string name="custom">Custom</string>
     <string name="database_event_failure">Unable to send migration failure event to Home Assistant</string>
     <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
     <string name="delete">Delete</string>
@@ -334,6 +337,7 @@
     <string name="get_help">Get help</string>
     <string name="help">Help</string>
     <string name="hide_password">Hide password</string>
+    <string name="hue">Hue</string>
     <string name="show_password">Show password</string>
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
