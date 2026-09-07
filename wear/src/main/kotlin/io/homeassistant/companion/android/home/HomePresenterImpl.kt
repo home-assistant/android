@@ -170,9 +170,11 @@ class HomePresenterImpl @Inject constructor(
                     "rgb_color" to listOf(Color.red(rgb), Color.green(rgb), Color.blue(rgb)),
                 ),
             )
-        } catch (e: Exception) {
-            Timber.e(e, "Exception when setting light color")
-        }
+        } catch (e: CancellationException) {
+            throw e
+         } catch (e: Exception) {
+             Timber.e(e, "Failed to set light color for entityId=$entityId")
+         }
     }
 
     override fun onInvalidAuthorization() = finishSession()
