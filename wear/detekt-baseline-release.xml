@@ -142,8 +142,6 @@
     <ID>UnusedPrivateProperty:HomeActivity.kt:HomeActivity$private var entityUpdateJob: Job? = null</ID>
     <ID>UnusedVariable:PhoneSettingsListener.kt:PhoneSettingsListener$val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")</ID>
     <ID>UnusedVariable:PhoneSettingsListener.kt:PhoneSettingsListener$val notificationsEnabled = dataMap.getBoolean("Notifications")</ID>
-    <ID>UseAnyOrNoneInsteadOfFind:SensorManagerUi.kt:firstOrNull { availableSensor -&gt; sensor.id == availableSensor.id }</ID>
-    <ID>UseCheckNotNull:ThermostatTile.kt:ThermostatTile$check(entity != null)</ID>
     <ID>UseOrEmpty:CameraTile.kt:CameraTile$picture ?: ""</ID>
     <ID>UseOrEmpty:ComplicationConfigMainView.kt:entity?.name ?: ""</ID>
     <ID>UseOrEmpty:ConversationActivity.kt:ConversationActivity$it?.get(0) ?: ""</ID>
