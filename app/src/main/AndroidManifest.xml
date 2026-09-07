@@ -342,6 +342,7 @@
         </service>
 
         <activity android:name=".controls.HaControlsPanelActivity"
+            tools:targetApi="upside_down_cake"
             android:permission="android.permission.BIND_CONTROLS"
             android:exported="true"
             android:resizeableActivity="true"
