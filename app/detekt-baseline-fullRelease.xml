@@ -124,6 +124,8 @@
     <ID>InjectDispatcher:MicroWakeWordModelConfig.kt:MicroWakeWordModelConfig.Companion$IO</ID>
     <ID>InjectDispatcher:NotificationActionReceiver.kt:NotificationActionReceiver$IO</ID>
     <ID>InjectDispatcher:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$Default</ID>
+    <ID>InjectDispatcher:SensorDetailSettingSheet.kt:Default</ID>
+    <ID>InjectDispatcher:SensorDetailViewModel.kt:SensorDetailViewModel$Default</ID>
     <ID>InjectDispatcher:SensorSettingsViewModel.kt:SensorSettingsViewModel$IO</ID>
     <ID>InjectDispatcher:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$IO</ID>
     <ID>InjectDispatcher:SettingsPresenterImpl.kt:SettingsPresenterImpl$IO</ID>
@@ -517,7 +519,6 @@
     <ID>UnsafeCallOnNullableType:LastAppSensorManager.kt:LastAppSensorManager$applicationContext.getSystemService&lt;UsageStatsManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:LocationSensorManager.kt:LocationSensorManager$geofencingEvent.triggeringGeofences!!</ID>
     <ID>UnsafeCallOnNullableType:LocationSensorManager.kt:LocationSensorManager$geofencingEvent.triggeringLocation!!</ID>
-    <ID>UnsafeCallOnNullableType:LocationSensorManager.kt:LocationSensorManager.&lt;no name provided&gt;$locationResult.lastLocation!!</ID>
     <ID>UnsafeCallOnNullableType:ManageControlsViewModel.kt:ManageControlsViewModel$it.key!!</ID>
     <ID>UnsafeCallOnNullableType:ManageShortcutsView.kt:shortcut.id.value!!</ID>
     <ID>UnsafeCallOnNullableType:MapVehicleScreen.kt:MapVehicleScreen$it.coordinates!!</ID>

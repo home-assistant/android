@@ -105,6 +105,8 @@
     <ID>InjectDispatcher:MicroWakeWordModelConfig.kt:MicroWakeWordModelConfig.Companion$IO</ID>
     <ID>InjectDispatcher:NotificationActionReceiver.kt:NotificationActionReceiver$IO</ID>
     <ID>InjectDispatcher:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$Default</ID>
+    <ID>InjectDispatcher:SensorDetailSettingSheet.kt:Default</ID>
+    <ID>InjectDispatcher:SensorDetailViewModel.kt:SensorDetailViewModel$Default</ID>
     <ID>InjectDispatcher:SensorSettingsViewModel.kt:SensorSettingsViewModel$IO</ID>
     <ID>InjectDispatcher:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$IO</ID>
     <ID>InjectDispatcher:SettingsPresenterImpl.kt:SettingsPresenterImpl$IO</ID>
