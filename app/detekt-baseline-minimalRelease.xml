@@ -110,7 +110,6 @@
     <ID>InjectDispatcher:SettingsPresenterImpl.kt:SettingsPresenterImpl$IO</ID>
     <ID>InjectDispatcher:TLSWebViewClient.kt:SafeKeyChainAliasCallback$IO</ID>
     <ID>InjectDispatcher:TemplateWidget.kt:TemplateWidget.Companion$Default</ID>
-    <ID>InjectDispatcher:TemplateWidgetConfigureActivity.kt:TemplateWidgetConfigureActivity$IO</ID>
     <ID>InjectDispatcher:TileExtensions.kt:TileExtensions$IO</ID>
     <ID>InjectDispatcher:WakeWordListener.kt:IO</ID>
     <ID>InjectDispatcher:WebsocketBroadcastReceiver.kt:WebsocketBroadcastReceiver$Default</ID>
@@ -184,7 +183,6 @@
     <ID>LongMethod:TagReaderScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun TagReaderScreen</ID>
     <ID>LongMethod:TemplateComponents.kt:@RequiresApi(Build.VERSION_CODES.O) fun getDomainList: ItemList.Builder</ID>
     <ID>LongMethod:TemplateWidget.kt:TemplateWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
-    <ID>LongMethod:TemplateWidgetConfigureActivity.kt:TemplateWidgetConfigureActivity$public override fun onCreate</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun tileClicked</ID>
     <ID>LongMethod:TodoWidgetConfigureActivity.kt:@Composable private fun TodoWidgetConfigureView</ID>
@@ -367,6 +365,8 @@
     <ID>ReturnCount:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$suspend fun getUserAvatar: Bitmap?</ID>
     <ID>ReturnCount:SsidViewModel.kt:SsidViewModel$fun addHomeWifiSsid: Boolean</ID>
     <ID>ReturnCount:TLSWebViewClient.kt:TLSWebViewClient$private fun getActivity: Activity?</ID>
+    <ID>ReturnCount:TemplateWidgetConfigureViewModel.kt:TemplateWidgetConfigureViewModel$@SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs. suspend fun requestWidgetCreation: Boolean</ID>
+    <ID>ReturnCount:TemplateWidgetConfigureViewModel.kt:TemplateWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:TileExtensions.kt:TileExtensions$private fun getTileIcon: Bitmap?</ID>
     <ID>ReturnCount:TodoWidgetActions.kt:ToggleTodoAction$override suspend fun onAction</ID>
     <ID>ReturnCount:WebViewAction.kt:WebViewAction.ReadThemeColors.Companion$private fun String.toWebViewColorOrNull: Color?</ID>
