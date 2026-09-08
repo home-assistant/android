@@ -1,27 +1,33 @@
 package io.homeassistant.companion.android.changelog
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.changelog.ui.ChangelogContent
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
+import kotlinx.coroutines.launch
 
 /**
  * Hosts the changelog within the settings, whose activity already provides the toolbar with the
@@ -37,14 +43,40 @@ class ChangelogFragment : Fragment() {
             setContent {
                 HATheme {
                     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-                    ChangelogContent(
-                        uiState = uiState,
-                        onGotItClick = { parentFragmentManager.popBackStack() },
-                        onActionClick = ::onActionClick,
-                        modifier = Modifier
-                            .background(LocalHAColorScheme.current.colorSurfaceDefault)
-                            .windowInsetsPadding(safeBottomWindowInsets(applyHorizontal = false)),
-                    )
+                    val coroutineScope = rememberCoroutineScope()
+                    val snackbarHostState = remember { SnackbarHostState() }
+                    val bottomInsets = safeBottomWindowInsets(applyHorizontal = false)
+
+                    Scaffold(
+                        snackbarHost = {
+                            SnackbarHost(
+                                hostState = snackbarHostState,
+                                modifier = Modifier.windowInsetsPadding(bottomInsets),
+                            )
+                        },
+                        // The content applies the insets it needs itself, the settings activity handles the rest.
+                        contentWindowInsets = WindowInsets(0),
+                    ) { contentPadding ->
+                        ChangelogContent(
+                            uiState = uiState,
+                            onGotItClick = { parentFragmentManager.popBackStack() },
+                            onActionClick = { action ->
+                                coroutineScope.launch {
+                                    action.perform(requireContext()) { message, snackbarAction ->
+                                        snackbarHostState.showSnackbar(
+                                            message,
+                                            snackbarAction,
+                                            duration = SnackbarDuration.Short,
+                                        ) == SnackbarResult.ActionPerformed
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .padding(contentPadding)
+                                .background(LocalHAColorScheme.current.colorSurfaceDefault)
+                                .windowInsetsPadding(bottomInsets),
+                        )
+                    }
                 }
             }
         }
@@ -53,16 +85,5 @@ class ChangelogFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         activity?.title = getString(commonR.string.changelog_screen_title)
-    }
-
-    private fun onActionClick(action: ChangelogAction) {
-        when (action) {
-            is ChangelogAction.OpenUrl -> startActivity(Intent(Intent.ACTION_VIEW, action.url.toUri()))
-            is ChangelogAction.OpenSettings ->
-                startActivity(SettingsActivity.newInstance(requireContext(), action.deeplink))
-            is ChangelogAction.OpenWidgetConfig ->
-                startActivity(action.widgetType.toConfigureIntent(requireContext()))
-            ChangelogAction.OpenAssist -> startActivity(AssistActivity.newInstance(requireContext()))
-        }
     }
 }

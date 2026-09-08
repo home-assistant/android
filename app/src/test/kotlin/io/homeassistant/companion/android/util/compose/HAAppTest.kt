@@ -49,7 +49,6 @@ import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.S
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.settings.navigation.navigateToSettings
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
 import io.mockk.coEvery
@@ -257,7 +256,9 @@ class HAAppTest {
     @Test
     fun `Given FrontendRoute when navigateToSettings then start SettingsActivity`() {
         testApp(FrontendRoute()) {
-            navController.navigateToSettings()
+            composeTestRule.activity.apply {
+                startActivity(SettingsActivity.newInstance(this))
+            }
 
             val startedIntent = Shadows.shadowOf(composeTestRule.activity).nextStartedActivity
             assertEquals(
@@ -270,8 +271,9 @@ class HAAppTest {
     @Test
     fun `Given FrontendRoute when navigateToSettings with deeplink then start SettingsActivity with deeplink extra`() {
         testApp(FrontendRoute()) {
-            navController.navigateToSettings(SettingsActivity.Deeplink.AssistSettings)
-
+            composeTestRule.activity.apply {
+                startActivity(SettingsActivity.newInstance(this, SettingsActivity.Deeplink.AssistSettings))
+            }
             val startedIntent = Shadows.shadowOf(composeTestRule.activity).nextStartedActivity
             assertEquals(
                 SettingsActivity::class.java.name,
