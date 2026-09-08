@@ -1,20 +1,24 @@
 package io.homeassistant.companion.android.common.util
 
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
-import androidx.compose.ui.platform.AndroidUriHandler
+import android.util.AndroidRuntimeException
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R
+import java.net.URISyntaxException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+
+private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
 
 /**
  * Wrapper around [Context.getSharedPreferences] that uses [Dispatchers.IO] to ensure
@@ -94,13 +98,11 @@ fun Context.isIgnoringBatteryOptimizations(): Boolean {
 }
 
 suspend fun Context.openUri(uri: String, onShowSnackbar: suspend (message: String, action: String?) -> Boolean) {
-    try {
-        AndroidUriHandler(this).openUri(uri)
-    } catch (e: IllegalArgumentException) {
-        // Don't log e in release to not leak the URL in the log
-        Timber.e(e.takeIf { BuildConfig.DEBUG }, "Failed to navigate open uri")
-        onShowSnackbar(getString(R.string.fail_to_navigate_to_uri, uri), null)
-    }
+    startActivityOrShowSnackbar(
+        intent = Intent(Intent.ACTION_VIEW, uri.toUri()),
+        target = uri,
+        onShowSnackbar = onShowSnackbar,
+    )
 }
 
 /**
@@ -137,3 +139,121 @@ fun Context.openSystemAppSettings() {
  */
 fun Context.parseExternalIntentUri(uri: String): Intent =
     Intent.parseUri(uri, Intent.URI_INTENT_SCHEME).stripSelfNonExportedTarget(this)
+
+/**
+ * Launches the installed app identified by [packageName].
+ *
+ * When no app with the given package is installed, the Play Store listing for that package is opened instead.
+ * When nothing can handle the launch (e.g. no store on the device), [onShowSnackbar] surfaces the failure to
+ * the user instead of failing silently.
+ */
+suspend fun Context.launchAppOrStore(
+    packageName: String,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+) {
+    startActivityOrShowSnackbar(
+        intent = appOrStoreIntent(packageName),
+        target = packageName,
+        onShowSnackbar = onShowSnackbar,
+    )
+}
+
+/**
+ * Parses [intentUri] as an Android `intent:` URI and launches it.
+ *
+ * When the parsed intent targets a package that is not installed, the Play Store listing for that package is
+ * opened instead. Parse failures and cases where nothing can handle the launch surface [onShowSnackbar] to the
+ * user instead of failing silently.
+ */
+suspend fun Context.launchIntentUri(
+    intentUri: String,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+) {
+    val intent = try {
+        parseExternalIntentUri(intentUri)
+    } catch (e: URISyntaxException) {
+        // Don't log e in release to not leak the URI in the log
+        Timber.e(e.takeIf { BuildConfig.DEBUG }, "Unable to parse intent URI")
+        onShowSnackbar(getString(R.string.fail_to_navigate_to_uri, intentUri), null)
+        return
+    }
+
+    val targetPackage = intent.`package`
+    val isPackageInstalled = targetPackage?.let { packageManager.getLaunchIntentForPackage(it) } != null
+    val toLaunch = if (!isPackageInstalled && !targetPackage.isNullOrEmpty()) {
+        Timber.w("No app found for intent, opening app store")
+        Intent(Intent.ACTION_VIEW, (MARKET_PREFIX + targetPackage).toUri())
+    } else {
+        intent
+    }
+    startActivityOrShowSnackbar(
+        intent = toLaunch,
+        target = intentUri,
+        onShowSnackbar = onShowSnackbar,
+    )
+}
+
+/**
+ * Opens the OS security settings screen, where the user can install a client certificate.
+ *
+ * When no activity can handle the intent, [onShowSnackbar] surfaces the failure to the user.
+ */
+suspend fun Context.openSecuritySettings(onShowSnackbar: suspend (message: String, action: String?) -> Boolean) {
+    startActivityOrShowSnackbar(
+        intent = Intent(Settings.ACTION_SECURITY_SETTINGS).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK },
+        target = getString(R.string.security_settings),
+        onShowSnackbar = onShowSnackbar,
+    )
+}
+
+/**
+ * Builds an intent that opens [packageName]'s launcher activity when installed, or its Play Store listing
+ * otherwise.
+ */
+private fun Context.appOrStoreIntent(packageName: String): Intent {
+    val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+    return if (launchIntent != null) {
+        launchIntent.apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
+    } else {
+        Timber.w("No launch intent for package, opening app store")
+        Intent(Intent.ACTION_VIEW, (MARKET_PREFIX + packageName).toUri())
+    }
+}
+
+/**
+ * Starts [intent], showing "no app available to open [target]" via [onShowSnackbar] when no activity can
+ * handle it. [target] is the user-facing description of what we tried to open (a URI, package, or label).
+ */
+private suspend fun Context.startActivityOrShowSnackbar(
+    intent: Intent,
+    target: String,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+) {
+    if (!startActivityCatching(intent)) {
+        onShowSnackbar(getString(R.string.fail_to_navigate_to_uri, target), null)
+    }
+}
+
+/**
+ * Starts [intent], returning `true` on success and `false` (after logging) when the launch fails.
+ *
+ * The caught exceptions embed the intent (including its data URI), so they are only logged in debug builds
+ * to avoid leaking user data in release logs.
+ */
+private fun Context.startActivityCatching(intent: Intent): Boolean {
+    return try {
+        startActivity(intent)
+        true
+    } catch (e: ActivityNotFoundException) {
+        Timber.e(e.takeIf { BuildConfig.DEBUG }, "No activity found to handle intent")
+        false
+    } catch (e: SecurityException) {
+        // The resolved activity requires a permission we were not granted to launch it.
+        Timber.e(e.takeIf { BuildConfig.DEBUG }, "Not allowed to launch intent")
+        false
+    } catch (e: AndroidRuntimeException) {
+        // e.g. launching without FLAG_ACTIVITY_NEW_TASK from a non-Activity context.
+        Timber.e(e.takeIf { BuildConfig.DEBUG }, "Unable to launch intent")
+        false
+    }
+}

@@ -36,7 +36,7 @@ class RequestAccurateLocationReceiverTest {
             forwarded.captured.action,
         )
         assertEquals(
-            ComponentName(context, LocationSensorManager::class.java),
+            ComponentName(context, LocationSensorReceiver::class.java),
             forwarded.captured.component,
         )
         assertEquals(null, forwarded.captured.extras)

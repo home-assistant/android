@@ -16,27 +16,28 @@ import io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivi
 sealed interface WidgetType {
 
     /**
-     * Builds the configuration [Intent] for this widget type, pre-filled with [entityId].
+     * Builds the configuration [Intent] for this widget type, pre-filled with [entityId] when
+     * one is given.
      */
-    fun toConfigureIntent(context: Context, entityId: String): Intent
+    fun toConfigureIntent(context: Context, entityId: String? = null): Intent
 
     data object Entity : WidgetType {
-        override fun toConfigureIntent(context: Context, entityId: String): Intent =
+        override fun toConfigureIntent(context: Context, entityId: String?): Intent =
             EntityWidgetConfigureActivity.newInstance(context, entityId)
     }
 
     data object MediaPlayer : WidgetType {
-        override fun toConfigureIntent(context: Context, entityId: String): Intent =
+        override fun toConfigureIntent(context: Context, entityId: String?): Intent =
             MediaPlayerControlsWidgetConfigureActivity.newInstance(context, entityId)
     }
 
     data object Camera : WidgetType {
-        override fun toConfigureIntent(context: Context, entityId: String): Intent =
+        override fun toConfigureIntent(context: Context, entityId: String?): Intent =
             CameraWidgetConfigureActivity.newInstance(context, entityId)
     }
 
     data object Todo : WidgetType {
-        override fun toConfigureIntent(context: Context, entityId: String): Intent =
+        override fun toConfigureIntent(context: Context, entityId: String?): Intent =
             TodoWidgetConfigureActivity.newInstance(context, entityId)
     }
 }

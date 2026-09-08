@@ -12,15 +12,13 @@ import android.os.Build
 import android.os.PowerManager
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.HiltAndroidApp
-import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.tiles.RefreshIntervalMigration
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,8 +31,7 @@ open class HomeAssistantApplication : Application() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     @Inject
-    @NamedKeyStore
-    lateinit var keyStore: KeyChainRepository
+    lateinit var refreshIntervalMigration: RefreshIntervalMigration
 
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
@@ -53,7 +50,7 @@ open class HomeAssistantApplication : Application() {
         configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)
 
         ioScope.launch {
-            keyStore.load(applicationContext, KeyStoreRepository.ALIAS)
+            refreshIntervalMigration.migrate()
         }
 
         val sensorReceiver = SensorReceiver()

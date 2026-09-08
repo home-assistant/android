@@ -10,27 +10,28 @@ import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.isActive
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import java.util.concurrent.ConcurrentHashMap
 
 @RequiresApi(Build.VERSION_CODES.R)
 object VacuumControl : HaControl {
-    private const val SUPPORT_TURN_ON = 1
-    private var entitySupportedFeatures = 0
+    private data class EntityKey(val serverId: Int, val entityId: String)
+
+    private val entitySupportsTurnOn = ConcurrentHashMap<EntityKey, Boolean>()
 
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity,
+        item: EntityDisplayWithContext,
         info: HaControlInfo,
     ): Control.StatefulBuilder {
-        entitySupportedFeatures = entity.attributes["supported_features"] as Int
+        entitySupportsTurnOn[EntityKey(info.serverId, item.entityId)] = item.vacuumControls?.supportsTurnOn == true
         control.setControlTemplate(
             ToggleTemplate(
-                entity.entityId,
+                item.entityId,
                 ControlButton(
-                    entity.isActive(),
+                    item.isActive,
                     "Description",
                 ),
             ),
@@ -38,15 +39,19 @@ object VacuumControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_VACUUM
+    override fun getDeviceType(item: EntityDisplayWithContext): Int = DeviceTypes.TYPE_VACUUM
 
-    override fun getDomainString(context: Context, entity: Entity): String =
+    override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.domain_vacuum)
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         integrationRepository.callAction(
             action.templateId.split(".")[0],
-            if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
+            if (entitySupportsTurnOn[EntityKey(serverId, action.templateId)] == true) {
                 if ((action as? BooleanAction)?.newState == true) "turn_on" else "turn_off"
             } else if ((action as? BooleanAction)?.newState == true) {
                 "start"

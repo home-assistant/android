@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.composable.HAFloatingActionButton
 import io.homeassistant.companion.android.common.compose.composable.HAIconButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -28,6 +29,7 @@ fun LazyListScope.catalogButtonsAndIndicatorsSection(variant: ButtonVariant) {
     buttonSection(variant = variant, enabled = false)
     buttonsWithIcon(variant = variant)
     buttonsWithBigContent(variant = variant)
+    floatingActionButtons(variant = variant)
 }
 
 private fun LazyListScope.buttonSection(variant: ButtonVariant, enabled: Boolean) {
@@ -165,6 +167,19 @@ private fun LazyListScope.buttonsWithBigContent(variant: ButtonVariant) {
                 suffix = { AddIcon() },
                 maxLines = 1,
                 textOverflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+private fun LazyListScope.floatingActionButtons(variant: ButtonVariant) {
+    catalogSection(title = "Floating action buttons") {
+        CatalogRow {
+            HAFloatingActionButton(
+                icon = Icons.Default.Add,
+                onClick = {},
+                contentDescription = null,
+                variant = variant,
             )
         }
     }

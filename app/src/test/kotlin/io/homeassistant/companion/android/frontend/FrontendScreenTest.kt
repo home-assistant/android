@@ -39,8 +39,10 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
+import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -101,18 +103,23 @@ class FrontendScreenTest {
     }
 
     @Test
-    fun `Given Error state then error screen with retry button and webview are displayed`() {
-        var retryCalled = false
-        val error = FrontendConnectionError.UnreachableError(
+    fun `Given Error state then error screen with recovery action and webview are displayed`() {
+        var action: ErrorActionIntent? = null
+        val error = FrontendConnectionError.Unreachable(
             message = commonR.string.webview_error_HOST_LOOKUP,
             errorDetails = "Connection failed",
             rawErrorType = "HostLookupError",
         )
         composeTestRule.apply {
             setFrontendScreen(
-                viewState = FrontendViewState.Error(serverId = 1, url = "https://example.com", error = error),
+                viewState = FrontendViewState.Error(
+                    serverId = 1,
+                    url = "https://example.com",
+                    error = error,
+                    actions = errorActions(error, isInternalConnection = false),
+                ),
                 errorStateProvider = FakeConnectionErrorStateProvider(url = "https://example.com", error = error),
-                onBlockInsecureRetry = { retryCalled = true },
+                onErrorAction = { action = it },
             )
 
             assertIsLoading(false)
@@ -120,8 +127,9 @@ class FrontendScreenTest {
 
             onNodeWithText(stringResource(commonR.string.error_connection_failed)).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.webview_error_HOST_LOOKUP)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.retry)).performScrollTo().performClick()
-            assertTrue("onRetry should be called when retry button is clicked", retryCalled)
+            // The external-connection actions refresh the external URL.
+            onNodeWithText(stringResource(commonR.string.refresh_external)).performScrollTo().performClick()
+            assertEquals(ErrorActionIntent.Refresh, action)
         }
     }
 
@@ -496,6 +504,7 @@ class FrontendScreenTest {
         errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
         pendingPermissionRequest: PermissionRequest? = null,
         onBlockInsecureRetry: () -> Unit = {},
+        onErrorAction: (ErrorActionIntent) -> Unit = {},
         onBlockInsecureHelpClick: suspend () -> Unit = {},
         onOpenSettings: () -> Unit = {},
         onChangeSecurityLevel: () -> Unit = {},
@@ -512,12 +521,13 @@ class FrontendScreenTest {
             val content: @Composable () -> Unit = {
                 FrontendScreenContent(
                     viewState = viewState,
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     errorStateProvider = errorStateProvider,
                     pendingPermissionRequest = pendingPermissionRequest,
                     onBlockInsecureRetry = onBlockInsecureRetry,
+                    onErrorAction = onErrorAction,
                     onOpenExternalLink = {},
                     onBlockInsecureHelpClick = onBlockInsecureHelpClick,
                     onOpenSettings = onOpenSettings,
@@ -568,7 +578,7 @@ class FrontendScreenTest {
                         barcodeScanner = barcodeScanner,
                     ),
                     pendingDialog = pendingDialog,
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
@@ -666,9 +676,8 @@ class FrontendScreenTest {
 
     @Test
     fun `Given WebViewCreationError state then error screen with open settings button is displayed`() {
-        var openSettingsCalled = false
-        val error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
-            message = commonR.string.webview_creation_failed,
+        var action: ErrorActionIntent? = null
+        val error = FrontendConnectionError.Unrecoverable.WebViewCreationError(
             throwable = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit"),
         )
         composeTestRule.apply {
@@ -678,18 +687,20 @@ class FrontendScreenTest {
                         serverId = 1,
                         url = "https://example.com",
                         error = error,
+                        actions = errorActions(error, isInternalConnection = false),
                     ),
                     errorStateProvider = FakeConnectionErrorStateProvider(
                         url = "https://example.com",
                         error = error,
                     ),
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
+                    onErrorAction = { action = it },
                     onOpenExternalLink = {},
                     onBlockInsecureHelpClick = {},
-                    onOpenSettings = { openSettingsCalled = true },
+                    onOpenSettings = {},
                     onChangeSecurityLevel = {},
                     onOpenLocationSettings = {},
                     onConfigureHomeNetwork = { _ -> },
@@ -706,11 +717,12 @@ class FrontendScreenTest {
             onNodeWithText(stringResource(commonR.string.webview_creation_error_title)).assertIsDisplayed()
             // Error message should be displayed
             onNodeWithText(stringResource(commonR.string.webview_creation_failed)).assertIsDisplayed()
-            // Retry button should NOT be displayed
-            onNodeWithText(stringResource(commonR.string.retry)).assertDoesNotExist()
-            // Open Settings button should be displayed
+            // No refresh action for an unrecoverable error
+            onNodeWithText(stringResource(commonR.string.refresh_external)).assertDoesNotExist()
+            onNodeWithText(stringResource(commonR.string.refresh_internal)).assertDoesNotExist()
+            // Open Settings action should be displayed and dispatch GoToSettings
             onNodeWithText(stringResource(commonR.string.open_settings)).performScrollTo().performClick()
-            assertTrue("onOpenSettings should be called when open settings button is clicked", openSettingsCalled)
+            assertEquals(ErrorActionIntent.GoToSettings, action)
         }
     }
 
@@ -724,7 +736,7 @@ class FrontendScreenTest {
                     url = "https://example.com",
                 ),
                 customView = View(context),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -768,7 +780,7 @@ class FrontendScreenTest {
                     url = "https://example.com",
                 ),
                 customView = View(context),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -800,7 +812,7 @@ class FrontendScreenTest {
                     serverId = 1,
                     url = "https://example.com",
                 ),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -829,7 +841,7 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -874,7 +886,7 @@ class FrontendScreenTest {
             if (visible.value) {
                 FrontendScreenContent(
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
@@ -913,7 +925,7 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -942,7 +954,7 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -975,7 +987,7 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -1010,7 +1022,7 @@ class FrontendScreenTest {
             if (visible.value) {
                 FrontendScreenContent(
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},

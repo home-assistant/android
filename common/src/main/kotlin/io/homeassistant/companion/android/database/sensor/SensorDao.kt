@@ -5,14 +5,14 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import androidx.room.Update
+import androidx.room.Upsert
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface SensorDao {
+internal interface SensorDao {
 
     @Query("SELECT * FROM Sensors WHERE id = :id")
     suspend fun get(id: String): List<Sensor>
@@ -22,6 +22,9 @@ interface SensorDao {
 
     @Query("SELECT * FROM sensors")
     fun getAllFlow(): Flow<List<Sensor>>
+
+    @Query("SELECT * FROM sensors")
+    suspend fun getAll(): List<Sensor>
 
     @Transaction
     @Query(
@@ -55,9 +58,6 @@ interface SensorDao {
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id ORDER BY sensor_id")
     fun getSettingsFlow(id: String): Flow<List<SensorSetting>>
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun add(sensor: Sensor)
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun add(attribute: Attribute)
 
@@ -90,8 +90,8 @@ interface SensorDao {
     @Query("DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name IN (:settingNames)")
     suspend fun removeSettings(sensorId: String, settingNames: List<String>)
 
-    @Update
-    suspend fun update(sensor: Sensor)
+    @Upsert
+    suspend fun upsert(sensor: Sensor)
 
     @Query("DELETE FROM sensor_attributes WHERE sensor_id = :sensorId")
     suspend fun clearAttributes(sensorId: String)
@@ -116,9 +116,6 @@ interface SensorDao {
     @Query("UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId")
     suspend fun updateLastSentStatesAndIcons(sensorId: String, state: String?, icon: String?)
 
-    @Query("SELECT COUNT(id) FROM sensors WHERE enabled = 1")
-    suspend fun getEnabledCount(): Int?
-
     @Transaction
     suspend fun setSensorEnabled(sensorId: String, serverIds: List<Int>, enabled: Boolean) {
         serverIds.forEach {
@@ -131,81 +128,14 @@ interface SensorDao {
         coroutineScope {
             sensorIds.map { sensorId ->
                 async {
-                    val sensorEntity = get(sensorId, serverId)
-                    if (sensorEntity != null) {
-                        update(sensorEntity.copy(enabled = enabled, lastSentState = null, lastSentIcon = null))
-                    } else {
-                        add(Sensor(sensorId, serverId, enabled, state = ""))
-                    }
+                    // Keep an existing row's other fields, otherwise start from a fresh entity; upsert
+                    // creates it when absent and overwrites it when present.
+                    val sensor = get(sensorId, serverId)
+                        ?.copy(enabled = enabled, lastSentState = null, lastSentIcon = null)
+                        ?: Sensor(sensorId, serverId, enabled, state = "")
+                    upsert(sensor)
                 }
             }.awaitAll()
-        }
-    }
-
-    @Transaction
-    suspend fun getOrDefault(sensorId: String, serverId: Int, permission: Boolean, enabledByDefault: Boolean): Sensor? {
-        val sensor = get(sensorId, serverId)
-
-        if (sensor?.enabled == true && !permission) {
-            // If we don't have permission but we are still enabled then we aren't really enabled.
-            sensor.enabled = false
-            update(sensor)
-        }
-
-        return sensor
-    }
-
-    @Transaction
-    suspend fun getAnyIsEnabled(
-        sensorId: String,
-        servers: List<Int>,
-        permission: Boolean,
-        enabledByDefault: Boolean,
-    ): Boolean {
-        // Create and update entries for all
-        var sensorList = get(sensorId)
-        var changedList = false
-        if (sensorList.isEmpty()) {
-            // If we haven't created the entity yet do so and default to enabled if required
-            servers.forEach {
-                add(Sensor(sensorId, it, enabled = permission && enabledByDefault, state = ""))
-            }
-            changedList = true
-        } else {
-            if (!permission) {
-                // If we don't have permission but we are still enabled then we aren't really enabled.
-                sensorList.filter { it.enabled }.forEach {
-                    update(it.apply { enabled = false })
-                    changedList = true
-                }
-            }
-            val newServers = servers.filter { it !in sensorList.map { sensor -> sensor.serverId } }
-            if (newServers.isNotEmpty()) {
-                // If we have any new servers but don't have entries create one for updates.
-                val singleSensor = sensorList.maxBy { it.enabled } // Prefer enabled
-                newServers.forEach {
-                    add(
-                        singleSensor.copy(
-                            serverId = it,
-                            registered = null,
-                            state = "",
-                            stateType = "",
-                            lastSentState = null,
-                            lastSentIcon = null,
-                            coreRegistration = null,
-                        ),
-                    )
-                }
-                changedList = true
-            }
-        }
-        if (changedList) sensorList = get(sensorId)
-
-        // Return if any are enabled
-        return if (sensorList.isEmpty()) {
-            false // No servers
-        } else {
-            sensorList.any { it.enabled && permission }
         }
     }
 }

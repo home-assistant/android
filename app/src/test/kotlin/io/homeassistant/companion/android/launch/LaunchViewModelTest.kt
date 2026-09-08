@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
@@ -95,7 +96,7 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
@@ -159,7 +160,7 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
@@ -381,10 +382,10 @@ class LaunchViewModelTest {
         val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
-        createViewModel(LaunchActivity.DeepLink.NavigateTo("/path", serverId))
+        createViewModel(LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/path"), serverId))
         advanceUntilIdle()
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute("/path", serverId)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Path("/path"), serverId)),
             viewModel.uiState.value,
         )
     }
@@ -452,7 +453,7 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
     }
@@ -479,7 +480,7 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
@@ -553,11 +554,11 @@ class LaunchViewModelTest {
         val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
-        createViewModel(LaunchActivity.DeepLink.NavigateTo(path = null, serverId = serverId))
+        createViewModel(LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Default, serverId))
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, serverId)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, serverId)),
             viewModel.uiState.value,
         )
     }

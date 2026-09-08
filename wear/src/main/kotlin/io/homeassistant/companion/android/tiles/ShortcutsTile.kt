@@ -115,7 +115,6 @@ class ShortcutsTile : TileService() {
                         val iconIIcon = getIcon(
                             entity.icon,
                             entity.domain,
-                            this@ShortcutsTile,
                         )
                         val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
                             colorInt = Color.WHITE
@@ -262,7 +261,7 @@ class ShortcutsTile : TileService() {
                 LayoutElementBuilders.Arc.Builder()
                     .addContent(
                         LayoutElementBuilders.ArcText.Builder()
-                            .setText(entity.friendlyName)
+                            .setText(entity.name)
                             .setFontStyle(
                                 LayoutElementBuilders.FontStyle.Builder()
                                     .setSize(sp(TEXT_SIZE))

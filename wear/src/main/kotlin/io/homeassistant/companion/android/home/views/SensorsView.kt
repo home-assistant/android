@@ -13,16 +13,15 @@ import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
 import io.homeassistant.companion.android.views.ListHeader
 import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
-fun SensorsView(onClickSensorManager: (SensorManager) -> Unit) {
+fun SensorsView(allManagers: List<SensorManager>, onClickSensorManager: (SensorManager) -> Unit) {
     WearAppTheme {
-        val sensorManagers = getSensorManagers()
+        val sensorManagers = getSensorManagers(allManagers)
         ThemeLazyColumn {
             item {
                 ListHeader(id = commonR.string.sensors)
@@ -44,15 +43,15 @@ fun SensorsView(onClickSensorManager: (SensorManager) -> Unit) {
 }
 
 @Composable
-fun getSensorManagers(): List<SensorManager> {
+fun getSensorManagers(allManagers: List<SensorManager>): List<SensorManager> {
     val context = LocalContext.current
-    return SensorReceiver.MANAGERS.sortedBy { context.getString(it.name) }.filter { it.hasSensor(context) }
+    return allManagers.sortedBy { context.getString(it.name) }.filter { it.hasSensor() }
 }
 
 @Preview(device = WearDevices.LARGE_ROUND)
 @Composable
 private fun PreviewSensorsView() {
     CompositionLocalProvider {
-        SensorsView {}
+        SensorsView(allManagers = emptyList()) {}
     }
 }

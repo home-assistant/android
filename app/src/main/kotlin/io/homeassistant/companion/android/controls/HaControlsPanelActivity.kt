@@ -1,10 +1,11 @@
 package io.homeassistant.companion.android.controls
 
-import android.annotation.SuppressLint
 import android.app.KeyguardManager
+import android.os.Build
 import android.os.Bundle
 import android.service.controls.ControlsProviderService
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,19 +24,22 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
+/**
+ * Device controls panel. The component is disabled in the manifest and only enabled on Android 14+
+ * by `ManageControlsViewModel`, so it never runs below [Build.VERSION_CODES.UPSIDE_DOWN_CAKE].
+ */
 @AndroidEntryPoint
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 class HaControlsPanelActivity : AppCompatActivity() {
 
     @Inject
@@ -46,7 +50,6 @@ class HaControlsPanelActivity : AppCompatActivity() {
 
     private var launched = false
 
-    @SuppressLint("InlinedApi") // This activity will only be launched on Android 14+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setShowWhenLocked(true)
@@ -69,23 +72,14 @@ class HaControlsPanelActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val serverId = prefsRepository.getControlsPanelServer() ?: serverManager.getServer()?.id
             val path = prefsRepository.getControlsPanelPath()
-            val intent = if (WIPFeature.USE_FRONTEND_V2) {
-                Timber.d("Launching LaunchActivity…")
-                LaunchActivity.newInstance(
-                    context = this@HaControlsPanelActivity,
-                    deepLink = LaunchActivity.DeepLink.NavigateTo(path = path, serverId = serverId ?: SERVER_ID_ACTIVE),
-                    showWhenLocked = true,
-                )
-            } else {
-                Timber.d("Launching WebView…")
-                WebViewActivity.newInstance(
-                    context = this@HaControlsPanelActivity,
-                    path = path,
-                    serverId = serverId,
-                ).apply {
-                    putExtra(WebViewActivity.EXTRA_SHOW_WHEN_LOCKED, true)
-                }
-            }
+            val intent = LaunchActivity.newInstance(
+                context = this@HaControlsPanelActivity,
+                deepLink = LaunchActivity.DeepLink.NavigateTo(
+                    target = FrontendTarget.fromRawPath(path),
+                    serverId = serverId ?: SERVER_ID_ACTIVE,
+                ),
+                showWhenLocked = true,
+            )
             startActivity(intent)
             overridePendingTransition(0, 0) // Disable activity start/stop animation
 

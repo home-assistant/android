@@ -11,22 +11,32 @@ import androidx.car.app.hardware.info.Model
 import androidx.car.app.hardware.info.Speed
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class CarSensorManager :
-    SensorManager,
+@Singleton
+class CarSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager,
     DefaultLifecycleObserver {
 
     data class CarSensor(
@@ -42,55 +52,63 @@ class CarSensorManager :
     )
 
     companion object {
+        @ProvidesSensor
+        internal val carFuel = SensorManager.BasicSensor(
+            "car_fuel",
+            "sensor",
+            R.string.basic_sensor_name_car_fuel,
+            R.string.sensor_description_car_fuel,
+            "mdi:barrel",
+            unitOfMeasurement = "%",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            deviceClass = "battery",
+        )
         private val fuelLevel = CarSensor(
-            SensorManager.BasicSensor(
-                "car_fuel",
-                "sensor",
-                R.string.basic_sensor_name_car_fuel,
-                R.string.sensor_description_car_fuel,
-                "mdi:barrel",
-                unitOfMeasurement = "%",
-                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-                deviceClass = "battery",
-            ),
+            carFuel,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf(
                 "android.car.permission.CAR_ENERGY",
                 "android.car.permission.CAR_ENERGY_PORTS",
                 "android.car.permission.READ_CAR_DISPLAY_UNITS",
             ),
+        )
+
+        @ProvidesSensor
+        internal val carBattery = SensorManager.BasicSensor(
+            "car_battery",
+            "sensor",
+            R.string.basic_sensor_name_car_battery,
+            R.string.sensor_description_car_battery,
+            "mdi:car-battery",
+            unitOfMeasurement = "%",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            deviceClass = "battery",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         private val batteryLevel = CarSensor(
-            SensorManager.BasicSensor(
-                "car_battery",
-                "sensor",
-                R.string.basic_sensor_name_car_battery,
-                R.string.sensor_description_car_battery,
-                "mdi:car-battery",
-                unitOfMeasurement = "%",
-                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-                deviceClass = "battery",
-                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            ),
+            carBattery,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf(
                 "android.car.permission.CAR_ENERGY",
                 "android.car.permission.CAR_ENERGY_PORTS",
                 "android.car.permission.READ_CAR_DISPLAY_UNITS",
             ),
+        )
+
+        @ProvidesSensor
+        internal val carRangeRemaining = SensorManager.BasicSensor(
+            "car_range_remaining",
+            "sensor",
+            R.string.basic_sensor_name_car_range_remaining,
+            R.string.sensor_description_car_range_remaining,
+            "mdi:map-marker-distance",
+            unitOfMeasurement = "m",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            deviceClass = "distance",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         private val rangeRemaining = CarSensor(
-            SensorManager.BasicSensor(
-                "car_range_remaining",
-                "sensor",
-                R.string.basic_sensor_name_car_range_remaining,
-                R.string.sensor_description_car_range_remaining,
-                "mdi:map-marker-distance",
-                unitOfMeasurement = "m",
-                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-                deviceClass = "distance",
-                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            ),
+            carRangeRemaining,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf(
                 "android.car.permission.CAR_ENERGY",
@@ -98,78 +116,96 @@ class CarSensorManager :
                 "android.car.permission.READ_CAR_DISPLAY_UNITS",
             ),
         )
+
+        @ProvidesSensor
+        internal val carNameSensor = SensorManager.BasicSensor(
+            "car_name",
+            "sensor",
+            R.string.basic_sensor_name_car_name,
+            R.string.sensor_description_car_name,
+            "mdi:car-info",
+        )
         private val carName = CarSensor(
-            SensorManager.BasicSensor(
-                "car_name",
-                "sensor",
-                R.string.basic_sensor_name_car_name,
-                R.string.sensor_description_car_name,
-                "mdi:car-info",
-            ),
+            carNameSensor,
             automotivePermissions = listOf("android.car.permission.CAR_INFO"),
         )
+
+        @ProvidesSensor
+        internal val carChargingStatusSensor = SensorManager.BasicSensor(
+            "car_charging_status",
+            "sensor",
+            R.string.basic_sensor_name_car_charging_status,
+            R.string.sensor_description_car_charging_status,
+            "mdi:ev-station",
+            deviceClass = "plug",
+        )
         private val carChargingStatus = CarSensor(
-            SensorManager.BasicSensor(
-                "car_charging_status",
-                "sensor",
-                R.string.basic_sensor_name_car_charging_status,
-                R.string.sensor_description_car_charging_status,
-                "mdi:ev-station",
-                deviceClass = "plug",
-            ),
+            carChargingStatusSensor,
             automotivePermissions = listOf("android.car.permission.CAR_ENERGY_PORTS"),
         )
+
+        @ProvidesSensor
+        internal val carOdometer = SensorManager.BasicSensor(
+            "car_odometer",
+            "sensor",
+            R.string.basic_sensor_name_car_odometer,
+            R.string.sensor_description_car_odometer,
+            "mdi:map-marker-distance",
+            unitOfMeasurement = "m",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            deviceClass = "distance",
+        )
         private val odometerValue = CarSensor(
-            SensorManager.BasicSensor(
-                "car_odometer",
-                "sensor",
-                R.string.basic_sensor_name_car_odometer,
-                R.string.sensor_description_car_odometer,
-                "mdi:map-marker-distance",
-                unitOfMeasurement = "m",
-                stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
-                deviceClass = "distance",
-            ),
+            carOdometer,
             automotiveEnabled = false,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_MILEAGE"),
         )
+
+        @ProvidesSensor
+        internal val carFuelType = SensorManager.BasicSensor(
+            "car_fuel_type",
+            "sensor",
+            R.string.basic_sensor_name_car_fuel_type,
+            R.string.sensor_description_car_fuel_type,
+            "mdi:gas-station",
+            deviceClass = "enum",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
         private val fuelType = CarSensor(
-            SensorManager.BasicSensor(
-                "car_fuel_type",
-                "sensor",
-                R.string.basic_sensor_name_car_fuel_type,
-                R.string.sensor_description_car_fuel_type,
-                "mdi:gas-station",
-                deviceClass = "enum",
-                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            ),
+            carFuelType,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf("android.car.permission.CAR_INFO"),
+        )
+
+        @ProvidesSensor
+        internal val carEvConnector = SensorManager.BasicSensor(
+            "car_ev_connector",
+            "sensor",
+            R.string.basic_sensor_name_car_ev_connector_type,
+            R.string.sensor_description_car_ev_connector_type,
+            "mdi:car-electric",
+            deviceClass = "enum",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
         private val evConnector = CarSensor(
-            SensorManager.BasicSensor(
-                "car_ev_connector",
-                "sensor",
-                R.string.basic_sensor_name_car_ev_connector_type,
-                R.string.sensor_description_car_ev_connector_type,
-                "mdi:car-electric",
-                deviceClass = "enum",
-                entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
-            ),
+            carEvConnector,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_FUEL"),
             automotivePermissions = listOf("android.car.permission.CAR_INFO"),
         )
+
+        @ProvidesSensor
+        internal val carSpeedSensor = SensorManager.BasicSensor(
+            "car_speed",
+            "sensor",
+            R.string.basic_sensor_name_car_speed,
+            R.string.sensor_description_car_speed,
+            "mdi:speedometer",
+            unitOfMeasurement = "m/s",
+            deviceClass = "speed",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+        )
         private val carSpeed = CarSensor(
-            SensorManager.BasicSensor(
-                "car_speed",
-                "sensor",
-                R.string.basic_sensor_name_car_speed,
-                R.string.sensor_description_car_speed,
-                "mdi:speedometer",
-                unitOfMeasurement = "m/s",
-                deviceClass = "speed",
-                stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
-            ),
+            carSpeedSensor,
             autoPermissions = listOf("com.google.android.gms.permission.CAR_SPEED"),
             automotivePermissions = listOf(
                 "android.car.permission.CAR_SPEED",
@@ -216,11 +252,9 @@ class CarSensorManager :
         )
     }
 
-    private lateinit var latestContext: Context
-
     private val areCarSensorApisAvailable = SdkVersion.isAtLeast(Build.VERSION_CODES.O)
 
-    private val isAutomotive get() = latestContext.isAutomotive()
+    private val isAutomotive get() = applicationContext.isAutomotive()
 
     private val carSensorsList get() = allSensorsList.filter {
         (isAutomotive && it.automotiveEnabled) ||
@@ -230,7 +264,7 @@ class CarSensorManager :
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
-    private suspend fun allDisabled(): Boolean = sensorsList.none { isEnabled(latestContext, it) }
+    private suspend fun allDisabled(): Boolean = sensorsList.none { isEnabled(it) }
 
     private fun connected(): Boolean = areCarSensorApisAvailable && HaCarAppService.carInfo != null
 
@@ -269,9 +303,7 @@ class CarSensorManager :
     override val name: Int
         get() = R.string.sensor_name_car
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        this.latestContext = context.applicationContext
-
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return if (areCarSensorApisAvailable) {
             sensorsList
         } else {
@@ -280,13 +312,11 @@ class CarSensorManager :
     }
 
     @Suppress("KotlinConstantConditions")
-    override fun hasSensor(context: Context): Boolean {
-        this.latestContext = context.applicationContext
-
+    override fun hasSensor(): Boolean {
         return isAutomotive || (areCarSensorApisAvailable && BuildConfig.FLAVOR == "full")
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return carSensorsList.firstOrNull { it.sensor.id == sensorId }?.let {
             if (isAutomotive) {
                 it.automotivePermissions.toTypedArray()
@@ -296,19 +326,15 @@ class CarSensorManager :
         } ?: emptyArray()
     }
 
-    suspend fun isEnabled(context: Context, carSensor: CarSensor): Boolean {
-        this.latestContext = context.applicationContext
-
+    suspend fun isEnabled(carSensor: CarSensor): Boolean {
         if ((isAutomotive && !carSensor.automotiveEnabled) || (!isAutomotive && !carSensor.autoEnabled)) {
             return false
         }
 
-        return super.isEnabled(context, carSensor.sensor)
+        return super.isEnabled(carSensor.sensor)
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        this.latestContext = context.applicationContext
-
+    override suspend fun requestSensorUpdate() {
         if (allDisabled()) {
             return
         }
@@ -318,7 +344,7 @@ class CarSensorManager :
                 updateCarInfo()
             } else {
                 carSensorsList.forEach {
-                    if (isEnabled(context, it)) {
+                    if (isEnabled(it)) {
                         val attrs = if (it.sensor.id == fuelType.sensor.id || it.sensor.id == evConnector.sensor.id) {
                             mapOf(
                                 "options" to when (it.sensor.id) {
@@ -331,7 +357,6 @@ class CarSensorManager :
                             mapOf()
                         }
                         onSensorUpdated(
-                            context,
                             it.sensor,
                             STATE_UNAVAILABLE,
                             it.sensor.statelessIcon,
@@ -356,7 +381,7 @@ class CarSensorManager :
             Timber.d("unregistering CarInfo $l listener")
         }
 
-        val executor = ContextCompat.getMainExecutor(latestContext)
+        val executor = ContextCompat.getMainExecutor(applicationContext)
         when (l) {
             Listener.ENERGY -> {
                 if (enable) {
@@ -407,7 +432,7 @@ class CarSensorManager :
 
     private suspend fun updateCarInfo() {
         listenerSensors.forEach { (listener, sensors) ->
-            if (sensors.any { isEnabled(latestContext, it) }) {
+            if (sensors.any { isEnabled(it) }) {
                 if (listenerLastRegistered[listener] != -1L &&
                     listenerLastRegistered[listener]!! + SensorManager.SENSOR_LISTENER_TIMEOUT <
                     System.currentTimeMillis()
@@ -428,7 +453,6 @@ class CarSensorManager :
         Timber.d("Received Energy level: $data")
         ioScope.launch {
             onSensorUpdated(
-                latestContext,
                 fuelLevel.sensor,
                 if (fuelStatus == "success") data.fuelPercent.value!! else STATE_UNKNOWN,
                 fuelLevel.sensor.statelessIcon,
@@ -439,7 +463,6 @@ class CarSensorManager :
             )
             val batteryStatus = carValueStatus(data.batteryPercent.status)
             onSensorUpdated(
-                latestContext,
                 batteryLevel.sensor,
                 if (batteryStatus == "success") data.batteryPercent.value!! else STATE_UNKNOWN,
                 batteryLevel.sensor.statelessIcon,
@@ -450,7 +473,6 @@ class CarSensorManager :
             )
             val rangeRemainingStatus = carValueStatus(data.rangeRemainingMeters.status)
             onSensorUpdated(
-                latestContext,
                 rangeRemaining.sensor,
                 if (rangeRemainingStatus == "success") data.rangeRemainingMeters.value!! else STATE_UNKNOWN,
                 rangeRemaining.sensor.statelessIcon,
@@ -468,7 +490,6 @@ class CarSensorManager :
         Timber.d("Received model information: $data")
         ioScope.launch {
             onSensorUpdated(
-                latestContext,
                 carName.sensor,
                 if (status == "success") data.name.value!! else STATE_UNKNOWN,
                 carName.sensor.statelessIcon,
@@ -489,7 +510,6 @@ class CarSensorManager :
         Timber.d("Received status available: $data")
         ioScope.launch {
             onSensorUpdated(
-                latestContext,
                 carChargingStatus.sensor,
                 if (status == "success") (data.evChargePortConnected.value == true) else STATE_UNKNOWN,
                 carChargingStatus.sensor.statelessIcon,
@@ -509,7 +529,6 @@ class CarSensorManager :
         Timber.d("Received mileage: $data")
         ioScope.launch {
             onSensorUpdated(
-                latestContext,
                 odometerValue.sensor,
                 if (status == "success") data.odometerMeters.value!! else STATE_UNKNOWN,
                 odometerValue.sensor.statelessIcon,
@@ -528,7 +547,6 @@ class CarSensorManager :
         Timber.d("Received energy profile: $data")
         ioScope.launch {
             onSensorUpdated(
-                latestContext,
                 fuelType.sensor,
                 if (fuelTypeStatus == "success") getFuelType(data.fuelTypes.value!!) else STATE_UNKNOWN,
                 fuelType.sensor.statelessIcon,
@@ -539,7 +557,6 @@ class CarSensorManager :
                 forceUpdate = true,
             )
             onSensorUpdated(
-                latestContext,
                 evConnector.sensor,
                 if (evConnectorTypeStatus == "success") {
                     getEvConnectorType(data.evConnectorTypes.value!!)
@@ -562,7 +579,6 @@ class CarSensorManager :
 
         ioScope.launch {
             onSensorUpdated(
-                latestContext,
                 carSpeed.sensor,
                 if (speedStatus == "success") data.displaySpeedMetersPerSecond.value!! else STATE_UNKNOWN,
                 carSpeed.sensor.statelessIcon,

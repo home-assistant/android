@@ -241,4 +241,18 @@ class UrlUtilTest {
 
         assertEquals(expected, httpUrl1.hasSameOrigin(httpUrl2))
     }
+
+    @ParameterizedTest(name = "isAbsoluteUrl: {0} -> {1}")
+    @CsvSource(
+        "https://example.com, true",
+        "http://example.com, true",
+        "HTTPS://example.com, true",
+        "HtTp://EXAMPLE.COM, true",
+        "/lovelace/default, false",
+        "app://com.example.app, false",
+        "entityId:light.kitchen, false",
+    )
+    fun `isAbsoluteUrl returns expected value`(input: String, expected: Boolean) {
+        assertEquals(expected, UrlUtil.isAbsoluteUrl(input))
+    }
 }

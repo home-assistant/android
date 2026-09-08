@@ -32,12 +32,13 @@ import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissio
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.hasActiveConnection
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -107,6 +108,9 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private val checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase =
         entryPoint.checkLocalNetworkPermission()
 
+    @VisibleForTesting
+    internal var dispatcher: CoroutineDispatcher = Dispatchers.IO
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface WebsocketManagerEntryPoint {
@@ -116,7 +120,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
     }
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    override suspend fun doWork(): Result = withContext(dispatcher) {
         if (!checkLocalNetworkPermission()) {
             Timber.d("Skipping websocket work: ACCESS_LOCAL_NETWORK permission missing")
             return@withContext Result.success()
@@ -137,7 +141,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         // play ping pong to ensure we have a connection and server changes are handled.
         do {
             delay(30000)
-        } while (jobs.values.any { it.isActive } && isActive && shouldWeRun() && manageServerJobs(jobs, this))
+        } while (isActive && shouldWeRun() && manageServerJobs(jobs, this))
 
         jobs.forEach { it.value.cancel() }
         jobs.clear()
@@ -176,9 +180,9 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
         val servers = serverManager.servers()
 
-        // Clean up...
-        jobs.filter { (serverId, _) ->
-            servers.none { it.id == serverId } || !shouldRunForServer(serverId)
+        // Clean up, including stopped jobs so they are started again below...
+        jobs.filter { (serverId, job) ->
+            servers.none { it.id == serverId } || !job.isActive || !shouldRunForServer(serverId)
         }
             .forEach { (serverId, job) ->
                 job.cancel()
@@ -252,7 +256,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             notificationManager.createNotificationChannel(notificationChannel)
         }
 
-        val intent = WebViewActivity.newInstance(applicationContext)
+        val intent = LaunchActivity.newInstance(applicationContext)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)

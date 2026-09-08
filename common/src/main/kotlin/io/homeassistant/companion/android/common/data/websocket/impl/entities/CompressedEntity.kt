@@ -61,28 +61,14 @@ data class CompressedEntityState(
      * entities that are delivered in a compressed format.
      */
     fun toEntity(entityId: String): Entity {
+        val lastChanged = checkNotNull(lastChanged) { "lastChanged must not be null" }
         return Entity(
             entityId = entityId,
             state = checkNotNull(state) { "State must not be null" },
             attributes = attributes,
-            lastChanged = LocalDateTime.ofEpochSecond(
-                round(
-                    checkNotNull(lastChanged) {
-                        "lastChanged must not be null"
-                    },
-                ).toLong(),
-                0,
-                ZoneOffset.UTC,
-            ),
-            lastUpdated = LocalDateTime.ofEpochSecond(
-                if (lastUpdated != null) {
-                    round(lastUpdated * 1000).toLong()
-                } else {
-                    round(lastChanged * 1000).toLong()
-                },
-                0,
-                ZoneOffset.UTC,
-            ),
+            lastChanged = LocalDateTime.ofEpochSecond(round(lastChanged).toLong(), 0, ZoneOffset.UTC),
+            // The subscription omits lastUpdated when it equals lastChanged
+            lastUpdated = LocalDateTime.ofEpochSecond(round(lastUpdated ?: lastChanged).toLong(), 0, ZoneOffset.UTC),
         )
     }
 }

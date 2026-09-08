@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,6 +26,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tooling.preview.devices.WearDevices
 import com.mikepenz.iconics.compose.Image
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.complications.ComplicationConfigViewModel
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -102,8 +102,7 @@ fun MainConfigView(
             item {
                 val iconBitmap = getIcon(
                     entity?.icon,
-                    entity?.domain ?: "light",
-                    LocalContext.current,
+                    entity?.domain ?: LIGHT_DOMAIN,
                 )
                 Button(
                     modifier = Modifier.fillMaxWidth(),
@@ -118,7 +117,7 @@ fun MainConfigView(
                     secondaryLabel = {
                         Text(
                             if (loaded) {
-                                entity?.friendlyName ?: ""
+                                entity?.name ?: ""
                             } else {
                                 stringResource(R.string.loading)
                             },

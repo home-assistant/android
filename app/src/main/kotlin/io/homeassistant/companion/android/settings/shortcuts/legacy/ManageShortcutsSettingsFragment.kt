@@ -28,10 +28,11 @@ class ManageShortcutsSettingsFragment : Fragment() {
 
     companion object {
         const val MAX_SHORTCUTS = 5
+        const val PINNED_SHORTCUT_INDEX = MAX_SHORTCUTS + 1
         const val SHORTCUT_PREFIX = "shortcut"
     }
 
-    val viewModel: ManageShortcutsViewModel by viewModels()
+    internal val viewModel: ManageShortcutsViewModel by viewModels()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {

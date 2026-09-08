@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.keychain
 
-import android.content.Context
 import android.os.Build
 import java.security.KeyStore
 import java.security.KeyStore.PrivateKeyEntry
@@ -8,101 +7,89 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-object KeyStoreRepository {
-    const val ALIAS = "TLSClientCertificate"
-}
+internal class KeyStoreRepositoryImpl @Inject constructor() : KeyStoreRepository {
 
-internal class KeyStoreRepositoryImpl @Inject constructor() : KeyChainRepository {
-
-    private var alias: String? = null
-    private var key: PrivateKey? = null
-    private var chain: Array<X509Certificate>? = null
-
-    override suspend fun clear() {
-        // intentionally left empty
+    private companion object {
+        /** Static alias because there is no way to ask the user for one on the watch. */
+        private const val ALIAS = "TLSClientCertificate"
     }
 
-    override suspend fun load(context: Context, alias: String) = withContext(Dispatchers.IO) {
-        this@KeyStoreRepositoryImpl.alias = alias
-        doLoad()
+    private val mutex = Mutex()
+
+    /** Written under [mutex]; read lock-free through [provider] from non-suspending contexts like TLS handshakes. */
+    @Volatile
+    private var certificate: ClientCertificate? = null
+
+    private val provider = object : ClientCertProvider {
+        override val certificate: ClientCertificate?
+            get() = this@KeyStoreRepositoryImpl.certificate
     }
 
-    override suspend fun load(context: Context) {
-        throw IllegalArgumentException("Key alias cannot be null.")
-    }
-
-    override suspend fun setData(alias: String, privateKey: PrivateKey, certificateChain: Array<X509Certificate>) =
-        withContext(Dispatchers.IO) {
-            // clear state
-            this@KeyStoreRepositoryImpl.alias = null
-            this@KeyStoreRepositoryImpl.key = null
-            this@KeyStoreRepositoryImpl.chain = null
-
-            // store and load certificate to/from KeyStore
-            doStore(alias, privateKey, certificateChain)
-            this@KeyStoreRepositoryImpl.alias = alias
-            doLoad()
-        }
-
-    override fun getAlias(): String? {
-        return alias
-    }
-
-    override fun getPrivateKey(): PrivateKey? {
-        return key
-    }
-
-    override fun getCertificateChain(): Array<X509Certificate>? {
-        return chain
-    }
-
-    @Synchronized
-    private fun doLoad() {
-        if (alias != null && alias?.isNotEmpty() == true) {
-            val aks = keyStore().apply {
-                load(null)
-                if (!containsAlias(alias)) return
-            }
-            val entry = try {
-                aks.getEntry(alias, null) as PrivateKeyEntry
-            } catch (e: Exception) {
-                Timber.e(e, "Exception getting KeyStore.Entry")
-                null
-            }
-            if (entry != null) {
-                if (chain == null) {
-                    chain = try {
-                        @Suppress("UNCHECKED_CAST")
-                        entry.certificateChain as Array<X509Certificate>
-                    } catch (e: Exception) {
-                        Timber.e(e, "Exception getting certificate chain")
-                        null
-                    }
-                }
-                if (key == null) {
-                    key = try {
-                        entry.privateKey
-                    } catch (e: Exception) {
-                        Timber.e(e, "Exception getting private key")
-                        null
-                    }
+    override suspend fun getClientCertProvider(): ClientCertProvider {
+        if (certificate == null) {
+            mutex.withLock {
+                if (certificate == null) {
+                    certificate = loadCertificate()
                 }
             }
         }
+        return provider
     }
 
-    @Synchronized
-    private fun doStore(alias: String, key: PrivateKey, chain: Array<X509Certificate>) {
-        try {
-            keyStore().apply {
-                load(null)
-                setEntry(alias, PrivateKeyEntry(key, chain), null)
-            }
+    override suspend fun store(privateKey: PrivateKey, chain: Array<X509Certificate>): ClientCertificate? =
+        mutex.withLock {
+            storeCertificate(privateKey, chain)
+            loadCertificate().also { certificate = it }
+        }
+
+    /** Must be called while holding [mutex]; runs the blocking [KeyStore] calls on [Dispatchers.IO]. */
+    private suspend fun loadCertificate(): ClientCertificate? = withContext(Dispatchers.IO) {
+        val aks = keyStore().apply { load(null) }
+        if (!aks.containsAlias(ALIAS)) return@withContext null
+
+        val entry = try {
+            aks.getEntry(ALIAS, null) as PrivateKeyEntry
         } catch (e: Exception) {
-            Timber.e(e, "Exception storing KeyStore.Entry")
+            Timber.e(e, "Exception getting KeyStore.Entry")
+            null
+        } ?: return@withContext null
+
+        val chain = try {
+            @Suppress("UNCHECKED_CAST")
+            entry.certificateChain as Array<X509Certificate>
+        } catch (e: Exception) {
+            Timber.e(e, "Exception getting certificate chain")
+            null
+        }
+        val key = try {
+            entry.privateKey
+        } catch (e: Exception) {
+            Timber.e(e, "Exception getting private key")
+            null
+        }
+        if (key != null && !chain.isNullOrEmpty()) {
+            ClientCertificate(key, chain)
+        } else {
+            null
+        }
+    }
+
+    /** Must be called while holding [mutex]; runs the blocking [KeyStore] calls on [Dispatchers.IO]. */
+    private suspend fun storeCertificate(key: PrivateKey, chain: Array<X509Certificate>) {
+        withContext(Dispatchers.IO) {
+            try {
+                keyStore().apply {
+                    load(null)
+                    setEntry(ALIAS, PrivateKeyEntry(key, chain), null)
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Exception storing KeyStore.Entry")
+            }
         }
     }
 

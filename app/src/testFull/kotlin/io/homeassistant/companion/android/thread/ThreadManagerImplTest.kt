@@ -256,39 +256,37 @@ class ThreadManagerImplTest {
         }
 
         @Test
-        fun `Given only the server has a dataset and import succeeds when sync then returns OnlyOnServer imported`() =
-            runTest {
-                stubServerSupport(coreSupports = true)
-                mockOrphanCleanup()
-                mockPreferredCredentials(intentSender = null)
-                coEvery { webSocketRepository.getThreadDatasets() } returns
-                    listOf(dataset(datasetId = "server", preferred = true))
-                // No TLV on the server, so the import is a no-op that completes successfully
-                coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
+        fun `Given only the server has a dataset and import succeeds when sync then returns OnlyOnServer imported`() = runTest {
+            stubServerSupport(coreSupports = true)
+            mockOrphanCleanup()
+            mockPreferredCredentials(intentSender = null)
+            coEvery { webSocketRepository.getThreadDatasets() } returns
+                listOf(dataset(datasetId = "server", preferred = true))
+            // No TLV on the server, so the import is a no-op that completes successfully
+            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
 
-                val result = assertInstanceOf(
-                    ThreadManager.SyncResult.OnlyOnServer::class.java,
-                    createManager().syncPreferredDataset(serverId = 1, scope = this),
-                )
-                assertTrue(result.imported)
-            }
+            val result = assertInstanceOf(
+                ThreadManager.SyncResult.OnlyOnServer::class.java,
+                createManager().syncPreferredDataset(serverId = 1, scope = this),
+            )
+            assertTrue(result.imported)
+        }
 
         @Test
-        fun `Given only the server has a dataset and import fails when sync then returns OnlyOnServer not imported`() =
-            runTest {
-                stubServerSupport(coreSupports = true)
-                mockOrphanCleanup()
-                mockPreferredCredentials(intentSender = null)
-                coEvery { webSocketRepository.getThreadDatasets() } returns
-                    listOf(dataset(datasetId = "server", preferred = true))
-                coEvery { webSocketRepository.getThreadDatasetTlv(any()) } throws RuntimeException("import boom")
+        fun `Given only the server has a dataset and import fails when sync then returns OnlyOnServer not imported`() = runTest {
+            stubServerSupport(coreSupports = true)
+            mockOrphanCleanup()
+            mockPreferredCredentials(intentSender = null)
+            coEvery { webSocketRepository.getThreadDatasets() } returns
+                listOf(dataset(datasetId = "server", preferred = true))
+            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } throws RuntimeException("import boom")
 
-                val result = assertInstanceOf(
-                    ThreadManager.SyncResult.OnlyOnServer::class.java,
-                    createManager().syncPreferredDataset(serverId = 1, scope = this),
-                )
-                assertFalse(result.imported)
-            }
+            val result = assertInstanceOf(
+                ThreadManager.SyncResult.OnlyOnServer::class.java,
+                createManager().syncPreferredDataset(serverId = 1, scope = this),
+            )
+            assertFalse(result.imported)
+        }
 
         @Test
         fun `Given only the device has a dataset when sync then returns OnlyOnDevice with intent`() = runTest {
@@ -328,24 +326,23 @@ class ThreadManagerImplTest {
         }
 
         @Test
-        fun `Given both have datasets and the comparison fails when sync then returns AllHaveCredentials with nulls`() =
-            runTest {
-                stubServerSupport(coreSupports = true)
-                mockOrphanCleanup()
-                mockPreferredCredentials(intentSender = mockk())
-                coEvery { webSocketRepository.getThreadDatasets() } returns
-                    listOf(dataset(datasetId = "server", preferred = true))
-                coEvery { webSocketRepository.getThreadDatasetTlv(any()) } throws RuntimeException("compare boom")
+        fun `Given both have datasets and the comparison fails when sync then returns AllHaveCredentials with nulls`() = runTest {
+            stubServerSupport(coreSupports = true)
+            mockOrphanCleanup()
+            mockPreferredCredentials(intentSender = mockk())
+            coEvery { webSocketRepository.getThreadDatasets() } returns
+                listOf(dataset(datasetId = "server", preferred = true))
+            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } throws RuntimeException("compare boom")
 
-                val result = assertInstanceOf(
-                    ThreadManager.SyncResult.AllHaveCredentials::class.java,
-                    createManager().syncPreferredDataset(serverId = 1, scope = this),
-                )
-                assertNull(result.matches)
-                assertNull(result.fromApp)
-                assertNull(result.updated)
-                assertNull(result.exportIntent)
-            }
+            val result = assertInstanceOf(
+                ThreadManager.SyncResult.AllHaveCredentials::class.java,
+                createManager().syncPreferredDataset(serverId = 1, scope = this),
+            )
+            assertNull(result.matches)
+            assertNull(result.fromApp)
+            assertNull(result.updated)
+            assertNull(result.exportIntent)
+        }
 
         @Test
         fun `Given the device already prefers the server dataset when sync then matches without exporting`() = runTest {
@@ -375,65 +372,62 @@ class ThreadManagerImplTest {
         }
 
         @Test
-        fun `Given the device prefers an app-added dataset when sync then updates the device to the server dataset`() =
-            runTest {
-                stubServerSupport(coreSupports = true)
-                mockOrphanCleanup()
-                mockPreferredCredentials(intentSender = mockk())
-                coEvery { webSocketRepository.getThreadDatasets() } returns
-                    listOf(dataset(datasetId = "server", preferred = true))
-                // No TLV, so the device does not prefer the server dataset directly...
-                coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
-                // ...but it does prefer a credential this app added previously
-                mockDeviceCredentialPrefersApp()
+        fun `Given the device prefers an app-added dataset when sync then updates the device to the server dataset`() = runTest {
+            stubServerSupport(coreSupports = true)
+            mockOrphanCleanup()
+            mockPreferredCredentials(intentSender = mockk())
+            coEvery { webSocketRepository.getThreadDatasets() } returns
+                listOf(dataset(datasetId = "server", preferred = true))
+            // No TLV, so the device does not prefer the server dataset directly...
+            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
+            // ...but it does prefer a credential this app added previously
+            mockDeviceCredentialPrefersApp()
 
-                val result = assertInstanceOf(
-                    ThreadManager.SyncResult.AllHaveCredentials::class.java,
-                    createManager().syncPreferredDataset(serverId = 1, scope = this),
-                )
-                assertEquals(false, result.matches)
-                assertEquals(true, result.fromApp)
-                assertEquals(true, result.updated)
-                assertNull(result.exportIntent)
-            }
+            val result = assertInstanceOf(
+                ThreadManager.SyncResult.AllHaveCredentials::class.java,
+                createManager().syncPreferredDataset(serverId = 1, scope = this),
+            )
+            assertEquals(false, result.matches)
+            assertEquals(true, result.fromApp)
+            assertEquals(true, result.updated)
+            assertNull(result.exportIntent)
+        }
 
         @Test
-        fun `Given a foreign-sourced server dataset preferred via an app credential when sync then removes it`() =
-            runTest {
-                stubServerSupport(coreSupports = true)
-                mockOrphanCleanup()
-                mockPreferredCredentials(intentSender = mockk())
-                // The server's preferred dataset reports it originated from another app (not HA), so HA
-                // should stop managing it: remove its own contributed credential without re-importing.
-                coEvery { webSocketRepository.getThreadDatasets() } returns
-                    listOf(dataset(datasetId = "server", preferred = true, source = "Google"))
-                // No TLV, so the device does not prefer the server dataset directly...
-                coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
-                // ...but it does prefer a credential this app added previously, which is what lets HA
-                // remove it. A credential added by another app could not be removed here (see the
-                // "neither is device-preferred" test, which exports instead of removing).
-                mockDeviceCredentialPrefersApp()
+        fun `Given a foreign-sourced server dataset preferred via an app credential when sync then removes it`() = runTest {
+            stubServerSupport(coreSupports = true)
+            mockOrphanCleanup()
+            mockPreferredCredentials(intentSender = mockk())
+            // The server's preferred dataset reports it originated from another app (not HA), so HA
+            // should stop managing it: remove its own contributed credential without re-importing.
+            coEvery { webSocketRepository.getThreadDatasets() } returns
+                listOf(dataset(datasetId = "server", preferred = true, source = "Google"))
+            // No TLV, so the device does not prefer the server dataset directly...
+            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
+            // ...but it does prefer a credential this app added previously, which is what lets HA
+            // remove it. A credential added by another app could not be removed here (see the
+            // "neither is device-preferred" test, which exports instead of removing).
+            mockDeviceCredentialPrefersApp()
 
-                val result = assertInstanceOf(
-                    ThreadManager.SyncResult.AllHaveCredentials::class.java,
-                    createManager().syncPreferredDataset(serverId = 1, scope = this),
-                )
-                assertEquals(false, result.matches)
-                assertEquals(true, result.fromApp)
-                assertEquals(false, result.updated)
-                assertNull(result.exportIntent)
-            }
+            val result = assertInstanceOf(
+                ThreadManager.SyncResult.AllHaveCredentials::class.java,
+                createManager().syncPreferredDataset(serverId = 1, scope = this),
+            )
+            assertEquals(false, result.matches)
+            assertEquals(true, result.fromApp)
+            assertEquals(false, result.updated)
+            assertNull(result.exportIntent)
+        }
     }
 
-    private fun dataset(datasetId: String, preferred: Boolean, source: String = "HomeAssistant") =
-        ThreadDatasetResponse(
-            datasetId = datasetId,
-            extendedPanId = "extended-pan-id",
-            networkName = "network-$datasetId",
-            panId = "pan-id",
-            preferred = preferred,
-            source = source,
-        )
+    private fun dataset(datasetId: String, preferred: Boolean, source: String = "HomeAssistant") = ThreadDatasetResponse(
+        datasetId = datasetId,
+        extendedPanId = "extended-pan-id",
+        networkName = "network-$datasetId",
+        panId = "pan-id",
+        preferred = preferred,
+        source = source,
+    )
 
     private fun stubServerSupport(coreSupports: Boolean) {
         coEvery { serverManager.isRegistered() } returns true

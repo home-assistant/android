@@ -34,15 +34,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -54,8 +54,6 @@ import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExpos
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import io.homeassistant.companion.android.util.getHexForColor
-import io.homeassistant.companion.android.util.previewEntity1
-import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
@@ -67,14 +65,20 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     companion object {
         private const val FOR_ENTITY = "for_entity"
 
-        fun newInstance(context: Context, entityId: String): Intent {
+        fun newInstance(context: Context, entityId: String? = null): Intent {
             return Intent(context, TodoWidgetConfigureActivity::class.java).apply {
-                putExtra(FOR_ENTITY, entityId)
+                entityId?.let { putExtra(FOR_ENTITY, it) }
                 putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
         }
     }
+
+    private val widgetId: Int
+        get() = intent.extras?.getInt(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID,
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
     private val viewModel: TodoWidgetConfigureViewModel by viewModels(
         extrasProducer = {
@@ -97,10 +101,6 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
-        val widgetId = intent.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
         viewModel.onSetup(widgetId, supportedTextColors)
 
@@ -143,7 +143,10 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     private suspend fun onUpdateWidget() {
         try {
             viewModel.updateWidgetConfiguration()
-            setResult(RESULT_OK)
+            setResult(
+                RESULT_OK,
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId),
+            )
             viewModel.updateWidget(this@TodoWidgetConfigureActivity)
             finish()
         } catch (_: Exception) {
@@ -163,16 +166,13 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 @Composable
 private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, onActionClick: () -> Unit) {
     val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
-    val entities by viewModel.entities.collectAsStateWithLifecycle()
-    val entityRegistry by viewModel.entityRegistry.collectAsStateWithLifecycle()
-    val deviceRegistry by viewModel.deviceRegistry.collectAsStateWithLifecycle()
-    val areaRegistry by viewModel.areaRegistry.collectAsStateWithLifecycle()
+    val entitiesState by viewModel.displayEntities.collectAsStateWithLifecycle()
 
     TodoWidgetConfigureView(
         servers = servers,
         selectedServerId = viewModel.selectedServerId,
         onServerSelected = viewModel::setServer,
-        entities = entities,
+        entitiesState = entitiesState,
         selectedEntityId = viewModel.selectedEntityId,
         onEntitySelected = { viewModel.selectedEntityId = it },
         showCompleted = viewModel.showCompletedState,
@@ -183,9 +183,6 @@ private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, o
         onTextColorSelected = { viewModel.textColorIndex = it },
         isUpdateWidget = viewModel.isUpdateWidget,
         onActionClick = onActionClick,
-        entityRegistry = entityRegistry,
-        deviceRegistry = deviceRegistry,
-        areaRegistry = areaRegistry,
     )
 }
 
@@ -194,7 +191,7 @@ private fun TodoWidgetConfigureView(
     servers: List<Server>,
     selectedServerId: Int,
     onServerSelected: (Int) -> Unit,
-    entities: List<Entity>,
+    entitiesState: EntityDisplayState<EntityDisplayWithContext>,
     selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
     showCompleted: Boolean,
@@ -205,9 +202,6 @@ private fun TodoWidgetConfigureView(
     onTextColorSelected: (Int) -> Unit,
     isUpdateWidget: Boolean,
     onActionClick: () -> Unit,
-    entityRegistry: List<EntityRegistryResponse>? = null,
-    deviceRegistry: List<DeviceRegistryResponse>? = null,
-    areaRegistry: List<AreaRegistryResponse>? = null,
 ) {
     Scaffold(
         topBar = {
@@ -239,13 +233,9 @@ private fun TodoWidgetConfigureView(
             // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6303
             HATheme {
                 EntityPicker(
-                    entities = entities,
+                    displayState = entitiesState,
                     selectedEntityId = selectedEntityId,
-                    onEntitySelectedId = { onEntitySelected(it) },
-                    onEntityCleared = { onEntitySelected(null) },
-                    entityRegistry = entityRegistry,
-                    deviceRegistry = deviceRegistry,
-                    areaRegistry = areaRegistry,
+                    onSelectionChanged = onEntitySelected,
                     addButtonText = stringResource(commonR.string.todo_widget_select_list),
                 )
             }
@@ -309,11 +299,8 @@ private fun TodoWidgetConfigureViewPreview() {
             ),
             selectedServerId = 0,
             onServerSelected = {},
-            entities = listOf(
-                previewEntity1,
-                previewEntity2,
-            ),
-            selectedEntityId = previewEntity1.entityId,
+            entitiesState = EntityDisplayState.Loaded(previewDisplayEntities),
+            selectedEntityId = previewDisplayEntities.first().entityId,
             onEntitySelected = {},
             showCompleted = true,
             onShowCompletedChanged = {},
@@ -326,3 +313,21 @@ private fun TodoWidgetConfigureViewPreview() {
         )
     }
 }
+
+private val previewDisplayEntities = listOf(
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "todo.shopping_list",
+            name = "Shopping List",
+            icon = CommunityMaterial.Icon.cmd_clipboard_list,
+        ),
+        areaName = "Kitchen",
+    ),
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "todo.chores",
+            name = "Chores",
+            icon = CommunityMaterial.Icon.cmd_clipboard_list,
+        ),
+    ),
+)

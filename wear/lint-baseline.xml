@@ -114,12 +114,12 @@
     <issue
         id="LocalContextGetResourceValueCall"
         message="Querying resource values using LocalContext.current"
-        errorLine1="    return SensorReceiver.MANAGERS.sortedBy { context.getString(it.name) }.filter { it.hasSensor(context) }"
-        errorLine2="                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="    return allManagers.sortedBy { context.getString(it.name) }.filter { it.hasSensor() }"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/home/views/SensorsView.kt"
-            line="49"
-            column="47"/>
+            line="48"
+            column="35"/>
     </issue>
 
     <issue

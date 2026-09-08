@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.onboarding.locationsharing
 
-import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -18,7 +18,7 @@ import org.junit.jupiter.params.provider.ValueSource
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class LocationSharingViewModelTest {
     private val serverId = 42
-    private val sensorDao: SensorDao = mockk(relaxUnitFun = true)
+    private val sensorRepository: SensorRepository = mockk(relaxUnitFun = true)
 
     private lateinit var viewModel: LocationSharingViewModel
 
@@ -32,7 +32,7 @@ class LocationSharingViewModelTest {
     fun setup() {
         viewModel = LocationSharingViewModel(
             serverId = serverId,
-            sensorDao = sensorDao,
+            sensorRepository = sensorRepository,
         )
     }
 
@@ -46,7 +46,7 @@ class LocationSharingViewModelTest {
         runCurrent()
 
         coVerify {
-            sensorDao.setSensorsEnabled(
+            sensorRepository.setSensorsEnabled(
                 sensorIds = locationSensorIds,
                 serverId = serverId,
                 enabled = enabled,
@@ -55,16 +55,16 @@ class LocationSharingViewModelTest {
     }
 
     @Test
-    fun `Given sensorDao throws exception When setupLocationSensor is called Then exception is caught`() = runTest {
+    fun `Given repository throws exception When setupLocationSensor is called Then exception is caught`() = runTest {
         val enabled = true
-        val exception = RuntimeException("Test exception from sensorDao")
-        coEvery { sensorDao.setSensorsEnabled(any(), any(), any()) } throws exception
+        val exception = RuntimeException("Test exception from repository")
+        coEvery { sensorRepository.setSensorsEnabled(any(), any(), any()) } throws exception
 
         viewModel.setupLocationSensor(enabled)
         runCurrent()
 
         coVerify {
-            sensorDao.setSensorsEnabled(
+            sensorRepository.setSensorsEnabled(
                 sensorIds = locationSensorIds,
                 serverId = serverId,
                 enabled = enabled,

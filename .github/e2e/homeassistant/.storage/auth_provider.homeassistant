@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "auth_provider.homeassistant",
+  "data": {
+    "users": [
+      {
+        "username": "citest",
+        "password": "JDJiJDEyJG9Cb2pUbXFaMTgzaWZIc0pqOHZCdXVFUVhYZzFKOElQdXY0SlRnQnNDUnpYck42UnZjdUNL"
+      }
+    ]
+  }
+}

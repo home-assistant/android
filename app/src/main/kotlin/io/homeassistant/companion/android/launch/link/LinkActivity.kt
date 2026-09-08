@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.startLaunchInvitation
 import io.homeassistant.companion.android.launch.startLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.server.ServerChooser
@@ -83,7 +84,7 @@ class LinkActivity : BaseActivity() {
         when (event) {
             LinkNavigationEvent.Finish -> Unit
             is LinkNavigationEvent.OpenInvitation -> startLaunchInvitation(event.serverUrl)
-            is LinkNavigationEvent.NavigateToWebView -> startLaunchWithNavigateTo(event.path, event.serverId)
+            is LinkNavigationEvent.NavigateToWebView -> startLaunchWithNavigateTo(event.target, event.serverId)
         }
         finish()
     }
@@ -127,7 +128,7 @@ private fun LinkActivityScreenPreview() {
                     ServerChooserItem(serverId = 1, userName = "Alice Smith", serverName = "Home"),
                     ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Friends home"),
                 ),
-                path = "/lovelace",
+                target = FrontendTarget.Path("/lovelace"),
             ),
             onServerSelected = {},
             onServerChooserDismissed = {},

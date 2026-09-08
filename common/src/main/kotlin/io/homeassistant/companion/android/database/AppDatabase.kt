@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
 import io.homeassistant.companion.android.database.migration.Migration27to28
 import io.homeassistant.companion.android.database.migration.Migration36to37
+import io.homeassistant.companion.android.database.migration.Migration52to53
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.qs.TileDao
@@ -74,7 +75,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         Server::class,
         Setting::class,
     ],
-    version = 52,
+    version = 53,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -102,6 +103,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         AutoMigration(from = 49, to = 50),
         AutoMigration(from = 50, to = 51),
         AutoMigration(from = 51, to = 52),
+        AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
     ],
 )
 @TypeConverters(

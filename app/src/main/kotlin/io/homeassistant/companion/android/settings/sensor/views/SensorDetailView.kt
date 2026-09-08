@@ -66,6 +66,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -103,15 +104,19 @@ fun SensorDetailView(
     val context = LocalContext.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
 
+    val sensor by viewModel.sensor.collectAsStateWithLifecycle()
+    val sensors by viewModel.sensors.collectAsStateWithLifecycle()
+    val sensorSettings by viewModel.sensorSettings.collectAsStateWithLifecycle()
+
     var sensorEnabled by remember { mutableStateOf(false) }
     val showPrivacyHint by viewModel.showPrivacyHint.collectAsState()
 
     LaunchedEffect(Unit) {
-        sensorEnabled = viewModel.sensor?.sensor?.enabled
+        sensorEnabled = sensor?.sensor?.enabled
             ?: (
                 viewModel.basicSensor != null &&
                     viewModel.basicSensor.enabledByDefault &&
-                    viewModel.sensorManager?.checkPermission(context, viewModel.basicSensor.id) == true
+                    viewModel.sensorManager?.checkPermission(viewModel.basicSensor.id) == true
                 )
     }
 
@@ -193,7 +198,7 @@ fun SensorDetailView(
                 item {
                     SensorDetailTopPanel(
                         basicSensor = viewModel.basicSensor,
-                        dbSensor = viewModel.sensors,
+                        dbSensor = sensors,
                         sensorsExpanded = viewModel.serversStateExpand.value,
                         serverNames = viewModel.serverNames,
                         onSetEnabled = onSetEnabled,
@@ -257,7 +262,7 @@ fun SensorDetailView(
                         sensorUpdateTypeInfo = true
                     }
                 }
-                viewModel.sensor?.let { sensor ->
+                sensor?.let { sensor ->
                     if (sensor.sensor.enabled && sensor.attributes.isNotEmpty()) {
                         item {
                             SettingsSubheader(stringResource(commonR.string.attributes))
@@ -292,11 +297,11 @@ fun SensorDetailView(
                             )
                         }
                     }
-                    if (sensor.sensor.enabled && viewModel.sensorSettings.value.isNotEmpty()) {
+                    if (sensor.sensor.enabled && sensorSettings.isNotEmpty()) {
                         item {
                             SettingsSubheader(stringResource(commonR.string.sensor_settings))
                         }
-                        items(viewModel.sensorSettings.value, key = { "${it.sensorId}-${it.name}" }) { setting ->
+                        items(sensorSettings, key = { "${it.sensorId}-${it.name}" }) { setting ->
                             when (setting.valueType) {
                                 SensorSettingType.TOGGLE -> {
                                     SensorDetailRow(
@@ -638,7 +643,7 @@ fun SensorDetailSettingDialog(
                             multiple = state.setting.valueType != SensorSettingType.LIST,
                             onClick = { isChecked ->
                                 if (state.setting.valueType == SensorSettingType.LIST) {
-                                    inputValue.value = entry.id
+                                    inputValue.value = id
                                     onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
                                 } else {
                                     if (checkedValue.contains(entry.id) && !isChecked) {

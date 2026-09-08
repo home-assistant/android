@@ -10,15 +10,15 @@ data class Sensor(
     @ColumnInfo(name = "server_id", defaultValue = "0")
     val serverId: Int,
     @ColumnInfo(name = "enabled")
-    var enabled: Boolean,
+    val enabled: Boolean,
     @ColumnInfo(name = "registered", defaultValue = "NULL")
-    var registered: Boolean? = null,
+    val registered: Boolean? = null,
     @ColumnInfo(name = "state")
     val state: String,
     @ColumnInfo(name = "last_sent_state", defaultValue = "NULL")
-    var lastSentState: String? = null,
+    val lastSentState: String? = null,
     @ColumnInfo(name = "last_sent_icon", defaultValue = "NULL")
-    var lastSentIcon: String? = null,
+    val lastSentIcon: String? = null,
     @ColumnInfo(name = "state_type")
     val stateType: String = "",
     @ColumnInfo(name = "type")
@@ -36,7 +36,7 @@ data class Sensor(
     @ColumnInfo(name = "entity_category")
     val entityCategory: String? = null,
     @ColumnInfo(name = "core_registration")
-    var coreRegistration: String? = null,
+    val coreRegistration: String? = null,
     @ColumnInfo(name = "app_registration")
-    var appRegistration: String? = null,
+    val appRegistration: String? = null,
 )

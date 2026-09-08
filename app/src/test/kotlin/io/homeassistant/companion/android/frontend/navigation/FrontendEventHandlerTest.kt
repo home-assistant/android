@@ -7,6 +7,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.mockk.mockk
@@ -165,6 +166,41 @@ class FrontendEventHandlerTest {
 
         assertEquals("OK", capturedMessage)
         assertNull(capturedAction)
+    }
+
+    @Test
+    fun `Given ShowSnackbar with format args then onShowSnackbar is called with the formatted message`() {
+        var capturedMessage: String? = null
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { message, _ ->
+                    capturedMessage = message
+                    false
+                },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(
+            FrontendEvent.ShowSnackbar(
+                messageResId = commonR.string.error_ssl_subresource_host,
+                formatArgs = listOf("analytics.example.com"),
+            ),
+        )
+        composeTestRule.waitForIdle()
+
+        assertEquals("Content from analytics.example.com could not be loaded securely.", capturedMessage)
     }
 
     @Test
@@ -363,6 +399,90 @@ class FrontendEventHandlerTest {
         composeTestRule.waitForIdle()
 
         assertEquals("intent://scan#Intent;end", capturedIntentUri)
+    }
+
+    @Test
+    fun `Given OpenSecuritySettings event then onOpenSecuritySettings is called`() {
+        var securitySettingsOpened = false
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+                onOpenSecuritySettings = { securitySettingsOpened = true },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.OpenSecuritySettings)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, securitySettingsOpened)
+    }
+
+    @Test
+    fun `Given UpdateWebView event then onUpdateWebView is called`() {
+        var webViewUpdated = false
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+                onUpdateWebView = { webViewUpdated = true },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.UpdateWebView)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, webViewUpdated)
+    }
+
+    @Test
+    fun `Given Relaunch event then onRelaunch is called`() {
+        var relaunched = false
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+                onRelaunch = { relaunched = true },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.Relaunch)
+        composeTestRule.waitForIdle()
+
+        assertEquals(true, relaunched)
     }
 
     @Test
