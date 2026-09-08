@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>UseCheckOrError:MicroWakeWord.kt:MicroWakeWord$throw IllegalStateException("Failed to create native MicroWakeWord engine")</ID>
+  </CurrentIssues>
+</SmellBaseline>
