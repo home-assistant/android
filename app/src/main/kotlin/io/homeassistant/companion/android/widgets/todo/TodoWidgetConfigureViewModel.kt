@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.widgets.todo
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.os.RemoteException
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,6 +21,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -137,13 +141,21 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
     /**
      * Asks the launcher to pin the configured widget and suspends until it is added, reporting
      * through [errors] and returning false when the widget cannot be requested at all.
-     *
-     * **WARNING**: This function does not handle user cancellation. If a user cancels the widget creation,
-     * this function will not return. If this function is called again and the user does not cancel,
-     * both calls to the function will return. While this behavior could be avoided,
-     * it does not cause issues in the current implementation as returning multiple times has no adverse effects.
      */
+    @SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs.
     suspend fun requestWidgetCreation(context: Context): Boolean {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+            Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        if (!isPinningSupported(context)) {
+            Timber.e("Cannot pin the widget, the launcher does not support it")
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
         val widget = getPendingDaoEntity()
         if (widget == null) {
             _errors.emit(commonR.string.widget_creation_error)
@@ -173,7 +185,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
             }.first()
 
         if (!requestAccepted) {
-            Timber.e("The launcher rejected the widget pin request or does not support pinning")
+            Timber.e("The launcher rejected the widget pin request")
             _errors.emit(commonR.string.widget_creation_error)
         }
         return requestAccepted
@@ -272,6 +284,14 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
     interface Factory {
         fun create(widgetId: Int, preselectedEntityId: String?): TodoWidgetConfigureViewModel
     }
+}
+
+@SuppressLint("NewApi")
+private fun isPinningSupported(context: Context): Boolean = try {
+    AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported
+} catch (e: RemoteException) {
+    Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
+    false
 }
 
 /**

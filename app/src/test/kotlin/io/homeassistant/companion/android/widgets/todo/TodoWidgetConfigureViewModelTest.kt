@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.widgets.todo
 
 import android.appwidget.AppWidgetManager
+import android.os.Build
+import android.os.RemoteException
 import app.cash.turbine.test
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R as commonR
@@ -13,6 +15,7 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
@@ -22,9 +25,12 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -205,6 +211,30 @@ class TodoWidgetConfigureViewModelTest {
     }
 
     @Test
+    fun `Given an SDK below Oreo when widget creation is requested then an error is reported`() = runTest {
+        SdkVersion.sdkInt = Build.VERSION_CODES.N
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.errors.test {
+            assertFalse(viewModel.requestWidgetCreation(mockk()))
+            assertEquals(commonR.string.widget_creation_error, awaitItem())
+        }
+    }
+
+    @Test
+    fun `Given a launcher that does not support pinning when widget creation is requested then an error is reported`() = runTest {
+        assertWidgetCreationFailsWhenPinningUnsupported { every { isRequestPinAppWidgetSupported } returns false }
+    }
+
+    @Test
+    fun `Given pinning support cannot be read when widget creation is requested then an error is reported`() = runTest {
+        assertWidgetCreationFailsWhenPinningUnsupported {
+            every { isRequestPinAppWidgetSupported } throws RemoteException("binder")
+        }
+    }
+
+    @Test
     fun `Given no registered server when created then the picker is empty and the action is disabled`() = runTest {
         coEvery { serverManager.isRegistered() } returns false
 
@@ -215,6 +245,28 @@ class TodoWidgetConfigureViewModelTest {
         assertEquals(EntityDisplayState.Loaded(emptyList<EntityDisplayWithContext>()), state.entityDisplayState)
         assertNull(state.selectedEntityId)
         assertFalse(state.isActionEnabled)
+    }
+
+    private suspend fun TestScope.assertWidgetCreationFailsWhenPinningUnsupported(
+        configure: AppWidgetManager.() -> Unit,
+    ) {
+        SdkVersion.sdkInt = Build.VERSION_CODES.O
+        mockkStatic(AppWidgetManager::class)
+        try {
+            val appWidgetManager = mockk<AppWidgetManager>()
+            every { AppWidgetManager.getInstance(any()) } returns appWidgetManager
+            appWidgetManager.configure()
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.errors.test {
+                assertFalse(viewModel.requestWidgetCreation(mockk()))
+                assertEquals(commonR.string.widget_creation_error, awaitItem())
+            }
+        } finally {
+            unmockkStatic(AppWidgetManager::class)
+        }
     }
 
     private fun createViewModel(preselectedEntityId: String? = null, widgetId: Int = this.widgetId) = TodoWidgetConfigureViewModel(
