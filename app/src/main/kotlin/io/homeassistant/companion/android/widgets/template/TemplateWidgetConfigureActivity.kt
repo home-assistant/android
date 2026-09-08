@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.widgets.template
 
 import android.appwidget.AppWidgetManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -15,6 +16,15 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class TemplateWidgetConfigureActivity : BaseActivity() {
+
+    companion object {
+        fun newInstance(context: Context): Intent {
+            return Intent(context, TemplateWidgetConfigureActivity::class.java).apply {
+                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+        }
+    }
 
     private val widgetId: Int
         get() = intent.extras?.getInt(

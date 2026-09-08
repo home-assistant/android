@@ -36,10 +36,13 @@ internal data class TemplateWidgetConfigureState(
     val showServerSelector = serversDropdownItems.size > 1 ||
         serversDropdownItems.none { it.key == selectedServerId }
 
+    @StringRes
+    val textSizeError = commonR.string.widget_text_size_error.takeIf { validTextSize == null }
+
     // Guards against saving a template that hasn't been (re-)validated yet: without
     // `!isRenderingPreview`, editing an already-valid template would keep the action enabled
     // using the *previous* render's result while the new one is still in flight.
-    val isActionEnabled = preview is TemplatePreview.Rendered && !isRenderingPreview && validTextSize != null
+    val isActionEnabled = preview is TemplatePreview.Rendered && !isRenderingPreview && textSizeError == null
 
     @StringRes
     val actionButtonLabel = if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget

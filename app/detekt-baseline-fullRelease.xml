@@ -130,7 +130,6 @@
     <ID>InjectDispatcher:SettingsWearFavoritesView.kt:IO</ID>
     <ID>InjectDispatcher:TLSWebViewClient.kt:SafeKeyChainAliasCallback$IO</ID>
     <ID>InjectDispatcher:TemplateWidget.kt:TemplateWidget.Companion$Default</ID>
-    <ID>InjectDispatcher:TemplateWidgetConfigureActivity.kt:TemplateWidgetConfigureActivity$IO</ID>
     <ID>InjectDispatcher:TileExtensions.kt:TileExtensions$IO</ID>
     <ID>InjectDispatcher:WakeWordListener.kt:IO</ID>
     <ID>InjectDispatcher:WearDnsRequestListener.kt:WearDnsRequestListener$IO</ID>
@@ -216,7 +215,6 @@
     <ID>LongMethod:TagReaderScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun TagReaderScreen</ID>
     <ID>LongMethod:TemplateComponents.kt:@RequiresApi(Build.VERSION_CODES.O) fun getDomainList: ItemList.Builder</ID>
     <ID>LongMethod:TemplateWidget.kt:TemplateWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
-    <ID>LongMethod:TemplateWidgetConfigureActivity.kt:TemplateWidgetConfigureActivity$public override fun onCreate</ID>
     <ID>LongMethod:ThreadManagerImpl.kt:ThreadManagerImpl$private suspend fun fullSyncPreferredDataset: ThreadManager.SyncResult</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun tileClicked</ID>
@@ -428,6 +426,7 @@
     <ID>ReturnCount:SettingsWearViewModel.kt:SettingsWearViewModel$private suspend fun updateServer</ID>
     <ID>ReturnCount:SsidViewModel.kt:SsidViewModel$fun addHomeWifiSsid: Boolean</ID>
     <ID>ReturnCount:TLSWebViewClient.kt:TLSWebViewClient$private fun getActivity: Activity?</ID>
+    <ID>ReturnCount:TemplateWidgetConfigureViewModel.kt:TemplateWidgetConfigureViewModel$@SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs. suspend fun requestWidgetCreation: Boolean</ID>
     <ID>ReturnCount:ThreadManagerImpl.kt:ThreadManagerImpl$override suspend fun exportPreferredDataset: ThreadManager.SyncResult.ExportResult</ID>
     <ID>ReturnCount:ThreadManagerImpl.kt:ThreadManagerImpl$override suspend fun syncPreferredDataset: ThreadManager.SyncResult</ID>
     <ID>ReturnCount:TileExtensions.kt:TileExtensions$private fun getTileIcon: Bitmap?</ID>
@@ -517,7 +516,6 @@
     <ID>UnsafeCallOnNullableType:LastAppSensorManager.kt:LastAppSensorManager$applicationContext.getSystemService&lt;UsageStatsManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:LocationSensorManager.kt:LocationSensorManager$geofencingEvent.triggeringGeofences!!</ID>
     <ID>UnsafeCallOnNullableType:LocationSensorManager.kt:LocationSensorManager$geofencingEvent.triggeringLocation!!</ID>
-    <ID>UnsafeCallOnNullableType:LocationSensorManager.kt:LocationSensorManager.&lt;no name provided&gt;$locationResult.lastLocation!!</ID>
     <ID>UnsafeCallOnNullableType:ManageControlsViewModel.kt:ManageControlsViewModel$it.key!!</ID>
     <ID>UnsafeCallOnNullableType:ManageShortcutsView.kt:shortcut.id.value!!</ID>
     <ID>UnsafeCallOnNullableType:MapVehicleScreen.kt:MapVehicleScreen$it.coordinates!!</ID>

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.template
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -142,6 +143,7 @@ internal fun TemplateWidgetConfigureContent(
             )
             AppearanceSection(
                 textSize = state.textSize,
+                textSizeError = state.textSizeError,
                 selectedBackgroundType = state.selectedBackgroundType,
                 dynamicColorAvailable = state.dynamicColorAvailable,
                 textColorHex = state.textColorHex,
@@ -240,6 +242,7 @@ private fun TemplatePreview.toAnnotatedString(): AnnotatedString = when (this) {
 @Composable
 private fun ColumnScope.AppearanceSection(
     textSize: String,
+    @StringRes textSizeError: Int?,
     selectedBackgroundType: WidgetBackgroundType,
     dynamicColorAvailable: Boolean,
     textColorHex: String?,
@@ -250,7 +253,9 @@ private fun ColumnScope.AppearanceSection(
     HATextField(
         value = textSize,
         onValueChange = onTextSizeChanged,
+        isError = textSizeError != null,
         label = { Text(stringResource(commonR.string.widget_text_size_label)) },
+        supportingText = textSizeError?.let { { Text(stringResource(it)) } },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         maxLines = 1,
         modifier = Modifier.formControlWidth(),

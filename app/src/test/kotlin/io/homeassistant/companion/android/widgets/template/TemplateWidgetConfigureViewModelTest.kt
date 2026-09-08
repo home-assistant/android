@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.widgets.template
 
+import android.appwidget.AppWidgetManager
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -18,6 +20,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -118,6 +121,28 @@ class TemplateWidgetConfigureViewModelTest {
         viewModel.onTextSizeChanged("")
 
         assertFalse(viewModel.state.value.isActionEnabled)
+    }
+
+    @Test
+    fun `Given an invalid text size when state is read then the error is set and the action is disabled`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onTextSizeChanged("")
+
+        val state = viewModel.state.value
+        assertEquals(commonR.string.widget_text_size_error, state.textSizeError)
+        assertFalse(state.isActionEnabled)
+    }
+
+    @Test
+    fun `Given a valid text size when state is read then no error is reported`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onTextSizeChanged("24")
+
+        assertNull(viewModel.state.value.textSizeError)
     }
 
     @Test
@@ -240,7 +265,21 @@ class TemplateWidgetConfigureViewModelTest {
         assertFalse(viewModel.updateWidgetConfiguration())
     }
 
-    private fun createViewModel() = TemplateWidgetConfigureViewModel(
+    @Test
+    fun `Given an invalid widget id when configuration is saved then nothing is persisted`() = runTest {
+        coEvery { integrationRepository.renderTemplate("{{ 1 }}", emptyMap()) } returns "1"
+        val viewModel = createViewModel(widgetId = AppWidgetManager.INVALID_APPWIDGET_ID)
+        advanceUntilIdle()
+        viewModel.onTemplateChanged("{{ 1 }}")
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.isActionEnabled)
+
+        assertFalse(viewModel.updateWidgetConfiguration())
+
+        coVerify(exactly = 0) { dao.add(any()) }
+    }
+
+    private fun createViewModel(widgetId: Int = this.widgetId) = TemplateWidgetConfigureViewModel(
         templateWidgetDao = dao,
         serverManager = serverManager,
         widgetId = widgetId,

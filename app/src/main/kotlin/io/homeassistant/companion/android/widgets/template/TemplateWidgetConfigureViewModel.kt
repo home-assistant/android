@@ -119,6 +119,11 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
      * cannot be saved.
      */
     suspend fun updateWidgetConfiguration(): Boolean {
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            Timber.e("Cannot save the widget configuration, the widget ID is invalid")
+            _errors.emit(commonR.string.widget_update_error)
+            return false
+        }
         val widget = getPendingDaoEntity()
         if (widget == null) {
             _errors.emit(commonR.string.widget_update_error)
@@ -202,7 +207,12 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
      * Restores the configuration of an existing widget, or falls back to the active server for a new one.
      */
     private suspend fun restoreConfiguration() {
-        val widget = templateWidgetDao.get(widgetId)
+        // The launcher pin flow opens this screen without a widget ID, so there is nothing to restore.
+        val widget = if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+            templateWidgetDao.get(widgetId)
+        } else {
+            null
+        }
 
         if (widget == null) {
             _state.update {

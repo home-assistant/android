@@ -44,6 +44,7 @@ class TemplateWidgetConfigureScreenTest {
     fun `Given no rendered template when displayed then the action is disabled`() {
         composeTestRule.apply {
             testScreen(singleServerState) {
+                onNodeWithText(activity.getString(commonR.string.empty_template)).assertIsDisplayed()
                 onNodeWithText(activity.getString(commonR.string.add_widget))
                     .performScrollTo()
                     .assertIsNotEnabled()
@@ -162,15 +163,6 @@ class TemplateWidgetConfigureScreenTest {
     }
 
     @Test
-    fun `Given an empty template when displayed then the preview shows the empty message`() {
-        composeTestRule.apply {
-            testScreen(singleServerState) {
-                onNodeWithText(activity.getString(commonR.string.empty_template)).assertIsDisplayed()
-            }
-        }
-    }
-
-    @Test
     fun `Given a rendered template when displayed then the preview shows the rendered text`() {
         composeTestRule.apply {
             testScreen(renderedState) {
@@ -180,7 +172,7 @@ class TemplateWidgetConfigureScreenTest {
     }
 
     @Test
-    fun `Given a template render error when displayed then the preview shows the error message`() {
+    fun `Given a template render error when displayed then the preview shows the error message and action disabled`() {
         composeTestRule.apply {
             testScreen(
                 singleServerState.copy(
@@ -189,6 +181,23 @@ class TemplateWidgetConfigureScreenTest {
                 ),
             ) {
                 onNodeWithText(activity.getString(commonR.string.template_render_error)).assertIsDisplayed()
+                onNodeWithText(activity.getString(commonR.string.add_widget))
+                    .performScrollTo()
+                    .assertIsNotEnabled()
+            }
+        }
+    }
+
+    @Test
+    fun `Given an invalid text size when displayed then the accepted values are explained`() {
+        composeTestRule.apply {
+            testScreen(renderedState.copy(textSize = "")) {
+                onNodeWithText(activity.getString(commonR.string.widget_text_size_error))
+                    .performScrollTo()
+                    .assertIsDisplayed()
+                onNodeWithText(activity.getString(commonR.string.add_widget))
+                    .performScrollTo()
+                    .assertIsNotEnabled()
             }
         }
     }
