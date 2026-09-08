@@ -75,7 +75,7 @@ fun IconDialogGridM3(
 ) {
     var icons by remember { mutableStateOf<List<IIcon>>(emptyList()) }
     LaunchedEffect(typeface, searchQuery) {
-        icons = withContext(Dispatchers.IO) {
+        icons = withContext(Dispatchers.Default) {
             iconFilter.queryIcons(typeface, searchQuery)
         }
     }

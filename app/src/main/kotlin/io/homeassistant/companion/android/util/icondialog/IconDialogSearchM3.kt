@@ -8,11 +8,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import io.homeassistant.companion.android.common.compose.composable.HATextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale
@@ -26,8 +23,8 @@ fun IconDialogSearchM3(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isEnglish by remember { mutableStateOf(Locale.current.language == "en") }
-    TextField(
+    val isEnglish = Locale.current.language == "en"
+    HATextField(
         modifier = modifier.fillMaxWidth(),
         value = value,
         onValueChange = onValueChange,

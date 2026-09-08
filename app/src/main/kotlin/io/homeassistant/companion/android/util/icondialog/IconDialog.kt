@@ -37,7 +37,10 @@ fun IconDialogContent(
 }
 
 @Deprecated(
-    "Uses Material Design 2. Use IconDialogM3 (Material Design 3) instead.",
+    message = "Uses Material Design 2. Use IconDialogM3 (Material Design 3) instead.",
+    replaceWith = ReplaceWith(
+        "IconDialogM3(onSelect = onSelect, onDismissRequest = onDismissRequest, modifier = modifier, iconFilter = iconFilter)",
+    ),
 )
 @Composable
 fun IconDialog(
