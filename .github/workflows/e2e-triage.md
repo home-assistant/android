@@ -86,13 +86,13 @@ The nightly `E2E` workflow failed. Work out why, and report it. You are diagnosi
 
 ## How to investigate
 
-Read `.agents/skills/ha-android-e2e-debugging/SKILL.md` and follow the procedure in it. Skip its step 0: the artifacts are already on disk. That skill is the source of truth for the triage order, for what each artifact contains, and for the known flake patterns. Do not invent your own order.
+Read `.agents/skills/ha-android-e2e-debugging/SKILL.md` and follow the procedure in it. Skip its step 1: the artifacts are already on disk. That skill is the source of truth for the triage order, for what each artifact contains, and for the known flake patterns. Do not invent your own order.
 
 Start by identifying which step of the workflow failed. A failure in the build, the Home Assistant container, or the emulator session is not a Maestro failure at all, and the Maestro report will be empty or missing.
 
 ## What to report
 
-Step 5 of the skill defines what a report contains and where it goes. Follow it exactly, and do not add sections of your own. In particular: everything goes into this repository's `e2e-failure` issue, including an upstream finding and the fix you propose for it. You have no write access to `home-assistant/core` or `home-assistant/frontend`, and must not try to open anything there.
+Step 3 of the skill defines what a report contains and where it goes. Follow it exactly, and do not add sections of your own. In particular: everything goes into this repository's `e2e-failure` issue, including an upstream finding and the fix you propose for it. You have no write access to `home-assistant/core` or `home-assistant/frontend`, and must not try to open anything there.
 
 Search the repository for an open issue labelled `e2e-failure`.
 

@@ -7,9 +7,9 @@ description: Home Assistant Android end-to-end (Maestro) failure triage. Use whe
 
 The `E2E` workflow (`.github/workflows/e2e.yml`) runs the `.maestro/onboarding.yaml` flow every night at 05:00 UTC. It starts a Home Assistant container (the `dev` image unless the run overrides it), boots one emulator per API level from 29 up to `androidSdk-target`, installs `app-full-debug.apk` on each, and shards the same flow across all of them. Every shard talks to that one container.
 
-Read the sources in the order below and stop at the first one that explains the failure. Most failures are already visible in the failing Maestro command; opening the Home Assistant log first usually wastes time.
+Read the sources in section 2 in order and stop at the first one that explains the failure, then always write the report in section 3. Most failures are already visible in the failing Maestro command; opening the Home Assistant log first usually wastes time.
 
-## 0. Collect the artifacts
+## 1. Collect the artifacts
 
 ```bash
 gh run download <run-id> --name e2e-artifacts --dir e2e
@@ -23,28 +23,30 @@ gh run download <run-id> --name e2e-artifacts --dir e2e
 | `homeassistant-config.json` | `/api/config` response: Home Assistant `version`, loaded `components` |
 | `homeassistant-container.json` | `docker inspect` of the container: image digest and labels |
 
-## 1. Maestro report
+## 2. Sources
+
+### 2.1 Maestro report
 
 Find the first command whose status is `FAILED` in `maestro-results/commands-*.json`, then read `maestro.log` around it and open the `screenshot-*.png` taken at that point. The screenshot is the fastest way to tell a genuinely broken screen from an element that merely never reached the accessibility tree.
 
-## 2. logcat
+### 2.2 logcat
 
 Match the failing shard's API level to `logcat-api<N>-*.txt`. Useful filters:
 
 ```bash
-grep -nE 'AndroidRuntime|FATAL|E ' e2e/logcat-api30-*.txt
-grep -nE 'io\.homeassistant|chromium|WebSocket|okhttp' e2e/logcat-api30-*.txt
+grep -nE 'AndroidRuntime|FATAL|E ' e2e/logcat-api<N>-*.txt
+grep -nE 'io\.homeassistant|chromium|WebSocket|okhttp' e2e/logcat-api<N>-*.txt
 ```
 
 Look for a crash or ANR at the failure timestamp, TLS or DNS errors reaching `homeassistant.internal`, WebSocket disconnects, and `chromium` renderer errors.
 
-## 3. Home Assistant logs
+### 2.3 Home Assistant logs
 
 Check `homeassistant.log` for errors at the same timestamp, and confirm in `homeassistant-config.json` that `mobile_app` is in `components` — the workflow verifies this at startup, but a later integration failure can still break onboarding. `homeassistant-container.json` gives the exact image digest, which matters for the next step.
 
-## 4. Upstream: core and frontend
+### 2.4 Upstream: core and frontend
 
-Only once the app and the flow are ruled out. The `dev` image moves every night, so the useful comparison is against the last run that passed:
+The `dev` image moves every night, so the useful comparison is against the last run that passed:
 
 ```bash
 gh run list --workflow=e2e.yml --status success --limit 1 --json databaseId,createdAt
@@ -56,9 +58,9 @@ Diff the two `homeassistant-config.json` files to get the Home Assistant version
 - [`home-assistant/core`](https://github.com/home-assistant/core).
 - [`home-assistant/frontend`](https://github.com/home-assistant/frontend).
 
-## 5. Report
+## 3. Report
 
-Everything lands in the `e2e-failure` issue in this repository: a comment when one is already open, a new issue otherwise. Never open an issue or a pull request on `home-assistant/core` or `home-assistant/frontend`. An upstream finding is reported here, in the same comment, for a maintainer to carry over.
+Everything lands in the `e2e-failure` issue in this repository: a comment when one is already open, a new issue otherwise. Never open an issue or a pull request on any other repository. An upstream finding is reported here, in the same comment, for a maintainer to carry over.
 
 Write:
 
