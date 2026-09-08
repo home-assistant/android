@@ -208,13 +208,13 @@ jobs:
         if: always() && steps.homeassistant.outputs.containername != ''
         env:
           STEPS_HOMEASSISTANT_OUTPUTS_CONTAINERNAME: ${{ steps.homeassistant.outputs.containername }}
-        run: docker logs --timestamps ${STEPS_HOMEASSISTANT_OUTPUTS_CONTAINERNAME} > homeassistant.log 2>&1
+        run: docker logs --timestamps "${STEPS_HOMEASSISTANT_OUTPUTS_CONTAINERNAME}" > homeassistant.log 2>&1
 
       - name: Capture Home Assistant container details
         if: always() && steps.homeassistant.outputs.containername != ''
         env:
           STEPS_HOMEASSISTANT_OUTPUTS_CONTAINERNAME: ${{ steps.homeassistant.outputs.containername }}
-        run: docker inspect ${STEPS_HOMEASSISTANT_OUTPUTS_CONTAINERNAME} > homeassistant-container.json
+        run: docker inspect "${STEPS_HOMEASSISTANT_OUTPUTS_CONTAINERNAME}" > homeassistant-container.json
 
       - name: Upload E2E artifacts
         if: always()
