@@ -427,6 +427,7 @@
     <ID>ReturnCount:SsidViewModel.kt:SsidViewModel$fun addHomeWifiSsid: Boolean</ID>
     <ID>ReturnCount:TLSWebViewClient.kt:TLSWebViewClient$private fun getActivity: Activity?</ID>
     <ID>ReturnCount:TemplateWidgetConfigureViewModel.kt:TemplateWidgetConfigureViewModel$@SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs. suspend fun requestWidgetCreation: Boolean</ID>
+    <ID>ReturnCount:TemplateWidgetConfigureViewModel.kt:TemplateWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:ThreadManagerImpl.kt:ThreadManagerImpl$override suspend fun exportPreferredDataset: ThreadManager.SyncResult.ExportResult</ID>
     <ID>ReturnCount:ThreadManagerImpl.kt:ThreadManagerImpl$override suspend fun syncPreferredDataset: ThreadManager.SyncResult</ID>
     <ID>ReturnCount:TileExtensions.kt:TileExtensions$private fun getTileIcon: Bitmap?</ID>
