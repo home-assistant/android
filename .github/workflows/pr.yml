@@ -447,7 +447,7 @@ jobs:
           system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
           # emulator-runner executes every script line in a separate shell, so the monitor
           # must be started and killed within a single command.
-          script: .github/actions/monitor-resources/run-with-monitor.sh ./gradlew ${{ matrix.configuration.gradle_target }}
+          script: .github/actions/monitor-resources/monitor.sh ./gradlew ${{ matrix.configuration.gradle_target }}
 
       - uses: ./.github/actions/upload-test-results
         if: always()
