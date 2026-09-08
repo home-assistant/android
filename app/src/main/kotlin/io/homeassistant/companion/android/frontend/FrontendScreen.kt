@@ -974,6 +974,7 @@ private fun FrontendBarcodeOverlay(
     )
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenLoadingPreview() {
@@ -1000,6 +1001,7 @@ private fun FrontendScreenLoadingPreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenErrorPreview() {
@@ -1031,6 +1033,7 @@ private fun FrontendScreenErrorPreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenInsecurePreview() {
@@ -1058,6 +1061,7 @@ private fun FrontendScreenInsecurePreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenSecurityLevelRequiredPreview() {
