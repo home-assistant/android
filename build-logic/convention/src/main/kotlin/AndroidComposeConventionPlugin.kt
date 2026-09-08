@@ -37,12 +37,19 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
             // Tracking: https://issuetracker.google.com/issues/469819154
             val maxHeapSizeScreenshotTesting = "3g"
 
+            // Most of the worker's footprint is layoutlib's native bitmaps, which sit outside
+            // maxHeapSize and are only released when the JVM exits. Restarting the worker every
+            // N test classes caps that growth; without it the app module reaches ~15GB on CI.
+            val screenshotTestForkEvery = 10L
+
             tasks.withType<PreviewScreenshotValidationTask>().configureEach {
                 maxHeapSize = maxHeapSizeScreenshotTesting
+                forkEvery = screenshotTestForkEvery
             }
 
             tasks.withType<PreviewScreenshotUpdateTask>().configureEach {
                 maxHeapSize = maxHeapSizeScreenshotTesting
+                forkEvery = screenshotTestForkEvery
             }
 
             androidConfig {

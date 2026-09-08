@@ -11,6 +11,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import io.homeassistant.companion.android.assist.AssistActivity
 import io.homeassistant.companion.android.changelog.ChangelogAction
 import io.homeassistant.companion.android.changelog.ChangelogShowViewModel
 import io.homeassistant.companion.android.changelog.ui.ChangelogScreen
@@ -44,6 +45,11 @@ internal fun NavGraphBuilder.changelogScreen(navController: NavController, onOpe
                     is ChangelogAction.OpenSettings -> navController.navigateToSettings(action.deeplink)
                     is ChangelogAction.OpenWidgetConfig -> navController.context.startActivity(
                         action.widgetType.toConfigureIntent(navController.context),
+                    )
+                    ChangelogAction.OpenAssist -> navController.context.startActivity(
+                        AssistActivity.newInstance(
+                            navController.context,
+                        ),
                     )
                 }
             },

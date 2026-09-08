@@ -43,6 +43,9 @@ sealed interface ChangelogAction {
 
     /** Opens the configuration screen of [widgetType] without a preselected entity. */
     data class OpenWidgetConfig(val widgetType: WidgetType) : ChangelogAction
+
+    /** Opens Assist */
+    data object OpenAssist : ChangelogAction
 }
 
 /**

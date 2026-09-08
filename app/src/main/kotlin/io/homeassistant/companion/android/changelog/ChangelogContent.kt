@@ -29,6 +29,11 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_assist,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+            action = ChangelogAction.OpenAssist,
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_entity_widgets,
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenWidgetConfig(WidgetType.Entity),

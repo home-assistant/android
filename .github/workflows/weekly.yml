@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'home-assistant/android'
     permissions:
-      actions: write # Start workflows onPush and prepareNextRelease
+      actions: write # Start workflows onPush
       contents: write # Allow pushing tags
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
