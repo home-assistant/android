@@ -41,8 +41,10 @@ import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HASearchField
+import io.homeassistant.companion.android.common.compose.composable.SearchFieldState
 import io.homeassistant.companion.android.common.compose.composable.consumeSheetScrollFling
 import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
+import io.homeassistant.companion.android.common.compose.composable.rememberSearchFieldState
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -78,11 +80,11 @@ internal fun SensorDetailSettingSheet(
     modifier: Modifier = Modifier,
 ) {
     val checkedValue = remember { state.entriesSelected.toMutableStateList() }
-    var searchQuery by remember { mutableStateOf("") }
+    val searchState = rememberSearchFieldState()
     var filteredEntries by remember(state.entries) { mutableStateOf(state.entries) }
-    LaunchedEffect(state.entries, searchQuery) {
+    LaunchedEffect(state.entries, searchState.query) {
         filteredEntries = withContext(Dispatchers.Default) {
-            filterSettingEntries(state.entries, searchQuery)
+            filterSettingEntries(state.entries, searchState.query)
         }
     }
 
@@ -100,8 +102,7 @@ internal fun SensorDetailSettingSheet(
             isLoading = state.isLoading,
             entries = filteredEntries,
             showSearch = state.showSearch,
-            searchQuery = searchQuery,
-            onQueryChange = { searchQuery = it },
+            searchState = searchState,
             isSelected = { it in checkedValue },
             onToggle = { id, isChecked ->
                 if (isChecked) {
@@ -140,8 +141,6 @@ internal fun SensorDetailSettingSheet(
  * @param isLoading When true, a loading indicator is shown in place of the entry list.
  * @param entries Filtered list of selectable entries to display.
  * @param showSearch When true, a search field is rendered below the title.
- * @param searchQuery Current text in the search field.
- * @param onQueryChange Invoked when the search query changes.
  * @param isSelected Returns whether the entry with the given ID is currently checked.
  * @param onToggle Invoked when the user checks or unchecks an entry.
  * @param onCancel Invoked when the user taps Cancel.
@@ -154,8 +153,7 @@ internal fun SensorDetailSettingSheetContent(
     isLoading: Boolean,
     entries: List<SettingEntry>,
     showSearch: Boolean,
-    searchQuery: String,
-    onQueryChange: (String) -> Unit,
+    searchState: SearchFieldState,
     isSelected: (id: String) -> Boolean,
     onToggle: (id: String, isChecked: Boolean) -> Unit,
     onCancel: () -> Unit,
@@ -169,8 +167,7 @@ internal fun SensorDetailSettingSheetContent(
         SheetHeader(
             title = title,
             showSearch = showSearch,
-            searchQuery = searchQuery,
-            onQueryChange = onQueryChange,
+            searchState = searchState,
         )
         SheetEntryList(
             isLoading = isLoading,
@@ -188,20 +185,14 @@ internal fun SensorDetailSettingSheetContent(
 }
 
 @Composable
-private fun ColumnScope.SheetHeader(
-    title: String,
-    showSearch: Boolean,
-    searchQuery: String,
-    onQueryChange: (String) -> Unit,
-) {
+private fun ColumnScope.SheetHeader(title: String, showSearch: Boolean, searchState: SearchFieldState) {
     Text(
         text = title,
         style = HATextStyle.HeadlineMedium.copy(textAlign = TextAlign.Start),
     )
     if (showSearch) {
         HASearchField(
-            query = searchQuery,
-            onQueryChange = onQueryChange,
+            state = searchState,
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,

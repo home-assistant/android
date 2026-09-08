@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
+import io.homeassistant.companion.android.common.compose.composable.SearchFieldState
 import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.util.compose.HAPreviews
@@ -103,8 +104,7 @@ class SensorDetailSettingSheetScreenshotTest {
                     isLoading = isLoading,
                     entries = entries,
                     showSearch = showSearch,
-                    searchQuery = searchQuery,
-                    onQueryChange = {},
+                    searchState = SearchFieldState(),
                     isSelected = isSelected,
                     onToggle = { _, _ -> },
                     onCancel = {},

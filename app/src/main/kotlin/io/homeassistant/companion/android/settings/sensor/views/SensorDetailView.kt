@@ -643,7 +643,7 @@ fun SensorDetailSettingDialog(
                             multiple = state.setting.valueType != SensorSettingType.LIST,
                             onClick = { isChecked ->
                                 if (state.setting.valueType == SensorSettingType.LIST) {
-                                    inputValue.value = id
+                                    inputValue.value = entry.id
                                     onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
                                 } else {
                                     if (checkedValue.contains(entry.id) && !isChecked) {
