@@ -3,61 +3,15 @@ package io.homeassistant.companion.android.widgets.todo
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Switch
-import androidx.compose.material.SwitchDefaults
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
-import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.entity.EntityPicker
-import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
-import io.homeassistant.companion.android.util.getHexForColor
-import io.homeassistant.companion.android.util.previewServer1
-import io.homeassistant.companion.android.util.previewServer2
-import io.homeassistant.companion.android.util.safeBottomWindowInsets
-import io.homeassistant.companion.android.util.safeTopWindowInsets
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -83,32 +37,36 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     private val viewModel: TodoWidgetConfigureViewModel by viewModels(
         extrasProducer = {
             defaultViewModelCreationExtras.withCreationCallback<TodoWidgetConfigureViewModel.Factory> { factory ->
-                factory.create(intent.extras?.getString(FOR_ENTITY, null))
+                factory.create(widgetId, intent.extras?.getString(FOR_ENTITY, null))
             }
         },
     )
 
-    private val supportedTextColors: List<String>
-        get() = listOf(
-            application.getHexForColor(commonR.color.colorWidgetButtonLabelBlack),
-            application.getHexForColor(android.R.color.white),
-        )
+    private val requestLauncherSetup: Boolean
+        get() = intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdgeCompat()
         super.onCreate(savedInstanceState)
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        viewModel.onSetup(widgetId, supportedTextColors)
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
+            finish()
+            return
+        }
 
         setContent {
-            HomeAssistantAppTheme {
+            HATheme {
                 TodoWidgetConfigureScreen(
                     viewModel = viewModel,
-                    onActionClick = { onActionClick() },
+                    // The app sets the extra when it opens this screen itself, so there is
+                    // something to go back to. The launcher opens it through the
+                    // APPWIDGET_CONFIGURE filter instead, leaving nothing behind us.
+                    canNavigateBack = requestLauncherSetup,
+                    onNavigate = ::finish,
+                    onActionClick = ::onActionClick,
                 )
             }
         }
@@ -116,218 +74,20 @@ class TodoWidgetConfigureActivity : BaseActivity() {
 
     private fun onActionClick() {
         lifecycleScope.launch {
-            if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
-                if (
-                    SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
-                    viewModel.isValidSelection()
-                ) {
-                    requestPinWidget()
-                } else {
-                    showAddWidgetError()
+            if (requestLauncherSetup) {
+                if (viewModel.requestWidgetCreation(this@TodoWidgetConfigureActivity)) {
+                    finish()
                 }
             } else {
-                onUpdateWidget()
-            }
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun requestPinWidget() {
-        val context = this@TodoWidgetConfigureActivity
-        lifecycleScope.launch {
-            viewModel.requestWidgetCreation(context)
-            finish()
-        }
-    }
-
-    private suspend fun onUpdateWidget() {
-        try {
-            viewModel.updateWidgetConfiguration()
-            setResult(
-                RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId),
-            )
-            viewModel.updateWidget(this@TodoWidgetConfigureActivity)
-            finish()
-        } catch (_: Exception) {
-            showUpdateWidgetError()
-        }
-    }
-
-    private fun showAddWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
-    }
-
-    private fun showUpdateWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_update_error, Toast.LENGTH_LONG).show()
-    }
-}
-
-@Composable
-private fun TodoWidgetConfigureScreen(viewModel: TodoWidgetConfigureViewModel, onActionClick: () -> Unit) {
-    val servers by viewModel.servers.collectAsStateWithLifecycle(emptyList())
-    val entitiesState by viewModel.displayEntities.collectAsStateWithLifecycle()
-
-    TodoWidgetConfigureView(
-        servers = servers,
-        selectedServerId = viewModel.selectedServerId,
-        onServerSelected = viewModel::setServer,
-        entitiesState = entitiesState,
-        selectedEntityId = viewModel.selectedEntityId,
-        onEntitySelected = { viewModel.selectedEntityId = it },
-        showCompleted = viewModel.showCompletedState,
-        onShowCompletedChanged = { viewModel.showCompletedState = it },
-        selectedBackgroundType = viewModel.selectedBackgroundType,
-        onBackgroundTypeSelected = { viewModel.selectedBackgroundType = it },
-        textColorIndex = viewModel.textColorIndex,
-        onTextColorSelected = { viewModel.textColorIndex = it },
-        isUpdateWidget = viewModel.isUpdateWidget,
-        onActionClick = onActionClick,
-    )
-}
-
-@Composable
-private fun TodoWidgetConfigureView(
-    servers: List<Server>,
-    selectedServerId: Int,
-    onServerSelected: (Int) -> Unit,
-    entitiesState: EntityDisplayState<EntityDisplayWithContext>,
-    selectedEntityId: String?,
-    onEntitySelected: (String?) -> Unit,
-    showCompleted: Boolean,
-    onShowCompletedChanged: (Boolean) -> Unit,
-    selectedBackgroundType: WidgetBackgroundType,
-    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
-    textColorIndex: Int,
-    onTextColorSelected: (Int) -> Unit,
-    isUpdateWidget: Boolean,
-    onActionClick: () -> Unit,
-) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(commonR.string.widget_todo_label)) },
-                windowInsets = safeTopWindowInsets(),
-                backgroundColor = colorResource(commonR.color.colorBackground),
-                contentColor = colorResource(commonR.color.colorOnBackground),
-            )
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .windowInsetsPadding(safeBottomWindowInsets())
-                .padding(padding)
-                .padding(all = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (servers.size > 1) {
-                ServerExposedDropdownMenu(
-                    servers = servers,
-                    current = selectedServerId,
-                    onSelected = { onServerSelected(it) },
-                    modifier = Modifier.padding(bottom = 16.dp),
-                )
-            }
-
-            // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6303
-            HATheme {
-                EntityPicker(
-                    displayState = entitiesState,
-                    selectedEntityId = selectedEntityId,
-                    onSelectionChanged = onEntitySelected,
-                    addButtonText = stringResource(commonR.string.todo_widget_select_list),
-                )
-            }
-
-            Row(
-                modifier = Modifier.clickable { onShowCompletedChanged(!showCompleted) },
-            ) {
-                Text(
-                    text = stringResource(commonR.string.widget_todo_show_completed),
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .weight(1f),
-                )
-
-                Switch(
-                    checked = showCompleted,
-                    onCheckedChange = { onShowCompletedChanged(it) },
-                    colors = SwitchDefaults.colors(
-                        uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
-                    ),
-                )
-            }
-
-            WidgetBackgroundTypeExposedDropdownMenu(
-                current = selectedBackgroundType,
-                onSelected = { onBackgroundTypeSelected(it) },
-                modifier = Modifier.padding(bottom = 16.dp),
-            )
-
-            if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                ExposedDropdownMenu(
-                    label = stringResource(commonR.string.widget_text_color_title),
-                    keys = listOf(
-                        stringResource(commonR.string.widget_text_color_black),
-                        stringResource(commonR.string.widget_text_color_white),
-                    ),
-                    currentIndex = textColorIndex,
-                    onSelected = { onTextColorSelected(it) },
-                    modifier = Modifier.padding(bottom = 16.dp),
-                )
-            }
-
-            Button(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { onActionClick() },
-            ) {
-                Text(stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget))
+                if (viewModel.updateWidgetConfiguration()) {
+                    viewModel.updateWidget(this@TodoWidgetConfigureActivity)
+                    setResult(
+                        RESULT_OK,
+                        Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId),
+                    )
+                    finish()
+                }
             }
         }
     }
 }
-
-@Preview
-@Composable
-private fun TodoWidgetConfigureViewPreview() {
-    HomeAssistantAppTheme {
-        TodoWidgetConfigureView(
-            servers = listOf(
-                previewServer1,
-                previewServer2,
-            ),
-            selectedServerId = 0,
-            onServerSelected = {},
-            entitiesState = EntityDisplayState.Loaded(previewDisplayEntities),
-            selectedEntityId = previewDisplayEntities.first().entityId,
-            onEntitySelected = {},
-            showCompleted = true,
-            onShowCompletedChanged = {},
-            selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
-            onBackgroundTypeSelected = {},
-            textColorIndex = 0,
-            onTextColorSelected = {},
-            isUpdateWidget = true,
-            onActionClick = {},
-        )
-    }
-}
-
-private val previewDisplayEntities = listOf(
-    EntityDisplayWithContext(
-        item = EntityDisplayWithoutContext(
-            entityId = "todo.shopping_list",
-            name = "Shopping List",
-            icon = CommunityMaterial.Icon.cmd_clipboard_list,
-        ),
-        areaName = "Kitchen",
-    ),
-    EntityDisplayWithContext(
-        item = EntityDisplayWithoutContext(
-            entityId = "todo.chores",
-            name = "Chores",
-            icon = CommunityMaterial.Icon.cmd_clipboard_list,
-        ),
-    ),
-)

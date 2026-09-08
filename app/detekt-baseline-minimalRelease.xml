@@ -185,7 +185,6 @@
     <ID>LongMethod:TemplateWidget.kt:TemplateWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun tileClicked</ID>
-    <ID>LongMethod:TodoWidgetConfigureActivity.kt:@Composable private fun TodoWidgetConfigureView</ID>
     <ID>LongMethod:WebsocketManager.kt:WebsocketManager$private suspend fun createNotification: Boolean</ID>
     <ID>LongMethod:WebsocketSettingView.kt:@Composable fun WebsocketSettingView</ID>
     <ID>LongMethod:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$override fun onBindViewHolder</ID>
@@ -465,7 +464,6 @@
     <ID>UnsafeCallOnNullableType:SensorDetailViewModel.kt:SensorDetailViewModel$state["id"]!!</ID>
     <ID>UnsafeCallOnNullableType:SensorSettingsViewModel.kt:SensorSettingsViewModel$searchQuery!!</ID>
     <ID>UnsafeCallOnNullableType:SettingsFragment.kt:SettingsFragment$serverAuth!!</ID>
-    <ID>UnsafeCallOnNullableType:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$selectedEntityId!!</ID>
     <ID>UnsafeCallOnNullableType:WebsocketManager.kt:WebsocketManager$applicationContext.getSystemService&lt;NotificationManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$actions[actionText]!!</ID>
     <ID>UnsafeCallOnNullableType:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$actions[actionText]!!.actionData.fields.getValue(fieldKey).values!!</ID>
@@ -491,7 +489,6 @@
     <ID>UnusedPrivateProperty:LaunchViewModel.kt:LaunchViewModel$private val prefsRepository: PrefsRepository</ID>
     <ID>UnusedPrivateProperty:SensorDetailViewModel.kt:SensorDetailViewModel$private val managers: Set&lt;@JvmSuppressWildcards SensorManager&gt;</ID>
     <ID>UnusedPrivateProperty:SettingsPresenterImpl.kt:SettingsPresenterImpl$private val settingsDao: SettingsDao</ID>
-    <ID>UnusedPrivateProperty:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$private val entitiesForDisplayManager: EntitiesForDisplayManager</ID>
     <ID>UseCheckOrError:AssistVoiceInteractionService.kt:AssistVoiceInteractionService$throw IllegalStateException("No wake word models found in assets")</ID>
     <ID>UseCheckOrError:CameraWidget.kt:CameraWidget$throw IllegalStateException("No URL available to retrieve picture")</ID>
     <ID>UseCheckOrError:ThreadManagerImpl.kt:ThreadManagerImpl$throw IllegalStateException("Thread is not supported with the minimal flavor")</ID>

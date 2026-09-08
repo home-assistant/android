@@ -4,11 +4,6 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,31 +12,29 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 @HiltViewModel(assistedFactory = TodoWidgetConfigureViewModel.Factory::class)
@@ -49,175 +42,90 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
     private val todoWidgetDao: TodoWidgetDao,
     private val serverManager: ServerManager,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
-    @Assisted preSelectedEntityId: String?,
+    @Assisted private val widgetId: Int,
+    @Assisted preselectedEntityId: String?,
 ) : ViewModel() {
-    private var supportedTextColors: List<String> = emptyList()
-    private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
-    val servers = serverManager.serversFlow
-    var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
-        private set
 
-    /**
-     * Picker state with the server's todo entities, resolved again whenever the selected
-     * server changes and starting as [EntityDisplayState.Loading].
-     */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val displayEntities: StateFlow<EntityDisplayState<EntityDisplayWithContext>> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .flatMapLatest { serverId ->
-            if (serverManager.isRegistered()) {
-                entitiesForDisplayManager.snapshotInContext(serverId = serverId) { it.domain == TODO_DOMAIN }
+    private val _state = MutableStateFlow(
+        TodoWidgetConfigureState(
+            selectedEntityId = preselectedEntityId,
+            dynamicColorAvailable = DynamicColors.isDynamicColorAvailable(),
+            selectedBackgroundType = if (DynamicColors.isDynamicColorAvailable()) {
+                WidgetBackgroundType.DYNAMICCOLOR
             } else {
-                Timber.w("No server registered")
-                flowOf(EntityDisplayState.Loaded(emptyList<EntityDisplayWithContext>()))
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), EntityDisplayState.Loading)
-
-    // We need a mutex since the update of the entities might happen concurrently with onSetup and the viewModel creation
-    private val selectedEntityMutex = Mutex()
-    var selectedEntityId by mutableStateOf<String?>(preSelectedEntityId)
-    var selectedBackgroundType by mutableStateOf(
-        if (DynamicColors.isDynamicColorAvailable()) {
-            WidgetBackgroundType.DYNAMICCOLOR
-        } else {
-            WidgetBackgroundType.DAYNIGHT
-        },
+                WidgetBackgroundType.DAYNIGHT
+            },
+        ),
     )
-    var textColorIndex by mutableIntStateOf(0)
-    var showCompletedState by mutableStateOf(true)
-    var isUpdateWidget by mutableStateOf(false)
+    internal val state: StateFlow<TodoWidgetConfigureState> = _state.asStateFlow()
+
+    private val _errors = MutableSharedFlow<Int>(replay = 1)
+
+    /** Errors to surface to the user, as string resources. */
+    val errors = _errors.asSharedFlow()
+
+    private var loadEntitiesJob: Job? = null
 
     init {
+        viewModelScope.launch { restoreConfiguration() }
+
         viewModelScope.launch {
-            displayEntities.collect { state ->
-                if (state !is EntityDisplayState.Loaded) return@collect
-                selectedEntityMutex.withLock {
-                    if (selectedEntityId == null) {
-                        selectedEntityId = state.entities.firstOrNull()?.entityId
-                    }
-                }
-            }
-        }
-    }
-
-    fun onSetup(widgetId: Int, supportedTextColors: List<String>) {
-        this.supportedTextColors = supportedTextColors
-        maybeLoadPreviousState(widgetId)
-        this.widgetId = widgetId
-    }
-
-    private fun maybeLoadPreviousState(widgetId: Int) = viewModelScope.launch {
-        selectedEntityMutex.withLock {
-            if (this@TodoWidgetConfigureViewModel.widgetId == AppWidgetManager.INVALID_APPWIDGET_ID &&
-                selectedEntityId == null
-            ) {
-                todoWidgetDao.get(widgetId)?.let {
-                    isUpdateWidget = true
-                    selectedServerId = it.serverId
-                    selectedEntityId = it.entityId
-                    selectedBackgroundType = it.backgroundType
-                    val colorIndex = supportedTextColors.indexOf(it.textColor)
-                    textColorIndex = if (colorIndex == -1) 0 else colorIndex
-                    showCompletedState = it.showCompleted
-                }
-            }
-        }
-    }
-
-    fun setServer(serverId: Int) {
-        if (selectedServerId == serverId) return
-        selectedServerId = serverId
-        viewModelScope.launch { selectedEntityMutex.withLock { selectedEntityId = null } }
-    }
-
-    suspend fun isValidSelection(): Boolean {
-        selectedEntityMutex.withLock {
-            return serverManager.getServer(selectedServerId) != null &&
-                selectedEntityId in
-                (displayEntities.value as? EntityDisplayState.Loaded)?.entities.orEmpty().map { it.entityId }
-        }
-    }
-
-    suspend fun updateWidgetConfiguration() {
-        if (!isValidSelection()) {
-            Timber.d("Widget data is invalid")
-            throw IllegalArgumentException("Widget data is invalid")
-        }
-        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            Timber.w("Widget ID is invalid")
-            throw IllegalArgumentException("Widget ID is invalid")
-        }
-
-        val entity = getPendingDaoEntity()
-        todoWidgetDao.add(entity)
-    }
-
-    /**
-     * Return a [TodoWidgetEntity] with the current selection, but without pushing this to the [todoWidgetDao]
-     */
-    private suspend fun getPendingDaoEntity(): TodoWidgetEntity {
-        val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-            supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
-        } else {
-            ""
-        }
-        selectedEntityMutex.withLock {
-            val listEntityId = selectedEntityId!!
-
-            val webSocketRepository = serverManager.webSocketRepository(selectedServerId)
-            // The selection is valid, so the name is the one already resolved for the picker
-            val name = (displayEntities.value as? EntityDisplayState.Loaded)?.entity(listEntityId)?.name
-            val todos = webSocketRepository.getTodos(listEntityId)?.response?.get(listEntityId)?.items.orEmpty()
-
-            return TodoWidgetEntity(
-                id = widgetId,
-                serverId = selectedServerId,
-                entityId = selectedEntityId!!,
-                backgroundType = selectedBackgroundType,
-                textColor = textColor,
-                showCompleted = showCompletedState,
-                latestUpdateData = TodoWidgetEntity.LastUpdateData(
-                    entityName = name,
-                    todos = todos.map {
-                        TodoWidgetEntity.TodoItem(
-                            uid = it.uid,
-                            summary = it.summary,
-                            status = it.status,
-                        )
-                    },
-                ),
-            )
-        }
-    }
-
-    /**
-     * Requests the widget to be created and waits until it has been saved to the DAO.
-     *
-     * **WARNING**: This function does not handle user cancellation. If a user cancels the widget creation,
-     * this function will not return. If this function is called again and the user does not cancel,
-     * both calls to the function will return. While this behavior could be avoided,
-     * it does not cause issues in the current implementation as returning multiple times has no adverse effects.
-     */
-    suspend fun requestWidgetCreation(context: Context) {
-        // We drop the first value since we only care about knowing when the widget is actually added
-        todoWidgetDao.getWidgetCountFlow().drop(1).onStart {
-            GlanceAppWidgetManager(context)
-                .requestPinGlanceAppWidget(
-                    TodoWidget::class.java,
-                    successCallback = PendingIntent.getBroadcast(
-                        context,
-                        System.currentTimeMillis().toInt(),
-                        Intent(context, TodoWidget::class.java).apply {
-                            action = ACTION_APPWIDGET_CREATED
-                            putExtra(EXTRA_WIDGET_ENTITY, getPendingDaoEntity())
+            serverManager.serversFlow.collect { servers ->
+                _state.update { current ->
+                    current.copy(
+                        serversDropdownItems = servers.map { server ->
+                            HADropdownItem(key = server.id, label = server.friendlyName)
                         },
-                        // We need the PendingIntent to be mutable so the system inject the EXTRA_APPWIDGET_ID of the created widget
-                        PendingIntent.FLAG_MUTABLE,
-                    ),
-                )
-        }.first()
+                    )
+                }
+            }
+        }
     }
 
+    fun onServerSelected(serverId: Int) {
+        if (serverId == _state.value.selectedServerId) return
+
+        _state.update { it.changeServer(serverId) }
+        loadEntities(serverId)
+    }
+
+    fun onEntitySelected(entityId: String?) {
+        _state.update { it.copy(selectedEntityId = entityId) }
+    }
+
+    fun onShowCompletedChanged(showCompleted: Boolean) {
+        _state.update { it.copy(showCompleted = showCompleted) }
+    }
+
+    fun onBackgroundTypeSelected(backgroundType: WidgetBackgroundType) {
+        _state.update { it.copy(selectedBackgroundType = backgroundType) }
+    }
+
+    fun onTextColorSelected(colorHex: String) {
+        _state.update { it.copy(textColorHex = colorHex) }
+    }
+
+    /**
+     * Persists the current configuration, reporting through [errors] and returning false when it
+     * cannot be saved.
+     */
+    suspend fun updateWidgetConfiguration(): Boolean {
+        val widget = if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            Timber.e("Cannot save the widget configuration, the widget ID is invalid")
+            null
+        } else {
+            getPendingDaoEntity()
+        }
+
+        if (widget == null) {
+            _errors.emit(commonR.string.widget_update_error)
+        } else {
+            todoWidgetDao.add(widget)
+        }
+        return widget != null
+    }
+
+    /** Asks the already placed widget to redraw with the configuration that was just saved. */
     fun updateWidget(context: Context) {
         val appContext = context.applicationContext
         viewModelScope.launch {
@@ -226,8 +134,167 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
         }
     }
 
+    /**
+     * Asks the launcher to pin the configured widget and suspends until it is added, reporting
+     * through [errors] and returning false when the widget cannot be requested at all.
+     *
+     * **WARNING**: This function does not handle user cancellation. If a user cancels the widget creation,
+     * this function will not return. If this function is called again and the user does not cancel,
+     * both calls to the function will return. While this behavior could be avoided,
+     * it does not cause issues in the current implementation as returning multiple times has no adverse effects.
+     */
+    suspend fun requestWidgetCreation(context: Context): Boolean {
+        val widget = getPendingDaoEntity()
+        if (widget == null) {
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        var requestAccepted = false
+        todoWidgetDao.getWidgetCountFlow()
+            // We drop the first value since we only care about knowing when the widget is actually added
+            .drop(1)
+            .onStart {
+                requestAccepted = GlanceAppWidgetManager(context).requestPinGlanceAppWidget(
+                    receiver = TodoWidget::class.java,
+                    successCallback = PendingIntent.getBroadcast(
+                        context,
+                        System.currentTimeMillis().toInt(),
+                        Intent(context, TodoWidget::class.java).apply {
+                            action = ACTION_APPWIDGET_CREATED
+                            putExtra(EXTRA_WIDGET_ENTITY, widget)
+                        },
+                        // The PendingIntent must be mutable so the system injects the EXTRA_APPWIDGET_ID of the created widget
+                        PendingIntent.FLAG_MUTABLE,
+                    ),
+                )
+                // A rejected request never adds a widget, so emit to stop waiting for one
+                if (!requestAccepted) emit(0)
+            }.first()
+
+        if (!requestAccepted) {
+            Timber.e("The launcher rejected the widget pin request or does not support pinning")
+            _errors.emit(commonR.string.widget_creation_error)
+        }
+        return requestAccepted
+    }
+
+    /**
+     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
+     */
+    private suspend fun restoreConfiguration() {
+        val widget = if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID && _state.value.selectedEntityId == null) {
+            todoWidgetDao.get(widgetId)
+        } else {
+            null
+        }
+
+        if (widget != null) {
+            _state.update {
+                it.copy(
+                    selectedServerId = widget.serverId,
+                    selectedEntityId = widget.entityId,
+                    showCompleted = widget.showCompleted,
+                    selectedBackgroundType = widget.backgroundType,
+                    textColorHex = widget.textColor,
+                    isUpdateWidget = true,
+                )
+            }
+        } else {
+            _state.update {
+                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
+            }
+        }
+
+        loadEntities(_state.value.selectedServerId)
+    }
+
+    /** Loads the to-do lists of the server, selecting the first one when there is no selection yet. */
+    private fun loadEntities(serverId: Int) {
+        loadEntitiesJob?.cancel()
+        loadEntitiesJob = viewModelScope.launch {
+            if (!serverManager.isRegistered()) {
+                Timber.w("No server registered")
+                _state.update { it.copy(entityDisplayState = EntityDisplayState.Loaded(emptyList())) }
+                return@launch
+            }
+            entitiesForDisplayManager.snapshotInContext(serverId) { it.domain == TODO_DOMAIN }
+                .collect { displayState ->
+                    _state.update { current ->
+                        val firstEntityId = (displayState as? EntityDisplayState.Loaded)
+                            ?.entities
+                            ?.firstOrNull()
+                            ?.entityId
+                        current.copy(
+                            entityDisplayState = displayState,
+                            selectedEntityId = current.selectedEntityId ?: firstEntityId,
+                        )
+                    }
+                }
+        }
+    }
+
+    /**
+     * Builds the widget to persist from the current configuration, or null when it is incomplete
+     * or the items of the selected list cannot be retrieved.
+     */
+    private suspend fun getPendingDaoEntity(): TodoWidgetEntity? {
+        val current = _state.value
+        // The selected list must still exist on a known server, which the picker state tells us.
+        val entity = current.selectedEntity?.takeIf { serverManager.getServer(current.selectedServerId) != null }
+        if (entity == null) {
+            Timber.e("Cannot build the widget, the current configuration is invalid")
+        }
+
+        val todos = entity?.let { serverManager.loadTodos(current.selectedServerId, it.entityId) }
+
+        return if (entity != null && todos != null) {
+            TodoWidgetEntity(
+                id = widgetId,
+                serverId = current.selectedServerId,
+                entityId = entity.entityId,
+                backgroundType = current.selectedBackgroundType,
+                textColor = current.textColorHex.takeIf {
+                    current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
+                },
+                showCompleted = current.showCompleted,
+                latestUpdateData = TodoWidgetEntity.LastUpdateData(
+                    entityName = entity.name,
+                    todos = todos,
+                ),
+            )
+        } else {
+            null
+        }
+    }
+
     @AssistedFactory
     interface Factory {
-        fun create(preSelectedEntityId: String?): TodoWidgetConfigureViewModel
+        fun create(widgetId: Int, preselectedEntityId: String?): TodoWidgetConfigureViewModel
     }
+}
+
+/**
+ * Fetches the items of the list so the widget shows content as soon as it is placed, or null
+ * when they cannot be retrieved.
+ */
+private suspend fun ServerManager.loadTodos(serverId: Int, entityId: String): List<TodoWidgetEntity.TodoItem>? = try {
+    webSocketRepository(serverId)
+        .getTodos(entityId)
+        ?.response
+        ?.get(entityId)
+        ?.items
+        .orEmpty()
+        .map {
+            TodoWidgetEntity.TodoItem(
+                uid = it.uid,
+                summary = it.summary,
+                status = it.status,
+            )
+        }
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    Timber.e(e, "Failed to load the items of the selected list")
+    null
 }
