@@ -5,13 +5,17 @@ import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.sensitive
+import java.io.IOException
+import java.io.InterruptedIOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -19,6 +23,7 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import timber.log.Timber
 
 @Serializable
@@ -30,7 +35,14 @@ private data class ManifestResponse(val name: String? = null) {
     }
 }
 
-private val CONNECTIVITY_TIMEOUT = 5.seconds
+private val CONNECT_TIMEOUT = 5.seconds
+
+/**
+ * Budget for a single read of a response. A phone on a weak mobile connection regularly stalls for
+ * several seconds in the middle of a response, and cutting that short reports a healthy server as
+ * broken. The 30 seconds call timeout of the default client still caps the whole request.
+ */
+private val READ_TIMEOUT = 10.seconds
 
 /**
  * Lazily builds and caches a single [OkHttpClient].
@@ -53,8 +65,8 @@ private class OkHttpClientProvider(private val defaultOkHttpClientProvider: Susp
      * Preconfigures the provided [OkHttpClient] with timeouts for connectivity testing.
      */
     private fun configureOkHttpClientForChecker(client: OkHttpClient): OkHttpClient = client.newBuilder()
-        .connectTimeout(CONNECTIVITY_TIMEOUT)
-        .readTimeout(CONNECTIVITY_TIMEOUT)
+        .connectTimeout(CONNECT_TIMEOUT)
+        .readTimeout(READ_TIMEOUT)
         .build()
 }
 
@@ -69,11 +81,16 @@ internal class DefaultConnectivityChecker @Inject constructor(
 
     override suspend fun dns(hostname: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
-            withTimeout(CONNECTIVITY_TIMEOUT) {
+            withTimeout(CONNECT_TIMEOUT) {
                 val addresses = InetAddress.getAllByName(hostname)
                 val addressList = addresses.joinToString(", ") { it.hostAddress ?: "" }
                 ConnectivityCheckResult.Success(commonR.string.connection_check_dns, addressList)
             }
+        } catch (e: TimeoutCancellationException) {
+            // Must come before the CancellationException it extends, which would propagate instead
+            // and leave the checks without a result.
+            Timber.d(e, "DNS resolution timed out for ${sensitive(hostname)}")
+            ConnectivityCheckResult.Failure(commonR.string.connection_check_error_dns_timeout)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -85,11 +102,14 @@ internal class DefaultConnectivityChecker @Inject constructor(
     override suspend fun port(hostname: String, port: Int): ConnectivityCheckResult = withContext(Dispatchers.IO) {
         try {
             Socket().use { socket ->
-                socket.connect(InetSocketAddress(hostname, port), CONNECTIVITY_TIMEOUT.inWholeMilliseconds.toInt())
+                socket.connect(InetSocketAddress(hostname, port), CONNECT_TIMEOUT.inWholeMilliseconds.toInt())
             }
             ConnectivityCheckResult.Success(commonR.string.connection_check_port, port.toString())
         } catch (e: CancellationException) {
             throw e
+        } catch (e: SocketTimeoutException) {
+            Timber.d(e, "Port $port timed out on ${sensitive(hostname)}")
+            ConnectivityCheckResult.Failure(commonR.string.connection_check_error_port_timeout)
         } catch (e: Exception) {
             Timber.d(e, "Port $port not reachable on ${sensitive(hostname)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_port)
@@ -114,49 +134,74 @@ internal class DefaultConnectivityChecker @Inject constructor(
             }
         } catch (e: CancellationException) {
             throw e
+        } catch (e: InterruptedIOException) {
+            Timber.d(e, "TLS handshake timed out for ${sensitive(url)}")
+            ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls_timeout)
         } catch (e: Exception) {
             Timber.d(e, "TLS check failed for ${sensitive(url)}")
             ConnectivityCheckResult.Failure(commonR.string.connection_check_error_tls)
         }
     }
 
-    override suspend fun server(url: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
-        try {
-            val request = Request.Builder()
-                .url(url)
-                .build()
-            okHttpClientProvider().newCall(request).execute().use {
-                ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.d(e, "Server connection failed for ${sensitive(url)}")
-            ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server)
-        }
-    }
-
-    override suspend fun homeAssistant(url: String): ConnectivityCheckResult = withContext(Dispatchers.IO) {
+    override suspend fun homeAssistant(url: String): ManifestCheckResult = withContext(Dispatchers.IO) {
         try {
             val request = Request.Builder()
                 .url("${UrlUtil.extractBaseUrl(url)}manifest.json")
                 .build()
             okHttpClientProvider().newCall(request).execute().use { response ->
-                val responseText = response.body.string()
-                val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(responseText)
-
-                if (manifest.isHomeAssistant()) {
-                    ConnectivityCheckResult.Success(commonR.string.connection_check_home_assistant_success)
-                } else {
-                    Timber.d("Manifest name mismatch: ${manifest.name}")
-                    ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
+                if (!response.isSuccessful) {
+                    Timber.d("Manifest request to ${sensitive(url)} answered with HTTP ${response.code}")
+                    return@use ManifestCheckResult.NotReached(
+                        ConnectivityCheckResult.Failure(
+                            commonR.string.connection_check_error_http_status,
+                            response.code.toString(),
+                        ),
+                    )
                 }
+                verifyManifest(response, url)
             }
         } catch (e: CancellationException) {
             throw e
-        } catch (e: Exception) {
-            Timber.d(e, "Home Assistant verification failed for ${sensitive(url)}")
-            ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant)
+        } catch (e: InterruptedIOException) {
+            // Covers both the read timeout and the call timeout of the client.
+            Timber.d(e, "Manifest request timed out for ${sensitive(url)}")
+            ManifestCheckResult.NotReached(
+                ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server_timeout),
+            )
+        } catch (e: IOException) {
+            Timber.d(e, "Manifest request failed for ${sensitive(url)}")
+            ManifestCheckResult.NotReached(
+                ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server),
+            )
         }
+    }
+
+    /**
+     * Reads the manifest of an answered request and tells whether it belongs to a Home Assistant instance.
+     */
+    private fun verifyManifest(response: Response, url: String): ManifestCheckResult = try {
+        val manifest = kotlinJsonMapper.decodeFromString<ManifestResponse>(response.body.string())
+
+        if (manifest.isHomeAssistant()) {
+            ManifestCheckResult.Verified
+        } else {
+            Timber.d("Manifest name mismatch: ${manifest.name}")
+            ManifestCheckResult.NotVerified(
+                ConnectivityCheckResult.Failure(commonR.string.connection_check_error_not_home_assistant),
+            )
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: InterruptedIOException) {
+        Timber.d(e, "Reading the manifest of ${sensitive(url)} timed out")
+        ManifestCheckResult.NotVerified(
+            ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server_timeout),
+        )
+    } catch (e: Exception) {
+        // An interrupted download, or a document that is not a manifest at all.
+        Timber.d(e, "Manifest of ${sensitive(url)} could not be read")
+        ManifestCheckResult.NotVerified(
+            ConnectivityCheckResult.Failure(commonR.string.connection_check_error_manifest),
+        )
     }
 }
