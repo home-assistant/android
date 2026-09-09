@@ -144,19 +144,18 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
      */
     @SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs.
     suspend fun requestWidgetCreation(context: Context): Boolean {
-        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-            Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
-            _errors.emit(commonR.string.widget_creation_error)
-            return false
+        // when keeps this under detekt's ReturnCount limit (entity/template are grandfathered in the baseline).
+        val widget = when {
+            !SdkVersion.isAtLeast(Build.VERSION_CODES.O) -> {
+                Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
+                null
+            }
+            !isPinningSupported(context) -> {
+                Timber.e("Cannot pin the widget, the launcher does not support it")
+                null
+            }
+            else -> getPendingDaoEntity()
         }
-
-        if (!isPinningSupported(context)) {
-            Timber.e("Cannot pin the widget, the launcher does not support it")
-            _errors.emit(commonR.string.widget_creation_error)
-            return false
-        }
-
-        val widget = getPendingDaoEntity()
         if (widget == null) {
             _errors.emit(commonR.string.widget_creation_error)
             return false
