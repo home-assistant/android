@@ -17,6 +17,11 @@ permissions:
   issues: read
   copilot-requests: write
 
+# One slot per triaged run: triages of different runs go in parallel, while a second
+# dispatch for the same run waits instead of racing it on the e2e-failure issue.
+concurrency:
+  job-discriminator: ${{ github.event.inputs.run-id }}
+
 engine: copilot
 
 network: defaults
