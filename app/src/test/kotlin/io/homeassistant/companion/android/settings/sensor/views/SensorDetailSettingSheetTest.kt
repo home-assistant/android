@@ -1,11 +1,12 @@
 package io.homeassistant.companion.android.settings.sensor.views
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -213,6 +214,7 @@ class SensorDetailSettingSheetTest {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     private fun AndroidComposeTestRule<*, *>.testSheet(
         initialState: SettingDialogState,
         block: TestHelper.() -> Unit,
