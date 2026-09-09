@@ -1,17 +1,16 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package io.homeassistant.companion.android.settings.sensor.views
 
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
-import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
-import io.homeassistant.companion.android.common.compose.composable.SearchFieldState
-import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
 class SensorDetailSettingSheetScreenshotTest {
@@ -49,8 +48,7 @@ class SensorDetailSettingSheetScreenshotTest {
     fun `SensorDetailSettingSheet with search field and entries`() {
         PreviewSheet(
             entries = manyEntries(),
-            showSearch = true,
-            isSelected = { it in setOf("com.spotify.music", "com.netflix.mediaclient") },
+            entriesSelected = listOf("com.spotify.music", "com.netflix.mediaclient"),
         )
     }
 
@@ -60,8 +58,7 @@ class SensorDetailSettingSheetScreenshotTest {
     fun `SensorDetailSettingSheet without search field`() {
         PreviewSheet(
             entries = fewEntries(),
-            showSearch = false,
-            isSelected = { it == "com.google.android.apps.maps" },
+            entriesSelected = listOf("com.google.android.apps.maps"),
         )
     }
 
@@ -69,51 +66,52 @@ class SensorDetailSettingSheetScreenshotTest {
     @HAPreviews
     @Composable
     fun `SensorDetailSettingSheet loading state`() {
-        PreviewSheet(
-            entries = emptyList(),
-            showSearch = false,
-            isLoading = true,
-        )
+        PreviewSheet(entries = emptyList(), isLoading = true)
     }
 
     @PreviewTest
     @HAPreviews
     @Composable
-    fun `SensorDetailSettingSheet empty filtered result`() {
-        PreviewSheet(
-            entries = emptyList(),
-            showSearch = true,
-            searchQuery = "xyz_no_match",
-        )
+    fun `SensorDetailSettingSheet without entries`() {
+        PreviewSheet(entries = emptyList())
     }
 
+    /**
+     * Renders [SensorDetailSettingSheet] with a [SheetState] already settled at [SheetValue.Expanded]:
+     * the default state starts partially expanded, which a static frame would capture as a half-open
+     * sheet.
+     */
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun PreviewSheet(
         entries: List<SettingEntry>,
-        showSearch: Boolean,
-        searchQuery: String = "",
+        entriesSelected: List<String> = emptyList(),
         isLoading: Boolean = false,
-        isSelected: (id: String) -> Boolean = { false },
     ) {
-        HAThemeForPreview {
-            HAModalBottomSheet(
-                bottomSheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true),
-            ) {
-                SensorDetailSettingSheetContent(
-                    title = "Monitored apps",
+        HAThemeForPreview(modifier = Modifier.fillMaxSize()) {
+            SensorDetailSettingSheet(
+                title = "Monitored apps",
+                state = SensorDetailViewModel.Companion.SettingDialogState(
+                    setting = SensorSetting(
+                        sensorId = "last_notification",
+                        name = "allow_list",
+                        value = entriesSelected.joinToString(),
+                        valueType = SensorSettingType.LIST_APPS,
+                    ),
                     isLoading = isLoading,
                     entries = entries,
-                    showSearch = showSearch,
-                    searchState = SearchFieldState(searchQuery),
-                    isSelected = isSelected,
-                    onToggle = { _, _ -> },
-                    onCancel = {},
-                    onSave = {},
-                    // Cap the height so the footer stays on-screen; the real sheet uses safeScreenHeight,
-                    // which overflows the windowless preview host.
-                    modifier = Modifier.heightIn(max = 560.dp),
-                )
-            }
+                    entriesSelected = entriesSelected,
+                ),
+                onDismiss = {},
+                onSave = {},
+                bottomSheetState = SheetState(
+                    skipPartiallyExpanded = true,
+                    // Thresholds only affect drag gestures, which never happen in screenshots.
+                    positionalThreshold = { 0f },
+                    velocityThreshold = { 0f },
+                    initialValue = SheetValue.Expanded,
+                ),
+            )
         }
     }
 }

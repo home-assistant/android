@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -34,6 +35,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
@@ -62,13 +64,14 @@ import kotlinx.coroutines.withContext
  * While the selection state is loading, a centered progress indicator is shown instead of the list.
  *
  * Filtering is performed off the UI thread on [Dispatchers.Default] to keep the sheet responsive on
- * long lists. The search field debounces the query so the list does not re-filter on every keystroke.
+ * long lists.
  *
  * @param title Heading displayed at the top of the sheet.
  * @param state Current dialog state holding the entries, selection and loading flag.
  * @param onDismiss Invoked when the sheet is dismissed without saving.
  * @param onSave Invoked with the updated state when the user confirms the selection.
  * @param modifier Optional [Modifier] applied to the sheet container.
+ * @param bottomSheetState State of the sheet, exposed so tests can provide an already expanded state.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +81,7 @@ internal fun SensorDetailSettingSheet(
     onDismiss: () -> Unit,
     onSave: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit,
     modifier: Modifier = Modifier,
+    bottomSheetState: SheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
     val checkedValue = remember(state.entriesSelected) { state.entriesSelected.toMutableStateList() }
     val searchState = rememberSearchFieldState()
@@ -92,7 +96,6 @@ internal fun SensorDetailSettingSheet(
     // the "no results" placeholder while the entries have in fact just arrived.
     val filteredEntries = if (query.isBlank()) state.entries else matchingEntries
 
-    val bottomSheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true)
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
     val coroutineScope = rememberCoroutineScope()
 
@@ -129,30 +132,14 @@ internal fun SensorDetailSettingSheet(
             },
             modifier = Modifier
                 .height(screenHeight)
-                .padding(horizontal = HADimens.SPACE4)
+                .padding(horizontal = HADimens.SPACE5)
                 .consumeSheetScrollFling(),
         )
     }
 }
 
-/**
- * Inner content of the sensor setting bottom sheet.
- *
- * Renders the sheet header (title + optional search field), the entry list or loading indicator,
- * and the cancel/save footer.
- *
- * @param title Heading displayed at the top of the content area.
- * @param isLoading When true, a loading indicator is shown in place of the entry list.
- * @param entries Filtered list of selectable entries to display.
- * @param showSearch When true, a search field is rendered below the title.
- * @param isSelected Returns whether the entry with the given ID is currently checked.
- * @param onToggle Invoked when the user checks or unchecks an entry.
- * @param onCancel Invoked when the user taps Cancel.
- * @param onSave Invoked when the user taps Save.
- * @param modifier Optional [Modifier] applied to the root [Column].
- */
 @Composable
-internal fun SensorDetailSettingSheetContent(
+private fun SensorDetailSettingSheetContent(
     title: String,
     isLoading: Boolean,
     entries: List<SettingEntry>,
@@ -234,7 +221,6 @@ private fun SheetEntryList(
                 Text(
                     text = stringResource(commonR.string.sensor_setting_allow_list_no_results),
                     style = HATextStyle.Body.copy(
-                        textAlign = TextAlign.Center,
                         color = LocalHAColorScheme.current.colorOnNeutralQuiet,
                     ),
                 )
@@ -282,8 +268,7 @@ private fun SheetFooter(
  * Filters setting entries by matching the query against entry labels (case-insensitive).
  * Returns all entries when the query is blank.
  */
-@VisibleForTesting
-internal fun filterSettingEntries(entries: List<SettingEntry>, query: String): List<SettingEntry> {
+private fun filterSettingEntries(entries: List<SettingEntry>, query: String): List<SettingEntry> {
     val trimmed = query.trim()
     return if (trimmed.isBlank()) {
         entries
@@ -310,6 +295,10 @@ private fun BottomSheetSettingRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            // The checkbox centers its 20dp glyph in a 48dp touch target, so it carries a 14dp
+            // inset on each side. Pull the row towards the start by that inset to align the glyph
+            // with the search field above the list.
+            .offset(x = (-14).dp)
             .toggleable(
                 value = checked,
                 role = Role.Checkbox,
@@ -324,9 +313,7 @@ private fun BottomSheetSettingRow(
             checked = checked,
             onCheckedChange = onCheckedChange,
             interactionSource = interactionSource,
-            modifier = Modifier
-                .size(width = HADimens.SPACE12, height = HADimens.SPACE12)
-                .testTag(settingEntryCheckboxTag(entry.id)),
+            modifier = Modifier.testTag(settingEntryCheckboxTag(entry.id)),
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(

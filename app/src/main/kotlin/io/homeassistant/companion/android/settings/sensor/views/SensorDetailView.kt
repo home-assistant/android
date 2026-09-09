@@ -42,6 +42,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.contentColorFor
 import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -92,6 +93,7 @@ import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SensorDetailView(
     viewModel: SensorDetailViewModel,

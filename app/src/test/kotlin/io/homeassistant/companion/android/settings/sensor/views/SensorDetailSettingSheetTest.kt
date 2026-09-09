@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -56,52 +57,56 @@ class SensorDetailSettingSheetTest {
     )
 
     @Test
-    fun `Given empty query when filtering then return all entries`() {
-        val result = filterSettingEntries(entries, query = "")
-
-        assertEquals(entries, result)
+    fun `Given a query matching the app name when searching then only that entry is listed`() {
+        composeTestRule.assertOnlyChromeIsListed(query = "Chrome")
     }
 
     @Test
-    fun `Given blank query when filtering then return all entries`() {
-        val result = filterSettingEntries(entries, query = "   ")
-
-        assertEquals(entries, result)
+    fun `Given a query matching the package name when searching then only that entry is listed`() {
+        composeTestRule.assertOnlyChromeIsListed(query = "com.google")
     }
 
     @Test
-    fun `Given query matching app name when filtering then return matching entries`() {
-        val result = filterSettingEntries(entries, query = "Chrome")
-
-        assertEquals(listOf(entries[0]), result)
+    fun `Given a query in another case when searching then it still matches`() {
+        composeTestRule.assertOnlyChromeIsListed(query = "CHROME")
     }
 
     @Test
-    fun `Given query matching package name in label when filtering then return matching entries`() {
-        val result = filterSettingEntries(entries, query = "com.google")
-
-        assertEquals(listOf(entries[0]), result)
+    fun `Given a query with surrounding spaces when searching then they are trimmed`() {
+        composeTestRule.assertOnlyChromeIsListed(query = " Chrome ")
     }
 
     @Test
-    fun `Given case-insensitive query when filtering then return matches`() {
-        val result = filterSettingEntries(entries, query = "CHROME")
+    fun `Given a query matching no entry when searching then the no results placeholder is shown`() {
+        composeTestRule.apply {
+            testSheet(dialogState(isLoading = false, entries = manyEntries(), selected = emptyList())) {
+                search("nonexistent")
 
-        assertEquals(listOf(entries[0]), result)
+                waitUntil(timeoutMillis = FILTER_TIMEOUT_MILLIS) {
+                    onAllNodesWithText(stringResource(commonR.string.sensor_setting_allow_list_no_results))
+                        .fetchSemanticsNodes().isNotEmpty()
+                }
+            }
+        }
     }
 
     @Test
-    fun `Given query matching no entries when filtering then return empty list`() {
-        val result = filterSettingEntries(entries, query = "nonexistent")
+    fun `Given a filtered list when the query is blanked then every entry is listed again`() {
+        composeTestRule.apply {
+            testSheet(dialogState(isLoading = false, entries = manyEntries(), selected = emptyList())) {
+                search("Chrome")
+                waitUntil(timeoutMillis = FILTER_TIMEOUT_MILLIS) {
+                    onAllNodesWithText(FIREFOX_LABEL).fetchSemanticsNodes().isEmpty()
+                }
 
-        assertEquals(emptyList<SettingEntry>(), result)
-    }
+                // Whitespace is trimmed away to nothing, so it must restore the full list.
+                onNodeWithText(stringResource(commonR.string.search)).performTextReplacement("   ")
 
-    @Test
-    fun `Given query with leading and trailing spaces when filtering then trim and match`() {
-        val result = filterSettingEntries(entries, query = " Chrome ")
-
-        assertEquals(listOf(entries[0]), result)
+                waitUntil(timeoutMillis = FILTER_TIMEOUT_MILLIS) {
+                    onAllNodesWithText(FIREFOX_LABEL).fetchSemanticsNodes().isNotEmpty()
+                }
+            }
+        }
     }
 
     @Test
@@ -182,26 +187,30 @@ class SensorDetailSettingSheetTest {
         }
     }
 
-    @Test
-    fun `Given a search query when typed then only matching entries stay visible`() {
-        composeTestRule.apply {
-            // The search field only appears above the entry count threshold.
-            testSheet(dialogState(isLoading = false, entries = manyEntries(), selected = emptyList())) {
-                onNodeWithText(stringResource(commonR.string.search)).performTextInput("google")
-
-                // The search field debounces the query, so wait for the filtering rather than a frame.
-                waitUntil(timeoutMillis = FILTER_TIMEOUT_MILLIS) {
-                    onAllNodesWithText(FIREFOX_LABEL).fetchSemanticsNodes().isEmpty()
-                }
-                onNodeWithText(CHROME_PACKAGE).assertIsDisplayed()
-            }
-        }
-    }
-
     private class TestHelper(initialState: SettingDialogState) {
         var state by mutableStateOf(initialState)
         var saved: SettingDialogState? = null
         var dismissed = false
+    }
+
+    /** Types [query] into the search field of an open sheet. */
+    private fun AndroidComposeTestRule<*, *>.search(query: String) {
+        onNodeWithText(stringResource(commonR.string.search)).performTextInput(query)
+    }
+
+    /** Opens a sheet with a searchable list, searches [query] and expects Chrome as the only match. */
+    private fun AndroidComposeTestRule<*, *>.assertOnlyChromeIsListed(query: String) {
+        testSheet(dialogState(isLoading = false, entries = manyEntries(), selected = emptyList())) {
+            search(query)
+
+            // The search field debounces the query, so wait for the filtering rather than a frame.
+            waitUntil(timeoutMillis = FILTER_TIMEOUT_MILLIS) {
+                onAllNodesWithText(FIREFOX_LABEL).fetchSemanticsNodes().isEmpty()
+            }
+            // Matched against the package on the entry's second line, so the assertion cannot also
+            // match the text sitting in the search field itself.
+            onNodeWithText(CHROME_PACKAGE).assertIsDisplayed()
+        }
     }
 
     private fun AndroidComposeTestRule<*, *>.testSheet(
