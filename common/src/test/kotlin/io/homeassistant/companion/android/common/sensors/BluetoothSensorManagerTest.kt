@@ -119,7 +119,7 @@ class BluetoothSensorManagerTest {
     }
 
     @Test
-    fun `Given the beacon monitor when inspected then the RSSI multiplier is its only decimal setting`() {
+    fun `Given beacon monitor when inspected then only RSSI multiplier is declared as decimal setting`() {
         val decimals = BluetoothSensorManager.beaconMonitor.settings
             .filterIsInstance<SensorManager.BasicSensor.Setting.Decimal>()
 

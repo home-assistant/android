@@ -24,7 +24,7 @@ class LocationSensorManagerTest {
     }
 
     @Test
-    fun `Given zone location sensor when inspected then minimum accuracy is declared`() {
+    fun `Given zone location sensor when inspected then minimum accuracy setting is declared`() {
         assertEquals(
             listOf(Setting.Number("location_minimum_accuracy", 200)),
             LocationSensorManager.zoneLocation.settings,

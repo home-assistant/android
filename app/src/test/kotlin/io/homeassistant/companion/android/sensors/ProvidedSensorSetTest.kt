@@ -34,10 +34,8 @@ class ProvidedSensorSetTest {
         assertTrue(ids.contains("car_speed"))
     }
 
-    /**
-     * A duplicated setting name resolves inconsistently: [io.homeassistant.companion.android.common.sensors.SensorRepository]
-     * keys declarations by name and keeps the last, while `SensorManager.getSetting` keeps the first.
-     */
+    // A duplicated setting name resolves inconsistently: SensorRepository keys declarations by name
+    // and keeps the last, while SensorManager.getSetting keeps the first.
     @Test
     fun `Given hilt graph then every sensor declares its settings with unique names`() {
         hilt.inject()
