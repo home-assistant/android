@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.settings.sensor.views
 
 import androidx.annotation.VisibleForTesting
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,21 +16,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
@@ -79,14 +79,18 @@ internal fun SensorDetailSettingSheet(
     onSave: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val checkedValue = remember { state.entriesSelected.toMutableStateList() }
+    val checkedValue = remember(state.entriesSelected) { state.entriesSelected.toMutableStateList() }
     val searchState = rememberSearchFieldState()
-    var filteredEntries by remember(state.entries) { mutableStateOf(state.entries) }
-    LaunchedEffect(state.entries, searchState.query) {
-        filteredEntries = withContext(Dispatchers.Default) {
-            filterSettingEntries(state.entries, searchState.query)
+    val query = searchState.query
+    val matchingEntries by produceState(state.entries, state.entries, query) {
+        value = withContext(Dispatchers.Default) {
+            filterSettingEntries(state.entries, query)
         }
     }
+    // A blank query filters nothing, so the entries are read as they are. Going through
+    // [produceState] would leave the list one frame behind [state], which is long enough to render
+    // the "no results" placeholder while the entries have in fact just arrived.
+    val filteredEntries = if (query.isBlank()) state.entries else matchingEntries
 
     val bottomSheetState = rememberHAModalBottomSheetState(skipPartiallyExpanded = true)
     val screenHeight = safeScreenHeight() - HADimens.SPACE16
@@ -242,7 +246,7 @@ private fun SheetEntryList(
                     BottomSheetSettingRow(
                         entry = entry,
                         checked = isSelected(entry.id),
-                        onClick = { isChecked -> onToggle(entry.id, isChecked) },
+                        onCheckedChange = { isChecked -> onToggle(entry.id, isChecked) },
                     )
                 }
             }
@@ -288,26 +292,41 @@ internal fun filterSettingEntries(entries: List<SettingEntry>, query: String): L
     }
 }
 
+/** Tags the checkbox of the entry [id], so a test can tap it rather than the row around it. */
+@VisibleForTesting
+internal fun settingEntryCheckboxTag(id: String) = "setting_entry_checkbox_$id"
+
 @Composable
 private fun BottomSheetSettingRow(
     entry: SettingEntry,
     checked: Boolean,
-    onClick: (Boolean) -> Unit,
+    onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colorScheme = LocalHAColorScheme.current
+    // Shared with the checkbox so presses anywhere on the row drive its press animation.
+    val interactionSource = remember { MutableInteractionSource() }
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(role = Role.Checkbox) { onClick(!checked) }
+            .toggleable(
+                value = checked,
+                role = Role.Checkbox,
+                onValueChange = onCheckedChange,
+                indication = null,
+                interactionSource = interactionSource,
+            )
             .heightIn(min = HADimens.SPACE16),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HACheckbox(
             checked = checked,
-            onCheckedChange = null,
-            modifier = Modifier.size(width = HADimens.SPACE12, height = HADimens.SPACE12),
+            onCheckedChange = onCheckedChange,
+            interactionSource = interactionSource,
+            modifier = Modifier
+                .size(width = HADimens.SPACE12, height = HADimens.SPACE12)
+                .testTag(settingEntryCheckboxTag(entry.id)),
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(

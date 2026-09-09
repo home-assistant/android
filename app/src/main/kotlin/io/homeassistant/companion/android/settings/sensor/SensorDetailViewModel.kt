@@ -337,8 +337,7 @@ class SensorDetailViewModel @Inject constructor(
         entries: List<SettingEntry>,
         entriesSelected: List<String>,
     ): List<SettingEntry> {
-        val isMultiSelect = setting.valueType.listType && setting.valueType != SensorSettingType.LIST
-        if (!isMultiSelect) return entries
+        if (!setting.valueType.isMultiSelect()) return entries
         val selected = entriesSelected.toSet()
         return entries.sortedByDescending { it.id in selected }
     }
@@ -357,7 +356,7 @@ class SensorDetailViewModel @Inject constructor(
 
     fun submitSettingWithDialog(data: SettingDialogState?) {
         if (data != null) {
-            val setting = if (data.setting.valueType.listType && data.setting.valueType != SensorSettingType.LIST) {
+            val setting = if (data.setting.valueType.isMultiSelect()) {
                 // Multi-select settings keep their selection as a list in the state; serialize it
                 // here into the comma-separated format read back by [onSettingWithDialogPressed]
                 data.setting.copy(value = data.entriesSelected.joinToString())

@@ -21,11 +21,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Card
-import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
@@ -47,7 +47,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -60,6 +59,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -163,13 +163,7 @@ fun SensorDetailView(
             )
         } else {
             viewModel.sensorSettingsDialog?.let { dialogState ->
-                val isMultiSelectList = dialogState.setting.valueType in listOf(
-                    SensorSettingType.LIST_APPS,
-                    SensorSettingType.LIST_BLUETOOTH,
-                    SensorSettingType.LIST_ZONES,
-                    SensorSettingType.LIST_BEACONS,
-                )
-                if (isMultiSelectList) {
+                if (dialogState.setting.valueType.isMultiSelect()) {
                     // TODO Drop the explicit HATheme once SensorDetailView is migrated
                     // https://github.com/home-assistant/android/issues/6839
                     HATheme {
@@ -611,8 +605,6 @@ fun SensorDetailSettingDialog(
     val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType.listType
     val inputValue = remember(state.isLoading) { mutableStateOf(state.setting.value) }
-    val checkedValue =
-        remember(state.isLoading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
 
     MdcAlertDialog(
         modifier = modifier,
@@ -633,25 +625,10 @@ fun SensorDetailSettingDialog(
                     items(state.entries, key = { it.id }) { entry ->
                         SensorDetailSettingRow(
                             entry = entry,
-                            checked = if (state.setting.valueType ==
-                                SensorSettingType.LIST
-                            ) {
-                                inputValue.value == entry.id
-                            } else {
-                                checkedValue.contains(entry.id)
-                            },
-                            multiple = state.setting.valueType != SensorSettingType.LIST,
-                            onClick = { isChecked ->
-                                if (state.setting.valueType == SensorSettingType.LIST) {
-                                    inputValue.value = entry.id
-                                    onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
-                                } else {
-                                    if (checkedValue.contains(entry.id) && !isChecked) {
-                                        checkedValue.remove(entry.id)
-                                    } else if (!checkedValue.contains(entry.id) && isChecked) {
-                                        checkedValue.add(entry.id)
-                                    }
-                                }
+                            selected = inputValue.value == entry.id,
+                            onClick = {
+                                inputValue.value = entry.id
+                                onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
                             },
                         )
                     }
@@ -678,14 +655,7 @@ fun SensorDetailSettingDialog(
         onSave = if (state.isLoading) {
             null
         } else if (state.setting.valueType != SensorSettingType.LIST) {
-            {
-                if (listSettingDialog) {
-                    // Multi-select selection is kept as a list; the ViewModel serializes it on submit
-                    onSubmit(state.copy(entriesSelected = checkedValue.toList()))
-                } else {
-                    onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
-                }
-            }
+            { onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value))) }
         } else { // list is saved when selecting a value
             null
         },
@@ -760,32 +730,23 @@ fun SensorDetailUpdateInfoDialog(
 @Composable
 internal fun SensorDetailSettingRow(
     entry: SettingEntry,
-    checked: Boolean,
-    multiple: Boolean,
-    onClick: (Boolean) -> Unit,
+    selected: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
-            .clickable { onClick(!checked) }
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 12.dp)
             .heightIn(min = 64.dp)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (multiple) {
-            Checkbox(
-                checked = checked,
-                onCheckedChange = null,
-                modifier = Modifier.size(width = 48.dp, height = 48.dp),
-            )
-        } else {
-            RadioButton(
-                selected = checked,
-                onClick = null,
-                modifier = Modifier.size(width = 48.dp, height = 48.dp),
-            )
-        }
+        RadioButton(
+            selected = selected,
+            onClick = null,
+            modifier = Modifier.size(width = 48.dp, height = 48.dp),
+        )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = entry.primary,

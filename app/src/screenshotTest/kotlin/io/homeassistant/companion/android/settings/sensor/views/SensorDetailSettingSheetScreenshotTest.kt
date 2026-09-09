@@ -104,7 +104,7 @@ class SensorDetailSettingSheetScreenshotTest {
                     isLoading = isLoading,
                     entries = entries,
                     showSearch = showSearch,
-                    searchState = SearchFieldState(),
+                    searchState = SearchFieldState(searchQuery),
                     isSelected = isSelected,
                     onToggle = { _, _ -> },
                     onCancel = {},
