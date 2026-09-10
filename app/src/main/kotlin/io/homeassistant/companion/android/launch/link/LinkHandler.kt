@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.frontend.url.FrontendUrlParams
 import javax.inject.Inject
 import timber.log.Timber
 
@@ -25,7 +26,6 @@ private const val MOBILE_VALUE = "1"
 
 private const val SERVER_PARAM = "server"
 private const val SERVER_ID_PARAM = "server_id"
-private const val MORE_INFO_ENTITY_ID_PARAM = "more-info-entity-id"
 
 /**
  * Builds the `homeassistant://navigate` deep link that [LinkHandler] resolves back to [target] on
@@ -37,7 +37,8 @@ internal fun navigateDeepLinkUri(target: FrontendTarget, serverId: Int): Uri {
         .scheme(HA_DEEP_LINK_SCHEME)
         .authority(NAVIGATE_URL_PATH.removeSurrounding("/"))
     when (target) {
-        is FrontendTarget.EntityMoreInfo -> builder.appendQueryParameter(MORE_INFO_ENTITY_ID_PARAM, target.entityId)
+        is FrontendTarget.EntityMoreInfo ->
+            builder.appendQueryParameter(FrontendUrlParams.MORE_INFO_ENTITY_ID, target.entityId)
         is FrontendTarget.Path -> builder.encodedRawPath(target.path)
         FrontendTarget.Default -> Unit
     }
@@ -266,7 +267,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         // A root-level `more-info-entity-id` maps to FrontendTarget.EntityMoreInfo, which keeps the
         // server-version handling (URL query parameter on HA 2025.6+, JavaScript dispatch on older
         // servers). Anything else is a plain path/URL.
-        val moreInfoEntityId = uri.getQueryParameter(MORE_INFO_ENTITY_ID_PARAM)?.takeIf { it.isNotBlank() }
+        val moreInfoEntityId = uri.getQueryParameter(FrontendUrlParams.MORE_INFO_ENTITY_ID)?.takeIf { it.isNotBlank() }
         val target = if (moreInfoEntityId != null && uri.isNavigateRoot()) {
             FrontendTarget.EntityMoreInfo(moreInfoEntityId)
         } else {

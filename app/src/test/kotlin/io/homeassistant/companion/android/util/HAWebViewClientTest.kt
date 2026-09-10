@@ -472,6 +472,27 @@ class HAWebViewClientTest {
     }
 
     @Test
+    fun `Given onUrlVisited callback when doUpdateVisitedHistory then reports visited url`() {
+        var captured: String? = null
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            clientCertProvider = clientCertProvider,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = null,
+            onReceivedHttpAuthRequest = null,
+            onUrlVisited = { captured = it },
+        )
+        val webView = mockk<WebView> { every { canGoBack() } returns false }
+
+        client.doUpdateVisitedHistory(webView, "https://example.com/history?start_date=2026-01-01", false)
+
+        assertEquals("https://example.com/history?start_date=2026-01-01", captured)
+    }
+
+    @Test
     fun `Given no onReceivedHttpAuthRequest callback when auth requested then does not crash`() {
         webViewClient.onReceivedHttpAuthRequest(mockk(relaxed = true), mockk(relaxed = true), "example.com", "realm")
         // No exception thrown

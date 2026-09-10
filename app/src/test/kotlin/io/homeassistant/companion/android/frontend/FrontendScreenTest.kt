@@ -515,6 +515,7 @@ class FrontendScreenTest {
         onImprovConnectDevice: (ssid: String, password: String) -> Unit = { _, _ -> },
         onImprovRestart: () -> Unit = {},
         onImprovDismiss: () -> Unit = {},
+        onBackPressed: () -> Unit = {},
         registry: ActivityResultRegistry? = null,
     ) {
         setContent {
@@ -541,6 +542,7 @@ class FrontendScreenTest {
                     onImprovConnectDevice = onImprovConnectDevice,
                     onImprovRestart = onImprovRestart,
                     onImprovDismiss = onImprovDismiss,
+                    onBackPressed = onBackPressed,
                 )
             }
 
@@ -671,6 +673,38 @@ class FrontendScreenTest {
             onNodeWithText("Already paired").assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.ok)).performClick()
             assertTrue("onDismiss should be called when OK tapped", dismissed)
+        }
+    }
+
+    @Test
+    fun `Given Content with back history when back pressed then onBackPressed is invoked`() {
+        var backPresses = 0
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com", canGoBack = true),
+                onBackPressed = { backPresses++ },
+            )
+
+            runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+            waitForIdle()
+            assertEquals(1, backPresses)
+        }
+    }
+
+    @Test
+    fun `Given Content without back history when back pressed then onBackPressed is not invoked`() {
+        var backPresses = 0
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com", canGoBack = false),
+                onBackPressed = { backPresses++ },
+            )
+
+            // With no history to pop the screen does not claim the gesture; it falls through
+            // to the default dispatcher behavior instead of the screen callback.
+            runOnUiThread { activity.onBackPressedDispatcher.onBackPressed() }
+            waitForIdle()
+            assertEquals(0, backPresses)
         }
     }
 

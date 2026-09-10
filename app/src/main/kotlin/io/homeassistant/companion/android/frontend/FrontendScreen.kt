@@ -196,6 +196,7 @@ internal fun FrontendScreen(
         onSecurityLevelDone = viewModel::onSecurityLevelDone,
         onSecurityLevelHelpClick = onSecurityLevelHelpClick,
         onShowSnackbar = onShowSnackbar,
+        onBackPressed = viewModel::onBackPressed,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
         onErrorAction = viewModel::onErrorAction,
         onDownloadRequested = viewModel::onDownloadRequested,
@@ -237,6 +238,7 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    onBackPressed: () -> Unit = {},
     onErrorAction: (ErrorActionIntent) -> Unit = {},
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
@@ -273,7 +275,7 @@ internal fun FrontendScreenContent(
     val loadingSurfaceColor = LocalHAColorScheme.current.colorSurfaceDefault
 
     // Consume back only while the dashboard (Content) is shown and the WebView has history to pop.
-    BackHandler(enabled = content?.canGoBack == true) { webView?.goBack() }
+    BackHandler(enabled = content?.canGoBack == true) { onBackPressed() }
 
     FrontendScreenEffects(
         webView = webView,

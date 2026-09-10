@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.util.compose.webview
 import android.net.Uri
 import android.webkit.WebView
 import androidx.core.net.toUri
+import io.homeassistant.companion.android.frontend.url.FrontendUrlParams
 import io.homeassistant.companion.android.util.hasNonRootPath
 import io.homeassistant.companion.android.util.hasSameOrigin
 
@@ -52,7 +53,7 @@ private fun resolveBackAction(previousUrl: Uri?, loadedUrl: Uri?): BackAction {
         val rootUrl = loadedUrl.buildUpon()
             .path("/")
             .clearQuery()
-            .appendQueryParameter("external_auth", "1")
+            .appendQueryParameter(FrontendUrlParams.EXTERNAL_AUTH, "1")
             .fragment(null)
             .build()
         return BackAction.NavigateToRoot(rootUrl)

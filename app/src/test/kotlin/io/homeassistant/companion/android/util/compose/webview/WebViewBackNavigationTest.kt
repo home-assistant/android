@@ -4,10 +4,13 @@ import android.net.Uri
 import android.webkit.WebBackForwardList
 import android.webkit.WebHistoryItem
 import android.webkit.WebView
+import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.frontend.WebViewAction
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -106,7 +109,57 @@ class WebViewBackNavigationTest {
         assertTrue(action is BackAction.NavigateToRoot)
     }
 
-    private fun webViewWithoutHistory(): WebView = mockk {
+    @Test
+    fun `Given same-origin previous entry when NavigateBack runs then WebView goes back`() {
+        val webView = webViewWithHistory("https://ha.local:8123/lovelace/0")
+
+        WebViewAction.NavigateBack("https://ha.local:8123/history?external_auth=1").run(webView)
+
+        verify { webView.goBack() }
+        verify(exactly = 0) { webView.clearHistory() }
+    }
+
+    @Test
+    fun `Given cross-origin previous entry and non-root path when NavigateBack runs then loads root and clears history`() {
+        val webView = webViewWithHistory("http://192.168.1.5:8123/lovelace/0")
+
+        WebViewAction.NavigateBack("https://ha.example.com/history?external_auth=1").run(webView)
+
+        verify { webView.loadUrl("https://ha.example.com/?external_auth=1") }
+        verify { webView.clearHistory() }
+        verify(exactly = 0) { webView.goBack() }
+    }
+
+    @Test
+    fun `Given no history when NavigateBack runs then triggers FailFast and does not navigate`() {
+        var failFastTriggered = false
+        FailFast.setHandler { _, _ -> failFastTriggered = true }
+        val webView = webViewWithoutHistory()
+
+        WebViewAction.NavigateBack("https://ha.local:8123/?external_auth=1").run(webView)
+
+        assertTrue(failFastTriggered)
+        verify(exactly = 0) { webView.goBack() }
+        verify(exactly = 0) { webView.loadUrl(any()) }
+        verify(exactly = 0) { webView.clearHistory() }
+    }
+
+    @Test
+    fun `Given cross-origin previous entry and root loaded url when NavigateBack runs then triggers FailFast`() {
+        // Reachable edge: the previous entry is cross-origin (so no same-origin GoBack) but the
+        // current page is already at the root (so no NavigateToRoot), leaving nothing actionable.
+        var failFastTriggered = false
+        FailFast.setHandler { _, _ -> failFastTriggered = true }
+        val webView = webViewWithHistory("http://192.168.1.5:8123/lovelace/0")
+
+        WebViewAction.NavigateBack("https://ha.example.com/?external_auth=1").run(webView)
+
+        assertTrue(failFastTriggered)
+        verify(exactly = 0) { webView.goBack() }
+        verify(exactly = 0) { webView.loadUrl(any()) }
+    }
+
+    private fun webViewWithoutHistory(): WebView = mockk(relaxUnitFun = true) {
         every { canGoBack() } returns false
     }
 
@@ -118,7 +171,7 @@ class WebViewBackNavigationTest {
             every { currentIndex } returns 1
             every { getItemAtIndex(0) } returns historyItem
         }
-        return mockk {
+        return mockk(relaxUnitFun = true) {
             every { canGoBack() } returns true
             every { copyBackForwardList() } returns backForwardList
         }
