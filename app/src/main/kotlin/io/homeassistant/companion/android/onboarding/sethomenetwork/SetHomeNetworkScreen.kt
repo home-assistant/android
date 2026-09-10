@@ -33,7 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.Close
 import io.github.timoptr.mdiicons.generated.Ethernet
-import io.github.timoptr.mdiicons.generated.Vpn
+import io.github.timoptr.mdiicons.generated.Key
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
@@ -148,7 +148,7 @@ private fun SetHomeNetworkContent(
                 isUsingVpn,
                 onUsingVpnChange,
                 text = stringResource(commonR.string.manage_ssids_vpn),
-                icon = Mdi.Vpn.rememberImageVector(),
+                icon = Mdi.Key.rememberImageVector(),
                 testTag = VPN_TAG,
             )
         }

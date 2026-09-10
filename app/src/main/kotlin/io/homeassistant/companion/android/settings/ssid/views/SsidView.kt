@@ -54,7 +54,7 @@ import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.AlertCircle
 import io.github.timoptr.mdiicons.generated.Close
 import io.github.timoptr.mdiicons.generated.Ethernet
-import io.github.timoptr.mdiicons.generated.Vpn
+import io.github.timoptr.mdiicons.generated.Key
 import io.github.timoptr.mdiicons.generated.Wifi
 import io.github.timoptr.mdiicons.generated.WifiCheck
 import io.github.timoptr.mdiicons.rememberImageVector
@@ -202,7 +202,7 @@ fun SsidView(
         item("vpn") {
             SsidSubheader(
                 title = stringResource(commonR.string.manage_ssids_vpn),
-                icon = Mdi.Vpn.rememberImageVector(),
+                icon = Mdi.Key.rememberImageVector(),
                 checked = vpn,
                 onClicked = { onSetVpn(it) },
             )
