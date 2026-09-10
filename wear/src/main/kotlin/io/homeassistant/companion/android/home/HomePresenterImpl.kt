@@ -5,6 +5,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.COVER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.FAN_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -36,11 +39,11 @@ class HomePresenterImpl @Inject constructor(
     companion object {
         val domainsWithNames = mapOf(
             "button" to commonR.string.buttons,
-            "cover" to commonR.string.covers,
-            "fan" to commonR.string.fans,
+            COVER_DOMAIN to commonR.string.covers,
+            FAN_DOMAIN to commonR.string.fans,
             "input_boolean" to commonR.string.input_booleans,
             "input_button" to commonR.string.input_buttons,
-            "light" to commonR.string.lights,
+            LIGHT_DOMAIN to commonR.string.lights,
             "lock" to commonR.string.locks,
             "switch" to commonR.string.switches,
             "script" to commonR.string.scripts,

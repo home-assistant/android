@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -8,13 +9,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Text
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.TimerCog
+import io.github.timoptr.mdiicons.generated.Video
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
-import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
@@ -27,7 +28,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 @Composable
 fun SetCameraTileView(
     tile: CameraTile?,
-    entities: List<Entity>?,
+    entityItem: EntityDisplay?,
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit,
 ) {
@@ -37,15 +38,13 @@ fun SetCameraTileView(
                 ListHeader(commonR.string.camera_tile)
             }
             item {
-                val entity = tile?.entityId?.let { tileEntityId ->
-                    entities?.firstOrNull { it.entityId == tileEntityId }
-                }
-                val icon = entity?.getIcon(LocalContext.current) ?: CommunityMaterial.Icon3.cmd_video
+                val icon = entityItem?.icon ?: Mdi.Video
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
-                            asset = icon,
+                            imageVector = icon.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
@@ -56,7 +55,7 @@ fun SetCameraTileView(
                         )
                     },
                     secondaryLabel = {
-                        Text(entity?.friendlyName ?: tile?.entityId ?: "")
+                        Text(entityItem?.name ?: tile?.entityId ?: "")
                     },
                     onClick = onSelectEntity,
                 )
@@ -67,7 +66,8 @@ fun SetCameraTileView(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
-                            asset = CommunityMaterial.Icon3.cmd_timer_cog,
+                            imageVector = Mdi.TimerCog.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },

@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ReturnCount:EvaluateJavascriptDetector.kt:EvaluateJavascriptDetector.IssueDetector$private fun hasOptIn: Boolean</ID>
+    <ID>ReturnCount:MissingSerializableAnnotationIssue.kt:DecodeFromStringStringVisitor$private fun shouldSkipTypeArgumentCheck: Boolean</ID>
+    <ID>ReturnCount:MissingSerializableAnnotationIssue.kt:EncodeToStringVisitor$private fun getValueArgumentFromMultipleArgument: UExpression?</ID>
+    <ID>ReturnCount:MissingSerializableAnnotationIssue.kt:MissingSerializableAnnotationIssue.IssueDetector.&lt;no name provided&gt;$override fun visitCallExpression</ID>
+    <ID>ReturnCount:SdkVersionDetector.kt:SdkVersionDetector.IssueDetector$override fun visitReference</ID>
+  </CurrentIssues>
+</SmellBaseline>

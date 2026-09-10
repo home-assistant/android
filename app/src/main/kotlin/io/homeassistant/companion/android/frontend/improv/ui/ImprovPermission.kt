@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.improv.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -20,9 +21,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Bluetooth
+import io.github.timoptr.mdiicons.generated.MapMarker
+import io.github.timoptr.mdiicons.generated.Radar
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
@@ -67,13 +71,13 @@ fun ImprovPermission(
         )
         if (needsBluetooth) {
             PermissionBullet(
-                icon = CommunityMaterial.Icon.cmd_bluetooth,
+                icon = Mdi.Bluetooth,
                 text = stringResource(commonR.string.improv_permission_bluetooth),
             )
         }
         if (needsLocation) {
             PermissionBullet(
-                icon = CommunityMaterial.Icon3.cmd_map_marker,
+                icon = Mdi.MapMarker,
                 text = stringResource(commonR.string.improv_permission_location),
             )
         }
@@ -97,9 +101,9 @@ fun ImprovPermission(
 private fun ColumnScope.Header(modifier: Modifier = Modifier) {
     Spacer(modifier = Modifier.height(HADimens.SPACE4))
     Image(
-        asset = CommunityMaterial.Icon3.cmd_radar,
-        colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnPrimaryNormal),
+        imageVector = Mdi.Radar.rememberImageVector(),
         contentDescription = null,
+        colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnPrimaryNormal),
         modifier = Modifier
             .size(48.dp),
     )
@@ -110,15 +114,15 @@ private fun ColumnScope.Header(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun PermissionBullet(icon: IIcon, text: String, modifier: Modifier = Modifier) {
+private fun PermissionBullet(icon: MdiIcon, text: String, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.widthIn(max = MaxButtonWidth).fillMaxWidth(),
     ) {
         Image(
-            asset = icon,
-            colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorTextPrimary),
+            imageVector = icon.rememberImageVector(),
             contentDescription = null,
+            colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorTextPrimary),
         )
         Text(
             text = text,

@@ -1,13 +1,30 @@
 package io.homeassistant.companion.android.frontend.filechooser
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.webkit.WebChromeClient
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import io.homeassistant.companion.android.webview.ShowWebFileChooser
+
+private class ShowWebFileChooser : ActivityResultContract<WebChromeClient.FileChooserParams, Array<Uri>?>() {
+
+    override fun createIntent(context: Context, input: WebChromeClient.FileChooserParams): Intent {
+        return input.createIntent().apply {
+            type = "*/*"
+        }
+    }
+
+    override fun parseResult(resultCode: Int, intent: Intent?): Array<Uri>? {
+        return WebChromeClient.FileChooserParams.parseResult(resultCode, intent)
+    }
+}
 
 /**
  * Composable effect that handles file uploads from the WebView.

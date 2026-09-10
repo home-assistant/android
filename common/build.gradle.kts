@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.homeassistant.android.compose)
 }
 
-val homeAssistantAndroidPushUrl: String by project
-val homeAssistantAndroidRateLimitUrl: String by project
+val homeAssistantAndroidPushUrl = providers.gradleProperty("homeAssistantAndroidPushUrl").get()
+val homeAssistantAndroidRateLimitUrl = providers.gradleProperty("homeAssistantAndroidRateLimitUrl").get()
 
 val versionName = project.version.toString()
 val versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
@@ -31,6 +31,8 @@ ksp {
 }
 
 dependencies {
+    api(libs.mdi.icons)
+
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
     implementation(libs.kotlinx.coroutines.core)
@@ -56,9 +58,6 @@ dependencies {
     implementation(libs.okhttp.android)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.android.beacon.library)
-
-    implementation(libs.iconics.core)
-    implementation(libs.community.material.typeface)
 
     implementation(libs.emojiJava) {
         exclude(group = "org.json", module = "json")

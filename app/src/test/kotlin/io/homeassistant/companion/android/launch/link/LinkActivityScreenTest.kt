@@ -8,6 +8,7 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.settings.server.ServerChooserItem
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Assert.assertEquals
@@ -39,7 +40,7 @@ class LinkActivityScreenTest {
         composeTestRule.apply {
             setContent {
                 LinkActivityScreen(
-                    uiState = LinkUiState.ChoosingServer(items = items, path = "/lovelace"),
+                    uiState = LinkUiState.ChoosingServer(items = items, target = FrontendTarget.Path("/lovelace")),
                     onServerSelected = {},
                     onServerChooserDismissed = {},
                 )
@@ -60,7 +61,7 @@ class LinkActivityScreenTest {
         composeTestRule.apply {
             setContent {
                 LinkActivityScreen(
-                    uiState = LinkUiState.ChoosingServer(items = items, path = "/lovelace"),
+                    uiState = LinkUiState.ChoosingServer(items = items, target = FrontendTarget.Path("/lovelace")),
                     onServerSelected = { selectedServerId = it },
                     onServerChooserDismissed = {},
                 )
@@ -96,7 +97,7 @@ class LinkActivityScreenTest {
         composeTestRule.apply {
             setContent {
                 LinkActivityScreen(
-                    uiState = LinkUiState.ChoosingServer(items = items, path = "/lovelace"),
+                    uiState = LinkUiState.ChoosingServer(items = items, target = FrontendTarget.Path("/lovelace")),
                     onServerSelected = { selectedServerId = it },
                     onServerChooserDismissed = {},
                 )

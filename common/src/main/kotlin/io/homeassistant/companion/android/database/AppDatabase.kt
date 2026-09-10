@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.database.mediacontrol.MediaControlConf
 import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
 import io.homeassistant.companion.android.database.migration.Migration27to28
 import io.homeassistant.companion.android.database.migration.Migration36to37
+import io.homeassistant.companion.android.database.migration.Migration52to53
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.qs.TileDao
@@ -105,6 +106,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         AutoMigration(from = 49, to = 50),
         AutoMigration(from = 50, to = 51),
         AutoMigration(from = 51, to = 52),
+        AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
         AutoMigration(from = 52, to = 53),
     ],
 )

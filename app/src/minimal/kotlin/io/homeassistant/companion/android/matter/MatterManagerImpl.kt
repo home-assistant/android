@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.matter
 
+import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import javax.inject.Inject
 
@@ -22,7 +23,9 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
         )
 
     override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? = null
-
     override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? =
         null
+
+    override fun parseCommissioningIntentResult(result: ActivityResult): MatterManager.CommissioningRequestResult =
+        MatterManager.CommissioningRequestResult.Failed
 }

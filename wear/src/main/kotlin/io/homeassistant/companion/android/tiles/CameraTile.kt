@@ -36,7 +36,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.guava.future
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -228,21 +227,13 @@ class CameraTile : TileService() {
         }
     }
 
-    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
-        serviceScope.launch {
-            val tileId = requestParams.tileId
-            val tileConfig = cameraTileDao.get(tileId)
-            tileConfig?.refreshInterval?.let {
-                if (it >= 1) {
-                    try {
-                        getUpdater(this@CameraTile)
-                            .requestUpdate(io.homeassistant.companion.android.tiles.CameraTile::class.java)
-                    } catch (e: Exception) {
-                        Timber.w(e, "Unable to request tile update on enter")
-                    }
-                }
-            }
+    override fun onRecentInteractionEventsAsync(
+        events: List<EventBuilders.TileInteractionEvent>,
+    ): ListenableFuture<Void?> = serviceScope.future {
+        requestUpdateOnEnter(events) { tileId ->
+            (cameraTileDao.get(tileId)?.refreshInterval ?: 0) >= 1
         }
+        null
     }
 
     override fun onDestroy() {

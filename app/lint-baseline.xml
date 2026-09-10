@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1119"
+            line="1120"
             column="17"/>
     </issue>
 
@@ -437,7 +437,7 @@
         errorLine2="            ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="76"
+            line="78"
             column="13"/>
     </issue>
 
@@ -448,7 +448,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="251"
+            line="253"
             column="9"/>
     </issue>
 
@@ -459,7 +459,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="252"
+            line="254"
             column="9"/>
     </issue>
 
@@ -470,7 +470,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="347"
+            line="352"
             column="9"/>
     </issue>
 
@@ -1070,28 +1070,6 @@
 
     <issue
         id="UnusedResources"
-        message="The resource `R.dimen.activity_margin` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;activity_margin&quot;>16dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="3"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.ic_baseline_info_24` appears to be unused"
-        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/drawable/ic_baseline_info_24.xml"
-            line="1"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
         message="The resource `R.drawable.ic_delete` appears to be unused"
         errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
         errorLine2="^">
@@ -1308,7 +1286,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/ManageShortcutsViewModel.kt"
-            line="217"
+            line="184"
             column="13"/>
     </issue>
 
@@ -1341,7 +1319,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="85"
+            line="87"
             column="1"/>
     </issue>
 

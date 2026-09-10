@@ -11,7 +11,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.settings.server.ServerChooserItem
+import io.homeassistant.companion.android.settings.server.ServerChooserItemsUseCase
 import io.homeassistant.companion.android.thread.ThreadManager
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -21,6 +22,7 @@ class MatterCommissioningViewModel @Inject constructor(
     private val matterManager: MatterManager,
     private val threadManager: ThreadManager,
     private val serverManager: ServerManager,
+    private val serverChooserItemsUseCase: ServerChooserItemsUseCase,
     application: Application,
 ) : AndroidViewModel(application) {
 
@@ -42,7 +44,7 @@ class MatterCommissioningViewModel @Inject constructor(
     var serverId by mutableIntStateOf(0)
         private set
 
-    var servers by mutableStateOf<List<Server>>(emptyList())
+    var serverChooserItems by mutableStateOf<List<ServerChooserItem>>(emptyList())
         private set
 
     fun checkSetup(isNewDevice: Boolean) {
@@ -57,9 +59,10 @@ class MatterCommissioningViewModel @Inject constructor(
                 step = CommissioningFlowStep.NotRegistered
                 return@launch
             }
-            servers = serverManager.servers()
+            val servers = serverManager.servers()
             if (servers.size > 1) {
                 step = CommissioningFlowStep.SelectServer
+                serverChooserItemsUseCase(servers).collect { serverChooserItems = it }
             } else {
                 serverManager.getServer()?.id?.let {
                     checkSupport(it)

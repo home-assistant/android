@@ -378,16 +378,14 @@
             </intent-filter>
         </service>
 
+        <!-- Kept only for not-yet-migrated hardcoded links such as app shortcuts -->
         <activity
             android:name=".webview.WebViewActivity"
-            android:supportsPictureInPicture="true"
-            android:resizeableActivity="true"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode" />
+            android:exported="false" />
 
         <activity
             android:name=".settings.SettingsActivity"
-            android:parentActivityName=".webview.WebViewActivity"
+            android:parentActivityName=".launch.LaunchActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.HomeAssistant.Config"/>
@@ -402,15 +400,6 @@
             android:theme="@style/Theme.HomeAssistant.TranslucentOverlay">
             <tools:validation testUrl="https://www.home-assistant.io/tag/123e4567-e89b-12d3-a456-426614174000" />
 
-            <intent-filter>
-                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="www.home-assistant.io"
-                    android:pathPrefix="/tag/" />
-            </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -422,6 +411,21 @@
                     android:pathPrefix="/tag/" />
             </intent-filter>
         </activity>
+        <activity-alias
+            android:name=".nfc.TagScannedActivity"
+            android:targetActivity=".nfc.TagReaderActivity"
+            android:exported="true"
+            android:permission="android.permission.DISPATCH_NFC_MESSAGE">
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="www.home-assistant.io"
+                    android:pathPrefix="/tag/" />
+            </intent-filter>
+        </activity-alias>
         <activity
             android:name=".nfc.NfcSetupActivity"
             android:exported="false"

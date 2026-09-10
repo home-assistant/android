@@ -1,15 +1,13 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,7 +19,9 @@ import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -43,7 +43,6 @@ fun SetShortcutsTileView(shortcutEntities: List<SimplifiedEntity>, onShortcutEnt
                 val iconBitmap = getIcon(
                     shortcutEntities[index].icon,
                     shortcutEntities[index].domain,
-                    LocalContext.current,
                 )
 
                 Button(
@@ -51,7 +50,8 @@ fun SetShortcutsTileView(shortcutEntities: List<SimplifiedEntity>, onShortcutEnt
                         .fillMaxWidth(),
                     icon = {
                         Image(
-                            iconBitmap,
+                            imageVector = iconBitmap.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(Color.White),
                         )
                     },
@@ -62,7 +62,7 @@ fun SetShortcutsTileView(shortcutEntities: List<SimplifiedEntity>, onShortcutEnt
                     },
                     secondaryLabel = {
                         Text(
-                            text = shortcutEntities[index].friendlyName,
+                            text = shortcutEntities[index].name,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -80,7 +80,7 @@ fun SetShortcutsTileView(shortcutEntities: List<SimplifiedEntity>, onShortcutEnt
                         onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) },
                     ) {
                         Icon(
-                            Icons.Filled.Add,
+                            Mdi.Plus.rememberImageVector(),
                             contentDescription = stringResource(id = commonR.string.add_shortcut),
                             modifier = Modifier.size(
                                 IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize),

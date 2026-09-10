@@ -18,8 +18,6 @@ import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
-import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
@@ -33,6 +31,7 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
+import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
 import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.QuestUtil
@@ -63,10 +62,6 @@ open class HomeAssistantApplication : Application() {
     lateinit var prefsRepository: PrefsRepository
 
     @Inject
-    @NamedKeyChain
-    lateinit var keyChainRepository: KeyChainRepository
-
-    @Inject
     lateinit var okHttpClientProvider: SuspendProvider<OkHttpClient>
 
     @Inject
@@ -80,6 +75,9 @@ open class HomeAssistantApplication : Application() {
 
     @Inject
     lateinit var settingsDao: SettingsDao
+
+    @Inject
+    internal lateinit var shortcutManager: HaShortcutManager
 
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
@@ -124,6 +122,7 @@ open class HomeAssistantApplication : Application() {
 
             languagesManager.applyCurrentLang()
             nightModeManager.applyCurrentNightMode()
+            shortcutManager.migrateLegacyShortcuts()
         }
 
         configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)
@@ -141,10 +140,6 @@ open class HomeAssistantApplication : Application() {
             },
             ContextCompat.RECEIVER_EXPORTED,
         )
-
-        ioScope.launch {
-            keyChainRepository.load(applicationContext)
-        }
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.

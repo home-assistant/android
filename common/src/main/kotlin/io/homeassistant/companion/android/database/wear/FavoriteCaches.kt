@@ -12,8 +12,9 @@ data class FavoriteCaches(
     @PrimaryKey
     @ColumnInfo(name = "id")
     val id: String,
-    @ColumnInfo(name = "friendly_name")
-    val friendlyName: String,
+    /** Name to display for the entity, resolved when it was cached. */
+    @ColumnInfo(name = "name")
+    val name: String,
     @ColumnInfo(name = "icon")
     val icon: String?,
 )

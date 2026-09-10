@@ -21,7 +21,7 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreActivityThreadVsyncDiskReadWrite,
     IgnoreSamsungInputRuneDiskRead,
     IgnoreSamsungKnoxProKioskDiskRead,
-    IgnoreSamsungBluetoothManagerServiceDiskRead,
+    IgnoreSamsungSpegDiskRead,
     IgnoreAndroidAutoServiceConnectionDiskRead,
     IgnoreAndroidAutoRendererServiceDiskRead,
     IgnoreMiuiFontSettingsDiskRead,
@@ -190,22 +190,24 @@ private data object IgnoreSamsungKnoxProKioskDiskRead : IgnoreViolationRule {
 }
 
 /**
- * Ignore a [DiskReadViolation] in the system Bluetooth service (`BluetoothManagerService`).
+ * Ignore a [DiskReadViolation] caused by the OEM `isSpeg` package check reached through a Bluetooth
+ * binder transaction.
  *
- * On some OEM ROMs (observed on Samsung, methods `isSpeg`/`isSpegInWorking`), registering a Bluetooth adapter
- * performs an internal `File.exists()` check while handling the `registerAdapter` binder transaction. The
- * StrictMode thread policy propagates across the binder call, so the disk read is reported back to the app even
- * though it happens inside the system service and is beyond application control.
+ * On some OEM ROMs (observed on Samsung), registering a Bluetooth adapter performs an internal
+ * `File.exists()` check while handling the `registerAdapter` binder transaction. The StrictMode thread
+ * policy propagates across the binder call, so the disk read is reported back to the app even though it
+ * happens inside the system service and is beyond application control.
+ *
+ * The frame declaring the check varies between ROMs (`com.android.server.bluetooth.BluetoothManagerService`
+ * and `android.content.pm.PackageManager` have both been seen), as does the method suffix
+ * (`isSpeg`/`isSpegInWorking`), so the match is keyed on the vendor-specific method name rather than the class.
  */
-private data object IgnoreSamsungBluetoothManagerServiceDiskRead : IgnoreViolationRule {
+private data object IgnoreSamsungSpegDiskRead : IgnoreViolationRule {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun shouldIgnore(violation: Violation): Boolean {
         if (violation !is DiskReadViolation) return false
 
-        return violation.stackTrace.any {
-            it.className == "com.android.server.bluetooth.BluetoothManagerService" &&
-                it.methodName == "isSpeg"
-        }
+        return violation.stackTrace.any { it.methodName.startsWith("isSpeg") }
     }
 }
 

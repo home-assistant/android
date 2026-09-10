@@ -4,7 +4,9 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.util.VOICE_SAMPLE_RATE
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -20,6 +22,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -229,10 +232,71 @@ class WebSocketRepositoryImplTest {
         }
     }
 
-    private fun createServer(deviceRegistryId: String? = null): Server {
+    @Nested
+    inner class RegistryForDisplay {
+
+        private fun captureSentMessage(resultJson: String, version: String = "2025.1.0"): CapturingSlot<Map<String, Any?>> {
+            coEvery { webSocketCore.server() } returns createServer(version = version)
+            val messageSlot = slot<Map<String, Any?>>()
+            coEvery { webSocketCore.sendMessage(capture(messageSlot)) } returns MessageSocketResponse(
+                id = 1,
+                success = true,
+                result = kotlinJsonMapper.parseToJsonElement(resultJson),
+            )
+            return messageSlot
+        }
+
+        @Test
+        fun `Given a display registry response When getting entity registry display Then sends list_for_display and decodes result`() = runTest {
+            val messageSlot = captureSentMessage(
+                """{"entity_categories": {"0": "config"}, "entities": [{"ei": "light.bed", "en": "Bed"}]}""",
+            )
+
+            val response = repository.getEntityRegistryDisplay()
+
+            assertEquals("config/entity_registry/list_for_display", messageSlot.captured["type"])
+            assertEquals("light.bed", response?.entities?.single()?.entityId)
+            assertEquals("Bed", response?.entities?.single()?.name)
+            assertEquals(mapOf(0 to "config"), response?.entityCategories)
+        }
+
+        @Test
+        fun `Given a server older than 2024 10 When getting entity registry display Then returns null without sending`() = runTest {
+            captureSentMessage("""{"entities": []}""", version = "2024.9.3")
+
+            assertNull(repository.getEntityRegistryDisplay())
+
+            coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
+        }
+
+        @Test
+        fun `Given a server older than 2024 3 When getting floor registry Then returns null without sending`() = runTest {
+            captureSentMessage("""[]""", version = "2024.2.0")
+
+            assertNull(repository.getFloorRegistry())
+
+            coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
+        }
+
+        @Test
+        fun `Given a floor registry response When getting floor registry Then sends floor_registry list and decodes result`() = runTest {
+            val messageSlot = captureSentMessage(
+                """[{"floor_id": "ground", "name": "Ground", "level": 0}]""",
+            )
+
+            val response = repository.getFloorRegistry()
+
+            assertEquals("config/floor_registry/list", messageSlot.captured["type"])
+            assertEquals("ground", response?.single()?.floorId)
+            assertEquals(0, response?.single()?.level)
+        }
+    }
+
+    private fun createServer(deviceRegistryId: String? = null, version: String? = null): Server {
         return Server(
             id = 1,
             _name = "Test Server",
+            _version = version,
             deviceRegistryId = deviceRegistryId,
             connection = ServerConnectionInfo(
                 externalUrl = "https://example.com",

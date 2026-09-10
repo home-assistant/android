@@ -4,6 +4,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import javax.inject.Inject
@@ -29,6 +30,9 @@ class LastUpdateManager @Inject constructor(
             "mdi:update",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+            settings = listOf(
+                Setting.Toggle(SETTING_ADD_NEW_INTENT, default = false),
+            ),
         )
     }
 
@@ -93,25 +97,18 @@ class LastUpdateManager @Inject constructor(
             sensorRepository.removeSettings(lastUpdate.id, intentSettings.map { it.name })
             // add new settings to DB:
             newIntentSettings.forEach {
-                sensorRepository.add(it)
+                sensorRepository.addDynamicSetting(it)
             }
         }
-        val addNewIntentToggle = allSettings.firstOrNull { it.name == SETTING_ADD_NEW_INTENT }
-        if (addNewIntentToggle == null) {
-            // add the toggle if it was not already added.
-            sensorRepository.add(
-                SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE),
-            )
-        } else if (addNewIntentToggle.value == "true") {
+        val addNewIntentToggle = allSettings.first { it.name == SETTING_ADD_NEW_INTENT }
+        if (addNewIntentToggle.value == "true") {
             val newIntentSettingOrdinal = intentSettings.size + 1
             val newIntentSettingName = "$INTENT_SETTING_PREFIX$newIntentSettingOrdinal:"
             if (allSettings.none { it.name == newIntentSettingName }) {
                 // turn off the toggle:
-                sensorRepository.add(
-                    SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", SensorSettingType.TOGGLE),
-                )
+                sensorRepository.updateSettingValue(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false")
                 // add the new Intent:
-                sensorRepository.add(
+                sensorRepository.addDynamicSetting(
                     SensorSetting(lastUpdate.id, newIntentSettingName, intentAction, SensorSettingType.STRING),
                 )
             }

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -20,12 +21,14 @@ import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Delete
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.util.capitalize
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
@@ -37,7 +40,7 @@ import java.util.Locale
 @Composable
 fun ChooseEntityView(
     entitiesByDomainOrder: List<String>,
-    entitiesByDomain: Map<String, List<Entity>>,
+    entitiesByDomain: Map<String, List<EntityDisplay>>,
     favoriteEntityIds: List<String>,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit,
@@ -58,7 +61,7 @@ fun ChooseEntityView(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 16.dp),
-                        icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
+                        icon = { Image(imageVector = Mdi.Delete.rememberImageVector(), contentDescription = null) },
                         label = { Text(stringResource(id = commonR.string.none)) },
                         onClick = onNoneClicked,
                         colors = ButtonDefaults.buttonColors(
@@ -118,21 +121,20 @@ fun ChooseEntityView(
 }
 
 @Composable
-private fun ChooseEntityChip(entity: Entity, onEntitySelected: (entity: SimplifiedEntity) -> Unit) {
-    val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = entity.getIcon(LocalContext.current)
+private fun ChooseEntityChip(entity: EntityDisplay, onEntitySelected: (entity: SimplifiedEntity) -> Unit) {
     Button(
         modifier = Modifier
             .fillMaxWidth(),
         icon = {
             Image(
-                asset = iconBitmap,
+                imageVector = entity.icon.rememberImageVector(),
+                contentDescription = null,
                 colorFilter = ColorFilter.tint(Color.White),
             )
         },
         label = {
             Text(
-                text = attributes["friendly_name"].toString(),
+                text = entity.name,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -141,8 +143,8 @@ private fun ChooseEntityChip(entity: Entity, onEntitySelected: (entity: Simplifi
             onEntitySelected(
                 SimplifiedEntity(
                     entity.entityId,
-                    attributes["friendly_name"] as String? ?: entity.entityId,
-                    attributes["icon"] as String? ?: "",
+                    entity.name,
+                    entity.statelessIcon.mdiName,
                 ),
             )
         },
@@ -172,8 +174,8 @@ fun ChooseEntityViewWithDataPreview() {
             playPreviewEntityScene2.entityId,
         ),
         entitiesByDomain = mapOf(
-            playPreviewEntityScene1.entityId to listOf(playPreviewEntityScene1),
-            playPreviewEntityScene2.entityId to listOf(playPreviewEntityScene2),
+            playPreviewEntityScene1.entityId to listOf(EntityDisplayWithoutContext(playPreviewEntityScene1)),
+            playPreviewEntityScene2.entityId to listOf(EntityDisplayWithoutContext(playPreviewEntityScene2)),
         ),
         favoriteEntityIds = listOf(playPreviewEntityScene1.entityId),
         onNoneClicked = {},

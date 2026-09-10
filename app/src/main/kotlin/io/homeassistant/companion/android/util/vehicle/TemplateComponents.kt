@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util.vehicle
 
+import android.graphics.Color
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
@@ -11,20 +12,22 @@ import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
 import androidx.car.app.model.Header
 import androidx.car.app.model.ItemList
+import androidx.core.graphics.drawable.IconCompat
 import androidx.lifecycle.LifecycleCoroutineScope
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.sizeDp
-import com.mikepenz.iconics.utils.toAndroidIconCompat
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.HomeSwitch
+import io.github.timoptr.mdiicons.generated.MapOutline
+import io.github.timoptr.mdiicons.generated.ViewList
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.capitalize
-import io.homeassistant.companion.android.util.RegistriesDataHandler
 import io.homeassistant.companion.android.vehicle.ChangeServerScreen
 import io.homeassistant.companion.android.vehicle.DomainListScreen
 import io.homeassistant.companion.android.vehicle.EntityGridVehicleScreen
@@ -59,12 +62,7 @@ fun getChangeServerGridItem(
         setTitle(carContext.getString(R.string.aa_change_server))
         setImage(
             CarIcon.Builder(
-                IconicsDrawable(
-                    carContext,
-                    CommunityMaterial.Icon2.cmd_home_switch,
-                ).apply {
-                    sizeDp = 64
-                }.toAndroidIconCompat(),
+                IconCompat.createWithBitmap(Mdi.HomeSwitch.toBitmap(carContext, 64, Color.WHITE)),
             )
                 .setTint(CarColor.DEFAULT)
                 .build(),
@@ -93,19 +91,13 @@ fun getNavigationGridItem(
     carContext: CarContext,
     screenManager: ScreenManager,
     integrationRepositoryProvider: suspend () -> IntegrationRepository,
-    allEntities: Flow<Map<String, Entity>>,
-    entityRegistry: List<EntityRegistryResponse>?,
+    entitiesState: Flow<EntityDisplayState<EntityDisplay>>,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.aa_navigation))
         setImage(
             CarIcon.Builder(
-                IconicsDrawable(
-                    carContext,
-                    CommunityMaterial.Icon3.cmd_map_outline,
-                ).apply {
-                    sizeDp = 64
-                }.toAndroidIconCompat(),
+                IconCompat.createWithBitmap(Mdi.MapOutline.toBitmap(carContext, 64, Color.WHITE)),
             )
                 .setTint(CarColor.DEFAULT)
                 .build(),
@@ -116,14 +108,9 @@ fun getNavigationGridItem(
                 MapVehicleScreen(
                     carContext,
                     integrationRepositoryProvider,
-                    allEntities.map {
-                        it.values.filter { entity ->
-                            entity.domain in MAP_DOMAINS &&
-                                RegistriesDataHandler.getHiddenByForEntity(
-                                    entity.entityId,
-                                    entityRegistry,
-                                ) == null
-                        }
+                    entitiesState.map { state ->
+                        (state as? EntityDisplayState.Loaded)?.entities.orEmpty()
+                            .filter { it.domain in MAP_DOMAINS && !it.isHidden }
                     },
                 ),
             )
@@ -139,8 +126,7 @@ fun getDomainList(
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
     prefsRepository: PrefsRepository,
-    allEntities: Flow<Map<String, Entity>>,
-    entityRegistry: List<EntityRegistryResponse>?,
+    entitiesState: Flow<EntityDisplayState<EntityDisplay>>,
     lifecycleScope: LifecycleCoroutineScope,
 ): ItemList.Builder {
     val listBuilder = ItemList.Builder()
@@ -156,16 +142,11 @@ fun getDomainList(
             mapOf<String, Any>(),
             LocalDateTime.now(),
             LocalDateTime.now(),
-        ).getIcon(carContext)
+        ).getIcon()
 
-        val entityList = allEntities.map {
-            it.values.filter { entity ->
-                entity.domain == domain &&
-                    RegistriesDataHandler.getHiddenByForEntity(
-                        entity.entityId,
-                        entityRegistry,
-                    ) == null
-            }
+        val entityList = entitiesState.map { state ->
+            (state as? EntityDisplayState.Loaded)?.entities.orEmpty()
+                .filter { it.domain == domain && !it.isHidden }
         }
         var domainIsEmpty = false
         lifecycleScope.launch {
@@ -179,10 +160,7 @@ fun getDomainList(
                 GridItem.Builder().apply {
                     setImage(
                         CarIcon.Builder(
-                            IconicsDrawable(carContext, icon)
-                                .apply {
-                                    sizeDp = 64
-                                }.toAndroidIconCompat(),
+                            IconCompat.createWithBitmap(icon.toBitmap(carContext, 64, Color.WHITE)),
                         )
                             .setTint(CarColor.DEFAULT)
                             .build(),
@@ -200,10 +178,9 @@ fun getDomainList(
                                     prefsRepository,
                                     { serverManager.integrationRepository(serverId.value) },
                                     friendlyDomain,
-                                    entityRegistry,
                                     domains,
                                     entityList,
-                                    allEntities,
+                                    entitiesState,
                                 ),
                             )
                         }
@@ -223,20 +200,14 @@ fun getDomainsGridItem(
     screenManager: ScreenManager,
     serverManager: ServerManager,
     serverId: StateFlow<Int>,
-    allEntities: Flow<Map<String, Entity>>,
+    entitiesState: Flow<EntityDisplayState<EntityDisplay>>,
     prefsRepository: PrefsRepository,
-    entityRegistry: List<EntityRegistryResponse>?,
 ): GridItem.Builder {
     return GridItem.Builder().apply {
         setTitle(carContext.getString(R.string.all_entities))
         setImage(
             CarIcon.Builder(
-                IconicsDrawable(
-                    carContext,
-                    CommunityMaterial.Icon3.cmd_view_list,
-                ).apply {
-                    sizeDp = 64
-                }.toAndroidIconCompat(),
+                IconCompat.createWithBitmap(Mdi.ViewList.toBitmap(carContext, 64, Color.WHITE)),
             )
                 .setTint(CarColor.DEFAULT)
                 .build(),
@@ -248,9 +219,8 @@ fun getDomainsGridItem(
                     carContext,
                     serverManager,
                     serverId,
-                    allEntities,
+                    entitiesState,
                     prefsRepository,
-                    entityRegistry,
                 ),
             )
         }

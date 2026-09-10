@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.improv
 
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import com.wifi.improv.ImprovManager
@@ -32,6 +33,10 @@ abstract class FrontendImprovModule {
         @Provides
         @Singleton
         fun provideImprovManagerFactory(@ApplicationContext context: Context): ImprovManagerFactory =
-            ImprovManagerFactory { callback -> ImprovManager(context.applicationContext, callback) }
+            ImprovManagerFactory { callback ->
+                context.getSystemService(BluetoothManager::class.java)?.adapter?.let {
+                    ImprovManager(context.applicationContext, callback)
+                }
+            }
     }
 }

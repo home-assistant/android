@@ -23,7 +23,7 @@ data class ThermostatTile(
     /** The target temperature to allow quick repeated changes */
     @ColumnInfo(name = "target_temperature")
     val targetTemperature: Float? = null,
-    /** Whether or not to show the entity friendly name on the tile. */
+    /** Whether or not to show the entity name on the tile. */
     @ColumnInfo(name = "show_entity_name")
     val showEntityName: Boolean? = true,
 )

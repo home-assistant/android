@@ -13,6 +13,7 @@ import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -150,7 +151,7 @@ class ActivitySensorManager @Inject constructor(
                     sleepClassifyEvent.last().confidence,
                     sleepConfidence.statelessIcon,
                     mapOf(
-                        "light" to sleepClassifyEvent.last().light,
+                        LIGHT_DOMAIN to sleepClassifyEvent.last().light,
                         "motion" to sleepClassifyEvent.last().motion,
                         "timestamp" to sleepClassifyEvent.last().timestampMillis,
                     ),

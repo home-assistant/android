@@ -19,10 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FlashlightOff
-import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,6 +58,11 @@ import com.google.accompanist.permissions.shouldShowRationale
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.CaptureManager
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Flashlight
+import io.github.timoptr.mdiicons.generated.FlashlightOff
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
@@ -424,7 +425,7 @@ private fun ScannerCloseButton(onClose: () -> Unit, modifier: Modifier = Modifie
     Box(modifier = modifier.fillMaxWidth()) {
         IconButton(onClick = onClose) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = Mdi.Close.rememberImageVector(),
                 contentDescription = stringResource(commonR.string.cancel),
                 tint = Color.White,
             )
@@ -501,7 +502,7 @@ private fun FlashlightButton(flashlightOn: Boolean, onToggle: () -> Unit, modifi
         onClick = onToggle,
     ) {
         Icon(
-            imageVector = if (flashlightOn) Icons.Default.FlashlightOff else Icons.Default.FlashlightOn,
+            imageVector = (if (flashlightOn) Mdi.FlashlightOff else Mdi.Flashlight).rememberImageVector(),
             contentDescription = stringResource(commonR.string.toggle_flashlight),
             tint = Color.White,
         )

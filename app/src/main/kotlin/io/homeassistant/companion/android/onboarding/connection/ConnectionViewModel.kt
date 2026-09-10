@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.util.SuspendLazy
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
@@ -67,7 +68,7 @@ private const val AUTH_CALLBACK = "$AUTH_CALLBACK_SCHEME://$AUTH_CALLBACK_HOST"
 @HiltViewModel
 internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawUrl: String,
-    private val webViewClientFactory: HAWebViewClientFactory,
+    webViewClientFactory: HAWebViewClientFactory,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val fileChooserManager: FileChooserManager,
 ) : ViewModel(),
@@ -135,15 +136,22 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         }
     }
 
-    val webViewClient: HAWebViewClient = webViewClientFactory.create(
-        currentUrlFlow = urlFlow,
-        onFrontendError = ::onError,
-        onUrlIntercepted = ::interceptRedirectIfRequired,
-        onPageFinished = { url ->
-            _isLoadingFlow.update { false }
-            updateEffectiveBaseUrl(url)
-        },
-    )
+    private val webViewClient = SuspendLazy {
+        webViewClientFactory.create(
+            currentUrlFlow = urlFlow,
+            onFrontendError = ::onError,
+            onUrlIntercepted = ::interceptRedirectIfRequired,
+            onPageFinished = { url ->
+                _isLoadingFlow.update { false }
+                updateEffectiveBaseUrl(url)
+            },
+        )
+    }
+
+    /**
+     * Returns the WebViewClient, creating it on first call.
+     */
+    suspend fun getWebViewClient(): HAWebViewClient = webViewClient.get()
 
     /**
      * [WebChromeClient][android.webkit.WebChromeClient] used by the onboarding WebView.
@@ -188,7 +196,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")
             onError(
-                FrontendConnectionError.UnreachableError(
+                FrontendConnectionError.Unreachable(
                     message = commonR.string.connection_screen_malformed_url,
                     errorDetails = e.localizedMessage ?: e.message,
                     rawErrorType = e::class.toString(),
@@ -258,15 +266,12 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     /**
      * Called when the system WebView fails to initialize.
      *
-     * Transitions to an error state with a [FrontendConnectionError.UnrecoverableError.WebViewCreationError]
+     * Transitions to an error state with a [FrontendConnectionError.Unrecoverable.WebViewCreationError]
      * so the error screen is displayed with guidance to update the system WebView.
      */
     fun onWebViewCreationFailed(throwable: Throwable) {
         onError(
-            FrontendConnectionError.UnrecoverableError.WebViewCreationError(
-                message = commonR.string.webview_creation_failed,
-                throwable = throwable,
-            ),
+            FrontendConnectionError.Unrecoverable.WebViewCreationError(throwable = throwable),
         )
     }
 
