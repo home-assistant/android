@@ -21,7 +21,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Fan
+import io.github.timoptr.mdiicons.generated.Garage
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.MotionSensor
+import io.github.timoptr.mdiicons.generated.Thermometer
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
@@ -351,7 +356,7 @@ private val sampleDisplayEntities = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "light.living_room",
             name = "Living Room Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            icon = Mdi.Lightbulb,
         ),
         areaName = "Living Room",
         deviceName = "Smart Bulb Pro",
@@ -360,7 +365,7 @@ private val sampleDisplayEntities = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "light.bedroom",
             name = "Bedroom Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            icon = Mdi.Lightbulb,
         ),
         areaName = "Bedroom",
     ),
@@ -368,28 +373,28 @@ private val sampleDisplayEntities = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "sensor.temperature",
             name = "Temperature Sensor",
-            icon = CommunityMaterial.Icon3.cmd_thermometer,
+            icon = Mdi.Thermometer,
         ),
     ),
     EntityDisplayWithContext(
         item = EntityDisplayWithoutContext(
             entityId = "switch.fan",
             name = "Ceiling Fan",
-            icon = CommunityMaterial.Icon2.cmd_fan,
+            icon = Mdi.Fan,
         ),
     ),
     EntityDisplayWithContext(
         item = EntityDisplayWithoutContext(
             entityId = "binary_sensor.motion",
             name = "Motion Sensor",
-            icon = CommunityMaterial.Icon3.cmd_motion_sensor,
+            icon = Mdi.MotionSensor,
         ),
     ),
     EntityDisplayWithContext(
         item = EntityDisplayWithoutContext(
             entityId = "cover.garage_door",
             name = "Garage Door",
-            icon = CommunityMaterial.Icon2.cmd_garage,
+            icon = Mdi.Garage,
         ),
     ),
 )

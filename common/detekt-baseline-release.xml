@@ -29,10 +29,10 @@
     <ID>CyclomaticComplexMethod:DeviceCommands.kt:private fun checkCommandFormat: Boolean</ID>
     <ID>CyclomaticComplexMethod:DeviceCommands.kt:suspend fun commandBleTransmitter: Boolean</ID>
     <ID>CyclomaticComplexMethod:Entity.kt:fun Entity.isActive</ID>
-    <ID>CyclomaticComplexMethod:Entity.kt:private fun Entity.getIcon: IIcon</ID>
-    <ID>CyclomaticComplexMethod:Entity.kt:private fun binarySensorIcon: IIcon</ID>
-    <ID>CyclomaticComplexMethod:Entity.kt:private fun coverIcon: IIcon</ID>
-    <ID>CyclomaticComplexMethod:Entity.kt:private fun sensorIcon: IIcon</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:private fun Entity.getIcon: MdiIcon</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:private fun binarySensorIcon: MdiIcon</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:private fun coverIcon: MdiIcon</ID>
+    <ID>CyclomaticComplexMethod:Entity.kt:private fun sensorIcon: MdiIcon</ID>
     <ID>CyclomaticComplexMethod:FriendlyState.kt:private fun Entity.stateResource: Int?</ID>
     <ID>CyclomaticComplexMethod:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$override suspend fun registerSensor</ID>
     <ID>CyclomaticComplexMethod:NetworkSensorManager.kt:NetworkSensorManager$@SuppressLint("MissingPermission") private suspend fun updateNetworkType</ID>
@@ -75,14 +75,12 @@
     <ID>InstanceOfCheckForException:SensorUpdater.kt:SensorUpdater$e is IntegrationException</ID>
     <ID>LargeClass:WebSocketCoreImpl.kt:WebSocketCoreImpl : WebSocketListenerWebSocketCore</ID>
     <ID>LongMethod:AssistViewModelBase.kt:AssistViewModelBase$protected fun runAssistPipelineInternal</ID>
-    <ID>LongMethod:BluetoothSensorManager.kt:BluetoothSensorManager$private suspend fun updateBLEDevice</ID>
-    <ID>LongMethod:BluetoothSensorManager.kt:BluetoothSensorManager$private suspend fun updateBeaconMonitoringDevice</ID>
     <ID>LongMethod:DatabaseMigration.kt:Migration16to17$@SuppressLint("Range") override fun migrate</ID>
     <ID>LongMethod:DatabaseMigration.kt:Migration37to38$fun onPostMigrate</ID>
     <ID>LongMethod:DatabaseMigration.kt:Migration40to41$@SuppressLint("Range") override fun migrate</ID>
     <ID>LongMethod:DeviceCommands.kt:suspend fun commandBleTransmitter: Boolean</ID>
-    <ID>LongMethod:Entity.kt:private fun Entity.getIcon: IIcon</ID>
-    <ID>LongMethod:Entity.kt:private fun sensorIcon: IIcon</ID>
+    <ID>LongMethod:Entity.kt:private fun Entity.getIcon: MdiIcon</ID>
+    <ID>LongMethod:Entity.kt:private fun sensorIcon: MdiIcon</ID>
     <ID>LongMethod:FriendlyState.kt:private fun Entity.stateResource: Int?</ID>
     <ID>LongMethod:HARadioGroup.kt:@Composable private fun HARadioButton</ID>
     <ID>LongMethod:NotificationManagerExtensions.kt:fun cancelNotificationGroupIfNeeded: Boolean</ID>
@@ -94,7 +92,6 @@
     <ID>LongParameterList:IntegrationRepository.kt:IntegrationRepositoryFactory</ID>
     <ID>LongParameterList:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl</ID>
     <ID>LongParameterList:NotificationFunctions.kt:fun handleDeleteIntent</ID>
-    <ID>LongParameterList:SensorManager.kt:SensorManager$suspend fun getSetting: String</ID>
     <ID>LongParameterList:SensorUpdater.kt:SensorUpdater</ID>
     <ID>LongParameterList:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl</ID>
     <ID>LongParameterList:ServerManagerImpl.kt:ServerManagerImpl</ID>
@@ -180,8 +177,7 @@
     <ID>MatchingDeclarationName:HARadioGroup.kt:RadioOption&lt;T&gt;</ID>
     <ID>MatchingDeclarationName:NotificationFunctions.kt:NotificationData</ID>
     <ID>NestedBlockDepth:DatabaseMigration.kt:Migration37to38$fun onPostMigrate</ID>
-    <ID>NestedBlockDepth:Entity.kt:private fun Entity.getIcon: IIcon</ID>
-    <ID>NestedBlockDepth:NotificationManagerExtensions.kt:fun cancelNotificationGroupIfNeeded: Boolean</ID>
+    <ID>NestedBlockDepth:Entity.kt:private fun Entity.getIcon: MdiIcon</ID>
     <ID>NestedBlockDepth:PhoneStateSensorManager.kt:PhoneStateSensorManager$@SuppressLint("MissingPermission") private suspend fun updateSimSensor</ID>
     <ID>NestedBlockDepth:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
     <ID>NoNameShadowing:DatabaseMigration.kt:MIGRATION6to7${ it.put("id", cursor.getString(cursor.getColumnIndex("unique_id"))) it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled"))) it.put( "registered", cursor.getInt(cursor.getColumnIndex("registered")), ) it.put("state", "") it.put("state_type", "") it.put("type", "") it.put("icon", "") it.put("name", "") it.put("device_class", "") }</ID>
@@ -194,7 +190,6 @@
     <ID>ReturnCount:Entity.kt:fun calculateNumStep: Int</ID>
     <ID>ReturnCount:EntityDisplay.kt:EntityDisplayWithoutContext.Companion$private fun Entity.fanControls: FanControls?</ID>
     <ID>ReturnCount:NetworkCapabilitiesChecker.kt:NetworkCapabilitiesChecker$private fun fallbackHasTransport: Boolean</ID>
-    <ID>ReturnCount:NotificationFunctions.kt:@RequiresApi(Build.VERSION_CODES.N) fun handleImportance: Int</ID>
     <ID>ReturnCount:PrefsRepositoryImpl.kt:PrefsRepositoryImpl$override suspend fun wasAppUpdatedSinceChangelogSeen: Boolean</ID>
     <ID>ReturnCount:SensorRepositoryImpl.kt:SensorRepositoryImpl$override suspend fun getFull: Map&lt;Sensor, List&lt;Attribute&gt;&gt;</ID>
     <ID>ReturnCount:SensorUpdater.kt:SensorUpdater$private suspend fun loadSensorReconcilingPermission: SensorWithAttributes?</ID>
@@ -222,7 +217,6 @@
     <ID>SuspendFunWithFlowReturnType:WebSocketRepository.kt:WebSocketRepository$suspend</ID>
     <ID>SuspendFunWithFlowReturnType:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$suspend</ID>
     <ID>SwallowedException:HomeAssistantApis.kt:HomeAssistantApis$e: Exception</ID>
-    <ID>SwallowedException:MdiIcons.kt:e: IllegalArgumentException</ID>
     <ID>SwallowedException:NetworkSensorManager.kt:NetworkSensorManager$e: NoSuchMethodException</ID>
     <ID>SwallowedException:TransmitterManager.kt:TransmitterManager$e: IllegalArgumentException</ID>
     <ID>SwallowedException:UrlUtil.kt:UrlUtil$e: IllegalArgumentException</ID>
@@ -310,7 +304,6 @@
     <ID>UseOrEmpty:NetworkSensorManager.kt:NetworkSensorManager$connectivityManager?.activeNetwork?.let { // Get the IPv4 address without prefix length connectivityManager.getLinkProperties(it)?.linkAddresses ?.firstOrNull { address -&gt; !address.toString().contains(":") } ?.toString()?.split("/")?.get(0) } ?: ""</ID>
     <ID>UseOrEmpty:NetworkSensorManager.kt:NetworkSensorManager$sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""</ID>
     <ID>UseOrEmpty:NetworkSensorManager.kt:NetworkSensorManager.&lt;no name provided&gt;$jsonObject?.getStringOrElse("ip", "") ?: ""</ID>
-    <ID>UseOrEmpty:NextAlarmManager.kt:NextAlarmManager$sensorSetting.firstOrNull { it.name == SETTING_ALLOW_LIST }?.value ?: ""</ID>
     <ID>UseOrEmpty:NotificationFunctions.kt:data[NotificationData.NOTIFICATION_ICON] ?: ""</ID>
     <ID>UseOrEmpty:PrefsRepositoryImpl.kt:PrefsRepositoryImpl$localStorage().getString(PREF_AUTO_FAVORITES)?.removeSurrounding("[", "]")?.split(", ")?.filter { it.isNotBlank() }?.mapNotNull { it.split("-").run { if (size != 2) { null } else { AutoFavorite(this[0].toInt(), this[1]) } } } ?: emptyList()</ID>
     <ID>UseOrEmpty:PrefsRepositoryImpl.kt:PrefsRepositoryImpl$localStorage().getStringSet(PREF_ALLOWED_TAGS) ?: emptySet()</ID>

@@ -61,14 +61,15 @@ jobs:
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
       - name: Build Release
+        uses: ./.github/actions/monitor-resources
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: |
-          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
+        with:
+          run: ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
       - name: Archive Build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -204,14 +205,15 @@ jobs:
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
       - name: Build Release
+        uses: ./.github/actions/monitor-resources
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: |
-          ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
+        with:
+          run: ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
 
       - name: Archive Build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

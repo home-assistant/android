@@ -18,10 +18,13 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Fan
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.TemperatureCelsius
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -137,7 +140,7 @@ class EntityPickerTest {
             item = EntityDisplayWithoutContext(
                 entityId = "light.living_room",
                 name = "Living Room Light",
-                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                icon = Mdi.Lightbulb,
             ),
             areaName = "Living Room",
             deviceName = "Smart Bulb",
@@ -146,7 +149,7 @@ class EntityPickerTest {
             item = EntityDisplayWithoutContext(
                 entityId = "light.bedroom",
                 name = "Bedroom Light",
-                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                icon = Mdi.Lightbulb,
             ),
             areaName = "Bedroom",
         ),
@@ -154,7 +157,7 @@ class EntityPickerTest {
             item = EntityDisplayWithoutContext(
                 entityId = "sensor.temperature",
                 name = "Temperature Sensor",
-                icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+                icon = Mdi.TemperatureCelsius,
             ),
             areaName = "Living Room",
         ),
@@ -162,7 +165,7 @@ class EntityPickerTest {
             item = EntityDisplayWithoutContext(
                 entityId = "switch.fan",
                 name = "Ceiling Fan",
-                icon = CommunityMaterial.Icon2.cmd_fan,
+                icon = Mdi.Fan,
             ),
             areaName = "Bedroom",
             deviceName = "Smart Switch",
@@ -173,7 +176,7 @@ class EntityPickerTest {
         EntityDisplayWithoutContext(
             entityId = "light.attic",
             name = "Attic Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            icon = Mdi.Lightbulb,
             isHidden = true,
         ),
     )

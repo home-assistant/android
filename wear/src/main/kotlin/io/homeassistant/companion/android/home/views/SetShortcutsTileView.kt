@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -20,7 +21,7 @@ import androidx.wear.compose.material3.IconButtonDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -49,7 +50,8 @@ fun SetShortcutsTileView(shortcutEntities: List<SimplifiedEntity>, onShortcutEnt
                         .fillMaxWidth(),
                     icon = {
                         Image(
-                            iconBitmap,
+                            imageVector = iconBitmap.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(Color.White),
                         )
                     },
