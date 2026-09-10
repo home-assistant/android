@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.widgets
 
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -97,9 +96,14 @@ data class EntitiesPerServer(val serverId: Int, val entityIds: List<String>)
 abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetDao<T>> @VisibleForTesting constructor(
     private val widgetScopeProvider: () -> CoroutineScope,
     private val glanceManagerProvider: (Context) -> GlanceAppWidgetManager,
+    private val appWidgetManagerProvider: (Context) -> AppWidgetManager,
 ) : GlanceAppWidgetReceiver() {
 
-    constructor() : this(newCoroutineScopeProvider(), { GlanceAppWidgetManager(it) })
+    constructor() : this(
+        newCoroutineScopeProvider(),
+        { GlanceAppWidgetManager(it) },
+        { AppWidgetManager.getInstance(it) },
+    )
 
     @Inject
     lateinit var dao: DAO
@@ -204,10 +208,9 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
 
     @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
     private fun isPreviewPublished(context: Context): Boolean {
-        val provider = ComponentName(context, this::class.java)
-        val providerInfo = AppWidgetManager.getInstance(context).installedProviders.firstOrNull {
-            it.provider == provider
-        }
+        val providerInfo = appWidgetManagerProvider(context)
+            .getInstalledProvidersForPackage(context.packageName, null)
+            .firstOrNull { it.provider.className == this::class.java.name }
         return (providerInfo?.generatedPreviewCategories ?: 0) != 0
     }
 
