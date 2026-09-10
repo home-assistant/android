@@ -1,0 +1,27 @@
+complexity:
+  LongParameterList:
+    ignoreAnnotated:
+      - Composable
+  TooManyFunctions:
+    ignoreAnnotatedFunctions:
+      - Preview
+      - HAPreviews
+      - PreviewLightDark
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: false
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - Composable
+
+style:
+  MaxLineLength:
+    active: false
+  UnusedPrivateFunction:
+    ignoreAnnotated:
+      - Preview
+      - HAPreviews
+      - PreviewLightDark

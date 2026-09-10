@@ -44,6 +44,11 @@ internal val currentChangelog = Changelog(
             action = ChangelogAction.OpenWidgetConfig(WidgetType.MediaPlayer),
         ),
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_template_widgets,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenWidgetConfig(WidgetType.Template),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_tiles,
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.QSTile()),

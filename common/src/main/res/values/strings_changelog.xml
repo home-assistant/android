@@ -8,6 +8,7 @@
     <string name="changelog_entry_health_connect">&lt;b&gt;Health Connect&lt;/b&gt; sleep duration now ignores awake and out-of-bed time</string>
     <string name="changelog_entry_entity_widgets">Modernized settings for &lt;b&gt;entity widgets&lt;/b&gt;</string>
     <string name="changelog_entry_media_player_widgets">Modernized settings for &lt;b&gt;media player widgets&lt;/b&gt;</string>
+    <string name="changelog_entry_template_widgets">Modernized settings for &lt;b&gt;template widgets&lt;/b&gt;</string>
     <string name="changelog_entry_matter_commissioning">Modernized adding &lt;b&gt;Matter devices&lt;/b&gt;</string>
     <string name="changelog_entry_assist">Modernized the &lt;b&gt;Assist&lt;/b&gt; pop-up</string>
     <string name="changelog_entry_tiles">Modernized settings for &lt;b&gt;tiles&lt;/b&gt;</string>

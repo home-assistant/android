@@ -1,10 +1,11 @@
 package io.homeassistant.companion.android.controls
 
-import android.annotation.SuppressLint
 import android.app.KeyguardManager
+import android.os.Build
 import android.os.Bundle
 import android.service.controls.ControlsProviderService
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,7 +34,12 @@ import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
+/**
+ * Device controls panel. The component is disabled in the manifest and only enabled on Android 14+
+ * by `ManageControlsViewModel`, so it never runs below [Build.VERSION_CODES.UPSIDE_DOWN_CAKE].
+ */
 @AndroidEntryPoint
+@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 class HaControlsPanelActivity : AppCompatActivity() {
 
     @Inject
@@ -44,7 +50,6 @@ class HaControlsPanelActivity : AppCompatActivity() {
 
     private var launched = false
 
-    @SuppressLint("InlinedApi") // This activity will only be launched on Android 14+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setShowWhenLocked(true)
