@@ -9,7 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Fan
+import io.github.timoptr.mdiicons.generated.Garage
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.Lock
+import io.github.timoptr.mdiicons.generated.Radiator
+import io.github.timoptr.mdiicons.generated.TemperatureCelsius
+import io.github.timoptr.mdiicons.generated.Thermostat
+import io.github.timoptr.mdiicons.generated.WaterPercent
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -139,7 +147,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "light.bed",
                 name = "Bed Light",
-                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                icon = Mdi.Lightbulb,
             ),
             areaName = "Bedroom",
             deviceName = "Device #1",
@@ -148,7 +156,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "sensor.temperature",
                 name = "Temperature",
-                icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+                icon = Mdi.TemperatureCelsius,
             ),
             areaName = "Living Room",
         ),
@@ -156,7 +164,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "switch.fan",
                 name = "Fan",
-                icon = CommunityMaterial.Icon2.cmd_fan,
+                icon = Mdi.Fan,
             ),
             areaName = "Bedroom",
             deviceName = "Device #2",
@@ -168,7 +176,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "light.attic",
                 name = "Attic Light",
-                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                icon = Mdi.Lightbulb,
                 isHidden = true,
             ),
             areaName = "Attic",
@@ -177,7 +185,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "light.living_room",
                 name = "Living Room Light",
-                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                icon = Mdi.Lightbulb,
             ),
 
             areaName = "Living Room",
@@ -187,7 +195,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "light.bedroom",
                 name = "Bedroom Light",
-                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                icon = Mdi.Lightbulb,
             ),
             areaName = "Bedroom",
             deviceName = "Smart Bulb Basic",
@@ -196,7 +204,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "light.kitchen",
                 name = "Kitchen Light",
-                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                icon = Mdi.Lightbulb,
             ),
             areaName = "Kitchen",
         ),
@@ -204,7 +212,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "sensor.temperature",
                 name = "Temperature Sensor",
-                icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+                icon = Mdi.TemperatureCelsius,
             ),
             areaName = "Living Room",
         ),
@@ -212,7 +220,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "sensor.humidity",
                 name = "Humidity Sensor",
-                icon = CommunityMaterial.Icon3.cmd_water_percent,
+                icon = Mdi.WaterPercent,
             ),
             areaName = "Bathroom",
         ),
@@ -220,7 +228,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "switch.fan",
                 name = "Ceiling Fan",
-                icon = CommunityMaterial.Icon2.cmd_fan,
+                icon = Mdi.Fan,
             ),
             areaName = "Bedroom",
             deviceName = "Smart Switch",
@@ -229,7 +237,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "switch.heater",
                 name = "Heater",
-                icon = CommunityMaterial.Icon3.cmd_radiator,
+                icon = Mdi.Radiator,
             ),
 
             areaName = "Living Room",
@@ -238,7 +246,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "climate.thermostat",
                 name = "Thermostat",
-                icon = CommunityMaterial.Icon3.cmd_thermostat,
+                icon = Mdi.Thermostat,
             ),
 
             areaName = "Hallway",
@@ -248,7 +256,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "lock.front_door",
                 name = "Front Door Lock",
-                icon = CommunityMaterial.Icon2.cmd_lock,
+                icon = Mdi.Lock,
             ),
 
             areaName = "Entry",
@@ -258,7 +266,7 @@ class EntityPickerScreenshotTest {
             item = EntityDisplayWithoutContext(
                 entityId = "cover.garage_door",
                 name = "Garage Door",
-                icon = CommunityMaterial.Icon2.cmd_garage,
+                icon = Mdi.Garage,
             ),
             areaName = "Garage",
         ),

@@ -90,10 +90,6 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.bundles.androidx.glance)
 
-                    "implementation"(libs.iconics.core)
-                    "implementation"(libs.iconics.compose)
-                    "implementation"(libs.community.material.typeface)
-
                     "implementation"(libs.bundles.paging)
 
                     "implementation"(libs.reorderable)

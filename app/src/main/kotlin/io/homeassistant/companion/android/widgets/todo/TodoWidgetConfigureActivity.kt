@@ -34,9 +34,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ClipboardList
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
@@ -319,7 +320,7 @@ private val previewDisplayEntities = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "todo.shopping_list",
             name = "Shopping List",
-            icon = CommunityMaterial.Icon.cmd_clipboard_list,
+            icon = Mdi.ClipboardList,
         ),
         areaName = "Kitchen",
     ),
@@ -327,7 +328,7 @@ private val previewDisplayEntities = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "todo.chores",
             name = "Chores",
-            icon = CommunityMaterial.Icon.cmd_clipboard_list,
+            icon = Mdi.ClipboardList,
         ),
     ),
 )
