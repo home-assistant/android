@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.VibrationEffect
@@ -15,14 +16,13 @@ import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import androidx.core.service.quicksettings.PendingIntentActivityWrapper
 import androidx.core.service.quicksettings.TileServiceCompat
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
@@ -31,7 +31,7 @@ import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.qs.getHighestInUse
@@ -49,6 +49,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+
+private const val TILE_ICON_SIZE_DP = 48
 
 @RequiresApi(Build.VERSION_CODES.N)
 @AndroidEntryPoint
@@ -326,20 +328,11 @@ internal abstract class TileExtensions : TileService() {
     }
 
     private fun getTileIcon(tileIconName: String?, entity: Entity?, context: Context): Bitmap? {
-        // Create an icon pack and load all drawables.
+        // The system renders tile icons as alpha masks, so the fill color only carries the shape.
         if (!tileIconName.isNullOrBlank()) {
-            val icon = CommunityMaterial.getIconByMdiName(tileIconName) ?: return null
-            val iconDrawable = IconicsDrawable(context, icon)
-            return iconDrawable.toBitmap()
-        } else {
-            entity?.getIcon()?.let {
-                return IconicsDrawable(context, it).apply {
-                    sizeDp = 48
-                }.toBitmap()
-            }
+            return Mdi.fromHaName(tileIconName)?.toBitmap(context, TILE_ICON_SIZE_DP, Color.WHITE)
         }
-
-        return null
+        return entity?.getIcon()?.toBitmap(context, TILE_ICON_SIZE_DP, Color.WHITE)
     }
 
     companion object {

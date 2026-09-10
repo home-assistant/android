@@ -911,6 +911,7 @@
     <string name="template_tile_empty">Set template in the phone settings</string>
     <string name="template_tile_log_in">Log in to set up a template</string>
     <string name="template_error">Error in template</string>
+    <string name="template_preview_label">Preview</string>
     <string name="template_render_error">Error rendering template</string>
     <string name="template_tile_help">Provide a template below that will be displayed on the Wear OS template tile. See help for markup options.</string>
     <string name="template_widget_default">Enter template here</string>
@@ -1072,7 +1073,6 @@
     <string name="widget_text_size_default">30</string>
     <string name="widget_text_size_error">Enter a whole number greater than 0</string>
     <string name="widget_text_size_label">Widget text size:</string>
-    <string name="widget_text_size_template">12</string>
     <string name="widget_text_color_black">Black</string>
     <string name="widget_text_color_title">Select widget text color</string>
     <string name="widget_text_color_label">Widget text color:</string>

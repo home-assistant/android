@@ -370,7 +370,7 @@ class SensorDetailViewModel @Inject constructor(
 
     fun setSetting(setting: SensorSetting) {
         viewModelScope.launch {
-            sensorRepository.add(setting)
+            sensorRepository.updateSettingValue(setting.sensorId, setting.name, setting.value)
             try {
                 sensorManager?.requestSensorUpdate()
             } catch (e: Exception) {

@@ -39,10 +39,7 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.android)
 
-    implementation(libs.iconics.core)
     implementation(libs.appcompat)
-    implementation(libs.community.material.typeface)
-    implementation(libs.iconics.compose)
 
     implementation(libs.activity.ktx)
     implementation(libs.activity.compose)

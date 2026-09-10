@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.common.data.integration.display
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.LayoutDirection
-import com.mikepenz.iconics.typeface.IIcon
+import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.CameraControls
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
 import io.homeassistant.companion.android.common.data.integration.CoverControls
@@ -69,13 +69,13 @@ enum class EntityCategory {
 interface EntityDisplay {
     val entityId: String
     val name: String
-    val icon: IIcon
+    val icon: MdiIcon
 
     /**
      * Icon of the entity ignoring its state, so it stays the same as the entity changes, for
      * callers persisting an icon reference rather than rendering [icon].
      */
-    val statelessIcon: IIcon
+    val statelessIcon: MdiIcon
     val state: FriendlyState
     val rawState: String
 
@@ -150,8 +150,8 @@ interface EntityDisplay {
 data class EntityDisplayWithoutContext(
     override val entityId: String,
     override val name: String,
-    override val icon: IIcon,
-    override val statelessIcon: IIcon = icon,
+    override val icon: MdiIcon,
+    override val statelessIcon: MdiIcon = icon,
     override val state: FriendlyState = FriendlyState.Literal(""),
     override val rawState: String = "",
     override val isExecuting: Boolean = false,
@@ -185,7 +185,7 @@ data class EntityDisplayWithoutContext(
     constructor(
         entity: Entity,
         name: String = entity.friendlyName,
-        customIcon: IIcon? = null,
+        customIcon: MdiIcon? = null,
         isHidden: Boolean = false,
         entityCategory: EntityCategory? = null,
         displayPrecision: Int? = null,

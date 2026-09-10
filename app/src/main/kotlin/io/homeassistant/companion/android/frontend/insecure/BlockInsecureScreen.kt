@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.frontend.insecure
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -35,8 +36,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.LockOpenAlert
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HABanner
@@ -158,9 +160,9 @@ private fun ColumnScope.Header() {
         modifier = Modifier
             .padding(all = 20.dp)
             .size(120.dp),
-        asset = CommunityMaterial.Icon2.cmd_lock_open_alert,
-        colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnPrimaryNormal),
+        imageVector = Mdi.LockOpenAlert.rememberImageVector(),
         contentDescription = null,
+        colorFilter = ColorFilter.tint(LocalHAColorScheme.current.colorOnPrimaryNormal),
     )
 
     Text(

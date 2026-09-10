@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,8 +31,9 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.TimerCog
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as R
 import io.homeassistant.companion.android.theme.wearColorScheme
 import io.homeassistant.companion.android.tiles.REFRESH_INTERVAL_ON_VIEWED
@@ -63,7 +65,7 @@ fun RefreshIntervalPickerView(currentInterval: Int, onSelectInterval: (Int) -> U
     ) {
         ListHeader {
             Image(
-                asset = CommunityMaterial.Icon3.cmd_timer_cog,
+                imageVector = Mdi.TimerCog.rememberImageVector(),
                 contentDescription = stringResource(R.string.refresh_interval),
                 colorFilter = ColorFilter.tint(LocalContentColor.current),
             )

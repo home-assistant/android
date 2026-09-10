@@ -23,7 +23,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Star
+import io.github.timoptr.mdiicons.generated.TextBox
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.settings.views.SettingsRow
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
@@ -98,14 +100,14 @@ fun SettingWearLandingView(
                     SettingsRow(
                         primaryText = stringResource(commonR.string.wear_favorite_entities),
                         secondaryText = stringResource(commonR.string.set_favorites_on_device),
-                        mdiIcon = CommunityMaterial.Icon3.cmd_star,
+                        mdiIcon = Mdi.Star,
                         enabled = true,
                         onClicked = navigateFavorites,
                     )
                     SettingsRow(
                         primaryText = stringResource(commonR.string.template_tiles),
                         secondaryText = stringResource(commonR.string.template_tile_set_on_watch),
-                        mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
+                        mdiIcon = Mdi.TextBox,
                         enabled = true,
                         onClicked = navigateTemplateTile,
                     )
