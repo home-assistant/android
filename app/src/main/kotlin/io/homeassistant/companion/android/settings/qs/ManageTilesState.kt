@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.settings.qs
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Stable
-import com.mikepenz.iconics.typeface.IIcon
+import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -23,7 +23,7 @@ internal data class ManageTilesState(
     val selectedTileId: TileId = tileSlots.first().id,
     val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
     val entityDisplayState: EntityDisplayState<EntityDisplayWithContext> = EntityDisplayState.Loading,
-    val customIcon: IIcon? = null,
+    val customIcon: MdiIcon? = null,
     val selectedEntityId: String? = null,
     val tileLabel: String = "",
     val tileSubtitle: String = "",

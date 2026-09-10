@@ -4,7 +4,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.android.tools.screenshot.PreviewTest
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ClipboardList
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -72,7 +73,7 @@ private val previewConfigureState = TodoWidgetConfigureState(
                 item = EntityDisplayWithoutContext(
                     entityId = "todo.shopping_list",
                     name = "Shopping List",
-                    icon = CommunityMaterial.Icon.cmd_clipboard_list,
+                    icon = Mdi.ClipboardList,
                 ),
                 areaName = "Kitchen",
             ),

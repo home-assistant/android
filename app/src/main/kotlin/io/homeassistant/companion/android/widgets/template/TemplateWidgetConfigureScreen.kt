@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -34,6 +32,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Eye
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -210,7 +211,7 @@ private fun TemplatePreviewCard(preview: TemplatePreview) {
                 horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Visibility,
+                    imageVector = Mdi.Eye.rememberImageVector(),
                     contentDescription = null,
                     tint = colorScheme.colorTextSecondary,
                     modifier = Modifier.size(HASize.M),

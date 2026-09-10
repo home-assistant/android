@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.wear.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,8 +27,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.TimerCog
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.compose.parseHtml
 import io.homeassistant.companion.android.util.intervalToString
@@ -61,7 +63,8 @@ fun SettingsWearTemplateTile(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    asset = CommunityMaterial.Icon3.cmd_timer_cog,
+                    imageVector = Mdi.TimerCog.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(colorResource(commonR.color.colorPrimary)),
                     modifier = Modifier
                         .height(24.dp)

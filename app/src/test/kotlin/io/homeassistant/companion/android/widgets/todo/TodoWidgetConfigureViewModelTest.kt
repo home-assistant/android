@@ -4,7 +4,8 @@ import android.appwidget.AppWidgetManager
 import android.os.Build
 import android.os.RemoteException
 import app.cash.turbine.test
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ClipboardList
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -301,6 +302,6 @@ class TodoWidgetConfigureViewModelTest {
      * primary constructor is used because formatting the state of a `todo` entity relies on the SDK version.
      */
     private fun Entity.toDisplayItem(name: String) = EntityDisplayWithContext(
-        EntityDisplayWithoutContext(entityId = entityId, name = name, icon = CommunityMaterial.Icon.cmd_clipboard_list),
+        EntityDisplayWithoutContext(entityId = entityId, name = name, icon = Mdi.ClipboardList),
     )
 }

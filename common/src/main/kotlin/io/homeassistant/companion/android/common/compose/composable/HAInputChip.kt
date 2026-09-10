@@ -10,9 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +21,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -133,14 +134,14 @@ private fun HAInputChipPreview() {
             HAInputChip(
                 text = "My super name to be displayed in a chip",
                 onClick = {},
-                trailingIcon = Icons.Default.Add,
+                trailingIcon = Mdi.Plus.rememberImageVector(),
                 trailingIconContentDescription = null,
             )
             HAInputChip(
                 text = "brightness",
                 onClick = {},
                 selected = true,
-                trailingIcon = Icons.Default.Close,
+                trailingIcon = Mdi.Close.rememberImageVector(),
                 trailingIconContentDescription = null,
             )
             HAInputChip(text = "no icon", onClick = {})
@@ -148,7 +149,7 @@ private fun HAInputChipPreview() {
                 text = "disabled",
                 onClick = {},
                 enabled = false,
-                trailingIcon = Icons.Default.Add,
+                trailingIcon = Mdi.Plus.rememberImageVector(),
                 trailingIconContentDescription = null,
             )
         }

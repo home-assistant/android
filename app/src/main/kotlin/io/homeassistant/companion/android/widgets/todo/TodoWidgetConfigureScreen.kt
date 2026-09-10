@@ -30,7 +30,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ClipboardList
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -297,7 +298,7 @@ private val previewTodoWidgetConfigureState = TodoWidgetConfigureState(
                 item = EntityDisplayWithoutContext(
                     entityId = "todo.shopping_list",
                     name = "Shopping List",
-                    icon = CommunityMaterial.Icon.cmd_clipboard_list,
+                    icon = Mdi.ClipboardList,
                 ),
                 areaName = "Kitchen",
             ),

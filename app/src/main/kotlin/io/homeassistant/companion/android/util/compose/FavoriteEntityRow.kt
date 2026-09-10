@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util.compose
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,9 +16,6 @@ import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -27,8 +25,11 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.DragHorizontalVariant
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -62,9 +63,9 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
             modifier = rowModifier,
         ) {
             Image(
-                asset = entity.icon,
-                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                imageVector = entity.icon.rememberImageVector(),
                 contentDescription = null,
+                colorFilter = ColorFilter.tint(LocalContentColor.current),
                 modifier = Modifier.padding(start = 16.dp).size(24.dp),
             )
             Column(
@@ -82,14 +83,14 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
             }
             IconButton(onClick = onClick) {
                 Icon(
-                    imageVector = if (checked) Icons.Default.Clear else Icons.Default.Add,
+                    imageVector = if (checked) Mdi.Close.rememberImageVector() else Mdi.Plus.rememberImageVector(),
                     contentDescription = stringResource(if (checked) R.string.delete else R.string.add_favorite),
                 )
             }
             if (draggable) {
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                     Image(
-                        asset = CommunityMaterial.Icon.cmd_drag_horizontal_variant,
+                        imageVector = Mdi.DragHorizontalVariant.rememberImageVector(),
                         contentDescription = stringResource(R.string.hold_to_reorder),
                         colorFilter = ColorFilter.tint(LocalContentColor.current),
                         modifier = Modifier

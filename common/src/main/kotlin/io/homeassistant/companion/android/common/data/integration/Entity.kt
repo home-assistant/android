@@ -3,11 +3,205 @@ package io.homeassistant.companion.android.common.data.integration
 import android.content.Context
 import android.graphics.Color
 import androidx.compose.runtime.Immutable
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon2
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon3
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Account
+import io.github.timoptr.mdiicons.generated.AccountArrowRight
+import io.github.timoptr.mdiicons.generated.AirFilter
+import io.github.timoptr.mdiicons.generated.AirHumidifier
+import io.github.timoptr.mdiicons.generated.AirHumidifierOff
+import io.github.timoptr.mdiicons.generated.Alert
+import io.github.timoptr.mdiicons.generated.AlertCircle
+import io.github.timoptr.mdiicons.generated.AlertCircleOutline
+import io.github.timoptr.mdiicons.generated.AngleAcute
+import io.github.timoptr.mdiicons.generated.AppleSafari
+import io.github.timoptr.mdiicons.generated.ArrowCollapseHorizontal
+import io.github.timoptr.mdiicons.generated.ArrowDownBox
+import io.github.timoptr.mdiicons.generated.ArrowLeftRight
+import io.github.timoptr.mdiicons.generated.ArrowSplitVertical
+import io.github.timoptr.mdiicons.generated.ArrowUpBox
+import io.github.timoptr.mdiicons.generated.AudioVideo
+import io.github.timoptr.mdiicons.generated.AudioVideoOff
+import io.github.timoptr.mdiicons.generated.Battery
+import io.github.timoptr.mdiicons.generated.Battery10
+import io.github.timoptr.mdiicons.generated.Battery20
+import io.github.timoptr.mdiicons.generated.Battery30
+import io.github.timoptr.mdiicons.generated.Battery40
+import io.github.timoptr.mdiicons.generated.Battery50
+import io.github.timoptr.mdiicons.generated.Battery60
+import io.github.timoptr.mdiicons.generated.Battery70
+import io.github.timoptr.mdiicons.generated.Battery80
+import io.github.timoptr.mdiicons.generated.Battery90
+import io.github.timoptr.mdiicons.generated.BatteryAlert
+import io.github.timoptr.mdiicons.generated.BatteryAlertVariantOutline
+import io.github.timoptr.mdiicons.generated.BatteryCharging
+import io.github.timoptr.mdiicons.generated.BatteryOutline
+import io.github.timoptr.mdiicons.generated.BatteryUnknown
+import io.github.timoptr.mdiicons.generated.Bell
+import io.github.timoptr.mdiicons.generated.BellRing
+import io.github.timoptr.mdiicons.generated.Blinds
+import io.github.timoptr.mdiicons.generated.BlindsOpen
+import io.github.timoptr.mdiicons.generated.Bookmark
+import io.github.timoptr.mdiicons.generated.Brightness5
+import io.github.timoptr.mdiicons.generated.Brightness7
+import io.github.timoptr.mdiicons.generated.Bullhorn
+import io.github.timoptr.mdiicons.generated.Calendar
+import io.github.timoptr.mdiicons.generated.CalendarClock
+import io.github.timoptr.mdiicons.generated.CarBattery
+import io.github.timoptr.mdiicons.generated.CarCoolantLevel
+import io.github.timoptr.mdiicons.generated.Cash
+import io.github.timoptr.mdiicons.generated.Cast
+import io.github.timoptr.mdiicons.generated.CastConnected
+import io.github.timoptr.mdiicons.generated.CastOff
+import io.github.timoptr.mdiicons.generated.CheckCircle
+import io.github.timoptr.mdiicons.generated.CheckCircleOutline
+import io.github.timoptr.mdiicons.generated.CheckNetworkOutline
+import io.github.timoptr.mdiicons.generated.CheckboxMarkedCircle
+import io.github.timoptr.mdiicons.generated.Circle
+import io.github.timoptr.mdiicons.generated.CircleSlice8
+import io.github.timoptr.mdiicons.generated.Clock
+import io.github.timoptr.mdiicons.generated.CloseCircleOutline
+import io.github.timoptr.mdiicons.generated.CloseNetworkOutline
+import io.github.timoptr.mdiicons.generated.CloudUpload
+import io.github.timoptr.mdiicons.generated.Cog
+import io.github.timoptr.mdiicons.generated.Counter
+import io.github.timoptr.mdiicons.generated.CropPortrait
+import io.github.timoptr.mdiicons.generated.CurrentAc
+import io.github.timoptr.mdiicons.generated.Curtains
+import io.github.timoptr.mdiicons.generated.CurtainsClosed
+import io.github.timoptr.mdiicons.generated.Database
+import io.github.timoptr.mdiicons.generated.DoorClosed
+import io.github.timoptr.mdiicons.generated.DoorOpen
+import io.github.timoptr.mdiicons.generated.EarHearing
+import io.github.timoptr.mdiicons.generated.Eye
+import io.github.timoptr.mdiicons.generated.Fan
+import io.github.timoptr.mdiicons.generated.FanOff
+import io.github.timoptr.mdiicons.generated.Fire
+import io.github.timoptr.mdiicons.generated.Flash
+import io.github.timoptr.mdiicons.generated.Flower
+import io.github.timoptr.mdiicons.generated.FormTextbox
+import io.github.timoptr.mdiicons.generated.FormatListBulleted
+import io.github.timoptr.mdiicons.generated.Garage
+import io.github.timoptr.mdiicons.generated.GarageOpen
+import io.github.timoptr.mdiicons.generated.Gate
+import io.github.timoptr.mdiicons.generated.GateArrowRight
+import io.github.timoptr.mdiicons.generated.GateOpen
+import io.github.timoptr.mdiicons.generated.Gauge
+import io.github.timoptr.mdiicons.generated.GestureTapButton
+import io.github.timoptr.mdiicons.generated.GoogleAssistant
+import io.github.timoptr.mdiicons.generated.GoogleCirclesCommunities
+import io.github.timoptr.mdiicons.generated.Home
+import io.github.timoptr.mdiicons.generated.HomeAssistant
+import io.github.timoptr.mdiicons.generated.HomeAutomation
+import io.github.timoptr.mdiicons.generated.HomeOutline
+import io.github.timoptr.mdiicons.generated.ImageFilterFrames
+import io.github.timoptr.mdiicons.generated.LightSwitch
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.LightningBolt
+import io.github.timoptr.mdiicons.generated.Lock
+import io.github.timoptr.mdiicons.generated.LockAlert
+import io.github.timoptr.mdiicons.generated.LockClock
+import io.github.timoptr.mdiicons.generated.LockOpen
+import io.github.timoptr.mdiicons.generated.LockOpenVariant
+import io.github.timoptr.mdiicons.generated.Mailbox
+import io.github.timoptr.mdiicons.generated.MapMarkerRadius
+import io.github.timoptr.mdiicons.generated.Message
+import io.github.timoptr.mdiicons.generated.MeterGas
+import io.github.timoptr.mdiicons.generated.MicrophoneMessage
+import io.github.timoptr.mdiicons.generated.Molecule
+import io.github.timoptr.mdiicons.generated.MoleculeCo
+import io.github.timoptr.mdiicons.generated.MoleculeCo2
+import io.github.timoptr.mdiicons.generated.MotionSensor
+import io.github.timoptr.mdiicons.generated.MotionSensorOff
+import io.github.timoptr.mdiicons.generated.MusicNote
+import io.github.timoptr.mdiicons.generated.MusicNoteOff
+import io.github.timoptr.mdiicons.generated.Package
+import io.github.timoptr.mdiicons.generated.PackageUp
+import io.github.timoptr.mdiicons.generated.PaletteOutline
+import io.github.timoptr.mdiicons.generated.Ph
+import io.github.timoptr.mdiicons.generated.Play
+import io.github.timoptr.mdiicons.generated.PowerPlug
+import io.github.timoptr.mdiicons.generated.PowerPlugOff
+import io.github.timoptr.mdiicons.generated.ProgressClock
+import io.github.timoptr.mdiicons.generated.RadioboxBlank
+import io.github.timoptr.mdiicons.generated.RayVertex
+import io.github.timoptr.mdiicons.generated.Remote
+import io.github.timoptr.mdiicons.generated.RemoteOff
+import io.github.timoptr.mdiicons.generated.Restart
+import io.github.timoptr.mdiicons.generated.Robot
+import io.github.timoptr.mdiicons.generated.RobotMower
+import io.github.timoptr.mdiicons.generated.RobotOff
+import io.github.timoptr.mdiicons.generated.RobotVacuum
+import io.github.timoptr.mdiicons.generated.ScriptTextOutline
+import io.github.timoptr.mdiicons.generated.Security
+import io.github.timoptr.mdiicons.generated.Shield
+import io.github.timoptr.mdiicons.generated.ShieldAirplane
+import io.github.timoptr.mdiicons.generated.ShieldHome
+import io.github.timoptr.mdiicons.generated.ShieldLock
+import io.github.timoptr.mdiicons.generated.ShieldMoon
+import io.github.timoptr.mdiicons.generated.ShieldOff
+import io.github.timoptr.mdiicons.generated.ShieldOutline
+import io.github.timoptr.mdiicons.generated.SineWave
+import io.github.timoptr.mdiicons.generated.SmokeDetector
+import io.github.timoptr.mdiicons.generated.SmokeDetectorAlert
+import io.github.timoptr.mdiicons.generated.SmokeDetectorVariant
+import io.github.timoptr.mdiicons.generated.SmokeDetectorVariantAlert
+import io.github.timoptr.mdiicons.generated.Snowflake
+import io.github.timoptr.mdiicons.generated.Speaker
+import io.github.timoptr.mdiicons.generated.SpeakerOff
+import io.github.timoptr.mdiicons.generated.SpeakerPause
+import io.github.timoptr.mdiicons.generated.SpeakerPlay
+import io.github.timoptr.mdiicons.generated.Speedometer
+import io.github.timoptr.mdiicons.generated.SpoonSugar
+import io.github.timoptr.mdiicons.generated.SproutOutline
+import io.github.timoptr.mdiicons.generated.Square
+import io.github.timoptr.mdiicons.generated.SquareOutline
+import io.github.timoptr.mdiicons.generated.Stop
+import io.github.timoptr.mdiicons.generated.StorageTank
+import io.github.timoptr.mdiicons.generated.SunWireless
+import io.github.timoptr.mdiicons.generated.TagOutline
+import io.github.timoptr.mdiicons.generated.Television
+import io.github.timoptr.mdiicons.generated.TelevisionOff
+import io.github.timoptr.mdiicons.generated.TelevisionPause
+import io.github.timoptr.mdiicons.generated.TelevisionPlay
+import io.github.timoptr.mdiicons.generated.TextureBox
+import io.github.timoptr.mdiicons.generated.Thermometer
+import io.github.timoptr.mdiicons.generated.ThermometerLines
+import io.github.timoptr.mdiicons.generated.Thermostat
+import io.github.timoptr.mdiicons.generated.TimerOutline
+import io.github.timoptr.mdiicons.generated.ToggleSwitchOutline
+import io.github.timoptr.mdiicons.generated.ToggleSwitchVariant
+import io.github.timoptr.mdiicons.generated.ToggleSwitchVariantOff
+import io.github.timoptr.mdiicons.generated.TransmissionTower
+import io.github.timoptr.mdiicons.generated.Vibrate
+import io.github.timoptr.mdiicons.generated.Video
+import io.github.timoptr.mdiicons.generated.VideoOff
+import io.github.timoptr.mdiicons.generated.Water
+import io.github.timoptr.mdiicons.generated.WaterBoiler
+import io.github.timoptr.mdiicons.generated.WaterBoilerOff
+import io.github.timoptr.mdiicons.generated.WaterOff
+import io.github.timoptr.mdiicons.generated.WaterPercent
+import io.github.timoptr.mdiicons.generated.WeatherCloudy
+import io.github.timoptr.mdiicons.generated.WeatherFog
+import io.github.timoptr.mdiicons.generated.WeatherHail
+import io.github.timoptr.mdiicons.generated.WeatherLightning
+import io.github.timoptr.mdiicons.generated.WeatherLightningRainy
+import io.github.timoptr.mdiicons.generated.WeatherNight
+import io.github.timoptr.mdiicons.generated.WeatherPartlyCloudy
+import io.github.timoptr.mdiicons.generated.WeatherPouring
+import io.github.timoptr.mdiicons.generated.WeatherRainy
+import io.github.timoptr.mdiicons.generated.WeatherSnowy
+import io.github.timoptr.mdiicons.generated.WeatherSnowyRainy
+import io.github.timoptr.mdiicons.generated.WeatherSunny
+import io.github.timoptr.mdiicons.generated.WeatherWindy
+import io.github.timoptr.mdiicons.generated.WeatherWindyVariant
+import io.github.timoptr.mdiicons.generated.Weight
+import io.github.timoptr.mdiicons.generated.WhiteBalanceSunny
+import io.github.timoptr.mdiicons.generated.Wifi
+import io.github.timoptr.mdiicons.generated.WindowClosed
+import io.github.timoptr.mdiicons.generated.WindowOpen
+import io.github.timoptr.mdiicons.generated.WindowShutter
+import io.github.timoptr.mdiicons.generated.WindowShutterOpen
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
@@ -23,7 +217,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.MapAnySerializer
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import kotlin.math.round
@@ -615,7 +809,7 @@ fun Entity.getVolumeStep(): Float {
     }
 }
 
-fun Entity.getIcon(): IIcon = getIcon(
+fun Entity.getIcon(): MdiIcon = getIcon(
     compareState = state.ifBlank {
         val attributeState = attributes["state"]
         if (attributeState != null && attributeState !is String) {
@@ -632,210 +826,210 @@ fun Entity.getIcon(): IIcon = getIcon(
  * icon it asks for, else the general icon of its domain. For callers persisting an icon rather
  * than rendering the current one with [getIcon].
  */
-fun Entity.getStatelessIcon(): IIcon = getIcon(compareState = null)
+fun Entity.getStatelessIcon(): MdiIcon = getIcon(compareState = null)
 
 /**
  * Icon of the entity for [compareState], its state or null to get the icon of the domain that
  * doesn't depend on it. Default icons match the ones used by the frontend, see icons.json in the
  * component's core integration.
  */
-private fun Entity.getIcon(compareState: String?): IIcon {
+private fun Entity.getIcon(compareState: String?): MdiIcon {
     val attributes = this.attributes
     val icon = attributes["icon"] as? String
     return if (icon?.startsWith(MDI_PREFIX) == true) {
-        CommunityMaterial.getIconByMdiName(icon) ?: Icon.cmd_bookmark
+        Mdi.fromHaName(icon) ?: Mdi.Bookmark
     } else {
         when (domain) {
-            "air_quality" -> Icon.cmd_air_filter
+            "air_quality" -> Mdi.AirFilter
             ALARM_CONTROL_PANEL_DOMAIN -> when (compareState) {
-                "armed_away" -> Icon3.cmd_shield_lock
-                "armed_custom_bypass" -> Icon3.cmd_security
-                "armed_home" -> Icon3.cmd_shield_home
-                "armed_night" -> Icon3.cmd_shield_moon
-                "armed_vacation" -> Icon3.cmd_shield_airplane
-                "disarmed" -> Icon3.cmd_shield_off
-                "pending" -> Icon3.cmd_shield_outline
-                "triggered" -> Icon.cmd_bell_ring
-                else -> Icon3.cmd_shield
+                "armed_away" -> Mdi.ShieldLock
+                "armed_custom_bypass" -> Mdi.Security
+                "armed_home" -> Mdi.ShieldHome
+                "armed_night" -> Mdi.ShieldMoon
+                "armed_vacation" -> Mdi.ShieldAirplane
+                "disarmed" -> Mdi.ShieldOff
+                "pending" -> Mdi.ShieldOutline
+                "triggered" -> Mdi.BellRing
+                else -> Mdi.Shield
             }
 
-            "alert" -> Icon.cmd_alert
+            "alert" -> Mdi.Alert
             "automation" -> if (compareState == "off") {
-                Icon3.cmd_robot_off
+                Mdi.RobotOff
             } else {
-                Icon3.cmd_robot
+                Mdi.Robot
             }
 
             "binary_sensor" -> binarySensorIcon(compareState, this)
             "button" -> when (attributes["device_class"]) {
-                "restart" -> Icon3.cmd_restart
-                "update" -> Icon3.cmd_package_up
-                else -> Icon2.cmd_gesture_tap_button
+                "restart" -> Mdi.Restart
+                "update" -> Mdi.PackageUp
+                else -> Mdi.GestureTapButton
             }
 
-            "calendar" -> Icon.cmd_calendar
+            "calendar" -> Mdi.Calendar
             CAMERA_DOMAIN -> if (compareState == "off") {
-                Icon3.cmd_video_off
+                Mdi.VideoOff
             } else {
-                Icon3.cmd_video
+                Mdi.Video
             }
 
-            CLIMATE_DOMAIN -> Icon3.cmd_thermostat
-            "configurator" -> Icon.cmd_cog
-            "conversation" -> Icon3.cmd_microphone_message
+            CLIMATE_DOMAIN -> Mdi.Thermostat
+            "configurator" -> Mdi.Cog
+            "conversation" -> Mdi.MicrophoneMessage
             COVER_DOMAIN -> coverIcon(compareState, this)
-            "counter" -> Icon.cmd_counter
+            "counter" -> Mdi.Counter
 
             DEVICE_TRACKER_DOMAIN, PERSON_DOMAIN -> if (compareState == "not_home") {
-                Icon.cmd_account_arrow_right
+                Mdi.AccountArrowRight
             } else {
-                Icon.cmd_account
+                Mdi.Account
             }
 
             FAN_DOMAIN -> if (compareState == "off") {
-                Icon2.cmd_fan_off
+                Mdi.FanOff
             } else {
-                Icon2.cmd_fan
+                Mdi.Fan
             }
 
-            "google_assistant" -> Icon2.cmd_google_assistant
-            "group" -> Icon2.cmd_google_circles_communities
-            "homeassistant" -> Icon2.cmd_home_assistant
-            "homekit" -> Icon2.cmd_home_automation
+            "google_assistant" -> Mdi.GoogleAssistant
+            "group" -> Mdi.GoogleCirclesCommunities
+            "homeassistant" -> Mdi.HomeAssistant
+            "homekit" -> Mdi.HomeAutomation
             "humidifier" -> if (compareState == "off") {
-                Icon.cmd_air_humidifier_off
+                Mdi.AirHumidifierOff
             } else {
-                Icon.cmd_air_humidifier
+                Mdi.AirHumidifier
             }
 
-            "image_processing" -> Icon2.cmd_image_filter_frames
+            "image_processing" -> Mdi.ImageFilterFrames
             "input_boolean" -> if (!entityId.endsWith(".ha_android_placeholder")) {
                 if (compareState == "on") {
-                    Icon.cmd_check_circle_outline
+                    Mdi.CheckCircleOutline
                 } else {
-                    Icon.cmd_close_circle_outline
+                    Mdi.CloseCircleOutline
                 }
             } else { // For SimplifiedEntity without state, use a more generic icon
-                Icon3.cmd_toggle_switch_outline
+                Mdi.ToggleSwitchOutline
             }
 
-            "input_button" -> Icon2.cmd_gesture_tap_button
+            "input_button" -> Mdi.GestureTapButton
             "input_datetime" -> if (attributes["has_date"] == false) {
-                Icon.cmd_clock
+                Mdi.Clock
             } else if (attributes["has_time"] == false) {
-                Icon.cmd_calendar
+                Mdi.Calendar
             } else {
-                Icon.cmd_calendar_clock
+                Mdi.CalendarClock
             }
 
-            "input_number" -> Icon3.cmd_ray_vertex
-            "input_select" -> Icon2.cmd_format_list_bulleted
-            "input_text" -> Icon2.cmd_form_textbox
-            "lawn_mower" -> Icon3.cmd_robot_mower
-            LIGHT_DOMAIN -> Icon2.cmd_lightbulb
+            "input_number" -> Mdi.RayVertex
+            "input_select" -> Mdi.FormatListBulleted
+            "input_text" -> Mdi.FormTextbox
+            "lawn_mower" -> Mdi.RobotMower
+            LIGHT_DOMAIN -> Mdi.Lightbulb
             "lock" -> when (compareState) {
-                "unlocked", "open" -> Icon2.cmd_lock_open_variant
-                "jammed" -> Icon2.cmd_lock_alert
-                "locking", "unlocking", "opening" -> Icon2.cmd_lock_clock
-                else -> Icon2.cmd_lock
+                "unlocked", "open" -> Mdi.LockOpenVariant
+                "jammed" -> Mdi.LockAlert
+                "locking", "unlocking", "opening" -> Mdi.LockClock
+                else -> Mdi.Lock
             }
 
-            "mailbox" -> Icon3.cmd_mailbox
+            "mailbox" -> Mdi.Mailbox
             MEDIA_PLAYER_DOMAIN -> when (attributes["device_class"]) {
                 "speaker" -> when (compareState) {
-                    "playing" -> Icon3.cmd_speaker_play
-                    "paused" -> Icon3.cmd_speaker_pause
-                    "off" -> Icon3.cmd_speaker_off
-                    else -> Icon3.cmd_speaker
+                    "playing" -> Mdi.SpeakerPlay
+                    "paused" -> Mdi.SpeakerPause
+                    "off" -> Mdi.SpeakerOff
+                    else -> Mdi.Speaker
                 }
 
                 "tv" -> when (compareState) {
-                    "playing" -> Icon3.cmd_television_play
-                    "paused" -> Icon3.cmd_television_pause
-                    "off" -> Icon3.cmd_television_off
-                    else -> Icon3.cmd_television
+                    "playing" -> Mdi.TelevisionPlay
+                    "paused" -> Mdi.TelevisionPause
+                    "off" -> Mdi.TelevisionOff
+                    else -> Mdi.Television
                 }
 
                 "receiver" -> when (compareState) {
-                    "off" -> Icon.cmd_audio_video_off
-                    else -> Icon.cmd_audio_video
+                    "off" -> Mdi.AudioVideoOff
+                    else -> Mdi.AudioVideo
                 }
 
                 else -> when (compareState) {
-                    "playing", "paused" -> Icon.cmd_cast_connected
-                    "off" -> Icon.cmd_cast_off
-                    else -> Icon.cmd_cast
+                    "playing", "paused" -> Mdi.CastConnected
+                    "off" -> Mdi.CastOff
+                    else -> Mdi.Cast
                 }
             }
 
-            "notify" -> Icon3.cmd_message
+            "notify" -> Mdi.Message
             "number" -> when (attributes["device_class"]) {
-                "apparent_power", "power", "reactive_power" -> Icon2.cmd_flash
-                "aqi" -> Icon.cmd_air_filter
-                "area" -> Icon3.cmd_texture_box
-                "atmospheric_pressure" -> Icon3.cmd_thermometer_lines
-                "battery" -> Icon.cmd_battery
-                "blood_glucose_concentration" -> Icon3.cmd_spoon_sugar
-                "carbon_dioxide" -> Icon3.cmd_molecule_co2
-                "carbon_monoxide" -> Icon3.cmd_molecule_co
-                "conductivity" -> Icon3.cmd_sprout_outline
-                "current" -> Icon.cmd_current_ac
-                "data_rate" -> Icon3.cmd_transmission_tower
-                "data_size" -> Icon.cmd_database
-                "distance" -> Icon.cmd_arrow_left_right
-                "duration" -> Icon3.cmd_progress_clock
-                "energy" -> Icon2.cmd_lightning_bolt
-                "energy_storage" -> Icon.cmd_car_battery
-                "frequency", "voltage" -> Icon3.cmd_sine_wave
-                "gas" -> Icon3.cmd_meter_gas
-                "humidity" -> Icon3.cmd_water_percent
-                "illuminance" -> Icon.cmd_brightness_5
-                "irradiance" -> Icon3.cmd_sun_wireless
-                "moisture" -> Icon3.cmd_water_percent
-                "monetary" -> Icon.cmd_cash
+                "apparent_power", "power", "reactive_power" -> Mdi.Flash
+                "aqi" -> Mdi.AirFilter
+                "area" -> Mdi.TextureBox
+                "atmospheric_pressure" -> Mdi.ThermometerLines
+                "battery" -> Mdi.Battery
+                "blood_glucose_concentration" -> Mdi.SpoonSugar
+                "carbon_dioxide" -> Mdi.MoleculeCo2
+                "carbon_monoxide" -> Mdi.MoleculeCo
+                "conductivity" -> Mdi.SproutOutline
+                "current" -> Mdi.CurrentAc
+                "data_rate" -> Mdi.TransmissionTower
+                "data_size" -> Mdi.Database
+                "distance" -> Mdi.ArrowLeftRight
+                "duration" -> Mdi.ProgressClock
+                "energy" -> Mdi.LightningBolt
+                "energy_storage" -> Mdi.CarBattery
+                "frequency", "voltage" -> Mdi.SineWave
+                "gas" -> Mdi.MeterGas
+                "humidity" -> Mdi.WaterPercent
+                "illuminance" -> Mdi.Brightness5
+                "irradiance" -> Mdi.SunWireless
+                "moisture" -> Mdi.WaterPercent
+                "monetary" -> Mdi.Cash
                 "nitrogen_dioxide", "nitrogen_monoxide", "nitrogen_oxide", "ozone",
                 "pm1", "pm10", "pm25", "sulfur_dioxide", "volatile_organic_compounds",
                 "volatile_organic_compounds_parts",
-                -> Icon3.cmd_molecule
+                -> Mdi.Molecule
 
-                "ph" -> Icon3.cmd_ph
-                "power_factor" -> Icon.cmd_angle_acute
-                "precipitation" -> Icon3.cmd_weather_rainy
-                "precipitation_intensity" -> Icon3.cmd_weather_pouring
-                "pressure" -> Icon2.cmd_gauge
-                "signal_strength" -> Icon3.cmd_wifi
-                "sound_pressure" -> Icon.cmd_ear_hearing
-                "speed" -> Icon3.cmd_speedometer
-                "temperature" -> Icon3.cmd_thermometer
-                "volume" -> Icon.cmd_car_coolant_level
-                "volume_storage" -> Icon3.cmd_storage_tank
-                "water" -> Icon3.cmd_water
-                "weight" -> Icon3.cmd_weight
-                "wind_speed" -> Icon3.cmd_weather_windy
-                else -> Icon3.cmd_ray_vertex
+                "ph" -> Mdi.Ph
+                "power_factor" -> Mdi.AngleAcute
+                "precipitation" -> Mdi.WeatherRainy
+                "precipitation_intensity" -> Mdi.WeatherPouring
+                "pressure" -> Mdi.Gauge
+                "signal_strength" -> Mdi.Wifi
+                "sound_pressure" -> Mdi.EarHearing
+                "speed" -> Mdi.Speedometer
+                "temperature" -> Mdi.Thermometer
+                "volume" -> Mdi.CarCoolantLevel
+                "volume_storage" -> Mdi.StorageTank
+                "water" -> Mdi.Water
+                "weight" -> Mdi.Weight
+                "wind_speed" -> Mdi.WeatherWindy
+                else -> Mdi.RayVertex
             }
 
-            "persistent_notification" -> Icon.cmd_bell
+            "persistent_notification" -> Mdi.Bell
 
-            "plant" -> Icon2.cmd_flower
-            "proximity" -> Icon.cmd_apple_safari
+            "plant" -> Mdi.Flower
+            "proximity" -> Mdi.AppleSafari
             "remote" -> if (compareState == "on") {
-                Icon3.cmd_remote
+                Mdi.Remote
             } else {
-                Icon3.cmd_remote_off
+                Mdi.RemoteOff
             }
 
-            "scene" -> Icon3.cmd_palette_outline // Different from frontend: outline version
-            "schedule" -> Icon.cmd_calendar_clock
-            "script" -> Icon3.cmd_script_text_outline // Different from frontend: outline version
-            "select" -> Icon2.cmd_format_list_bulleted
+            "scene" -> Mdi.PaletteOutline // Different from frontend: outline version
+            "schedule" -> Mdi.CalendarClock
+            "script" -> Mdi.ScriptTextOutline // Different from frontend: outline version
+            "select" -> Mdi.FormatListBulleted
             "sensor" -> sensorIcon(compareState, this)
-            "siren" -> Icon.cmd_bullhorn
-            "simple_alarm" -> Icon.cmd_bell
+            "siren" -> Mdi.Bullhorn
+            "simple_alarm" -> Mdi.Bell
             "sun" -> if (compareState == "above_horizon") {
-                Icon3.cmd_white_balance_sunny
+                Mdi.WhiteBalanceSunny
             } else {
-                Icon3.cmd_weather_night
+                Mdi.WeatherNight
             }
 
             "switch" -> if (!entityId.endsWith(".ha_android_placeholder")) {
@@ -843,57 +1037,57 @@ private fun Entity.getIcon(compareState: String?): IIcon {
                     "outlet" -> if (compareState ==
                         "on"
                     ) {
-                        Icon3.cmd_power_plug
+                        Mdi.PowerPlug
                     } else {
-                        Icon3.cmd_power_plug_off
+                        Mdi.PowerPlugOff
                     }
 
                     "switch" -> if (compareState ==
                         "on"
                     ) {
-                        Icon3.cmd_toggle_switch_variant
+                        Mdi.ToggleSwitchVariant
                     } else {
-                        Icon3.cmd_toggle_switch_variant_off
+                        Mdi.ToggleSwitchVariantOff
                     }
 
-                    else -> Icon2.cmd_flash
+                    else -> Mdi.Flash
                 }
             } else { // For SimplifiedEntity without state, use a more generic icon
-                Icon2.cmd_light_switch
+                Mdi.LightSwitch
             }
 
-            "tag" -> Icon3.cmd_tag_outline
-            "text" -> Icon2.cmd_form_textbox
-            "timer" -> Icon3.cmd_timer_outline
-            "update" -> Icon3.cmd_package
-            "updater" -> Icon.cmd_cloud_upload
-            "vacuum" -> Icon3.cmd_robot_vacuum
+            "tag" -> Mdi.TagOutline
+            "text" -> Mdi.FormTextbox
+            "timer" -> Mdi.TimerOutline
+            "update" -> Mdi.Package
+            "updater" -> Mdi.CloudUpload
+            "vacuum" -> Mdi.RobotVacuum
             "water_heater" -> if (compareState == "off") {
-                Icon3.cmd_water_boiler_off
+                Mdi.WaterBoilerOff
             } else {
-                Icon3.cmd_water_boiler
+                Mdi.WaterBoiler
             }
 
             "weather" -> when (state) {
-                "clear-night" -> Icon3.cmd_weather_night
-                "exceptional" -> Icon.cmd_alert_circle_outline
-                "fog" -> Icon3.cmd_weather_fog
-                "hail" -> Icon3.cmd_weather_hail
-                "lightning" -> Icon3.cmd_weather_lightning
-                "lightning-rainy" -> Icon3.cmd_weather_lightning_rainy
-                "partlycloudy" -> Icon3.cmd_weather_partly_cloudy
-                "pouring" -> Icon3.cmd_weather_pouring
-                "rainy" -> Icon3.cmd_weather_rainy
-                "snowy" -> Icon3.cmd_weather_snowy
-                "snowy-rainy" -> Icon3.cmd_weather_snowy_rainy
-                "sunny" -> Icon3.cmd_weather_sunny
-                "windy" -> Icon3.cmd_weather_windy
-                "windy-variant" -> Icon3.cmd_weather_windy_variant
-                else -> Icon3.cmd_weather_cloudy
+                "clear-night" -> Mdi.WeatherNight
+                "exceptional" -> Mdi.AlertCircleOutline
+                "fog" -> Mdi.WeatherFog
+                "hail" -> Mdi.WeatherHail
+                "lightning" -> Mdi.WeatherLightning
+                "lightning-rainy" -> Mdi.WeatherLightningRainy
+                "partlycloudy" -> Mdi.WeatherPartlyCloudy
+                "pouring" -> Mdi.WeatherPouring
+                "rainy" -> Mdi.WeatherRainy
+                "snowy" -> Mdi.WeatherSnowy
+                "snowy-rainy" -> Mdi.WeatherSnowyRainy
+                "sunny" -> Mdi.WeatherSunny
+                "windy" -> Mdi.WeatherWindy
+                "windy-variant" -> Mdi.WeatherWindyVariant
+                else -> Mdi.WeatherCloudy
             }
 
-            "zone" -> Icon3.cmd_map_marker_radius
-            else -> Icon.cmd_bookmark
+            "zone" -> Mdi.MapMarkerRadius
+            else -> Mdi.Bookmark
         }
     }
 }
@@ -902,134 +1096,134 @@ fun Entity.isUsableInTile(): Boolean {
     return domain in EntityExt.APP_PRESS_ACTION_DOMAINS
 }
 
-private fun binarySensorIcon(state: String?, entity: Entity): IIcon {
+private fun binarySensorIcon(state: String?, entity: Entity): MdiIcon {
     val isOff = state == "off"
 
     return when (entity.attributes["device_class"]) {
-        "battery" -> if (isOff) Icon.cmd_battery else Icon.cmd_battery_outline
-        "battery_charging" -> if (isOff) Icon.cmd_battery else Icon.cmd_battery_charging
-        "carbon_monoxide" -> if (isOff) Icon3.cmd_smoke_detector else Icon3.cmd_smoke_detector_alert
-        "cold" -> if (isOff) Icon3.cmd_thermometer else Icon3.cmd_snowflake
-        "connectivity" -> if (isOff) Icon.cmd_close_network_outline else Icon.cmd_check_network_outline
-        "door" -> if (isOff) Icon.cmd_door_closed else Icon.cmd_door_open
-        "garage_door" -> if (isOff) Icon2.cmd_garage else Icon2.cmd_garage_open
-        "gas", "problem", "safety", "tamper" -> if (isOff) Icon.cmd_check_circle else Icon.cmd_alert_circle
-        "heat" -> if (isOff) Icon3.cmd_thermometer else Icon2.cmd_fire
-        LIGHT_DOMAIN -> if (isOff) Icon.cmd_brightness_5 else Icon.cmd_brightness_7
-        "lock" -> if (isOff) Icon2.cmd_lock else Icon2.cmd_lock_open
-        "moisture" -> if (isOff) Icon3.cmd_water_off else Icon3.cmd_water
-        "motion" -> if (isOff) Icon3.cmd_motion_sensor_off else Icon3.cmd_motion_sensor
-        "occupancy", "presence" -> if (isOff) Icon2.cmd_home_outline else Icon2.cmd_home
-        "opening" -> if (isOff) Icon3.cmd_square else Icon3.cmd_square_outline
-        "plug", "power" -> if (isOff) Icon3.cmd_power_plug_off else Icon3.cmd_power_plug
-        "running" -> if (isOff) Icon3.cmd_stop else Icon3.cmd_play
-        "smoke" -> if (isOff) Icon3.cmd_smoke_detector_variant else Icon3.cmd_smoke_detector_variant_alert
-        "sound" -> if (isOff) Icon3.cmd_music_note_off else Icon3.cmd_music_note
-        "update" -> if (isOff) Icon3.cmd_package else Icon3.cmd_package_up
-        "vibration" -> if (isOff) Icon.cmd_crop_portrait else Icon3.cmd_vibrate
-        "window" -> if (isOff) Icon3.cmd_window_closed else Icon3.cmd_window_open
-        else -> if (isOff) Icon3.cmd_radiobox_blank else Icon.cmd_checkbox_marked_circle
+        "battery" -> if (isOff) Mdi.Battery else Mdi.BatteryOutline
+        "battery_charging" -> if (isOff) Mdi.Battery else Mdi.BatteryCharging
+        "carbon_monoxide" -> if (isOff) Mdi.SmokeDetector else Mdi.SmokeDetectorAlert
+        "cold" -> if (isOff) Mdi.Thermometer else Mdi.Snowflake
+        "connectivity" -> if (isOff) Mdi.CloseNetworkOutline else Mdi.CheckNetworkOutline
+        "door" -> if (isOff) Mdi.DoorClosed else Mdi.DoorOpen
+        "garage_door" -> if (isOff) Mdi.Garage else Mdi.GarageOpen
+        "gas", "problem", "safety", "tamper" -> if (isOff) Mdi.CheckCircle else Mdi.AlertCircle
+        "heat" -> if (isOff) Mdi.Thermometer else Mdi.Fire
+        LIGHT_DOMAIN -> if (isOff) Mdi.Brightness5 else Mdi.Brightness7
+        "lock" -> if (isOff) Mdi.Lock else Mdi.LockOpen
+        "moisture" -> if (isOff) Mdi.WaterOff else Mdi.Water
+        "motion" -> if (isOff) Mdi.MotionSensorOff else Mdi.MotionSensor
+        "occupancy", "presence" -> if (isOff) Mdi.HomeOutline else Mdi.Home
+        "opening" -> if (isOff) Mdi.Square else Mdi.SquareOutline
+        "plug", "power" -> if (isOff) Mdi.PowerPlugOff else Mdi.PowerPlug
+        "running" -> if (isOff) Mdi.Stop else Mdi.Play
+        "smoke" -> if (isOff) Mdi.SmokeDetectorVariant else Mdi.SmokeDetectorVariantAlert
+        "sound" -> if (isOff) Mdi.MusicNoteOff else Mdi.MusicNote
+        "update" -> if (isOff) Mdi.Package else Mdi.PackageUp
+        "vibration" -> if (isOff) Mdi.CropPortrait else Mdi.Vibrate
+        "window" -> if (isOff) Mdi.WindowClosed else Mdi.WindowOpen
+        else -> if (isOff) Mdi.RadioboxBlank else Mdi.CheckboxMarkedCircle
     }
 }
 
-private fun coverIcon(state: String?, entity: Entity): IIcon {
+private fun coverIcon(state: String?, entity: Entity): MdiIcon {
     val open = state != "closed"
 
     return when (entity.attributes["device_class"]) {
         "garage" -> when (state) {
-            "opening" -> Icon.cmd_arrow_up_box
-            "closing" -> Icon.cmd_arrow_down_box
-            "closed" -> Icon2.cmd_garage
-            else -> Icon2.cmd_garage_open
+            "opening" -> Mdi.ArrowUpBox
+            "closing" -> Mdi.ArrowDownBox
+            "closed" -> Mdi.Garage
+            else -> Mdi.GarageOpen
         }
 
         "gate" -> when (state) {
-            "opening", "closing" -> Icon2.cmd_gate_arrow_right
-            "closed" -> Icon2.cmd_gate
-            else -> Icon2.cmd_gate_open
+            "opening", "closing" -> Mdi.GateArrowRight
+            "closed" -> Mdi.Gate
+            else -> Mdi.GateOpen
         }
 
-        "door" -> if (open) Icon.cmd_door_open else Icon.cmd_door_closed
-        "damper" -> if (open) Icon.cmd_circle else Icon.cmd_circle_slice_8
+        "door" -> if (open) Mdi.DoorOpen else Mdi.DoorClosed
+        "damper" -> if (open) Mdi.Circle else Mdi.CircleSlice8
         "shutter" -> when (state) {
-            "opening" -> Icon.cmd_arrow_up_box
-            "closing" -> Icon.cmd_arrow_down_box
-            "closed" -> Icon3.cmd_window_shutter
-            else -> Icon3.cmd_window_shutter_open
+            "opening" -> Mdi.ArrowUpBox
+            "closing" -> Mdi.ArrowDownBox
+            "closed" -> Mdi.WindowShutter
+            else -> Mdi.WindowShutterOpen
         }
 
         "curtain" -> when (state) {
-            "opening" -> Icon.cmd_arrow_split_vertical
-            "closing" -> Icon.cmd_arrow_collapse_horizontal
-            "closed" -> Icon.cmd_curtains_closed
-            else -> Icon.cmd_curtains
+            "opening" -> Mdi.ArrowSplitVertical
+            "closing" -> Mdi.ArrowCollapseHorizontal
+            "closed" -> Mdi.CurtainsClosed
+            else -> Mdi.Curtains
         }
 
         "blind", "shade" -> when (state) {
-            "opening" -> Icon.cmd_arrow_up_box
-            "closing" -> Icon.cmd_arrow_down_box
-            "closed" -> Icon.cmd_blinds
-            else -> Icon.cmd_blinds_open
+            "opening" -> Mdi.ArrowUpBox
+            "closing" -> Mdi.ArrowDownBox
+            "closed" -> Mdi.Blinds
+            else -> Mdi.BlindsOpen
         }
 
         else -> when (state) {
-            "opening" -> Icon.cmd_arrow_up_box
-            "closing" -> Icon.cmd_arrow_down_box
-            "closed" -> Icon3.cmd_window_closed
-            else -> Icon3.cmd_window_open
+            "opening" -> Mdi.ArrowUpBox
+            "closing" -> Mdi.ArrowDownBox
+            "closed" -> Mdi.WindowClosed
+            else -> Mdi.WindowOpen
         }
     }
 }
 
-private fun sensorIcon(state: String?, entity: Entity): IIcon {
-    var icon: IIcon? = null
+private fun sensorIcon(state: String?, entity: Entity): MdiIcon {
+    var icon: MdiIcon? = null
 
     if (entity.attributes["device_class"] != null) {
         icon = when (entity.attributes["device_class"]) {
-            "apparent_power", "power", "reactive_power" -> Icon2.cmd_flash
-            "aqi" -> Icon.cmd_air_filter
-            "atmospheric_pressure" -> Icon3.cmd_thermometer_lines
+            "apparent_power", "power", "reactive_power" -> Mdi.Flash
+            "aqi" -> Mdi.AirFilter
+            "atmospheric_pressure" -> Mdi.ThermometerLines
             "battery" -> {
                 val batteryValue = state?.toDoubleOrNull()
                 if (batteryValue == null) {
                     when (state) {
-                        "off" -> Icon.cmd_battery
-                        "on" -> Icon.cmd_battery_alert
-                        else -> Icon.cmd_battery_unknown
+                        "off" -> Mdi.Battery
+                        "on" -> Mdi.BatteryAlert
+                        else -> Mdi.BatteryUnknown
                     }
                 } else if (batteryValue <= 5) {
-                    Icon.cmd_battery_alert_variant_outline
+                    Mdi.BatteryAlertVariantOutline
                 } else {
                     when (((batteryValue / 10) * 10).toInt()) {
-                        10 -> Icon.cmd_battery_10
-                        20 -> Icon.cmd_battery_20
-                        30 -> Icon.cmd_battery_30
-                        40 -> Icon.cmd_battery_40
-                        50 -> Icon.cmd_battery_50
-                        60 -> Icon.cmd_battery_60
-                        70 -> Icon.cmd_battery_70
-                        80 -> Icon.cmd_battery_80
-                        90 -> Icon.cmd_battery_90
-                        else -> Icon.cmd_battery
+                        10 -> Mdi.Battery10
+                        20 -> Mdi.Battery20
+                        30 -> Mdi.Battery30
+                        40 -> Mdi.Battery40
+                        50 -> Mdi.Battery50
+                        60 -> Mdi.Battery60
+                        70 -> Mdi.Battery70
+                        80 -> Mdi.Battery80
+                        90 -> Mdi.Battery90
+                        else -> Mdi.Battery
                     }
                 }
             }
 
-            "carbon_dioxide" -> Icon3.cmd_molecule_co2
-            "carbon_monoxide" -> Icon3.cmd_molecule_co
-            "current" -> Icon.cmd_current_ac
-            "data_rate" -> Icon3.cmd_transmission_tower
-            "data_size" -> Icon.cmd_database
-            "date" -> Icon.cmd_calendar
-            "distance" -> Icon.cmd_arrow_left_right
-            "duration" -> Icon3.cmd_progress_clock
-            "energy" -> Icon2.cmd_lightning_bolt
-            "frequency", "voltage" -> Icon3.cmd_sine_wave
-            "gas" -> Icon3.cmd_meter_gas
-            "humidity", "moisture" -> Icon3.cmd_water_percent
-            "illuminance" -> Icon.cmd_brightness_5
-            "irradiance" -> Icon3.cmd_sun_wireless
-            "monetary" -> Icon.cmd_cash
+            "carbon_dioxide" -> Mdi.MoleculeCo2
+            "carbon_monoxide" -> Mdi.MoleculeCo
+            "current" -> Mdi.CurrentAc
+            "data_rate" -> Mdi.TransmissionTower
+            "data_size" -> Mdi.Database
+            "date" -> Mdi.Calendar
+            "distance" -> Mdi.ArrowLeftRight
+            "duration" -> Mdi.ProgressClock
+            "energy" -> Mdi.LightningBolt
+            "frequency", "voltage" -> Mdi.SineWave
+            "gas" -> Mdi.MeterGas
+            "humidity", "moisture" -> Mdi.WaterPercent
+            "illuminance" -> Mdi.Brightness5
+            "irradiance" -> Mdi.SunWireless
+            "monetary" -> Mdi.Cash
             "nitrogen_dioxide",
             "nitrogen_monoxide",
             "nitrous_oxide",
@@ -1039,21 +1233,21 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
             "pm25",
             "sulphur_dioxide",
             "volatile_organic_compounds",
-            -> Icon3.cmd_molecule
+            -> Mdi.Molecule
 
-            "power_factor" -> Icon.cmd_angle_acute
-            "precipitation" -> Icon3.cmd_weather_rainy
-            "precipitation_intensity" -> Icon3.cmd_weather_pouring
-            "pressure" -> Icon2.cmd_gauge
-            "signal_strength" -> Icon3.cmd_wifi
-            "sound_pressure" -> Icon.cmd_ear_hearing
-            "speed" -> Icon3.cmd_speedometer
-            "temperature" -> Icon3.cmd_thermometer
-            "timestamp" -> Icon.cmd_clock
-            "volume" -> Icon.cmd_car_coolant_level
-            "water" -> Icon3.cmd_water
-            "weight" -> Icon3.cmd_weight
-            "wind_speed" -> Icon3.cmd_weather_windy
+            "power_factor" -> Mdi.AngleAcute
+            "precipitation" -> Mdi.WeatherRainy
+            "precipitation_intensity" -> Mdi.WeatherPouring
+            "pressure" -> Mdi.Gauge
+            "signal_strength" -> Mdi.Wifi
+            "sound_pressure" -> Mdi.EarHearing
+            "speed" -> Mdi.Speedometer
+            "temperature" -> Mdi.Thermometer
+            "timestamp" -> Mdi.Clock
+            "volume" -> Mdi.CarCoolantLevel
+            "water" -> Mdi.Water
+            "weight" -> Mdi.Weight
+            "wind_speed" -> Mdi.WeatherWindy
             else -> null
         }
     }
@@ -1061,11 +1255,11 @@ private fun sensorIcon(state: String?, entity: Entity): IIcon {
     if (icon == null) {
         val unitOfMeasurement = entity.unitOfMeasurement()
         if (unitOfMeasurement != null && unitOfMeasurement in listOf("°C", "°F")) {
-            icon = Icon3.cmd_thermometer
+            icon = Mdi.Thermometer
         }
     }
 
-    return icon ?: Icon.cmd_eye
+    return icon ?: Mdi.Eye
 }
 
 /**

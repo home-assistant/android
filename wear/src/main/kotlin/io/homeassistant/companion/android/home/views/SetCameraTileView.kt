@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -8,8 +9,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Text
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.TimerCog
+import io.github.timoptr.mdiicons.generated.Video
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
@@ -35,12 +38,13 @@ fun SetCameraTileView(
                 ListHeader(commonR.string.camera_tile)
             }
             item {
-                val icon = entityItem?.icon ?: CommunityMaterial.Icon3.cmd_video
+                val icon = entityItem?.icon ?: Mdi.Video
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
-                            asset = icon,
+                            imageVector = icon.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
@@ -62,7 +66,8 @@ fun SetCameraTileView(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
-                            asset = CommunityMaterial.Icon3.cmd_timer_cog,
+                            imageVector = Mdi.TimerCog.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },

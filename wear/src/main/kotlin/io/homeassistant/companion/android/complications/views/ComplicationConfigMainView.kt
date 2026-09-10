@@ -1,10 +1,9 @@
 package io.homeassistant.companion.android.complications.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,7 +23,9 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Check
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.complications.ComplicationConfigViewModel
@@ -108,7 +109,8 @@ fun MainConfigView(
                     modifier = Modifier.fillMaxWidth(),
                     icon = {
                         Image(
-                            asset = iconBitmap,
+                            imageVector = iconBitmap.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
@@ -157,7 +159,7 @@ fun MainConfigView(
                     enabled = loaded && entity != null,
                 ) {
                     Icon(
-                        Icons.Filled.Check,
+                        Mdi.Check.rememberImageVector(),
                         contentDescription = stringResource(id = R.string.save),
                         modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize)),
                     )
