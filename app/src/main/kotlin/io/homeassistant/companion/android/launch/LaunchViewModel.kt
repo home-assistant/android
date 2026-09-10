@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -211,19 +212,24 @@ internal class LaunchViewModel @VisibleForTesting constructor(
                 skipWelcome = initialDeepLink.skipWelcome,
             )
 
+            is LaunchActivity.DeepLink.OpenInvitation -> navigateToOnboarding(
+                initialDeepLink.serverUrl,
+                fromInvitation = true,
+            )
+
             is LaunchActivity.DeepLink.NavigateTo,
-            -> connectToServer(initialDeepLink.serverId, initialDeepLink.path)
+            -> connectToServer(initialDeepLink.serverId, initialDeepLink.target)
 
             is LaunchActivity.DeepLink.OpenWearOnboarding -> navigateToWearOnboarding(
                 wearName = initialDeepLink.wearName,
                 urlToOnboard = initialDeepLink.urlToOnboard,
             )
 
-            null -> connectToServer(ServerManager.SERVER_ID_ACTIVE, null)
+            null -> connectToServer(ServerManager.SERVER_ID_ACTIVE, FrontendTarget.Default)
         }
     }
 
-    private suspend fun connectToServer(serverId: Int, path: String?) {
+    private suspend fun connectToServer(serverId: Int, target: FrontendTarget) {
         try {
             getServerConnectedAndRegistered(serverId)?.let { server ->
                 Timber.d("Server (id=${server.id}) is connected and registered checking network status")
@@ -231,7 +237,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
                 networkStatusMonitor.observeNetworkStatus(serverManager.connectionStateProvider(server.id))
                     .takeWhile { state ->
                         // Until the network is ready we continue to observe network status changes
-                        !handleNetworkState(state, path, serverId)
+                        !handleNetworkState(state, target, serverId)
                     }.collect()
             } ?: navigateToOnboarding()
         } catch (e: IllegalStateException) {
@@ -270,6 +276,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
         urlToOnboard: String? = null,
         hideExistingServers: Boolean = false,
         skipWelcome: Boolean = false,
+        fromInvitation: Boolean = false,
     ) {
         _uiState.value = LaunchUiState.Ready(
             OnboardingRoute(
@@ -277,6 +284,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
                 urlToOnboard = urlToOnboard,
                 hideExistingServers = hideExistingServers,
                 skipWelcome = skipWelcome,
+                fromInvitation = fromInvitation,
             ),
         )
     }
@@ -296,7 +304,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
             .forEach { serverManager.removeServer(it.id) }
     }
 
-    private fun handleNetworkState(state: NetworkState, path: String?, serverId: Int): Boolean {
+    private fun handleNetworkState(state: NetworkState, target: FrontendTarget, serverId: Int): Boolean {
         Timber.i("Current network state $state")
         return when (state) {
             NetworkState.READY_INTERNAL, NetworkState.READY_NET_VALIDATED, NetworkState.READY_NET_LOCAL -> {
@@ -305,7 +313,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
                     if (shouldNavigateToAutomotive) {
                         AutomotiveRoute
                     } else {
-                        FrontendRoute(path, serverId)
+                        FrontendRoute(target, serverId)
                     },
                 )
                 true

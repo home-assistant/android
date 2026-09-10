@@ -1,12 +1,10 @@
 package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 class CommandMessageTest {
 
     @Test
@@ -31,6 +29,37 @@ class CommandMessageTest {
             """{"type":"command","id":null,"command":"navigate","payload":{"path":"/lovelace/dashboard","options":{"replace":false}}}""",
             json,
         )
+    }
+
+    @Test
+    fun `Given MatterCommissionFinishMessage with name when serializing then produces command with payload`() {
+        val message = MatterCommissionFinishMessage(name = "Kitchen light", success = true)
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":null,"command":"matter/commission/finish","payload":{"name":"Kitchen light","success":true}}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given failed MatterCommissionFinishMessage when serializing then payload contains explicit null name`() {
+        val message = MatterCommissionFinishMessage(name = null, success = false)
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":null,"command":"matter/commission/finish","payload":{"name":null,"success":false}}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given server version when isAvailable then only 2026_7 and later handle the finish message`() {
+        assertEquals(false, MatterCommissionFinishMessage.isAvailable(null))
+        assertEquals(false, MatterCommissionFinishMessage.isAvailable(HomeAssistantVersion(2026, 6, 9)))
+        assertEquals(true, MatterCommissionFinishMessage.isAvailable(HomeAssistantVersion(2026, 7, 0)))
     }
 
     @Test
@@ -61,6 +90,42 @@ class CommandMessageTest {
 
         assertEquals(
             """{"type":"command","id":null,"command":"improv/device_setup_done","payload":null}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given BarcodeScanResultMessage when serializing then produces bar_code scan_result command`() {
+        val message = BarcodeScanResultMessage(id = 7, rawValue = "HA-12345", format = "qr_code")
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":7,"command":"bar_code/scan_result","payload":{"rawValue":"HA-12345","format":"qr_code"}}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given BarcodeScanAbortedMessage forAction true when serializing then reason is alternative_options`() {
+        val message = BarcodeScanAbortedMessage(id = 7, forAction = true)
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":7,"command":"bar_code/aborted","payload":{"reason":"alternative_options"}}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given BarcodeScanAbortedMessage forAction false when serializing then reason is canceled`() {
+        val message = BarcodeScanAbortedMessage(id = 7, forAction = false)
+
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(message)
+
+        assertEquals(
+            """{"type":"command","id":7,"command":"bar_code/aborted","payload":{"reason":"canceled"}}""",
             json,
         )
     }

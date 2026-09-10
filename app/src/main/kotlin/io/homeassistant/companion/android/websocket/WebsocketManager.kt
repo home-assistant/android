@@ -28,14 +28,17 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET_ISSUES
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.hasActiveConnection
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -61,6 +64,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         } else {
             WebsocketSetting.ALWAYS
         }
+        private val ACTION_EXTRA_KEYS = listOf("uri", "behavior", "authenticationRequired")
 
         suspend fun start(context: Context) {
             val websocketNotifications =
@@ -101,6 +105,11 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private val serverManager: ServerManager = entryPoint.serverManager()
     private val messagingManager: MessagingManager = entryPoint.messagingManager()
     private val settingsDao: SettingsDao = entryPoint.settingsDao()
+    private val checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase =
+        entryPoint.checkLocalNetworkPermission()
+
+    @VisibleForTesting
+    internal var dispatcher: CoroutineDispatcher = Dispatchers.IO
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
@@ -108,9 +117,14 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         fun serverManager(): ServerManager
         fun messagingManager(): MessagingManager
         fun settingsDao(): SettingsDao
+        fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
     }
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    override suspend fun doWork(): Result = withContext(dispatcher) {
+        if (!checkLocalNetworkPermission()) {
+            Timber.d("Skipping websocket work: ACCESS_LOCAL_NETWORK permission missing")
+            return@withContext Result.success()
+        }
         if (!shouldWeRun()) {
             return@withContext Result.success()
         }
@@ -127,7 +141,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         // play ping pong to ensure we have a connection and server changes are handled.
         do {
             delay(30000)
-        } while (jobs.values.any { it.isActive } && isActive && shouldWeRun() && manageServerJobs(jobs, this))
+        } while (isActive && shouldWeRun() && manageServerJobs(jobs, this))
 
         jobs.forEach { it.value.cancel() }
         jobs.clear()
@@ -166,9 +180,9 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
         val servers = serverManager.servers()
 
-        // Clean up...
-        jobs.filter { (serverId, _) ->
-            servers.none { it.id == serverId } || !shouldRunForServer(serverId)
+        // Clean up, including stopped jobs so they are started again below...
+        jobs.filter { (serverId, job) ->
+            servers.none { it.id == serverId } || !job.isActive || !shouldRunForServer(serverId)
         }
             .forEach { (serverId, job) ->
                 job.cancel()
@@ -204,10 +218,8 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                             if (action is Map<*, *>) {
                                 flattened["action_${i + 1}_key"] = action["action"].toString()
                                 flattened["action_${i + 1}_title"] = action["title"].toString()
-                                action["uri"]?.let { uri -> flattened["action_${i + 1}_uri"] = uri.toString() }
-                                action["behavior"]?.let { behavior ->
-                                    flattened["action_${i + 1}_behavior"] =
-                                        behavior.toString()
+                                for (key in ACTION_EXTRA_KEYS) {
+                                    action[key]?.let { value -> flattened["action_${i + 1}_$key"] = value.toString() }
                                 }
                             }
                         }
@@ -235,7 +247,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
      * @return `true` if the foreground service was started
      */
     private suspend fun createNotification(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             val notificationChannel = NotificationChannel(
                 CHANNEL_WEBSOCKET,
                 applicationContext.getString(R.string.websocket_setting_name),
@@ -244,7 +256,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             notificationManager.createNotificationChannel(notificationChannel)
         }
 
-        val intent = WebViewActivity.newInstance(applicationContext)
+        val intent = LaunchActivity.newInstance(applicationContext)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
@@ -279,7 +291,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             )
             .build()
         return try {
-            val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val type = if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
             } else {
                 0
@@ -290,7 +302,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             if (e is CancellationException) return false
 
             Timber.e(e, "Unable to setForeground due to restrictions")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                 if (notificationManager.getNotificationChannel(CHANNEL_WEBSOCKET_ISSUES) == null) {
                     val restrictedNotificationChannel = NotificationChannel(
                         CHANNEL_WEBSOCKET_ISSUES,

@@ -4,10 +4,8 @@ import android.content.Intent
 import android.speech.RecognitionService
 import android.speech.SpeechRecognizer
 import dagger.hilt.android.testing.HiltTestApplication
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -17,9 +15,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 class AssistRecognitionServiceTest {
-
-    @get:Rule
-    val consoleLogRule = ConsoleLogRule()
 
     @Test
     fun `Given onStartListening when invoked then report client error`() {

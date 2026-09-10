@@ -18,10 +18,11 @@ jobs:
   app_build:
     name: Github, Firebase, and Sentry Release
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -30,9 +31,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
         with:
-          ruby-version: "4.0.3"
+          ruby-version: "4.0.6"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
@@ -60,14 +61,15 @@ jobs:
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
       - name: Build Release
+        uses: ./.github/actions/monitor-resources
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: |
-          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
+        with:
+          run: ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
       - name: Archive Build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -83,15 +85,16 @@ jobs:
         run: |
           echo $VERSION_CODE > ./app/build/outputs/version_code.txt
 
-      - name: Create draft Github Pre-Release
+      - name: Create draft GitHub Pre-Release
         if: github.event.inputs.beta == 'true'
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        with:
-          tag_name: ${{ steps.rel_number.outputs.version }}
-          body_path: ./app/build/outputs/changelogGithub
-          draft: true
-          prerelease: true
-          files: |
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REL_VERSION: ${{ steps.rel_number.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          assets=(
             ./app/build/outputs/apk/full/release/app-full-release.apk
             ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
             ./app/build/outputs/version_code.txt
@@ -100,12 +103,30 @@ jobs:
             ./automotive/build/outputs/apk/minimal/release/automotive-minimal-release.apk
             ./strings.zip
             ./app/src/main/res/xml/locales_config.xml
+          )
+
+          # Immutable releases lock their assets at publish time, so we create the release as a
+          # draft first and attach assets while it is still mutable. The next step publishes it.
+          # On re-runs, --clobber keeps the upload idempotent as long as the previous attempt
+          # did not get past the publish step.
+          if ! gh release view "$REL_VERSION" >/dev/null 2>&1; then
+            gh release create "$REL_VERSION" \
+              --draft \
+              --prerelease \
+              --notes-file ./app/build/outputs/changelogGithub
+          fi
+
+          gh release upload "$REL_VERSION" "${assets[@]}" --clobber
 
       - name: Publish Pre-Release
         if: github.event.inputs.beta == 'true'
-        run: gh release edit ${{ steps.rel_number.outputs.version }} --draft=false
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REL_VERSION: ${{ steps.rel_number.outputs.version }}
+        run: |
+          gh release edit "$REL_VERSION" \
+            --draft=false \
+            --notes-file ./app/build/outputs/changelogGithub
 
       - name: Deploy to Firebase
         env:
@@ -129,7 +150,7 @@ jobs:
           AMAZON_APPSTORE_APP_ID: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
 
       - name: Upload Github Dependencies
-        uses: gradle/actions/dependency-submission@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+        uses: gradle/actions/dependency-submission@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
           cache-provider: basic # Avoid the proprietary 'enhanced' cache; 'basic' uses the MIT-licensed GitHub Actions cache.
 
@@ -139,12 +160,13 @@ jobs:
   play_publish:
     name: Play Publish
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     concurrency:
       group: playstore_deploy
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -153,9 +175,9 @@ jobs:
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@c4e5b1316158f92e3d49443a9d58b31d25ac0f8f # v1.306.0
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
         with:
-          ruby-version: "4.0.3"
+          ruby-version: "4.0.6"
           bundler-cache: false
 
       - uses: ./.github/actions/create-release-number
@@ -183,14 +205,15 @@ jobs:
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
       - name: Build Release
+        uses: ./.github/actions/monitor-resources
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: |
-          ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
+        with:
+          run: ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
 
       - name: Archive Build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

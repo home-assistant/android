@@ -10,10 +10,10 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
@@ -224,7 +224,7 @@ class ConnectivityCheckRepositoryImplTest {
         // DNS should succeed
         assertNotNull(dnsSuccessState, "DNS resolution should succeed")
 
-        val success = dnsSuccessState!!.dnsResolution as ConnectivityCheckResult.Success
+        val success = dnsSuccessState.dnsResolution as ConnectivityCheckResult.Success
         // Should contain IP address information
         assertNotNull(success.details)
         assertEquals(ipAddresses, success.details)

@@ -2,8 +2,6 @@ package io.homeassistant.companion.android.widgets.button
 
 import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -22,15 +20,19 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Flash
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -39,8 +41,6 @@ import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewMode
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
 import io.homeassistant.companion.android.util.getHexForColor
 import io.homeassistant.companion.android.util.icondialog.IconDialogFragment
-import io.homeassistant.companion.android.util.icondialog.getIconByMdiName
-import io.homeassistant.companion.android.util.icondialog.mdiName
 import io.homeassistant.companion.android.widgets.BaseWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -49,6 +49,8 @@ import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+private const val ICON_PREVIEW_SIZE_DP = 24
 
 // TODO Migrate to compose https://github.com/home-assistant/android/issues/6305
 @AndroidEntryPoint
@@ -287,7 +289,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
             runOnUiThread {
                 // Create an icon pack and load all drawables.
                 val iconName = buttonWidget?.iconName ?: "mdi:flash"
-                val icon = CommunityMaterial.getIconByMdiName(iconName) ?: CommunityMaterial.Icon2.cmd_flash
+                val icon = Mdi.fromHaName(iconName) ?: Mdi.Flash
                 onIconDialogIconsSelected(icon)
                 binding.widgetConfigIconSelector.setOnClickListener {
                     var alertDialog: DialogFragment? = null
@@ -358,7 +360,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
                 val widgetConfigAction = binding.widgetTextConfigService.text.toString()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
                     selectedServerId != null &&
                     (
                         widgetConfigAction in actions[selectedServerId].orEmpty().keys ||
@@ -462,12 +464,10 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         }
     }
 
-    private fun onIconDialogIconsSelected(selectedIcon: IIcon) {
+    private fun onIconDialogIconsSelected(selectedIcon: MdiIcon) {
         binding.widgetConfigIconSelector.tag = selectedIcon.mdiName
-        val iconDrawable = IconicsDrawable(this, selectedIcon)
-        iconDrawable.colorFilter =
-            PorterDuffColorFilter(ContextCompat.getColor(this, commonR.color.colorIcon), PorterDuff.Mode.SRC_IN)
-
-        binding.widgetConfigIconSelector.setImageBitmap(iconDrawable.toBitmap())
+        binding.widgetConfigIconSelector.setImageBitmap(
+            selectedIcon.toBitmap(this, ICON_PREVIEW_SIZE_DP, ContextCompat.getColor(this, commonR.color.colorIcon)),
+        )
     }
 }

@@ -2,16 +2,18 @@ package io.homeassistant.companion.android.util.vehicle
 
 import android.app.ActivityOptions
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.view.Display
 import androidx.car.app.CarContext
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.sizeDp
-import com.mikepenz.iconics.utils.toAndroidIconCompat
+import androidx.core.graphics.drawable.IconCompat
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Cog
+import io.github.timoptr.mdiicons.toBitmap
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.settings.SettingsActivity
 import timber.log.Timber
 
@@ -19,9 +21,7 @@ fun settingsAction(carContext: CarContext): Action {
     return Action.Builder()
         .setIcon(
             CarIcon.Builder(
-                IconicsDrawable(carContext, CommunityMaterial.Icon.cmd_cog).apply {
-                    sizeDp = 64
-                }.toAndroidIconCompat(),
+                IconCompat.createWithBitmap(Mdi.Cog.toBitmap(carContext, 64, Color.WHITE)),
             )
                 .setTint(CarColor.DEFAULT)
                 .build(),
@@ -35,7 +35,7 @@ private fun startSettingsActivity(carContext: CarContext) {
     Timber.d("Starting settings activity")
     // The app must indicate the default display to be used to avoid a SecurityException on newer
     // Android versions. See: https://developer.android.com/training/cars/platforms/releases#android-14
-    val options = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+    val options = if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
         ActivityOptions.makeBasic()
             .setLaunchDisplayId(Display.DEFAULT_DISPLAY)
             .toBundle()

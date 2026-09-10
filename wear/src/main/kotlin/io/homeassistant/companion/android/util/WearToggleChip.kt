@@ -15,12 +15,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.wear.compose.material.ToggleChipColors
 import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material3.contentColorFor
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityPosition
-import io.homeassistant.companion.android.common.data.integration.getCoverPosition
-import io.homeassistant.companion.android.common.data.integration.getFanSpeed
-import io.homeassistant.companion.android.common.data.integration.getLightBrightness
-import io.homeassistant.companion.android.common.data.integration.getLightColor
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.COVER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.FAN_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.theme.wearColorScheme
 
 object WearToggleChip {
@@ -34,7 +33,7 @@ object WearToggleChip {
      * @param entity The entity state on which the background for the active state should be based
      */
     @Composable
-    fun entityToggleChipBackgroundColors(entity: Entity, checked: Boolean): ToggleChipColors {
+    fun entityToggleChipBackgroundColors(entity: EntityDisplay, checked: Boolean): ToggleChipColors {
         // For a toggleable entity, a custom background should only be used if it has:
         // a. a position (eg. fan speed, light brightness)
         // b. a custom color (eg. light color)
@@ -43,16 +42,15 @@ object WearToggleChip {
         // If it doesn't have either or is 'off', it should use the default off (surfaceDim) background.
 
         val hasPosition = when (entity.domain) {
-            "cover" -> entity.state != "closed" && entity.getCoverPosition() != null
-            "fan" -> checked && entity.getFanSpeed() != null
-            "light" -> checked && entity.getLightBrightness() != null
+            COVER_DOMAIN -> entity.rawState != "closed" && entity.position != null
+            FAN_DOMAIN, LIGHT_DOMAIN -> checked && entity.position != null
             else -> false
         }
-        val hasColor = entity.getLightColor() != null
+        val hasColor = entity.color != null
         val gradientDirection = LocalLayoutDirection.current
 
         val contentBackgroundColor = if (hasColor) {
-            val entityColor = entity.getLightColor()
+            val entityColor = entity.color
             if (entityColor != null) Color(entityColor) else wearColorScheme.surfaceContainerHigh
         } else {
             wearColorScheme.surfaceContainerHigh
@@ -109,12 +107,8 @@ object WearToggleChip {
 
                     // Use position info to provide stop points
                     // Minimum/maximum stops are not set to 0f/1f to make 1%/100% values visible
-                    val position = when (entity.domain) {
-                        "cover" -> entity.getCoverPosition()
-                        "fan" -> entity.getFanSpeed()
-                        "light" -> entity.getLightBrightness()
-                        else -> null
-                    } ?: EntityPosition(value = 1f, min = 0f, max = 2f) // This should never happen
+                    // Null should never happen: hasPosition is only true when the position is set
+                    val position = entity.position ?: EntityPosition(value = 1f, min = 0f, max = 2f)
                     val positionValueRelative = if (gradientDirection == LayoutDirection.Ltr) {
                         ((position.value - position.min) / (position.max - position.min))
                     } else {

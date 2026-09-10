@@ -1,12 +1,13 @@
 plugins {
     alias(libs.plugins.homeassistant.android.application)
-    alias(libs.plugins.google.services)
 }
 
 android {
     defaultConfig {
         minSdk = libs.versions.androidSdk.wear.min.get().toInt()
         targetSdk = libs.versions.androidSdk.wear.target.get().toInt()
+
+        testInstrumentationRunner = "io.homeassistant.companion.android.util.HAAndroidJUnitRunner"
 
         versionName = project.version.toString()
         // We add 1 because the app and wear versions need to have different version codes.
@@ -38,15 +39,10 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.android)
 
-    implementation(libs.iconics.core)
     implementation(libs.appcompat)
-    implementation(libs.community.material.typeface)
-    implementation(libs.iconics.compose)
 
     implementation(libs.activity.ktx)
     implementation(libs.activity.compose)
-    implementation(libs.compose.material.icons.core)
-    implementation(libs.compose.material.icons.extended)
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.compose.material)
     implementation(libs.wear.compose.navigation)
@@ -69,4 +65,6 @@ dependencies {
     androidTestImplementation(libs.bundles.androidx.test)
     testImplementation(libs.bundles.androidx.test)
     testImplementation(libs.androidx.test.core)
+
+    ksp(project(":provides-sensor-processor"))
 }

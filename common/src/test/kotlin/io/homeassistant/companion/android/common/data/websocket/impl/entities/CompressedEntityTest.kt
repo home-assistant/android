@@ -1,16 +1,13 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import kotlin.random.Random
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNull
 
-@ExtendWith(ConsoleLogExtension::class)
 class CompressedEntityTest {
 
     @Test
@@ -34,10 +31,10 @@ class CompressedEntityTest {
         val lastChanged = 42.0
         val lastUpdated = 41.1
         val attributes = mapOf(
-            "friendly_name" to Random.nextInt().toString(),
+            "dummy" to Random.nextInt().toString(),
             "icon" to Random.nextInt().toString(),
         )
-        val rawData = """{"s":"$state","lc":$lastChanged,"lu":$lastUpdated,"a":{"friendly_name":"${attributes["friendly_name"]}","icon":"${attributes["icon"]}"}}"""
+        val rawData = """{"s":"$state","lc":$lastChanged,"lu":$lastUpdated,"a":{"dummy":"${attributes["dummy"]}","icon":"${attributes["icon"]}"}}"""
         val expected = CompressedEntityState(state = JsonPrimitive(state), attributes = attributes, lastChanged = lastChanged, lastUpdated = lastUpdated)
         assertEquals(expected, kotlinJsonMapper.decodeFromString<CompressedEntityState>(rawData))
     }

@@ -1,5 +1,9 @@
 package io.homeassistant.companion.android.widgets.todo
 
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Bookmark
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.COMPLETED_STATUS
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -7,7 +11,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNull
 
 class TodoWidgetStateTest {
     @Test
@@ -64,14 +67,14 @@ class TodoWidgetStateTest {
             serverId = 1,
             entityId = "41",
         )
-        val entity = fakeServerEntity("41", friendlyName = "home")
+        val displayEntity = fakeEntityDisplay("41", "home")
 
         val todos = listOf(
             TodoWidgetEntity.TodoItem(uid = "1", summary = "Task 1", status = COMPLETED_STATUS),
             TodoWidgetEntity.TodoItem(uid = "2", summary = "Task 2", status = "hello"),
         )
 
-        val result = TodoStateWithData.from(todoEntity, entity, todos)
+        val result = TodoStateWithData.from(todoEntity, displayEntity, todos)
 
         assertEquals(WidgetBackgroundType.DAYNIGHT, result.backgroundType)
         assertEquals("#FFFFFF", result.textColor)
@@ -84,26 +87,37 @@ class TodoWidgetStateTest {
     }
 
     @Test
-    fun `Given TodoWidgetEntity when invoking from then return TodoStateWithData with outOfSync true`() {
+    fun `Given TodoWidgetEntity with latest update data when invoking from then return TodoStateWithData with outOfSync true`() {
         val todoEntity = TodoWidgetEntity(
             id = 42,
-            backgroundType = WidgetBackgroundType.TRANSPARENT,
-            textColor = "#FFFFFa",
+            backgroundType = WidgetBackgroundType.DAYNIGHT,
+            textColor = "#FFFFFF",
             serverId = 2,
-            entityId = "41",
+            entityId = "todo.shopping",
             showCompleted = false,
+            latestUpdateData = TodoWidgetEntity.LastUpdateData(
+                entityName = "Shopping",
+                todos = listOf(
+                    TodoWidgetEntity.TodoItem(uid = "1", summary = "Milk", status = COMPLETED_STATUS),
+                    TodoWidgetEntity.TodoItem(uid = "2", summary = "Bread", status = "needs_action"),
+                ),
+            ),
         )
 
-        // When
         val result = TodoStateWithData.from(todoEntity)
 
-        // Then
-        assertEquals(WidgetBackgroundType.TRANSPARENT, result.backgroundType)
-        assertEquals("#FFFFFa", result.textColor)
+        assertEquals(WidgetBackgroundType.DAYNIGHT, result.backgroundType)
+        assertEquals("#FFFFFF", result.textColor)
         assertEquals(2, result.serverId)
-        assertEquals("41", result.listEntityId)
-        assertNull(result.listName)
-        assertTrue(result.todoItems.isEmpty())
+        assertEquals("todo.shopping", result.listEntityId)
+        assertEquals("Shopping", result.listName)
+        assertEquals(
+            listOf(
+                TodoItemState(uid = "1", name = "Milk", done = true),
+                TodoItemState(uid = "2", name = "Bread", done = false),
+            ),
+            result.todoItems,
+        )
         assertTrue(result.outOfSync)
         assertFalse(result.showComplete)
     }
@@ -156,5 +170,9 @@ class TodoWidgetStateTest {
         )
 
         assertFalse(todoState.hasDisplayableItems())
+    }
+
+    private fun fakeEntityDisplay(entityId: String, name: String, icon: MdiIcon? = null): EntityDisplayWithoutContext {
+        return EntityDisplayWithoutContext(entityId, name, icon ?: Mdi.Bookmark)
     }
 }

@@ -77,8 +77,6 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.compose.animation)
                     "implementation"(libs.compose.material)
-                    "implementation"(libs.compose.material.icons.core)
-                    "implementation"(libs.compose.material.icons.extended)
                     "implementation"(libs.compose.runtime)
                     "implementation"(libs.activity.compose)
                     "implementation"(libs.navigation.compose)
@@ -90,14 +88,9 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.bundles.androidx.glance)
 
-                    "implementation"(libs.iconics.core)
-                    "implementation"(libs.iconics.compose)
-                    "implementation"(libs.community.material.typeface)
-
                     "implementation"(libs.bundles.paging)
 
                     "implementation"(libs.reorderable)
-                    "implementation"(libs.changeLog)
                     "implementation"(libs.aboutlibraries.compose.m3)
 
                     "implementation"(libs.zxing)

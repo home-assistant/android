@@ -3,21 +3,18 @@ package io.homeassistant.companion.android.common.data.prefs
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl.Companion.MIGRATION_PREF
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl.Companion.MIGRATION_VERSION
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedLegacyChangelogPref
 import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-
-@VisibleForTesting
-const val MIGRATION_PREF = "migration"
-
-@VisibleForTesting
-const val MIGRATION_VERSION = 1
 
 private const val PREF_VER = "version"
 private const val PREF_NIGHT_MODE_THEME = "theme"
@@ -44,6 +41,7 @@ private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
 private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
 private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
+private const val PREF_LAST_SEEN_CHANGELOG_VERSION = "last_seen_changelog_version"
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
@@ -57,12 +55,14 @@ private class LocalStorageWithMigration(
     private val localStorage: LocalStorage,
     private val integrationStorage: LocalStorage,
 ) {
-    private val migrationChecked = AtomicBoolean(false)
+    @Volatile
+    private var migrationChecked = false
     private val migrationMutex = Mutex()
 
     private suspend fun checkMigration() {
+        if (migrationChecked) return
         migrationMutex.withLock {
-            if (!migrationChecked.get()) {
+            if (!migrationChecked) {
                 val currentVersion = localStorage.getInt(MIGRATION_PREF)
                 if (currentVersion == null || currentVersion < 1) {
                     integrationStorage.getString(PREF_CONTROLS_AUTH_REQUIRED)?.let {
@@ -92,7 +92,7 @@ private class LocalStorageWithMigration(
 
                     localStorage.putInt(MIGRATION_PREF, MIGRATION_VERSION)
                 }
-                migrationChecked.set(true)
+                migrationChecked = true
             }
         }
     }
@@ -106,9 +106,19 @@ private class LocalStorageWithMigration(
 internal class PrefsRepositoryImpl @Inject constructor(
     @NamedThemesStorage localStorage: LocalStorage,
     @NamedIntegrationStorage integrationStorage: LocalStorage,
+    @NamedLegacyChangelogPref private val hadLegacyChangelogPref: SuspendProvider<Boolean>,
 ) : PrefsRepository {
 
-    private val localStorage = LocalStorageWithMigration(localStorage, integrationStorage)
+    companion object {
+        @VisibleForTesting
+        const val MIGRATION_PREF = "migration"
+
+        @VisibleForTesting
+        const val MIGRATION_VERSION = 1
+    }
+
+    private val localStorage =
+        LocalStorageWithMigration(localStorage = localStorage, integrationStorage = integrationStorage)
 
     override suspend fun getAppVersion(): String? {
         return localStorage().getString(PREF_VER)
@@ -142,12 +152,18 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putString(PREF_LOCALES, lang)
     }
 
-    override suspend fun getScreenOrientation(): String? {
-        return localStorage().getString(PREF_SCREEN_ORIENTATION)
+    override suspend fun getScreenOrientation(): ScreenOrientation {
+        return ScreenOrientation.fromStorageValue(localStorage().getString(PREF_SCREEN_ORIENTATION))
     }
 
-    override suspend fun saveScreenOrientation(orientation: String?) {
-        localStorage().putString(PREF_SCREEN_ORIENTATION, orientation)
+    override suspend fun setScreenOrientation(orientation: ScreenOrientation) {
+        localStorage().putString(PREF_SCREEN_ORIENTATION, orientation.storageValue)
+    }
+
+    override suspend fun screenOrientationFlow(): Flow<ScreenOrientation> {
+        return localStorage().observeChanges(PREF_SCREEN_ORIENTATION) {
+            getScreenOrientation()
+        }
     }
 
     override suspend fun getControlsAuthRequired(): ControlsAuthRequiredSetting {
@@ -217,6 +233,12 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
+    }
+
+    override suspend fun keepScreenOnFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_KEEP_SCREEN_ON_ENABLED) {
+            isKeepScreenOnEnabled()
+        }
     }
 
     override suspend fun getPageZoomLevel(): Int {
@@ -365,6 +387,24 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setChangeLogPopupEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_CHANGE_LOG_POPUP_ENABLED, enabled)
+    }
+
+    override suspend fun wasAppUpdatedSinceChangelogSeen(currentVersionCode: Int): Boolean {
+        val lastSeenVersionCode = localStorage().getInt(PREF_LAST_SEEN_CHANGELOG_VERSION) ?: run {
+            // The changelog was previously tracked by a library with its own storage: the
+            // presence of its pref means the app was updated from such a version, so show the
+            // changelog and only mark it seen once the user saw it.
+            if (hadLegacyChangelogPref()) {
+                return true
+            }
+            markChangelogSeen(currentVersionCode)
+            return false
+        }
+        return lastSeenVersionCode < currentVersionCode
+    }
+
+    override suspend fun markChangelogSeen(currentVersionCode: Int) {
+        localStorage().putInt(PREF_LAST_SEEN_CHANGELOG_VERSION, currentVersionCode)
     }
 
     override suspend fun removeServer(serverId: Int) {

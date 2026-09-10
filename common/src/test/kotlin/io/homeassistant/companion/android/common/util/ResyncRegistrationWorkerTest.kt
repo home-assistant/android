@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.util.ResyncRegistrationWorker.Companion.ResyncRegistrationWorkerEntryPoint
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -19,14 +18,12 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
-private val appVersion = AppVersion.from("1.1.1.", 1)
+private val appVersion = AppVersion("1.1.1.", 1)
 private val messagingToken = MessagingToken("hello")
 
-@ExtendWith(ConsoleLogExtension::class)
 class ResyncRegistrationWorkerTest {
 
     private val serverManager: ServerManager = mockk()
@@ -170,7 +167,7 @@ class ResyncRegistrationWorkerTest {
             EntryPoints.get(any(), ResyncRegistrationWorkerEntryPoint::class.java)
         } returns mockk(relaxed = true) {
             every { serverManager() } returns serverManager
-            every { appVersionProvider() } returns AppVersionProvider { appVersion }
+            every { appVersion() } returns appVersion
             every { pushToken() } returns MessagingTokenProvider { return@MessagingTokenProvider messagingToken }
             every { pushWebsocketSupport() } returns pushWebsocketSupport
         }

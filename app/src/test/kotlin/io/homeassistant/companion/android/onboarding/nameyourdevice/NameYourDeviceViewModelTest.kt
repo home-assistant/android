@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.database.server.Server
@@ -18,7 +17,6 @@ import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -42,7 +40,7 @@ import retrofit2.Response
 
 private const val DEFAULT_DEVICE_NAME = "Pixel 42"
 
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
 class NameYourDeviceViewModelTest {
 
@@ -51,9 +49,7 @@ class NameYourDeviceViewModelTest {
 
     private val serverRegistrationRepository: ServerRegistrationRepository = mockk()
     private val authenticationRepository: AuthenticationRepository = mockk()
-    private val appVersionProvider: AppVersionProvider = AppVersionProvider {
-        AppVersion.from("test", 42)
-    }
+    private val appVersion = AppVersion("test", 42)
     private val messagingTokenProvider: MessagingTokenProvider = MessagingTokenProvider {
         return@MessagingTokenProvider MessagingToken("test_messaging_token")
     }
@@ -90,7 +86,7 @@ class NameYourDeviceViewModelTest {
             route,
             serverManager,
             serverRegistrationRepository,
-            appVersionProvider,
+            appVersion,
             messagingTokenProvider,
             defaultName = DEFAULT_DEVICE_NAME,
         )
@@ -156,7 +152,7 @@ class NameYourDeviceViewModelTest {
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     DEFAULT_DEVICE_NAME,
                     messagingTokenProvider(),
                 ),
@@ -202,7 +198,7 @@ class NameYourDeviceViewModelTest {
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     customDeviceName,
                     messagingTokenProvider(),
                 ),
@@ -225,7 +221,7 @@ class NameYourDeviceViewModelTest {
             coVerify {
                 integrationRepository.registerDevice(
                     DeviceRegistration(
-                        appVersionProvider(),
+                        appVersion,
                         customDeviceName,
                         messagingTokenProvider(),
                     ),
@@ -242,7 +238,7 @@ class NameYourDeviceViewModelTest {
             secureRoute,
             serverManager,
             serverRegistrationRepository,
-            appVersionProvider,
+            appVersion,
             messagingTokenProvider,
             defaultName = DEFAULT_DEVICE_NAME,
         )
@@ -260,7 +256,7 @@ class NameYourDeviceViewModelTest {
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     DEFAULT_DEVICE_NAME,
                     messagingTokenProvider(),
                 ),

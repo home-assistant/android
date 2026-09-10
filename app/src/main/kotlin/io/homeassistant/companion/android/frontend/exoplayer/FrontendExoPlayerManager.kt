@@ -11,6 +11,8 @@ import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DataSource
 import androidx.media3.exoplayer.ExoPlayer
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.scopes.ViewModelScoped
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent
 import java.io.Closeable
@@ -30,14 +32,18 @@ import timber.log.Timber
  *
  * The player need to be released by calling [close] (typically in ViewModel's `onCleared`).
  */
+@ViewModelScoped
 class FrontendExoPlayerManager @VisibleForTesting constructor(
     private val playerCreator: suspend (ExoPlayer.() -> Unit) -> ExoPlayer,
 ) : Closeable {
 
     @Inject
-    constructor(@ApplicationContext context: Context, dataSourceFactory: DataSource.Factory) : this(
+    constructor(
+        @ApplicationContext context: Context,
+        dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>,
+    ) : this(
         { configure ->
-            initializePlayer(context, dataSourceFactory).apply(configure)
+            initializePlayer(context, dataSourceFactoryProvider()).apply(configure)
         },
     )
 

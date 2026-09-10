@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.ssid.views
 
 import android.net.wifi.WifiManager
 import android.os.Build
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,12 +33,6 @@ import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.SettingsEthernet
-import androidx.compose.material.icons.filled.VpnKey
-import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -55,10 +50,17 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AlertCircle
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Ethernet
+import io.github.timoptr.mdiicons.generated.Key
+import io.github.timoptr.mdiicons.generated.Wifi
+import io.github.timoptr.mdiicons.generated.WifiCheck
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.network.WifiHelper
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.util.compose.HaAlertInfo
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.plus
@@ -97,7 +99,7 @@ fun SsidView(
                 )
                 SsidSubheader(
                     title = stringResource(commonR.string.manage_ssids_wifi),
-                    icon = Icons.Default.Wifi,
+                    icon = Mdi.Wifi.rememberImageVector(),
                     checked = null,
                     onClicked = null,
                 )
@@ -118,7 +120,7 @@ fun SsidView(
         if (
             activeSsid?.isNotBlank() == true &&
             wifiSsids.none { it == activeSsid } &&
-            (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || activeSsid !== WifiManager.UNKNOWN_SSID)
+            (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || activeSsid !== WifiManager.UNKNOWN_SSID)
         ) {
             item("ssid.suggestion") {
                 Chip(
@@ -126,7 +128,7 @@ fun SsidView(
                     onClick = { onAddWifiSsid(activeSsid) },
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Wifi,
+                        imageVector = Mdi.Wifi.rememberImageVector(),
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
                     )
@@ -162,7 +164,8 @@ fun SsidView(
             ) {
                 if (connected) {
                     Image(
-                        asset = CommunityMaterial.Icon3.cmd_wifi_check,
+                        imageVector = Mdi.WifiCheck.rememberImageVector(),
+                        contentDescription = null,
                         colorFilter = ColorFilter.tint(colorResource(commonR.color.colorAccent)),
                     )
                     Spacer(Modifier.width(16.dp))
@@ -185,7 +188,7 @@ fun SsidView(
                         .weight(1f),
                 )
                 Icon(
-                    imageVector = Icons.Default.Clear,
+                    imageVector = Mdi.Close.rememberImageVector(),
                     contentDescription = stringResource(commonR.string.remove_ssid),
                     tint = colorResource(commonR.color.colorWarning),
                     modifier = Modifier
@@ -199,7 +202,7 @@ fun SsidView(
         item("vpn") {
             SsidSubheader(
                 title = stringResource(commonR.string.manage_ssids_vpn),
-                icon = Icons.Default.VpnKey,
+                icon = Mdi.Key.rememberImageVector(),
                 checked = vpn,
                 onClicked = { onSetVpn(it) },
             )
@@ -210,7 +213,7 @@ fun SsidView(
                 Spacer(Modifier.height(16.dp))
                 SsidSubheader(
                     title = stringResource(commonR.string.manage_ssids_ethernet),
-                    icon = Icons.Default.SettingsEthernet,
+                    icon = Mdi.Ethernet.rememberImageVector(),
                     checked = ethernet,
                     onClicked = { onSetEthernet(it) },
                 )
@@ -321,7 +324,7 @@ fun SsidInput(onSubmit: (String) -> Boolean, modifier: Modifier = Modifier) {
             trailingIcon = if (ssidError) {
                 {
                     Icon(
-                        imageVector = Icons.Default.Error,
+                        imageVector = Mdi.AlertCircle.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.manage_ssids_input_exists),
                     )
                 }

@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.home.HomeActivity
@@ -35,7 +36,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.guava.future
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -63,7 +63,7 @@ class CameraTile : TileService() {
     lateinit var wearPrefsRepository: WearPrefsRepository
 
     @Inject
-    lateinit var okHttpClient: OkHttpClient
+    lateinit var okHttpClientProvider: SuspendProvider<OkHttpClient>
 
     @Inject
     lateinit var cameraTileDao: CameraTileDao
@@ -141,7 +141,7 @@ class CameraTile : TileService() {
                             requestParams.deviceConfiguration.screenHeightDp *
                                 requestParams.deviceConfiguration.screenDensity
                         withContext(Dispatchers.IO) {
-                            val response = okHttpClient.newCall(Request.Builder().url(url).build()).execute()
+                            val response = okHttpClientProvider().newCall(Request.Builder().url(url).build()).execute()
                             byteArray = response.body.byteStream().readBytes()
                             var bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
                             if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
@@ -227,21 +227,13 @@ class CameraTile : TileService() {
         }
     }
 
-    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
-        serviceScope.launch {
-            val tileId = requestParams.tileId
-            val tileConfig = cameraTileDao.get(tileId)
-            tileConfig?.refreshInterval?.let {
-                if (it >= 1) {
-                    try {
-                        getUpdater(this@CameraTile)
-                            .requestUpdate(io.homeassistant.companion.android.tiles.CameraTile::class.java)
-                    } catch (e: Exception) {
-                        Timber.w(e, "Unable to request tile update on enter")
-                    }
-                }
-            }
+    override fun onRecentInteractionEventsAsync(
+        events: List<EventBuilders.TileInteractionEvent>,
+    ): ListenableFuture<Void?> = serviceScope.future {
+        requestUpdateOnEnter(events) { tileId ->
+            (cameraTileDao.get(tileId)?.refreshInterval ?: 0) >= 1
         }
+        null
     }
 
     override fun onDestroy() {

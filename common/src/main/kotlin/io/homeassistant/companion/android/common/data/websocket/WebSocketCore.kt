@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.websocket
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCoreImpl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import javax.inject.Provider
@@ -51,6 +52,17 @@ internal interface WebSocketCore {
     suspend fun sendBytes(data: ByteArray): Boolean
 
     /**
+     * Sends an application-level ping and verifies that the connection is alive.
+     *
+     * If no pong is received while the connection is believed to be established, this indicates a
+     * silently dropped connection. The function will properly handle this as a closed connection
+     * and try restoring any active subscriptions.
+     *
+     * @return `true` if a pong was received, `false` otherwise.
+     */
+    suspend fun ping(): Boolean
+
+    /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to
      * new messages. When there are no more listeners, the subscription will automatically be cancelled
      * using `unsubscribe_events`. If the subscription already exists, the existing Flow is returned.
@@ -74,13 +86,13 @@ internal interface WebSocketCore {
 }
 
 internal class WebSocketCoreFactory @Inject constructor(
-    private val okHttpClient: OkHttpClient,
-    // Use a Provider to avoid a dependency circle since serverManager needs WebSocketCoreFactory
+    private val okHttpClientProvider: SuspendProvider<OkHttpClient>,
+    // Use a Provider to avoid a dependency circle since serverManager needs the factory
     private val serverManagerProvider: Provider<ServerManager>,
 ) {
 
-    fun create(serverId: Int): WebSocketCore {
-        return WebSocketCoreImpl(okHttpClient, serverManagerProvider.get(), serverId)
+    suspend fun create(serverId: Int): WebSocketCore {
+        return WebSocketCoreImpl(okHttpClientProvider(), serverManagerProvider.get(), serverId)
     }
 }
 

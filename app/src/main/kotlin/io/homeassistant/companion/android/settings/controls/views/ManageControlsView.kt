@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.controls.views
 
 import android.os.Build
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -51,17 +53,18 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.DipSwitch
+import io.github.timoptr.mdiicons.generated.ViewDashboard
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.getEntityDomainString
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
@@ -71,7 +74,7 @@ fun ManageControlsView(
     authSetting: ControlsAuthRequiredSetting,
     authRequiredList: List<String>,
     entitiesLoaded: Boolean,
-    entitiesList: Map<Int, List<Entity>>,
+    entitiesList: Map<Int, List<EntityDisplayWithContext>>,
     panelSetting: Pair<String?, Int>?,
     serversList: List<Server>,
     structureEnabled: Boolean,
@@ -93,7 +96,7 @@ fun ManageControlsView(
         modifier = modifier,
         contentPadding = PaddingValues(vertical = 16.dp) + safeBottomPaddingValues(applyHorizontal = false),
     ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             item {
                 Text(
                     text = stringResource(commonR.string.controls_setting_panel),
@@ -128,7 +131,7 @@ fun ManageControlsView(
             }
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE || !panelEnabled) {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) || !panelEnabled) {
             if (serversList.size > 1) {
                 item {
                     Row(
@@ -201,8 +204,7 @@ fun ManageControlsView(
                     }) { index ->
                         val entity = entitiesList[selectedServer]?.get(index) ?: return@items
                         ManageControlsEntity(
-                            entityName = entity.friendlyName,
-                            entityDomain = entity.domain,
+                            entity = entity,
                             selected = (
                                 authSetting == ControlsAuthRequiredSetting.NONE ||
                                     (
@@ -304,8 +306,7 @@ fun ManageControlsView(
 
 @Composable
 fun ManageControlsEntity(
-    entityName: String,
-    entityDomain: String,
+    entity: EntityDisplayWithContext,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -323,15 +324,25 @@ fun ManageControlsEntity(
             // Handled by parent Row clickable modifier
             onCheckedChange = null,
         )
+        Image(
+            imageVector = entity.icon.rememberImageVector(),
+            contentDescription = null,
+            modifier = Modifier
+                .padding(end = 16.dp)
+                .size(24.dp),
+            colorFilter = ColorFilter.tint(LocalContentColor.current),
+        )
         Column(
             modifier = Modifier.weight(1f),
         ) {
-            Text(text = entityName, style = MaterialTheme.typography.body1)
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                Text(
-                    text = getEntityDomainString(entityDomain),
-                    style = MaterialTheme.typography.body2,
-                )
+            Text(text = entity.name, style = MaterialTheme.typography.body1)
+            entity.subtitle(LocalLayoutDirection.current)?.let {
+                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.body2,
+                    )
+                }
             }
         }
     }
@@ -349,11 +360,11 @@ fun ManageControlsModeButton(isPanel: Boolean, selected: Boolean, onClick: () ->
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Image(
-                asset = if (isPanel) {
-                    CommunityMaterial.Icon3.cmd_view_dashboard
+                imageVector = if (isPanel) {
+                    Mdi.ViewDashboard
                 } else {
-                    CommunityMaterial.Icon.cmd_dip_switch
-                },
+                    Mdi.DipSwitch
+                }.rememberImageVector(),
                 contentDescription = null,
                 modifier = Modifier.size(36.dp),
                 colorFilter = ColorFilter.tint(LocalContentColor.current),

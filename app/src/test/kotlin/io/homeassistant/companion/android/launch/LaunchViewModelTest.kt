@@ -16,9 +16,9 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.onboarding.OnboardingRoute
 import io.homeassistant.companion.android.onboarding.WearOnboardingRoute
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -31,9 +31,9 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
@@ -41,7 +41,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(MainDispatcherJUnit5Extension::class, ConsoleLogExtension::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class LaunchViewModelTest {
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val networkStatusMonitor: NetworkStatusMonitor = mockk(relaxed = true)
@@ -96,7 +96,7 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
@@ -160,7 +160,7 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
@@ -352,6 +352,25 @@ class LaunchViewModelTest {
     }
 
     @Test
+    fun `Given initial deep link is OpenInvitation when creating viewModel, then navigate to onboarding from invitation with the server url`() = runTest {
+        createViewModel(
+            initialDeepLink = LaunchActivity.DeepLink.OpenInvitation("http://homeassistant.io"),
+            hasLocationTrackingSupport = true,
+        )
+        advanceUntilIdle()
+        assertEquals(
+            LaunchUiState.Ready(
+                OnboardingRoute(
+                    hasLocationTracking = true,
+                    urlToOnboard = "http://homeassistant.io",
+                    fromInvitation = true,
+                ),
+            ),
+            viewModel.uiState.value,
+        )
+    }
+
+    @Test
     fun `Given initial deep link is NavigateTo when creating viewModel, then navigate to frontend with the server id and path`() = runTest {
         val serverId = 42
         val server = mockk<Server>(relaxed = true)
@@ -363,10 +382,10 @@ class LaunchViewModelTest {
         val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
-        createViewModel(LaunchActivity.DeepLink.NavigateTo("/path", serverId))
+        createViewModel(LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Path("/path"), serverId))
         advanceUntilIdle()
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute("/path", serverId)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Path("/path"), serverId)),
             viewModel.uiState.value,
         )
     }
@@ -434,7 +453,7 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
     }
@@ -461,7 +480,7 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, ServerManager.SERVER_ID_ACTIVE)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, ServerManager.SERVER_ID_ACTIVE)),
             viewModel.uiState.value,
         )
         assertEquals(0, networkStateFlow.subscriptionCount.value)
@@ -535,11 +554,11 @@ class LaunchViewModelTest {
         val networkStateFlow = MutableStateFlow(NetworkState.READY_NET_VALIDATED)
         coEvery { networkStatusMonitor.observeNetworkStatus(any()) } returns networkStateFlow
 
-        createViewModel(LaunchActivity.DeepLink.NavigateTo(path = null, serverId = serverId))
+        createViewModel(LaunchActivity.DeepLink.NavigateTo(FrontendTarget.Default, serverId))
         advanceUntilIdle()
 
         assertEquals(
-            LaunchUiState.Ready(FrontendRoute(null, serverId)),
+            LaunchUiState.Ready(FrontendRoute(FrontendTarget.Default, serverId)),
             viewModel.uiState.value,
         )
     }

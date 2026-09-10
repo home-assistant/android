@@ -8,11 +8,12 @@ jobs:
   tag:
     name: Tag Weekly Release
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     permissions:
-      actions: write # Start workflows onPush and prepareNextRelease
+      actions: write # Start workflows onPush
       contents: write # Allow pushing tags
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: true # Needed to be able to push the new tag
@@ -36,15 +37,4 @@ jobs:
               inputs: {
                 "beta": "true",
               },
-            })
-
-      - name: Trigger Prepare Next Release
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'prepareNextRelease.yml',
-              ref: 'main',
             })

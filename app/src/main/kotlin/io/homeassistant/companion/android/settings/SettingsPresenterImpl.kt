@@ -12,13 +12,14 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
-import io.homeassistant.companion.android.util.ChangeLog
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +38,6 @@ class SettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val nightModeManager: NightModeManager,
     private val langsManager: LanguagesManager,
-    private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val defaultAssistantManager: DefaultAssistantManager,
 ) : PreferenceDataStore(),
@@ -112,7 +112,7 @@ class SettingsPresenterImpl @Inject constructor(
             "themes" -> nightModeManager.getCurrentNightMode().storageValue
             "languages" -> langsManager.getCurrentLang()
             "page_zoom" -> prefsRepository.getPageZoomLevel().toString()
-            "screen_orientation" -> prefsRepository.getScreenOrientation()
+            "screen_orientation" -> prefsRepository.getScreenOrientation().storageValue
             else -> throw IllegalArgumentException("No string found by this key: $key")
         }
     }
@@ -123,7 +123,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "themes" -> nightModeManager.saveNightMode(NightModeTheme.fromStorageValue(value))
                 "languages" -> langsManager.saveLang(value)
                 "page_zoom" -> prefsRepository.setPageZoomLevel(value?.toIntOrNull())
-                "screen_orientation" -> prefsRepository.saveScreenOrientation(value)
+                "screen_orientation" -> prefsRepository.setScreenOrientation(ScreenOrientation.fromStorageValue(value))
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -156,10 +156,6 @@ class SettingsPresenterImpl @Inject constructor(
             Timber.d(e, "Unable to get rate limits")
             return@withContext null
         }
-    }
-
-    override suspend fun showChangeLog(context: Context) {
-        changeLog.showChangeLog(context, true)
     }
 
     override suspend fun isChangeLogPopupEnabled(): Boolean {
@@ -198,7 +194,7 @@ class SettingsPresenterImpl @Inject constructor(
         }
 
         // Notifications
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
             !NotificationManagerCompat.from(context).areNotificationsEnabled()
         ) {
             suggestions += SettingsHomeSuggestion(

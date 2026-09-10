@@ -3,24 +3,33 @@ package io.homeassistant.companion.android.common.sensors
 import android.app.AlarmManager
 import android.content.Context
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.sensor.SensorSetting
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.GregorianCalendar
 import java.util.Locale
 import java.util.TimeZone
+import javax.inject.Inject
+import javax.inject.Singleton
 import timber.log.Timber
 
-class NextAlarmManager : SensorManager {
+@Singleton
+class NextAlarmManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
         private const val SETTING_ALLOW_LIST = "nextalarm_allow_list"
 
+        @ProvidesSensor
         val nextAlarm = SensorManager.BasicSensor(
             "next_alarm",
             "sensor",
@@ -29,6 +38,9 @@ class NextAlarmManager : SensorManager {
             "mdi:alarm",
             deviceClass = "timestamp",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+            settings = listOf(
+                Setting.Apps(SETTING_ALLOW_LIST),
+            ),
         )
     }
 
@@ -38,24 +50,24 @@ class NextAlarmManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_alarm
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(nextAlarm)
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        return !context.isAutomotive()
+    override fun hasSensor(): Boolean {
+        return !applicationContext.isAutomotive()
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        updateNextAlarm(context)
+    override suspend fun requestSensorUpdate() {
+        updateNextAlarm()
     }
 
-    private suspend fun updateNextAlarm(context: Context) {
-        if (!isEnabled(context, nextAlarm)) {
+    private suspend fun updateNextAlarm() {
+        if (!isEnabled(nextAlarm)) {
             return
         }
 
@@ -64,12 +76,10 @@ class NextAlarmManager : SensorManager {
         var utc = STATE_UNAVAILABLE
         var pendingIntent = ""
 
-        val sensorDao = sensorDao(context)
-        val sensorSetting = sensorDao.getSettings(nextAlarm.id)
-        val allowPackageList = sensorSetting.firstOrNull { it.name == SETTING_ALLOW_LIST }?.value ?: ""
+        val allowPackageList = getSetting(nextAlarm, SETTING_ALLOW_LIST)
 
         try {
-            val alarmManager = context.getSystemService<AlarmManager>()!!
+            val alarmManager = applicationContext.getSystemService<AlarmManager>()!!
 
             val alarmClockInfo = alarmManager.nextAlarmClock
 
@@ -84,10 +94,6 @@ class NextAlarmManager : SensorManager {
                         Timber.d("Skipping update from $pendingIntent as it is not in the allow list")
                         return
                     }
-                } else {
-                    sensorDao.add(
-                        SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, SensorSettingType.LIST_APPS),
-                    )
                 }
 
                 val cal: Calendar = GregorianCalendar()
@@ -106,7 +112,6 @@ class NextAlarmManager : SensorManager {
         }
 
         onSensorUpdated(
-            context,
             nextAlarm,
             utc,
             nextAlarm.statelessIcon,

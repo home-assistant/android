@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.DARK
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.LIGHT
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme.SYSTEM
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -26,7 +27,7 @@ class NightModeManager @Inject constructor(private val prefsRepository: PrefsRep
     suspend fun getCurrentNightMode(): NightModeTheme {
         val nightMode = prefsRepository.getCurrentNightModeTheme()
         return if (nightMode == null) {
-            val nightModeThemeToSet = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val nightModeThemeToSet = if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
                 SYSTEM
             } else {
                 LIGHT

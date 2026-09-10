@@ -15,20 +15,17 @@ import androidx.car.app.validation.HostValidator
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import java.util.Collections
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.O)
 @AndroidEntryPoint
@@ -46,11 +43,14 @@ class HaCarAppService : CarAppService() {
     lateinit var prefsRepository: PrefsRepository
 
     @Inject
+    lateinit var entitiesForDisplayManager: EntitiesForDisplayManager
+
+    @Inject
     lateinit var connectionAvailabilityMonitor: ConnectionAvailabilityMonitor
 
     private val serverId = MutableStateFlow(0)
-    private val allEntities = MutableStateFlow<Map<String, Entity>>(emptyMap())
-    private var allEntitiesJob: Job? = null
+    private val entitiesState = MutableStateFlow<EntityDisplayState<EntityDisplay>>(EntityDisplayState.Loading)
+    private var observeJob: Job? = null
 
     override fun createHostValidator(): HostValidator {
         return if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
@@ -67,7 +67,7 @@ class HaCarAppService : CarAppService() {
             init {
                 lifecycleScope.launch {
                     serverManager.getServer()?.let {
-                        loadEntities(this, it.id)
+                        loadEntities(lifecycleScope, it.id)
                     }
                 }
                 lifecycleScope.launch {
@@ -76,11 +76,7 @@ class HaCarAppService : CarAppService() {
             }
 
             val serverIdFlow = serverId.asStateFlow()
-            val entityFlow = allEntities.shareIn(
-                lifecycleScope,
-                SharingStarted.WhileSubscribed(10_000),
-                1,
-            )
+            val entitiesStateFlow = entitiesState.asStateFlow()
 
             override fun onCreateScreen(intent: Intent): Screen {
                 carInfo = carContext.getCarService(CarHardwareManager::class.java).carInfo
@@ -93,7 +89,7 @@ class HaCarAppService : CarAppService() {
                                     carContext,
                                     serverManager,
                                     serverIdFlow,
-                                    entityFlow,
+                                    entitiesStateFlow,
                                     prefsRepository,
                                     { loadEntities(lifecycleScope, it) },
                                     { loadEntities(lifecycleScope, serverId.value) },
@@ -116,7 +112,7 @@ class HaCarAppService : CarAppService() {
                                     carContext,
                                     serverManager,
                                     serverIdFlow,
-                                    entityFlow,
+                                    entitiesStateFlow,
                                     prefsRepository,
                                     { loadEntities(lifecycleScope, it) },
                                     { loadEntities(lifecycleScope, serverId.value) },
@@ -152,50 +148,16 @@ class HaCarAppService : CarAppService() {
         carInfo = null
     }
 
+    /**
+     * Observes the displayed entities of the server [id] into [entitiesState], cancelling any
+     * previous observation so a refresh of the same server restarts it.
+     */
     private fun loadEntities(scope: CoroutineScope, id: Int) {
-        allEntitiesJob?.cancel()
-        allEntitiesJob = scope.launch {
-            serverId.value = id
-            val entities: MutableMap<String, Entity>? =
-                if (serverManager.getServer(id) != null) {
-                    try {
-                        serverManager.integrationRepository(id).getEntities()
-                            ?.associate { it.entityId to it }
-                            ?.toMutableMap()
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Failed to get entities")
-                        null
-                    }
-                } else {
-                    null
-                }
-            if (entities != null) {
-                allEntities.emit(entities.toImmutableMap())
-                try {
-                    serverManager.integrationRepository(id).getEntityUpdates()?.collect { entity ->
-                        entities[entity.entityId] = entity
-                        allEntities.emit(entities.toImmutableMap())
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get entity updates")
-                }
-            } else {
-                Timber.w("No entities found?")
-                allEntities.emit(emptyMap())
-            }
-        }
-    }
-
-    /** Returns an immutable copy of this. */
-    private fun <K, V> Map<K, V>.toImmutableMap(): Map<K, V> {
-        return if (isEmpty()) {
-            emptyMap()
-        } else {
-            Collections.unmodifiableMap(LinkedHashMap(this))
+        serverId.value = id
+        observeJob?.cancel()
+        entitiesState.value = EntityDisplayState.Loading
+        observeJob = scope.launch {
+            entitiesForDisplayManager.observe(id).collect { entitiesState.value = it }
         }
     }
 }

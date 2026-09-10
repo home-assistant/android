@@ -6,12 +6,12 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
@@ -240,5 +240,19 @@ class UrlUtilTest {
         val httpUrl2 = url2.toHttpUrl()
 
         assertEquals(expected, httpUrl1.hasSameOrigin(httpUrl2))
+    }
+
+    @ParameterizedTest(name = "isAbsoluteUrl: {0} -> {1}")
+    @CsvSource(
+        "https://example.com, true",
+        "http://example.com, true",
+        "HTTPS://example.com, true",
+        "HtTp://EXAMPLE.COM, true",
+        "/lovelace/default, false",
+        "app://com.example.app, false",
+        "entityId:light.kitchen, false",
+    )
+    fun `isAbsoluteUrl returns expected value`(input: String, expected: Boolean) {
+        assertEquals(expected, UrlUtil.isAbsoluteUrl(input))
     }
 }

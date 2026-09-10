@@ -16,7 +16,6 @@ import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.CHANNEL_DOWNLOADS
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
@@ -28,7 +27,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -38,9 +36,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [Build.VERSION_CODES.Q])
 class DataUriDownloadManagerTest {
-
-    @get:Rule
-    var consoleLog = ConsoleLogRule()
 
     private lateinit var app: Application
     private lateinit var manager: DataUriDownloadManager

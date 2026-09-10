@@ -11,6 +11,7 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
@@ -18,12 +19,14 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.assist.service.AssistVoiceInteractionService
-import io.homeassistant.companion.android.assist.ui.AssistSheetView
+import io.homeassistant.companion.android.assist.ui.AssistSheet
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -76,6 +79,7 @@ class AssistActivity : BaseActivity() {
         ActivityResultContracts.RequestPermission(),
     ) { viewModel.onPermissionResult(it) }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         updateShowWhenLocked()
@@ -124,8 +128,8 @@ class AssistActivity : BaseActivity() {
                 return@setContent
             }
 
-            HomeAssistantAppTheme {
-                AssistSheetView(
+            HATheme {
+                AssistSheet(
                     conversation = viewModel.conversation,
                     pipelines = viewModel.pipelines,
                     inputMode = viewModel.inputMode,
@@ -136,9 +140,9 @@ class AssistActivity : BaseActivity() {
                     if (fromFrontend && viewModel.userCanManagePipelines) {
                         {
                             startActivity(
-                                WebViewActivity.newInstance(
-                                    this,
-                                    "config/voice-assistants/assistants",
+                                intentLaunchWithNavigateTo(
+                                    FrontendTarget.Path("config/voice-assistants/assistants"),
+                                    ServerManager.SERVER_ID_ACTIVE,
                                 ).apply {
                                     flags += Intent.FLAG_ACTIVITY_NEW_TASK // Delivers data in onNewIntent
                                 },
@@ -192,7 +196,7 @@ class AssistActivity : BaseActivity() {
         contextIsLocked = locked
         if (locked) {
             window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
+            if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)) {
                 @Suppress("DEPRECATION")
                 window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             } else {
@@ -200,7 +204,7 @@ class AssistActivity : BaseActivity() {
                 setTurnScreenOn(true)
             }
         } else {
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O) {
+            if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)) {
                 @Suppress("DEPRECATION")
                 window.clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED)
             } else {

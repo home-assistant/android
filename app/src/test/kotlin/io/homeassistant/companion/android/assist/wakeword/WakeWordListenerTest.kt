@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.assist.wakeword
 import android.content.Context
 import io.homeassistant.companion.android.common.util.VoiceAudioRecorder
 import io.homeassistant.companion.android.microwakeword.MicroWakeWord
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.coEvery
 import io.mockk.every
@@ -20,10 +19,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class WakeWordListenerTest {
 
     private lateinit var context: Context

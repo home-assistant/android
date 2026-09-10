@@ -1,11 +1,14 @@
 package io.homeassistant.companion.android.util.compose.entity
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ForcedSize
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -15,19 +18,27 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Fan
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.TemperatureCelsius
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.mockk.mockk
 import io.mockk.verify
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,15 +52,12 @@ import org.robolectric.annotation.Config
 class EntityPickerTest {
 
     @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
-
-    @get:Rule(order = 1)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
-    @get:Rule(order = 3)
+    @get:Rule(order = 2)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>(mainDispatcherRule.testDispatcher)
 
     /**
@@ -106,21 +114,21 @@ class EntityPickerTest {
      * By forcing a tablet size, we use the inline dropdown which stays in the same composition tree.
      */
     private fun setExpandedEntityPickerContent(
-        entities: List<EntityPickerItem> = createTestEntities(),
+        displayState: EntityDisplayState<EntityDisplayWithContext> = EntityDisplayState.Loaded(createTestEntities()),
         selectedEntityId: String? = null,
-        onEntitySelectedId: (String) -> Unit = {},
-        onEntityCleared: () -> Unit = {},
+        onSelectionChanged: (String?) -> Unit = {},
+        filterDispatcher: CoroutineContext = mainDispatcherRule.testDispatcher,
     ) {
         composeTestRule.setContent {
             TabletSizeContent {
                 HAThemeForPreview {
                     EntityPicker(
-                        entities = entities,
+                        displayState = displayState,
                         selectedEntityId = selectedEntityId,
-                        onEntitySelectedId = onEntitySelectedId,
-                        onEntityCleared = onEntityCleared,
-                        isExpanded = true,
-                        dispatcher = mainDispatcherRule.testDispatcher,
+                        onSelectionChanged = onSelectionChanged,
+                        state = remember {
+                            EntityPickerState(isExpanded = true, dispatcher = filterDispatcher)
+                        },
                     )
                 }
             }
@@ -128,35 +136,48 @@ class EntityPickerTest {
     }
 
     private fun createTestEntities() = listOf(
-        EntityPickerItem(
-            entityId = "light.living_room",
-            domain = "light",
-            friendlyName = "Living Room Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "light.living_room",
+                name = "Living Room Light",
+                icon = Mdi.Lightbulb,
+            ),
             areaName = "Living Room",
             deviceName = "Smart Bulb",
         ),
-        EntityPickerItem(
-            entityId = "light.bedroom",
-            domain = "light",
-            friendlyName = "Bedroom Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "light.bedroom",
+                name = "Bedroom Light",
+                icon = Mdi.Lightbulb,
+            ),
             areaName = "Bedroom",
         ),
-        EntityPickerItem(
-            entityId = "sensor.temperature",
-            domain = "sensor",
-            friendlyName = "Temperature Sensor",
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "sensor.temperature",
+                name = "Temperature Sensor",
+                icon = Mdi.TemperatureCelsius,
+            ),
             areaName = "Living Room",
-            icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
         ),
-        EntityPickerItem(
-            entityId = "switch.fan",
-            domain = "switch",
-            friendlyName = "Ceiling Fan",
-            icon = CommunityMaterial.Icon2.cmd_fan,
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "switch.fan",
+                name = "Ceiling Fan",
+                icon = Mdi.Fan,
+            ),
             areaName = "Bedroom",
             deviceName = "Smart Switch",
+        ),
+    )
+
+    private fun createHiddenTestEntity() = EntityDisplayWithContext(
+        EntityDisplayWithoutContext(
+            entityId = "light.attic",
+            name = "Attic Light",
+            icon = Mdi.Lightbulb,
+            isHidden = true,
         ),
     )
 
@@ -165,10 +186,9 @@ class EntityPickerTest {
         composeTestRule.setContent {
             HAThemeForPreview {
                 EntityPicker(
-                    entities = createTestEntities(),
+                    displayState = EntityDisplayState.Loaded(createTestEntities()),
                     selectedEntityId = null,
-                    onEntitySelectedId = {},
-                    onEntityCleared = {},
+                    onSelectionChanged = {},
                 )
             }
         }
@@ -182,10 +202,9 @@ class EntityPickerTest {
         composeTestRule.setContent {
             HAThemeForPreview {
                 EntityPicker(
-                    entities = createTestEntities(),
+                    displayState = EntityDisplayState.Loaded(createTestEntities()),
                     selectedEntityId = "light.living_room",
-                    onEntitySelectedId = {},
-                    onEntityCleared = {},
+                    onSelectionChanged = {},
                 )
             }
         }
@@ -200,10 +219,9 @@ class EntityPickerTest {
         composeTestRule.setContent {
             HAThemeForPreview {
                 EntityPicker(
-                    entities = createTestEntities(),
+                    displayState = EntityDisplayState.Loaded(createTestEntities()),
                     selectedEntityId = "light.living_room",
-                    onEntitySelectedId = {},
-                    onEntityCleared = {},
+                    onSelectionChanged = {},
                 )
             }
         }
@@ -217,10 +235,9 @@ class EntityPickerTest {
         composeTestRule.setContent {
             HAThemeForPreview {
                 EntityPicker(
-                    entities = createTestEntities(),
+                    displayState = EntityDisplayState.Loaded(createTestEntities()),
                     selectedEntityId = "light.bedroom",
-                    onEntitySelectedId = {},
-                    onEntityCleared = {},
+                    onSelectionChanged = {},
                 )
             }
         }
@@ -256,23 +273,101 @@ class EntityPickerTest {
 
     @Test
     fun `Given expanded picker with empty list when rendered then shows no entities message`() {
-        setExpandedEntityPickerContent(entities = emptyList())
+        setExpandedEntityPickerContent(displayState = EntityDisplayState.Loaded(emptyList()))
+
+        advanceTimeAndWaitForIdle()
 
         composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_no_entity_found))
             .assertIsDisplayed()
     }
 
     @Test
+    fun `Given expanded picker with entities when filtering not done yet then shows loading`() {
+        // Dedicated dispatcher with its own scheduler (otherwise it would share the main test
+        // dispatcher's scheduler) so the filtering does not progress until we advance it,
+        // keeping the "filtering in progress" state observable
+        val filterDispatcher = StandardTestDispatcher(TestCoroutineScheduler())
+        setExpandedEntityPickerContent(filterDispatcher = filterDispatcher)
+
+        // Before the filtering coroutines run, the picker must not claim there are no entities
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_no_entity_found))
+            .assertDoesNotExist()
+        composeTestRule.onNodeWithTag(ENTITY_PICKER_LOADING_TEST_TAG).assertIsDisplayed()
+
+        // Let the filtering complete: one round for the searchable fields mapping, one for the
+        // filtering itself, each resuming on the compose main dispatcher via waitForIdle
+        repeat(2) {
+            filterDispatcher.scheduler.advanceUntilIdle()
+            composeTestRule.waitForIdle()
+        }
+
+        composeTestRule.onNodeWithTag(ENTITY_PICKER_LOADING_TEST_TAG).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Bedroom Light").assertIsDisplayed()
+    }
+
+    @Test
+    fun `Given expanded picker still loading when rendered then shows loading indicator instead of empty message`() {
+        setExpandedEntityPickerContent(displayState = EntityDisplayState.Loading)
+
+        composeTestRule.onNodeWithTag(ENTITY_PICKER_LOADING_TEST_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_no_entity_found))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun `Given expanded picker in error when rendered then shows the failure message`() {
+        setExpandedEntityPickerContent(displayState = EntityDisplayState.Error)
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_loading_failed))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_no_entity_found))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun `Given selection in error when rendered then shows the raw entity id in the chip`() {
+        composeTestRule.setContent {
+            TabletSizeContent {
+                HAThemeForPreview {
+                    EntityPicker(
+                        displayState = EntityDisplayState.Error,
+                        selectedEntityId = "light.bed",
+                        onSelectionChanged = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("light.bed").assertIsDisplayed()
+    }
+
+    @Test
+    fun `Given selection while loading when rendered then shows the raw entity id in the chip`() {
+        composeTestRule.setContent {
+            TabletSizeContent {
+                HAThemeForPreview {
+                    EntityPicker(
+                        displayState = EntityDisplayState.Loading,
+                        selectedEntityId = "light.bed",
+                        onSelectionChanged = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("light.bed").assertIsDisplayed()
+    }
+
+    @Test
     fun `Given selected entity when clear button clicked then callback invoked`() {
-        val onEntityCleared: () -> Unit = mockk(relaxed = true)
+        val onSelectionChanged: (String?) -> Unit = mockk(relaxed = true)
 
         composeTestRule.setContent {
             HAThemeForPreview {
                 EntityPicker(
-                    entities = createTestEntities(),
+                    displayState = EntityDisplayState.Loaded(createTestEntities()),
                     selectedEntityId = "light.living_room",
-                    onEntitySelectedId = {},
-                    onEntityCleared = onEntityCleared,
+                    onSelectionChanged = onSelectionChanged,
                 )
             }
         }
@@ -280,14 +375,14 @@ class EntityPickerTest {
         composeTestRule.onNodeWithContentDescription(composeTestRule.stringResource(commonR.string.search_clear_selection))
             .performClick()
 
-        verify(exactly = 1) { onEntityCleared() }
+        verify(exactly = 1) { onSelectionChanged(null) }
     }
 
     @Test
     fun `Given expanded picker when entity selected then callback invoked with entity id`() {
-        val onEntitySelectedId: (String) -> Unit = mockk(relaxed = true)
+        val onSelectionChanged: (String?) -> Unit = mockk(relaxed = true)
 
-        setExpandedEntityPickerContent(onEntitySelectedId = onEntitySelectedId)
+        setExpandedEntityPickerContent(onSelectionChanged = onSelectionChanged)
 
         composeTestRule.waitForIdle()
 
@@ -301,7 +396,7 @@ class EntityPickerTest {
 
         composeTestRule.waitForIdle()
 
-        verify(exactly = 1) { onEntitySelectedId("light.bedroom") }
+        verify(exactly = 1) { onSelectionChanged("light.bedroom") }
     }
 
     @Test
@@ -332,6 +427,74 @@ class EntityPickerTest {
         composeTestRule.onNodeWithText("Ceiling Fan").assertIsDisplayed() // Has "Bedroom" in area
         composeTestRule.onNode(hasText("Living Room Light")).assertDoesNotExist()
         composeTestRule.onNode(hasText("Temperature Sensor")).assertDoesNotExist()
+    }
+
+    @Test
+    fun `Given expanded picker with a hidden entity when rendered then it is not listed`() {
+        setExpandedEntityPickerContent(
+            displayState = EntityDisplayState.Loaded(createTestEntities() + createHiddenTestEntity()),
+        )
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_add_entity))
+            .assertIsDisplayed()
+            .performClick()
+
+        waitForInitialEntityLoad()
+
+        composeTestRule.onNodeWithText("Bedroom Light").assertIsDisplayed()
+        composeTestRule.onNode(hasText("Attic Light")).assertDoesNotExist()
+    }
+
+    @Test
+    fun `Given a search matching a hidden entity when rendered then it is listed`() {
+        setExpandedEntityPickerContent(
+            displayState = EntityDisplayState.Loaded(createTestEntities() + createHiddenTestEntity()),
+        )
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_add_entity))
+            .assertIsDisplayed()
+            .performClick()
+
+        waitForInitialEntityLoad()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.search))
+            .assertIsDisplayed()
+            .performTextInput("attic")
+
+        advanceTimeAndWaitForIdle()
+
+        composeTestRule.onNodeWithText("Attic Light").assertIsDisplayed()
+    }
+
+    @Test
+    fun `Given listed hidden and visible entities when rendered then only the hidden one has the hidden content description`() {
+        setExpandedEntityPickerContent(
+            displayState = EntityDisplayState.Loaded(createTestEntities() + createHiddenTestEntity()),
+        )
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_add_entity))
+            .assertIsDisplayed()
+            .performClick()
+
+        waitForInitialEntityLoad()
+
+        // "light" matches the hidden Attic Light as well as the visible lights
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.search))
+            .assertIsDisplayed()
+            .performTextInput("light")
+
+        advanceTimeAndWaitForIdle()
+
+        composeTestRule.onNodeWithText("Attic Light").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Bedroom Light").assertIsDisplayed()
+        composeTestRule.onAllNodesWithContentDescription(composeTestRule.stringResource(commonR.string.hidden_entity))
+            .assertCountEquals(1)
     }
 
     @Test

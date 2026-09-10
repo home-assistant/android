@@ -4,8 +4,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
-import io.homeassistant.companion.android.common.util.AppVersionProvider
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
+import io.homeassistant.companion.android.common.util.AppVersion
 import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
@@ -21,14 +20,12 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 class ApplicationModuleTest {
-    @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
 
-    @get:Rule(order = 1)
+    @get:Rule
     var hiltRule = HiltAndroidRule(this)
 
     @Inject
-    lateinit var appVersionProvider: AppVersionProvider
+    lateinit var appVersion: AppVersion
 
     @Inject
     @PushWebsocketSupport
@@ -41,10 +38,10 @@ class ApplicationModuleTest {
     }
 
     @Test
-    fun `Given injected appVersionProvider when invoking it returns current version`() {
+    fun `Given injected appVersion when reading it then returns current version`() {
         assertEquals(
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-            appVersionProvider().value,
+            appVersion.toString(),
         )
     }
 

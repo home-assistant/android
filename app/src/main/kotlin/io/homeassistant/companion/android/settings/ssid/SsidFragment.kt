@@ -19,6 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.ssid.views.SsidView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -80,7 +81,7 @@ class SsidFragment : Fragment() {
             return
         }
 
-        val permissionsToCheck = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val permissionsToCheck = if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         } else {
             arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -89,7 +90,7 @@ class SsidFragment : Fragment() {
     }
 
     private fun onRequestLocationPermission() {
-        val permissionsToCheck: Array<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        val permissionsToCheck: Array<String> = if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         } else {
             arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -127,9 +128,9 @@ class SsidFragment : Fragment() {
     }
 
     private fun requestLocationPermission() {
-        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val permissions = if (SdkVersion.isAtLeast(Build.VERSION_CODES.R)) {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION) // Background location will be requested later
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        } else if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         } else {
             arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -140,7 +141,7 @@ class SsidFragment : Fragment() {
     private fun onPermissionsResult(results: Map<String, Boolean>) {
         if (results.keys.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
             results[Manifest.permission.ACCESS_FINE_LOCATION] == true &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+            SdkVersion.isAtLeast(Build.VERSION_CODES.R)
         ) {
             // For Android 11+ we MUST NOT request Background Location permission with fine or coarse
             // permissions as for Android 11 the background location request needs to be done separately

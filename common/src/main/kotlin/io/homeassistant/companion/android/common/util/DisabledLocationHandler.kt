@@ -10,7 +10,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.LocationManager
-import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
 import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
@@ -30,7 +29,7 @@ object DisabledLocationHandler {
     fun isLocationEnabled(context: Context): Boolean {
         val lm: LocationManager = context.getSystemService() ?: return false
 
-        return if (VERSION.SDK_INT >= VERSION_CODES.P) {
+        return if (SdkVersion.isAtLeast(VERSION_CODES.P)) {
             lm.isLocationEnabled
         } else {
             lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ||
@@ -94,7 +93,7 @@ object DisabledLocationHandler {
 
         val parameters = settings.joinToString(separator = "\n") { "- $it" }
 
-        if (VERSION.SDK_INT >= VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(VERSION_CODES.O)) {
             val channel = NotificationChannel(
                 CHANNEL_LOCATION_DISABLED,
                 context.applicationContext.getString(commonR.string.location_warn_channel),

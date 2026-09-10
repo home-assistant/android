@@ -1,28 +1,28 @@
 package io.homeassistant.companion.android.common.data.integration
 
-import android.content.Context
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Bookmark
+import io.github.timoptr.mdiicons.generated.Eye
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityRemoved
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
-import io.mockk.mockk
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
 
-@ExtendWith(ConsoleLogExtension::class)
 class EntityTest {
 
     private val baseDateTime = LocalDateTime.of(2024, 1, 1, 12, 0, 0)
@@ -59,6 +59,40 @@ class EntityTest {
         ) {
             val entity = createEntity(entityId = entityId)
             assertEquals(expectedDomain, entity.domain)
+        }
+    }
+
+    @Nested
+    inner class FriendlyNameProperty {
+        @Test
+        fun `Given friendly_name attribute when accessing friendlyName then returns it`() {
+            val entity = createEntity(attributes = mapOf("friendly_name" to "Living Room Light"))
+            assertEquals("Living Room Light", entity.friendlyName)
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = ["", "   "])
+        fun `Given blank friendly_name attribute when accessing friendlyName then returns entityId`(name: String) {
+            val entity = createEntity(attributes = mapOf("friendly_name" to name))
+            assertEquals("light.living_room", entity.friendlyName)
+        }
+
+        @Test
+        fun `Given no friendly_name attribute when accessing friendlyName then returns entityId`() {
+            val entity = createEntity(attributes = emptyMap())
+            assertEquals("light.living_room", entity.friendlyName)
+        }
+
+        @Test
+        fun `Given null friendly_name attribute when accessing friendlyName then returns entityId`() {
+            val entity = createEntity(attributes = mapOf("friendly_name" to null))
+            assertEquals("light.living_room", entity.friendlyName)
+        }
+
+        @Test
+        fun `Given non-string friendly_name attribute when accessing friendlyName then returns its string value`() {
+            val entity = createEntity(attributes = mapOf("friendly_name" to 42))
+            assertEquals("42", entity.friendlyName)
         }
     }
 
@@ -118,39 +152,36 @@ class EntityTest {
     inner class GetIcon {
         @Test
         fun `Given blank state and non-string state attribute when getting icon then does not throw`() {
-            val context = mockk<Context>()
             val entity = createEntity(
                 entityId = "sensor.test",
                 state = "",
                 attributes = mapOf("state" to 42),
             )
-            assertDoesNotThrow { entity.getIcon(context) }
+            assertDoesNotThrow { entity.getIcon() }
         }
 
         @ParameterizedTest
         @ValueSource(strings = ["mdi:", "mdi:abcdefgh"])
         fun `Given invalid mdi icon attribute when getting icon then returns fallback`(iconAttr: String) {
-            val context = mockk<Context>(relaxed = true)
             val entity = createEntity(
                 entityId = "sensor.test",
                 state = "42",
                 attributes = mapOf("icon" to iconAttr),
             )
-            val icon = entity.getIcon(context)
-            assertEquals(Icon.cmd_bookmark, icon)
+            val icon = entity.getIcon()
+            assertEquals(Mdi.Bookmark, icon)
         }
 
         @ParameterizedTest
         @ValueSource(strings = ["mdicustom:abcdefgh", "hue:bulb-filament"])
         fun `Given custom non-mdi icon attribute when getting icon then returns domain default`(iconAttr: String) {
-            val context = mockk<Context>()
             val entity = createEntity(
                 entityId = "sensor.test",
                 state = "42",
                 attributes = mapOf("icon" to iconAttr),
             )
-            val icon = entity.getIcon(context)
-            assertEquals(Icon.cmd_eye, icon)
+            val icon = entity.getIcon()
+            assertEquals(Mdi.Eye, icon)
         }
     }
 
@@ -222,6 +253,209 @@ class EntityTest {
 
             assertEquals(baseDateTime, result.lastChanged)
             assertEquals(newDateTime, result.lastUpdated)
+        }
+    }
+
+    @Nested
+    inner class SupportsFeature {
+
+        @Test
+        fun `Given a feature in the bitmask when checking support then only its flags are supported`() {
+            val entity = createEntity(attributes = mapOf("supported_features" to 5))
+
+            assertTrue(entity.supportsFeature(1))
+            assertTrue(entity.supportsFeature(4))
+            assertFalse(entity.supportsFeature(2))
+        }
+
+        @Test
+        fun `Given one of the requested features in the bitmask when checking support then it is supported`() {
+            val entity = createEntity(attributes = mapOf("supported_features" to 4))
+
+            assertTrue(entity.supportsFeature(1 or 4))
+        }
+
+        @Test
+        fun `Given a bitmask serialized as another number type when checking support then it is supported`() {
+            assertTrue(createEntity(attributes = mapOf("supported_features" to 4L)).supportsFeature(4))
+            assertTrue(createEntity(attributes = mapOf("supported_features" to 4.0)).supportsFeature(4))
+        }
+
+        @Test
+        fun `Given no or non numeric supported_features when checking support then it is not supported`() {
+            assertFalse(createEntity(attributes = emptyMap()).supportsFeature(1))
+            assertFalse(createEntity(attributes = mapOf("supported_features" to "4")).supportsFeature(4))
+        }
+    }
+
+    @Nested
+    inner class ControlGroups {
+
+        @ParameterizedTest
+        @ValueSource(strings = ["number", "input_number"])
+        fun `Given a number entity when getting number controls then range and step are resolved`(domain: String) {
+            val entity = createEntity(
+                entityId = "$domain.threshold",
+                state = "7.5",
+                attributes = mapOf("min" to 5, "max" to 30, "step" to 0.5),
+            )
+
+            val controls = checkNotNull(entity.getNumberControls())
+            assertEquals(EntityPosition(value = 7.5f, min = 5f, max = 30f), controls.range)
+            assertEquals(0.5f, controls.step)
+        }
+
+        @Test
+        fun `Given not a number entity when getting number controls then they are null`() {
+            assertNull(createEntity(entityId = "sensor.value", state = "7.5").getNumberControls())
+        }
+
+        @Test
+        fun `Given a media player supporting volume when getting media player controls then volume is resolved`() {
+            val entity = createEntity(
+                entityId = "media_player.tv",
+                attributes = mapOf("supported_features" to 4, "volume_level" to 0.5, "volume_step" to 0.05),
+            )
+
+            val controls = checkNotNull(entity.getMediaPlayerControls())
+            assertEquals(50f, controls.volume?.value)
+            assertEquals(0.05f, controls.volumeStep)
+        }
+
+        @Test
+        fun `Given a media player without volume support when getting media player controls then volume is null`() {
+            val entity = createEntity(entityId = "media_player.tv", attributes = mapOf("supported_features" to 0))
+
+            val controls = checkNotNull(entity.getMediaPlayerControls())
+            assertNull(controls.volume)
+        }
+
+        @Test
+        fun `Given not a media player when getting media player controls then they are null`() {
+            assertNull(createEntity().getMediaPlayerControls())
+        }
+
+        @Test
+        fun `Given a cover supporting set position when getting cover controls then position is resolved`() {
+            val entity = createEntity(
+                entityId = "cover.blinds",
+                state = "open",
+                attributes = mapOf("supported_features" to 4, "current_position" to 40),
+            )
+
+            val controls = checkNotNull(entity.getCoverControls())
+            assertEquals(true, controls.supportsSetPosition)
+            assertEquals(40f, controls.position?.value)
+        }
+
+        @Test
+        fun `Given a cover without set position support when getting cover controls then it is not supported`() {
+            val entity = createEntity(
+                entityId = "cover.blinds",
+                state = "open",
+                attributes = mapOf("supported_features" to 0),
+            )
+
+            assertEquals(false, checkNotNull(entity.getCoverControls()).supportsSetPosition)
+        }
+
+        @Test
+        fun `Given a vacuum when getting vacuum controls then turn on support is resolved`() {
+            val supported = createEntity(entityId = "vacuum.roomba", attributes = mapOf("supported_features" to 1))
+            val unsupported = createEntity(entityId = "vacuum.roomba", attributes = mapOf("supported_features" to 2))
+
+            assertEquals(true, checkNotNull(supported.getVacuumControls()).supportsTurnOn)
+            assertEquals(false, checkNotNull(unsupported.getVacuumControls()).supportsTurnOn)
+            assertNull(createEntity().getVacuumControls())
+        }
+
+        @Test
+        fun `Given a camera when getting camera controls then the entity picture is resolved`() {
+            val camera = createEntity(
+                entityId = "camera.door",
+                attributes = mapOf("entity_picture" to "/api/camera_proxy/camera.door"),
+            )
+            val withoutPicture = createEntity(entityId = "camera.door")
+
+            assertEquals("/api/camera_proxy/camera.door", checkNotNull(camera.getCameraControls()).entityPicturePath)
+            assertNull(checkNotNull(withoutPicture.getCameraControls()).entityPicturePath)
+            assertNull(createEntity().getCameraControls())
+        }
+
+        @Test
+        fun `Given a climate entity when getting climate controls then range unit and modes are resolved`() {
+            val entity = createEntity(
+                entityId = "climate.thermostat",
+                state = "heat",
+                attributes = mapOf(
+                    "min_temp" to 7,
+                    "max_temp" to 35,
+                    "temperature_unit" to "°C",
+                    "hvac_modes" to listOf("heat", "off"),
+                    "supported_features" to 1,
+                ),
+            )
+
+            val controls = checkNotNull(entity.getClimateControls())
+            assertEquals(7f, controls.minTemperature)
+            assertEquals(35f, controls.maxTemperature)
+            assertEquals("°C", controls.temperatureUnit)
+            assertEquals(listOf("heat", "off"), controls.hvacModes)
+            assertEquals(true, controls.supportsTargetTemperature)
+        }
+
+        @Test
+        fun `Given a climate entity without target temperature support when getting climate controls then it is not supported`() {
+            val entity = createEntity(
+                entityId = "climate.thermostat",
+                state = "heat",
+                attributes = mapOf("supported_features" to 128),
+            )
+
+            assertEquals(false, checkNotNull(entity.getClimateControls()).supportsTargetTemperature)
+        }
+    }
+
+    @Nested
+    inner class DisplayAttributes {
+
+        @Test
+        fun `Given device_class and entity_picture attributes when accessing them then they are returned`() {
+            val entity = createEntity(
+                entityId = "cover.garage",
+                attributes = mapOf("device_class" to "garage", "entity_picture" to "/api/camera_proxy/camera.door"),
+            )
+
+            assertEquals("garage", entity.deviceClass())
+            assertEquals("/api/camera_proxy/camera.door", entity.entityPicturePath())
+        }
+
+        @Test
+        fun `Given no device_class and a blank entity_picture when accessing them then they are null`() {
+            val entity = createEntity(attributes = mapOf("entity_picture" to " "))
+
+            assertNull(entity.deviceClass())
+            assertNull(entity.entityPicturePath())
+        }
+    }
+
+    @Nested
+    inner class CompressedEntityStateToEntity {
+        @Test
+        fun `Given a compressed entity state without lastUpdated when converting to an entity then lastUpdated falls back to lastChanged`() {
+            val compressed = CompressedEntityState(
+                state = JsonPrimitive("on"),
+                attributes = mapOf("brightness" to 128),
+                lastChanged = newDateTimeEpoch,
+            )
+
+            val entity = compressed.toEntity("light.bed")
+
+            assertEquals("light.bed", entity.entityId)
+            assertEquals("on", entity.state)
+            assertEquals(mapOf<String, Any?>("brightness" to 128), entity.attributes)
+            assertEquals(newDateTime, entity.lastChanged)
+            assertEquals(newDateTime, entity.lastUpdated)
         }
     }
 }

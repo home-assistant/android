@@ -21,6 +21,7 @@ data class UpdateLocationRequest(
     val gps: List<Double>? = null,
     val gpsAccuracy: Int? = null,
     val locationName: String? = null,
+    val inZones: List<String>? = null,
     val speed: Int? = null,
     val altitude: Int? = null,
     val course: Int? = null,
@@ -37,6 +38,7 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
         element("gps", DoubleArraySerializer().descriptor)
         element("gps_accuracy", Int.serializer().descriptor)
         element("location_name", String.serializer().descriptor)
+        element("in_zones", ListSerializer(String.serializer()).descriptor)
         element("speed", Int.serializer().descriptor)
         element("altitude", Int.serializer().descriptor)
         element("course", Int.serializer().descriptor)
@@ -50,10 +52,13 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
                 if (gps != null) encodeSerializableElement(descriptor, 0, ListSerializer(Double.serializer()), gps)
                 if (gpsAccuracy != null) encodeIntElement(descriptor, 1, gpsAccuracy)
                 if (locationName != null) encodeStringElement(descriptor, 2, locationName)
-                if (speed != null) encodeIntElement(descriptor, 3, speed)
-                if (altitude != null) encodeIntElement(descriptor, 4, altitude)
-                if (course != null) encodeIntElement(descriptor, 5, course)
-                if (verticalAccuracy != null) encodeIntElement(descriptor, 6, verticalAccuracy)
+                if (inZones != null) {
+                    encodeSerializableElement(descriptor, 3, ListSerializer(String.serializer()), inZones)
+                }
+                if (speed != null) encodeIntElement(descriptor, 4, speed)
+                if (altitude != null) encodeIntElement(descriptor, 5, altitude)
+                if (course != null) encodeIntElement(descriptor, 6, course)
+                if (verticalAccuracy != null) encodeIntElement(descriptor, 7, verticalAccuracy)
             }
         }
     }
@@ -64,6 +69,7 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
             var gps: List<Double>? = null
             var gpsAccuracy: Int? = null
             var locationName: String? = null
+            var inZones: List<String>? = null
             var speed: Int? = null
             var altitude: Int? = null
             var course: Int? = null
@@ -74,10 +80,11 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
                     0 -> gps = decodeSerializableElement(descriptor, index, ListSerializer(Double.serializer()))
                     1 -> gpsAccuracy = decodeIntElement(descriptor, index)
                     2 -> locationName = decodeStringElement(descriptor, index)
-                    3 -> speed = decodeIntElement(descriptor, index)
-                    4 -> altitude = decodeIntElement(descriptor, index)
-                    5 -> course = decodeIntElement(descriptor, index)
-                    6 -> verticalAccuracy = decodeIntElement(descriptor, index)
+                    3 -> inZones = decodeSerializableElement(descriptor, index, ListSerializer(String.serializer()))
+                    4 -> speed = decodeIntElement(descriptor, index)
+                    5 -> altitude = decodeIntElement(descriptor, index)
+                    6 -> course = decodeIntElement(descriptor, index)
+                    7 -> verticalAccuracy = decodeIntElement(descriptor, index)
                     CompositeDecoder.DECODE_DONE -> break
                 }
             }
@@ -85,6 +92,7 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
                 gps = gps,
                 gpsAccuracy = gpsAccuracy,
                 locationName = locationName,
+                inZones = inZones,
                 speed = speed,
                 altitude = altitude,
                 course = course,

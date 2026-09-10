@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,6 +32,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.datasource.DataSource
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
@@ -46,19 +49,26 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class DemoExoPlayerActivity : AppCompatActivity() {
     @Inject
-    lateinit var dataSourceFactory: DataSource.Factory
+    lateinit var dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
+            val dataSourceFactory by produceState<DataSource.Factory?>(initialValue = null, dataSourceFactoryProvider) {
+                value = dataSourceFactoryProvider()
+            }
             HomeAssistantAppTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    HAMediaPlayer(
-                        "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
-                        dataSourceFactory = dataSourceFactory,
-                        modifier = Modifier.size(width = 428.dp, height = 192.dp).align(Alignment.Center),
-                    )
+                    dataSourceFactory?.let {
+                        HAMediaPlayer(
+                            "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8",
+                            dataSourceFactory = it,
+                            modifier = Modifier
+                                .size(width = 428.dp, height = 192.dp)
+                                .align(Alignment.Center),
+                        )
+                    }
                 }
             }
         }
@@ -98,7 +108,7 @@ private fun HAMediaPlayer(
         player = null
     }
 
-    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+    if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
         // Initialize/release in onStart()/onStop() only because in a multi-window environment multiple
         // apps can be visible at the same time. The apps that are out-of-focus are paused, but video
         // playback should continue.

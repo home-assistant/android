@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.matter
 
-import android.content.Context
-import android.content.IntentSender
+import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import javax.inject.Inject
 
@@ -14,20 +13,19 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
 
     override suspend fun coreSupportsCommissioning(serverId: Int): Boolean = false
 
-    override fun suppressDiscoveryBottomSheet(context: Context) {
+    override fun suppressDiscoveryBottomSheet() {
         // No support, so nothing to suppress
     }
 
-    override fun startNewCommissioningFlow(
-        context: Context,
-        onSuccess: (IntentSender) -> Unit,
-        onFailure: (Exception) -> Unit,
-    ) {
-        onFailure(IllegalStateException("Matter commissioning is not supported with the minimal flavor"))
-    }
+    override suspend fun prepareMatterDeviceCommissioning(): MatterManager.CommissioningResult =
+        MatterManager.CommissioningResult.Error(
+            IllegalStateException("Matter commissioning is not supported with the minimal flavor"),
+        )
 
     override suspend fun commissionDevice(code: String, serverId: Int): MatterCommissionResponse? = null
-
     override suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse? =
         null
+
+    override fun parseCommissioningIntentResult(result: ActivityResult): MatterManager.CommissioningRequestResult =
+        MatterManager.CommissioningRequestResult.Failed
 }

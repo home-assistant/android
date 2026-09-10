@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android.settings.assist
 
 import android.Manifest
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -25,9 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -53,6 +47,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Check
+import io.github.timoptr.mdiicons.generated.Microphone
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -69,6 +67,7 @@ import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.util.openSystemAppSettings
 import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 import kotlinx.coroutines.launch
@@ -95,12 +94,7 @@ private fun rememberRecordAudioPermissionState(
                     duration = SnackbarDuration.Long,
                 )
                 if (result == SnackbarResult.ActionPerformed) {
-                    context.startActivity(
-                        Intent(
-                            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                            Uri.fromParts("package", context.packageName, null),
-                        ),
-                    )
+                    context.openSystemAppSettings()
                 }
             }
         }
@@ -277,7 +271,7 @@ private fun DefaultAssistantCard(isDefault: Boolean, onSetDefault: () -> Unit) {
             ) {
                 if (isDefault) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = Mdi.Check.rememberImageVector(),
                         contentDescription = null,
                         tint = colorScheme.colorOnSuccessNormal,
                         modifier = Modifier.size(24.dp),
@@ -385,7 +379,7 @@ private fun WakeWordTestSection(
                 onClick = if (isTesting) onStopTest else onStartTest,
                 prefix = {
                     Icon(
-                        imageVector = Icons.Default.Mic,
+                        imageVector = Mdi.Microphone.rememberImageVector(),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                     )
@@ -410,7 +404,7 @@ private fun WakeWordTestSection(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = Mdi.Check.rememberImageVector(),
                         contentDescription = null,
                         tint = colorScheme.colorOnSuccessNormal,
                         modifier = Modifier.size(24.dp),

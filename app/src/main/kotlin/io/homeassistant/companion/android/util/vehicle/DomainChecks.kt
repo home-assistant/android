@@ -2,16 +2,22 @@ package io.homeassistant.companion.android.util.vehicle
 
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.supportsAlarmControlPanelArmAway
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.ALARM_CONTROL_PANEL_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.COVER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.DEVICE_TRACKER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.FAN_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 
 val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
-    "alarm_control_panel" to R.string.alarm_control_panels,
+    ALARM_CONTROL_PANEL_DOMAIN to R.string.alarm_control_panels,
     "button" to R.string.buttons,
-    "cover" to R.string.covers,
-    "fan" to R.string.fans,
+    COVER_DOMAIN to R.string.covers,
+    FAN_DOMAIN to R.string.fans,
     "input_boolean" to R.string.input_booleans,
     "input_button" to R.string.input_buttons,
-    "light" to R.string.lights,
+    LIGHT_DOMAIN to R.string.lights,
     "lock" to R.string.locks,
     "scene" to R.string.scenes,
     "script" to R.string.scripts,
@@ -20,14 +26,14 @@ val SUPPORTED_DOMAINS_WITH_STRING = mapOf(
 val SUPPORTED_DOMAINS = SUPPORTED_DOMAINS_WITH_STRING.keys
 
 val MAP_DOMAINS = listOf(
-    "device_tracker",
-    "person",
+    DEVICE_TRACKER_DOMAIN,
+    PERSON_DOMAIN,
     "sensor",
     "zone",
 )
 
 val NOT_ACTIONABLE_DOMAINS = listOf(
-    "alarm_control_panel",
+    ALARM_CONTROL_PANEL_DOMAIN,
     "binary_sensor",
     "sensor",
 )
@@ -46,8 +52,4 @@ fun canNavigate(entity: Entity): Boolean {
         )
 }
 
-fun alarmHasNoCode(entity: Entity): Boolean {
-    return entity.domain == "alarm_control_panel" &&
-        entity.attributes["code_format"] as? String == null &&
-        entity.supportsAlarmControlPanelArmAway()
-}
+fun canNavigate(entity: EntityDisplay): Boolean = entity.domain in MAP_DOMAINS && entity.coordinates != null

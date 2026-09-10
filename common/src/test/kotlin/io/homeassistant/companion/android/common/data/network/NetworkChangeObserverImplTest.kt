@@ -6,7 +6,6 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import app.cash.turbine.test
 import app.cash.turbine.turbineScope
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import io.mockk.CapturingSlot
 import io.mockk.Runs
 import io.mockk.every
@@ -21,10 +20,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@ExtendWith(ConsoleLogExtension::class)
 class NetworkChangeObserverImplTest {
 
     private val connectivityManager: ConnectivityManager = mockk()

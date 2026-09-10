@@ -57,7 +57,7 @@ class SingleSlotQueue<T : Any>(private val _state: MutableStateFlow<T?> = Mutabl
      *
      * Typical usage:
      * ```
-     * suspend fun showJsConfirm(message: String): Boolean = queue.awaitResult { onResult ->
+     * suspend fun showConfirm(message: String): Boolean = queue.awaitResult { onResult ->
      *     FrontendDialog.Confirm(
      *         message = message,
      *         onConfirm = { onResult(true) },

@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.onboarding.connection.ConnectionErrorScreen
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.mockk.Runs
@@ -38,13 +37,11 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 class FrontendConnectionErrorScreenTest {
-    @get:Rule(order = 0)
-    var consoleLog = ConsoleLogRule()
 
-    @get:Rule(order = 1)
+    @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
-    @get:Rule(order = 2)
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
@@ -68,7 +65,7 @@ class FrontendConnectionErrorScreenTest {
             var urlClicked: String? = null
             setContent {
                 FrontendConnectionErrorScreen(
-                    error = FrontendConnectionError.UnknownError(R.string.tls_cert_expired_message, "details", "errorType"),
+                    error = FrontendConnectionError.Unknown("details", "errorType"),
                     url = null,
                     onOpenExternalLink = {
                         urlClicked = it.toString()
@@ -78,7 +75,7 @@ class FrontendConnectionErrorScreenTest {
             }
 
             onNodeWithText(stringResource(R.string.error_connection_failed)).assertIsDisplayed()
-            onNodeWithText(stringResource(R.string.tls_cert_expired_message)).assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.connection_error_unknown_error)).assertIsDisplayed()
             onNodeWithTag(URL_INFO_TAG).assertIsNotDisplayed()
 
             val description = onNodeWithText(stringResource(R.string.connection_error_more_details_description))
@@ -124,7 +121,7 @@ class FrontendConnectionErrorScreenTest {
         composeTestRule.apply {
             setContent {
                 FrontendConnectionErrorScreen(
-                    error = FrontendConnectionError.UnknownError(R.string.tls_cert_expired_message, "details", "errorType"),
+                    error = FrontendConnectionError.Unknown("details", "errorType"),
                     url = BLANK_URL,
                     onOpenExternalLink = {},
                     connectivityCheckState = ConnectivityCheckState(),
@@ -146,7 +143,7 @@ class FrontendConnectionErrorScreenTest {
             val url = "http://ha.org"
             setContent {
                 FrontendConnectionErrorScreen(
-                    error = FrontendConnectionError.AuthenticationError(R.string.tls_cert_expired_message, "details", "errorType"),
+                    error = FrontendConnectionError.AuthRevoked(R.string.tls_cert_expired_message, "details", "errorType"),
                     url = url,
                     onOpenExternalLink = {},
                     connectivityCheckState = ConnectivityCheckState(),
@@ -163,7 +160,7 @@ class FrontendConnectionErrorScreenTest {
     @Test
     fun `Given FrontendConnectionErrorScreen with viewmodel when retry is clicked then connectivity check is retried`() {
         val viewModel = mockk<ConnectionViewModel>()
-        val error = FrontendConnectionError.UnreachableError(
+        val error = FrontendConnectionError.Unreachable(
             R.string.tls_cert_expired_message,
             "details",
             "errorType",
@@ -214,6 +211,41 @@ class FrontendConnectionErrorScreenTest {
 
             runOnIdle {
                 verify(exactly = 1) { viewModel.runConnectivityChecks() }
+            }
+        }
+    }
+
+    @Test
+    fun `Given TlsCertNotFound when actions rendered then shows recovery actions and dispatches intent`() {
+        composeTestRule.apply {
+            var dispatched: ErrorActionIntent? = null
+            val error = FrontendConnectionError.TlsCertNotFound(
+                "details",
+                "errorType",
+            )
+            setContent {
+                FrontendConnectionErrorScreen(
+                    error = error,
+                    url = "http://ha.org",
+                    onOpenExternalLink = {},
+                    connectivityCheckState = ConnectivityCheckState(),
+                    actions = {
+                        ErrorActions(
+                            actions = errorActions(error, isInternalConnection = true),
+                            onAction = { dispatched = it },
+                        )
+                    },
+                )
+            }
+
+            onNodeWithText(stringResource(R.string.open_settings)).performScrollTo().assertIsDisplayed()
+            onNodeWithText(stringResource(R.string.error_action_remove_server))
+                .performScrollTo()
+                .assertIsDisplayed()
+                .performClick()
+
+            runOnIdle {
+                assertEquals(ErrorActionIntent.RemoveServerAndRelaunch, dispatched)
             }
         }
     }

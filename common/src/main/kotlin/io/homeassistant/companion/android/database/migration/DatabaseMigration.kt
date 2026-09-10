@@ -860,3 +860,14 @@ private class Migration40to41(private val context: Context) : Migration(40, 41) 
         }
     }
 }
+
+/**
+ * The cached name of a favorite is the display name of the entity, resolved from the entity
+ * registry, not its `friendly_name` state attribute anymore.
+ */
+@RenameColumn(
+    tableName = "favorite_cache",
+    fromColumnName = "friendly_name",
+    toColumnName = "name",
+)
+internal class Migration52to53 : AutoMigrationSpec

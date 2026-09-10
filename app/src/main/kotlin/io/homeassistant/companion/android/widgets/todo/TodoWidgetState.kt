@@ -9,9 +9,9 @@ import androidx.core.graphics.toColorInt
 import androidx.glance.GlanceTheme
 import androidx.glance.color.ColorProviders
 import androidx.glance.material.ColorProviders
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.COMPLETED_STATUS
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
@@ -33,7 +33,7 @@ internal data class TodoItemState(val uid: String?, val name: String, val done: 
 
 internal sealed interface TodoState {
     val backgroundType: WidgetBackgroundType
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        get() = if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
             WidgetBackgroundType.DYNAMICCOLOR
         } else {
             WidgetBackgroundType.DAYNIGHT
@@ -90,15 +90,15 @@ internal data class TodoStateWithData(
          */
         fun from(
             todoEntity: TodoWidgetEntity,
-            entity: Entity,
+            displayEntity: EntityDisplay,
             todos: List<TodoWidgetEntity.TodoItem>,
         ): TodoStateWithData {
             return TodoStateWithData(
                 backgroundType = todoEntity.backgroundType,
                 textColor = todoEntity.textColor,
                 serverId = todoEntity.serverId,
-                listEntityId = entity.entityId,
-                listName = entity.friendlyName,
+                listEntityId = displayEntity.entityId,
+                listName = displayEntity.name,
                 todoItems = todos.map(TodoItemState::from),
                 outOfSync = false,
                 showComplete = todoEntity.showCompleted,

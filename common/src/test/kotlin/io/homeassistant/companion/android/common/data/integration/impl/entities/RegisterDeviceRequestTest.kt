@@ -3,12 +3,9 @@ package io.homeassistant.companion.android.common.data.integration.impl.entities
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
-import io.homeassistant.companion.android.testing.unit.ConsoleLogExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
 
-@ExtendWith(ConsoleLogExtension::class)
 class RegisterDeviceRequestTest {
 
     @Test
@@ -19,7 +16,7 @@ class RegisterDeviceRequestTest {
                 RegisterDeviceRequest(
                     appId = "1",
                     appName = "2",
-                    appVersion = AppVersion.from("3", 3),
+                    appVersion = AppVersion("3", 3),
                     deviceName = "4",
                     manufacturer = "5",
                     model = "6",
@@ -45,7 +42,7 @@ class RegisterDeviceRequestTest {
             RegisterDeviceRequest(
                 appId = "1",
                 appName = "2",
-                appVersion = AppVersion.from("3", 3),
+                appVersion = AppVersion("3", 3),
                 deviceName = "4",
                 manufacturer = "5",
                 model = "6",

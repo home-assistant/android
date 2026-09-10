@@ -13,24 +13,25 @@ import android.os.PowerManager
 import android.telephony.TelephonyManager
 import android.webkit.WebView
 import androidx.core.content.ContextCompat
+import androidx.webkit.WebViewCompat
 import coil3.ImageLoader
-import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
-import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.HAStrictMode
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
+import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
 import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.QuestUtil
@@ -53,9 +54,7 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 
 @HiltAndroidApp
-open class HomeAssistantApplication :
-    Application(),
-    SingletonImageLoader.Factory {
+open class HomeAssistantApplication : Application() {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
@@ -63,11 +62,7 @@ open class HomeAssistantApplication :
     lateinit var prefsRepository: PrefsRepository
 
     @Inject
-    @NamedKeyChain
-    lateinit var keyChainRepository: KeyChainRepository
-
-    @Inject
-    lateinit var okHttpClient: OkHttpClient
+    lateinit var okHttpClientProvider: SuspendProvider<OkHttpClient>
 
     @Inject
     lateinit var languagesManager: LanguagesManager
@@ -76,17 +71,20 @@ open class HomeAssistantApplication :
     lateinit var nightModeManager: NightModeManager
 
     @Inject
-    lateinit var sensorDao: SensorDao
+    lateinit var sensorRepository: SensorRepository
 
     @Inject
     lateinit var settingsDao: SettingsDao
+
+    @Inject
+    internal lateinit var shortcutManager: HaShortcutManager
 
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
         super.onCreate()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.S) &&
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
@@ -96,7 +94,7 @@ open class HomeAssistantApplication :
             )
         }
 
-        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK ${Build.VERSION.SDK_INT}")
+        Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $SdkVersion")
 
         registerActivityLifecycleCallbacks(LifecycleHandler)
 
@@ -106,15 +104,25 @@ open class HomeAssistantApplication :
                 prefsRepository.isCrashReporting(),
             )
             initCrashSaving(applicationContext)
+            val okHttpClient = okHttpClientProvider()
 
-            val webViewDebug = BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled()
-            withContext(Dispatchers.Main) {
-                // Release builds require calling this on the main thread
-                WebView.setWebContentsDebuggingEnabled(webViewDebug)
+            SingletonImageLoader.setSafe {
+                ImageLoader.Builder(this@HomeAssistantApplication)
+                    .components {
+                        add(
+                            OkHttpNetworkFetcherFactory(
+                                callFactory = okHttpClient,
+                            ),
+                        )
+                    }
+                    .build()
             }
+
+            configureWebViewDebugging(enabled = BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled())
 
             languagesManager.applyCurrentLang()
             nightModeManager.applyCurrentNightMode()
+            shortcutManager.migrateLegacyShortcuts()
         }
 
         configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)
@@ -132,10 +140,6 @@ open class HomeAssistantApplication :
             },
             ContextCompat.RECEIVER_EXPORTED,
         )
-
-        ioScope.launch {
-            keyChainRepository.load(applicationContext)
-        }
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
@@ -239,7 +243,7 @@ open class HomeAssistantApplication :
         )
 
         // Listen for microphone mute changes
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -249,7 +253,7 @@ open class HomeAssistantApplication :
         }
 
         // Listen for speakerphone state changes
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -283,7 +287,7 @@ open class HomeAssistantApplication :
 
         // Register for all saved user intents
         ioScope.launch {
-            val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
+            val allSettings = sensorRepository.getSettings(LastUpdateManager.lastUpdate.id)
             for (setting in allSettings) {
                 if (setting.value != "" && setting.value != "SensorWorker") {
                     val settingSplit = setting.value.split(',')
@@ -304,7 +308,7 @@ open class HomeAssistantApplication :
         }
 
         // Register for changes to the managed profile availability
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
             ContextCompat.registerReceiver(
                 this,
                 sensorReceiver,
@@ -372,13 +376,19 @@ open class HomeAssistantApplication :
         }
     }
 
-    override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
-        .components {
-            add(
-                OkHttpNetworkFetcherFactory(
-                    callFactory = okHttpClient,
-                ),
+    /**
+     * Enables WebView contents debugging and logs the current WebView package.
+     *
+     * Runs on the main thread because [WebView.setWebContentsDebuggingEnabled] requires it in
+     * release builds.
+     */
+    private suspend fun configureWebViewDebugging(enabled: Boolean) = withContext(Dispatchers.Main) {
+        WebView.setWebContentsDebuggingEnabled(enabled)
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+            val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this@HomeAssistantApplication)
+            Timber.d(
+                "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}",
             )
         }
-        .build()
+    }
 }

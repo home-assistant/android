@@ -9,12 +9,14 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.isSetup
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
-import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.settings.qs.tileSlots
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,7 +36,7 @@ class TilePreferenceActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
 
         var tileId = "-1"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             intent.extras?.let { extras ->
                 BundleCompat.getParcelable(
                     extras,
@@ -43,8 +45,7 @@ class TilePreferenceActivity : BaseActivity() {
                 )?.let { component ->
                     try {
                         val tileClass = Class.forName(component.className)
-                        val tileMap = ManageTilesViewModel.idToTileService
-                        tileMap.filter { it.value == tileClass }.entries.firstOrNull()?.key?.let {
+                        tileSlots.firstOrNull { it.serviceClass == tileClass }?.id?.value?.let {
                             Timber.d("Tile ID for long press action: $it")
                             tileId = it
                         }
@@ -61,9 +62,8 @@ class TilePreferenceActivity : BaseActivity() {
             val intent = if (!serverManager.isRegistered()) {
                 Intent(this@TilePreferenceActivity, LaunchActivity::class.java)
             } else if (tileData?.isSetup == true) {
-                WebViewActivity.newInstance(
-                    this@TilePreferenceActivity,
-                    path = "entityId:${tileData.entityId}",
+                this@TilePreferenceActivity.intentLaunchWithNavigateTo(
+                    target = FrontendTarget.EntityMoreInfo(tileData.entityId),
                     serverId = tileData.serverId,
                 )
             } else {

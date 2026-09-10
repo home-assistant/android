@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConf
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListener
 import io.homeassistant.companion.android.assist.wakeword.WakeWordListenerFactory
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
-import io.homeassistant.companion.android.testing.unit.ConsoleLogRule
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.util.microWakeWordModelConfigs
 import io.mockk.coEvery
@@ -47,10 +46,7 @@ import org.robolectric.shadows.ShadowVoiceInteractionService
 @Config(application = HiltTestApplication::class)
 class AssistVoiceInteractionServiceTest {
 
-    @get:Rule(order = 0)
-    val consoleLogRule = ConsoleLogRule()
-
-    @get:Rule(order = 1)
+    @get:Rule
     val mainDispatcherRule = MainDispatcherJUnit4Rule()
 
     private val assistConfigManager: AssistConfigManager = mockk(relaxed = true)
@@ -329,6 +325,62 @@ class AssistVoiceInteractionServiceTest {
     fun `Given service not ready when onShutdown then do not crash`() = runTest {
         // Reproduces https://github.com/home-assistant/android/pull/6628: onShutdown called before onReady should not throw
         // IllegalArgumentException for unregistering a receiver that was never registered
+        service.onShutdown()
+    }
+
+    @Test
+    fun `Given service shut down when onReady delivered again then do not register receiver`() = runTest {
+        service.onReady()
+        advanceUntilIdle()
+        service.onShutdown()
+        advanceUntilIdle()
+
+        service.onReady()
+        advanceUntilIdle()
+
+        assertTrue(ACTION_START_LISTENING !in getRegisteredReceiverActions())
+    }
+
+    @Test
+    fun `Given service shut down when onReady delivered and wake word enabled then do not start listening`() = runTest {
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+
+        service.onShutdown()
+        advanceUntilIdle()
+
+        service.onReady()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
+    }
+
+    @Test
+    fun `Given service destroyed when onReady delivered again then do not register receiver`() = runTest {
+        service.onDestroy()
+
+        service.onReady()
+        advanceUntilIdle()
+
+        assertTrue(ACTION_START_LISTENING !in getRegisteredReceiverActions())
+    }
+
+    @Test
+    fun `Given receiver already unregistered when onShutdown then do not crash`() = runTest {
+        service.onReady()
+        advanceUntilIdle()
+
+        // Simulate the framework removing the registration out from under the service
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val receiver = Shadows.shadowOf(application).registeredReceivers
+            .first { wrapper ->
+                (0 until wrapper.intentFilter.countActions())
+                    .any { wrapper.intentFilter.getAction(it) == ACTION_START_LISTENING }
+            }
+            .broadcastReceiver
+        application.unregisterReceiver(receiver)
+
+        // Should not throw
         service.onShutdown()
     }
 

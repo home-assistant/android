@@ -15,7 +15,6 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import dagger.Lazy
 import java.io.File
 import java.util.concurrent.Executors
 import kotlin.time.Duration.Companion.seconds
@@ -126,7 +125,7 @@ private fun createDataSourceFactory(
 private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
     // https://developer.android.com/reference/android/net/http/HttpEngine
     // Added in API level 34 also in S Extensions 7
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+    return if (SdkVersion.isAtLeast(Build.VERSION_CODES.R) &&
         SdkExtensions.getExtensionVersion(Build.VERSION_CODES.S) >= 7
     ) {
         // Use Platform embedded Cronet via android.net.http.HttpEngine
@@ -171,15 +170,15 @@ private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
  * then we use the OkHttp datasource.
  *
  * @param context application context for initializing HttpEngine/Cronet
- * @param okHttpClientProvider lazily provides the shared [OkHttpClient] configured with mTLS
+ * @param okHttpClient the shared [OkHttpClient] configured with mTLS
  * @param usesMtls called on every [createDataSource] to check if mTLS is currently used
  */
 internal class MtlsAwareDataSourceFactory(
     context: Context,
-    okHttpClientProvider: Lazy<OkHttpClient>,
+    okHttpClient: OkHttpClient,
     private val usesMtls: () -> Boolean,
 ) : DataSource.Factory {
-    private val okHttpDelegate by lazy { OkHttpDataSource.Factory(okHttpClientProvider.get()) }
+    private val okHttpDelegate by lazy { OkHttpDataSource.Factory(okHttpClient) }
     private val defaultDelegate by lazy { createDataSourceFactory(context) { okHttpDelegate } }
 
     @OptIn(UnstableApi::class)

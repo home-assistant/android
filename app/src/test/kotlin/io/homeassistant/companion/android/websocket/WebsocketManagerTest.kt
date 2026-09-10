@@ -10,6 +10,8 @@ import androidx.work.testing.TestListenableWorkerBuilder
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.Setting
@@ -18,16 +20,23 @@ import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
 import io.mockk.spyk
+import io.mockk.unmockkAll
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -53,10 +62,14 @@ class WebsocketManagerTest {
             // Test does not cover websocket monitoring right now, failsafe to end quickly if it tries
             coEvery { webSocketRepository(any()) } throws IllegalStateException("Test should not interact with WS")
         }
+        val checkLocalNetworkPermission = mockk<CheckLocalNetworkPermissionUseCase>().also {
+            coEvery { it() } returns true
+        }
 
         override fun serverManager(): ServerManager = serverManager
         override fun messagingManager(): MessagingManager = messagingManager
         override fun settingsDao(): SettingsDao = dao
+        override fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase = checkLocalNetworkPermission
     }
 
     private fun mockSetting(setting: WebsocketSetting) {
@@ -74,6 +87,11 @@ class WebsocketManagerTest {
             EntryPointAccessors.fromApplication(any(), WebsocketManager.WebsocketManagerEntryPoint::class.java)
         } returns
             entryPoint
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
@@ -207,5 +225,37 @@ class WebsocketManagerTest {
         // Has not run other settings' checks
         verify(exactly = 0) { context.getSystemService(PowerManager::class.java) }
         coVerify(exactly = 0) { entryPoint.serverManager.connectionStateProvider(any()) }
+    }
+
+    @Test
+    fun `Given a collector that stopped when listening for notifications then it is restarted on the next interval`() = runTest {
+        mockSetting(WebsocketSetting.ALWAYS)
+        every { context.hasActiveConnection() } returns true
+        coEvery { entryPoint.serverManager.isRegistered() } returns true
+
+        mockkConstructor(NotificationCompat.Builder::class)
+        every { anyConstructed<NotificationCompat.Builder>().build() } returns mockk<Notification>()
+
+        val repository = mockk<WebSocketRepository>(relaxed = true)
+        coEvery { entryPoint.serverManager.webSocketRepository(any()) } returns repository
+        // The first collection completes immediately (the initial subscribe failed, e.g. the
+        // server was still starting), the second stays live
+        coEvery { repository.getNotifications() } returnsMany
+            listOf(null, MutableSharedFlow<Map<String, Any>>())
+
+        val worker = spyk(TestListenableWorkerBuilder<WebsocketManager>(context).build())
+        coJustRun { worker.setForeground(any()) }
+        worker.dispatcher = StandardTestDispatcher(testScheduler)
+
+        val work = launch { worker.doWork() }
+        testScheduler.runCurrent()
+        coVerify(exactly = 1) { repository.getNotifications() }
+
+        // The next supervision interval restarts the stopped collector
+        testScheduler.advanceTimeBy(31_000)
+        testScheduler.runCurrent()
+        coVerify(exactly = 2) { repository.getNotifications() }
+
+        work.cancelAndJoin()
     }
 }
