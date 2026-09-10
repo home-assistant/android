@@ -2,12 +2,13 @@ package io.homeassistant.companion.android.compose.composable
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.android.tools.screenshot.PreviewTest
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.composable.HAInputChip
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -23,14 +24,14 @@ class HAInputChipScreenshotTest {
                 HAInputChip(
                     text = "unselected",
                     onClick = {},
-                    trailingIcon = Icons.Default.Add,
+                    trailingIcon = Mdi.Plus.rememberImageVector(),
                     trailingIconContentDescription = null,
                 )
                 HAInputChip(
                     text = "selected with a quite significant long name",
                     onClick = {},
                     selected = true,
-                    trailingIcon = Icons.Default.Close,
+                    trailingIcon = Mdi.Close.rememberImageVector(),
                     trailingIconContentDescription = null,
                 )
                 HAInputChip(text = "without icon", onClick = {})
@@ -38,7 +39,7 @@ class HAInputChipScreenshotTest {
                     text = "disabled",
                     onClick = {},
                     enabled = false,
-                    trailingIcon = Icons.Default.Add,
+                    trailingIcon = Mdi.Plus.rememberImageVector(),
                     trailingIconContentDescription = null,
                 )
             }

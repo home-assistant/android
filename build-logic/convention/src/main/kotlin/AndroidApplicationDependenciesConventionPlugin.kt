@@ -77,8 +77,6 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.compose.animation)
                     "implementation"(libs.compose.material)
-                    "implementation"(libs.compose.material.icons.core)
-                    "implementation"(libs.compose.material.icons.extended)
                     "implementation"(libs.compose.runtime)
                     "implementation"(libs.activity.compose)
                     "implementation"(libs.navigation.compose)
