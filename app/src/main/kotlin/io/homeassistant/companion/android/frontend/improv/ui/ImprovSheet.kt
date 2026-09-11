@@ -47,7 +47,6 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.data.network.isUnavailableSsid
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 
 /**
@@ -150,7 +149,7 @@ private fun ColumnScope.ConfiguringDeviceSection(
  * values when the app lacks the location permission.
  */
 private fun String?.takeIfDisplayable(): String? = takeIf {
-    !it.isNullOrBlank() && !isUnavailableSsid(it)
+    !it.isNullOrBlank()
 }
 
 @Composable

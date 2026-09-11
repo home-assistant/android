@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.ssid.views
 
-import android.net.wifi.WifiManager
-import android.os.Build
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -10,9 +8,6 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.util.SdkVersion
-import org.junit.After
-import org.junit.Assert.assertNotSame
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,22 +24,9 @@ class SsidViewTest {
     @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
-    @After
-    fun tearDown() {
-        SdkVersion.resetSdkInt()
-    }
-
     @Test
-    fun `Given real network named unknown SSID when showing networks then suggestion is shown`() {
-        val unknownSsid = String(WifiManager.UNKNOWN_SSID.toCharArray())
-        assertNotSame(WifiManager.UNKNOWN_SSID, unknownSsid)
-
-        assertSsidSuggestion(unknownSsid, expected = true)
-    }
-
-    @Test
-    fun `Given unknown SSID constant when showing networks then suggestion is hidden`() {
-        assertSsidSuggestion(WifiManager.UNKNOWN_SSID, expected = false)
+    fun `Given unconfigured SSID when showing networks then suggestion is shown`() {
+        assertSsidSuggestion("Home", expected = true)
     }
 
     @Test
@@ -57,7 +39,6 @@ class SsidViewTest {
         expected: Boolean,
         wifiSsids: List<String> = emptyList(),
     ) {
-        SdkVersion.sdkInt = Build.VERSION_CODES.R
         composeTestRule.setContent {
             HAThemeForPreview {
                 SsidView(

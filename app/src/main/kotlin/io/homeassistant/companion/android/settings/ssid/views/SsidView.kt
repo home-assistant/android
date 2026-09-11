@@ -58,7 +58,6 @@ import io.github.timoptr.mdiicons.generated.WifiCheck
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.network.WifiHelper
-import io.homeassistant.companion.android.common.data.network.isUnavailableSsid
 import io.homeassistant.companion.android.util.compose.HaAlertInfo
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.plus
@@ -115,9 +114,7 @@ fun SsidView(
             }
         }
 
-        val suggestedSsid = activeSsid
-            ?.takeIf { it.isNotBlank() && it !in wifiSsids }
-            ?.takeUnless(::isUnavailableSsid)
+        val suggestedSsid = activeSsid?.takeIf { it.isNotBlank() && it !in wifiSsids }
         if (suggestedSsid != null) {
             item("ssid.suggestion") {
                 Chip(

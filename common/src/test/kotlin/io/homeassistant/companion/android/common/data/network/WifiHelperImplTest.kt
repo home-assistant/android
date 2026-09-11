@@ -6,12 +6,15 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 private const val ANDROID_11_SDK = 30
+private const val ANDROID_10_SDK = 29
 
 class WifiHelperImplTest {
     private val wifiInfo = mockk<WifiInfo>()
@@ -34,6 +37,7 @@ class WifiHelperImplTest {
     fun `Given unknown SSID when checking networks then it does not match`() {
         every { wifiInfo.ssid } returns WifiManager.UNKNOWN_SSID
 
+        assertNull(helper.getWifiSsid())
         assertFalse(helper.isUsingSpecificWifi(listOf(WifiManager.UNKNOWN_SSID)))
     }
 
@@ -41,7 +45,16 @@ class WifiHelperImplTest {
     fun `Given real network named unknown SSID when checking networks then it matches`() {
         every { wifiInfo.ssid } returns "\"${WifiManager.UNKNOWN_SSID}\""
 
+        assertEquals(WifiManager.UNKNOWN_SSID, helper.getWifiSsid())
         assertTrue(helper.isUsingSpecificWifi(listOf(WifiManager.UNKNOWN_SSID)))
+    }
+
+    @Test
+    fun `Given unknown SSID before Android 11 when reading SSID then it is preserved`() {
+        SdkVersion.sdkInt = ANDROID_10_SDK
+        every { wifiInfo.ssid } returns WifiManager.UNKNOWN_SSID
+
+        assertEquals(WifiManager.UNKNOWN_SSID, helper.getWifiSsid())
     }
 
     @Test
