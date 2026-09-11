@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +37,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
@@ -49,7 +52,10 @@ import io.homeassistant.companion.android.common.compose.composable.rememberHAMo
 import io.homeassistant.companion.android.common.compose.composable.rememberSearchFieldState
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import kotlinx.coroutines.Dispatchers
@@ -131,8 +137,8 @@ internal fun SensorDetailSettingSheet(
                 }
             },
             modifier = Modifier
-                .height(screenHeight)
-                .padding(horizontal = HADimens.SPACE5)
+                .heightIn(max = screenHeight)
+                .padding(horizontal = HADimens.SPACE4)
                 .consumeSheetScrollFling(),
         )
     }
@@ -165,7 +171,7 @@ private fun SensorDetailSettingSheetContent(
             entries = entries,
             isSelected = isSelected,
             onToggle = onToggle,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f, fill = false),
         )
         SheetFooter(
             saveEnabled = !isLoading,
@@ -204,18 +210,22 @@ private fun SheetEntryList(
     onToggle: (id: String, isChecked: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // The list only takes the height it needs, so the placeholders reserve a minimum area to be
+    // centered in instead of hugging the header.
+    val placeholderModifier = modifier.fillMaxWidth().heightIn(min = HADimens.SPACE20 * 2)
     when {
         isLoading -> {
             Box(
-                modifier = modifier.fillMaxWidth(),
+                modifier = placeholderModifier,
                 contentAlignment = Alignment.Center,
             ) {
                 HALoading()
             }
         }
+
         entries.isEmpty() -> {
             Box(
-                modifier = modifier.fillMaxWidth(),
+                modifier = placeholderModifier,
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -226,10 +236,11 @@ private fun SheetEntryList(
                 )
             }
         }
+
         else -> {
             LazyColumn(modifier = modifier.fillMaxWidth()) {
                 items(entries, key = { it.id }) { entry ->
-                    BottomSheetSettingRow(
+                    SettingRow(
                         entry = entry,
                         checked = isSelected(entry.id),
                         onCheckedChange = { isChecked -> onToggle(entry.id, isChecked) },
@@ -248,7 +259,7 @@ private fun SheetFooter(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().padding(bottom = HADimens.SPACE4),
         horizontalArrangement = Arrangement.End,
     ) {
         HAPlainButton(
@@ -282,7 +293,7 @@ private fun filterSettingEntries(entries: List<SettingEntry>, query: String): Li
 internal fun settingEntryCheckboxTag(id: String) = "setting_entry_checkbox_$id"
 
 @Composable
-private fun BottomSheetSettingRow(
+private fun SettingRow(
     entry: SettingEntry,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
@@ -331,5 +342,70 @@ private fun BottomSheetSettingRow(
                 )
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun SensorDetailSettingsSheetPreview() {
+    val entries = listOf(
+        SettingEntry("com.google.android.apps.maps", "Maps\n(com.google.android.apps.maps)"),
+        SettingEntry("com.spotify.music", "Spotify\n(com.spotify.music)"),
+        SettingEntry("com.netflix.mediaclient", "Netflix\n(com.netflix.mediaclient)"),
+        SettingEntry("com.whatsapp", "WhatsApp\n(com.whatsapp)"),
+    )
+    PreviewSheet(
+        entries = entries,
+        entriesSelected = listOf("com.spotify.music", "com.netflix.mediaclient"),
+    )
+}
+
+@Preview
+@Composable
+private fun SensorDetailSettingsSheetLoadingPreview() {
+    PreviewSheet(entries = emptyList(), isLoading = true)
+}
+
+@Preview
+@Composable
+private fun SensorDetailSettingsSheetNoResultPreview() {
+    PreviewSheet(entries = emptyList())
+}
+
+/**
+ * Renders the sheet with a [SheetState] already settled at [SheetValue.Expanded], since the default
+ * state starts hidden and a static frame would show nothing.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PreviewSheet(
+    entries: List<SettingEntry>,
+    entriesSelected: List<String> = emptyList(),
+    isLoading: Boolean = false,
+) {
+    HAThemeForPreview(modifier = Modifier.fillMaxSize()) {
+        SensorDetailSettingSheet(
+            title = "Monitored apps",
+            state = SensorDetailViewModel.Companion.SettingDialogState(
+                setting = SensorSetting(
+                    sensorId = "last_notification",
+                    name = "allow_list",
+                    value = entriesSelected.joinToString(),
+                    valueType = SensorSettingType.LIST_APPS,
+                ),
+                isLoading = isLoading,
+                entries = entries,
+                entriesSelected = entriesSelected,
+            ),
+            onDismiss = {},
+            onSave = {},
+            bottomSheetState = SheetState(
+                skipPartiallyExpanded = true,
+                // Thresholds only affect drag gestures, which never happen in previews.
+                positionalThreshold = { 0f },
+                velocityThreshold = { 0f },
+                initialValue = SheetValue.Expanded,
+            ),
+        )
     }
 }
