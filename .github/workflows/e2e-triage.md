@@ -102,7 +102,7 @@ Stop investigating as soon as one source explains the failure, and write the rep
 - The job is killed after 20 minutes, startup included, and a killed run reports nothing. Run `date` first, and post the report before 17 minutes have passed, saying what you did not get to.
 - The shell accepts only `ls`, `cat`, `head`, `tail`, `grep`, `wc`, `find`, `jq`, `file`, `date`, `echo`, `printf`, `pwd`, `sort`, `uniq`, and `yq`. Anything else, including `cd`, `python3`, `curl`, `cp`, and `touch`, is denied, and a denied command stays denied when rephrased. Use `jq` and `grep` with absolute paths instead, and call `missing_tool` if something is truly impossible.
 - The workspace and the artifacts are read-only. Write only under `/tmp/gh-aw/`.
-- Use the GitHub tools only for what the skill asks for: the failed job's console output, and the commit range for step 2.4 when you reach it.
+- The `gh` CLI is not in the shell. GitHub is reached through two tools: `github`, read-only, for the `e2e-failure` issue search below, the failed job's console output, and the commit range for step 2.4 when you reach it; and `safeoutputs`, whose `create_issue` and `add_comment` calls publish your report. The last green run is already in `e2e-artifacts-last-green/`, so nothing needs downloading.
 
 ## What to report
 

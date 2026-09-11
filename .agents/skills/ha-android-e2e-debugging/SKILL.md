@@ -30,11 +30,11 @@ gh run download <run-id> --name e2e-artifacts --dir e2e-artifacts
 Find the failed command and its shard in one pass:
 
 ```bash
-jq -c '.[] | select(.metadata.status == "FAILED") | {shard: input_filename, command, error: .metadata.error.message}' \
+jq -c 'to_entries[] | select(.value.metadata.status == "FAILED") | {shard: input_filename, step: (.key + 1), command: .value.command, error: .value.metadata.error.message}' \
   e2e-artifacts/maestro-results/*/onboarding-shard-*/commands.json
 ```
 
-Then open that shard's `screenshots/step-<index>-*.png` and `screen-hierarchy/step-<index>-*.json`. An element visible in the screenshot but absent from the hierarchy never reached the accessibility tree; a broken screen shows in the screenshot itself.
+`step` is the zero-padded number in that shard's `screenshots/step-<step>-*.png` and `screen-hierarchy/step-<step>-*.json`; open both. An element visible in the screenshot but absent from the hierarchy never reached the accessibility tree; a broken screen shows in the screenshot itself.
 
 ### 2.2 logcat
 
@@ -55,7 +55,7 @@ Check `homeassistant.log` for errors at the same timestamp, and confirm in `home
 
 Only when 2.1 to 2.3 explain nothing. A typical upstream symptom is a clean split by API level: every shard below some API level fails at the same step while every shard above it passes. The frontend ships one bundle to all WebViews, so a change that relies on a newer web feature breaks the older WebViews together.
 
-The `dev` image moves every night, so the useful comparison is against the last run that passed:
+The `dev` image moves every night, so the useful comparison is against the last run that passed. The triage workflow downloads it into `e2e-artifacts-last-green/` before the agent starts; only when working locally, fetch it yourself:
 
 ```bash
 gh run list --workflow=e2e.yml --status success --limit 1 --json databaseId,createdAt
