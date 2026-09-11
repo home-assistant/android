@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.frontend.improv.ui
 
-import android.net.wifi.WifiManager
-import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,7 +47,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.data.network.isUnavailableSsid
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 
 /**
@@ -152,7 +150,7 @@ private fun ColumnScope.ConfiguringDeviceSection(
  * values when the app lacks the location permission.
  */
 private fun String?.takeIfDisplayable(): String? = takeIf {
-    !it.isNullOrBlank() && (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || it !== WifiManager.UNKNOWN_SSID)
+    !it.isNullOrBlank() && !it.isUnavailableSsid()
 }
 
 @Composable
