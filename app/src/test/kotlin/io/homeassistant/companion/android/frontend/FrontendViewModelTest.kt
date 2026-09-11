@@ -73,6 +73,7 @@ import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkStatic
 import io.mockk.verify
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -651,6 +652,79 @@ class FrontendViewModelTest {
             messageFlow.emit(FrontendHandlerEvent.Loaded)
             advanceUntilIdle()
             assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+        }
+
+        @Test
+        fun `Given loading when the screen is backgrounded and resumed then the load is restarted`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(1.seconds)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            // Backgrounded mid-load. The watchdog is cancelled, so the state simply stays Loading
+            // however long the app stays away.
+            viewModel.onScreenStartedChanged(false)
+            advanceTimeBy(5.minutes)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            viewModel.onScreenStartedChanged(true)
+            advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+
+            // Resuming restarts the timeout countdown, so it must also restart the load. The paused
+            // WebView never resumes a navigation on its own, and the already-loaded frontend never
+            // repeats its external-bus handshake, so without a reload the countdown can only expire.
+            verify(exactly = 2) { urlManager.serverUrlFlow(any(), any()) }
+        }
+
+        @Test
+        fun `Given loading a deep link when the screen is backgrounded and resumed then the load is restarted at the same target`() = runTest {
+            val target = FrontendTarget.Path("/dashboard")
+            every { urlManager.serverUrlFlow(serverId, target) } returns flowOf(
+                UrlLoadResult.Success(url = "https://example.com/dashboard?external_auth=1", serverId = serverId),
+            )
+
+            val viewModel = createViewModel(path = "/dashboard")
+            advanceTimeBy(1.seconds)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            viewModel.onScreenStartedChanged(false)
+            viewModel.onScreenStartedChanged(true)
+            advanceTimeBy(1.seconds)
+
+            verify(exactly = 2) { urlManager.serverUrlFlow(serverId, target) }
+        }
+
+        @Test
+        fun `Given loading with the handshake done when the screen is backgrounded and resumed then the load is not restarted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "t",
+                haVersion = HomeAssistantVersion(2026, 8, 0),
+                serverId = serverId,
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceTimeBy(1.seconds)
+            val state = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+            assertTrue(state.connected)
+
+            // The frontend reconnects on its own once the handshake is done, so restarting would
+            // only discard a finished load.
+            viewModel.onScreenStartedChanged(false)
+            viewModel.onScreenStartedChanged(true)
+            advanceTimeBy(1.seconds)
+
+            verify(exactly = 1) { urlManager.serverUrlFlow(any(), any()) }
         }
 
         @Test
@@ -2721,7 +2795,8 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given handler emits ReloadAtPath event when collected then state transitions to LoadServer`() = runTest {
+        fun `Given handler emits ReloadAtPath event when collected then the frontend is reloaded at that path`() = runTest {
+            val path = "/_my_redirect/config_flow_start?domain=acme"
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -2730,18 +2805,14 @@ class FrontendViewModelTest {
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
             improvEventsFlow.emit(
-                FrontendImprovHandler.Event.ReloadAtPath(
-                    path = "/_my_redirect/config_flow_start?domain=acme",
-                    serverId = serverId,
-                ),
+                FrontendImprovHandler.Event.ReloadAtPath(path = path, serverId = serverId),
             )
             advanceTimeBy(1.seconds)
 
-            val state = assertInstanceOf(FrontendViewState.LoadServer::class.java, viewModel.viewState.value)
-            assertEquals(
-                FrontendTarget.Path("/_my_redirect/config_flow_start?domain=acme"),
-                state.target,
-            )
+            // Transitioning to LoadServer is not enough: nothing else starts a load, so without
+            // this the WebView would sit on the blank URL forever.
+            verify { urlManager.serverUrlFlow(serverId, FrontendTarget.Path(path)) }
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
         }
 
         @Test
