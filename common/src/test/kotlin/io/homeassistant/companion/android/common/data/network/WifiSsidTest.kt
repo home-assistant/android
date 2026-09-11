@@ -24,22 +24,22 @@ class WifiSsidTest {
     }
 
     @Test
-    fun `Given unknown SSID content on Android 11 then it is unavailable`() {
+    fun `Given unknown SSID constant on Android 11 then it is unavailable`() {
+        assertTrue(isUnavailableSsid(WifiManager.UNKNOWN_SSID))
+    }
+
+    @Test
+    fun `Given distinct unknown SSID content on Android 11 then it is available`() {
         val unknownSsid = String(WifiManager.UNKNOWN_SSID.toCharArray())
         assertNotSame(WifiManager.UNKNOWN_SSID, unknownSsid)
 
-        assertTrue(unknownSsid.isUnavailableSsid())
+        assertFalse(isUnavailableSsid(unknownSsid))
     }
 
     @Test
     fun `Given unknown SSID content before Android 11 then it is available`() {
         SdkVersion.sdkInt = ANDROID_10_SDK
 
-        assertFalse(String(WifiManager.UNKNOWN_SSID.toCharArray()).isUnavailableSsid())
-    }
-
-    @Test
-    fun `Given known SSID then it is available`() {
-        assertFalse("Home".isUnavailableSsid())
+        assertFalse(isUnavailableSsid(String(WifiManager.UNKNOWN_SSID.toCharArray())))
     }
 }

@@ -150,7 +150,7 @@ private fun ColumnScope.ConfiguringDeviceSection(
  * values when the app lacks the location permission.
  */
 private fun String?.takeIfDisplayable(): String? = takeIf {
-    !it.isNullOrBlank() && !it.isUnavailableSsid()
+    !it.isNullOrBlank() && !isUnavailableSsid(it)
 }
 
 @Composable

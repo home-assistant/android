@@ -117,7 +117,7 @@ fun SsidView(
 
         val suggestedSsid = activeSsid
             ?.takeIf { it.isNotBlank() && it !in wifiSsids }
-            ?.takeUnless { it.isUnavailableSsid() }
+            ?.takeUnless(::isUnavailableSsid)
         if (suggestedSsid != null) {
             item("ssid.suggestion") {
                 Chip(

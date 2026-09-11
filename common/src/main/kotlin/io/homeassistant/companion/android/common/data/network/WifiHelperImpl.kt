@@ -24,7 +24,7 @@ class WifiHelperImpl @Inject constructor(
         val formattedBssid = getWifiBssid()
         return (
             formattedSsid != null &&
-                !formattedSsid.isUnavailableSsid() &&
+                !isUnavailableSsid(formattedSsid) &&
                 formattedSsid in networks
             ) ||
             (

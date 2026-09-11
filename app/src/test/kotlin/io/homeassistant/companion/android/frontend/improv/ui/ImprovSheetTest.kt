@@ -39,15 +39,15 @@ class ImprovSheetTest {
     }
 
     @Test
-    fun `Given unknown SSID content on Android 11 when configuring then SSID input is empty`() {
-        val unknownSsid = String(WifiManager.UNKNOWN_SSID.toCharArray())
-        assertNotSame(WifiManager.UNKNOWN_SSID, unknownSsid)
-        assertPrefilledSsid(unknownSsid, "")
+    fun `Given unknown SSID constant on Android 11 when configuring then SSID input is empty`() {
+        assertPrefilledSsid(WifiManager.UNKNOWN_SSID, "")
     }
 
     @Test
-    fun `Given known SSID when configuring then SSID is prefilled`() {
-        assertPrefilledSsid("Home", "Home")
+    fun `Given real network named unknown SSID when configuring then SSID is prefilled`() {
+        val unknownSsid = String(WifiManager.UNKNOWN_SSID.toCharArray())
+        assertNotSame(WifiManager.UNKNOWN_SSID, unknownSsid)
+        assertPrefilledSsid(unknownSsid, WifiManager.UNKNOWN_SSID)
     }
 
     private fun assertPrefilledSsid(ssid: String?, expected: String) {

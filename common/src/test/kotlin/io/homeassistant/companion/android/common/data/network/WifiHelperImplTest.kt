@@ -32,21 +32,21 @@ class WifiHelperImplTest {
 
     @Test
     fun `Given unknown SSID when checking networks then it does not match`() {
-        every { wifiInfo.ssid } returns String(WifiManager.UNKNOWN_SSID.toCharArray())
+        every { wifiInfo.ssid } returns WifiManager.UNKNOWN_SSID
 
         assertFalse(helper.isUsingSpecificWifi(listOf(WifiManager.UNKNOWN_SSID)))
     }
 
     @Test
-    fun `Given quoted known SSID when checking networks then it matches`() {
-        every { wifiInfo.ssid } returns "\"Home\""
+    fun `Given real network named unknown SSID when checking networks then it matches`() {
+        every { wifiInfo.ssid } returns "\"${WifiManager.UNKNOWN_SSID}\""
 
-        assertTrue(helper.isUsingSpecificWifi(listOf("Home")))
+        assertTrue(helper.isUsingSpecificWifi(listOf(WifiManager.UNKNOWN_SSID)))
     }
 
     @Test
     fun `Given unknown SSID when BSSID matches then network still matches`() {
-        every { wifiInfo.ssid } returns String(WifiManager.UNKNOWN_SSID.toCharArray())
+        every { wifiInfo.ssid } returns WifiManager.UNKNOWN_SSID
         every { wifiInfo.bssid } returns "aa:bb:cc:dd:ee:ff"
 
         assertFalse(helper.isUsingSpecificWifi(listOf(WifiManager.UNKNOWN_SSID)))

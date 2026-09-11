@@ -35,16 +35,16 @@ class SsidViewTest {
     }
 
     @Test
-    fun `Given known SSID when showing networks then suggestion is shown`() {
-        assertSsidSuggestion("Home", expected = true)
-    }
-
-    @Test
-    fun `Given unknown SSID content when showing networks then suggestion is hidden`() {
+    fun `Given real network named unknown SSID when showing networks then suggestion is shown`() {
         val unknownSsid = String(WifiManager.UNKNOWN_SSID.toCharArray())
         assertNotSame(WifiManager.UNKNOWN_SSID, unknownSsid)
 
-        assertSsidSuggestion(unknownSsid, expected = false)
+        assertSsidSuggestion(unknownSsid, expected = true)
+    }
+
+    @Test
+    fun `Given unknown SSID constant when showing networks then suggestion is hidden`() {
+        assertSsidSuggestion(WifiManager.UNKNOWN_SSID, expected = false)
     }
 
     @Test
