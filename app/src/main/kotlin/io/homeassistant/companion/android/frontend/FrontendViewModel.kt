@@ -421,8 +421,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         viewModelScope.launch {
             _viewState.collect { state ->
                 Timber.d("Frontend state: ${state.logDescription()}")
-                // LoadServer is the request to (re)load, so acting on it here is what guarantees
-                // that setting the state and starting the load can never drift apart.
                 if (state is FrontendViewState.LoadServer) loadServer(state.serverId, state.target)
                 releaseExoPlayerIfLeavingContent(state)
             }
@@ -557,7 +555,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         )
 
     fun onScreenStartedChanged(started: Boolean) {
-        // Gates the loading watchdog, so this marks when the timeout countdown can run.
         Timber.d("Frontend screen started: $started")
         val resumed = started && !isScreenStarted.value
         isScreenStarted.value = started
