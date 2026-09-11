@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.di.ServerManagerModule
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.mockk.Runs
@@ -64,9 +65,11 @@ class LaunchActivityTest {
         mockkObject(WebsocketManager.Companion)
         mockkObject(SensorReceiver.Companion)
         mockkObject(DisabledLocationHandler)
+        mockkObject(HaMediaSessionService.Companion)
         every { SensorWorker.start(any()) } just Runs
         coEvery { WebsocketManager.start(any()) } just Runs
         every { SensorReceiver.updateAllSensors(any()) } just Runs
+        every { HaMediaSessionService.start(any()) } just Runs
         every { DisabledLocationHandler.isLocationEnabled(any()) } returns true
     }
 
@@ -76,13 +79,15 @@ class LaunchActivityTest {
         unmockkObject(WebsocketManager.Companion)
         unmockkObject(SensorReceiver.Companion)
         unmockkObject(DisabledLocationHandler)
+        unmockkObject(HaMediaSessionService.Companion)
     }
 
     @Test
-    fun `Given activity resumes then sensor worker and websocket manager are started`() {
+    fun `Given activity resumes then sensor worker, websocket manager and media session service are started`() {
         ActivityScenario.launch(LaunchActivity::class.java).use {
             verify { SensorWorker.start(any()) }
             coVerify { WebsocketManager.start(any()) }
+            verify { HaMediaSessionService.start(any()) }
             verify { DisabledLocationHandler.isLocationEnabled(any()) }
         }
     }
