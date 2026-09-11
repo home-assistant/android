@@ -19,12 +19,16 @@ import io.homeassistant.companion.android.common.data.integration.display.Entiti
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.servers.ConnectionAvailability
+import io.homeassistant.companion.android.common.data.servers.ConnectionAvailabilityMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -126,19 +130,25 @@ class HaCarAppService : CarAppService() {
                 }
             }
 
+            /** Shows [ConnectionErrorScreen] while the displayed server is unreachable. */
+            @OptIn(ExperimentalCoroutinesApi::class)
             private suspend fun observeConnectionAvailability() {
-                connectionAvailabilityMonitor.observeAvailability().collect { state ->
-                    val screenManager = carContext.getCarService(ScreenManager::class.java)
-                    val topIsNoConnection = screenManager.top is NoConnectionScreen
-                    when (state) {
-                        ConnectionAvailability.Unavailable -> if (!topIsNoConnection) {
-                            screenManager.push(NoConnectionScreen(carContext))
-                        }
-                        ConnectionAvailability.Available -> if (topIsNoConnection) {
-                            screenManager.pop()
+                serverId
+                    .flatMapLatest(connectionAvailabilityMonitor::observeAvailability)
+                    .collect { state ->
+                        val screenManager = carContext.getCarService(ScreenManager::class.java)
+                        // top throws before the first screen is pushed from onCreateScreen
+                        val topIsConnectionError = screenManager.stackSize > 0 &&
+                            screenManager.top is ConnectionErrorScreen
+                        when (state) {
+                            ConnectionAvailability.Unavailable -> if (!topIsConnectionError) {
+                                screenManager.push(ConnectionErrorScreen(carContext))
+                            }
+                            ConnectionAvailability.Available -> if (topIsConnectionError) {
+                                screenManager.pop()
+                            }
                         }
                     }
-                }
             }
         }
     }
