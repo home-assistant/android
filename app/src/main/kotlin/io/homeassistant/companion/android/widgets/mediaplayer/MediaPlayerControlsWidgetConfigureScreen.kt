@@ -29,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -374,7 +373,7 @@ private fun SelectedEntityRow(entity: EntityDisplayWithContext, onRemove: () -> 
                 overflow = TextOverflow.Ellipsis,
             )
 
-            entity.subtitle(LocalLayoutDirection.current)?.let { subtitle ->
+            entity.subtitle()?.let { subtitle ->
                 Text(
                     text = subtitle,
                     style = HATextStyle.BodyMedium,
