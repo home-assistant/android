@@ -45,7 +45,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -350,7 +349,7 @@ private fun RowScope.EntityContent(entity: EntityDisplay, showHiddenIndicator: B
             overflow = TextOverflow.Ellipsis,
         )
 
-        (entity as? EntityDisplayWithContext)?.subtitle(LocalLayoutDirection.current)?.let { subtitle ->
+        (entity as? EntityDisplayWithContext)?.subtitle()?.let { subtitle ->
             Text(
                 text = subtitle,
                 style = HATextStyle.BodyMedium,
