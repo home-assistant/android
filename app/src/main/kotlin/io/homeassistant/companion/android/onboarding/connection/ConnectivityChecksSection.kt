@@ -14,9 +14,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -168,44 +170,38 @@ private fun CheckResultRow(label: String, result: ConnectivityCheckResult) {
                 },
                 label = "resultContent",
             ) { animatedResult ->
-                when (animatedResult) {
-                    is ConnectivityCheckResult.Success -> {
-                        Text(
-                            text = animatedResult.details ?: stringResource(animatedResult.messageResId),
-                            style = textStyle,
-                            color = LocalHAColorScheme.current.colorTextSecondary,
-                        )
-                    }
-
-                    is ConnectivityCheckResult.Failure -> {
-                        Text(
-                            text = stringResource(animatedResult.messageResId),
-                            style = textStyle,
-                            color = LocalHAColorScheme.current.colorOnDangerQuiet,
-                        )
-                    }
-
-                    is ConnectivityCheckResult.NotApplicable -> {
-                        Text(
-                            text = stringResource(animatedResult.messageResId),
-                            style = textStyle,
-                            color = LocalHAColorScheme.current.colorTextSecondary,
-                        )
-                    }
-
-                    is ConnectivityCheckResult.InProgress,
-                    is ConnectivityCheckResult.Pending,
-                    -> {
-                        Text(
-                            text = stringResource(commonR.string.loading),
-                            style = textStyle,
-                            color = LocalHAColorScheme.current.colorOnNeutralQuiet,
-                        )
-                    }
-                }
+                Text(
+                    text = animatedResult.message(),
+                    style = textStyle,
+                    color = animatedResult.messageColor(),
+                )
             }
         }
     }
+}
+
+@Composable
+@ReadOnlyComposable
+private fun ConnectivityCheckResult.message(): String = when (this) {
+    is ConnectivityCheckResult.Success -> details ?: stringResource(messageResId)
+    is ConnectivityCheckResult.Failure -> details?.let { stringResource(messageResId, it) }
+        ?: stringResource(messageResId)
+    is ConnectivityCheckResult.NotApplicable -> stringResource(messageResId)
+    ConnectivityCheckResult.InProgress,
+    ConnectivityCheckResult.Pending,
+    -> stringResource(commonR.string.loading)
+}
+
+@Composable
+@ReadOnlyComposable
+private fun ConnectivityCheckResult.messageColor(): Color = when (this) {
+    is ConnectivityCheckResult.Failure -> LocalHAColorScheme.current.colorOnDangerQuiet
+    is ConnectivityCheckResult.Success,
+    is ConnectivityCheckResult.NotApplicable,
+    -> LocalHAColorScheme.current.colorTextSecondary
+    ConnectivityCheckResult.InProgress,
+    ConnectivityCheckResult.Pending,
+    -> LocalHAColorScheme.current.colorOnNeutralQuiet
 }
 
 @Preview
@@ -230,8 +226,13 @@ private fun PreviewConnectivityChecksSectionMixed() {
                 tlsCertificate = ConnectivityCheckResult.NotApplicable(
                     commonR.string.connection_check_tls_not_applicable,
                 ),
-                serverConnection = ConnectivityCheckResult.Failure(commonR.string.connection_check_error_server),
-                homeAssistantVerification = ConnectivityCheckResult.Pending,
+                serverConnection = ConnectivityCheckResult.Failure(
+                    commonR.string.connection_check_error_http_status,
+                    "502",
+                ),
+                homeAssistantVerification = ConnectivityCheckResult.Failure(
+                    commonR.string.connection_check_skipped,
+                ),
             ),
             onRetryConnectivityCheck = {},
         )
