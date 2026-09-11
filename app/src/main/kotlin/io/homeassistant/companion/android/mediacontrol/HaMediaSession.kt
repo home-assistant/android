@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.CHANNEL_MEDIA_SESSION
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.util.sensitive
 import java.io.ByteArrayOutputStream
@@ -334,6 +335,7 @@ class HaMediaSession @AssistedInject constructor(
                         player.updateState(state = state, artworkBytes = null)
                     }
                 }
+
                 state.entityPictureUrl != artworkCache.url -> {
                     artworkCache = loadArtwork(state)
                     withContext(Dispatchers.Main) {
@@ -341,6 +343,7 @@ class HaMediaSession @AssistedInject constructor(
                         player.updateState(state = state, artworkBytes = artworkCache.bytes)
                     }
                 }
+
                 else -> Unit
             }
         }
@@ -361,7 +364,7 @@ class HaMediaSession @AssistedInject constructor(
             val tapIntent = LaunchActivity.newInstance(
                 context = context,
                 deepLink = LaunchActivity.DeepLink.NavigateTo(
-                    path = "entityId:${config.entityId}",
+                    FrontendTarget.EntityMoreInfo(config.entityId),
                     serverId = config.serverId,
                 ),
             ).apply {

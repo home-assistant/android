@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.mediacontrol.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,24 +12,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mikepenz.iconics.compose.Image
-import io.homeassistant.companion.android.common.R
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.rememberImageVector
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
@@ -38,9 +39,12 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.data.integration.getIcon
+import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.entitySubtitleSeparator
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
-import io.homeassistant.companion.android.settings.mediacontrol.ConfiguredEntityItem
+import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSelectedEntity
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsUiState
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsViewModel
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -65,7 +69,7 @@ internal fun MediaControlSettingsContent(
     uiState: MediaControlSettingsUiState,
     onServerSelected: (Int) -> Unit,
     onEntitySelected: (String) -> Unit,
-    onRemoveEntity: (MediaControlEntityConfig) -> Unit,
+    onRemoveEntity: (MediaControlSelectedEntity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -77,17 +81,21 @@ internal fun MediaControlSettingsContent(
         if (uiState.isLoading) {
             item {
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(top = HADimens.SPACE4),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = HADimens.SPACE4),
                     contentAlignment = Alignment.Center,
                 ) {
                     HALoading()
                 }
             }
         } else {
-            if (uiState.servers.size > 1) {
+            val hasMultiServer = uiState.serversDropdownItems.size > 1
+            if (hasMultiServer) {
                 item(key = "server_dropdown") {
-                    ServerDropdownSection(
-                        uiState = uiState,
+                    ServerSelector(
+                        items = uiState.serversDropdownItems,
+                        selectedServerId = uiState.selectedServerId,
                         onServerSelected = onServerSelected,
                         modifier = Modifier.animateItem(),
                     )
@@ -96,19 +104,20 @@ internal fun MediaControlSettingsContent(
 
             item(key = "entity_picker") {
                 EntityPickerSection(
-                    uiState = uiState,
+                    availableEntities = uiState.availableEntities,
                     onEntitySelected = onEntitySelected,
                     modifier = Modifier.animateItem(),
                 )
             }
 
             items(
-                items = uiState.configuredEntityItems,
+                items = uiState.selectedEntities,
                 key = { item -> item.config.id },
             ) { item ->
                 ConfiguredEntityRow(
                     item = item,
-                    onRemove = { onRemoveEntity(item.config) },
+                    hasMultiServer = hasMultiServer,
+                    onRemove = { onRemoveEntity(item) },
                     modifier = Modifier.animateItem(),
                 )
             }
@@ -117,10 +126,10 @@ internal fun MediaControlSettingsContent(
 }
 
 @Composable
-private fun DescriptionSection() {
+private fun LazyItemScope.DescriptionSection() {
     val colorScheme = LocalHAColorScheme.current
     Text(
-        text = stringResource(R.string.media_control_description),
+        text = stringResource(commonR.string.media_control_description),
         style = HATextStyle.Body,
         color = colorScheme.colorTextPrimary,
         textAlign = TextAlign.Start,
@@ -130,18 +139,22 @@ private fun DescriptionSection() {
 }
 
 @Composable
-private fun ServerDropdownSection(
-    uiState: MediaControlSettingsUiState,
+private fun ServerSelector(
+    items: List<HADropdownItem<Int>>,
+    selectedServerId: Int,
     onServerSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier.padding(horizontal = HADimens.SPACE4)) {
         HADropdownMenu(
-            items = uiState.servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
-            selectedKey = uiState.selectedServerId,
+            items = items,
+            selectedKey = selectedServerId,
             onItemSelected = onServerSelected,
-            label = stringResource(R.string.server),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = HADimens.SPACE4),
+            label = stringResource(commonR.string.server_select),
+            placeholder = stringResource(commonR.string.server_select),
+            modifier = Modifier
+                .widthIn(max = MaxButtonWidth)
+                .fillMaxWidth(),
         )
         Spacer(modifier = Modifier.size(HADimens.SPACE2))
     }
@@ -149,28 +162,32 @@ private fun ServerDropdownSection(
 
 @Composable
 private fun EntityPickerSection(
-    uiState: MediaControlSettingsUiState,
+    availableEntities: EntityDisplayState<EntityDisplayWithContext>,
     onEntitySelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     EntityPicker(
-        entities = uiState.availableEntities,
+        displayState = availableEntities,
         selectedEntityId = null,
-        onEntitySelectedId = onEntitySelected,
-        onEntityCleared = {},
-        addButtonText = stringResource(R.string.media_control_select_entity),
-        entityRegistry = uiState.entityRegistryForServer(uiState.selectedServerId),
-        deviceRegistry = uiState.deviceRegistryForServer(uiState.selectedServerId),
-        areaRegistry = uiState.areaRegistryForServer(uiState.selectedServerId),
+        onSelectionChanged = { entityId ->
+            if (entityId != null) {
+                onEntitySelected(entityId)
+            }
+        },
+        addButtonText = stringResource(commonR.string.media_control_select_entity),
         modifier = modifier.padding(horizontal = HADimens.SPACE4),
     )
 }
 
 @Composable
-private fun ConfiguredEntityRow(item: ConfiguredEntityItem, onRemove: () -> Unit, modifier: Modifier = Modifier) {
+private fun ConfiguredEntityRow(
+    item: MediaControlSelectedEntity,
+    hasMultiServer: Boolean,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colorScheme = LocalHAColorScheme.current
-    val context = LocalContext.current
-    val entityIcon = remember(item.entity) { item.entity?.getIcon(context) }
+    val entityIcon = item.entityForDisplay?.icon?.rememberImageVector()
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -183,7 +200,7 @@ private fun ConfiguredEntityRow(item: ConfiguredEntityItem, onRemove: () -> Unit
     ) {
         if (entityIcon != null) {
             Image(
-                asset = entityIcon,
+                imageVector = entityIcon,
                 colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
                 contentDescription = null,
                 modifier = Modifier.size(HADimens.SPACE6),
@@ -193,22 +210,30 @@ private fun ConfiguredEntityRow(item: ConfiguredEntityItem, onRemove: () -> Unit
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = item.name,
+                text = item.entityForDisplay?.name ?: item.config.entityId,
                 style = HATextStyle.Body,
                 color = colorScheme.colorTextPrimary,
                 textAlign = TextAlign.Start,
             )
-            Text(
-                text = item.config.entityId,
-                style = HATextStyle.BodyMedium,
-                color = colorScheme.colorTextSecondary,
-                textAlign = TextAlign.Start,
-            )
+
+            val subtitle = listOfNotNull(
+                item.serverName.takeIf { hasMultiServer },
+                item.entityForDisplay?.subtitle(),
+            ).takeIf { it.isNotEmpty() }?.joinToString(entitySubtitleSeparator())
+
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = HATextStyle.BodyMedium,
+                    color = colorScheme.colorTextSecondary,
+                    textAlign = TextAlign.Start,
+                )
+            }
         }
         HAIconButton(
-            icon = Icons.Default.Clear,
+            icon = Mdi.Close.rememberImageVector(),
             onClick = onRemove,
-            contentDescription = stringResource(R.string.media_control_remove_entity),
+            contentDescription = stringResource(commonR.string.media_control_remove_entity),
             variant = ButtonVariant.NEUTRAL,
         )
     }
@@ -247,17 +272,9 @@ private fun MediaControlSettingsContentWithEntitiesPreview() {
         MediaControlSettingsContent(
             uiState = MediaControlSettingsUiState(
                 isLoading = false,
-                configuredEntityItems = listOf(
-                    ConfiguredEntityItem(
-                        config = MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room"),
-                        name = "Living Room",
-                        entity = null,
-                    ),
-                    ConfiguredEntityItem(
-                        config = MediaControlEntityConfig(serverId = 1, entityId = "media_player.bedroom"),
-                        name = "Bedroom",
-                        entity = null,
-                    ),
+                mediaControlEntityConfigs = listOf(
+                    MediaControlEntityConfig(serverId = 1, entityId = "media_player.living_room"),
+                    MediaControlEntityConfig(serverId = 1, entityId = "media_player.bedroom"),
                 ),
             ),
             onServerSelected = {},
