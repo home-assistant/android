@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,7 +46,6 @@ import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSele
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsUiState
 import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsViewModel
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
-import io.homeassistant.companion.android.util.plus
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 /** Displays the media controls settings screen, backed by [MediaControlSettingsViewModel]. */
@@ -72,70 +69,44 @@ internal fun MediaControlSettingsContent(
     onRemoveEntity: (MediaControlSelectedEntity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        contentPadding = PaddingValues(vertical = HADimens.SPACE4) + safeBottomPaddingValues(applyHorizontal = false),
-        modifier = modifier,
-    ) {
-        item { DescriptionSection() }
+    val hasMultiServer = uiState.serversDropdownItems.size > 1
 
-        if (uiState.isLoading) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = HADimens.SPACE4),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    HALoading()
-                }
-            }
-        } else {
-            val hasMultiServer = uiState.serversDropdownItems.size > 1
-            if (hasMultiServer) {
-                item(key = "server_dropdown") {
-                    ServerSelector(
-                        items = uiState.serversDropdownItems,
-                        selectedServerId = uiState.selectedServerId,
-                        onServerSelected = onServerSelected,
-                        modifier = Modifier.animateItem(),
-                    )
-                }
-            }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4)) {
+        DescriptionSection()
 
-            item(key = "entity_picker") {
-                EntityPickerSection(
-                    availableEntities = uiState.availableEntities,
-                    onEntitySelected = onEntitySelected,
-                    modifier = Modifier.animateItem(),
-                )
-            }
-
-            items(
-                items = uiState.selectedEntities,
-                key = { item -> item.config.id },
-            ) { item ->
-                ConfiguredEntityRow(
-                    item = item,
-                    hasMultiServer = hasMultiServer,
-                    onRemove = { onRemoveEntity(item) },
-                    modifier = Modifier.animateItem(),
-                )
-            }
+        if (hasMultiServer) {
+            ServerSelector(
+                items = uiState.serversDropdownItems,
+                selectedServerId = uiState.selectedServerId,
+                onServerSelected = onServerSelected,
+            )
         }
+
+        if (!uiState.isLoading) {
+            EntityPickerSection(
+                availableEntities = uiState.availableEntities,
+                onEntitySelected = onEntitySelected,
+                modifier = Modifier,
+            )
+        }
+        ConfiguredEntities(
+            isLoading = uiState.isLoading,
+            selectedEntities = uiState.selectedEntities,
+            hasMultiServer = hasMultiServer,
+            onRemoveEntity = onRemoveEntity,
+        )
     }
 }
 
 @Composable
-private fun LazyItemScope.DescriptionSection() {
-    val colorScheme = LocalHAColorScheme.current
+private fun DescriptionSection() {
     Text(
         text = stringResource(commonR.string.media_control_description),
         style = HATextStyle.Body,
-        color = colorScheme.colorTextPrimary,
+        color = LocalHAColorScheme.current.colorTextPrimary,
         textAlign = TextAlign.Start,
         modifier = Modifier.padding(horizontal = HADimens.SPACE4),
     )
-    Spacer(modifier = Modifier.size(HADimens.SPACE4))
 }
 
 @Composable
@@ -156,7 +127,6 @@ private fun ServerSelector(
                 .widthIn(max = MaxButtonWidth)
                 .fillMaxWidth(),
         )
-        Spacer(modifier = Modifier.size(HADimens.SPACE2))
     }
 }
 
@@ -177,6 +147,45 @@ private fun EntityPickerSection(
         addButtonText = stringResource(commonR.string.media_control_select_entity),
         modifier = modifier.padding(horizontal = HADimens.SPACE4),
     )
+}
+
+@Composable
+private fun ConfiguredEntities(
+    isLoading: Boolean,
+    selectedEntities: List<MediaControlSelectedEntity>,
+    hasMultiServer: Boolean,
+    onRemoveEntity: (MediaControlSelectedEntity) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        contentPadding = safeBottomPaddingValues(applyHorizontal = false),
+        modifier = modifier,
+    ) {
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = HADimens.SPACE4),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    HALoading()
+                }
+            }
+        } else {
+            items(
+                items = selectedEntities,
+                key = { item -> item.config.id },
+            ) { item ->
+                ConfiguredEntityRow(
+                    item = item,
+                    hasMultiServer = hasMultiServer,
+                    onRemove = { onRemoveEntity(item) },
+                    modifier = Modifier.animateItem(),
+                )
+            }
+        }
+    }
 }
 
 @Composable
