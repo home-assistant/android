@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android.common.data.servers
 
 import app.cash.turbine.test
-import io.homeassistant.companion.android.common.data.servers.ConnectionAvailabilityMonitorImpl.Companion.DEGRADED_POLL_INTERVAL
-import io.homeassistant.companion.android.common.data.servers.ConnectionAvailabilityMonitorImpl.Companion.GRACE_PERIOD
-import io.homeassistant.companion.android.common.data.servers.ConnectionAvailabilityMonitorImpl.Companion.HEALTHY_POLL_INTERVAL
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
