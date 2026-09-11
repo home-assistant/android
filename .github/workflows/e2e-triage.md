@@ -95,6 +95,15 @@ Read `.agents/skills/ha-android-e2e-debugging/SKILL.md` and follow the procedure
 
 Start by identifying which step of the workflow failed. A failure in the build, the Home Assistant container, or the emulator session is not a Maestro failure at all, and the Maestro report will be empty or missing.
 
+Stop investigating as soon as one source explains the failure, and write the report. Look at upstream core and frontend only when the Maestro report, the logcat, and the Home Assistant log all leave the failure unexplained. A run that reaches a verdict and then keeps searching for a culprit commit runs out of time without reporting anything, which is worse than a report without a culprit.
+
+## Constraints
+
+- The job is killed after 20 minutes, startup included, and a killed run reports nothing. Run `date` first, and post the report before 17 minutes have passed, saying what you did not get to.
+- The shell accepts only `ls`, `cat`, `head`, `tail`, `grep`, `wc`, `find`, `jq`, `file`, `date`, `echo`, `printf`, `pwd`, `sort`, `uniq`, and `yq`. Anything else, including `cd`, `python3`, `curl`, `cp`, and `touch`, is denied, and a denied command stays denied when rephrased. Use `jq` and `grep` with absolute paths instead, and call `missing_tool` if something is truly impossible.
+- The workspace and the artifacts are read-only. Write only under `/tmp/gh-aw/`.
+- Use the GitHub tools only for what the skill asks for: the failed job's console output, and the commit range for step 2.4 when you reach it.
+
 ## What to report
 
 Step 3 of the skill defines what a report contains and where it goes. Follow it exactly, and do not add sections of your own. In particular: everything goes into this repository's `e2e-failure` issue, including an upstream finding and the fix you propose for it. You have no write access to `home-assistant/core` or `home-assistant/frontend`, and must not try to open anything there.
