@@ -1,12 +1,17 @@
 package io.homeassistant.companion.android.widgets
 
 import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -20,6 +25,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,28 +36,42 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNull
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 
 private data class FakeGlanceId(val id: Int) : GlanceId
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
 class BaseGlanceEntityWidgetReceiverTest {
 
     val mockedDao: TodoWidgetDao = mockk()
     val mockedServerManager: ServerManager = mockk()
     val mockedWidget: GlanceAppWidget = mockk()
     val glanceManager: GlanceAppWidgetManager = mockk()
+    val appWidgetManager: AppWidgetManager = mockk()
+
+    @After
+    fun tearDown() {
+        unmockkAll()
+    }
 
     private fun TestScope.getReceiver(
         widgetEntitiesByServer: Map<Int, EntitiesPerServer> = emptyMap<Int, EntitiesPerServer>(),
         coroutineScopeProvider: () -> CoroutineScope = { this },
         onEntityUpdateCallback: suspend (Context, Int, Entity) -> Unit = { _, _, _ -> },
     ): BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao> {
-        return object : BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao>(widgetScopeProvider = coroutineScopeProvider, glanceManagerProvider = { glanceManager }) {
+        return object : BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao>(widgetScopeProvider = coroutineScopeProvider, glanceManagerProvider = { glanceManager }, appWidgetManagerProvider = { appWidgetManager }) {
             override suspend fun getWidgetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> = widgetEntitiesByServer
             override val glanceAppWidget: GlanceAppWidget = mockedWidget
             override suspend fun onEntityUpdate(context: Context, appWidgetId: Int, entity: Entity) {
@@ -290,5 +310,78 @@ class BaseGlanceEntityWidgetReceiverTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { mockedDao wasNot Called }
+    }
+
+    @Test
+    fun `Given receiver when register then it listens for screen on and off without being exported`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+        installProvider(application, receiver, generatedPreviewCategories = 0)
+        coEvery { glanceManager.setWidgetPreviews(any(), any()) } returns GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS
+
+        receiver.register(application)
+
+        val registration = shadowOf(application).registeredReceivers.single { it.broadcastReceiver === receiver }
+        val actions = (0 until registration.intentFilter.countActions()).map { registration.intentFilter.getAction(it) }
+        assertEquals(setOf(Intent.ACTION_SCREEN_ON, Intent.ACTION_SCREEN_OFF), actions.toSet())
+        assertEquals(ContextCompat.RECEIVER_NOT_EXPORTED, registration.flags)
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    fun `Given SDK below 35 when register then it does not publish the widget preview`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+
+        receiver.register(application)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { glanceManager.setWidgetPreviews(any(), any()) }
+    }
+
+    @Test
+    fun `Given no generated preview when register then it publishes the widget preview`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+        installProvider(application, receiver, generatedPreviewCategories = 0)
+        coEvery { glanceManager.setWidgetPreviews(any(), any()) } returns GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS
+
+        receiver.register(application)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { glanceManager.setWidgetPreviews(receiver::class, any()) }
+    }
+
+    @Test
+    fun `Given generated preview already published when register then it does not publish it again`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+        installProvider(application, receiver, generatedPreviewCategories = AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN)
+
+        receiver.register(application)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { glanceManager.setWidgetPreviews(any(), any()) }
+    }
+
+    @Test
+    fun `Given publication rate limited when register then it does not throw`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+        installProvider(application, receiver, generatedPreviewCategories = 0)
+        coEvery { glanceManager.setWidgetPreviews(any(), any()) } returns GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_RATE_LIMITED
+
+        receiver.register(application)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { glanceManager.setWidgetPreviews(receiver::class, any()) }
+    }
+
+    private fun installProvider(context: Context, receiver: BaseGlanceEntityWidgetReceiver<*, *>, generatedPreviewCategories: Int) {
+        val providerInfo = AppWidgetProviderInfo().apply {
+            provider = ComponentName(context, receiver::class.java)
+            this.generatedPreviewCategories = generatedPreviewCategories
+        }
+        every { appWidgetManager.getInstalledProvidersForPackage(context.packageName, null) } returns listOf(providerInfo)
     }
 }
