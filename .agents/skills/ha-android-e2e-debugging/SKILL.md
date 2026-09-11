@@ -38,7 +38,7 @@ jq -c 'to_entries[] | select(.value.metadata.status == "FAILED") | {shard: input
 
 ### 2.2 logcat
 
-Shard numbers are not API levels. The shard's `logs/device-logcat.txt` is the same device as one `logcat-api<N>-*.txt` in another format, so match them on a message: take an early line of the shard's logcat, strip everything up to the first `): `, and `grep -l -F` the rest across `logcat-api*.txt`. Useful filters on the matched file:
+Only when 2.1 explains nothing. Shard numbers are not API levels. The shard's `logs/device-logcat.txt` is the same device as one `logcat-api<N>-*.txt` in another format, so match them on a message: take an early line of the shard's logcat, strip everything up to the first `): `, and `grep -l -F` the rest across `logcat-api*.txt`. Useful filters on the matched file:
 
 ```bash
 grep -nE 'AndroidRuntime|FATAL' e2e-artifacts/logcat-api<N>-*.txt | tail -40
@@ -49,7 +49,15 @@ Look for a crash or ANR at the failure timestamp, TLS or DNS errors reaching `ho
 
 ### 2.3 Home Assistant logs
 
-Check `homeassistant.log` for errors at the same timestamp, and confirm in `homeassistant-config.json` that `mobile_app` is in `components`: the workflow verifies this at startup, but a later integration failure can still break onboarding. `homeassistant-container.json` gives the exact image digest for the next step.
+Only when 2.1 and 2.2 explain nothing.
+
+```bash
+grep -nE ' (ERROR|WARNING) ' e2e-artifacts/homeassistant.log | tail -40
+jq -c '{version, mobile_app: (.components | index("mobile_app") != null)}' e2e-artifacts/homeassistant-config.json
+jq -r '.[0].Config.Image' e2e-artifacts/homeassistant-container.json
+```
+
+Read the errors around the failure time, and confirm `mobile_app` is loaded: the workflow verifies it at startup, but a later integration failure can still break onboarding. An error that the same grep also finds in `e2e-artifacts-last-green/homeassistant.log` did not break this run. The `frontend.js.*` logger name carries the frontend build date, useful for the next step.
 
 ### 2.4 Upstream: core and frontend
 
