@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.connection
 
+import android.annotation.SuppressLint
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -140,6 +141,7 @@ private fun ErrorPlaceholder() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun ConnectionScreenPreview() {
