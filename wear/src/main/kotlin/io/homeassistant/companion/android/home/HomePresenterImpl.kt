@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home
 
+import android.graphics.Color
 import androidx.work.WorkManager
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
@@ -157,6 +158,23 @@ class HomePresenterImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Exception when setting light color temp")
         }
+    }
+
+    override suspend fun onColorChanged(entityId: String, rgb: Int) {
+        try {
+            serverManager.integrationRepository().callAction(
+                entityId.split(".")[0],
+                "turn_on",
+                hashMapOf(
+                    "entity_id" to entityId,
+                    "rgb_color" to listOf(Color.red(rgb), Color.green(rgb), Color.blue(rgb)),
+                ),
+            )
+        } catch (e: CancellationException) {
+            throw e
+         } catch (e: Exception) {
+             Timber.e(e, "Failed to set light color for entityId=$entityId")
+         }
     }
 
     override fun onInvalidAuthorization() = finishSession()

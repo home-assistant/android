@@ -443,6 +443,12 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun setColor(entityId: String, rgb: Int) {
+        viewModelScope.launch {
+            homePresenter.onColorChanged(entityId, rgb)
+        }
+    }
+
     fun enableDisableSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
         viewModelScope.launch {
             val basicSensor = sensorManager.getAvailableSensors()
