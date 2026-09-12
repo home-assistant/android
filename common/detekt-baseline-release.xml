@@ -5,7 +5,6 @@
     <ID>AbstractClassCanBeInterface:ConnectivityCheckModule.kt:ConnectivityCheckModule$ConnectivityCheckModule</ID>
     <ID>AbstractClassCanBeInterface:NetworkModule.kt:NetworkModule$NetworkModule</ID>
     <ID>AbstractClassCanBeInterface:TextToSpeech.kt:StreamVolumeAdjustment$StreamVolumeAdjustment</ID>
-    <ID>AvoidReferentialEquality:WifiHelperImpl.kt:WifiHelperImpl$formattedSsid !== WifiManager.UNKNOWN_SSID</ID>
     <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$!isBtOn() || !bleTransmitterDevice.transmitRequested || (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting &amp;&amp; !isPermittedOnThisNetwork())</ID>
     <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$bleTransmitterDevice.transmitRequested &amp;&amp; (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) &amp;&amp; (!bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisNetwork())</ID>
     <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$bleTransmitterDevice.uuid != uuid || bleTransmitterDevice.major != major || bleTransmitterDevice.minor != minor || bleTransmitterDevice.transmitPowerSetting != transmitPower || bleTransmitterDevice.advertiseModeSetting != advertiseMode || bleTransmitterDevice.transmitRequested != transmitActive || bleTransmitterDevice.measuredPowerSetting != measuredPower || priorBluetoothStateEnabled != isBtOn() || bleTransmitterDevice.onlyTransmitOnHomeWifiSetting != homeWifiOnly</ID>

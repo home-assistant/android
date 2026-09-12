@@ -93,7 +93,7 @@ class SsidViewModel @Inject constructor(
     fun updateWifiState() {
         try {
             usingWifi = wifiHelper.isUsingWifi()
-            activeSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\"")
+            activeSsid = wifiHelper.getWifiSsid()
             activeBssid = wifiHelper.getWifiBssid()
         } catch (e: Exception) {
             Timber.w(e, "Unable to update Wi-Fi state")

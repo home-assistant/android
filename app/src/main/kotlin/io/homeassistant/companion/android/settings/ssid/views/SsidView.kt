@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.ssid.views
 
-import android.net.wifi.WifiManager
-import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -60,7 +58,6 @@ import io.github.timoptr.mdiicons.generated.WifiCheck
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.network.WifiHelper
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.util.compose.HaAlertInfo
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.plus
@@ -117,15 +114,12 @@ fun SsidView(
             }
         }
 
-        if (
-            activeSsid?.isNotBlank() == true &&
-            wifiSsids.none { it == activeSsid } &&
-            (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || activeSsid !== WifiManager.UNKNOWN_SSID)
-        ) {
+        val suggestedSsid = activeSsid?.takeIf { it.isNotBlank() && it !in wifiSsids }
+        if (suggestedSsid != null) {
             item("ssid.suggestion") {
                 Chip(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    onClick = { onAddWifiSsid(activeSsid) },
+                    onClick = { onAddWifiSsid(suggestedSsid) },
                 ) {
                     Icon(
                         imageVector = Mdi.Wifi.rememberImageVector(),
@@ -133,7 +127,7 @@ fun SsidView(
                         modifier = Modifier.size(20.dp),
                     )
                     Text(
-                        text = stringResource(commonR.string.add_ssid_name_suggestion, activeSsid),
+                        text = stringResource(commonR.string.add_ssid_name_suggestion, suggestedSsid),
                         modifier = Modifier.padding(start = 8.dp),
                     )
                 }
