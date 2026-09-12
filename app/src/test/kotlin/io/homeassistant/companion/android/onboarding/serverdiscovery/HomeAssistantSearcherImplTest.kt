@@ -38,7 +38,7 @@ class HomeAssistantSearcherImplTest {
 
     @BeforeEach
     fun setup() {
-        SdkVersion.sdkInt = Build.VERSION_CODES.M
+        SdkVersion.sdkInt = Build.VERSION_CODES.N
         nsdManager = mockk(relaxed = true)
         wifiManager = mockk(relaxed = true)
         searcher = HomeAssistantSearcherImpl(nsdManager, wifiManager)

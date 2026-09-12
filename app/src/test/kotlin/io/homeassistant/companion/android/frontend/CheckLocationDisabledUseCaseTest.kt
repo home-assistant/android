@@ -35,7 +35,7 @@ class CheckLocationDisabledUseCaseTest {
 
     @BeforeEach
     fun setUp() {
-        SdkVersion.sdkInt = Build.VERSION_CODES.M
+        SdkVersion.sdkInt = Build.VERSION_CODES.N
         mockkObject(DisabledLocationHandler)
         every { DisabledLocationHandler.removeLocationDisabledWarning(any()) } just runs
         every { DisabledLocationHandler.showLocationDisabledNotification(any(), any()) } just runs

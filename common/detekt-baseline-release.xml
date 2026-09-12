@@ -178,7 +178,6 @@
     <ID>MatchingDeclarationName:NotificationFunctions.kt:NotificationData</ID>
     <ID>NestedBlockDepth:DatabaseMigration.kt:Migration37to38$fun onPostMigrate</ID>
     <ID>NestedBlockDepth:Entity.kt:private fun Entity.getIcon: MdiIcon</ID>
-    <ID>NestedBlockDepth:NotificationManagerExtensions.kt:fun cancelNotificationGroupIfNeeded: Boolean</ID>
     <ID>NestedBlockDepth:PhoneStateSensorManager.kt:PhoneStateSensorManager$@SuppressLint("MissingPermission") private suspend fun updateSimSensor</ID>
     <ID>NestedBlockDepth:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
     <ID>NoNameShadowing:DatabaseMigration.kt:MIGRATION6to7${ it.put("id", cursor.getString(cursor.getColumnIndex("unique_id"))) it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled"))) it.put( "registered", cursor.getInt(cursor.getColumnIndex("registered")), ) it.put("state", "") it.put("state_type", "") it.put("type", "") it.put("icon", "") it.put("name", "") it.put("device_class", "") }</ID>
@@ -191,7 +190,6 @@
     <ID>ReturnCount:Entity.kt:fun calculateNumStep: Int</ID>
     <ID>ReturnCount:EntityDisplay.kt:EntityDisplayWithoutContext.Companion$private fun Entity.fanControls: FanControls?</ID>
     <ID>ReturnCount:NetworkCapabilitiesChecker.kt:NetworkCapabilitiesChecker$private fun fallbackHasTransport: Boolean</ID>
-    <ID>ReturnCount:NotificationFunctions.kt:@RequiresApi(Build.VERSION_CODES.N) fun handleImportance: Int</ID>
     <ID>ReturnCount:PrefsRepositoryImpl.kt:PrefsRepositoryImpl$override suspend fun wasAppUpdatedSinceChangelogSeen: Boolean</ID>
     <ID>ReturnCount:SensorRepositoryImpl.kt:SensorRepositoryImpl$override suspend fun getFull: Map&lt;Sensor, List&lt;Attribute&gt;&gt;</ID>
     <ID>ReturnCount:SensorUpdater.kt:SensorUpdater$private suspend fun loadSensorReconcilingPermission: SensorWithAttributes?</ID>

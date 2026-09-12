@@ -107,23 +107,22 @@ fun handleChannel(
     return channelID
 }
 
-@RequiresApi(Build.VERSION_CODES.N)
 fun handleImportance(data: Map<String, String>): Int {
-    when (data[NotificationData.IMPORTANCE]) {
+    return when (data[NotificationData.IMPORTANCE]) {
         "high" -> {
-            return NotificationManager.IMPORTANCE_HIGH
+            NotificationManager.IMPORTANCE_HIGH
         }
         "low" -> {
-            return NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_LOW
         }
         "max" -> {
-            return NotificationManager.IMPORTANCE_MAX
+            NotificationManager.IMPORTANCE_MAX
         }
         "min" -> {
-            return NotificationManager.IMPORTANCE_MIN
+            NotificationManager.IMPORTANCE_MIN
         }
         else -> {
-            return NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_DEFAULT
         }
     }
 }

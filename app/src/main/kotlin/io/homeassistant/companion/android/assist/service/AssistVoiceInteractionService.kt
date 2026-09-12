@@ -263,12 +263,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun stopForegroundCompat() {
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
+        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
     private fun launchAssist(wakeWord: String? = null) {

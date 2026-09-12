@@ -230,17 +230,15 @@ class SettingsFragment(
                 }
             }
 
-            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                findPreference<PreferenceCategory>("quick_settings")?.let {
-                    it.isVisible = true
+            findPreference<PreferenceCategory>("quick_settings")?.let {
+                it.isVisible = true
+            }
+            findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(R.id.content, ManageTilesFragment::class.java, null)
+                    addToBackStack(getString(commonR.string.tiles))
                 }
-                findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
-                    parentFragmentManager.commit {
-                        replace(R.id.content, ManageTilesFragment::class.java, null)
-                        addToBackStack(getString(commonR.string.tiles))
-                    }
-                    return@setOnPreferenceClickListener true
-                }
+                return@setOnPreferenceClickListener true
             }
 
             if (!isAutomotive && SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
