@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.widgets.todo
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -28,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timoptr.mdiicons.Mdi
@@ -41,6 +43,7 @@ import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -207,21 +210,32 @@ private fun ServerSelector(
 
 @Composable
 private fun ShowCompletedRow(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    // Shared with the switch so presses anywhere on the row drive its press animation.
+    val interactionSource = remember { MutableInteractionSource() }
     Row(
         modifier = Modifier
             .formControlWidth()
-            .clickable(role = Role.Switch) { onCheckedChange(!checked) },
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+                indication = null,
+                interactionSource = interactionSource,
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(
             text = stringResource(commonR.string.widget_todo_show_completed),
             style = HATextStyle.Body,
+            color = LocalHAColorScheme.current.colorTextPrimary,
+            textAlign = TextAlign.Start,
             modifier = Modifier.weight(1f),
         )
         HASwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            interactionSource = interactionSource,
         )
     }
 }

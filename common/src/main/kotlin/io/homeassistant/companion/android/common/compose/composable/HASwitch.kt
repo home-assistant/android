@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.common.compose.composable
 
+import androidx.compose.foundation.interaction.Interaction
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchColors
 import androidx.compose.runtime.Composable
@@ -18,19 +20,25 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
  * @param modifier the [Modifier] to be applied to this switch
  * @param enabled controls the enabled state of this switch. When `false`, this component will not be
  * interactable, and it will appear visually disabled and disabled to accessibility services.
+ * @param interactionSource an optional hoisted [MutableInteractionSource] for observing and
+ *   emitting [Interaction]s for this switch. You can use this to change the switch's appearance
+ *   or preview the switch in different states. Note that if `null` is provided, interactions will
+ *   still happen internally.
  */
 @Composable
 fun HASwitch(
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
+    onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     Switch(
         checked = checked,
         onCheckedChange = onCheckedChange,
         colors = switchColors(),
         enabled = enabled,
+        interactionSource = interactionSource,
         modifier = modifier,
     )
 }
