@@ -139,17 +139,9 @@ private fun ColumnScope.ConfiguringDeviceSection(
             .padding(vertical = HADimens.SPACE4),
     )
     ImprovWifiInput(
-        activeSsid = state.activeSsid.takeIfDisplayable(),
+        activeSsid = state.activeSsid?.takeIf { it.isNotBlank() },
         onSubmit = onConnect,
     )
-}
-
-/**
- * Returns the SSID if it's safe to prefill into the credentials form. Filters out `null`, blank, or dummy
- * values when the app lacks the location permission.
- */
-private fun String?.takeIfDisplayable(): String? = takeIf {
-    !it.isNullOrBlank()
 }
 
 @Composable
