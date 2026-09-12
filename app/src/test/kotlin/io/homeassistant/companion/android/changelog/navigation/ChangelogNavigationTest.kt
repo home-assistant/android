@@ -87,7 +87,7 @@ internal class ChangelogNavigationTest {
                 startDestination = FrontendRoute(FrontendTarget.Default),
             ) {
                 composable<FrontendRoute> { Text(FRONTEND_FAKE_CONTENT) }
-                changelogScreen(navController, onOpenUrl = {})
+                changelogScreen(navController, onShowSnackbar = { _, _ -> true })
             }
 
             ChangelogAutoShowEffect(navController)
