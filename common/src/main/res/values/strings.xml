@@ -3,6 +3,8 @@
     <string name="aa_launch_native">Native mode</string>
     <string name="aa_driving_optimized_change">Use Home Assistant in drive mode?</string>
     <string name="aa_navigation">Navigation</string>
+    <string name="aa_connection_error_title">Unable to connect</string>
+    <string name="aa_connection_error_message">Home Assistant can\'t be reached. Check your network connection and that the server is running.</string>
     <string name="aa_no_entities_with_locations">No entities with locations found</string>
     <string name="aa_change_server">Change server</string>
     <string name="account">Account</string>
