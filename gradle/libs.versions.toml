@@ -36,7 +36,7 @@ constraintlayout = "2.2.2"
 coreKtx = "1.19.0"
 core-splashscreen = "1.2.0"
 core-remoteviews = "1.1.0"
-cronet = "143.7445.0"
+cronet = "500.0.2"
 detekt = "2.0.0-alpha.6"
 emojiJava = "5.1.1"
 firebase-bom = "34.18.0"
@@ -184,8 +184,8 @@ compose-ui-testManifest = { group = "androidx.compose.ui", name = "ui-test-manif
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 core-remoteviews = { module = "androidx.core:core-remoteviews", version.ref = "core-remoteviews" }
-cronet-api = { module = "org.chromium.net:cronet-api", version.ref = "cronet" }
-cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet" }
+cronet = { module = "org.chromium.net:cronet", version.ref = "cronet" }
+cronet-bundled = { module = "org.chromium.net:cronet-bundled", version.ref = "cronet" }
 emojiJava = { module = "com.vdurmont:emoji-java", version.ref = "emojiJava" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }

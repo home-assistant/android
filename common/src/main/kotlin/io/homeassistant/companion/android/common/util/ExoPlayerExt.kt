@@ -103,7 +103,7 @@ private fun createDataSourceFactory(
         val cronetEngine = CronetUtil.buildCronetEngine(context, null, true)
 
         if (cronetEngine != null) {
-            Timber.i("Using CronetDataSource for media")
+            Timber.i("Using CronetDataSource for media, engine=${cronetEngine.versionString}")
             // assumed to be singleton scoped, so app lifetime for executor
             val singleThreadExecutor = Executors.newSingleThreadExecutor()
             val timeout = DATA_SOURCE_TIMEOUT.inWholeMilliseconds.toInt()
