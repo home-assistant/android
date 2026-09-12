@@ -13,6 +13,9 @@ enum class SensorSettingType(val string: String, val listType: Boolean = false) 
     LIST_BLUETOOTH("list-bluetooth", listType = true),
     LIST_ZONES("list-zones", listType = true),
     LIST_BEACONS("list-beacons", listType = true),
+    ;
+
+    fun isMultiSelect(): Boolean = listType && this != LIST
 }
 
 @Entity(tableName = "sensor_settings", primaryKeys = ["sensor_id", "name"])

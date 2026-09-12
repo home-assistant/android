@@ -59,8 +59,7 @@
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$private suspend fun handleDeviceCommands</ID>
     <ID>CyclomaticComplexMethod:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$private suspend fun mappedBundle: Map&lt;String, Any?&gt;?</ID>
     <ID>CyclomaticComplexMethod:OnSwipeListener.kt:OnSwipeListener$override fun onTouch: Boolean</ID>
-    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@Composable fun SensorDetailSettingDialog</ID>
-    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@Composable fun SensorDetailView</ID>
+    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SensorDetailView</ID>
     <ID>CyclomaticComplexMethod:SensorDetailViewModel.kt:SensorDetailViewModel$suspend fun getSettingEntries: List&lt;String&gt;</ID>
     <ID>CyclomaticComplexMethod:ServerSettingsFragment.kt:ServerSettingsFragment$@Deprecated("Deprecated in Java") override fun onCreatePreferences</ID>
     <ID>CyclomaticComplexMethod:SettingsActivity.kt:SettingsActivity$override fun onCreate</ID>
@@ -123,6 +122,8 @@
     <ID>InjectDispatcher:MicroWakeWordModelConfig.kt:MicroWakeWordModelConfig.Companion$IO</ID>
     <ID>InjectDispatcher:NotificationActionReceiver.kt:NotificationActionReceiver$IO</ID>
     <ID>InjectDispatcher:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$Default</ID>
+    <ID>InjectDispatcher:SensorDetailSettingSheet.kt:Default</ID>
+    <ID>InjectDispatcher:SensorDetailViewModel.kt:SensorDetailViewModel$Default</ID>
     <ID>InjectDispatcher:SensorSettingsViewModel.kt:SensorSettingsViewModel$IO</ID>
     <ID>InjectDispatcher:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$IO</ID>
     <ID>InjectDispatcher:SettingsPresenterImpl.kt:SettingsPresenterImpl$IO</ID>
@@ -198,9 +199,8 @@
     <ID>LongMethod:OnboardingNavigation.kt:internal fun NavGraphBuilder.onboarding</ID>
     <ID>LongMethod:OnboardingNavigation.kt:private fun NavGraphBuilder.commonScreens</ID>
     <ID>LongMethod:SensorDetailFragment.kt:SensorDetailFragment$@SuppressLint("InlinedApi") override fun onViewCreated</ID>
-    <ID>LongMethod:SensorDetailView.kt:@Composable fun SensorDetailSettingDialog</ID>
     <ID>LongMethod:SensorDetailView.kt:@Composable fun SensorDetailTopPanel</ID>
-    <ID>LongMethod:SensorDetailView.kt:@Composable fun SensorDetailView</ID>
+    <ID>LongMethod:SensorDetailView.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SensorDetailView</ID>
     <ID>LongMethod:ServerSettingsFragment.kt:ServerSettingsFragment$@Deprecated("Deprecated in Java") override fun onCreatePreferences</ID>
     <ID>LongMethod:SettingsActivity.kt:SettingsActivity$override fun onCreate</ID>
     <ID>LongMethod:SettingsFragment.kt:SettingsFragment$override fun onCreatePreferences</ID>

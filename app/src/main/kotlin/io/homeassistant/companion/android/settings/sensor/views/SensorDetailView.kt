@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,11 +22,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Card
-import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
@@ -42,12 +43,12 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.contentColorFor
 import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -60,6 +61,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -72,6 +74,9 @@ import io.github.timoptr.mdiicons.generated.ClockFast
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAHint
+import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -90,6 +95,7 @@ import io.homeassistant.companion.android.util.safeBottomWindowInsets
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SensorDetailView(
     viewModel: SensorDetailViewModel,
@@ -160,13 +166,26 @@ fun SensorDetailView(
                 onDismiss = { sensorUpdateTypeInfo = false },
             )
         } else {
-            viewModel.sensorSettingsDialog?.let {
-                SensorDetailSettingDialog(
-                    viewModel = viewModel,
-                    state = it,
-                    onDismiss = { viewModel.cancelSettingWithDialog() },
-                    onSubmit = { state -> onDialogSettingSubmitted(state) },
-                )
+            viewModel.sensorSettingsDialog?.let { dialogState ->
+                if (dialogState.setting.valueType.isMultiSelect()) {
+                    // TODO Drop the explicit HATheme once SensorDetailView is migrated
+                    // https://github.com/home-assistant/android/issues/6839
+                    HATheme {
+                        SensorDetailSettingSheet(
+                            title = viewModel.getSettingTranslatedTitle(dialogState.setting.name),
+                            state = dialogState,
+                            onDismiss = viewModel::cancelSettingWithDialog,
+                            onSave = onDialogSettingSubmitted,
+                        )
+                    }
+                } else {
+                    SensorDetailSettingDialog(
+                        viewModel = viewModel,
+                        state = dialogState,
+                        onDismiss = viewModel::cancelSettingWithDialog,
+                        onSubmit = onDialogSettingSubmitted,
+                    )
+                }
             }
         }
         LazyColumn(
@@ -585,16 +604,14 @@ fun SensorDetailSettingDialog(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType.listType
-    val inputValue = remember(state.loading) { mutableStateOf(state.setting.value) }
-    val checkedValue =
-        remember(state.loading) { mutableStateListOf<String>().also { it.addAll(state.entriesSelected) } }
+    val inputValue = remember(state.isLoading) { mutableStateOf(state.setting.value) }
 
     MdcAlertDialog(
         modifier = modifier,
         onDismissRequest = onDismiss,
         title = { Text(viewModel.getSettingTranslatedTitle(state.setting.name)) },
         content = {
-            if (state.loading) {
+            if (state.isLoading) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -605,28 +622,13 @@ fun SensorDetailSettingDialog(
                 }
             } else if (listSettingDialog) {
                 LazyColumn {
-                    items(state.entries, key = { (id) -> id }) { (id, entry) ->
+                    items(state.entries, key = { it.id }) { entry ->
                         SensorDetailSettingRow(
-                            label = entry,
-                            checked = if (state.setting.valueType ==
-                                SensorSettingType.LIST
-                            ) {
-                                inputValue.value == id
-                            } else {
-                                checkedValue.contains(id)
-                            },
-                            multiple = state.setting.valueType != SensorSettingType.LIST,
-                            onClick = { isChecked ->
-                                if (state.setting.valueType == SensorSettingType.LIST) {
-                                    inputValue.value = id
-                                    onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
-                                } else {
-                                    if (checkedValue.contains(id) && !isChecked) {
-                                        checkedValue.remove(id)
-                                    } else if (!checkedValue.contains(id) && isChecked) {
-                                        checkedValue.add(id)
-                                    }
-                                }
+                            entry = entry,
+                            selected = inputValue.value == entry.id,
+                            onClick = {
+                                inputValue.value = entry.id
+                                onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
                             },
                         )
                     }
@@ -650,15 +652,10 @@ fun SensorDetailSettingDialog(
             }
         },
         onCancel = onDismiss,
-        onSave = if (state.loading) {
+        onSave = if (state.isLoading) {
             null
         } else if (state.setting.valueType != SensorSettingType.LIST) {
-            {
-                if (listSettingDialog) {
-                    inputValue.value = checkedValue.joinToString().replace("[", "").replace("]", "")
-                }
-                onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value)))
-            }
+            { onSubmit(state.copy(setting = state.setting.copy(value = inputValue.value))) }
         } else { // list is saved when selecting a value
             null
         },
@@ -731,33 +728,37 @@ fun SensorDetailUpdateInfoDialog(
 }
 
 @Composable
-fun SensorDetailSettingRow(
-    label: String,
-    checked: Boolean,
-    multiple: Boolean,
-    onClick: (Boolean) -> Unit,
+internal fun SensorDetailSettingRow(
+    entry: SettingEntry,
+    selected: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
-            .clickable { onClick(!checked) }
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 12.dp)
+            .heightIn(min = 64.dp)
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (multiple) {
-            Checkbox(
-                checked = checked,
-                onCheckedChange = null,
-                modifier = Modifier.size(width = 48.dp, height = 48.dp),
+        RadioButton(
+            selected = selected,
+            onClick = null,
+            modifier = Modifier.size(width = 48.dp, height = 48.dp),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = entry.primary,
+                style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
             )
-        } else {
-            RadioButton(
-                selected = checked,
-                onClick = null,
-                modifier = Modifier.size(width = 48.dp, height = 48.dp),
-            )
+            if (entry.secondary != null) {
+                Spacer(Modifier.height(HADimens.SPACE1))
+                Text(
+                    text = entry.secondary,
+                    style = HATextStyle.BodyMedium.copy(textAlign = TextAlign.Start),
+                )
+            }
         }
-        Text(label)
     }
 }
