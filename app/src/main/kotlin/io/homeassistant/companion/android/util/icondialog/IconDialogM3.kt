@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.util.icondialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,19 +14,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import io.github.timoptr.mdiicons.MdiIcon
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import com.mikepenz.iconics.typeface.IIcon
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 @Composable
-fun IconDialogContent(
+fun IconDialogContentM3(
     modifier: Modifier = Modifier,
     iconFilter: IconFilter = DefaultIconFilter(),
-    onSelect: (MdiIcon) -> Unit,
+    onSelect: (IIcon) -> Unit,
 ) {
     var searchQuery by remember { mutableStateOf("") }
     Column(modifier = modifier) {
-        IconDialogSearch(value = searchQuery, onValueChange = { searchQuery = it })
-        IconDialogGrid(
+        IconDialogSearchM3(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+        )
+        IconDialogGridM3(
+            typeface = CommunityMaterial,
             searchQuery = searchQuery,
             iconFilter = iconFilter,
             onClick = onSelect,
@@ -34,15 +39,9 @@ fun IconDialogContent(
     }
 }
 
-@Deprecated(
-    message = "Uses Material Design 2. Use IconDialogM3 (Material Design 3) instead.",
-    replaceWith = ReplaceWith(
-        "IconDialogM3(onSelect = onSelect, onDismissRequest = onDismissRequest, modifier = modifier, iconFilter = iconFilter)",
-    ),
-)
 @Composable
-fun IconDialog(
-    onSelect: (MdiIcon) -> Unit,
+fun IconDialogM3(
+    onSelect: (IIcon) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     iconFilter: IconFilter = DefaultIconFilter(),
@@ -54,22 +53,25 @@ fun IconDialog(
                 .height(500.dp),
             shape = MaterialTheme.shapes.medium,
         ) {
-            IconDialogContent(iconFilter = iconFilter, onSelect = onSelect)
+            IconDialogContentM3(
+                iconFilter = iconFilter,
+                onSelect = onSelect,
+            )
         }
     }
 }
 
 @Preview
 @Composable
-private fun IconDialogPreview() {
-    HomeAssistantAppTheme {
+private fun IconDialogM3Preview() {
+    HAThemeForPreview {
         Surface(
             modifier = Modifier
                 .width(480.dp)
                 .height(500.dp),
             shape = MaterialTheme.shapes.medium,
         ) {
-            IconDialogContent(onSelect = {})
+            IconDialogContentM3(onSelect = {})
         }
     }
 }
