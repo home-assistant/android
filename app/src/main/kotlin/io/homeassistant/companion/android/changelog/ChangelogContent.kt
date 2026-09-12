@@ -49,6 +49,11 @@ internal val currentChangelog = Changelog(
             action = ChangelogAction.OpenWidgetConfig(WidgetType.Template),
         ),
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_todo_widgets,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenWidgetConfig(WidgetType.Todo),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_tiles,
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.QSTile()),
