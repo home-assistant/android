@@ -24,6 +24,6 @@ suspend fun EntityDisplay.tryFireNavigationEvent(integrationRepository: Integrat
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        Timber.e(e, "Unable to send '$EVENT_ANDROID_NAVIGATION_STARTED' event")
+        Timber.e(e, "Unable to send '$EVENT_ANDROID_NAVIGATION_STARTED' event for $entityId")
     }
 }
