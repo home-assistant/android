@@ -307,18 +307,15 @@ open class HomeAssistantApplication : Application() {
             }
         }
 
-        // Register for changes to the managed profile availability
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-            ContextCompat.registerReceiver(
-                this,
-                sensorReceiver,
-                IntentFilter().apply {
-                    addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE)
-                    addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)
-                },
-                ContextCompat.RECEIVER_EXPORTED,
-            )
-        }
+        ContextCompat.registerReceiver(
+            this,
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE)
+                addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)
+            },
+            ContextCompat.RECEIVER_EXPORTED,
+        )
 
         // Register for faster sensor updates if enabled
         ioScope.launch {
