@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.di
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import androidx.media3.datasource.DataSource
@@ -158,7 +159,7 @@ internal abstract class DataModule {
 
         @Provides
         @Singleton
-        fun packageManager(@ApplicationContext appContext: Context) = appContext.packageManager
+        fun packageManager(@ApplicationContext appContext: Context): PackageManager = appContext.packageManager
 
         @Provides
         @Singleton

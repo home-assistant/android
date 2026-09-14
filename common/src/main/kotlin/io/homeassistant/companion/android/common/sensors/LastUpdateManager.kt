@@ -90,8 +90,8 @@ class LastUpdateManager @Inject constructor(
         }
         if (!isSequenceContinuous) {
             // create new settings with sequential IDs:
-            val newIntentSettings = intentSettings.mapIndexed { index, it ->
-                it.copy(name = "$INTENT_SETTING_PREFIX${index + 1}:")
+            val newIntentSettings = intentSettings.mapIndexed { index, setting ->
+                setting.copy(name = "$INTENT_SETTING_PREFIX${index + 1}:")
             }
             // delete old settings from DB:
             sensorRepository.removeSettings(lastUpdate.id, intentSettings.map { it.name })

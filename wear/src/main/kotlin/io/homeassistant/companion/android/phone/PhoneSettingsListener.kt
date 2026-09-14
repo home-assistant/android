@@ -170,8 +170,6 @@ class PhoneSettingsListener :
             val url = dataMap.getString("URL", "")
             val authCode = dataMap.getString("AuthCode", "")
             val deviceName = dataMap.getString("DeviceName")
-            val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
-            val notificationsEnabled = dataMap.getBoolean("Notifications")
             val tlsClientCertificateData = dataMap.getByteArray("TLSClientCertificateData")
             val tlsClientCertificatePassword = dataMap.getString("TLSClientCertificatePassword").orEmpty().toCharArray()
 

@@ -138,14 +138,14 @@ fun SsidView(
             key = { index: Int, item: String ->
                 if (wifiSsids.count { it == item } == 1) "ssid.item.$item" else "ssid.index.$index"
             },
-        ) { _, it ->
-            val connected = remember(it, activeSsid, activeBssid, usingWifi) {
+        ) { _, ssid ->
+            val connected = remember(ssid, activeSsid, activeBssid, usingWifi) {
                 usingWifi &&
                     (
-                        it == activeSsid ||
+                        ssid == activeSsid ||
                             (
-                                it.startsWith(WifiHelper.BSSID_PREFIX) &&
-                                    it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true)
+                                ssid.startsWith(WifiHelper.BSSID_PREFIX) &&
+                                    ssid.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true)
                                 )
                         )
             }
@@ -166,13 +166,13 @@ fun SsidView(
                 }
                 Text(
                     text =
-                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) {
-                        it.removePrefix(WifiHelper.BSSID_PREFIX)
+                    if (ssid.startsWith(WifiHelper.BSSID_PREFIX)) {
+                        ssid.removePrefix(WifiHelper.BSSID_PREFIX)
                     } else {
-                        it
+                        ssid
                     },
                     fontFamily =
-                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) {
+                    if (ssid.startsWith(WifiHelper.BSSID_PREFIX)) {
                         FontFamily.Monospace
                     } else {
                         null
@@ -186,7 +186,7 @@ fun SsidView(
                     contentDescription = stringResource(commonR.string.remove_ssid),
                     tint = colorResource(commonR.color.colorWarning),
                     modifier = Modifier
-                        .clickable { onRemoveWifiSsid(it) }
+                        .clickable { onRemoveWifiSsid(ssid) }
                         .size(48.dp)
                         .padding(all = 12.dp),
                 )

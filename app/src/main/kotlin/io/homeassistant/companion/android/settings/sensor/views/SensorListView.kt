@@ -9,7 +9,6 @@ import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import io.github.timoptr.mdiicons.Mdi
 import io.homeassistant.companion.android.common.R as commonR
@@ -74,7 +73,6 @@ fun SensorRow(
     onSensorClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     var iconToUse = basicSensor.statelessIcon
     if (dbSensor?.enabled == true && dbSensor.icon.isNotBlank()) {
         iconToUse = dbSensor.icon
