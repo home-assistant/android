@@ -43,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -336,7 +335,7 @@ fun ManageControlsEntity(
             modifier = Modifier.weight(1f),
         ) {
             Text(text = entity.name, style = MaterialTheme.typography.body1)
-            entity.subtitle(LocalLayoutDirection.current)?.let {
+            entity.subtitle()?.let {
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                     Text(
                         text = it,

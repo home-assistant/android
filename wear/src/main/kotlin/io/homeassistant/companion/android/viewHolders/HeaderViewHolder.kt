@@ -7,5 +7,5 @@ import io.homeassistant.companion.android.R
 
 class HeaderViewHolder(v: View) : RecyclerView.ViewHolder(v) {
 
-    val headerTextView = v.findViewById<TextView>(R.id.headerTextView)
+    val headerTextView: TextView = v.findViewById(R.id.headerTextView)
 }

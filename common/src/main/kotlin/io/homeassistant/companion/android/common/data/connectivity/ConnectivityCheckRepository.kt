@@ -4,7 +4,8 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Repository for performing connectivity checks against a server URL.
- * Checks include DNS resolution, port reachability, TLS certificate validation, and server connection.
+ * Checks include DNS resolution, port reachability, TLS certificate validation, server connection, and
+ * Home Assistant verification.
  */
 interface ConnectivityCheckRepository {
 

@@ -276,7 +276,7 @@ data class EntityDisplayWithContext(
         ?.joinToString(entitySubtitleSeparator(layoutDirection))
         ?.takeIf { it != name }
 
-    /** The subtitle resolved against the layout direction of the current composition. */
+    /** [subtitle] resolved against the layout direction the composition is in. */
     @Composable
     @ReadOnlyComposable
     fun subtitle(): String? = subtitle(LocalLayoutDirection.current)

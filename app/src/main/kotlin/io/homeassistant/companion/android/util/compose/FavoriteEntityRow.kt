@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.timoptr.mdiicons.Mdi
@@ -75,7 +74,7 @@ fun ReorderableCollectionItemScope.FavoriteEntityRow(
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                     Text(
                         text =
-                        (entity as? EntityDisplayWithContext)?.subtitle(LocalLayoutDirection.current)
+                        (entity as? EntityDisplayWithContext)?.subtitle()
                             ?: entity.entityId,
                         style = MaterialTheme.typography.body2,
                     )
