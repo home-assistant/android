@@ -39,6 +39,7 @@ internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
     @Test
     fun `Given enter manual address when setting url and clicking connect then show ConnectScreen then back goes to ManualServer`() {
         testNavigation {
+            mockCheckPermission(true)
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(commonR.string.manual_setup))
