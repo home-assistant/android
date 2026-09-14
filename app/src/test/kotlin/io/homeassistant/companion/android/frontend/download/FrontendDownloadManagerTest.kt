@@ -19,7 +19,6 @@ import io.mockk.verify
 import java.net.URL
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import org.json.JSONObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -45,9 +44,6 @@ class FrontendDownloadManagerTest {
 
         mockkStatic(URLUtil::class)
         every { URLUtil.guessFileName(any(), any(), any()) } returns "downloaded_file"
-
-        mockkStatic(JSONObject::class)
-        every { JSONObject.quote(any()) } answers { "\"${firstArg<String>()}\"" }
 
         mockkConstructor(DownloadManager.Request::class)
         every { anyConstructed<DownloadManager.Request>().setMimeType(any()) } answers { self as DownloadManager.Request }
