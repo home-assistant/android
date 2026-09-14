@@ -27,7 +27,7 @@ appcompat = "1.8.0"
 biometric = "1.1.0"
 blurView = "version-2.0.6"
 car-versions = "1.7.0"
-classgraph = "4.8.194"
+classgraph = "4.8.195"
 cmake = "4.1.2"
 compose-bom = "2026.08.00"
 composeLintChecks = "1.6.0"
@@ -39,10 +39,10 @@ core-remoteviews = "1.1.0"
 cronet = "143.7445.0"
 detekt = "2.0.0-alpha.6"
 emojiJava = "5.1.1"
-firebase-bom = "34.18.0"
+firebase-bom = "34.19.0"
 firebaseAppdistributionGradle = "5.3.0"
 fragment-ktx = "1.9.0"
-glance = "1.1.1"
+glance = "1.2.0"
 googleServices = "4.5.0"
 guava = "33.4.6-android"
 healthServicesClient = "1.1.0-rc02"
@@ -55,12 +55,12 @@ kotlin = "2.4.20"
 kotlinpoet = "1.11.0" # is the last version that works, we can bump it once https://github.com/square/kotlinpoet/pull/2320 1.11.0 is merged
 kotlinx-coroutines = "1.11.0"
 kotlinx-serialization = "1.11.0"
-ksp = "2.3.11"
+ksp = "2.3.12"
 ktlint = "14.2.0"
 leakcanaryAndroid = "2.14"
 lifecycle = "2.11.0"
 material = "1.14.0"
-mdi-icons = "0.1.0"
+mdi-icons = "0.2.0"
 media = "1.8.0"
 media3 = "1.11.0"
 mockk = "1.14.11"
@@ -77,12 +77,12 @@ protobuf-javalite = "4.36.1"
 recyclerview = "1.4.0"
 reorderable = "3.1.0"
 retrofit-bom = "3.0.0"
-robolectric = "4.16.1" # Check if robolectric supports a more recent version of the SDK on each update
-robolectric-target-sdk = "36"
-room = "2.8.4"
+robolectric = "4.17" # Check if robolectric supports a more recent version of the SDK on each update
+robolectric-target-sdk = "37"
+room = "2.8.5"
 runtimeLint = "1.12.0"
 screenshot = "0.0.1-alpha15" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
-sentry-android = "8.55.0"
+sentry-android = "8.56.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
@@ -176,8 +176,6 @@ compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "composeLintChecks" }
 compose-material = { module = "androidx.compose.material:material" }
 compose-material3 = { module = "androidx.compose.material3:material3-android" }
-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 compose-runtime = { module = "androidx.compose.runtime:runtime" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }

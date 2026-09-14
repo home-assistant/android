@@ -40,6 +40,7 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
@@ -1677,10 +1678,16 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_IMMUTABLE,
                         )
+                        // Intentionally use no icon if the action is first/second, so Android Auto heads-up
+                        // notifications show the action title instead of replacing it with an icon. However, the
+                        // third action MUST have an icon to avoid crashing the Android Auto app.
+                        val actionIcon = if (i == 3) {
+                            IconCompat.createWithResource(context, commonR.drawable.ic_stat_ic_notification)
+                        } else {
+                            null
+                        }
                         val action = NotificationCompat.Action.Builder(
-                            // Intentionally use no icon so Android Auto / heads-up notifications show the action
-                            // title instead of replacing it with an icon
-                            null,
+                            actionIcon,
                             notificationAction.title,
                             actionPendingIntent,
                         )

@@ -378,7 +378,6 @@ fun SensorDetailTopPanel(
     onSetEnabled: (Boolean, Int?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     val sensor = dbSensor.map { it.sensor }.maxByOrNull { it.enabled }
 
     Surface(

@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.CameraControls
@@ -272,4 +275,9 @@ data class EntityDisplayWithContext(
         .takeIf { it.isNotEmpty() }
         ?.joinToString(if (layoutDirection == LayoutDirection.Ltr) " ▸ " else " ◂ ")
         ?.takeIf { it != name }
+
+    /** [subtitle] resolved against the layout direction the composition is in. */
+    @Composable
+    @ReadOnlyComposable
+    fun subtitle(): String? = subtitle(LocalLayoutDirection.current)
 }

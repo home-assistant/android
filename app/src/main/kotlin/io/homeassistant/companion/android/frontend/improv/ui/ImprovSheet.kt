@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.frontend.improv.ui
 
-import android.net.wifi.WifiManager
-import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,9 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -40,6 +35,8 @@ import com.wifi.improv.ErrorState
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.github.timoptr.mdiicons.generated.Alert
+import io.github.timoptr.mdiicons.generated.Eye
+import io.github.timoptr.mdiicons.generated.EyeOff
 import io.github.timoptr.mdiicons.generated.WifiCheck
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
@@ -50,7 +47,6 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 
 /**
@@ -143,17 +139,9 @@ private fun ColumnScope.ConfiguringDeviceSection(
             .padding(vertical = HADimens.SPACE4),
     )
     ImprovWifiInput(
-        activeSsid = state.activeSsid.takeIfDisplayable(),
+        activeSsid = state.activeSsid?.takeIf { it.isNotBlank() },
         onSubmit = onConnect,
     )
-}
-
-/**
- * Returns the SSID if it's safe to prefill into the credentials form. Filters out `null`, blank, or dummy
- * values when the app lacks the location permission.
- */
-private fun String?.takeIfDisplayable(): String? = takeIf {
-    !it.isNullOrBlank() && (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || it !== WifiManager.UNKNOWN_SSID)
 }
 
 @Composable
@@ -217,7 +205,7 @@ private fun ImprovWifiInput(activeSsid: String?, onSubmit: (String, String) -> U
                 },
             ),
             trailingIcon = {
-                val image = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                val image = if (passwordVisible) Mdi.Eye.rememberImageVector() else Mdi.EyeOff.rememberImageVector()
                 val description = stringResource(
                     if (passwordVisible) commonR.string.hide_password else commonR.string.view_password,
                 )

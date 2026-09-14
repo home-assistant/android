@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -32,6 +30,7 @@ import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Check
 import io.github.timoptr.mdiicons.generated.TimerCog
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as R
@@ -96,7 +95,7 @@ fun RefreshIntervalPickerView(currentInterval: Int, onSelectInterval: (Int) -> U
             modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
         ) {
             Icon(
-                Icons.Filled.Check,
+                Mdi.Check.rememberImageVector(),
                 contentDescription = stringResource(id = R.string.save),
                 modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.SmallButtonSize)),
             )
