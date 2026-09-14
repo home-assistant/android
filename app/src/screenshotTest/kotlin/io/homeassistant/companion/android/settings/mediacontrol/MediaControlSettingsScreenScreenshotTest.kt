@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.settings.mediacontrol
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.android.tools.screenshot.PreviewTest
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.Speaker
@@ -51,12 +54,15 @@ class MediaControlSettingsScreenScreenshotTest {
     @Composable
     fun `Media control settings is loading`() {
         HAThemeForPreview {
-            MediaControlSettingsContent(
-                uiState = MediaControlSettingsUiState(isLoading = true),
-                onServerSelected = {},
-                onEntitySelected = {},
-                onRemoveEntity = {},
-            )
+            Scaffold {
+                MediaControlSettingsContent(
+                    uiState = MediaControlSettingsUiState(isLoading = true),
+                    onServerSelected = {},
+                    onEntitySelected = {},
+                    onRemoveEntity = {},
+                    modifier = Modifier.padding(it),
+                )
+            }
         }
     }
 
@@ -65,12 +71,15 @@ class MediaControlSettingsScreenScreenshotTest {
     @Composable
     fun `Media control settings empty`() {
         HAThemeForPreview {
-            MediaControlSettingsContent(
-                uiState = MediaControlSettingsUiState(isLoading = false),
-                onServerSelected = {},
-                onEntitySelected = {},
-                onRemoveEntity = {},
-            )
+            Scaffold {
+                MediaControlSettingsContent(
+                    uiState = MediaControlSettingsUiState(isLoading = false),
+                    onServerSelected = {},
+                    onEntitySelected = {},
+                    onRemoveEntity = {},
+                    modifier = Modifier.padding(it),
+                )
+            }
         }
     }
 
@@ -80,16 +89,19 @@ class MediaControlSettingsScreenScreenshotTest {
     @Composable
     fun `Media control settings with configured entities`() {
         HAThemeForPreview {
-            MediaControlSettingsContent(
-                uiState = MediaControlSettingsUiState(
-                    isLoading = false,
-                    mediaControlEntityConfigs = listOf(livingRoomConfig, kitchenConfig),
-                    entityDisplayStatePerServer = mapOf(SERVER_ID to displayState),
-                ),
-                onServerSelected = {},
-                onEntitySelected = {},
-                onRemoveEntity = {},
-            )
+            Scaffold {
+                MediaControlSettingsContent(
+                    uiState = MediaControlSettingsUiState(
+                        isLoading = false,
+                        mediaControlEntityConfigs = listOf(livingRoomConfig, kitchenConfig),
+                        entityDisplayStatePerServer = mapOf(SERVER_ID to displayState),
+                    ),
+                    onServerSelected = {},
+                    onEntitySelected = {},
+                    onRemoveEntity = {},
+                    modifier = Modifier.padding(it),
+                )
+            }
         }
     }
 
@@ -102,21 +114,24 @@ class MediaControlSettingsScreenScreenshotTest {
     @Composable
     fun `Media control settings with multiple servers`() {
         HAThemeForPreview {
-            MediaControlSettingsContent(
-                uiState = MediaControlSettingsUiState(
-                    isLoading = false,
-                    serversDropdownItems = listOf(
-                        HADropdownItem(key = SERVER_ID, label = "Home"),
-                        HADropdownItem(key = OTHER_SERVER_ID, label = "Office"),
+            Scaffold {
+                MediaControlSettingsContent(
+                    uiState = MediaControlSettingsUiState(
+                        isLoading = false,
+                        serversDropdownItems = listOf(
+                            HADropdownItem(key = SERVER_ID, label = "Home"),
+                            HADropdownItem(key = OTHER_SERVER_ID, label = "Office"),
+                        ),
+                        selectedServerId = SERVER_ID,
+                        mediaControlEntityConfigs = listOf(livingRoomConfig, kitchenConfig, officeConfig),
+                        entityDisplayStatePerServer = mapOf(SERVER_ID to displayState),
                     ),
-                    selectedServerId = SERVER_ID,
-                    mediaControlEntityConfigs = listOf(livingRoomConfig, kitchenConfig, officeConfig),
-                    entityDisplayStatePerServer = mapOf(SERVER_ID to displayState),
-                ),
-                onServerSelected = {},
-                onEntitySelected = {},
-                onRemoveEntity = {},
-            )
+                    onServerSelected = {},
+                    onEntitySelected = {},
+                    onRemoveEntity = {},
+                    modifier = Modifier.padding(it),
+                )
+            }
         }
     }
 }
