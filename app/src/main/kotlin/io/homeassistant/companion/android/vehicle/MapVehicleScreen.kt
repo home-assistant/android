@@ -26,7 +26,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
-import kotlinx.coroutines.CancellationException
+import io.homeassistant.companion.android.util.vehicle.tryFireNavigationEvent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -103,18 +103,7 @@ class MapVehicleScreen(
                         .setOnClickListener {
                             Timber.i("${pair.first.entityId} clicked")
                             lifecycleScope.launch {
-                                try {
-                                    integrationRepositoryProvider().fireEvent(
-                                        "android.navigation_started",
-                                        mapOf(
-                                            "entity_id" to pair.first.entityId,
-                                        ),
-                                    )
-                                } catch (e: CancellationException) {
-                                    throw e
-                                } catch (e: Exception) {
-                                    Timber.e(e, "Unable to send navigation started event")
-                                }
+                                pair.first.tryFireNavigationEvent(integrationRepositoryProvider())
                             }
                             val intent = Intent(
                                 CarContext.ACTION_NAVIGATE,
