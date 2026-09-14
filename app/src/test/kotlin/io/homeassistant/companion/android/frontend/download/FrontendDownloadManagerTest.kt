@@ -90,8 +90,25 @@ class FrontendDownloadManagerTest {
 
             assertEquals(DownloadResult.Forwarded, result)
             coVerify { externalBusRepository.evaluateScript(any()) }
-            assertTrue(scriptSlot.captured.contains("type:'handleBlob',data:reader.result"))
-            assertTrue(scriptSlot.captured.contains("fetch("))
+            assertTrue(scriptSlot.captured.contains("""fetch("blob:https://example.com/abc-123")"""))
+            assertTrue(scriptSlot.captured.contains("""{type:'handleBlob',data:reader.result,filename:"downloaded_file"}"""))
+        }
+
+        @Test
+        fun `Given blob URL and filename with quotes backslashes and newlines when downloadFile called then script contains escaped literals`() = runTest {
+            val scriptSlot = slot<String>()
+            coEvery { externalBusRepository.evaluateScript(capture(scriptSlot)) } returns null
+            every { URLUtil.guessFileName(any(), any(), any()) } returns "re\"port\\name\n.pdf"
+
+            manager.downloadFile(
+                url = "blob:https://example.com/a\"b\\c\nd",
+                contentDisposition = "",
+                mimetype = "application/pdf",
+                serverId = 1,
+            )
+
+            assertTrue(scriptSlot.captured.contains("""fetch("blob:https://example.com/a\"b\\c\nd")"""))
+            assertTrue(scriptSlot.captured.contains("""filename:"re\"port\\name\n.pdf"}"""))
         }
     }
 
