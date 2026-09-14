@@ -85,7 +85,6 @@
     <ID>EmptyFunctionBlock:FakePlayer.kt:FakePlayer${}</ID>
     <ID>EmptyFunctionBlock:FrontendJsBridge.kt:FrontendJsBridge.Companion.&lt;no name provided&gt;${}</ID>
     <ID>EmptyFunctionBlock:LogFragment.kt:LogFragment.&lt;no name provided&gt;${}</ID>
-    <ID>ExplicitItLambdaMultipleParameters:SsidView.kt:{ _, it -&gt; val connected = remember(it, activeSsid, activeBssid, usingWifi) { usingWifi &amp;&amp; ( it == activeSsid || ( it.startsWith(WifiHelper.BSSID_PREFIX) &amp;&amp; it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true) ) ) } Row( modifier = Modifier .heightIn(min = 48.dp) .padding(horizontal = 16.dp) .animateItem(), verticalAlignment = Alignment.CenterVertically, ) { if (connected) { Image( imageVector = Mdi.WifiCheck.rememberImageVector(), contentDescription = null, colorFilter = ColorFilter.tint(colorResource(commonR.color.colorAccent)), ) Spacer(Modifier.width(16.dp)) } Text( text = if (it.startsWith(WifiHelper.BSSID_PREFIX)) { it.removePrefix(WifiHelper.BSSID_PREFIX) } else { it }, fontFamily = if (it.startsWith(WifiHelper.BSSID_PREFIX)) { FontFamily.Monospace } else { null }, modifier = Modifier .padding(end = 16.dp) .weight(1f), ) Icon( imageVector = Mdi.Close.rememberImageVector(), contentDescription = stringResource(commonR.string.remove_ssid), tint = colorResource(commonR.color.colorWarning), modifier = Modifier .clickable { onRemoveWifiSsid(it) } .size(48.dp) .padding(all = 12.dp), ) } }</ID>
     <ID>FunctionOnlyReturningConstant:ApplicationModule.kt:ApplicationModule$@Provides @Singleton @PushWebsocketSupport fun providesPushWebsocketSupport: Boolean</ID>
     <ID>ImplicitDefaultLocale:ContextExtensions.kt:String.format("#%06X", 0xFFFFFF and color)</ID>
     <ID>ImplicitDefaultLocale:HighAccuracyLocationService.kt:HighAccuracyLocationService.Companion$String.format("%8.5f", latitude)</ID>
@@ -551,8 +550,6 @@
     <ID>UnusedPrivateProperty:SensorDetailViewModel.kt:SensorDetailViewModel$private val managers: Set&lt;@JvmSuppressWildcards SensorManager&gt;</ID>
     <ID>UnusedPrivateProperty:SettingsPresenterImpl.kt:SettingsPresenterImpl$private val settingsDao: SettingsDao</ID>
     <ID>UnusedPrivateProperty:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$private val entitiesForDisplayManager: EntitiesForDisplayManager</ID>
-    <ID>UnusedVariable:SensorDetailView.kt:val context = LocalContext.current</ID>
-    <ID>UnusedVariable:SensorListView.kt:val context = LocalContext.current</ID>
     <ID>UseCheckOrError:AssistVoiceInteractionService.kt:AssistVoiceInteractionService$throw IllegalStateException("No wake word models found in assets")</ID>
     <ID>UseCheckOrError:CameraWidget.kt:CameraWidget$throw IllegalStateException("No URL available to retrieve picture")</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$server?.friendlyName ?: ""</ID>
