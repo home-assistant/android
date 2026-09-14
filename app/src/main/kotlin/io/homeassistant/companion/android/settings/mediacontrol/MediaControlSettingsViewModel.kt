@@ -138,9 +138,7 @@ class MediaControlSettingsViewModel @Inject constructor(
             }
 
             val config = MediaControlEntityConfig(serverId = serverId, entityId = entityId)
-            if (config !in state.mediaControlEntityConfigs) {
-                mediaControlRepository.setConfiguredEntities(state.mediaControlEntityConfigs + config)
-            }
+            mediaControlRepository.addConfiguredEntity(config)
         }
     }
 
@@ -150,8 +148,7 @@ class MediaControlSettingsViewModel @Inject constructor(
      */
     fun removeEntity(selectedEntity: MediaControlSelectedEntity) {
         viewModelScope.launch {
-            val newConfigs = _uiState.value.mediaControlEntityConfigs.filterNot { it == selectedEntity.config }
-            mediaControlRepository.setConfiguredEntities(newConfigs)
+            mediaControlRepository.removeConfiguredEntity(selectedEntity.config)
         }
     }
 

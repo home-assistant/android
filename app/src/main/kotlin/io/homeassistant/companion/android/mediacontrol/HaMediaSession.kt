@@ -25,12 +25,14 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.integration.MediaRepeatMode
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.CHANNEL_MEDIA_SESSION
@@ -52,6 +54,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -59,7 +63,7 @@ import timber.log.Timber
 /**
  * Owns the [MediaSession] and [HaRemoteMediaPlayer] for a single Home Assistant media_player entity.
  *
- * Observes [MediaControlRepository] for entity state changes, loads artwork via Coil, and
+ * Observes [EntitiesForDisplayManager] for entity state changes, loads artwork via Coil, and
  * translates Media3 player commands into Home Assistant service calls via [ServerManager].
  *
  * Call [observe] to start the session. The session and its Media3 resources are created when
@@ -67,14 +71,14 @@ import timber.log.Timber
  *
  * @param context Application context used for Coil image loading and [MediaSession] construction.
  * @param config Identifies the media_player entity this session represents.
- * @param mediaControlRepository Provides the per-entity state flow.
+ * @param entitiesForDisplayManager Resolves and follows the state of the entity.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
  */
 @OptIn(UnstableApi::class, ExperimentalTime::class)
 class HaMediaSession @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     @Assisted private val config: MediaControlEntityConfig,
-    private val mediaControlRepository: MediaControlRepository,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     private val serverManager: ServerManager,
     private val clock: Clock,
 ) {
@@ -231,9 +235,9 @@ class HaMediaSession @AssistedInject constructor(
 
         override fun onRepeatRequested(repeatMode: MediaRepeatMode): Job {
             val haRepeatValue = when (repeatMode) {
-                is MediaRepeatMode.Off -> "off"
-                is MediaRepeatMode.One -> "one"
-                is MediaRepeatMode.All -> "all"
+                is MediaRepeatMode.Off -> MEDIA_PLAYER_REPEAT_OFF
+                is MediaRepeatMode.One -> EntityExt.MEDIA_PLAYER_REPEAT_ONE
+                is MediaRepeatMode.All -> EntityExt.MEDIA_PLAYER_REPEAT_ALL
             }
             return scope.launch {
                 callMediaAction(
@@ -299,54 +303,61 @@ class HaMediaSession @AssistedInject constructor(
     private suspend fun startObservingState(player: HaRemoteMediaPlayer) {
         Timber.d("startObservingState: starting for ${config.entityId}")
         var artworkCache = ArtworkCache()
-        mediaControlRepository.observeEntityState(config).collectLatest { state ->
-            if (state == null) {
-                Timber.d("startObservingState: received null state for ${config.entityId}, skipping update")
-                return@collectLatest
-            }
-            Timber.d("startObservingState: received state for ${config.entityId}, playbackState=${state.playbackState}")
-            if (state.playbackState is MediaPlaybackState.Off) {
-                // Entity is off: reset the player to idle (no playlist, no commands) so Media3
-                // does not create a notification for this session. A notification for an idle
-                // session with no content would replace the foreground notification of any
-                // currently-playing session (e.g. another configured entity), hiding its control.
-                artworkCache = ArtworkCache()
-                withContext(Dispatchers.Main) {
-                    notificationArtwork = null
-                    notificationEntityName = null
-                    player.updateState(state = null, artworkBytes = null)
+        // Emits null while the entity cannot be resolved, and completes when it can no longer be
+        // followed, which ends the session
+        entitiesForDisplayManager.observe(config.serverId, listOf(config.entityId))
+            .map { (it as? EntityDisplayState.Loaded)?.entity(config.entityId) }
+            .distinctUntilChanged()
+            .collectLatest { state ->
+                if (state == null) {
+                    Timber.d("startObservingState: received null state for ${config.entityId}, skipping update")
+                    return@collectLatest
                 }
-                return@collectLatest
-            }
-
-            // Push metadata and playback state immediately, keeping old artwork bytes in the
-            // player until new artwork finishes loading — avoids a blank gap when the URL
-            // changes (HA sends multiple updates per track change with different cache= params).
-            withContext(Dispatchers.Main) {
-                notificationEntityName = state.entityFriendlyName
-                player.updateState(state = state, artworkBytes = artworkCache.bytes)
-            }
-
-            when {
-                state.entityPictureUrl == null -> {
+                Timber.d(
+                    "startObservingState: received state for ${config.entityId}, playback=${state.mediaPlayback?.state}",
+                )
+                if (state.mediaPlayback?.state is MediaPlaybackState.Off) {
+                    // Entity is off: reset the player to idle (no playlist, no commands) so Media3
+                    // does not create a notification for this session. A notification for an idle
+                    // session with no content would replace the foreground notification of any
+                    // currently-playing session (e.g. another configured entity), hiding its control.
                     artworkCache = ArtworkCache()
                     withContext(Dispatchers.Main) {
                         notificationArtwork = null
-                        player.updateState(state = state, artworkBytes = null)
+                        notificationEntityName = null
+                        player.updateState(state = null, artworkBytes = null)
                     }
+                    return@collectLatest
                 }
 
-                state.entityPictureUrl != artworkCache.url -> {
-                    artworkCache = loadArtwork(state)
-                    withContext(Dispatchers.Main) {
-                        notificationArtwork = artworkCache.bitmap
-                        player.updateState(state = state, artworkBytes = artworkCache.bytes)
-                    }
+                // Push metadata and playback state immediately, keeping old artwork bytes in the
+                // player until new artwork finishes loading — avoids a blank gap when the URL
+                // changes (HA sends multiple updates per track change with different cache= params).
+                withContext(Dispatchers.Main) {
+                    notificationEntityName = state.name
+                    player.updateState(state = state, artworkBytes = artworkCache.bytes)
                 }
 
-                else -> Unit
+                when {
+                    state.mediaPlayback?.entityPicturePath == null -> {
+                        artworkCache = ArtworkCache()
+                        withContext(Dispatchers.Main) {
+                            notificationArtwork = null
+                            player.updateState(state = state, artworkBytes = null)
+                        }
+                    }
+
+                    state.mediaPlayback?.entityPicturePath != artworkCache.url -> {
+                        artworkCache = loadArtwork(state)
+                        withContext(Dispatchers.Main) {
+                            notificationArtwork = artworkCache.bitmap
+                            player.updateState(state = state, artworkBytes = artworkCache.bytes)
+                        }
+                    }
+
+                    else -> Unit
+                }
             }
-        }
         Timber.d("startObservingState: flow collection ended for ${config.entityId}")
     }
 
@@ -397,28 +408,28 @@ class HaMediaSession @AssistedInject constructor(
      * Resolves and loads artwork for [state], returning an [ArtworkCache] for the result.
      * Returns an empty [ArtworkCache] if the URL cannot be resolved or the load fails.
      */
-    private suspend fun loadArtwork(state: MediaControlState): ArtworkCache {
+    private suspend fun loadArtwork(state: EntityDisplayWithoutContext): ArtworkCache {
         val url = resolveArtworkUrl(state) ?: return ArtworkCache()
         val (bytes, bitmap) = loadArtworkData(url) ?: return ArtworkCache()
-        return ArtworkCache(url = state.entityPictureUrl, bytes = bytes, bitmap = bitmap)
+        return ArtworkCache(url = state.mediaPlayback?.entityPicturePath, bytes = bytes, bitmap = bitmap)
     }
 
-    private suspend fun resolveArtworkUrl(state: MediaControlState): String? {
-        val entityPictureUrl = state.entityPictureUrl ?: return null
-        if (entityPictureUrl.startsWith("http")) return entityPictureUrl
+    private suspend fun resolveArtworkUrl(state: EntityDisplayWithoutContext): String? {
+        val entityPicturePath = state.mediaPlayback?.entityPicturePath ?: return null
+        if (entityPicturePath.startsWith(HTTP_SCHEME_PREFIX)) return entityPicturePath
 
         val baseUrl = try {
-            serverManager.connectionStateProvider(state.serverId)
+            serverManager.connectionStateProvider(config.serverId)
                 .urlFlow()
                 .firstUrlOrNull()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Failed to resolve artwork base URL for server ${state.serverId}")
+            Timber.e(e, "Failed to resolve artwork base URL for server ${config.serverId}")
             null
         } ?: return null
 
-        return URL(baseUrl, entityPictureUrl).toString()
+        return URL(baseUrl, entityPicturePath).toString()
     }
 
     /**
@@ -490,6 +501,12 @@ class HaMediaSession @AssistedInject constructor(
     private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null, val bitmap: Bitmap? = null)
 
     companion object {
+        /** The `repeat` value Home Assistant uses for no repeat; the others come from [EntityExt]. */
+        private const val MEDIA_PLAYER_REPEAT_OFF = "off"
+
+        /** Artwork paths already carrying a scheme are absolute and need no base URL. */
+        private const val HTTP_SCHEME_PREFIX = "http"
+
         private const val ACTION_MEDIA_PLAY = "media_play"
         private const val ACTION_MEDIA_PAUSE = "media_pause"
         private const val ACTION_MEDIA_STOP = "media_stop"

@@ -64,8 +64,13 @@ class MediaControlSettingsViewModelTest {
         coEvery { serverManager.integrationRepository(any()) } returns mockk(relaxed = true)
         coEvery { serverManager.webSocketRepository(any()) } returns mockk(relaxed = true)
         coEvery { mediaControlRepository.observeConfiguredEntities() } returns configuredEntitiesFlow
-        coEvery { mediaControlRepository.setConfiguredEntities(any()) } coAnswers {
-            configuredEntitiesFlow.value = firstArg()
+        coEvery { mediaControlRepository.addConfiguredEntity(any()) } coAnswers {
+            // The (server_id, entity_id) primary key makes a repeated insert a replace
+            val config = firstArg<MediaControlEntityConfig>()
+            configuredEntitiesFlow.value = configuredEntitiesFlow.value - config + config
+        }
+        coEvery { mediaControlRepository.removeConfiguredEntity(any()) } coAnswers {
+            configuredEntitiesFlow.value = configuredEntitiesFlow.value - firstArg<MediaControlEntityConfig>()
         }
         every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns flowOf(
             EntityDisplayState.Loading,
@@ -254,8 +259,8 @@ class MediaControlSettingsViewModelTest {
                 advanceUntilIdle()
 
                 coVerify {
-                    mediaControlRepository.setConfiguredEntities(
-                        match { it.size == 1 && it[0].entityId == "media_player.living_room" },
+                    mediaControlRepository.addConfiguredEntity(
+                        match { it.entityId == "media_player.living_room" },
                     )
                 }
                 assertEquals(MediaControlServiceEvent.Start, awaitItem())
@@ -335,7 +340,7 @@ class MediaControlSettingsViewModelTest {
                 viewModel.removeEntity(viewModel.uiState.value.selectedEntities.first())
                 advanceUntilIdle()
 
-                coVerify { mediaControlRepository.setConfiguredEntities(emptyList()) }
+                coVerify { mediaControlRepository.removeConfiguredEntity(match { it.entityId == "media_player.tv" }) }
                 expectNoEvents()
                 cancelAndIgnoreRemainingEvents()
             }
@@ -359,9 +364,7 @@ class MediaControlSettingsViewModelTest {
                 advanceUntilIdle()
 
                 coVerify {
-                    mediaControlRepository.setConfiguredEntities(
-                        match { it.size == 1 && it[0].entityId == "media_player.radio" },
-                    )
+                    mediaControlRepository.removeConfiguredEntity(match { it.entityId == "media_player.tv" })
                 }
                 assertEquals(MediaControlServiceEvent.Start, awaitItem())
                 cancelAndIgnoreRemainingEvents()

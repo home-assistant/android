@@ -14,9 +14,9 @@ import androidx.media3.common.util.UnstableApi
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
+import io.homeassistant.companion.android.common.data.integration.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.integration.MediaRepeatMode
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -59,7 +59,7 @@ internal class HaRemoteMediaPlayer(
         fun onRepeatRequested(repeatMode: MediaRepeatMode): Job
     }
 
-    private var mediaState: MediaControlState? = null
+    private var mediaState: EntityDisplayWithoutContext? = null
     private var artworkBytes: ByteArray? = null
 
     private var positionAnchorMs: Long = 0L
@@ -73,27 +73,28 @@ internal class HaRemoteMediaPlayer(
     internal var pendingCommandFuture: SettableFuture<Void>? = null
 
     /**
-     * Updates the internal state from a new [MediaControlState] and triggers a state refresh.
+     * Updates the internal state from a new [EntityDisplayWithoutContext] and triggers a state refresh.
      * Completes any in-flight [pendingCommandFuture] so SimpleBasePlayer calls [getState] with
      * the fresh data rather than the stale pre-command state.
      * Must be called on the looper thread passed to the constructor.
      * @param artworkBytes Pre-compressed JPEG bytes for album art (compress off main thread).
      */
     @MainThread
-    fun updateState(state: MediaControlState?, artworkBytes: ByteArray?) {
+    fun updateState(state: EntityDisplayWithoutContext?, artworkBytes: ByteArray?) {
+        val playback = state?.mediaPlayback
         val shouldResetAnchor = state != null &&
             (
                 mediaState == null ||
-                    state.mediaPosition != mediaState?.mediaPosition ||
+                    playback?.position != mediaState?.mediaPlayback?.position ||
                     (
-                        state.playbackState is MediaPlaybackState.Playing &&
-                            mediaState?.playbackState !is MediaPlaybackState.Playing
+                        playback?.state is MediaPlaybackState.Playing &&
+                            mediaState?.mediaPlayback?.state !is MediaPlaybackState.Playing
                         )
                 )
         mediaState = state
         this.artworkBytes = artworkBytes
         if (shouldResetAnchor && state != null) {
-            positionAnchorMs = state.mediaPosition?.inWholeMilliseconds ?: 0L
+            positionAnchorMs = playback?.position?.inWholeMilliseconds ?: 0L
             positionAnchorTime = clock.now()
         }
         pendingCommandFuture?.set(null)
@@ -106,10 +107,13 @@ internal class HaRemoteMediaPlayer(
         return buildConnectedState(state, artworkBytes)
     }
 
-    private fun buildConnectedState(state: MediaControlState, artwork: ByteArray?): State {
+    private fun buildConnectedState(state: EntityDisplayWithoutContext, artwork: ByteArray?): State {
         val availableCommands = buildAvailableCommands(state)
+        // Both are null only for a non media_player entity, which cannot be configured here
+        val playback = state.mediaPlayback
+        val controls = state.mediaPlayerControls
 
-        val playbackState = when (state.playbackState) {
+        val playbackState = when (playback?.state) {
             is MediaPlaybackState.Playing -> STATE_READY
             is MediaPlaybackState.Paused -> STATE_READY
             is MediaPlaybackState.Buffering -> STATE_BUFFERING
@@ -119,12 +123,12 @@ internal class HaRemoteMediaPlayer(
             // remains controllable. HA "Off" maps to STATE_IDLE for the opposite reason: the device
             // is unavailable, so letting the notification disappear is the right behavior.
             is MediaPlaybackState.Idle -> STATE_ENDED
-            is MediaPlaybackState.Off -> STATE_IDLE
+            is MediaPlaybackState.Off, null -> STATE_IDLE
         }
 
-        val isPlaying = state.playbackState is MediaPlaybackState.Playing
+        val isPlaying = playback?.state is MediaPlaybackState.Playing
 
-        val durationUs = state.mediaDuration?.inWholeMicroseconds ?: C.TIME_UNSET
+        val durationUs = playback?.duration?.inWholeMicroseconds ?: C.TIME_UNSET
         val positionMs = computeCurrentPositionMs(state)
 
         val currentItem = MediaItemData.Builder(state.entityId)
@@ -132,12 +136,12 @@ internal class HaRemoteMediaPlayer(
             .setDurationUs(durationUs)
             .build()
 
-        val deviceVolume = state.volumeLevel?.let { (it * VOLUME_SCALE).toInt() } ?: 0
+        val deviceVolume = controls?.volume?.value?.toInt() ?: 0
 
-        val media3RepeatMode = when (state.repeatMode) {
-            is MediaRepeatMode.Off -> REPEAT_MODE_OFF
+        val media3RepeatMode = when (controls?.repeatMode) {
             is MediaRepeatMode.One -> REPEAT_MODE_ONE
             is MediaRepeatMode.All -> REPEAT_MODE_ALL
+            is MediaRepeatMode.Off, null -> REPEAT_MODE_OFF
         }
 
         return State.Builder()
@@ -150,22 +154,23 @@ internal class HaRemoteMediaPlayer(
             .setPlaylist(buildPlaylist(currentItem))
             .setDeviceInfo(REMOTE_DEVICE_INFO)
             .setDeviceVolume(deviceVolume)
-            .setIsDeviceMuted(state.isVolumeMuted)
-            .setShuffleModeEnabled(state.shuffle)
+            .setIsDeviceMuted(controls?.isVolumeMuted == true)
+            .setShuffleModeEnabled(controls?.shuffle == true)
             .setRepeatMode(media3RepeatMode)
             .build()
     }
 
-    private fun buildMetadata(state: MediaControlState, artwork: ByteArray?): MediaMetadata {
+    private fun buildMetadata(state: EntityDisplayWithoutContext, artwork: ByteArray?): MediaMetadata {
+        val playback = state.mediaPlayback
         val builder = MediaMetadata.Builder()
-            .setTitle(state.title)
-            .setArtist(state.artist)
-            .setAlbumTitle(state.albumName)
-            .setAlbumArtist(state.albumArtist)
-            .setTrackNumber(state.mediaTrack)
-            .setStation(state.mediaChannel)
-            .setSubtitle(state.mediaSeriesTitle ?: state.appName)
-            .setMediaType(state.mediaContentType?.toMedia3MediaType())
+            .setTitle(playback?.title)
+            .setArtist(playback?.artist)
+            .setAlbumTitle(playback?.albumName)
+            .setAlbumArtist(playback?.albumArtist)
+            .setTrackNumber(playback?.track)
+            .setStation(playback?.channel)
+            .setSubtitle(playback?.seriesTitle ?: playback?.appName)
+            .setMediaType(playback?.contentType?.toMedia3MediaType())
         artwork?.let { builder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
         return builder.build()
     }
@@ -175,17 +180,18 @@ internal class HaRemoteMediaPlayer(
     /**
      * Returns the estimated current playback position in milliseconds.
      *
-     * The position anchor is set (in [updateState]) only when [MediaControlState.mediaPosition]
+     * The position anchor is set (in [updateState]) only when the playback position
      * actually changes or when playback resumes, so non-position updates such as volume changes
      * do not reset the anchor. This prevents the progress bar from jumping backward when the
      * server sends a volume-only state delta.
      */
-    private fun computeCurrentPositionMs(state: MediaControlState): Long {
+    private fun computeCurrentPositionMs(state: EntityDisplayWithoutContext): Long {
+        val playback = state.mediaPlayback
         val anchorMs = positionAnchorMs
         val anchorTime = positionAnchorTime ?: return anchorMs
-        if (state.playbackState !is MediaPlaybackState.Playing) return anchorMs
+        if (playback?.state !is MediaPlaybackState.Playing) return anchorMs
         val compensatedMs = anchorMs + (clock.now() - anchorTime).inWholeMilliseconds
-        val maxMs = state.mediaDuration?.inWholeMilliseconds
+        val maxMs = playback.duration?.inWholeMilliseconds
         return if (maxMs != null) compensatedMs.coerceIn(0L, maxMs) else compensatedMs.coerceAtLeast(0L)
     }
 
@@ -205,7 +211,7 @@ internal class HaRemoteMediaPlayer(
                 -> commandCallback.onPreviousRequested()
 
                 else -> {
-                    if (mediaState?.supportsSeek == true) {
+                    if (mediaState?.mediaPlayerControls?.supportsSeek == true) {
                         commandCallback.onSeekRequested(positionMs)
                     } else {
                         null
@@ -224,7 +230,7 @@ internal class HaRemoteMediaPlayer(
         handleCommand { commandCallback.onDecreaseVolumeRequested() }
 
     override fun handleSetDeviceMuted(muted: Boolean, flags: Int): ListenableFuture<*> = handleCommand {
-        if (mediaState?.supportsMute == true) {
+        if (mediaState?.mediaPlayerControls?.supportsVolumeMute == true) {
             commandCallback.onMuteRequested(muted = muted)
         } else {
             null
@@ -288,26 +294,27 @@ internal class HaRemoteMediaPlayer(
         .setDeviceInfo(REMOTE_DEVICE_INFO)
         .build()
 
-    private fun buildAvailableCommands(state: MediaControlState): Player.Commands {
+    private fun buildAvailableCommands(state: EntityDisplayWithoutContext): Player.Commands {
+        val controls = state.mediaPlayerControls
         val builder = Player.Commands.Builder()
-        if (state.supportsPlay || state.supportsPause) builder.add(COMMAND_PLAY_PAUSE)
-        if (state.supportsStop) builder.add(COMMAND_STOP)
-        if (state.supportsSeek) {
+        if (controls?.supportsPlay == true || controls?.supportsPause == true) builder.add(COMMAND_PLAY_PAUSE)
+        if (controls?.supportsStop == true) builder.add(COMMAND_STOP)
+        if (controls?.supportsSeek == true) {
             builder.add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
             builder.add(COMMAND_SEEK_TO_DEFAULT_POSITION)
             builder.add(COMMAND_SEEK_BACK)
             builder.add(COMMAND_SEEK_FORWARD)
         }
         builder.add(COMMAND_GET_CURRENT_MEDIA_ITEM)
-        if (state.supportsPreviousTrack) {
+        if (controls?.supportsPreviousTrack == true) {
             builder.add(COMMAND_SEEK_TO_PREVIOUS)
             builder.add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
         }
-        if (state.supportsNextTrack) {
+        if (controls?.supportsNextTrack == true) {
             builder.add(COMMAND_SEEK_TO_NEXT)
             builder.add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
         }
-        if (state.supportsVolumeSet) {
+        if (controls?.supportsVolumeSet == true) {
             builder.add(COMMAND_GET_DEVICE_VOLUME)
             // Both the deprecated and _WITH_FLAGS variants are required: the deprecated ones are
             // checked by Media3's MediaSessionLegacyStub when setting up VolumeProviderCompat
@@ -320,8 +327,8 @@ internal class HaRemoteMediaPlayer(
             builder.add(COMMAND_ADJUST_DEVICE_VOLUME)
             builder.add(COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
         }
-        if (state.supportsShuffleSet) builder.add(COMMAND_SET_SHUFFLE_MODE)
-        if (state.supportsRepeatSet) builder.add(COMMAND_SET_REPEAT_MODE)
+        if (controls?.supportsShuffleSet == true) builder.add(COMMAND_SET_SHUFFLE_MODE)
+        if (controls?.supportsRepeatSet == true) builder.add(COMMAND_SET_REPEAT_MODE)
         builder.add(COMMAND_GET_METADATA)
         builder.add(COMMAND_GET_TIMELINE)
         return builder.build()

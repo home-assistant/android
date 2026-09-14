@@ -3,14 +3,14 @@ package io.homeassistant.companion.android.mediacontrol
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
+import io.homeassistant.companion.android.common.data.integration.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.testing.unit.FakeClock
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import java.util.concurrent.atomic.AtomicInteger
@@ -67,6 +67,7 @@ private val sessionCounter = AtomicInteger(0)
 class HaMediaSessionServiceTest {
 
     private val mediaControlRepository: MediaControlRepository = mockk(relaxed = true)
+    private val entitiesForDisplayManager: EntitiesForDisplayManager = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val haMediaSessionFactory: HaMediaSession.Factory = mockk()
     private val fakeClock = FakeClock()
@@ -74,10 +75,10 @@ class HaMediaSessionServiceTest {
     // replay=1 ensures tryEmit always succeeds and the value is available to new subscribers.
     private lateinit var configuredEntitiesFlow: MutableSharedFlow<List<MediaControlEntityConfig>>
 
-    // A non-completing SharedFlow: observeEntityState() suspends indefinitely by default so that
+    // A non-completing SharedFlow: the observation suspends indefinitely by default so that
     // HaMediaSession.observe() doesn't exit normally, keeping the session alive in getSessions().
     // MediaSession.release() auto-removes the session from getSessions(), so we need it alive.
-    private val entityStateFlow = MutableSharedFlow<MediaControlState?>(replay = 0)
+    private val entityStateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 0)
 
     private lateinit var observationScope: CoroutineScope
     private lateinit var service: HaMediaSessionService
@@ -88,7 +89,7 @@ class HaMediaSessionServiceTest {
         observationScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher())
 
         every { mediaControlRepository.observeConfiguredEntities() } returns configuredEntitiesFlow
-        coEvery { mediaControlRepository.observeEntityState(any()) } returns entityStateFlow
+        every { entitiesForDisplayManager.observe(any(), any()) } returns entityStateFlow
 
         // Each session is created without a scope — HaMediaSession.observe() derives its scope
         // from the coroutine that calls it (observationScope with UnconfinedTestDispatcher).
@@ -96,7 +97,7 @@ class HaMediaSessionServiceTest {
             HaMediaSession(
                 context = ApplicationProvider.getApplicationContext(),
                 config = firstArg(),
-                mediaControlRepository = mediaControlRepository,
+                entitiesForDisplayManager = entitiesForDisplayManager,
                 serverManager = serverManager,
                 clock = fakeClock,
             )
@@ -154,31 +155,17 @@ class HaMediaSessionServiceTest {
         return MediaControlEntityConfig(serverId = 1, entityId = "media_player.test_$id")
     }
 
-    private fun createPlayingState(entityId: String) = MediaControlState(
+    private fun createPlayingState(entityId: String) = mediaDisplayItem(
         entityId = entityId,
-        serverId = 1,
         playbackState = MediaPlaybackState.Playing,
         title = "Test Track",
         artist = null,
         albumName = null,
-        entityPictureUrl = null,
         mediaDuration = null,
         mediaPosition = null,
-        supportsPause = true,
-        supportsPlay = true,
         supportsSeek = false,
         supportsPreviousTrack = false,
         supportsNextTrack = false,
-        supportsVolumeSet = false,
-        supportsStop = false,
-        supportsMute = false,
-        supportsShuffleSet = false,
-        supportsRepeatSet = false,
-        volumeLevel = null,
-        isVolumeMuted = false,
-        shuffle = false,
-        repeatMode = MediaRepeatMode.Off,
-        entityFriendlyName = "media_player.test",
     )
 
     // -- Reconciliation via flow emissions --
@@ -273,9 +260,9 @@ class HaMediaSessionServiceTest {
         val config = uniqueConfig()
         // Pre-load a Playing state with replay=1 so the session's startObservingState() receives
         // it immediately when it subscribes, before idleMainLooper flushes player.updateState().
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createPlayingState(config.entityId))
-        coEvery { mediaControlRepository.observeEntityState(any()) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createPlayingState(config.entityId)))
+        every { entitiesForDisplayManager.observe(any(), any()) } returns stateFlow
 
         configuredEntitiesFlow.tryEmit(listOf(config))
         startObserving()

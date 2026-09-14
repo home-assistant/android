@@ -369,9 +369,71 @@ data class ClimateControls(
 @Immutable
 data class NumberControls(val range: EntityPosition, val step: Float)
 
-/** Volume control of a media player entity, [volume] null when it cannot be set. */
+/** Playback state of a media player entity, resolved from its raw state. */
 @Immutable
-data class MediaPlayerControls(val volume: EntityPosition?, val volumeStep: Float)
+sealed interface MediaPlaybackState {
+    data object Playing : MediaPlaybackState
+    data object Paused : MediaPlaybackState
+    data object Idle : MediaPlaybackState
+    data object Buffering : MediaPlaybackState
+
+    /** The player is off, unavailable, or in a state the app does not model. */
+    data object Off : MediaPlaybackState
+}
+
+/** Repeat mode of a media player entity, matching the `repeat` attribute values. */
+@Immutable
+sealed interface MediaRepeatMode {
+    data object Off : MediaRepeatMode
+    data object One : MediaRepeatMode
+    data object All : MediaRepeatMode
+}
+
+/**
+ * Controls of a media player entity: what it can be asked to do, and the settings a caller can
+ * change. [volume] is null when the volume cannot be set.
+ */
+@Immutable
+data class MediaPlayerControls(
+    val volume: EntityPosition?,
+    val volumeStep: Float,
+    val isVolumeMuted: Boolean = false,
+    val shuffle: Boolean = false,
+    val repeatMode: MediaRepeatMode = MediaRepeatMode.Off,
+    val supportsPlay: Boolean = false,
+    val supportsPause: Boolean = false,
+    val supportsStop: Boolean = false,
+    val supportsSeek: Boolean = false,
+    val supportsPreviousTrack: Boolean = false,
+    val supportsNextTrack: Boolean = false,
+    val supportsVolumeSet: Boolean = false,
+    val supportsVolumeMute: Boolean = false,
+    val supportsShuffleSet: Boolean = false,
+    val supportsRepeatSet: Boolean = false,
+)
+
+/**
+ * What a media player entity is currently playing, null for other domains.
+ *
+ * [entityPicturePath] is the raw `entity_picture` attribute, a path the caller resolves against
+ * the URL of its own server.
+ */
+@Immutable
+data class MediaPlayback(
+    val state: MediaPlaybackState,
+    val title: String? = null,
+    val artist: String? = null,
+    val albumName: String? = null,
+    val albumArtist: String? = null,
+    val seriesTitle: String? = null,
+    val channel: String? = null,
+    val track: Int? = null,
+    val contentType: String? = null,
+    val appName: String? = null,
+    val entityPicturePath: String? = null,
+    val duration: Duration? = null,
+    val position: Duration? = null,
+)
 
 /** Controls of a cover entity, [position] null when it is not set. */
 @Immutable
@@ -410,6 +472,13 @@ object EntityExt {
     const val MEDIA_PLAYER_SUPPORT_PLAY = 16384
     const val MEDIA_PLAYER_SUPPORT_SHUFFLE_SET = 32768
     const val MEDIA_PLAYER_SUPPORT_REPEAT_SET = 262144
+    const val MEDIA_PLAYER_STATE_PLAYING = "playing"
+    const val MEDIA_PLAYER_STATE_PAUSED = "paused"
+    const val MEDIA_PLAYER_STATE_BUFFERING = "buffering"
+    const val MEDIA_PLAYER_STATE_IDLE = "idle"
+    const val MEDIA_PLAYER_STATE_STANDBY = "standby"
+    const val MEDIA_PLAYER_REPEAT_ONE = "one"
+    const val MEDIA_PLAYER_REPEAT_ALL = "all"
     const val VACUUM_SUPPORT_TURN_ON = 1
 
     val DOMAINS_PRESS = listOf("button", "input_button")
@@ -728,6 +797,40 @@ fun Entity.getMediaPlayerControls(): MediaPlayerControls? {
     return MediaPlayerControls(
         volume = if (supportsVolumeSet()) getVolumeLevel() else null,
         volumeStep = getVolumeStep(),
+        isVolumeMuted = getVolumeMuted(),
+        shuffle = getShuffle(),
+        repeatMode = getRepeatMode(),
+        supportsPlay = supportsPlay(),
+        supportsPause = supportsPause(),
+        supportsStop = supportsStop(),
+        supportsSeek = supportsSeek(),
+        supportsPreviousTrack = supportsPreviousTrack(),
+        supportsNextTrack = supportsNextTrack(),
+        supportsVolumeSet = supportsVolumeSet(),
+        supportsVolumeMute = supportsVolumeMute(),
+        supportsShuffleSet = supportsShuffleSet(),
+        supportsRepeatSet = supportsRepeatSet(),
+    )
+}
+
+/** What the entity is currently playing, null for other domains. */
+fun Entity.getMediaPlayback(): MediaPlayback? {
+    if (domain != MEDIA_PLAYER_DOMAIN) return null
+
+    return MediaPlayback(
+        state = getMediaPlaybackState(),
+        title = getMediaTitle(),
+        artist = getMediaArtist(),
+        albumName = getMediaAlbumName(),
+        albumArtist = getMediaAlbumArtist(),
+        seriesTitle = getMediaSeriesTitle(),
+        channel = getMediaChannel(),
+        track = getMediaTrack(),
+        contentType = getMediaContentType(),
+        appName = getAppName(),
+        entityPicturePath = entityPicturePath(),
+        duration = getMediaDuration(),
+        position = getMediaPosition(),
     )
 }
 
@@ -1466,9 +1569,22 @@ internal fun Entity.getMediaPosition(): Duration? =
 internal fun Entity.getMediaDuration(): Duration? =
     if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_duration"]?.toString()?.toDoubleOrNull()?.seconds else null
 
-/** Returns the entity_picture attribute URL, if available. */
-internal fun Entity.getEntityPictureUrl(): String? =
-    if (domain == MEDIA_PLAYER_DOMAIN) attributes["entity_picture"]?.toString() else null
+/** Returns the playback state, [MediaPlaybackState.Off] for any state the app does not model. */
+internal fun Entity.getMediaPlaybackState(): MediaPlaybackState = when (state) {
+    EntityExt.MEDIA_PLAYER_STATE_PLAYING -> MediaPlaybackState.Playing
+    EntityExt.MEDIA_PLAYER_STATE_PAUSED -> MediaPlaybackState.Paused
+    EntityExt.MEDIA_PLAYER_STATE_BUFFERING -> MediaPlaybackState.Buffering
+    EntityExt.MEDIA_PLAYER_STATE_IDLE, EntityExt.MEDIA_PLAYER_STATE_STANDBY -> MediaPlaybackState.Idle
+    else -> MediaPlaybackState.Off
+}
+
+/** Returns the repeat mode, [MediaRepeatMode.Off] when it is not set. */
+internal fun Entity.getRepeatMode(): MediaRepeatMode =
+    when (if (domain == MEDIA_PLAYER_DOMAIN) attributes["repeat"]?.toString() else null) {
+        EntityExt.MEDIA_PLAYER_REPEAT_ONE -> MediaRepeatMode.One
+        EntityExt.MEDIA_PLAYER_REPEAT_ALL -> MediaRepeatMode.All
+        else -> MediaRepeatMode.Off
+    }
 
 /** Whether this media_player entity supports stop. */
 internal fun Entity.supportsStop(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_STOP)

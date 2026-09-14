@@ -2,9 +2,8 @@ package io.homeassistant.companion.android.mediacontrol
 
 import android.os.Looper
 import androidx.media3.common.Player
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
+import io.homeassistant.companion.android.common.data.integration.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.integration.MediaRepeatMode
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.mockk.every
 import io.mockk.mockk
@@ -75,14 +74,13 @@ class HaRemoteMediaPlayerTest {
         mediaChannel: String? = null,
         mediaSeriesTitle: String? = null,
         appName: String? = null,
-    ) = MediaControlState(
-        entityId = "media_player.test",
-        serverId = 1,
+    ) = mediaDisplayItem(
+        name = entityFriendlyName,
         playbackState = playbackState,
         title = title,
         artist = artist,
         albumName = albumName,
-        entityPictureUrl = entityPictureUrl,
+        entityPicturePath = entityPictureUrl,
         mediaDuration = mediaDuration,
         mediaPosition = mediaPosition,
         supportsPause = supportsPause,
@@ -92,14 +90,13 @@ class HaRemoteMediaPlayerTest {
         supportsNextTrack = supportsNextTrack,
         supportsVolumeSet = supportsVolumeSet,
         supportsStop = supportsStop,
-        supportsMute = supportsMute,
+        supportsVolumeMute = supportsMute,
         supportsShuffleSet = supportsShuffleSet,
         supportsRepeatSet = supportsRepeatSet,
         volumeLevel = volumeLevel,
         isVolumeMuted = isVolumeMuted,
         shuffle = shuffle,
         repeatMode = repeatMode,
-        entityFriendlyName = entityFriendlyName,
         albumArtist = albumArtist,
         mediaContentType = mediaContentType,
         mediaTrack = mediaTrack,

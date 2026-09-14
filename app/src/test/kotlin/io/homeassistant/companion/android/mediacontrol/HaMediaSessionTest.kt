@@ -6,15 +6,16 @@ import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlEntityConfig
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlRepository
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaControlState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaPlaybackState
-import io.homeassistant.companion.android.common.data.mediacontrol.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import java.util.concurrent.atomic.AtomicInteger
@@ -50,7 +51,7 @@ private val sessionCounter = AtomicInteger(0)
 class HaMediaSessionTest {
 
     private lateinit var testScope: CoroutineScope
-    private lateinit var mediaControlRepository: MediaControlRepository
+    private lateinit var entitiesForDisplayManager: EntitiesForDisplayManager
     private lateinit var serverManager: ServerManager
     private lateinit var integrationRepository: IntegrationRepository
     private lateinit var config: MediaControlEntityConfig
@@ -70,14 +71,14 @@ class HaMediaSessionTest {
     fun setUp() {
         @OptIn(ExperimentalCoroutinesApi::class)
         testScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher())
-        mediaControlRepository = mockk()
+        entitiesForDisplayManager = mockk()
         serverManager = mockk()
         integrationRepository = mockk(relaxed = true)
 
         val uniqueEntityId = "media_player.test_${sessionCounter.incrementAndGet()}"
         config = MediaControlEntityConfig(serverId = SERVER_ID, entityId = uniqueEntityId)
 
-        coEvery { mediaControlRepository.observeEntityState(config) } returns flowOf()
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns flowOf()
         coEvery { serverManager.integrationRepository(SERVER_ID) } returns integrationRepository
     }
 
@@ -85,37 +86,24 @@ class HaMediaSessionTest {
         playbackState: MediaPlaybackState = MediaPlaybackState.Playing,
         title: String? = "Test Title",
         entityPictureUrl: String? = null,
-    ) = MediaControlState(
+    ) = mediaDisplayItem(
         entityId = config.entityId,
-        serverId = SERVER_ID,
         playbackState = playbackState,
         title = title,
         artist = null,
         albumName = null,
-        entityPictureUrl = entityPictureUrl,
+        entityPicturePath = entityPictureUrl,
         mediaDuration = 300.0.seconds,
         mediaPosition = 60.0.seconds,
-        supportsPause = true,
-        supportsPlay = true,
         supportsSeek = false,
         supportsPreviousTrack = false,
         supportsNextTrack = false,
-        supportsVolumeSet = false,
-        supportsStop = false,
-        supportsMute = false,
-        supportsShuffleSet = false,
-        supportsRepeatSet = false,
-        volumeLevel = null,
-        isVolumeMuted = false,
-        shuffle = false,
-        repeatMode = MediaRepeatMode.Off,
-        entityFriendlyName = "media_player.test",
     )
 
     private fun buildSession(): HaMediaSession = HaMediaSession(
         context = ApplicationProvider.getApplicationContext(),
         config = config,
-        mediaControlRepository = mediaControlRepository,
+        entitiesForDisplayManager = entitiesForDisplayManager,
         serverManager = serverManager,
         clock = fakeClock,
     )
@@ -136,9 +124,9 @@ class HaMediaSessionTest {
 
     @Test
     fun `Given observeEntityState emits state then null when startObservingState then player retains initial state`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Playing))
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createState(playbackState = MediaPlaybackState.Playing)))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
         var capturedSession: androidx.media3.session.MediaSession? = null
@@ -152,7 +140,7 @@ class HaMediaSessionTest {
         assertEquals(true, player?.playWhenReady)
 
         // Emitting null afterwards (simulating WebSocket-not-ready) should not clear state
-        stateFlow.tryEmit(null)
+        stateFlow.tryEmit(loadedState())
         idleMainLooper()
 
         assertEquals(Player.STATE_READY, player?.playbackState)
@@ -170,9 +158,9 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given observeEntityState emits playing state when startObservingState then player is ready and playing`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Playing))
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createState(playbackState = MediaPlaybackState.Playing)))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
         var capturedSession: androidx.media3.session.MediaSession? = null
@@ -196,9 +184,9 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given observeEntityState emits paused state when startObservingState then player is ready and not playing`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Paused))
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createState(playbackState = MediaPlaybackState.Paused)))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
         var capturedSession: androidx.media3.session.MediaSession? = null
@@ -221,8 +209,8 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given observeEntityState flow completes when startObservingState then session is torn down`() {
-        coEvery { mediaControlRepository.observeEntityState(config) } returns flowOf(
-            createState(playbackState = MediaPlaybackState.Playing),
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns flowOf(
+            loadedState(createState(playbackState = MediaPlaybackState.Playing)),
         )
 
         val session = buildSession()
@@ -246,9 +234,9 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given state with null artwork URL when startObservingState then player artwork is null`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createState(entityPictureUrl = null))
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createState(entityPictureUrl = null)))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
         var capturedSession: androidx.media3.session.MediaSession? = null
@@ -272,9 +260,9 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given two consecutive states both with null artwork URL when startObservingState then title updates and artwork stays null`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createState(entityPictureUrl = null, title = "Track 1"))
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createState(entityPictureUrl = null, title = "Track 1")))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
         var capturedSession: androidx.media3.session.MediaSession? = null
@@ -283,7 +271,7 @@ class HaMediaSessionTest {
         }
         idleMainLooper()
 
-        stateFlow.tryEmit(createState(entityPictureUrl = null, title = "Track 2"))
+        stateFlow.tryEmit(loadedState(createState(entityPictureUrl = null, title = "Track 2")))
         idleMainLooper()
 
         val player = capturedSession?.player
@@ -305,9 +293,9 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given paused player when play requested then media_play action is called`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Paused))
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createState(playbackState = MediaPlaybackState.Paused)))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
         var capturedSession: androidx.media3.session.MediaSession? = null
@@ -342,9 +330,9 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given playing player when pause requested then media_pause action is called`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Playing))
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createState(playbackState = MediaPlaybackState.Playing)))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
         var capturedSession: androidx.media3.session.MediaSession? = null
@@ -378,9 +366,9 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given callAction throws when play requested then exception is caught and does not crash`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Paused))
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createState(playbackState = MediaPlaybackState.Paused)))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
         coEvery {
             integrationRepository.callAction(any(), any(), any())
         } throws RuntimeException("Simulated server error")
@@ -414,9 +402,9 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given observing session when job cancelled then session is no longer active`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>(replay = 1)
-        stateFlow.tryEmit(createState(playbackState = MediaPlaybackState.Playing))
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(createState(playbackState = MediaPlaybackState.Playing)))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
         val job = testScope.launch {
@@ -438,8 +426,8 @@ class HaMediaSessionTest {
      */
     @Test
     fun `Given session when observe called then onSessionReady is invoked with the session`() {
-        val stateFlow = MutableSharedFlow<MediaControlState?>()
-        coEvery { mediaControlRepository.observeEntityState(config) } returns stateFlow
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>()
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
         var capturedSession: androidx.media3.session.MediaSession? = null
