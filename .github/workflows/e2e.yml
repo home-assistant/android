@@ -107,13 +107,13 @@ jobs:
 
           jq -e '.components | index("mobile_app") != null' homeassistant-config.json >/dev/null
 
-      - uses: emulator-wtf/actions/configure-credentials@72f86422814fad7432a286a1b29699cc9e73d561 # v1.1.0
+      - uses: emulator-wtf/actions/configure-credentials@850ae9eb6e2ac6c36b146b32eb6802effe8013d8 # v1.1.1
         with:
           oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
 
       - name: Start emulators
         id: emulator
-        uses: emulator-wtf/actions/use-emulator@72f86422814fad7432a286a1b29699cc9e73d561 # v1.1.0
+        uses: emulator-wtf/actions/use-emulator@850ae9eb6e2ac6c36b146b32eb6802effe8013d8 # v1.1.1
         with:
           devices: ${{ steps.devices.outputs.list }}
           egress-tunnel: true
