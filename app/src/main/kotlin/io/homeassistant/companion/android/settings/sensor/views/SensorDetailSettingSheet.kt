@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
@@ -39,6 +37,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Magnify
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
@@ -61,6 +62,12 @@ import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+/**
+ * The checkbox centers its 20dp glyph in a 48dp touch target, so it carries a 14dp inset on each
+ * side. Rows are pulled towards the start by that inset to align the glyph with the search field.
+ */
+private val CheckboxTouchInset = 14.dp
 
 /**
  * Bottom sheet for multi-select allow list sensor settings (apps, bluetooth, zones, beacons).
@@ -192,7 +199,7 @@ private fun ColumnScope.SheetHeader(title: String, showSearch: Boolean, searchSt
             state = searchState,
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Search,
+                    imageVector = Mdi.Magnify.rememberImageVector(),
                     contentDescription = null,
                     tint = LocalHAColorScheme.current.colorOnNeutralNormal,
                 )
@@ -306,10 +313,7 @@ private fun SettingRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            // The checkbox centers its 20dp glyph in a 48dp touch target, so it carries a 14dp
-            // inset on each side. Pull the row towards the start by that inset to align the glyph
-            // with the search field above the list.
-            .offset(x = (-14).dp)
+            .offset(x = -CheckboxTouchInset)
             .toggleable(
                 value = checked,
                 role = Role.Checkbox,
