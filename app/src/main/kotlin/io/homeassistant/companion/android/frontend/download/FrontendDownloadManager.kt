@@ -18,7 +18,6 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
 import timber.log.Timber
 
 /**
@@ -172,7 +171,7 @@ class FrontendDownloadManager @Inject constructor(
                         const response = await fetch($safeUrl);
                         if (!response.ok) {
                             console.error('Blob download failed: HTTP ' + response.status + ' for ${
-            sensitive(safeUrl.contentOrNull.orEmpty())
+            sensitive(safeUrl.toString())
         }');
                             return;
                         }
