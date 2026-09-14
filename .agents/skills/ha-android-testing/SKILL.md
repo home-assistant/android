@@ -14,7 +14,7 @@ Use this skill when writing, changing, or reviewing tests.
 
 After an intentional UI change, update the reference screenshots (stored under `src/screenshotTestFullDebug/reference` in `:app`, `src/screenshotTestDebug/reference` in `:common` and `:wear`) with `./gradlew updateDebugScreenshotTest updateFullDebugScreenshotTest`. Rendering differs subtly between hosts, so if CI still fails on thresholds, a maintainer triggers the `Update Screenshots` workflow to regenerate them on the CI host — don't chase pixel diffs locally.
 
-Don't run a validate task after an update run: the update wrote the references from the code you just built, so validation can only confirm that or resurface the known host-rendering noise below. Read the regenerated images instead — that is what tells you the change is right. Validate only when you have not regenerated, to find out what a change broke.
+Don't run a validate task after an update run: the update will update the screenshots from the code you just built, so validation can only confirm that or resurface the subtle host differences in rendering. Check that the images were updated and have changed instead, that is what tells you the change is right. Validate only when you have not regenerated, to find out if a change unintentionally changed the UI.
 
 ### Known false positive
 
