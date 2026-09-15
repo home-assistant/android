@@ -40,7 +40,6 @@ cronet = "143.7445.0"
 detekt = "2.0.0-alpha.6"
 emojiJava = "5.1.1"
 firebase-bom = "34.19.0"
-firebaseAppdistributionGradle = "5.3.0"
 fragment-ktx = "1.9.0"
 glance = "1.2.0"
 googleServices = "4.5.0"
@@ -104,7 +103,6 @@ aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.re
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
 android-lint = { id = "com.android.lint", version.ref = "androidGradlePlugin" }
-firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppdistributionGradle" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
