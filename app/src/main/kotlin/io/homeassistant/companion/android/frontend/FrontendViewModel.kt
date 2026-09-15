@@ -759,7 +759,27 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is GestureResult.PerformWebViewAction -> _webViewActions.emit(result.action)
             is GestureResult.SwitchServer -> switchServer(result.serverId)
             is GestureResult.NavigateToDefaultDashboard -> navigateToDefaultDashboard(_viewState.value.serverId)
+            is GestureResult.OpenInBrowser -> openCurrentPageInBrowser()
             is GestureResult.Forwarded, is GestureResult.Ignored -> { /* no-op */ }
+        }
+    }
+
+    /**
+     * Get the webview's current URL, and open it in the device's browser app.
+     *
+     * The `external_auth` query parameter, if present, should be removed from the URL as it only makes sense to the
+     * frontend running inside our webview.
+     */
+    private suspend fun openCurrentPageInBrowser() {
+        val getCurrentUri = WebViewAction.ReadCurrentUriForExternal()
+        _webViewActions.emit(getCurrentUri)
+        val uri = getCurrentUri.await()
+
+        if (uri != null) {
+            val openEvent = FrontendEvent.OpenExternalLink(uri)
+            _events.emit(openEvent)
+        } else {
+            Timber.w("Open in browser requested but current URI couldn't be read")
         }
     }
 
