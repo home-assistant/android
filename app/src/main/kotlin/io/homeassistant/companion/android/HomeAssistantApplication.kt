@@ -353,7 +353,7 @@ open class HomeAssistantApplication : Application() {
             val entityWidget = EntityWidget()
             val mediaPlayerWidget = MediaPlayerControlsWidget()
             val templateWidget = TemplateWidget()
-            TodoWidget().registerReceiver(this)
+            TodoWidget().register(this@HomeAssistantApplication)
 
             val screenIntentFilter = IntentFilter()
             screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)

@@ -31,7 +31,6 @@ jobs:
         with:
           keystore: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
           google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
       - name: Install Fastlane dependencies

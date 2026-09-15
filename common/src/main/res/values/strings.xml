@@ -3,6 +3,8 @@
     <string name="aa_launch_native">Native mode</string>
     <string name="aa_driving_optimized_change">Use Home Assistant in drive mode?</string>
     <string name="aa_navigation">Navigation</string>
+    <string name="aa_connection_error_title">Unable to connect</string>
+    <string name="aa_connection_error_message">Home Assistant can\'t be reached. Check your connection.</string>
     <string name="aa_no_entities_with_locations">No entities with locations found</string>
     <string name="aa_change_server">Change server</string>
     <string name="account">Account</string>
@@ -782,6 +784,7 @@
     <string name="sensor_setting_nextalarm_allow_list_title">Allow list</string>
     <string name="sensor_setting_notification_allow_list_title">Allow list</string>
     <string name="sensor_setting_notification_disable_allow_list_title">Disable allow list requirement</string>
+    <string name="sensor_setting_allow_list_no_results">No results</string>
     <string name="sensor_setting_active_notification_count_content_attrs_title">Include content from all notifications as attributes</string>
     <string name="sensor_setting_battery_current_divisor_title">Battery current divisor</string>
     <string name="sensor_setting_battery_voltage_divisor_title">Battery voltage divisor</string>
@@ -1064,6 +1067,10 @@
     <string name="widget_todo_label">To-do list</string>
     <string name="widget_todo_empty">You have no to-do items!</string>
     <string name="widget_todo_show_completed">Show completed items</string>
+    <string name="widget_todo_preview_list_name">Shopping list</string>
+    <string name="widget_todo_preview_item_first">Eggs</string>
+    <string name="widget_todo_preview_item_second">Milk</string>
+    <string name="widget_todo_preview_item_third">Bread</string>
     <string name="widget_tap_action_label">Tap action:</string>
     <string name="widget_tap_action_open">Open</string>
     <string name="widget_tap_action_toggle">Toggle</string>
@@ -1506,12 +1513,18 @@
     <string name="connection_check_server_success">Connection established</string>
     <string name="connection_check_error_invalid_url">Invalid URL format</string>
     <string name="connection_check_error_dns">DNS resolution failed</string>
+    <string name="connection_check_error_dns_timeout">DNS resolution timed out</string>
     <string name="connection_check_error_port">Port not reachable</string>
+    <string name="connection_check_error_port_timeout">Connection to the port timed out</string>
     <string name="connection_check_error_tls">TLS certificate error</string>
+    <string name="connection_check_error_tls_timeout">TLS handshake timed out</string>
     <string name="connection_check_error_server">Server connection failed</string>
+    <string name="connection_check_error_http_status">Server answered with HTTP %1$s</string>
+    <string name="connection_check_error_server_timeout">Server took too long to answer</string>
     <string name="connection_check_skipped">Skipped (previous check failed)</string>
     <string name="connection_check_home_assistant">Home Assistant verification</string>
     <string name="connection_check_home_assistant_success">Verified as Home Assistant</string>
+    <string name="connection_check_error_manifest">Manifest could not be read</string>
     <string name="connection_check_error_not_home_assistant">Server is not Home Assistant</string>
     <string name="entity_picker_loading_failed">Failed to load entities</string>
     <string name="entity_picker_no_entity_found">No entity found</string>

@@ -10,8 +10,6 @@
     <ID>AbstractClassCanBeInterface:SettingsModule.kt:SettingsModule$SettingsModule</ID>
     <ID>AbstractClassCanBeInterface:ThreadManager.kt:ThreadManager.SyncResult$SyncResult</ID>
     <ID>AbstractClassCanBeInterface:ThreadModule.kt:ThreadModule$ThreadModule</ID>
-    <ID>AvoidReferentialEquality:ImprovSheet.kt:it !== WifiManager.UNKNOWN_SSID</ID>
-    <ID>AvoidReferentialEquality:SsidView.kt:activeSsid !== WifiManager.UNKNOWN_SSID</ID>
     <ID>ComplexCondition:AssistViewModel.kt:AssistViewModel$pipelineId == PIPELINE_LAST_USED &amp;&amp; recorderAutoStart &amp;&amp; hasPermission &amp;&amp; hasMicrophone &amp;&amp; serverManager.getServer(selectedServerId) != null &amp;&amp; serverManager.integrationRepository(selectedServerId).getLastUsedPipelineSttSupport()</ID>
     <ID>ComplexCondition:BackAction.kt:previousUrl != null &amp;&amp; loadedUrl != null &amp;&amp; previousUrl.scheme?.startsWith("http") == true &amp;&amp; previousUrl.hasSameOrigin(loadedUrl)</ID>
     <ID>ComplexCondition:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$SdkVersion.isAtLeast(Build.VERSION_CODES.O) &amp;&amp; selectedServerId != null &amp;&amp; ( widgetConfigAction in actions[selectedServerId].orEmpty().keys || widgetConfigAction.split(".", limit = 2).size == 2 )</ID>
@@ -20,7 +18,6 @@
     <ID>ComplexCondition:ManageWidgetsView.kt:viewModel.buttonWidgetList.value.isEmpty() &amp;&amp; viewModel.staticWidgetList.value.isEmpty() &amp;&amp; viewModel.mediaWidgetList.value.isEmpty() &amp;&amp; viewModel.templateWidgetList.value.isEmpty() &amp;&amp; viewModel.cameraWidgetList.value.isEmpty() &amp;&amp; viewModel.todoWidgetList.value.isEmpty()</ID>
     <ID>ComplexCondition:MessagingManager.kt:MessagingManager$!jsonData[NotificationData.MEDIA_STREAM].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &amp;&amp; !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND]?.toIntOrNull() != null</ID>
     <ID>ComplexCondition:MessagingManager.kt:MessagingManager$( !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS ) || ( !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND] in FORCE_COMMANDS ) || ( !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &amp;&amp; jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null &amp;&amp; jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! &gt;= 5 )</ID>
-    <ID>ComplexCondition:SsidView.kt:activeSsid?.isNotBlank() == true &amp;&amp; wifiSsids.none { it == activeSsid } &amp;&amp; (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || activeSsid !== WifiManager.UNKNOWN_SSID)</ID>
     <ID>ComplexCondition:TileExtensions.kt:TileExtensions$tileData != null &amp;&amp; tileData.isSetup &amp;&amp; tileData.entityId.split('.')[0] in toggleDomainsWithLock &amp;&amp; serverManager.getServer(tileData.serverId) != null</ID>
     <ID>ConstructorParameterNaming:FrontendViewModel.kt:FrontendViewModel.ViewStateManager$private val _state: MutableStateFlow&lt;FrontendViewState&gt; = MutableStateFlow(initialState)</ID>
     <ID>CyclomaticComplexMethod:AssistViewModel.kt:AssistViewModel$fun onCreate</ID>
@@ -53,8 +50,7 @@
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$private suspend fun handleDeviceCommands</ID>
     <ID>CyclomaticComplexMethod:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$private suspend fun mappedBundle: Map&lt;String, Any?&gt;?</ID>
     <ID>CyclomaticComplexMethod:OnSwipeListener.kt:OnSwipeListener$override fun onTouch: Boolean</ID>
-    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@Composable fun SensorDetailSettingDialog</ID>
-    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@Composable fun SensorDetailView</ID>
+    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SensorDetailView</ID>
     <ID>CyclomaticComplexMethod:SensorDetailViewModel.kt:SensorDetailViewModel$suspend fun getSettingEntries: List&lt;String&gt;</ID>
     <ID>CyclomaticComplexMethod:ServerSettingsFragment.kt:ServerSettingsFragment$@Deprecated("Deprecated in Java") override fun onCreatePreferences</ID>
     <ID>CyclomaticComplexMethod:SettingsActivity.kt:SettingsActivity$override fun onCreate</ID>
@@ -75,7 +71,6 @@
     <ID>EmptyFunctionBlock:LocationSensorManager.kt:LocationSensorManager.Companion${}</ID>
     <ID>EmptyFunctionBlock:LogFragment.kt:LogFragment.&lt;no name provided&gt;${}</ID>
     <ID>EmptyFunctionBlock:ThreadManagerImpl.kt:ThreadManagerImpl${}</ID>
-    <ID>ExplicitItLambdaMultipleParameters:SsidView.kt:{ _, it -&gt; val connected = remember(it, activeSsid, activeBssid, usingWifi) { usingWifi &amp;&amp; ( it == activeSsid || ( it.startsWith(WifiHelper.BSSID_PREFIX) &amp;&amp; it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true) ) ) } Row( modifier = Modifier .heightIn(min = 48.dp) .padding(horizontal = 16.dp) .animateItem(), verticalAlignment = Alignment.CenterVertically, ) { if (connected) { Image( imageVector = Mdi.WifiCheck.rememberImageVector(), contentDescription = null, colorFilter = ColorFilter.tint(colorResource(commonR.color.colorAccent)), ) Spacer(Modifier.width(16.dp)) } Text( text = if (it.startsWith(WifiHelper.BSSID_PREFIX)) { it.removePrefix(WifiHelper.BSSID_PREFIX) } else { it }, fontFamily = if (it.startsWith(WifiHelper.BSSID_PREFIX)) { FontFamily.Monospace } else { null }, modifier = Modifier .padding(end = 16.dp) .weight(1f), ) Icon( imageVector = Mdi.Close.rememberImageVector(), contentDescription = stringResource(commonR.string.remove_ssid), tint = colorResource(commonR.color.colorWarning), modifier = Modifier .clickable { onRemoveWifiSsid(it) } .size(48.dp) .padding(all = 12.dp), ) } }</ID>
     <ID>FunctionOnlyReturningConstant:ApplicationModule.kt:ApplicationModule$@Provides @Singleton @PushWebsocketSupport fun providesPushWebsocketSupport: Boolean</ID>
     <ID>FunctionOnlyReturningConstant:SettingsWearDetection.kt:SettingsWearDetection$@Suppress("RedundantSuspendModifier") suspend fun hasAnyNodes: Boolean</ID>
     <ID>ImplicitDefaultLocale:ContextExtensions.kt:String.format("#%06X", 0xFFFFFF and color)</ID>
@@ -104,6 +99,8 @@
     <ID>InjectDispatcher:MicroWakeWordModelConfig.kt:MicroWakeWordModelConfig.Companion$IO</ID>
     <ID>InjectDispatcher:NotificationActionReceiver.kt:NotificationActionReceiver$IO</ID>
     <ID>InjectDispatcher:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$Default</ID>
+    <ID>InjectDispatcher:SensorDetailSettingSheet.kt:Default</ID>
+    <ID>InjectDispatcher:SensorDetailViewModel.kt:SensorDetailViewModel$Default</ID>
     <ID>InjectDispatcher:SensorSettingsViewModel.kt:SensorSettingsViewModel$IO</ID>
     <ID>InjectDispatcher:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$IO</ID>
     <ID>InjectDispatcher:SettingsPresenterImpl.kt:SettingsPresenterImpl$IO</ID>
@@ -171,9 +168,8 @@
     <ID>LongMethod:OnboardingNavigation.kt:internal fun NavGraphBuilder.onboarding</ID>
     <ID>LongMethod:OnboardingNavigation.kt:private fun NavGraphBuilder.commonScreens</ID>
     <ID>LongMethod:SensorDetailFragment.kt:SensorDetailFragment$@SuppressLint("InlinedApi") override fun onViewCreated</ID>
-    <ID>LongMethod:SensorDetailView.kt:@Composable fun SensorDetailSettingDialog</ID>
     <ID>LongMethod:SensorDetailView.kt:@Composable fun SensorDetailTopPanel</ID>
-    <ID>LongMethod:SensorDetailView.kt:@Composable fun SensorDetailView</ID>
+    <ID>LongMethod:SensorDetailView.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SensorDetailView</ID>
     <ID>LongMethod:ServerSettingsFragment.kt:ServerSettingsFragment$@Deprecated("Deprecated in Java") override fun onCreatePreferences</ID>
     <ID>LongMethod:SettingsActivity.kt:SettingsActivity$override fun onCreate</ID>
     <ID>LongMethod:SettingsFragment.kt:SettingsFragment$override fun onCreatePreferences</ID>
@@ -483,8 +479,6 @@
     <ID>UnusedPrivateProperty:LaunchViewModel.kt:LaunchViewModel$private val prefsRepository: PrefsRepository</ID>
     <ID>UnusedPrivateProperty:SensorDetailViewModel.kt:SensorDetailViewModel$private val managers: Set&lt;@JvmSuppressWildcards SensorManager&gt;</ID>
     <ID>UnusedPrivateProperty:SettingsPresenterImpl.kt:SettingsPresenterImpl$private val settingsDao: SettingsDao</ID>
-    <ID>UnusedVariable:SensorDetailView.kt:val context = LocalContext.current</ID>
-    <ID>UnusedVariable:SensorListView.kt:val context = LocalContext.current</ID>
     <ID>UseCheckOrError:AssistVoiceInteractionService.kt:AssistVoiceInteractionService$throw IllegalStateException("No wake word models found in assets")</ID>
     <ID>UseCheckOrError:CameraWidget.kt:CameraWidget$throw IllegalStateException("No URL available to retrieve picture")</ID>
     <ID>UseCheckOrError:ThreadManagerImpl.kt:ThreadManagerImpl$throw IllegalStateException("Thread is not supported with the minimal flavor")</ID>
