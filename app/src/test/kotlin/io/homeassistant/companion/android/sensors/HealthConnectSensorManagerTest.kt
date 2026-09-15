@@ -10,6 +10,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import kotlin.time.Duration.Companion.minutes
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
@@ -104,8 +105,8 @@ class HealthConnectSensorManagerTest {
             },
         )
 
-        val result = sensorManager.calculateSleepDurationInMinutes(mockSleepStages)
-        assertEquals(300L, result)
+        val result = sensorManager.calculateSleepDuration(mockSleepStages)
+        assertEquals(300.minutes, result)
     }
 
     @Test
@@ -161,15 +162,15 @@ class HealthConnectSensorManagerTest {
 
         val result = sensorManager.analyzeSleepStages(stages)
 
-        assertEquals(90L, result.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_LIGHT])
-        assertEquals(60L, result.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_DEEP])
-        assertEquals(30L, result.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_REM])
-        assertEquals(15L, result.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_AWAKE])
-        assertEquals(10L, result.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED])
-        assertEquals(10L, result.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_OUT_OF_BED])
-        assertEquals(30L, result.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_SLEEPING])
-        assertEquals(15L, result.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_UNKNOWN])
-        assertEquals(225L, result.sleepDurationInMinutes)
+        assertEquals(90.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_LIGHT])
+        assertEquals(60.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_DEEP])
+        assertEquals(30.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_REM])
+        assertEquals(15.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_AWAKE])
+        assertEquals(10.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED])
+        assertEquals(10.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_OUT_OF_BED])
+        assertEquals(30.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_SLEEPING])
+        assertEquals(15.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_UNKNOWN])
+        assertEquals(225.minutes, result.sleepDuration)
     }
 
     @Test
@@ -185,7 +186,7 @@ class HealthConnectSensorManagerTest {
 
         val result = sensorManager.analyzeSleepStages(stages)
 
-        assertFalse(result.durationInMinutesByStage.containsKey(SleepSessionRecord.STAGE_TYPE_DEEP))
+        assertFalse(result.durationByStage.containsKey(SleepSessionRecord.STAGE_TYPE_DEEP))
     }
 
     @Test
@@ -213,15 +214,15 @@ class HealthConnectSensorManagerTest {
         )
         assertEquals(
             listOf(
-                midnight.toString(),
-                midnight.plus(30, ChronoUnit.MINUTES).toString(),
+                midnight,
+                midnight.plus(30, ChronoUnit.MINUTES),
             ),
             result.stageStartTimes,
         )
         assertEquals(
             listOf(
-                midnight.plus(30, ChronoUnit.MINUTES).toString(),
-                midnight.plus(1, ChronoUnit.HOURS).toString(),
+                midnight.plus(30, ChronoUnit.MINUTES),
+                midnight.plus(1, ChronoUnit.HOURS),
             ),
             result.stageEndTimes,
         )

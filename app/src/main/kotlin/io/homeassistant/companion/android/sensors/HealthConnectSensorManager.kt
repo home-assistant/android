@@ -52,7 +52,6 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -61,8 +60,8 @@ import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.reflect.KClass
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration
+import kotlin.time.toKotlinDuration
 import timber.log.Timber
 
 @Singleton
@@ -1032,7 +1031,7 @@ class HealthConnectSensorManager @Inject constructor(
         if (isEnabled(sleepDuration)) {
             onSensorUpdated(
                 sleepDuration,
-                analysis.sleepDurationInMinutes,
+                analysis.sleepDuration.inWholeMinutes,
                 sleepDuration.statelessIcon,
                 attributes = sessionAttributes,
             )
@@ -1056,49 +1055,49 @@ class HealthConnectSensorManager @Inject constructor(
 
         updateSleepStageDurationSensor(
             sleepLightDuration,
-            analysis.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_LIGHT],
+            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_LIGHT],
             basicAttributes,
         )
         updateSleepStageDurationSensor(
             sleepDeepDuration,
-            analysis.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_DEEP],
+            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_DEEP],
             basicAttributes,
         )
         updateSleepStageDurationSensor(
             sleepRemDuration,
-            analysis.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_REM],
+            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_REM],
             basicAttributes,
         )
         updateSleepStageDurationSensor(
             sleepAwakeDuration,
-            analysis.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_AWAKE],
+            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_AWAKE],
             basicAttributes,
         )
         updateSleepStageDurationSensor(
             sleepAwakeInBedDuration,
-            analysis.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED],
+            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED],
             basicAttributes,
         )
         updateSleepStageDurationSensor(
             sleepOutOfBedDuration,
-            analysis.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_OUT_OF_BED],
+            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_OUT_OF_BED],
             basicAttributes,
         )
         updateSleepStageDurationSensor(
             sleepUnspecifiedDuration,
-            analysis.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_SLEEPING],
+            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_SLEEPING],
             basicAttributes,
         )
         updateSleepStageDurationSensor(
             sleepUnknownDuration,
-            analysis.durationInMinutesByStage[SleepSessionRecord.STAGE_TYPE_UNKNOWN],
+            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_UNKNOWN],
             basicAttributes,
         )
     }
 
     private suspend fun updateSleepStageDurationSensor(
         sensor: SensorManager.BasicSensor,
-        durationInMinutes: Long?,
+        duration: Duration?,
         attributes: Map<String, Any?>,
     ) {
         if (!isEnabled(sensor)) {
@@ -1106,7 +1105,7 @@ class HealthConnectSensorManager @Inject constructor(
         }
         onSensorUpdated(
             sensor,
-            durationInMinutes ?: STATE_UNKNOWN,
+            duration?.inWholeMinutes ?: STATE_UNKNOWN,
             sensor.statelessIcon,
             attributes = attributes,
         )
@@ -1121,52 +1120,50 @@ class HealthConnectSensorManager @Inject constructor(
         "sources" to sleepRecord.metadata.dataOrigin.packageName,
         "stageTypes" to analysis.stageTypes,
         "stageTypeIds" to analysis.stageTypeIds,
-        "stageStartTimes" to analysis.stageStartTimes,
-        "stageEndTimes" to analysis.stageEndTimes,
+        "stageStartTimes" to analysis.stageStartTimes.map(Instant::toString),
+        "stageEndTimes" to analysis.stageEndTimes.map(Instant::toString),
     )
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     internal data class SleepStageAnalysis(
-        val sleepDurationInMinutes: Long,
-        val durationInMinutesByStage: Map<Int, Long>,
+        val sleepDuration: Duration,
+        val durationByStage: Map<Int, Duration>,
         val stageTypes: List<String>,
         val stageTypeIds: List<Int>,
-        val stageStartTimes: List<String>,
-        val stageEndTimes: List<String>,
+        val stageStartTimes: List<Instant>,
+        val stageEndTimes: List<Instant>,
     )
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     internal fun analyzeSleepStages(stages: List<SleepSessionRecord.Stage>): SleepStageAnalysis {
-        val durationSecondsByStage = stages
+        val durationByStage = stages
             .groupingBy { it.stage }
-            .fold(0L) { durationSeconds, stage ->
-                durationSeconds + Duration.between(stage.startTime, stage.endTime).seconds
+            .fold(Duration.ZERO) { duration, stage ->
+                duration + java.time.Duration.between(stage.startTime, stage.endTime).toKotlinDuration()
             }
-        val sleepDurationSeconds = durationSecondsByStage
+        val sleepDuration = durationByStage
             .filterKeys {
                 it != SleepSessionRecord.STAGE_TYPE_AWAKE &&
                     it != SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED &&
                     it != SleepSessionRecord.STAGE_TYPE_OUT_OF_BED
             }
             .values
-            .sum()
+            .fold(Duration.ZERO) { total, duration -> total + duration }
 
         return SleepStageAnalysis(
-            sleepDurationInMinutes = sleepDurationSeconds.toDuration(DurationUnit.SECONDS).inWholeMinutes,
-            durationInMinutesByStage = durationSecondsByStage.mapValues { (_, durationSeconds) ->
-                durationSeconds.toDuration(DurationUnit.SECONDS).inWholeMinutes
-            },
+            sleepDuration = sleepDuration,
+            durationByStage = durationByStage,
             stageTypes = stages.map { stage -> getSleepStageType(stage.stage) },
             stageTypeIds = stages.map { stage -> stage.stage },
-            stageStartTimes = stages.map { stage -> stage.startTime.toString() },
-            stageEndTimes = stages.map { stage -> stage.endTime.toString() },
+            stageStartTimes = stages.map { stage -> stage.startTime },
+            stageEndTimes = stages.map { stage -> stage.endTime },
         )
     }
 
     /** @return Sleep duration based on the stages, excluding awake (+ in bed) and out of bed */
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    internal fun calculateSleepDurationInMinutes(stages: List<SleepSessionRecord.Stage>): Long =
-        analyzeSleepStages(stages).sleepDurationInMinutes
+    internal fun calculateSleepDuration(stages: List<SleepSessionRecord.Stage>): Duration =
+        analyzeSleepStages(stages).sleepDuration
 
     private fun getSleepStageType(stageType: Int): String {
         return when (stageType) {
