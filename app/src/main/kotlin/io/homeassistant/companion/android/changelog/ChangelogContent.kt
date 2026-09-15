@@ -22,6 +22,10 @@ internal val currentChangelog = Changelog(
             contentRes = commonR.string.changelog_entry_assistant_volume_command,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_health_connect_sleep_stages,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+        ),
     ),
     improved = listOf(
         ChangelogEntry(
