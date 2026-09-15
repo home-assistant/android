@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
+import io.homeassistant.companion.android.util.CheckTLSClientAuthNeededUseCase
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -71,6 +72,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     webViewClientFactory: HAWebViewClientFactory,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     private val fileChooserManager: FileChooserManager,
+    private val checkTLSClientAuthNeededUseCase: CheckTLSClientAuthNeededUseCase,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -80,11 +82,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         webViewClientFactory: HAWebViewClientFactory,
         connectivityCheckRepository: ConnectivityCheckRepository,
         fileChooserManager: FileChooserManager,
+        checkTLSClientAuthNeededUseCase: CheckTLSClientAuthNeededUseCase,
     ) : this(
         savedStateHandle.toRoute<ConnectionRoute>().url,
         webViewClientFactory,
         connectivityCheckRepository,
         fileChooserManager,
+        checkTLSClientAuthNeededUseCase,
     )
 
     /**
@@ -243,7 +247,9 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                         ConnectionNavigationEvent.Authenticated(
                             url = effectiveUrl.value,
                             authCode = code,
-                            requiredMTLS = isTLSClientAuthNeeded,
+                            // The WebView may have resumed a TLS session without a
+                            // CertificateRequest, so also check the loaded certificate chain.
+                            requiredMTLS = isTLSClientAuthNeeded || checkTLSClientAuthNeededUseCase(rawHttpUrl?.host),
                         ),
                     )
                 }
