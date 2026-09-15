@@ -9,8 +9,11 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.Job
 import org.junit.After
@@ -53,6 +56,7 @@ class HaRemoteMediaPlayerTest {
         entityPictureUrl: String? = null,
         mediaDuration: Duration? = 300.0.seconds,
         mediaPosition: Duration? = 120.0.seconds,
+        mediaPositionUpdatedAt: Instant? = null,
         supportsPause: Boolean = true,
         supportsPlay: Boolean = true,
         supportsSeek: Boolean = true,
@@ -83,6 +87,7 @@ class HaRemoteMediaPlayerTest {
         entityPicturePath = entityPictureUrl,
         mediaDuration = mediaDuration,
         mediaPosition = mediaPosition,
+        mediaPositionUpdatedAt = mediaPositionUpdatedAt,
         supportsPause = supportsPause,
         supportsPlay = supportsPlay,
         supportsSeek = supportsSeek,
@@ -623,37 +628,43 @@ class HaRemoteMediaPlayerTest {
 
     @Test
     fun `Given playing state when time advances and volume-only update arrives then position is not reset`() {
-        player.updateState(state = createState(mediaPosition = 120.0.seconds), artworkBytes = null)
+        val positionValidAt = fakeClock.now()
+        player.updateState(
+            state = createState(mediaPosition = 120.0.seconds, mediaPositionUpdatedAt = positionValidAt),
+            artworkBytes = null,
+        )
         shadowOf(Looper.getMainLooper()).idle()
 
         // 2 seconds of playback elapse
         fakeClock.currentInstant += 2.seconds
 
-        // Volume-only WebSocket update: same position, different volume level
+        // Volume-only update: the server repeats the same position and timestamp
         player.updateState(
-            state = createState(mediaPosition = 120.0.seconds, volumeLevel = 0.4f),
+            state = createState(
+                mediaPosition = 120.0.seconds,
+                mediaPositionUpdatedAt = positionValidAt,
+                volumeLevel = 0.4f,
+            ),
             artworkBytes = null,
         )
         shadowOf(Looper.getMainLooper()).idle()
 
-        // Position should reflect elapsed time since anchor, not reset to raw HA value
         assertEquals(122_000L, player.currentPosition)
     }
 
     @Test
     fun `Given paused state when time advances then position is not extrapolated`() {
-        player.updateState(
-            state = createState(playbackState = MediaPlaybackState.Paused, mediaPosition = 120.0.seconds),
-            artworkBytes = null,
+        val state = createState(
+            playbackState = MediaPlaybackState.Paused,
+            mediaPosition = 120.0.seconds,
+            mediaPositionUpdatedAt = fakeClock.now(),
         )
+        player.updateState(state = state, artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         fakeClock.currentInstant += 5.seconds
 
-        player.updateState(
-            state = createState(playbackState = MediaPlaybackState.Paused, mediaPosition = 120.0.seconds),
-            artworkBytes = null,
-        )
+        player.updateState(state = state, artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         // Position must stay fixed while paused
@@ -661,23 +672,80 @@ class HaRemoteMediaPlayerTest {
     }
 
     @Test
-    fun `Given playing then paused then playing again when resumed then anchor resets to resume position`() {
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing, mediaPosition = 100.0.seconds), artworkBytes = null)
+    fun `Given a resume when the server sends a fresh timestamp then the position does not jump`() {
+        val pausedAt = fakeClock.now()
+        player.updateState(
+            state = createState(
+                playbackState = MediaPlaybackState.Paused,
+                mediaPosition = 100.0.seconds,
+                mediaPositionUpdatedAt = pausedAt,
+            ),
+            artworkBytes = null,
+        )
         shadowOf(Looper.getMainLooper()).idle()
 
-        // Pause at 100s
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Paused, mediaPosition = 100.0.seconds), artworkBytes = null)
-        shadowOf(Looper.getMainLooper()).idle()
-
-        // 30 seconds pass while paused
+        // 30 seconds pass while paused, Home Assistant re-stamps the position on resume
         fakeClock.currentInstant += 30.seconds
-
-        // Resume at same position
-        player.updateState(state = createState(playbackState = MediaPlaybackState.Playing, mediaPosition = 100.0.seconds), artworkBytes = null)
+        player.updateState(
+            state = createState(
+                playbackState = MediaPlaybackState.Playing,
+                mediaPosition = 100.0.seconds,
+                mediaPositionUpdatedAt = fakeClock.now(),
+            ),
+            artworkBytes = null,
+        )
         shadowOf(Looper.getMainLooper()).idle()
 
-        // Anchor should be reset at resume time, so position = 100s (not 130s)
+        // The paused time is not counted as playback
         assertEquals(100_000L, player.currentPosition)
+    }
+
+    @Test
+    fun `Given a position stamped in the past when playing then it is extrapolated to now`() {
+        // Subscribing mid-track: the server last stamped the position three minutes ago
+        player.updateState(
+            state = createState(
+                playbackState = MediaPlaybackState.Playing,
+                mediaPosition = 0.seconds,
+                mediaPositionUpdatedAt = fakeClock.now() - 3.minutes,
+                mediaDuration = 600.0.seconds,
+            ),
+            artworkBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(180_000L, player.currentPosition)
+    }
+
+    @Test
+    fun `Given no position timestamp when playing then the position is not extrapolated`() {
+        // Integrations that omit media_position_updated_at report a static position, and the
+        // frontend does not extrapolate one either
+        player.updateState(
+            state = createState(mediaPosition = 120.0.seconds, mediaPositionUpdatedAt = null),
+            artworkBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        fakeClock.currentInstant += 10.seconds
+
+        assertEquals(120_000L, player.currentPosition)
+    }
+
+    @Test
+    fun `Given a timestamp older than the duration when playing then the position is bound to it`() {
+        player.updateState(
+            state = createState(
+                playbackState = MediaPlaybackState.Playing,
+                mediaPosition = 120.0.seconds,
+                mediaPositionUpdatedAt = fakeClock.now() - 1.hours,
+                mediaDuration = 300.0.seconds,
+            ),
+            artworkBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(300_000L, player.currentPosition)
     }
 
     // -- Pending command future tests --

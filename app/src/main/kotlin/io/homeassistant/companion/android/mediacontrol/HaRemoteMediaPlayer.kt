@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.common.data.integration.MediaRepeatMod
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 
@@ -62,9 +61,6 @@ internal class HaRemoteMediaPlayer(
     private var mediaState: EntityDisplayWithoutContext? = null
     private var artworkBytes: ByteArray? = null
 
-    private var positionAnchorMs: Long = 0L
-    private var positionAnchorTime: Instant? = null
-
     /**
      * The pending future from the most recent [handleCommand] call, if any. Completed by
      * [updateState] when the server confirms the new state via WebSocket. Exposed for testing only.
@@ -81,22 +77,8 @@ internal class HaRemoteMediaPlayer(
      */
     @MainThread
     fun updateState(state: EntityDisplayWithoutContext?, artworkBytes: ByteArray?) {
-        val playback = state?.mediaPlayback
-        val shouldResetAnchor = state != null &&
-            (
-                mediaState == null ||
-                    playback?.position != mediaState?.mediaPlayback?.position ||
-                    (
-                        playback?.state is MediaPlaybackState.Playing &&
-                            mediaState?.mediaPlayback?.state !is MediaPlaybackState.Playing
-                        )
-                )
         mediaState = state
         this.artworkBytes = artworkBytes
-        if (shouldResetAnchor) {
-            positionAnchorMs = playback?.position?.inWholeMilliseconds ?: 0L
-            positionAnchorTime = clock.now()
-        }
         pendingCommandFuture?.set(null)
         pendingCommandFuture = null
         invalidateState()
@@ -180,16 +162,21 @@ internal class HaRemoteMediaPlayer(
     /**
      * Returns the estimated current playback position in milliseconds.
      *
-     * The position anchor is set (in [updateState]) only when the playback position
-     * actually changes or when playback resumes, so non-position updates such as volume changes
-     * do not reset the anchor. This prevents the progress bar from jumping backward when the
-     * server sends a volume-only state delta.
+     * The anchor comes from the server: Home Assistant reports where the media was at
+     * `media_position_updated_at` rather than sending the position continuously, so a running
+     * progress bar advances from that timestamp. A volume-only delta carries the same pair and
+     * therefore resolves to the same position, without needing to detect it.
+     *
+     * This matches how the frontend renders progress, including its exposure to phone-versus-server
+     * clock skew, which the duration bound below keeps harmless.
      */
     private fun computeCurrentPositionMs(state: EntityDisplayWithoutContext): Long {
         val playback = state.mediaPlayback
-        val anchorMs = positionAnchorMs
-        val anchorTime = positionAnchorTime ?: return anchorMs
-        if (playback?.state !is MediaPlaybackState.Playing) return anchorMs
+        val anchorMs = playback?.position?.inWholeMilliseconds ?: 0L
+        // Without a server timestamp the position is a static value, the frontend does not
+        // extrapolate one either (see getCurrentProgress in src/data/media-player.ts)
+        val anchorTime = playback?.positionUpdatedAt ?: return anchorMs
+        if (playback.state !is MediaPlaybackState.Playing) return anchorMs
         val compensatedMs = anchorMs + (clock.now() - anchorTime).inWholeMilliseconds
         val maxMs = playback.duration?.inWholeMilliseconds
         return if (maxMs != null) compensatedMs.coerceIn(0L, maxMs) else compensatedMs.coerceAtLeast(0L)

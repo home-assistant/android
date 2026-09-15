@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 /** Home Assistant reports the volume as a 0..1 fraction, resolved to a 0..100 [EntityPosition]. */
 private const val VOLUME_PERCENT = 100f
@@ -18,7 +19,8 @@ private const val VOLUME_STEP = 0.1f
 
 /**
  * An [EntityDisplayWithoutContext] for a media_player, the shape the media session consumes.
- * [volumeLevel] takes the 0..1 fraction Home Assistant reports, as the state attribute does.
+ * [volumeLevel] takes the 0..1 fraction Home Assistant reports, as the state attribute does, and
+ * [mediaPositionUpdatedAt] defaults to null, the integrations that report no position timestamp.
  */
 internal fun mediaDisplayItem(
     entityId: String = "media_player.test",
@@ -30,6 +32,7 @@ internal fun mediaDisplayItem(
     entityPicturePath: String? = null,
     mediaDuration: Duration? = 300.0.seconds,
     mediaPosition: Duration? = 120.0.seconds,
+    mediaPositionUpdatedAt: Instant? = null,
     supportsPause: Boolean = true,
     supportsPlay: Boolean = true,
     supportsSeek: Boolean = true,
@@ -85,6 +88,7 @@ internal fun mediaDisplayItem(
         entityPicturePath = entityPicturePath,
         duration = mediaDuration,
         position = mediaPosition,
+        positionUpdatedAt = mediaPositionUpdatedAt,
     ),
 )
 

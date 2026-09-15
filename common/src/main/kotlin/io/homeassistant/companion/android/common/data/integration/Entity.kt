@@ -223,6 +223,7 @@ import java.time.ZoneOffset
 import kotlin.math.round
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Polymorphic
@@ -417,6 +418,11 @@ data class MediaPlayerControls(
  *
  * [entityPicturePath] is the raw `entity_picture` attribute, a path the caller resolves against
  * the URL of its own server.
+ *
+ * [position] is only valid as of [positionUpdatedAt]: Home Assistant reports the position at
+ * discontinuities (track start, seek, resume) rather than continuously, so a caller rendering a
+ * running progress bar extrapolates from that timestamp. It is null for the integrations that
+ * omit it, and the position is then a static value that must not be extrapolated.
  */
 @Immutable
 data class MediaPlayback(
@@ -433,6 +439,7 @@ data class MediaPlayback(
     val entityPicturePath: String? = null,
     val duration: Duration? = null,
     val position: Duration? = null,
+    val positionUpdatedAt: Instant? = null,
 )
 
 /** Controls of a cover entity, [position] null when it is not set. */
@@ -831,6 +838,7 @@ fun Entity.getMediaPlayback(): MediaPlayback? {
         entityPicturePath = entityPicturePath(),
         duration = getMediaDuration(),
         position = getMediaPosition(),
+        positionUpdatedAt = getMediaPositionUpdatedAt(),
     )
 }
 
@@ -1564,6 +1572,25 @@ internal fun Entity.getMediaAlbumName(): String? =
 /** Returns the current media position, if available. */
 internal fun Entity.getMediaPosition(): Duration? =
     if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_position"]?.toString()?.toDoubleOrNull()?.seconds else null
+
+/**
+ * Returns when [getMediaPosition] was valid, if the integration reports it.
+ *
+ * Home Assistant sends `homeassistant.util.dt.utcnow()` as an ISO-8601 string.
+ */
+internal fun Entity.getMediaPositionUpdatedAt(): Instant? {
+    val rawValue = attributes["media_position_updated_at"]
+        ?.takeIf { domain == MEDIA_PLAYER_DOMAIN }
+        ?.toString()
+        ?: return null
+
+    return try {
+        Instant.parse(rawValue)
+    } catch (e: IllegalArgumentException) {
+        Timber.tag(EntityExt.TAG).e(e, "Unable to parse media_position_updated_at")
+        null
+    }
+}
 
 /** Returns the media duration, if available. */
 internal fun Entity.getMediaDuration(): Duration? =

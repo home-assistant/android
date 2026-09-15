@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -495,6 +496,38 @@ class EntityTest {
         @Test
         fun `Given not a media player when getting the playback then it is null`() {
             assertNull(createEntity().getMediaPlayback())
+        }
+
+        @Test
+        fun `Given a position timestamp when getting the playback then it is parsed`() {
+            val entity = createEntity(
+                entityId = "media_player.tv",
+                state = "playing",
+                attributes = mapOf("media_position_updated_at" to "2026-09-15T10:23:45.123456+00:00"),
+            )
+
+            assertEquals(
+                Instant.parse("2026-09-15T10:23:45.123456Z"),
+                entity.getMediaPlayback()?.positionUpdatedAt,
+            )
+        }
+
+        @Test
+        fun `Given no position timestamp when getting the playback then it is null`() {
+            val entity = createEntity(entityId = "media_player.tv", state = "playing", attributes = emptyMap())
+
+            assertNull(entity.getMediaPlayback()?.positionUpdatedAt)
+        }
+
+        @Test
+        fun `Given an unparsable position timestamp when getting the playback then it is null`() {
+            val entity = createEntity(
+                entityId = "media_player.tv",
+                state = "playing",
+                attributes = mapOf("media_position_updated_at" to "not a timestamp"),
+            )
+
+            assertNull(entity.getMediaPlayback()?.positionUpdatedAt)
         }
 
         @Test
