@@ -93,7 +93,7 @@ internal class HaRemoteMediaPlayer(
                 )
         mediaState = state
         this.artworkBytes = artworkBytes
-        if (shouldResetAnchor && state != null) {
+        if (shouldResetAnchor) {
             positionAnchorMs = playback?.position?.inWholeMilliseconds ?: 0L
             positionAnchorTime = clock.now()
         }

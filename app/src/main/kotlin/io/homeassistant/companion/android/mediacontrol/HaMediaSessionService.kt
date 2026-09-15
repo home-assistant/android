@@ -131,7 +131,6 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     }
 
     override fun onDestroy() {
-        Timber.d("HaMediaSessionService destroyed")
         if (foregroundNotificationId != null) {
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             foregroundNotificationId = null
@@ -148,6 +147,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         }
         serviceScope.cancel()
         super.onDestroy()
+        Timber.d("HaMediaSessionService destroyed")
     }
 
     @VisibleForTesting
@@ -213,9 +213,8 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     /**
      * Launches the observation coroutine for a new session, registers it with the service, and
      * stores it in [activeSessions].
-     * Must be called from the Main thread.
      */
-    private fun launchSession(key: String, session: HaMediaSession) {
+    private suspend fun launchSession(key: String, session: HaMediaSession) {
         val job = serviceScope.launch {
             session.observe { mediaSession -> addSession(mediaSession) }
             // observe() returned normally (the entity state flow completed rather than suspending
@@ -229,8 +228,10 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
                 Timber.d("Session $key observation ended normally, removed stale entry")
             }
         }
-        activeSessions[key] = session to job
-        Timber.d("Added media session for $key")
+        withContext(Dispatchers.Main) {
+            activeSessions[key] = session to job
+            Timber.d("Added media session for $key")
+        }
     }
 
     /**

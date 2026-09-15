@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timoptr.mdiicons.Mdi
@@ -103,7 +104,6 @@ private fun DescriptionSection() {
     Text(
         text = stringResource(commonR.string.media_control_description),
         style = HATextStyle.Body,
-        color = LocalHAColorScheme.current.colorTextPrimary,
         textAlign = TextAlign.Start,
         modifier = Modifier.padding(horizontal = HADimens.SPACE4),
     )
@@ -223,6 +223,8 @@ private fun ConfiguredEntityRow(
                 style = HATextStyle.Body,
                 color = colorScheme.colorTextPrimary,
                 textAlign = TextAlign.Start,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
 
             val subtitle = listOfNotNull(
@@ -234,8 +236,9 @@ private fun ConfiguredEntityRow(
                 Text(
                     text = subtitle,
                     style = HATextStyle.BodyMedium,
-                    color = colorScheme.colorTextSecondary,
                     textAlign = TextAlign.Start,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

@@ -28,6 +28,9 @@ class MediaControlSettingsScreenScreenshotTest {
     /** Belongs to a server whose entities are not resolved, so the row falls back to the entity id. */
     private val officeConfig = MediaControlEntityConfig(serverId = OTHER_SERVER_ID, entityId = "media_player.office")
 
+    /** Resolved with a name and a subtitle too long for the row, so both ellipsize. */
+    private val theatreConfig = MediaControlEntityConfig(serverId = SERVER_ID, entityId = "media_player.theatre")
+
     private val displayState = EntityDisplayState.Loaded(
         listOf(
             EntityDisplayWithContext(
@@ -45,6 +48,15 @@ class MediaControlSettingsScreenScreenshotTest {
                     name = "Kitchen Radio",
                     icon = Mdi.Speaker,
                 ),
+            ),
+            EntityDisplayWithContext(
+                item = EntityDisplayWithoutContext(
+                    entityId = theatreConfig.entityId,
+                    name = "Downstairs Home Theatre Receiver And Amplifier",
+                    icon = Mdi.Television,
+                ),
+                areaName = "Downstairs Entertainment Room",
+                deviceName = "Denon AVR-X3700H Network Receiver",
             ),
         ),
     )
@@ -83,7 +95,10 @@ class MediaControlSettingsScreenScreenshotTest {
         }
     }
 
-    /** Single server: no row leads with a server name, one entity has a subtitle and one has none. */
+    /**
+     * Single server: no row leads with a server name, one entity has a subtitle, one has none, and
+     * the last one has a name and a subtitle too long for the row so both ellipsize.
+     */
     @PreviewTest
     @HAPreviews
     @Composable
@@ -93,7 +108,7 @@ class MediaControlSettingsScreenScreenshotTest {
                 MediaControlSettingsContent(
                     uiState = MediaControlSettingsUiState(
                         isLoading = false,
-                        mediaControlEntityConfigs = listOf(livingRoomConfig, kitchenConfig),
+                        mediaControlEntityConfigs = listOf(livingRoomConfig, kitchenConfig, theatreConfig),
                         entityDisplayStatePerServer = mapOf(SERVER_ID to displayState),
                     ),
                     onServerSelected = {},

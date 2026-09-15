@@ -56,6 +56,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -69,7 +70,7 @@ import timber.log.Timber
  * Call [observe] to start the session. The session and its Media3 resources are created when
  * [observe] is called and released automatically when the calling coroutine is cancelled.
  *
- * @param context Application context used for Coil image loading and [MediaSession] construction.
+ * @param context Application context.
  * @param config Identifies the media_player entity this session represents.
  * @param entitiesForDisplayManager Resolves and follows the state of the entity.
  * @param serverManager Used to resolve artwork base URLs and call HA integration actions.
@@ -263,8 +264,7 @@ class HaMediaSession @AssistedInject constructor(
                 "observe() called while a session is already active for ${config.entityId}"
             }
 
-            // SupervisorJob without a parent: command failures don't propagate to the
-            // observation scope, and this scope does not block coroutineScope from completing
+            // Dedicated scope to not block coroutineScope from completing
             // when the entity state flow ends naturally. Cancelled explicitly in the finally block.
             val commandScope = CoroutineScope(
                 coroutineContext + SupervisorJob() + CoroutineExceptionHandler { _, e ->
@@ -308,6 +308,9 @@ class HaMediaSession @AssistedInject constructor(
         entitiesForDisplayManager.observe(config.serverId, listOf(config.entityId))
             .map { (it as? EntityDisplayState.Loaded)?.entity(config.entityId) }
             .distinctUntilChanged()
+            .onCompletion { cause ->
+                Timber.d("startObservingState: ${config.entityId} stopped being followed, cause=$cause")
+            }
             .collectLatest { state ->
                 if (state == null) {
                     Timber.d("startObservingState: received null state for ${config.entityId}, skipping update")
@@ -358,7 +361,6 @@ class HaMediaSession @AssistedInject constructor(
                     else -> Unit
                 }
             }
-        Timber.d("startObservingState: flow collection ended for ${config.entityId}")
     }
 
     private fun buildMediaSession(player: HaRemoteMediaPlayer): MediaSession = MediaSession.Builder(context, player)
@@ -366,12 +368,6 @@ class HaMediaSession @AssistedInject constructor(
         .setCallback(MediaSessionCallback())
         .build()
         .also { session ->
-            /**
-             * FLAG_ACTIVITY_NEW_TASK is required when starting an activity from a service context
-             * (PendingIntents from notifications always fire in a non-Activity context).
-             * FLAG_ACTIVITY_SINGLE_TOP prevents stacking a redundant WebViewActivity if one is
-             * already at the top; onNewIntent delivers the path to the existing instance instead.
-             */
             val tapIntent = LaunchActivity.newInstance(
                 context = context,
                 deepLink = LaunchActivity.DeepLink.NavigateTo(
