@@ -26,7 +26,7 @@ jobs:
           ruby-version: "4.0.6"
           bundler-cache: false
 
-      - uses: ./.github/actions/inflate-secrets
+      - uses: $/.github/actions/inflate-secrets
         name: Inflate Secrets
         with:
           keystore: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}

@@ -47,7 +47,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
