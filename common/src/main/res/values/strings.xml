@@ -304,6 +304,7 @@
     <string name="gestures_action_navigate_dashboard">Go to default dashboard</string>
     <string name="gestures_action_navigate_forward">Go to next page</string>
     <string name="gestures_action_navigate_reload">Reload page</string>
+    <string name="gestures_action_navigate_open_in_browser">Open page in browser</string>
     <string name="gestures_action_open_app_settings">Open app settings</string>
     <string name="gestures_action_open_app_developer">Open app troubleshooting</string>
     <string name="gestures_action_open_assist">Open Assist</string>
