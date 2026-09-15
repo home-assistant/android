@@ -12,7 +12,6 @@ import android.os.Vibrator
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import androidx.core.service.quicksettings.PendingIntentActivityWrapper
 import androidx.core.service.quicksettings.TileServiceCompat
@@ -52,7 +51,6 @@ import timber.log.Timber
 
 private const val TILE_ICON_SIZE_DP = 48
 
-@RequiresApi(Build.VERSION_CODES.N)
 @AndroidEntryPoint
 internal abstract class TileExtensions : TileService() {
 
