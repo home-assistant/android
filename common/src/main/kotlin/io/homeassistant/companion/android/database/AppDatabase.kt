@@ -8,6 +8,8 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlConfig
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
 import io.homeassistant.companion.android.database.migration.Migration27to28
 import io.homeassistant.companion.android.database.migration.Migration36to37
 import io.homeassistant.companion.android.database.migration.Migration52to53
@@ -74,8 +76,9 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         EntityStateComplications::class,
         Server::class,
         Setting::class,
+        MediaControlConfig::class,
     ],
-    version = 53,
+    version = 54,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -104,6 +107,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         AutoMigration(from = 50, to = 51),
         AutoMigration(from = 51, to = 52),
         AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
+        AutoMigration(from = 53, to = 54),
     ],
 )
 @TypeConverters(
@@ -133,4 +137,5 @@ internal abstract class AppDatabase : RoomDatabase() {
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao
+    abstract fun mediaControlDao(): MediaControlDao
 }

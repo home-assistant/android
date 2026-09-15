@@ -47,6 +47,7 @@ import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissio
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
+import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
@@ -248,6 +249,7 @@ class LaunchActivity : AppCompatActivity() {
         SensorWorker.start(this)
         lifecycleScope.launch {
             WebsocketManager.start(this@LaunchActivity)
+            HaMediaSessionService.start(this@LaunchActivity)
             checkLocationDisabled()
             checkLocalNetworkPermission()
         }

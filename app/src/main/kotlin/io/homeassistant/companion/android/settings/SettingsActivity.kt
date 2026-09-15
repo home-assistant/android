@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
+import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
@@ -75,6 +76,7 @@ class SettingsActivity : BaseActivity() {
         data class Sensor(val sensorId: String) : Deeplink
         data object Websocket : Deeplink
         data object AssistSettings : Deeplink
+        data object MediaControls : Deeplink
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -115,7 +117,8 @@ class SettingsActivity : BaseActivity() {
                             is Deeplink.Sensor -> SensorDetailFragment::class.java
                             is Deeplink.QSTile -> ManageTilesFragment::class.java
                             Deeplink.AssistSettings -> AssistSettingsFragment::class.java
-                            else -> SettingsFragment::class.java
+                            Deeplink.MediaControls -> MediaControlSettingsFragment::class.java
+                            null -> SettingsFragment::class.java
                         },
                         when (settingsNavigation) {
                             is Deeplink.HomeNetwork -> {
