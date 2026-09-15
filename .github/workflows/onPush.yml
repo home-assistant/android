@@ -16,7 +16,7 @@ env:
 
 jobs:
   app_build:
-    name: Github, Firebase, and Sentry Release
+    name: GitHub build and (pre)release
     runs-on: ubuntu-latest
     if: github.repository == 'home-assistant/android'
     permissions:
