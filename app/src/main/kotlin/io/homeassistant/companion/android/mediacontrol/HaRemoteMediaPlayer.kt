@@ -108,7 +108,14 @@ internal class HaRemoteMediaPlayer(
             is MediaPlaybackState.Off, null -> STATE_IDLE
         }
 
-        val isPlaying = playback?.state is MediaPlaybackState.Playing
+        // Buffering is playback intent, not a pause: the entity is loading in order to play, so
+        // only STATE_BUFFERING above says it is not audible yet. Reporting it as not play-when-ready
+        // would make Media3 offer Play instead of Pause (see Util.shouldShowPlayButton) and would
+        // let onTaskRemoved stop the service mid-buffer, since HaMediaSession.isPlaying reads this.
+        val playWhenReady = when (playback?.state) {
+            is MediaPlaybackState.Playing, is MediaPlaybackState.Buffering -> true
+            else -> false
+        }
 
         val durationUs = playback?.duration?.inWholeMicroseconds ?: C.TIME_UNSET
         val positionMs = computeCurrentPositionMs(state)
@@ -129,7 +136,7 @@ internal class HaRemoteMediaPlayer(
         return State.Builder()
             .setAvailableCommands(availableCommands)
             .setPlaybackState(playbackState)
-            .setPlayWhenReady(isPlaying, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+            .setPlayWhenReady(playWhenReady, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
             .setPlaybackParameters(PlaybackParameters(PLAYBACK_SPEED))
             .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
             .setContentPositionMs(positionMs)

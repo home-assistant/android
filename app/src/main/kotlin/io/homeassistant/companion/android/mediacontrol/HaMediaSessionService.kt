@@ -226,7 +226,9 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      */
     private suspend fun launchSession(key: String, session: HaMediaSession) {
         val job = serviceScope.launch {
-            session.observe { mediaSession -> addSession(mediaSession) }
+            session.observe { mediaSession ->
+                withContext(Dispatchers.Main) { addSession(mediaSession) }
+            }
             // observe() returned normally (the entity state flow completed rather than suspending
             // indefinitely). The finally block in observe() has already released Media3 resources.
             // Remove the stale map entry so a subsequent reconcileSessions emission can restart

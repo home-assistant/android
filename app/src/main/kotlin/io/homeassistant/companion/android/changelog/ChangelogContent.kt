@@ -22,6 +22,11 @@ internal val currentChangelog = Changelog(
             contentRes = commonR.string.changelog_entry_assistant_volume_command,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_native_media_controls,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.MediaControls),
+        ),
     ),
     improved = listOf(
         ChangelogEntry(

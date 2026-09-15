@@ -140,11 +140,16 @@ class HaRemoteMediaPlayerTest {
     }
 
     @Test
-    fun `Given buffering state when getState then return buffering`() {
+    fun `Given buffering state when getState then return buffering while still intending to play`() {
         player.updateState(state = createState(playbackState = MediaPlaybackState.Buffering), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(Player.STATE_BUFFERING, player.playbackState)
+        // Buffering is on the way to playing, so the shade keeps offering Pause and the service
+        // does not treat the session as stopped
+        assertTrue(player.playWhenReady)
+        // Media3 still reports it as not playing, since nothing is audible yet
+        assertFalse(player.isPlaying)
     }
 
     @Test

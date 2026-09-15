@@ -19,6 +19,7 @@ import androidx.media3.session.MediaStyleNotificationHelper
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
+import coil3.size.Precision
 import coil3.toBitmap
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -39,6 +40,7 @@ import io.homeassistant.companion.android.common.util.CHANNEL_MEDIA_SESSION
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.mediacontrol.HaMediaSession.Companion.MAX_ARTWORK_SIZE
 import io.homeassistant.companion.android.util.sensitive
 import java.io.ByteArrayOutputStream
 import java.net.URL
@@ -271,9 +273,12 @@ class HaMediaSession @AssistedInject constructor(
                     Timber.e(e, "Command failed for ${config.entityId}")
                 },
             )
-            val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(commandScope), clock)
-            val session = buildMediaSession(player)
-            withContext(Dispatchers.Main) { mediaSession = session }
+            val (player, session) = withContext(Dispatchers.Main) {
+                val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(commandScope), clock)
+                val session = buildMediaSession(player)
+                mediaSession = session
+                player to session
+            }
             try {
                 onSessionReady(session)
                 startObservingState(player)
@@ -396,7 +401,12 @@ class HaMediaSession @AssistedInject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.e(e, "Failed to call media action $action on ${config.entityId}")
+            // Rethrow so the command Job fails: HaRemoteMediaPlayer fails the pending Media3
+            // future on it, which drops the optimistic placeholder state and re-reads the real
+            // one. Swallowing here would leave the future pending, since a failed action changes
+            // nothing on the server and so produces no state update to complete it, and the shade
+            // would keep showing the action as if it had succeeded. The command scope logs it.
+            throw IllegalStateException("Failed to call media action $action on ${config.entityId}", e)
         }
     }
 
@@ -429,24 +439,40 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     /**
-     * Loads album art at its native resolution and returns JPEG-compressed bytes for media
+     * Loads album art bounded to [MAX_ARTWORK_SIZE] and returns JPEG-compressed bytes for media
      * metadata alongside a notification-icon-sized bitmap for [setLargeIcon][android.app.Notification.Builder.setLargeIcon].
      *
-     * The bitmap is scaled to [android.R.dimen.notification_large_icon_width] with
-     * [scaleDownIfNecessary] here on IO rather than during notification rendering.
+     * The bound matters because the source art is arbitrarily large: without it every configured
+     * entity retains a native-resolution JPEG and bitmap for the lifetime of its session, and the
+     * full resolution is compressed only to be thrown away for a notification-icon-sized bitmap.
+     *
+     * It also bounds what leaves the process. Media3 neither paginates nor resizes
+     * [androidx.media3.common.MediaMetadata.artworkData]: it could throw `TransactionTooLargeException` if
+     * the buffer is too big.
+     *
+     * Both outputs derive from that one bitmap, scaled with [scaleDownIfNecessary] here on IO
+     * rather than during notification rendering.
      */
     private suspend fun loadArtworkData(url: String): Pair<ByteArray, Bitmap>? = withContext(Dispatchers.IO) {
         try {
             val request = ImageRequest.Builder(context)
                 .data(url)
                 .allowHardware(false)
+                // A bounding box rather than an output size: Scale.FIT keeps the aspect ratio, and
+                // INEXACT stops art smaller than the box from being upscaled to fill it.
+                .size(MAX_ARTWORK_SIZE, MAX_ARTWORK_SIZE)
+                .precision(Precision.INEXACT)
                 .build()
             val result = context.imageLoader.execute(request)
-            result.image?.toBitmap()?.let { bitmap ->
+            result.image?.toBitmap()?.let { decodedBitmap ->
+                // Coil only downsamples by powers of two, so the decoded bitmap can still be larger
+                // than requested; bound it before compressing rather than trusting the request.
+                val artworkBitmap = scaleDownIfNecessary(decodedBitmap, MAX_ARTWORK_SIZE, MAX_ARTWORK_SIZE)
                 val stream = ByteArrayOutputStream()
-                bitmap.compress(CompressFormat.JPEG, 90, stream)
+                artworkBitmap.compress(CompressFormat.JPEG, ARTWORK_JPEG_QUALITY, stream)
                 val maxIconSize = context.resources.getDimensionPixelSize(android.R.dimen.notification_large_icon_width)
-                val notificationBitmap = scaleDownIfNecessary(bitmap, maxWidth = maxIconSize, maxHeight = maxIconSize)
+                val notificationBitmap =
+                    scaleDownIfNecessary(artworkBitmap, maxWidth = maxIconSize, maxHeight = maxIconSize)
                 stream.toByteArray() to notificationBitmap
             }
         } catch (e: CancellationException) {
@@ -502,6 +528,16 @@ class HaMediaSession @AssistedInject constructor(
 
         /** Artwork paths already carrying a scheme are absolute and need no base URL. */
         private const val HTTP_SCHEME_PREFIX = "http"
+
+        /**
+         * Largest edge, in pixels, of the album art sent as media metadata. Comfortably above every
+         * surface that renders it (the notification icon is `notification_large_icon_width`, the
+         * shade and lock screen a few hundred dp) while keeping the encoded bytes small enough to
+         * hold per session and to send to out-of-process controllers.
+         */
+        private const val MAX_ARTWORK_SIZE = 512
+
+        private const val ARTWORK_JPEG_QUALITY = 90
 
         private const val ACTION_MEDIA_PLAY = "media_play"
         private const val ACTION_MEDIA_PAUSE = "media_pause"

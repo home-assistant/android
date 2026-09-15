@@ -31,8 +31,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -358,14 +360,15 @@ class HaMediaSessionTest {
     }
 
     /**
-     * Verifies that when `callAction` throws an exception, `callMediaAction` catches it and does
-     * not propagate the crash, while still having attempted the call.
+     * Verifies that a failed action does not leave the player showing it as if it had succeeded.
      *
-     * This guards the `catch (e: Exception)` branch at the end of `callMediaAction`, which ensures
-     * a transient network or server error never terminates the media session coroutine.
+     * Media3 holds the optimistic placeholder state until the command future completes, and a
+     * failed action changes nothing on the server, so no state update arrives to complete it.
+     * `callMediaAction` therefore rethrows, which fails the future and makes Media3 re-read the
+     * real state.
      */
     @Test
-    fun `Given callAction throws when play requested then exception is caught and does not crash`() {
+    fun `Given callAction throws when play requested then the player reverts to the real state`() {
         val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
         stateFlow.tryEmit(loadedState(createState(playbackState = MediaPlaybackState.Paused)))
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
@@ -380,7 +383,8 @@ class HaMediaSessionTest {
         }
         idleMainLooper()
 
-        capturedSession?.player?.play()
+        val player = capturedSession?.player as HaRemoteMediaPlayer
+        player.play()
         shadowOf(Looper.getMainLooper()).idle()
 
         coVerify {
@@ -390,6 +394,10 @@ class HaMediaSessionTest {
                 actionData = any(),
             )
         }
+        // The future is resolved rather than waiting for a state update that will never come, so
+        // the optimistic "playing" placeholder is dropped for the entity's real paused state
+        assertTrue(player.pendingCommandFuture?.isDone ?: false)
+        assertFalse(player.playWhenReady)
 
         job.cancel()
     }
