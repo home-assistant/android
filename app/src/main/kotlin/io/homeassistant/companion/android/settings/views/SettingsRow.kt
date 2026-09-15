@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,8 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.rememberImageVector
 
 /**
  * A Composable that displays a typical Material Design clickable list item
@@ -33,7 +34,7 @@ import com.mikepenz.iconics.typeface.IIcon
 fun SettingsRow(
     primaryText: String,
     secondaryText: String,
-    mdiIcon: IIcon?,
+    mdiIcon: MdiIcon?,
     enabled: Boolean,
     modifier: Modifier = Modifier,
     onClicked: () -> Unit,
@@ -45,7 +46,8 @@ fun SettingsRow(
         icon = {
             if (mdiIcon != null) {
                 Image(
-                    asset = mdiIcon,
+                    imageVector = mdiIcon.rememberImageVector(),
+                    contentDescription = null,
                     modifier = Modifier
                         .size(DefaultIconSize)
                         .alpha(if (enabled) ContentAlpha.high else ContentAlpha.disabled),

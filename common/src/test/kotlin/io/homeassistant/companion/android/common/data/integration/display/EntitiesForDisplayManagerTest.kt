@@ -3,7 +3,11 @@ package io.homeassistant.companion.android.common.data.integration.display
 import androidx.compose.ui.unit.LayoutDirection
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Bookmark
+import io.github.timoptr.mdiicons.generated.Heart
+import io.github.timoptr.mdiicons.generated.Robot
+import io.github.timoptr.mdiicons.generated.RobotOff
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getIcon
@@ -394,8 +398,8 @@ class EntitiesForDisplayManagerTest {
             val item = resolve(off).single()
 
             // The rendered icon follows the state, the persisted one stays the same as it changes
-            assertEquals(CommunityMaterial.Icon3.cmd_robot_off, item.icon)
-            assertEquals(CommunityMaterial.Icon3.cmd_robot, item.statelessIcon)
+            assertEquals(Mdi.RobotOff, item.icon)
+            assertEquals(Mdi.Robot, item.statelessIcon)
         }
 
         @Test
@@ -407,8 +411,8 @@ class EntitiesForDisplayManagerTest {
             val item = resolve(entity("automation.wake_up"))
                 .single()
 
-            assertEquals(CommunityMaterial.Icon2.cmd_heart, item.icon)
-            assertEquals(CommunityMaterial.Icon2.cmd_heart, item.statelessIcon)
+            assertEquals(Mdi.Heart, item.icon)
+            assertEquals(Mdi.Heart, item.statelessIcon)
         }
 
         @Test
@@ -770,7 +774,7 @@ class EntitiesForDisplayManagerTest {
                     item = EntityDisplayWithoutContext(
                         entityId = entityId,
                         name = "Name",
-                        icon = CommunityMaterial.Icon.cmd_bookmark,
+                        icon = Mdi.Bookmark,
                     ),
                 )
                 assertEquals(expectedDomain, item.domain)
@@ -782,7 +786,7 @@ class EntitiesForDisplayManagerTest {
                     item = EntityDisplayWithoutContext(
                         entityId = "light.bed",
                         name = "Bed",
-                        icon = CommunityMaterial.Icon.cmd_bookmark,
+                        icon = Mdi.Bookmark,
                     ),
                     areaName = "Bedroom",
                     deviceName = "Hub",
@@ -798,7 +802,7 @@ class EntitiesForDisplayManagerTest {
                     item = EntityDisplayWithoutContext(
                         entityId = "light.bed",
                         name = "Bed",
-                        icon = CommunityMaterial.Icon.cmd_bookmark,
+                        icon = Mdi.Bookmark,
                     ),
                 )
 
@@ -811,7 +815,7 @@ class EntitiesForDisplayManagerTest {
                     item = EntityDisplayWithoutContext(
                         entityId = "light.bed",
                         name = "Bed",
-                        icon = CommunityMaterial.Icon.cmd_bookmark,
+                        icon = Mdi.Bookmark,
                     ),
                     deviceName = "Bed",
                 )

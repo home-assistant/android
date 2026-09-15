@@ -12,7 +12,26 @@
             android:exported="true" />
 
         <activity android:name=".developer.catalog.HAComposeCatalogActivity"
-            android:exported="true" />
+            android:exported="false" />
+
+        <activity android:name=".developer.nfc.DebugNfcTagEmulatorActivity"
+            android:label="@string/debug_nfc_tag_emulator"
+            android:configChanges="orientation|screenSize"
+            android:exported="false" />
+
+        <!-- Disabled by default, DebugNfcTagEmulatorActivity enables it only while it is visible -->
+        <service
+            android:name=".developer.nfc.DebugNfcTagEmulatorService"
+            android:enabled="false"
+            android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/debug_nfc_tag_apduservice" />
+        </service>
 
         <activity android:name=".developer.DemoExoPlayerActivity"
             android:supportsPictureInPicture="true"

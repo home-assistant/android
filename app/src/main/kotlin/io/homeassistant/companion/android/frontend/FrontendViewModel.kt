@@ -62,6 +62,7 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -75,6 +76,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -308,6 +310,46 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     suspend fun getWebViewClient(): HAWebViewClient = webViewClient.get()
 
+    /**
+     * Primes the TLS client certificate for [url]'s host before the WebView loads it, when a
+     * client certificate is configured. No-op for other URLs (e.g. about:blank) or without a
+     * certificate.
+     *
+     * Without priming, on servers requiring a TLS client certificate (mTLS), the first load after
+     * a process start always fails and shows the retry screen. Three facts combine into that
+     * failure:
+     * - On a fresh process the frontend's app shell is served by its service worker without any
+     *   network fetch, so loading the page negotiates nothing.
+     * - The frontend's WebSocket is then the first connection to reach the server.
+     * - Chromium cannot invoke [android.webkit.WebViewClient.onReceivedClientCertRequest] during
+     *   a WebSocket handshake, so that connection fails instead of asking for the certificate.
+     *
+     * Requesting a small resource first ([WebViewAction.PingUrl]) makes the
+     * certificate negotiation happen on a regular request, and Chromium caches the selection per
+     * host for the rest of the process, so the frontend's WebSocket reuses it.
+     *
+     * The Screen must call this after setting the WebViewClient and before `loadUrl`: the
+     * certificate request must land in [HAWebViewClient], since the default client's cancel would
+     * be remembered as a denial for the whole process. Waits at most [WebViewAction.PingUrl.PING_TIMEOUT]
+     * so an unreachable server cannot delay the load; every failure mode degrades to loading
+     * without priming, which the load's own error handling reports, never to a broken state.
+     */
+    suspend fun prepareUrlLoad(url: String) {
+        val manifestUrl = url.toHttpUrlOrNull()?.resolve("/manifest.json") ?: return
+        if (keyChainRepository.getClientCertProvider().certificate == null) return
+
+        val action = WebViewAction.PingUrl(manifestUrl.toString())
+        // An emission without subscribers is dropped: on a cold start this can run before the
+        // Screen's action collector has subscribed, so wait for the subscription first.
+        _webViewActions.subscriptionCount.first { it > 0 }
+        _webViewActions.emit(action)
+        try {
+            action.await()
+        } catch (e: TimeoutCancellationException) {
+            Timber.w(e, "TLS client certificate priming timed out, loading the frontend anyway")
+        }
+    }
+
     /** The current pending file chooser request from the WebView, or null if none. */
     val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
 
@@ -378,6 +420,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     init {
         viewModelScope.launch {
             _viewState.collect { state ->
+                Timber.d("Frontend state: ${state.logDescription()}")
+                if (state is FrontendViewState.LoadServer) loadServer(state.serverId, state.target)
                 releaseExoPlayerIfLeavingContent(state)
             }
         }
@@ -431,12 +475,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             improvHandler.events.collect { event ->
                 when (event) {
                     is FrontendImprovHandler.Event.ReloadAtPath -> {
-                        _viewState.update {
-                            FrontendViewState.LoadServer(
-                                serverId = event.serverId,
-                                target = FrontendTarget.Path(event.path),
-                            )
-                        }
+                        startLoad(serverId = event.serverId, target = FrontendTarget.Path(event.path))
                     }
                 }
             }
@@ -455,8 +494,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
 
         collectMatterThreadEvents()
-
-        loadServer()
     }
 
     override fun onCleared() {
@@ -518,14 +555,26 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         )
 
     fun onScreenStartedChanged(started: Boolean) {
+        Timber.d("Frontend screen started: $started")
+        val resumed = started && !isScreenStarted.value
         isScreenStarted.value = started
+        if (resumed) restartInterruptedLoad()
+    }
+
+    /**
+     * Restarts the load when the screen resumes while the external-bus handshake is still pending.
+     * A frontend whose connection attempt failed while the app was in the background never retries
+     * on its own, so only a new navigation to the same [FrontendViewState.Loading.target] can
+     * complete the handshake.
+     */
+    private fun restartInterruptedLoad() {
+        val state = _viewState.value
+        if (state !is FrontendViewState.Loading || state.connected) return
+        startLoad(serverId = state.serverId, target = state.target)
     }
 
     fun onRetry() {
-        _viewState.update {
-            FrontendViewState.LoadServer(serverId = it.serverId)
-        }
-        loadServer()
+        startLoad()
     }
 
     /**
@@ -578,10 +627,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     fun switchServer(serverId: Int) {
-        _viewState.update {
-            FrontendViewState.LoadServer(serverId = serverId)
-        }
-        loadServer()
+        startLoad(serverId = serverId)
     }
 
     /**
@@ -591,10 +637,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     fun onSecurityLevelDone() {
         val serverId = _viewState.value.serverId
         urlManager.onSecurityLevelShown(serverId)
-        _viewState.update {
-            FrontendViewState.LoadServer(serverId = serverId)
-        }
-        loadServer()
+        startLoad(serverId = serverId)
     }
 
     /**
@@ -731,7 +774,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun navigateToDefaultDashboard(serverId: Int) {
         val clearHistory = WebViewAction.ClearHistory()
         _webViewActions.emit(clearHistory)
-        clearHistory.result.await()
+        clearHistory.await()
 
         val version = serverManager.getServer(serverId)?.version
         if (NavigateToMessage.isAvailable(version)) {
@@ -785,20 +828,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun loadServer() {
+    private fun startLoad(serverId: Int = _viewState.value.serverId, target: FrontendTarget = FrontendTarget.Default) {
+        _viewState.update { FrontendViewState.LoadServer(serverId = serverId, target = target) }
+    }
+
+    private fun loadServer(serverId: Int, target: FrontendTarget) {
         urlFlowJob?.cancel()
         urlFlowJob = viewModelScope.launch {
             permissionManager.checkLocalNetworkPermission()
-            val currentState = _viewState.value
-            val target = when (currentState) {
-                is FrontendViewState.LoadServer -> currentState.target
-                is FrontendViewState.Loading -> currentState.target
-                else -> FrontendTarget.Default
-            }
-            urlManager.serverUrlFlow(
-                serverId = currentState.serverId,
-                target = target,
-            ).collect { result ->
+            urlManager.serverUrlFlow(serverId = serverId, target = target).collect { result ->
                 handleUrlResult(result)
             }
         }
@@ -837,6 +875,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is FrontendHandlerEvent.Disconnected -> {
                 // Disconnection handling not yet implemented
+                Timber.d("Frontend external bus disconnected")
             }
             is FrontendHandlerEvent.Loaded -> showContent()
 
@@ -960,11 +999,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         when (result) {
             is UrlLoadResult.Success -> {
                 pendingMoreInfoEntityId = result.moreInfoEntityId
-                _viewState.update {
+                _viewState.update { currentState ->
                     FrontendViewState.Loading(
                         serverId = result.serverId,
                         url = result.url,
-                        target = FrontendTarget.Default,
+                        target = currentState.pendingTarget,
                     )
                 }
             }
@@ -1063,7 +1102,29 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
+    /**
+     * The frontend page the current load was started for, [FrontendTarget.Default] once the
+     * content is shown.
+     */
+    private val FrontendViewState.pendingTarget: FrontendTarget
+        get() = when (this) {
+            is FrontendViewState.LoadServer -> target
+            is FrontendViewState.Loading -> target
+            else -> FrontendTarget.Default
+        }
+
+    /**
+     * Short description of a state for logging. Deliberately omits the URL, which carries the
+     * server address.
+     */
+    private fun FrontendViewState.logDescription(): String = when (this) {
+        is FrontendViewState.Loading -> "Loading(connected=$connected)"
+        is FrontendViewState.Error -> "Error(${error::class.simpleName})"
+        else -> this::class.simpleName.orEmpty()
+    }
+
     private fun onError(error: FrontendConnectionError) {
+        Timber.w("Frontend error: ${error::class.simpleName}")
         // Resolve the connection type so the error screen can label the "Refresh" action, then
         // build the recovery actions for the screen to render.
         viewModelScope.launch {
@@ -1253,7 +1314,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun updateThemeColors() {
         val action = WebViewAction.ReadThemeColors()
         _webViewActions.emit(action)
-        val colors = action.result.await()
+        val colors = action.await()
         if (colors == null) {
             Timber.w("Could not read theme colors from the frontend")
             return

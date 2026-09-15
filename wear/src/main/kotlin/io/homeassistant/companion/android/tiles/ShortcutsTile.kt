@@ -2,9 +2,10 @@ package io.homeassistant.companion.android.tiles
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders.argb
@@ -27,12 +28,8 @@ import androidx.wear.tiles.RequestBuilders.TileRequest
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
 import com.google.common.util.concurrent.ListenableFuture
-import com.mikepenz.iconics.IconicsColor
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.utils.backgroundColor
-import com.mikepenz.iconics.utils.colorInt
-import com.mikepenz.iconics.utils.sizeDp
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
@@ -112,15 +109,15 @@ class ShortcutsTile : TileService() {
                 .apply {
                     entities.map { entity ->
                         // Find icon and create Bitmap
-                        val iconIIcon = getIcon(
+                        val icon = getIcon(
                             entity.icon,
                             entity.domain,
                         )
-                        val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
-                            colorInt = Color.WHITE
-                            sizeDp = iconSize.roundToInt()
-                            backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
-                        }.toBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565)
+                        val iconBitmap = createBitmap(iconSizePx, iconSizePx).also { bitmap ->
+                            val canvas = Canvas(bitmap)
+                            canvas.drawColor(getColor(R.color.colorOverlay))
+                            canvas.drawBitmap(icon.toBitmap(iconSizePx, Color.WHITE), 0f, 0f, null)
+                        }
 
                         // Make array of bitmap
                         val bitmapData = ByteBuffer.allocate(iconBitmap.byteCount).apply {

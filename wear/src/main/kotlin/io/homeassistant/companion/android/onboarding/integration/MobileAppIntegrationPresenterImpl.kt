@@ -5,7 +5,7 @@ import androidx.wear.tiles.TileService
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.tiles.CameraTile
@@ -23,7 +23,7 @@ import timber.log.Timber
 class MobileAppIntegrationPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val serverManager: ServerManager,
-    private val appVersionProvider: AppVersionProvider,
+    private val appVersion: AppVersion,
     private val messagingTokenProvider: MessagingTokenProvider,
 ) : MobileAppIntegrationPresenter {
     private val view = context as MobileAppIntegrationView
@@ -31,7 +31,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
 
     private suspend fun createRegistration(deviceName: String): DeviceRegistration {
         return DeviceRegistration(
-            appVersionProvider(),
+            appVersion,
             deviceName,
             messagingTokenProvider(),
             false,

@@ -4,7 +4,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import com.mikepenz.iconics.typeface.IIcon
+import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.DEVICE_TRACKER_DOMAIN
@@ -32,7 +32,7 @@ fun stringForDomain(domain: String, context: Context): String? = (
     )
     )[domain]?.let { context.getString(it) }
 
-fun getIcon(icon: String?, domain: String): IIcon {
+fun getIcon(icon: String?, domain: String): MdiIcon {
     val simpleEntity = Entity(
         "$domain.ha_android_placeholder",
         "",

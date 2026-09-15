@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositor
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.common.util.WearDataMessages
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -65,7 +65,7 @@ class PhoneSettingsListener :
     lateinit var keyStoreRepository: KeyStoreRepository
 
     @Inject
-    lateinit var appVersionProvider: AppVersionProvider
+    lateinit var appVersion: AppVersion
 
     @Inject
     lateinit var messagingTokenProvider: MessagingTokenProvider
@@ -170,8 +170,6 @@ class PhoneSettingsListener :
             val url = dataMap.getString("URL", "")
             val authCode = dataMap.getString("AuthCode", "")
             val deviceName = dataMap.getString("DeviceName")
-            val deviceTrackingEnabled = dataMap.getBoolean("LocationTracking")
-            val notificationsEnabled = dataMap.getBoolean("Notifications")
             val tlsClientCertificateData = dataMap.getByteArray("TLSClientCertificateData")
             val tlsClientCertificatePassword = dataMap.getString("TLSClientCertificatePassword").orEmpty().toCharArray()
 
@@ -199,7 +197,7 @@ class PhoneSettingsListener :
             serverId = serverManager.addServer(temporaryServer)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     deviceName,
                     messagingTokenProvider(),
                     false,

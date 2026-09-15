@@ -130,6 +130,6 @@ class WebViewActionThemeColorsTest {
         action.run(webView)
         callbackSlot.captured.onReceiveValue(raw)
 
-        return action.result.await()
+        return action.await()
     }
 }

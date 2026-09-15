@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -38,7 +39,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mikepenz.iconics.compose.IconicsPainter
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -201,7 +202,7 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
         ) {
             val icon = viewModel.shortcuts[i].selectedIcon.value
             val painter = if (icon != null) {
-                remember(icon) { IconicsPainter(icon) }
+                rememberVectorPainter(icon.rememberImageVector())
             } else {
                 painterResource(R.drawable.ic_stat_ic_notification_blue)
             }

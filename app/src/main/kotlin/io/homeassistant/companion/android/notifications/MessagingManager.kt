@@ -40,6 +40,7 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
@@ -107,6 +108,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -1561,8 +1563,9 @@ class MessagingManager @Inject constructor(
 
                     mediaRetriever.release()
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                e.printStackTrace()
                 Timber.e(e, "Couldn't download video for notification")
             }
 
@@ -1675,10 +1678,16 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_IMMUTABLE,
                         )
+                        // Intentionally use no icon if the action is first/second, so Android Auto heads-up
+                        // notifications show the action title instead of replacing it with an icon. However, the
+                        // third action MUST have an icon to avoid crashing the Android Auto app.
+                        val actionIcon = if (i == 3) {
+                            IconCompat.createWithResource(context, commonR.drawable.ic_stat_ic_notification)
+                        } else {
+                            null
+                        }
                         val action = NotificationCompat.Action.Builder(
-                            // Intentionally use no icon so Android Auto / heads-up notifications show the action
-                            // title instead of replacing it with an icon
-                            null,
+                            actionIcon,
                             notificationAction.title,
                             actionPendingIntent,
                         )

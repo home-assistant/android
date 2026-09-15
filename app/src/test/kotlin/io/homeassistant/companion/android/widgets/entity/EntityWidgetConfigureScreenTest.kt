@@ -246,8 +246,8 @@ class EntityWidgetConfigureScreenTest {
     fun `Given an unselected attribute when its chip is clicked then onAttributeAdded is triggered`() {
         composeTestRule.apply {
             testScreen(configuredState) {
-                onNodeWithText("friendly_name").performScrollTo().performClick()
-                assertEquals("friendly_name", attributeAdded)
+                onNodeWithText("power").performScrollTo().performClick()
+                assertEquals("power", attributeAdded)
             }
         }
     }
@@ -318,7 +318,7 @@ class EntityWidgetConfigureScreenTest {
         val ENTITY = Entity(
             entityId = "light.office",
             state = "on",
-            attributes = mapOf("friendly_name" to "Office light"),
+            attributes = mapOf("power" to "50W"),
             lastChanged = LocalDateTime.MIN,
             lastUpdated = LocalDateTime.MIN,
         )
@@ -331,7 +331,7 @@ class EntityWidgetConfigureScreenTest {
 
         val configuredState = newWidgetState.copy(
             selectedEntityId = ENTITY.entityId,
-            availableAttributes = listOf("brightness", "friendly_name"),
+            availableAttributes = listOf("brightness", "power"),
             selectedAttributeIds = listOf("brightness"),
             label = "Office light",
             stateSeparator = " - ",

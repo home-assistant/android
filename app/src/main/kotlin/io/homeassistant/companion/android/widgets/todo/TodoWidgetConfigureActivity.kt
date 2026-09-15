@@ -34,9 +34,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ClipboardList
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
@@ -65,14 +66,20 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     companion object {
         private const val FOR_ENTITY = "for_entity"
 
-        fun newInstance(context: Context, entityId: String): Intent {
+        fun newInstance(context: Context, entityId: String? = null): Intent {
             return Intent(context, TodoWidgetConfigureActivity::class.java).apply {
-                putExtra(FOR_ENTITY, entityId)
+                entityId?.let { putExtra(FOR_ENTITY, it) }
                 putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
         }
     }
+
+    private val widgetId: Int
+        get() = intent.extras?.getInt(
+            AppWidgetManager.EXTRA_APPWIDGET_ID,
+            AppWidgetManager.INVALID_APPWIDGET_ID,
+        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
     private val viewModel: TodoWidgetConfigureViewModel by viewModels(
         extrasProducer = {
@@ -95,10 +102,6 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
-        val widgetId = intent.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
 
         viewModel.onSetup(widgetId, supportedTextColors)
 
@@ -141,7 +144,10 @@ class TodoWidgetConfigureActivity : BaseActivity() {
     private suspend fun onUpdateWidget() {
         try {
             viewModel.updateWidgetConfiguration()
-            setResult(RESULT_OK)
+            setResult(
+                RESULT_OK,
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId),
+            )
             viewModel.updateWidget(this@TodoWidgetConfigureActivity)
             finish()
         } catch (_: Exception) {
@@ -314,7 +320,7 @@ private val previewDisplayEntities = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "todo.shopping_list",
             name = "Shopping List",
-            icon = CommunityMaterial.Icon.cmd_clipboard_list,
+            icon = Mdi.ClipboardList,
         ),
         areaName = "Kitchen",
     ),
@@ -322,7 +328,7 @@ private val previewDisplayEntities = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "todo.chores",
             name = "Chores",
-            icon = CommunityMaterial.Icon.cmd_clipboard_list,
+            icon = Mdi.ClipboardList,
         ),
     ),
 )

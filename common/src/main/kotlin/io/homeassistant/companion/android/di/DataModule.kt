@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.di
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import androidx.media3.datasource.DataSource
@@ -35,6 +36,7 @@ import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
 import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedLegacyChangelogPref
 import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
 import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
@@ -108,6 +110,17 @@ internal abstract class DataModule {
             appContext.getSharedPreferencesSuspend("wear_0")
         }
 
+        // The changelog library (com.github.AppDevNext:ChangeLog) previously used by the app
+        // tracked the last shown version in its own preferences file: the presence of its pref
+        // means the app was updated from a version that used it.
+        @Provides
+        @NamedLegacyChangelogPref
+        @Singleton
+        fun provideLegacyChangelogPref(@ApplicationContext appContext: Context): SuspendProvider<Boolean> =
+            SuspendProvider {
+                appContext.getSharedPreferencesSuspend("changelog").contains("ChangeLog_last_version_code")
+            }
+
         @Provides
         @NamedManufacturer
         @Singleton
@@ -146,7 +159,7 @@ internal abstract class DataModule {
 
         @Provides
         @Singleton
-        fun packageManager(@ApplicationContext appContext: Context) = appContext.packageManager
+        fun packageManager(@ApplicationContext appContext: Context): PackageManager = appContext.packageManager
 
         @Provides
         @Singleton

@@ -1,0 +1,146 @@
+# yamllint disable rule:document-start
+appId: io.homeassistant.companion.android.debug
+---
+# Granting all permissions upfront keeps the flow deterministic across API
+# levels: otherwise system permission dialogs (nearby devices, notifications)
+# cover the UI at API-level-dependent moments.
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+
+- tapOn:
+    text: '(?s)Connect to my Home.*Assistant server'
+    retryTapIfNoChange: true
+
+# On API 33+ the discovery screen triggers the NEARBY_WIFI_DEVICES system
+# dialog, which Maestro's launchApp permissions do not cover. The regex
+# tolerates the typographic apostrophe in "Don't allow".
+- tapOn:
+    text: "Don.t allow"
+    optional: true
+    retryTapIfNoChange: true
+
+- tapOn:
+    text: "Enter address manually"
+    retryTapIfNoChange: true
+
+- assertVisible:
+    text: '(?s)What is your Home.*Assistant address.*'
+- tapOn: "http://homeassistant.local:8123"
+- inputText: ${HOME_ASSISTANT_URL}
+# Dismiss the keyboard and Gboard's first-run tooltip, which can cover the
+# Connect button.
+- hideKeyboard
+- tapOn:
+    text: "Connect"
+    retryTapIfNoChange: true
+
+# Generous timeouts from here on: all shards load the frontend from the single
+# Home Assistant container at the same time, so pages appear much slower than
+# on a lone device.
+#
+# The login page is detected through "Forgot password?" instead of the
+# "Log in" button: API 30's WebView (Chromium 83) exposes the frontend's
+# buttons without their shadow-DOM labels, so the button text is not matchable
+# there. Same reason for submitting with Enter below instead of tapping it.
+- extendedWaitUntil:
+    visible: "Forgot password?"
+    timeout: 60000
+
+- tapOn: "Username"
+- inputText: ${HOME_ASSISTANT_USERNAME}
+- tapOn: "Password"
+- inputText: ${HOME_ASSISTANT_PASSWORD}
+- hideKeyboard
+# Submits the login form from the focused password field.
+- pressKey: Enter
+- tapOn:
+    text: "Authorize"
+    optional: true
+
+- extendedWaitUntil:
+    visible: "How would you like to name this device?"
+    timeout: 60000
+
+- tapOn:
+    text: "Save"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: "Got it"
+    timeout: 30000
+
+- tapOn:
+    text: "Got it"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: "Use this device's location for automations"
+    timeout: 15000
+
+- tapOn:
+    text: "Do not share my location"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: "Let us help secure your remote connection"
+    timeout: 15000
+
+- tapOn:
+    text: "Less secure: Do not allow this app to know when you're home"
+    retryTapIfNoChange: true
+- tapOn:
+    text: "Next"
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    notVisible: "Let us help secure your remote connection"
+    timeout: 10000
+
+# The notification permission prompt can cover the frontend once it loads
+# (API 33+): its modal sheet also prunes the accessibility tree behind it, so
+# wait for either the frontend or the sheet, dismiss the sheet if present, and
+# only then assert on the frontend.
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^(Overview|More details|Do not allow)$'
+    timeout: 60000
+- tapOn:
+    text: "Do not allow"
+    optional: true
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^Overview$'
+    timeout: 60000
+
+- tapOn:
+    text: '(?i)^Sidebar toggle$'
+    retryTapIfNoChange: true
+- waitForAnimationToEnd:
+    timeout: 2500
+
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^Settings$'
+    timeout: 10000
+- tapOn:
+    text: '(?i)^Settings$'
+    retryTapIfNoChange: true
+- waitForAnimationToEnd:
+    timeout: 2500
+
+# scrollUntilVisible instead of a plain wait: on older bundled WebViews (seen on API 30) the
+# accessibility tree can miss the row even though it is rendered, and scrolling forces the
+# WebView to re-serialize it. No-op when the row is already in the tree.
+- scrollUntilVisible:
+    element:
+      text: '(?is).*Companion app.*'
+    timeout: 60000
+- tapOn:
+    text: '(?is).*Companion app.*'
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: "Servers & devices"
+    timeout: 10000

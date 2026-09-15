@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,7 +21,7 @@ import androidx.wear.compose.material3.LocalTextStyle
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
@@ -78,7 +79,8 @@ fun EntityUi(
             modifier = Modifier.fillMaxWidth(),
             appIcon = {
                 Image(
-                    asset = iconBitmap,
+                    imageVector = iconBitmap.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                 )
             },
@@ -104,7 +106,8 @@ fun EntityUi(
             modifier = Modifier.fillMaxWidth(),
             icon = {
                 Image(
-                    asset = iconBitmap,
+                    imageVector = iconBitmap.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                 )
             },

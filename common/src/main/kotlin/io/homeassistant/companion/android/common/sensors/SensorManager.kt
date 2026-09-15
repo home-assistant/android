@@ -11,10 +11,10 @@ import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AnySerializer
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.sensor.Attribute
-import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
@@ -56,7 +56,111 @@ interface SensorManager {
         val entityCategory: String? = null,
         val updateType: UpdateType = UpdateType.WORKER,
         val enabledByDefault: Boolean = false,
+        val settings: List<Setting> = emptyList(),
     ) {
+        /**
+         * Declaration of a setting exposed by a [BasicSensor].
+         *
+         * Each subtype carries only the data its kind of setting supports and maps to the
+         * [SensorSettingType] persisted alongside the value.
+         */
+        sealed interface Setting {
+            val name: String
+
+            /** Whether the setting is shown to the user until they hide it. */
+            val enabledByDefault: Boolean
+
+            /** Type persisted in the database and used by the settings screen to render the setting. */
+            val type: SensorSettingType
+
+            /** Value used until the user changes the setting. */
+            val defaultValue: String
+
+            data class Toggle(
+                override val name: String,
+                val default: Boolean,
+                override val enabledByDefault: Boolean = true,
+            ) : Setting {
+                override val type = SensorSettingType.TOGGLE
+                override val defaultValue = default.toString()
+            }
+
+            data class Number(
+                override val name: String,
+                val default: Int,
+                override val enabledByDefault: Boolean = true,
+            ) : Setting {
+                override val type = SensorSettingType.NUMBER
+                override val defaultValue = default.toString()
+            }
+
+            data class Decimal(
+                override val name: String,
+                val default: Double,
+                override val enabledByDefault: Boolean = true,
+            ) : Setting {
+                override val type = SensorSettingType.NUMBER
+                override val defaultValue = default.toString()
+            }
+
+            data class Text(
+                override val name: String,
+                override val defaultValue: String = "",
+                override val enabledByDefault: Boolean = true,
+            ) : Setting {
+                override val type = SensorSettingType.STRING
+            }
+
+            /**
+             * Single choice among a fixed set of [entries]. The other list types resolve their entries when
+             * displayed, so this is the only setting that declares them.
+             */
+            data class Options(
+                override val name: String,
+                override val defaultValue: String,
+                val entries: List<String>,
+                override val enabledByDefault: Boolean = true,
+            ) : Setting {
+                override val type = SensorSettingType.LIST
+            }
+
+            /** Installed applications, listed when the setting is displayed. */
+            data class Apps(
+                override val name: String,
+                override val defaultValue: String = "",
+                override val enabledByDefault: Boolean = true,
+            ) : Setting {
+                override val type = SensorSettingType.LIST_APPS
+            }
+
+            /** Known Bluetooth devices, listed when the setting is displayed. */
+            data class BluetoothDevices(
+                override val name: String,
+                override val defaultValue: String = "",
+                override val enabledByDefault: Boolean = true,
+            ) : Setting {
+                override val type = SensorSettingType.LIST_BLUETOOTH
+            }
+
+            /** Zones of the configured servers, listed when the setting is displayed. */
+            data class Zones(
+                override val name: String,
+                override val defaultValue: String = "",
+                override val enabledByDefault: Boolean = true,
+            ) : Setting {
+                override val type = SensorSettingType.LIST_ZONES
+            }
+
+            /** Beacons seen by the device, listed when the setting is displayed. */
+            data class Beacons(
+                override val name: String,
+                override val defaultValue: String = "",
+                override val enabledByDefault: Boolean = true,
+            ) : Setting {
+                override val type = SensorSettingType.LIST_BEACONS
+            }
+        }
+
         enum class UpdateType {
             INTENT,
             INTENT_ONLY,
@@ -172,67 +276,42 @@ interface SensorManager {
         }
     }
 
-    suspend fun getToggleSetting(
-        sensor: BasicSensor,
-        settingName: String,
-        default: Boolean,
-        enabled: Boolean = true,
-    ): Boolean {
-        return getSetting(
-            sensor,
-            settingName,
-            SensorSettingType.TOGGLE,
-            default.toString(),
-            enabled,
-        ).toBoolean()
+    suspend fun getToggleSetting(sensor: BasicSensor, settingName: String): Boolean {
+        return getSetting(sensor, settingName).toBoolean()
     }
 
-    suspend fun getNumberSetting(
-        sensor: BasicSensor,
-        settingName: String,
-        default: Int,
-        enabled: Boolean = true,
-    ): Int {
-        return getSetting(
-            sensor,
-            settingName,
-            SensorSettingType.NUMBER,
-            default.toString(),
-            enabled,
-        ).toIntOrNull()
-            ?: default
+    suspend fun getNumberSetting(sensor: BasicSensor, settingName: String): Int {
+        val definition = settingDefinition(sensor, settingName)
+        if (definition !is BasicSensor.Setting.Number) {
+            FailFast.fail { "Setting for sensor id=${sensor.id}, name=$settingName is not declared as a number" }
+            return 0
+        }
+        return getSetting(sensor, settingName).toIntOrNull() ?: definition.default
     }
 
-    /**
-     * Get the stored setting value for...
-     * @param default Value to use if the setting does not exist
-     */
-    suspend fun getSetting(
-        sensor: BasicSensor,
-        settingName: String,
-        settingType: SensorSettingType,
-        default: String,
-        enabled: Boolean = true,
-        entries: List<String> = arrayListOf(),
-    ): String {
-        val setting = sensorRepository
+    suspend fun getDecimalSetting(sensor: BasicSensor, settingName: String): Double {
+        val definition = settingDefinition(sensor, settingName)
+        if (definition !is BasicSensor.Setting.Decimal) {
+            FailFast.fail { "Setting for sensor id=${sensor.id}, name=$settingName is not declared as a decimal" }
+            return 0.0
+        }
+        return getSetting(sensor, settingName).toDoubleOrNull() ?: definition.default
+    }
+
+    /** Get the effective value of a declared setting. */
+    suspend fun getSetting(sensor: BasicSensor, settingName: String): String {
+        val value = sensorRepository
             .getSettings(sensor.id)
             .firstOrNull { it.name == settingName }
             ?.value
-        if (setting == null) {
-            sensorRepository.add(
-                SensorSetting(
-                    sensor.id,
-                    settingName,
-                    default,
-                    settingType,
-                    enabled,
-                    entries = entries,
-                ),
-            )
-        }
+        if (value != null) return value
 
-        return setting ?: default
+        FailFast.fail { "No setting defined for sensor id=${sensor.id}, name=$settingName" }
+        return ""
+    }
+
+    private fun settingDefinition(sensor: BasicSensor, settingName: String): BasicSensor.Setting? {
+        return sensor.settings.firstOrNull { it.name == settingName }
     }
 
     suspend fun onSensorUpdated(

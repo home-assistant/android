@@ -35,3 +35,5 @@ gradle.lockfile merge=union
 # Handle Android Studio specific files
 *.iml text
 *.idea/** text
+
+.github/workflows/*.lock.yml linguist-generated=true

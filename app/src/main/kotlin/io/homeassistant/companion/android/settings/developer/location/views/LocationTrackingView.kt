@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,8 +52,14 @@ import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AlertOutline
+import io.github.timoptr.mdiicons.generated.Check
+import io.github.timoptr.mdiicons.generated.DebugStepOver
+import io.github.timoptr.mdiicons.generated.Map
+import io.github.timoptr.mdiicons.generated.MapMarkerPath
+import io.github.timoptr.mdiicons.generated.ShareVariant
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
 import io.homeassistant.companion.android.database.location.LocationHistoryItemResult
@@ -110,7 +117,7 @@ fun LocationTrackingView(
         if (!useHistory || (historyState.loadState.refresh !is LoadState.Loading && historyState.itemCount == 0)) {
             item("history.empty") {
                 EmptyState(
-                    icon = CommunityMaterial.Icon3.cmd_map_marker_path,
+                    icon = Mdi.MapMarkerPath,
                     title = stringResource(
                         if (useHistory) {
                             commonR.string.location_history_empty_title
@@ -184,11 +191,11 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                     modifier = Modifier.padding(end = 4.dp),
                                 )
                                 Image(
-                                    asset = when {
-                                        sent -> CommunityMaterial.Icon.cmd_check
-                                        failed -> CommunityMaterial.Icon.cmd_alert_outline
-                                        else -> CommunityMaterial.Icon.cmd_debug_step_over
-                                    },
+                                    imageVector = when {
+                                        sent -> Mdi.Check
+                                        failed -> Mdi.AlertOutline
+                                        else -> Mdi.DebugStepOver
+                                    }.rememberImageVector(),
                                     contentDescription = if (sent ||
                                         failed
                                     ) {
@@ -258,7 +265,7 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                     },
                                 ) {
                                     Image(
-                                        asset = CommunityMaterial.Icon3.cmd_map,
+                                        imageVector = Mdi.Map.rememberImageVector(),
                                         contentDescription = stringResource(commonR.string.show_on_map),
                                         modifier = Modifier.size(24.dp),
                                         colorFilter = ColorFilter.tint(MaterialTheme.colors.primary),
@@ -275,7 +282,7 @@ fun LocationTrackingHistoryRow(item: LocationHistoryItem?, servers: List<Server>
                                 },
                             ) {
                                 Image(
-                                    asset = CommunityMaterial.Icon3.cmd_share_variant,
+                                    imageVector = Mdi.ShareVariant.rememberImageVector(),
                                     contentDescription = stringResource(commonR.string.share_logs),
                                     modifier = Modifier.size(24.dp),
                                     colorFilter = ColorFilter.tint(MaterialTheme.colors.primary),

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.qs
 import android.app.StatusBarManager
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.Color
 import android.graphics.drawable.Icon
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -10,17 +11,17 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.isUsableInTile
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
@@ -40,6 +41,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+private const val TILE_ICON_SIZE_DP = 48
 
 @HiltViewModel
 internal class ManageTilesViewModel @Inject constructor(
@@ -110,7 +113,7 @@ internal class ManageTilesViewModel @Inject constructor(
                     tileLabel = setupEntity?.label.orEmpty(),
                     tileSubtitle = setupEntity?.subtitle.orEmpty(),
                     selectedEntityId = setupEntity?.entityId,
-                    customIcon = setupEntity?.iconName?.let { name -> CommunityMaterial.getIconByMdiName(name) },
+                    customIcon = setupEntity?.iconName?.let { name -> Mdi.fromHaName(name) },
                     submitButtonLabel = if (!SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) ||
                         entity?.added == true
                     ) {
@@ -137,7 +140,7 @@ internal class ManageTilesViewModel @Inject constructor(
     }
 
     /** Sets the custom icon of the tile, or clears it so the icon of the selected entity is used instead. */
-    fun selectIcon(icon: IIcon?) {
+    fun selectIcon(icon: MdiIcon?) {
         _state.update { it.copy(customIcon = icon) }
     }
 
@@ -179,11 +182,11 @@ internal class ManageTilesViewModel @Inject constructor(
 
     /** Asks the system to add [tileData] to the quick settings panel; the result is handled by [onSystemTileAddResult]. */
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun requestAddTileToSystem(context: Context, tileData: TileEntity, icon: IIcon?) {
+    private fun requestAddTileToSystem(context: Context, tileData: TileEntity, icon: MdiIcon?) {
         val service = tileSlots.find { it.id.value == tileData.tileId }?.serviceClass
             ?: Tile1Service::class.java
         val tileIcon = icon?.let {
-            Icon.createWithBitmap(IconicsDrawable(context, it).toBitmap())
+            Icon.createWithBitmap(it.toBitmap(context, TILE_ICON_SIZE_DP, Color.WHITE))
         } ?: Icon.createWithResource(context, commonR.drawable.ic_stat_ic_notification)
 
         context.getSystemService<StatusBarManager>()?.requestAddTileService(

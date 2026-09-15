@@ -101,7 +101,7 @@ class FrontendExternalBusRepository @Inject constructor() {
     suspend fun evaluateScript(script: String): String? {
         val action = WebViewAction.EvaluateScript(script)
         actionsFlow.emit(action)
-        return action.result.await()
+        return action.await()
     }
 
     /**

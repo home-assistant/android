@@ -22,9 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -50,6 +47,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Check
+import io.github.timoptr.mdiicons.generated.Microphone
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -270,7 +271,7 @@ private fun DefaultAssistantCard(isDefault: Boolean, onSetDefault: () -> Unit) {
             ) {
                 if (isDefault) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = Mdi.Check.rememberImageVector(),
                         contentDescription = null,
                         tint = colorScheme.colorOnSuccessNormal,
                         modifier = Modifier.size(24.dp),
@@ -378,7 +379,7 @@ private fun WakeWordTestSection(
                 onClick = if (isTesting) onStopTest else onStartTest,
                 prefix = {
                     Icon(
-                        imageVector = Icons.Default.Mic,
+                        imageVector = Mdi.Microphone.rememberImageVector(),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                     )
@@ -403,7 +404,7 @@ private fun WakeWordTestSection(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = Mdi.Check.rememberImageVector(),
                         contentDescription = null,
                         tint = colorScheme.colorOnSuccessNormal,
                         modifier = Modifier.size(24.dp),

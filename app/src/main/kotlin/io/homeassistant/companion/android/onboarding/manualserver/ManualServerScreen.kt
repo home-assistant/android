@@ -13,8 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -32,7 +30,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -166,7 +168,7 @@ private fun ServerUrlTextField(
             if (serverUrl.isNotEmpty()) {
                 IconButton(onClick = { onServerUrlChange("") }) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = Mdi.Close.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.clear_text),
                     )
                 }
@@ -179,7 +181,13 @@ private fun ServerUrlTextField(
                 color = LocalHAColorScheme.current.colorOnNeutralNormal,
             )
         },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        // Uri keyboard without autocorrection: keyboards with aggressive autocorrect rewrite
+        // hostnames while they are typed (e.g. homeassistant.internal to home assistant.internal)
+        keyboardOptions = KeyboardOptions(
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Uri,
+            imeAction = ImeAction.Done,
+        ),
         keyboardActions = KeyboardActions(
             onDone = {
                 focusRequester.freeFocus()

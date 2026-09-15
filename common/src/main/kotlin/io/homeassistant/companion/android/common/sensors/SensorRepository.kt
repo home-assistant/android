@@ -71,20 +71,23 @@ interface SensorRepository {
     /** Replaces all attributes of sensor [sensorId] with [attributes]. */
     suspend fun replaceAllAttributes(sensorId: String, attributes: List<Attribute>)
 
-    /** Settings of sensor [id]. */
+    /** Effective settings of sensor [id], combining declared metadata with persisted value and enabled overrides. */
     suspend fun getSettings(id: String): List<SensorSetting>
 
-    /** Reactive settings of sensor [id]. */
+    /** Reactive form of [getSettings]. */
     fun getSettingsFlow(id: String): Flow<List<SensorSetting>>
 
-    /** Adds a sensor [sensorSetting], replacing any existing one with the same name. */
-    suspend fun add(sensorSetting: SensorSetting)
+    /** Adds a dynamic [sensorSetting] that has no declaration, replacing any existing one with the same name. */
+    suspend fun addDynamicSetting(sensorSetting: SensorSetting)
 
-    /** Enables or disables setting [settingName] of sensor [sensorId]. */
+    /** Enables or disables setting [settingName] of sensor [sensorId], persisting it if needed. */
     suspend fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean)
 
-    /** Sets the value of setting [settingName] of sensor [sensorId]. */
+    /** Sets the value of setting [settingName] of sensor [sensorId], persisting it if needed. */
     suspend fun updateSettingValue(sensorId: String, settingName: String, value: String)
+
+    /** Sets [initialValue] only when the setting is missing or empty, and returns its stored value. */
+    suspend fun getOrInitializeSettingValue(sensorId: String, settingName: String, initialValue: String): String
 
     /** Removes setting [settingName] from sensor [sensorId]. */
     suspend fun removeSetting(sensorId: String, settingName: String)

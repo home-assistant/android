@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
-private val appVersion = AppVersion.from("1.1.1.", 1)
+private val appVersion = AppVersion("1.1.1.", 1)
 private val messagingToken = MessagingToken("hello")
 
 class ResyncRegistrationWorkerTest {
@@ -167,7 +167,7 @@ class ResyncRegistrationWorkerTest {
             EntryPoints.get(any(), ResyncRegistrationWorkerEntryPoint::class.java)
         } returns mockk(relaxed = true) {
             every { serverManager() } returns serverManager
-            every { appVersionProvider() } returns AppVersionProvider { appVersion }
+            every { appVersion() } returns appVersion
             every { pushToken() } returns MessagingTokenProvider { return@MessagingTokenProvider messagingToken }
             every { pushWebsocketSupport() } returns pushWebsocketSupport
         }

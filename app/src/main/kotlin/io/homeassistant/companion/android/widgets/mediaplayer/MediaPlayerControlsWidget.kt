@@ -14,14 +14,17 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
 import com.google.android.material.color.DynamicColors
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Cast
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
+import io.homeassistant.companion.android.common.util.MDI_PREFIX
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -32,6 +35,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+
+private const val MEDIA_ICON_SIZE_DP = 24
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -203,13 +208,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     )
                 }
 
-                var iconBitmap = IconicsDrawable(context, CommunityMaterial.Icon.cmd_cast).toBitmap()
-                if (icon?.startsWith("mdi") == true && icon.substringAfter(":").isNotBlank()) {
-                    val iconDrawable = IconicsDrawable(context, "cmd-${icon.substringAfter(":")}")
-                    if (iconDrawable.icon != null) {
-                        iconBitmap = iconDrawable.toBitmap()
-                    }
-                }
+                val mediaIcon = icon?.takeIf { it.startsWith(MDI_PREFIX) }?.let { Mdi.fromHaName(it) } ?: Mdi.Cast
+                val iconBitmap = mediaIcon.toBitmap(context, MEDIA_ICON_SIZE_DP, Color.WHITE)
 
                 setImageViewBitmap(
                     R.id.widgetSourceIcon,

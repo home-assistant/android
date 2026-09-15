@@ -6,9 +6,6 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.tooling.preview.Preview
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Magnify
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
@@ -32,12 +33,12 @@ fun IconDialogSearch(value: String, onValueChange: (String) -> Unit, modifier: M
             Text(text = stringResource(if (isEnglish) R.string.search_icons else R.string.search_icons_in_english))
         },
         leadingIcon = {
-            Icon(Icons.Filled.Search, contentDescription = null)
+            Icon(Mdi.Magnify.rememberImageVector(), contentDescription = null)
         },
         trailingIcon = if (value.isNotBlank()) {
             {
                 IconButton(onClick = { onValueChange("") }) {
-                    Icon(Icons.Filled.Clear, contentDescription = stringResource(R.string.clear_search))
+                    Icon(Mdi.Close.rememberImageVector(), contentDescription = stringResource(R.string.clear_search))
                 }
             }
         } else {

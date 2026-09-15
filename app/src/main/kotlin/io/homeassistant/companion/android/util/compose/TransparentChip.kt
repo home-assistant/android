@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util.compose
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -17,14 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.rememberImageVector
 
 /**
  * A Material 3-style Assist Chip with a transparent background
  */
 @Composable
-fun TransparentChip(text: String, modifier: Modifier = Modifier, icon: IIcon? = null, onClick: () -> Unit) {
+fun TransparentChip(text: String, modifier: Modifier = Modifier, icon: MdiIcon? = null, onClick: () -> Unit) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
@@ -42,7 +43,8 @@ fun TransparentChip(text: String, modifier: Modifier = Modifier, icon: IIcon? = 
         ) {
             if (icon != null) {
                 Image(
-                    asset = icon,
+                    imageVector = icon.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(MaterialTheme.colors.primary),
                     modifier = Modifier
                         .padding(horizontal = 8.dp)

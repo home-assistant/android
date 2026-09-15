@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -14,7 +14,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.FloorRegistryResponse
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -434,9 +434,9 @@ private class EntityRegistryEntries(
         )
     }
 
-    private fun String?.toIcon(): IIcon? = this
+    private fun String?.toIcon(): MdiIcon? = this
         ?.takeIf { it.startsWith(MDI_PREFIX) }
-        ?.let { CommunityMaterial.getIconByMdiName(it) }
+        ?.let { Mdi.fromHaName(it) }
 }
 
 /**

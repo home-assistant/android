@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.controls.views
 
 import android.os.Build
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -52,8 +52,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.DipSwitch
+import io.github.timoptr.mdiicons.generated.ViewDashboard
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
@@ -322,7 +324,7 @@ fun ManageControlsEntity(
             onCheckedChange = null,
         )
         Image(
-            asset = entity.icon,
+            imageVector = entity.icon.rememberImageVector(),
             contentDescription = null,
             modifier = Modifier
                 .padding(end = 16.dp)
@@ -333,7 +335,7 @@ fun ManageControlsEntity(
             modifier = Modifier.weight(1f),
         ) {
             Text(text = entity.name, style = MaterialTheme.typography.body1)
-            entity.subtitle(LocalLayoutDirection.current)?.let {
+            entity.subtitle()?.let {
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                     Text(
                         text = it,
@@ -357,11 +359,11 @@ fun ManageControlsModeButton(isPanel: Boolean, selected: Boolean, onClick: () ->
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Image(
-                asset = if (isPanel) {
-                    CommunityMaterial.Icon3.cmd_view_dashboard
+                imageVector = if (isPanel) {
+                    Mdi.ViewDashboard
                 } else {
-                    CommunityMaterial.Icon.cmd_dip_switch
-                },
+                    Mdi.DipSwitch
+                }.rememberImageVector(),
                 contentDescription = null,
                 modifier = Modifier.size(36.dp),
                 colorFilter = ColorFilter.tint(LocalContentColor.current),

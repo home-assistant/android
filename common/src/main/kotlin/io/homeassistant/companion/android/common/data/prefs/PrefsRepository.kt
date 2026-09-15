@@ -177,6 +177,18 @@ interface PrefsRepository {
 
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
 
+    /**
+     * Returns `true` when the app was updated since the changelog was last marked seen with
+     * [markChangelogSeen].
+     *
+     * A fresh install is not an update: [currentVersionCode] is stored as the baseline to compare
+     * future updates against, and `false` is returned.
+     */
+    suspend fun wasAppUpdatedSinceChangelogSeen(currentVersionCode: Int): Boolean
+
+    /** Stores [currentVersionCode] as the last app version whose changelog was seen. */
+    suspend fun markChangelogSeen(currentVersionCode: Int)
+
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 

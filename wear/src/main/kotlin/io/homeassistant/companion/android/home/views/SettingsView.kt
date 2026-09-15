@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,9 +15,24 @@ import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.BellRing
+import io.github.timoptr.mdiicons.generated.CommentProcessingOutline
+import io.github.timoptr.mdiicons.generated.Delete
+import io.github.timoptr.mdiicons.generated.ExitRun
+import io.github.timoptr.mdiicons.generated.HomeHeart
+import io.github.timoptr.mdiicons.generated.Leak
+import io.github.timoptr.mdiicons.generated.Message
+import io.github.timoptr.mdiicons.generated.MessageOff
+import io.github.timoptr.mdiicons.generated.Star
+import io.github.timoptr.mdiicons.generated.StarCircleOutline
+import io.github.timoptr.mdiicons.generated.TextBox
+import io.github.timoptr.mdiicons.generated.Thermostat
+import io.github.timoptr.mdiicons.generated.VideoBox
+import io.github.timoptr.mdiicons.generated.WatchVibrate
+import io.github.timoptr.mdiicons.generated.WatchVibrateOff
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.home.MainViewModel
@@ -30,7 +46,7 @@ import io.homeassistant.companion.android.views.ThemeLazyColumn
 
 @Composable
 fun SecondarySettingsChip(
-    icon: IIcon,
+    icon: MdiIcon,
     label: String,
     secondaryLabel: String? = null,
     enabled: Boolean = true,
@@ -40,7 +56,8 @@ fun SecondarySettingsChip(
         modifier = Modifier.fillMaxWidth(),
         icon = {
             Image(
-                asset = icon,
+                imageVector = icon.rememberImageVector(),
+                contentDescription = null,
                 colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
             )
         },
@@ -84,7 +101,7 @@ fun SettingsView(
             }
             item {
                 SecondarySettingsChip(
-                    icon = CommunityMaterial.Icon3.cmd_star,
+                    icon = Mdi.Star,
                     label = stringResource(commonR.string.favorite),
                     enabled = loadingState == MainViewModel.LoadingState.READY,
                     onClick = onClickSetFavorites,
@@ -92,7 +109,7 @@ fun SettingsView(
             }
             item {
                 SecondarySettingsChip(
-                    icon = CommunityMaterial.Icon.cmd_delete,
+                    icon = Mdi.Delete,
                     label = stringResource(commonR.string.clear_favorites),
                     enabled = favorites.isNotEmpty(),
                     onClick = onClearFavorites,
@@ -107,7 +124,8 @@ fun SettingsView(
                     enabled = favorites.isNotEmpty(),
                     icon = {
                         Image(
-                            asset = CommunityMaterial.Icon2.cmd_home_heart,
+                            imageVector = Mdi.HomeHeart.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
@@ -131,12 +149,9 @@ fun SettingsView(
                     label = { Text(stringResource(commonR.string.setting_haptic_label)) },
                     icon = {
                         Image(
-                            asset =
-                            if (isHapticEnabled) {
-                                CommunityMaterial.Icon3.cmd_watch_vibrate
-                            } else {
-                                CommunityMaterial.Icon3.cmd_watch_vibrate_off
-                            },
+                            imageVector = (if (isHapticEnabled) Mdi.WatchVibrate else Mdi.WatchVibrateOff)
+                                .rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
@@ -151,12 +166,8 @@ fun SettingsView(
                     label = { Text(stringResource(commonR.string.setting_toast_label)) },
                     icon = {
                         Image(
-                            asset =
-                            if (isToastEnabled) {
-                                CommunityMaterial.Icon3.cmd_message
-                            } else {
-                                CommunityMaterial.Icon3.cmd_message_off
-                            },
+                            imageVector = (if (isToastEnabled) Mdi.Message else Mdi.MessageOff).rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
@@ -171,28 +182,28 @@ fun SettingsView(
             }
             item {
                 SecondarySettingsChip(
-                    icon = CommunityMaterial.Icon3.cmd_video_box,
+                    icon = Mdi.VideoBox,
                     label = stringResource(commonR.string.camera_tiles),
                     onClick = onClickCameraTile,
                 )
             }
             item {
                 SecondarySettingsChip(
-                    icon = CommunityMaterial.Icon3.cmd_star_circle_outline,
+                    icon = Mdi.StarCircleOutline,
                     label = stringResource(commonR.string.shortcut_tiles),
                     onClick = onClickSetShortcuts,
                 )
             }
             item {
                 SecondarySettingsChip(
-                    icon = CommunityMaterial.Icon3.cmd_text_box,
+                    icon = Mdi.TextBox,
                     label = stringResource(commonR.string.template_tiles),
                     onClick = onClickTemplateTiles,
                 )
             }
             item {
                 SecondarySettingsChip(
-                    icon = CommunityMaterial.Icon3.cmd_thermostat,
+                    icon = Mdi.Thermostat,
                     label = stringResource(commonR.string.thermostat_tiles),
                     onClick = onClickThermostatTiles,
                 )
@@ -204,7 +215,7 @@ fun SettingsView(
             }
             item {
                 SecondarySettingsChip(
-                    icon = CommunityMaterial.Icon2.cmd_leak,
+                    icon = Mdi.Leak,
                     label = stringResource(id = commonR.string.sensor_title),
                     onClick = onClickSensors,
                 )
@@ -222,7 +233,8 @@ fun SettingsView(
                     label = { Text(stringResource(commonR.string.available_as_assistant_app)) },
                     icon = {
                         Image(
-                            asset = CommunityMaterial.Icon.cmd_comment_processing_outline,
+                            imageVector = Mdi.CommentProcessingOutline.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },
@@ -237,7 +249,7 @@ fun SettingsView(
                 }
                 item {
                     SecondarySettingsChip(
-                        icon = CommunityMaterial.Icon.cmd_bell_ring,
+                        icon = Mdi.BellRing,
                         label = stringResource(commonR.string.suggestion_notifications_title),
                         onClick = onClickNotifications,
                     )
@@ -251,7 +263,7 @@ fun SettingsView(
             item {
                 Button(
                     modifier = Modifier.fillMaxWidth(),
-                    icon = { Image(CommunityMaterial.Icon.cmd_exit_run) },
+                    icon = { Image(imageVector = Mdi.ExitRun.rememberImageVector(), contentDescription = null) },
                     label = { Text(stringResource(commonR.string.logout)) },
                     onClick = onClickLogout,
                     colors = ButtonDefaults.buttonColors(

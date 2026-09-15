@@ -3,9 +3,6 @@ package io.homeassistant.companion.android.settings.shortcuts
 import android.content.Context
 import android.content.Intent
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
 import android.os.Build
 import android.util.NoSuchPropertyException
 import android.util.TypedValue
@@ -14,20 +11,16 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.IconCompat
-import com.mikepenz.iconics.IconicsColor
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.IconicsSize
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.backgroundColor
-import com.mikepenz.iconics.utils.size
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.common.util.getIconByMdiName
-import io.homeassistant.companion.android.common.util.mdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.database.IconDialogCompat
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.link.HA_DEEP_LINK_SCHEME
@@ -81,7 +74,7 @@ internal class HaShortcutManager @Inject constructor(
         label: String,
         longLabel: String,
         path: String,
-        icon: IIcon?,
+        icon: MdiIcon?,
     ): ShortcutInfoCompat {
         val intent = Intent(
             Intent.ACTION_VIEW,
@@ -97,7 +90,7 @@ internal class HaShortcutManager @Inject constructor(
             addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
             putExtra(SHORTCUT_EXTRA_SERVER, serverId)
             putExtra(SHORTCUT_EXTRA_PATH, path)
-            icon?.let { putExtra(SHORTCUT_EXTRA_ICON_NAME, it.mdiName) }
+            icon?.let { putExtra(SHORTCUT_EXTRA_ICON_NAME, "$MDI_PREFIX${it.name}") }
         }
         return ShortcutInfoCompat.Builder(context, shortcutId)
             .setShortLabel(label)
@@ -111,20 +104,20 @@ internal class HaShortcutManager @Inject constructor(
     }
 
     /**
-     * Resolves the [IIcon] stored on a shortcut intent via its `iconName`/`iconId` extras, or `null`
-     * if none is present.
+     * Resolves the [MdiIcon] stored on a shortcut intent via its `iconName`/`iconId` extras, or
+     * `null` if none is present.
      */
-    suspend fun resolveIconFromIntent(intent: Intent): IIcon? = withContext(Dispatchers.IO) {
+    suspend fun resolveIconFromIntent(intent: Intent): MdiIcon? = withContext(Dispatchers.IO) {
         val extras = intent.extras ?: return@withContext null
         return@withContext when {
             extras.containsKey(SHORTCUT_EXTRA_ICON_NAME) -> extras.getString(SHORTCUT_EXTRA_ICON_NAME)?.let {
-                CommunityMaterial.getIconByMdiName(it)
+                Mdi.fromHaName(it)
             }
 
             extras.containsKey(SHORTCUT_EXTRA_ICON_ID) -> {
                 extras.getInt(SHORTCUT_EXTRA_ICON_ID).takeIf { it != 0 }?.let { iconId ->
                     try {
-                        CommunityMaterial.getIconByMdiName("mdi:${iconDialogCompat.streamingIconLookup(iconId)}")
+                        Mdi.fromHaName("$MDI_PREFIX${iconDialogCompat.streamingIconLookup(iconId)}")
                     } catch (e: NoSuchPropertyException) {
                         Timber.w(e, "Unknown shortcut iconId=$iconId, falling back to default icon")
                         null
@@ -182,18 +175,16 @@ internal class HaShortcutManager @Inject constructor(
     }
 
     /**
-     * Replicates an AdaptiveIcon from an [IIcon] by drawing it centered on a themed launcher-colored
-     * background, returned as an [IconCompat] flagged as an AdaptiveIcon.
+     * Replicates an AdaptiveIcon from an [MdiIcon] by drawing it centered on a themed
+     * launcher-colored background, returned as an [IconCompat] flagged as an AdaptiveIcon.
      */
-    private fun IIcon.toAdaptiveIcon(): IconCompat {
-        val iconDrawable = IconicsDrawable(context, this).apply {
-            size = IconicsSize.dp(48)
-            colorFilter = PorterDuffColorFilter(
-                ContextCompat.getColor(context, commonR.color.colorAccent),
-                PorterDuff.Mode.SRC_IN,
-            )
-            backgroundColor = IconicsColor.colorInt(Color.TRANSPARENT)
-        }
+    private fun MdiIcon.toAdaptiveIcon(): IconCompat {
+        val iconSize = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            48f,
+            context.resources.displayMetrics,
+        ).toInt()
+        val iconBitmap = toBitmap(iconSize, ContextCompat.getColor(context, commonR.color.colorAccent))
 
         val adaptiveIconSize = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
@@ -204,10 +195,9 @@ internal class HaShortcutManager @Inject constructor(
         val canvas = Canvas(adaptiveBitmap)
         // Use the same color as the foreground of the launcher as background
         canvas.drawColor(ContextCompat.getColor(context, R.color.ic_launcher_foreground))
-        val x = (canvas.width - iconDrawable.intrinsicWidth) / 2f
-        val y = (canvas.height - iconDrawable.intrinsicHeight) / 2f
-        canvas.translate(x, y)
-        iconDrawable.draw(canvas)
+        val x = (canvas.width - iconBitmap.width) / 2f
+        val y = (canvas.height - iconBitmap.height) / 2f
+        canvas.drawBitmap(iconBitmap, x, y, null)
 
         return IconCompat.createWithAdaptiveBitmap(adaptiveBitmap)
     }

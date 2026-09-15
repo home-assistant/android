@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import io.homeassistant.companion.android.automotive.navigation.carAppActivity
 import io.homeassistant.companion.android.automotive.navigation.navigateToCarAppActivity
+import io.homeassistant.companion.android.changelog.navigation.changelogScreen
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.isAutomotive
@@ -132,6 +133,10 @@ internal fun HANavHost(
                 onUpdateWebView = { navController.updateSystemWebView(onShowSnackbar) },
                 onRequestFullscreen = onRequestFullscreen,
                 onPipReadinessChanged = onPipReadinessChanged,
+            )
+            changelogScreen(
+                navController = navController,
+                onOpenUrl = { url -> navController.navigateToUri(url, onShowSnackbar) },
             )
             setHomeNetworkScreen(
                 onGotoNextScreen = {

@@ -10,10 +10,11 @@ import androidx.wear.watchface.complications.data.MonochromaticImageComplication
 import androidx.wear.watchface.complications.data.PlainComplicationText
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.colorInt
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.CommentProcessingOutline
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R
+private const val COMPLICATION_ICON_SIZE_DP = 24
 
 class AssistDataSourceService : ComplicationDataSourceService() {
 
@@ -34,10 +35,7 @@ class AssistDataSourceService : ComplicationDataSourceService() {
     }
 
     private fun getAssistIcon(): Bitmap {
-        val icon = CommunityMaterial.Icon.cmd_comment_processing_outline
-        return IconicsDrawable(this, icon).apply {
-            colorInt = Color.WHITE
-        }.toBitmap()
+        return Mdi.CommentProcessingOutline.toBitmap(this, COMPLICATION_ICON_SIZE_DP, Color.WHITE)
     }
 
     override fun getPreviewData(type: ComplicationType): ComplicationData = MonochromaticImageComplicationData.Builder(

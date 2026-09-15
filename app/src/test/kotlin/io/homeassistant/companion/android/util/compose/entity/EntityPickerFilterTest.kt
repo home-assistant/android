@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util.compose.entity
 
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Lightbulb
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
@@ -29,7 +30,7 @@ class EntityPickerFilterTest {
         item = EntityDisplayWithoutContext(
             entityId = entityId,
             name = name,
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            icon = Mdi.Lightbulb,
             isHidden = isHidden,
         ),
         areaName = areaName,

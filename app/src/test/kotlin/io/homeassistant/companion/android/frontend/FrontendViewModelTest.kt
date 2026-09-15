@@ -18,6 +18,8 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
+import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
@@ -71,6 +73,7 @@ import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.unmockkStatic
 import io.mockk.verify
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -82,6 +85,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -648,6 +652,79 @@ class FrontendViewModelTest {
             messageFlow.emit(FrontendHandlerEvent.Loaded)
             advanceUntilIdle()
             assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+        }
+
+        @Test
+        fun `Given loading when the screen is backgrounded and resumed then the load is restarted`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(1.seconds)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            // Backgrounded mid-load. The watchdog is cancelled, so the state simply stays Loading
+            // however long the app stays away.
+            viewModel.onScreenStartedChanged(false)
+            advanceTimeBy(5.minutes)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            viewModel.onScreenStartedChanged(true)
+            advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+
+            // Resuming restarts the timeout countdown, so it must also restart the load. The paused
+            // WebView never resumes a navigation on its own, and the already-loaded frontend never
+            // repeats its external-bus handshake, so without a reload the countdown can only expire.
+            verify(exactly = 2) { urlManager.serverUrlFlow(any(), any()) }
+        }
+
+        @Test
+        fun `Given loading a deep link when the screen is backgrounded and resumed then the load is restarted at the same target`() = runTest {
+            val target = FrontendTarget.Path("/dashboard")
+            every { urlManager.serverUrlFlow(serverId, target) } returns flowOf(
+                UrlLoadResult.Success(url = "https://example.com/dashboard?external_auth=1", serverId = serverId),
+            )
+
+            val viewModel = createViewModel(path = "/dashboard")
+            advanceTimeBy(1.seconds)
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            viewModel.onScreenStartedChanged(false)
+            viewModel.onScreenStartedChanged(true)
+            advanceTimeBy(1.seconds)
+
+            verify(exactly = 2) { urlManager.serverUrlFlow(serverId, target) }
+        }
+
+        @Test
+        fun `Given loading with the handshake done when the screen is backgrounded and resumed then the load is not restarted`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://ha.test",
+                name = "t",
+                haVersion = HomeAssistantVersion(2026, 8, 0),
+                serverId = serverId,
+            )
+
+            val viewModel = createViewModel()
+            advanceTimeBy(1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceTimeBy(1.seconds)
+            val state = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+            assertTrue(state.connected)
+
+            // The frontend reconnects on its own once the handshake is done, so restarting would
+            // only discard a finished load.
+            viewModel.onScreenStartedChanged(false)
+            viewModel.onScreenStartedChanged(true)
+            advanceTimeBy(1.seconds)
+
+            verify(exactly = 1) { urlManager.serverUrlFlow(any(), any()) }
         }
 
         @Test
@@ -2718,7 +2795,8 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given handler emits ReloadAtPath event when collected then state transitions to LoadServer`() = runTest {
+        fun `Given handler emits ReloadAtPath event when collected then the frontend is reloaded at that path`() = runTest {
+            val path = "/_my_redirect/config_flow_start?domain=acme"
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
@@ -2727,18 +2805,14 @@ class FrontendViewModelTest {
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
             improvEventsFlow.emit(
-                FrontendImprovHandler.Event.ReloadAtPath(
-                    path = "/_my_redirect/config_flow_start?domain=acme",
-                    serverId = serverId,
-                ),
+                FrontendImprovHandler.Event.ReloadAtPath(path = path, serverId = serverId),
             )
             advanceTimeBy(1.seconds)
 
-            val state = assertInstanceOf(FrontendViewState.LoadServer::class.java, viewModel.viewState.value)
-            assertEquals(
-                FrontendTarget.Path("/_my_redirect/config_flow_start?domain=acme"),
-                state.target,
-            )
+            // Transitioning to LoadServer is not enough: nothing else starts a load, so without
+            // this the WebView would sit on the blank URL forever.
+            verify { urlManager.serverUrlFlow(serverId, FrontendTarget.Path(path)) }
+            assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
         }
 
         @Test
@@ -3174,6 +3248,93 @@ class FrontendViewModelTest {
                 messageFlow.emit(FrontendHandlerEvent.Connected)
                 advanceUntilIdle()
                 expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    @Nested
+    @OptIn(EvaluateJavascriptUsage::class)
+    inner class TlsClientCertPriming {
+        private fun stubClientCert(certificate: ClientCertificate?) {
+            coEvery { keyChainRepository.getClientCertProvider() } returns object : ClientCertProvider {
+                override val certificate = certificate
+            }
+        }
+
+        @Test
+        fun `Given a client certificate when preparing a url load then a priming action is emitted and awaited`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                val prepare = launch { viewModel.prepareUrlLoad("https://example.com/?external_auth=1") }
+                val action = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+                assertEquals("https://example.com/manifest.json", action.url)
+                runCurrent()
+                assertFalse(prepare.isCompleted, "prepareUrlLoad should wait for the priming action")
+
+                action.result.complete(Unit)
+                prepare.join()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given the action collector subscribes late when preparing a url load then the priming action is not dropped`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            // Start preparing before anything collects the actions, like a cold start where the
+            // Screen's collector is not subscribed yet.
+            val prepare = launch { viewModel.prepareUrlLoad("https://example.com/") }
+            runCurrent()
+            assertFalse(prepare.isCompleted, "prepareUrlLoad should wait for a subscriber")
+
+            viewModel.webViewActions.test {
+                val action = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+                action.result.complete(Unit)
+                prepare.join()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given no client certificate when preparing a url load then no priming action is emitted`() = runTest {
+            stubClientCert(null)
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                viewModel.prepareUrlLoad("https://example.com/")
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a blank url when preparing a url load then no priming action is emitted`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                viewModel.prepareUrlLoad("about:blank")
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a priming action that never completes when preparing a url load then it times out and cancels the action`() = runTest {
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                val prepare = launch { viewModel.prepareUrlLoad("https://example.com/") }
+                val action = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+
+                advanceTimeBy(WebViewAction.PingUrl.PING_TIMEOUT + 1.seconds)
+                prepare.join()
+                assertTrue(action.result.isCancelled, "the action's polling should be stopped")
                 cancelAndIgnoreRemainingEvents()
             }
         }

@@ -1,6 +1,7 @@
 # Home Assistant Companion for Android
 
-[![Build Status](https://github.com/home-assistant/android/actions/workflows/onPush.yml/badge.svg)](https://github.com/home-assistant/android/actions/workflows/onPush.yml)  
+[![Build Status](https://github.com/home-assistant/android/actions/workflows/onPush.yml/badge.svg)](https://github.com/home-assistant/android/actions/workflows/onPush.yml)
+[![E2E Status](https://github.com/home-assistant/android/actions/workflows/e2e.yml/badge.svg)](https://github.com/home-assistant/android/actions/workflows/e2e.yml)
 [![Play Store](https://img.shields.io/badge/Play%20Store-Download-blue?logo=google-play)](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android)
 [![Play Store Beta](https://img.shields.io/badge/Play%20Store%20Beta-Download-blue?logo=google-play)](https://play.google.com/apps/testing/io.homeassistant.companion.android)
 [![Discord](https://img.shields.io/discord/330944238910963714?label=Discord&logo=discord)](https://discord.gg/c5DvZ4e)
@@ -19,7 +20,7 @@ Welcome to the **Home Assistant Companion for Android**! This is the official An
 
 ## Get the app
 
-- **[Download from the Play Store](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android)**  
+- **[Download from the Play Store](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android)**
   Join the [Play Store Beta](https://play.google.com/apps/testing/io.homeassistant.companion.android) to test new features early.
 - **Other Stores**: The app is also available in other app stores.
 
@@ -29,10 +30,10 @@ Looking for help? Check out the [Home Assistant Companion Documentation](https:/
 
 ## Report a bug or request a feature
 
-Found a bug or have an idea for a new feature? Let us know!  
+Found a bug or have an idea for a new feature? Let us know!
 
-- **[Open a Bug Report](https://github.com/home-assistant/android/issues/new?template=Bug_report.md)**  
-- **[Request a Feature](https://github.com/home-assistant/android/issues/new?template=feature_request.md)**  
+- **[Open a Bug Report](https://github.com/home-assistant/android/issues/new?template=Bug_report.md)**
+- **[Request a Feature](https://github.com/home-assistant/android/issues/new?template=feature_request.md)**
 
 We appreciate your feedback and contributions to make the app even better!
 
@@ -54,7 +55,7 @@ Connect with other contributors and users in our vibrant **[Discord Community](h
 
 ## Star the repository
 
-If you find this project useful, consider giving it a star on GitHub!  
+If you find this project useful, consider giving it a star on GitHub!
 It helps others discover the project and motivates us to keep improving.
 
 <a href="https://next.ossinsight.io/widgets/official/analyze-repo-stars-history?repo_id=179008173" target="_blank" style="display: block" align="center">
