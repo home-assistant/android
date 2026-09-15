@@ -120,8 +120,18 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
             // with this session's notification. All subsequent sessions (and updates to this one)
             // go through notificationManager.notify() to avoid replacing the foreground
             // notification ID, which would dismiss the previously-shown notification on Android 13+.
-            startForeground(notificationId, notification)
-            foregroundNotificationId = notificationId
+            try {
+                startForeground(notificationId, notification)
+                foregroundNotificationId = notificationId
+            } catch (e: IllegalStateException) {
+                // Android 12+ refuses a foreground start from the background with a
+                // ForegroundServiceStartNotAllowedException. State updates arrive over the
+                // websocket while the app is backgrounded, so this is a normal outcome rather
+                // than a failure: show the notification anyway and retry the promotion on the
+                // next update, since foregroundNotificationId stays null.
+                Timber.d(e, "Not allowed to start in foreground, posting the notification instead")
+                notificationManager.notify(notificationId, notification)
+            }
         } else {
             // Service is already in the foreground (or foreground not yet required).
             // notificationManager.notify() works for both regular notifications and for updating
