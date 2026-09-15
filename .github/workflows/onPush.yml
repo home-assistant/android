@@ -45,7 +45,6 @@ jobs:
         with:
           keystore: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
           google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
       - uses: ./.github/actions/create-release-notes
@@ -128,15 +127,6 @@ jobs:
             --draft=false \
             --notes-file ./app/build/outputs/changelogGithub
 
-      - name: Deploy to Firebase
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: ./gradlew appDistributionUploadFullRelease
-
       - name: Install Fastlane dependencies
         if: github.event.inputs.beta == 'true'
         run: bundle install
@@ -189,7 +179,6 @@ jobs:
         with:
           keystore: ${{ secrets.UPLOAD_KEYSTORE_FILE }}
           google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
       - uses: ./.github/actions/create-release-notes
