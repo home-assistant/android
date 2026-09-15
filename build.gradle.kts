@@ -1,6 +1,19 @@
 import dev.detekt.gradle.Detekt
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
+buildscript {
+    configurations.classpath {
+        // The Firebase App Distribution plugin pulls grpc-netty, which pins Netty 4.1.110.
+        // Keep the build classpath on a patched Netty until Google ships a newer gRPC.
+        resolutionStrategy.eachDependency {
+            if (requested.group == "io.netty") {
+                useVersion("4.1.138.Final")
+                because("Netty releases before 4.1.137 have open security advisories.")
+            }
+        }
+    }
+}
+
 val kotlinVersion = libs.versions.kotlin.get()
 
 plugins {
