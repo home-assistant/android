@@ -57,6 +57,10 @@ internal val currentChangelog = Changelog(
             contentRes = commonR.string.changelog_entry_matter_commissioning,
             platforms = setOf(ChangelogPlatform.APP),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_chronometer_when_start,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+        ),
     ),
     fixed = listOf(
         ChangelogEntry(
