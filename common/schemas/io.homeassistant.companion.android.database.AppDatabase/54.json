@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 54,
-    "identityHash": "0e8cc6a631bcc4a33dbc445383277ff7",
+    "identityHash": "245e83868633642c69b23edd17561b6f",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -1150,7 +1150,7 @@
         }
       },
       {
-        "tableName": "media_control_entity_config",
+        "tableName": "media_controls_entity_config",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`server_id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, PRIMARY KEY(`server_id`, `entity_id`))",
         "fields": [
           {
@@ -1177,7 +1177,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0e8cc6a631bcc4a33dbc445383277ff7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '245e83868633642c69b23edd17561b6f')"
     ]
   }
 }

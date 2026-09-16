@@ -84,6 +84,7 @@
     <ID>EmptyFunctionBlock:FrontendJsBridge.kt:FrontendJsBridge.Companion.&lt;no name provided&gt;${}</ID>
     <ID>EmptyFunctionBlock:LogFragment.kt:LogFragment.&lt;no name provided&gt;${}</ID>
     <ID>ForbiddenVoid:HaRemoteMediaPlayer.kt:HaRemoteMediaPlayer$Void</ID>
+    <ID>FunctionNaming:MediaControlsSettingsScreen.kt:private fun LazyListScope.ConfiguredEntities</ID>
     <ID>FunctionOnlyReturningConstant:ApplicationModule.kt:ApplicationModule$@Provides @Singleton @PushWebsocketSupport fun providesPushWebsocketSupport: Boolean</ID>
     <ID>ImplicitDefaultLocale:ContextExtensions.kt:String.format("#%06X", 0xFFFFFF and color)</ID>
     <ID>ImplicitDefaultLocale:HighAccuracyLocationService.kt:HighAccuracyLocationService.Companion$String.format("%8.5f", latitude)</ID>
@@ -270,7 +271,6 @@
     <ID>MagicNumber:FrontendViewModel.kt:FrontendViewModel$8</ID>
     <ID>MagicNumber:GesturesScreen.kt:200</ID>
     <ID>MagicNumber:HAWebView.kt:5</ID>
-    <ID>MagicNumber:HaMediaSession.kt:HaMediaSession$90</ID>
     <ID>MagicNumber:HaMediaSession.kt:HaMediaSession.&lt;no name provided&gt;$1000.0</ID>
     <ID>MagicNumber:HealthConnectSensorManager.kt:HealthConnectSensorManager$30</ID>
     <ID>MagicNumber:HighAccuracyLocationService.kt:HighAccuracyLocationService.Companion$3600</ID>

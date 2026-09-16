@@ -3,7 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>AbstractClassCanBeInterface:ConnectivityCheckModule.kt:ConnectivityCheckModule$ConnectivityCheckModule</ID>
-    <ID>AbstractClassCanBeInterface:MediaControlModule.kt:MediaControlModule$MediaControlModule</ID>
     <ID>AbstractClassCanBeInterface:NetworkModule.kt:NetworkModule$NetworkModule</ID>
     <ID>AbstractClassCanBeInterface:TextToSpeech.kt:StreamVolumeAdjustment$StreamVolumeAdjustment</ID>
     <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$!isBtOn() || !bleTransmitterDevice.transmitRequested || (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting &amp;&amp; !isPermittedOnThisNetwork())</ID>

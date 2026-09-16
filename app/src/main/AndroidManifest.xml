@@ -343,7 +343,7 @@
         </service>
 
         <service
-            android:name=".mediacontrol.HaMediaSessionService"
+            android:name=".mediacontrols.HaMediaSessionService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
             tools:ignore="ExportedService">

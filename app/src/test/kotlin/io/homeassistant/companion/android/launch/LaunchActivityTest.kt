@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.di.ServerManagerModule
-import io.homeassistant.companion.android.mediacontrol.HaMediaSessionService
+import io.homeassistant.companion.android.mediacontrols.HaMediaSessionService
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.mockk.Runs

@@ -46,7 +46,7 @@ import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFr
 import io.homeassistant.companion.android.settings.gestures.GesturesFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.license.LicensesFragment
-import io.homeassistant.companion.android.settings.mediacontrol.MediaControlSettingsFragment
+import io.homeassistant.companion.android.settings.mediacontrols.MediaControlsSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -251,7 +251,7 @@ class SettingsFragment(
                 parentFragmentManager.commit {
                     replace(
                         R.id.content,
-                        MediaControlSettingsFragment::class.java,
+                        MediaControlsSettingsFragment::class.java,
                         null,
                     )
                     addToBackStack(getString(commonR.string.media_controls))

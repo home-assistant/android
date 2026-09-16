@@ -9,7 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
-import io.homeassistant.companion.android.database.mediacontrol.MediaControlDao
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlsDao
 import io.homeassistant.companion.android.database.migration.migrationPath
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.qs.TileDao
@@ -100,5 +100,5 @@ internal object DatabaseModule {
         database.entityStateComplicationsDao()
 
     @Provides
-    fun provideMediaControlDao(database: AppDatabase): MediaControlDao = database.mediaControlDao()
+    fun provideMediaControlDao(database: AppDatabase): MediaControlsDao = database.mediaControlDao()
 }
