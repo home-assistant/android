@@ -52,7 +52,7 @@ private fun resolveBackAction(previousUrl: Uri?, loadedUrl: Uri?): BackAction {
         val rootUrl = loadedUrl.buildUpon()
             .path("/")
             .clearQuery()
-            .appendQueryParameter("external_auth", "1")
+            .appendQueryParameter(EXTERNAL_AUTH_QUERY_PARAM, "1")
             .fragment(null)
             .build()
         return BackAction.NavigateToRoot(rootUrl)

@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
 import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
+import io.homeassistant.companion.android.util.compose.webview.EXTERNAL_AUTH_QUERY_PARAM
 import io.homeassistant.companion.android.util.compose.webview.settings
 import io.homeassistant.companion.android.util.sensitive
 import java.util.concurrent.atomic.AtomicInteger
@@ -221,8 +222,8 @@ sealed interface WebViewAction {
     }
 
     /**
-     * Reads the webview's current URI and returns it, stripping the `external_auth` query parameter if present.
-     * If the webview has no url or [BLANK_URL], it will return `null`.
+     * Reads the webview's current URI and returns it, stripping the `external_auth` query parameter
+     * if present. If the webview has no url or [BLANK_URL], it will return `null`.
      */
     class ReadCurrentUriForExternal : AwaitableAction<Uri?>() {
         override fun run(webView: WebView) {
@@ -237,7 +238,7 @@ sealed interface WebViewAction {
                 clearQuery()
                 if (currentUri.isHierarchical) {
                     currentUri.queryParameterNames
-                        .filter { it != "external_auth" }
+                        .filter { it != EXTERNAL_AUTH_QUERY_PARAM }
                         .forEach { param ->
                             currentUri.getQueryParameters(param).forEach { value ->
                                 appendQueryParameter(param, value)
