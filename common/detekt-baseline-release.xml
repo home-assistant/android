@@ -5,7 +5,6 @@
     <ID>AbstractClassCanBeInterface:ConnectivityCheckModule.kt:ConnectivityCheckModule$ConnectivityCheckModule</ID>
     <ID>AbstractClassCanBeInterface:NetworkModule.kt:NetworkModule$NetworkModule</ID>
     <ID>AbstractClassCanBeInterface:TextToSpeech.kt:StreamVolumeAdjustment$StreamVolumeAdjustment</ID>
-    <ID>AvoidReferentialEquality:WifiHelperImpl.kt:WifiHelperImpl$formattedSsid !== WifiManager.UNKNOWN_SSID</ID>
     <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$!isBtOn() || !bleTransmitterDevice.transmitRequested || (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting &amp;&amp; !isPermittedOnThisNetwork())</ID>
     <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$bleTransmitterDevice.transmitRequested &amp;&amp; (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) &amp;&amp; (!bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisNetwork())</ID>
     <ID>ComplexCondition:BluetoothSensorManager.kt:BluetoothSensorManager$bleTransmitterDevice.uuid != uuid || bleTransmitterDevice.major != major || bleTransmitterDevice.minor != minor || bleTransmitterDevice.transmitPowerSetting != transmitPower || bleTransmitterDevice.advertiseModeSetting != advertiseMode || bleTransmitterDevice.transmitRequested != transmitActive || bleTransmitterDevice.measuredPowerSetting != measuredPower || priorBluetoothStateEnabled != isBtOn() || bleTransmitterDevice.onlyTransmitOnHomeWifiSetting != homeWifiOnly</ID>
@@ -45,9 +44,7 @@
     <ID>CyclomaticComplexMethod:SensorWithAttributes.kt:SensorWithAttributes$fun toSensorRegistration: SensorRegistration&lt;Any&gt;</ID>
     <ID>CyclomaticComplexMethod:WearPrefsRepositoryImpl.kt:WearLocalStorageWithMigration$private suspend fun checkMigration</ID>
     <ID>CyclomaticComplexMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
-    <ID>ExplicitItLambdaMultipleParameters:LastUpdateManager.kt:LastUpdateManager${ index, it -&gt; it.copy(name = "$INTENT_SETTING_PREFIX${index + 1}:") }</ID>
     <ID>ForbiddenComment:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$// TODO: Send default locale of device with request.</ID>
-    <ID>HasPlatformType:DataModule.kt:DataModule.Companion$@Provides @Singleton fun packageManager</ID>
     <ID>ImplicitDefaultLocale:SensorReceiverBase.kt:SensorReceiverBase$String.format( "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update", sensors.toString(), intent.action, )</ID>
     <ID>ImplicitDefaultLocale:StorageSensorManager.kt:StorageSensorManager$String.format("%,d", sizeLong)</ID>
     <ID>InjectDispatcher:BluetoothSensorManager.kt:BluetoothSensorManager$IO</ID>

@@ -16,9 +16,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.SnackbarResult
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -27,6 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Delete
+import io.github.timoptr.mdiicons.generated.Pencil
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.appCreatedChannels
 import io.homeassistant.companion.android.settings.notification.NotificationViewModel
@@ -79,7 +80,7 @@ fun NotificationChannelView(notificationViewModel: NotificationViewModel, modifi
                         modifier = Modifier.padding(start = 12.dp),
                     ) {
                         Icon(
-                            Icons.Filled.Edit,
+                            Mdi.Pencil.rememberImageVector(),
                             stringResource(id = R.string.edit_channel),
                             modifier = Modifier
                                 .clickable { notificationViewModel.editChannelDetails(channel.id) }
@@ -87,7 +88,7 @@ fun NotificationChannelView(notificationViewModel: NotificationViewModel, modifi
                         )
                         if (channel.id !in appCreatedChannels) {
                             Icon(
-                                Icons.Filled.Delete,
+                                Mdi.Delete.rememberImageVector(),
                                 stringResource(id = R.string.delete_channel),
                                 modifier = Modifier
                                     .clickable {

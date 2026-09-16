@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -41,7 +39,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Undo
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -299,7 +299,7 @@ private fun TileIconRow(
         Spacer(modifier = Modifier.weight(1f))
         if (showResetIcon) {
             HAIconButton(
-                icon = Icons.AutoMirrored.Filled.Undo,
+                icon = Mdi.Undo.rememberImageVector(autoMirror = true),
                 onClick = onResetIcon,
                 contentDescription = stringResource(commonR.string.undo),
             )

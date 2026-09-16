@@ -7,9 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MarkEmailUnread
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +21,10 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.EmailMarkAsUnread
+import io.github.timoptr.mdiicons.generated.InformationOutline
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
@@ -71,7 +72,7 @@ private fun InvitationWarning(serverUrl: String) {
                     ServerAddressLink(serverUrl = serverUrl)
                 }
                 Icon(
-                    imageVector = Icons.Default.MarkEmailUnread,
+                    imageVector = Mdi.EmailMarkAsUnread.rememberImageVector(),
                     contentDescription = null,
                     tint = LocalHAColorScheme.current.colorFillPrimaryLoudResting,
                     modifier = Modifier.align(Alignment.Top),
@@ -86,7 +87,7 @@ private fun InvitationWarning(serverUrl: String) {
 private fun InvitationDetail(modifier: Modifier = Modifier) {
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
         Icon(
-            imageVector = Icons.Outlined.Info,
+            imageVector = Mdi.InformationOutline.rememberImageVector(),
             contentDescription = null,
             tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
             modifier = Modifier.size(INFO_ICON_SIZE),

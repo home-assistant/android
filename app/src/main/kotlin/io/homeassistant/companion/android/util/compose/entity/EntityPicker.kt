@@ -25,11 +25,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,7 +45,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -58,9 +52,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Alert
+import io.github.timoptr.mdiicons.generated.Close
 import io.github.timoptr.mdiicons.generated.EyeOff
 import io.github.timoptr.mdiicons.generated.Fan
 import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.Magnify
+import io.github.timoptr.mdiicons.generated.Plus
 import io.github.timoptr.mdiicons.generated.TemperatureCelsius
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.BuildConfig
@@ -175,7 +173,7 @@ fun EntityPicker(
                 size = ButtonSize.SMALL,
                 prefix = {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        imageVector = Mdi.Plus.rememberImageVector(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -276,7 +274,7 @@ private fun RowScope.UnresolvedEntityContent(entityId: String, isError: Boolean)
     val colorScheme = LocalHAColorScheme.current
     if (isError) {
         Icon(
-            imageVector = Icons.Default.Warning,
+            imageVector = Mdi.Alert.rememberImageVector(),
             contentDescription = stringResource(commonR.string.entity_picker_loading_failed),
             tint = colorScheme.colorOnNeutralNormal,
             modifier = Modifier.size(HADimens.SPACE6),
@@ -324,7 +322,7 @@ private fun SelectedEntityChipContainer(
             modifier = Modifier.size(HADimens.SPACE8),
         ) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = Mdi.Close.rememberImageVector(),
                 contentDescription = stringResource(commonR.string.search_clear_selection),
                 tint = colorScheme.colorOnNeutralNormal,
                 modifier = Modifier.size(HADimens.SPACE6),
@@ -351,7 +349,7 @@ private fun RowScope.EntityContent(entity: EntityDisplay, showHiddenIndicator: B
             overflow = TextOverflow.Ellipsis,
         )
 
-        (entity as? EntityDisplayWithContext)?.subtitle(LocalLayoutDirection.current)?.let { subtitle ->
+        (entity as? EntityDisplayWithContext)?.subtitle()?.let { subtitle ->
             Text(
                 text = subtitle,
                 style = HATextStyle.BodyMedium,
@@ -548,7 +546,7 @@ private fun ErrorPlaceholder(modifier: Modifier = Modifier) {
     PlaceholderContainer(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.Warning,
+                imageVector = Mdi.Alert.rememberImageVector(),
                 contentDescription = null,
                 tint = LocalHAColorScheme.current.colorOnNeutralNormal,
             )
@@ -566,7 +564,7 @@ private fun EmptyResultPlaceholder(searchQuery: String, modifier: Modifier = Mod
     PlaceholderContainer(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.Search,
+                imageVector = Mdi.Magnify.rememberImageVector(),
                 contentDescription = null,
                 tint = LocalHAColorScheme.current.colorOnNeutralNormal,
             )

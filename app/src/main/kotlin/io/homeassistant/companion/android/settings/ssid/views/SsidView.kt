@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.ssid.views
 
-import android.net.wifi.WifiManager
-import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -33,12 +31,6 @@ import androidx.compose.material.Switch
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.SettingsEthernet
-import androidx.compose.material.icons.filled.VpnKey
-import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -57,11 +49,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AlertCircle
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Ethernet
+import io.github.timoptr.mdiicons.generated.Key
+import io.github.timoptr.mdiicons.generated.Wifi
 import io.github.timoptr.mdiicons.generated.WifiCheck
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.network.WifiHelper
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.util.compose.HaAlertInfo
 import io.homeassistant.companion.android.util.compose.HaAlertWarning
 import io.homeassistant.companion.android.util.plus
@@ -100,7 +96,7 @@ fun SsidView(
                 )
                 SsidSubheader(
                     title = stringResource(commonR.string.manage_ssids_wifi),
-                    icon = Icons.Default.Wifi,
+                    icon = Mdi.Wifi.rememberImageVector(),
                     checked = null,
                     onClicked = null,
                 )
@@ -118,23 +114,20 @@ fun SsidView(
             }
         }
 
-        if (
-            activeSsid?.isNotBlank() == true &&
-            wifiSsids.none { it == activeSsid } &&
-            (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || activeSsid !== WifiManager.UNKNOWN_SSID)
-        ) {
+        val suggestedSsid = activeSsid?.takeIf { it.isNotBlank() && it !in wifiSsids }
+        if (suggestedSsid != null) {
             item("ssid.suggestion") {
                 Chip(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    onClick = { onAddWifiSsid(activeSsid) },
+                    onClick = { onAddWifiSsid(suggestedSsid) },
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Wifi,
+                        imageVector = Mdi.Wifi.rememberImageVector(),
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
                     )
                     Text(
-                        text = stringResource(commonR.string.add_ssid_name_suggestion, activeSsid),
+                        text = stringResource(commonR.string.add_ssid_name_suggestion, suggestedSsid),
                         modifier = Modifier.padding(start = 8.dp),
                     )
                 }
@@ -145,14 +138,14 @@ fun SsidView(
             key = { index: Int, item: String ->
                 if (wifiSsids.count { it == item } == 1) "ssid.item.$item" else "ssid.index.$index"
             },
-        ) { _, it ->
-            val connected = remember(it, activeSsid, activeBssid, usingWifi) {
+        ) { _, ssid ->
+            val connected = remember(ssid, activeSsid, activeBssid, usingWifi) {
                 usingWifi &&
                     (
-                        it == activeSsid ||
+                        ssid == activeSsid ||
                             (
-                                it.startsWith(WifiHelper.BSSID_PREFIX) &&
-                                    it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true)
+                                ssid.startsWith(WifiHelper.BSSID_PREFIX) &&
+                                    ssid.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true)
                                 )
                         )
             }
@@ -173,13 +166,13 @@ fun SsidView(
                 }
                 Text(
                     text =
-                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) {
-                        it.removePrefix(WifiHelper.BSSID_PREFIX)
+                    if (ssid.startsWith(WifiHelper.BSSID_PREFIX)) {
+                        ssid.removePrefix(WifiHelper.BSSID_PREFIX)
                     } else {
-                        it
+                        ssid
                     },
                     fontFamily =
-                    if (it.startsWith(WifiHelper.BSSID_PREFIX)) {
+                    if (ssid.startsWith(WifiHelper.BSSID_PREFIX)) {
                         FontFamily.Monospace
                     } else {
                         null
@@ -189,11 +182,11 @@ fun SsidView(
                         .weight(1f),
                 )
                 Icon(
-                    imageVector = Icons.Default.Clear,
+                    imageVector = Mdi.Close.rememberImageVector(),
                     contentDescription = stringResource(commonR.string.remove_ssid),
                     tint = colorResource(commonR.color.colorWarning),
                     modifier = Modifier
-                        .clickable { onRemoveWifiSsid(it) }
+                        .clickable { onRemoveWifiSsid(ssid) }
                         .size(48.dp)
                         .padding(all = 12.dp),
                 )
@@ -203,7 +196,7 @@ fun SsidView(
         item("vpn") {
             SsidSubheader(
                 title = stringResource(commonR.string.manage_ssids_vpn),
-                icon = Icons.Default.VpnKey,
+                icon = Mdi.Key.rememberImageVector(),
                 checked = vpn,
                 onClicked = { onSetVpn(it) },
             )
@@ -214,7 +207,7 @@ fun SsidView(
                 Spacer(Modifier.height(16.dp))
                 SsidSubheader(
                     title = stringResource(commonR.string.manage_ssids_ethernet),
-                    icon = Icons.Default.SettingsEthernet,
+                    icon = Mdi.Ethernet.rememberImageVector(),
                     checked = ethernet,
                     onClicked = { onSetEthernet(it) },
                 )
@@ -325,7 +318,7 @@ fun SsidInput(onSubmit: (String) -> Boolean, modifier: Modifier = Modifier) {
             trailingIcon = if (ssidError) {
                 {
                     Icon(
-                        imageVector = Icons.Default.Error,
+                        imageVector = Mdi.AlertCircle.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.manage_ssids_input_exists),
                     )
                 }

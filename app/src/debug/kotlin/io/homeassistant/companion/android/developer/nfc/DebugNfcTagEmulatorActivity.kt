@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -32,6 +30,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
@@ -139,7 +140,7 @@ private fun DebugNfcTagEmulatorScreen() {
                         },
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Clear,
+                            imageVector = Mdi.Close.rememberImageVector(),
                             contentDescription = "Clear tag ID",
                         )
                     }

@@ -354,7 +354,6 @@ wear/src/main/res/xml/locales_config.xml
 !common/src/main/res/values/strings.xml
 
 ## Avoid to push secrets from CI or localy
-firebaseAppDistributionServiceCredentialsFile.json
 playStorePublishServiceCredentialsFile.json
 
 ## Missing from the generated gitignore
