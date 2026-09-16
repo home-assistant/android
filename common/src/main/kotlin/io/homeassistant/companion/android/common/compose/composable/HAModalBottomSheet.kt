@@ -13,7 +13,6 @@ import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -22,6 +21,7 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Velocity
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.compose.util.isLight
 
 /**
  * Remembers a [SheetState] for use with [HAModalBottomSheet].
@@ -41,8 +41,6 @@ fun rememberHAModalBottomSheetState(skipPartiallyExpanded: Boolean = false): She
     } else {
         rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)
     }
-
-private const val LIGHT_SURFACE_LUMINANCE_THRESHOLD = 0.5f
 
 /**
  * A modal bottom sheet that uses the Home Assistant theme.
@@ -64,7 +62,7 @@ fun HAModalBottomSheet(
     dragHandle: @Composable (() -> Unit)? = { BottomSheetDefaults.DragHandle() },
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val isLightSurface = BottomSheetDefaults.ContainerColor.luminance() > LIGHT_SURFACE_LUMINANCE_THRESHOLD
+    val isLightSurface = BottomSheetDefaults.ContainerColor.isLight()
     ModalBottomSheet(
         modifier = modifier,
         sheetState = bottomSheetState,
