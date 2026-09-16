@@ -625,19 +625,7 @@ class HealthConnectSensorManager @Inject constructor(
         if (isEnabled(restingHeartRate)) {
             updateRestingHeartRateSensor()
         }
-        if (
-            isEnabled(sleepDuration) ||
-            isEnabled(sleepStart) ||
-            isEnabled(sleepEnd) ||
-            isEnabled(sleepLightDuration) ||
-            isEnabled(sleepDeepDuration) ||
-            isEnabled(sleepRemDuration) ||
-            isEnabled(sleepAwakeDuration) ||
-            isEnabled(sleepAwakeInBedDuration) ||
-            isEnabled(sleepOutOfBedDuration) ||
-            isEnabled(sleepUnspecifiedDuration) ||
-            isEnabled(sleepUnknownDuration)
-        ) {
+        if (isAnySleepSensorEnabled()) {
             updateSleepSensors()
         }
         if (isEnabled(steps)) {
@@ -1053,46 +1041,44 @@ class HealthConnectSensorManager @Inject constructor(
             )
         }
 
-        updateSleepStageDurationSensor(
-            sleepLightDuration,
-            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_LIGHT],
-            basicAttributes,
+        updateSleepStageSensors(analysis, basicAttributes)
+    }
+
+    private fun isAnySleepSensorEnabled(): Boolean = listOf(
+        sleepDuration,
+        sleepStart,
+        sleepEnd,
+        sleepLightDuration,
+        sleepDeepDuration,
+        sleepRemDuration,
+        sleepAwakeDuration,
+        sleepAwakeInBedDuration,
+        sleepOutOfBedDuration,
+        sleepUnspecifiedDuration,
+        sleepUnknownDuration,
+    ).any(::isEnabled)
+
+    private suspend fun updateSleepStageSensors(
+        analysis: SleepStageAnalysis,
+        attributes: Map<String, Any?>,
+    ) {
+        val stageSensors = listOf(
+            sleepLightDuration to SleepSessionRecord.STAGE_TYPE_LIGHT,
+            sleepDeepDuration to SleepSessionRecord.STAGE_TYPE_DEEP,
+            sleepRemDuration to SleepSessionRecord.STAGE_TYPE_REM,
+            sleepAwakeDuration to SleepSessionRecord.STAGE_TYPE_AWAKE,
+            sleepAwakeInBedDuration to SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
+            sleepOutOfBedDuration to SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+            sleepUnspecifiedDuration to SleepSessionRecord.STAGE_TYPE_SLEEPING,
+            sleepUnknownDuration to SleepSessionRecord.STAGE_TYPE_UNKNOWN,
         )
-        updateSleepStageDurationSensor(
-            sleepDeepDuration,
-            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_DEEP],
-            basicAttributes,
-        )
-        updateSleepStageDurationSensor(
-            sleepRemDuration,
-            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_REM],
-            basicAttributes,
-        )
-        updateSleepStageDurationSensor(
-            sleepAwakeDuration,
-            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_AWAKE],
-            basicAttributes,
-        )
-        updateSleepStageDurationSensor(
-            sleepAwakeInBedDuration,
-            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED],
-            basicAttributes,
-        )
-        updateSleepStageDurationSensor(
-            sleepOutOfBedDuration,
-            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_OUT_OF_BED],
-            basicAttributes,
-        )
-        updateSleepStageDurationSensor(
-            sleepUnspecifiedDuration,
-            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_SLEEPING],
-            basicAttributes,
-        )
-        updateSleepStageDurationSensor(
-            sleepUnknownDuration,
-            analysis.durationByStage[SleepSessionRecord.STAGE_TYPE_UNKNOWN],
-            basicAttributes,
-        )
+        stageSensors.forEach { (sensor, stageType) ->
+            updateSleepStageDurationSensor(
+                sensor,
+                analysis.durationByStage[stageType],
+                attributes,
+            )
+        }
     }
 
     private suspend fun updateSleepStageDurationSensor(
