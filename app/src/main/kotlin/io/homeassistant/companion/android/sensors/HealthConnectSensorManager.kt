@@ -1058,10 +1058,7 @@ class HealthConnectSensorManager @Inject constructor(
         sleepUnknownDuration,
     ).any(::isEnabled)
 
-    private suspend fun updateSleepStageSensors(
-        analysis: SleepStageAnalysis,
-        attributes: Map<String, Any?>,
-    ) {
+    private suspend fun updateSleepStageSensors(analysis: SleepStageAnalysis, attributes: Map<String, Any?>) {
         val stageSensors = listOf(
             sleepLightDuration to SleepSessionRecord.STAGE_TYPE_LIGHT,
             sleepDeepDuration to SleepSessionRecord.STAGE_TYPE_DEEP,
