@@ -25,6 +25,7 @@ internal val currentChangelog = Changelog(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_gesture_action,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.Gestures),
         ),
     ),
     improved = listOf(
