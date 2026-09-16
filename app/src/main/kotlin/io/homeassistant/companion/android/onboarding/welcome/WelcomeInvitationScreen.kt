@@ -128,7 +128,7 @@ private fun ServerAddressLink(serverUrl: String) {
 private fun WelcomeInvitationScreenPreview() {
     HAThemeForPreview {
         WelcomeInvitationScreen(
-            serverUrl = "http://homeassistant.local:8123",
+            serverUrl = "http://homeassistant.local",
             onAcceptClick = {},
             onRejectClick = {},
             onLearnMoreClick = {},

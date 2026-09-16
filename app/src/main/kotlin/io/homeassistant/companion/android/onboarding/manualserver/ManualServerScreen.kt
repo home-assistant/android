@@ -176,7 +176,7 @@ private fun ServerUrlTextField(
         },
         placeholder = {
             Text(
-                text = "http://homeassistant.local:8123",
+                text = "http://homeassistant.local",
                 style = HATextStyle.UserInput,
                 color = LocalHAColorScheme.current.colorOnNeutralNormal,
             )
