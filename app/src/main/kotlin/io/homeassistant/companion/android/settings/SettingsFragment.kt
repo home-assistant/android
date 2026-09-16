@@ -230,9 +230,6 @@ class SettingsFragment(
                 }
             }
 
-            findPreference<PreferenceCategory>("quick_settings")?.let {
-                it.isVisible = true
-            }
             findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
                 parentFragmentManager.commit {
                     replace(R.id.content, ManageTilesFragment::class.java, null)

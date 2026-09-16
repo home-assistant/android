@@ -167,8 +167,7 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:key="quick_settings"
-        android:title="@string/quick_settings"
-        app:isPreferenceVisible="false">
+        android:title="@string/quick_settings">
         <Preference
             android:key="manage_tiles"
             android:icon="@drawable/ic_tile"
