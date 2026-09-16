@@ -307,6 +307,7 @@ open class HomeAssistantApplication : Application() {
             }
         }
 
+        // Register for changes to the managed profile availability
         ContextCompat.registerReceiver(
             this,
             sensorReceiver,
