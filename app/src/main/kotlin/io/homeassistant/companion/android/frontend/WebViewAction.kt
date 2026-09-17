@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
+import android.net.Uri
 import android.webkit.WebView
 import androidx.annotation.VisibleForTesting
 import androidx.compose.ui.graphics.Color
@@ -7,10 +8,13 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 import androidx.core.graphics.toColorInt
+import androidx.core.net.toUri
 import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLORS_SCRIPT
 import io.homeassistant.companion.android.frontend.WebViewAction.ReadThemeColors.Companion.THEME_COLOR_SPACER
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
+import io.homeassistant.companion.android.util.compose.webview.EXTERNAL_AUTH_QUERY_PARAM
 import io.homeassistant.companion.android.util.compose.webview.settings
 import io.homeassistant.companion.android.util.sensitive
 import java.util.concurrent.atomic.AtomicInteger
@@ -214,6 +218,35 @@ sealed interface WebViewAction {
             webView.evaluateJavascript(script) { scriptResult ->
                 result.complete(scriptResult)
             }
+        }
+    }
+
+    /**
+     * Reads the webview's current URI and returns it, stripping the `external_auth` query parameter
+     * if present. If the webview has no url or [BLANK_URL], it will return `null`.
+     */
+    class ReadCurrentUriForExternal : AwaitableAction<Uri?>() {
+        override fun run(webView: WebView) {
+            val loadedUrl = webView.url
+            if (loadedUrl == null || loadedUrl == BLANK_URL) {
+                result.complete(null)
+                return
+            }
+
+            val currentUri = loadedUrl.toUri()
+            val newUri = currentUri.buildUpon().apply {
+                clearQuery()
+                if (currentUri.isHierarchical) {
+                    currentUri.queryParameterNames
+                        .filter { it != EXTERNAL_AUTH_QUERY_PARAM }
+                        .forEach { param ->
+                            currentUri.getQueryParameters(param).forEach { value ->
+                                appendQueryParameter(param, value)
+                            }
+                        }
+                }
+            }.build()
+            result.complete(newUri)
         }
     }
 

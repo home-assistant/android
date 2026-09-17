@@ -6,6 +6,7 @@ import android.webkit.WebView
 import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.haptic.HapticFeedbackPerformer
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -370,6 +371,32 @@ class WebViewActionTest {
             val evaluateCount = evaluateCallbacks.size
             delayedRunnables.removeFirst().run()
             assertEquals(evaluateCount, evaluateCallbacks.size, "polling should stop once await gave up")
+        }
+    }
+
+    @Nested
+    inner class ReadCurrentUriForExternal {
+
+        @Test
+        fun `Given ReadCurrentUriForExternal when webview has no URL then returns null`() = runTest {
+            every { webView.url } returns null
+
+            val action = WebViewAction.ReadCurrentUriForExternal()
+            action.run(webView)
+            val result = action.await()
+
+            assertEquals(null, result)
+        }
+
+        @Test
+        fun `Given ReadCurrentUriForExternal when webview has blank URL then returns null`() = runTest {
+            every { webView.url } returns BLANK_URL
+
+            val action = WebViewAction.ReadCurrentUriForExternal()
+            action.run(webView)
+            val result = action.await()
+
+            assertEquals(null, result)
         }
     }
 }
