@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
@@ -20,6 +21,7 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.Velocity
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.compose.util.isLight
 
 /**
  * Remembers a [SheetState] for use with [HAModalBottomSheet].
@@ -43,6 +45,9 @@ fun rememberHAModalBottomSheetState(skipPartiallyExpanded: Boolean = false): She
 /**
  * A modal bottom sheet that uses the Home Assistant theme.
  *
+ * The system bars of the sheet window follow the luminance of the sheet surface, so their icons stay visible in both
+ * light and dark themes.
+ *
  * @param bottomSheetState The state of the bottom sheet.
  * @param modifier Optional [Modifier] for this bottom sheet.
  * @param onDismissRequest Called when the user attempts to dismiss the bottom sheet.
@@ -57,6 +62,7 @@ fun HAModalBottomSheet(
     dragHandle: @Composable (() -> Unit)? = { BottomSheetDefaults.DragHandle() },
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val isLightSurface = BottomSheetDefaults.ContainerColor.isLight()
     ModalBottomSheet(
         modifier = modifier,
         sheetState = bottomSheetState,
@@ -64,6 +70,10 @@ fun HAModalBottomSheet(
         onDismissRequest = onDismissRequest,
         shape = RoundedCornerShape(topStart = HARadius.X3L, topEnd = HARadius.X3L),
         dragHandle = dragHandle,
+        properties = ModalBottomSheetProperties(
+            isAppearanceLightStatusBars = isLightSurface,
+            isAppearanceLightNavigationBars = isLightSurface,
+        ),
         content = content,
     )
 }
