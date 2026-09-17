@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.database.server
 
-import androidx.room.ColumnInfo
+import androidx.room3.ColumnInfo
 
 data class ServerUserInfo(
     @ColumnInfo(name = "user_id")

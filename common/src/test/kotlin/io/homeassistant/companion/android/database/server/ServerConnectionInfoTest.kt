@@ -303,9 +303,9 @@ class ServerConnectionInfoTest {
     }
 
     @Nested
-    inner class InternalSsidTypeConverterTest {
+    inner class InternalSsidColumnTypeConverterTest {
 
-        private val converter = InternalSsidTypeConverter()
+        private val converter = InternalSsidColumnTypeConverter()
 
         @Test
         fun `Given empty list then fromListToString returns empty array`() {

@@ -1,9 +1,9 @@
 package io.homeassistant.companion.android.database
 
-import androidx.room.AutoMigration
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
+import androidx.room3.AutoMigration
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.Database
+import androidx.room3.RoomDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
@@ -16,15 +16,15 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.sensor.Attribute
-import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
+import io.homeassistant.companion.android.database.sensor.EntriesColumnTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
-import io.homeassistant.companion.android.database.sensor.SensorSettingTypeConverter
+import io.homeassistant.companion.android.database.sensor.SensorSettingColumnTypeConverter
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
-import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
+import io.homeassistant.companion.android.database.settings.LocalSensorSettingColumnTypeConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.CameraTile
@@ -49,8 +49,9 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
-import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
-import io.homeassistant.companion.android.database.widget.WidgetTapActionConverter
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundColumnTypeConverter
+import io.homeassistant.companion.android.database.widget.WidgetTapActionColumnTypeConverter
+import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 
 @Database(
     entities = [
@@ -106,13 +107,14 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
     ],
 )
-@TypeConverters(
+@ColumnTypeConverters(
     LocalNotificationSettingConverter::class,
-    LocalSensorSettingConverter::class,
-    EntriesTypeConverter::class,
-    SensorSettingTypeConverter::class,
-    WidgetBackgroundTypeConverter::class,
-    WidgetTapActionConverter::class,
+    LocalSensorSettingColumnTypeConverter::class,
+    EntriesColumnTypeConverter::class,
+    SensorSettingColumnTypeConverter::class,
+    WidgetBackgroundColumnTypeConverter::class,
+    WidgetTapActionColumnTypeConverter::class,
+    TodoLastUpdateDataConverter::class,
 )
 internal abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao

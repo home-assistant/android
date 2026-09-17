@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.database.widget
 
-import androidx.room.TypeConverter
+import androidx.room3.ColumnTypeConverter
 
 enum class WidgetTapAction {
     REFRESH,
@@ -8,11 +8,11 @@ enum class WidgetTapAction {
     TOGGLE,
 }
 
-class WidgetTapActionConverter {
+class WidgetTapActionColumnTypeConverter {
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun toWidgetTapAction(setting: String): WidgetTapAction = WidgetTapAction.valueOf(setting)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromWidgetBackgroundType(setting: WidgetTapAction): String = setting.name
 }

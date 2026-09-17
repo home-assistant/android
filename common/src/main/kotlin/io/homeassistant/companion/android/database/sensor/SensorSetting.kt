@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.database.sensor
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.TypeConverter
+import androidx.room3.ColumnInfo
+import androidx.room3.ColumnTypeConverter
+import androidx.room3.Entity
 
 enum class SensorSettingType(val string: String, val listType: Boolean = false) {
     STRING("string"),
@@ -35,26 +35,26 @@ data class SensorSetting(
     val entries: List<String> = arrayListOf(),
 )
 
-class EntriesTypeConverter {
-    @TypeConverter
+class EntriesColumnTypeConverter {
+    @ColumnTypeConverter
     fun fromStringToList(value: String): List<String> {
         return value.split("|")
     }
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun toStringFromList(list: List<String>): String {
         return list.joinToString(separator = "|")
     }
 }
 
-class SensorSettingTypeConverter {
-    @TypeConverter
+class SensorSettingColumnTypeConverter {
+    @ColumnTypeConverter
     fun fromStringToEnum(value: String): SensorSettingType {
         return enumValues<SensorSettingType>().find { it.string == value }
             ?: SensorSettingType.STRING
     }
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun toStringFromEnum(enum: SensorSettingType): String {
         return enum.string
     }

@@ -79,7 +79,7 @@ reorderable = "3.1.0"
 retrofit-bom = "3.0.0"
 robolectric = "4.17" # Check if robolectric supports a more recent version of the SDK on each update
 robolectric-target-sdk = "37"
-room = "2.8.5"
+room = "3.0.3"
 runtimeLint = "1.12.0"
 screenshot = "0.0.1-alpha15" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
 sentry-android = "8.56.0"
@@ -141,11 +141,10 @@ androidx-health-connect-client = { module = "androidx.health.connect:connect-cli
 androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
 androidx-media = { module = "androidx.media:media", version.ref = "media" }
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidxHiltNavigationCompose" }
-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
-androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
-androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
-androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
-androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room" }
+androidx-room-paging = { module = "androidx.room3:room3-paging", version.ref = "room" }
+androidx-room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room" }
+androidx-room-testing = { module = "androidx.room3:room3-testing", version.ref = "room" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
