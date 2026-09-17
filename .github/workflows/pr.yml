@@ -33,7 +33,7 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: ./.github/actions/download-translations
+      - uses: $/.github/actions/download-translations
         if: steps.changes.outputs.skip != 'true'
         name: Download Translations
         with:
@@ -82,7 +82,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -113,7 +113,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -145,7 +145,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -154,7 +154,7 @@ jobs:
       - name: Validate ktlint
         run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --continue
 
-      - uses: ./.github/actions/upload-sarif-results
+      - uses: $/.github/actions/upload-sarif-results
         if: always()
         with:
           category: "KTlint"
@@ -169,7 +169,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -181,7 +181,7 @@ jobs:
       - name: Validate Detekt
         run: ./gradlew detektMain :build-logic:convention:detektMain --continue
 
-      - uses: ./.github/actions/upload-sarif-results
+      - uses: $/.github/actions/upload-sarif-results
         if: always()
         with:
           category: "Detekt"
@@ -196,7 +196,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -211,7 +211,7 @@ jobs:
           name: lint-reports
           path: "**/build/reports/lint-results-*.html"
 
-      - uses: ./.github/actions/upload-sarif-results
+      - uses: $/.github/actions/upload-sarif-results
         if: always()
         with:
           category: "Android Lint"
@@ -225,27 +225,27 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews - app
-        uses: ./.github/actions/monitor-resources
+        uses: $/.github/actions/monitor-resources
         with:
           run: ./gradlew :app:validateFullDebugScreenshotTest
 
       - name: Validate Screenshot Previews - wear
-        uses: ./.github/actions/monitor-resources
+        uses: $/.github/actions/monitor-resources
         with:
           run: ./gradlew :wear:validateDebugScreenshotTest
 
       - name: Validate Screenshot Previews - common
-        uses: ./.github/actions/monitor-resources
+        uses: $/.github/actions/monitor-resources
         with:
           run: ./gradlew :common:validateDebugScreenshotTest
 
-      - uses: ./.github/actions/upload-test-results
+      - uses: $/.github/actions/upload-test-results
         if: always()
         with:
           test-name: Screenshot test
@@ -269,7 +269,7 @@ jobs:
             echo -e "\n✔️ No changed database schemas on branch"
           fi
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -305,7 +305,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -321,7 +321,7 @@ jobs:
           -storepass android \
           -keypass android
       - name: Build Release
-        uses: ./.github/actions/monitor-resources
+        uses: $/.github/actions/monitor-resources
         env:
           KEYSTORE_PATH: /home/runner/work/android/android/ci_dummy_keystore.keystore
           KEYSTORE_ALIAS: androiddebugkey
@@ -339,7 +339,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -354,7 +354,7 @@ jobs:
             -x :app:testMinimalDebugUnitTest \
             :app:compileMinimalDebugUnitTestKotlin
 
-      - uses: ./.github/actions/upload-test-results
+      - uses: $/.github/actions/upload-test-results
         if: always()
         with:
           test-name: Unit test
@@ -369,7 +369,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -445,7 +445,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -476,7 +476,7 @@ jobs:
           # must be started and killed within a single command.
           script: .github/actions/monitor-resources/monitor.sh ./gradlew ${{ matrix.configuration.gradle_target }}
 
-      - uses: ./.github/actions/upload-test-results
+      - uses: $/.github/actions/upload-test-results
         if: always()
         with:
           test-name: Instrumentation test (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
