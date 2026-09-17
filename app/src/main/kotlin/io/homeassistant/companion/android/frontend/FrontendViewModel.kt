@@ -764,12 +764,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    /**
-     * Get the webview's current URL, and open it in the device's browser app.
-     *
-     * The `external_auth` query parameter, if present, should be removed from the URL as it only
-     * makes sense to the frontend running inside our webview.
-     */
+    /** Get the webview's current URL, and open it in the device's browser app. */
     private suspend fun openCurrentPageInBrowser() {
         val getCurrentUri = WebViewAction.ReadCurrentUriForExternal()
         _webViewActions.emit(getCurrentUri)
