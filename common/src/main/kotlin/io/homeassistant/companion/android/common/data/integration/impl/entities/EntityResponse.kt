@@ -9,4 +9,4 @@ import io.homeassistant.companion.android.common.data.integration.Entity
  * sending a non-string `state`. Being an alias it adds no type separation: the compiler treats
  * the two as the same type.
  */
-internal typealias EntityResponse = Entity
+typealias EntityResponse = Entity
