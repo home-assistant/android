@@ -10,7 +10,10 @@ import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.datastore.ServerSession
+import io.homeassistant.companion.android.datastore.SessionDatastore
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
@@ -21,6 +24,8 @@ class AuthenticationRepositoryImpl internal constructor(
     private val serverId: Int,
     private val localStorage: LocalStorage,
     private val installId: String,
+    private val sessionDatastore: SessionDatastore,
+    private val clock: Clock,
 ) : AuthenticationRepository {
 
     companion object {
@@ -34,21 +39,30 @@ class AuthenticationRepositoryImpl internal constructor(
 
     private suspend fun connectionStateProvider() = serverManager.connectionStateProvider(serverId)
 
+    /**
+     * The stored session, or `null` when this install has none for the server. A session belonging
+     * to another install counts as absent: its webhook is not ours to use.
+     */
+    private suspend fun session(): ServerSession? =
+        sessionDatastore.getSession(serverId)?.takeIf { server().installId == installId }
+
+    private fun ServerSession.isExpired() = tokenExpiration <= clock.now()
+
     override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String {
         ensureValidSession(forceRefresh)
-        val server = server()
+        val session = session() ?: throw AuthorizationException()
         return kotlinJsonMapper.encodeToString(
             MapAnySerializer,
             mapOf(
-                "access_token" to server.session.accessToken,
-                "expires_in" to server.session.expiresIn(),
+                "access_token" to session.accessToken,
+                "expires_in" to (session.tokenExpiration - clock.now()).inWholeSeconds,
             ),
         )
     }
 
     override suspend fun retrieveAccessToken(): String {
         ensureValidSession(false)
-        return server().session.accessToken!!
+        return (session() ?: throw AuthorizationException()).accessToken
     }
 
     override suspend fun revokeSession() {
@@ -56,29 +70,24 @@ class AuthenticationRepositoryImpl internal constructor(
         val url = connectionStateProvider().urlFlow().firstUrlOrNull {
             "No URL available to revoke session"
         }?.toHttpUrlOrNull()
-        if (!server.session.isComplete() || url == null) {
+        val session = session()
+        if (session == null || url == null) {
             Timber.e("Unable to revoke session.")
             return
         }
         if (server.version?.isAtLeast(2022, 9, 0) == true) {
             authenticationService.revokeToken(
                 url.newBuilder().addPathSegments("auth/revoke").build(),
-                server.session.refreshToken!!,
+                session.refreshToken,
             )
         } else {
             authenticationService.revokeTokenLegacy(
                 url.newBuilder().addPathSegments(SEGMENT_AUTH_TOKEN).build(),
-                server.session.refreshToken!!,
+                session.refreshToken,
                 AuthenticationService.REVOKE_ACTION,
             )
         }
-        serverManager.updateServer(
-            server.copy(
-                session = server.session.copy(
-                    refreshToken = null,
-                ),
-            ),
-        )
+        sessionDatastore.removeSession(serverId)
     }
 
     override suspend fun deletePreferences() {
@@ -88,10 +97,7 @@ class AuthenticationRepositoryImpl internal constructor(
 
     override suspend fun getSessionState(): SessionState {
         val server = server()
-        return if (server.session.isComplete() &&
-            server.session.installId == installId &&
-            server.connection.hasAtLeastOneUrl
-        ) {
+        return if (session() != null && server.connection.hasAtLeastOneUrl) {
             SessionState.CONNECTED
         } else {
             SessionState.ANONYMOUS
@@ -100,24 +106,23 @@ class AuthenticationRepositoryImpl internal constructor(
 
     override suspend fun buildBearerToken(): String {
         ensureValidSession()
-        return "Bearer " + server().session.accessToken
+        return "Bearer " + (session() ?: throw AuthorizationException()).accessToken
     }
 
     private suspend fun ensureValidSession(forceRefresh: Boolean = false) {
-        val server = server()
         val url = connectionStateProvider().urlFlow().firstUrlOrNull()?.toHttpUrlOrNull()
-        if (!server.session.isComplete() || server.session.installId != installId || url == null) {
+        val session = session()
+        if (session == null || url == null) {
             Timber.e("Unable to ensure valid session.")
             throw AuthorizationException()
         }
 
-        if (server.session.isExpired() || forceRefresh) {
-            refreshSessionWithToken(url, server.session.refreshToken!!)
+        if (session.isExpired() || forceRefresh) {
+            refreshSessionWithToken(url, session.refreshToken)
         }
     }
 
     private suspend fun refreshSessionWithToken(baseUrl: HttpUrl, refreshToken: String) {
-        val server = server()
         return authenticationService.refreshToken(
             baseUrl.newBuilder().addPathSegments(SEGMENT_AUTH_TOKEN).build(),
             AuthenticationService.GRANT_TYPE_REFRESH,
@@ -126,15 +131,13 @@ class AuthenticationRepositoryImpl internal constructor(
         ).let {
             if (it.isSuccessful) {
                 val refreshedToken = it.body() ?: throw AuthorizationException()
-                serverManager.updateServer(
-                    server.copy(
-                        session = ServerSessionInfo(
-                            accessToken = refreshedToken.accessToken,
-                            refreshToken = refreshToken,
-                            tokenExpiration = System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
-                            tokenType = refreshedToken.tokenType,
-                            installId = installId,
-                        ),
+                sessionDatastore.updateSession(
+                    serverId,
+                    ServerSession(
+                        accessToken = refreshedToken.accessToken,
+                        refreshToken = refreshToken,
+                        tokenExpiration = clock.now() + refreshedToken.expiresIn.seconds,
+                        tokenType = refreshedToken.tokenType,
                     ),
                 )
                 return@let

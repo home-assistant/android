@@ -15,7 +15,6 @@ import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -101,7 +100,6 @@ class WebSocketCoreImplTest {
             connection = ServerConnectionInfo(
                 externalUrl = url,
             ),
-            session = ServerSessionInfo(),
             user = ServerUserInfo(),
         )
 

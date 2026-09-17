@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.database.server
 
+import io.homeassistant.companion.android.datastore.ServerSession
+import kotlin.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -18,7 +20,6 @@ class ServerTest {
         nameOverride = nameOverride,
         _version = version,
         connection = ServerConnectionInfo(externalUrl = externalUrl),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(),
     )
 
@@ -99,37 +100,38 @@ class ServerTest {
     @Nested
     inner class FromTemporaryServer {
 
+        private fun temporaryServer(
+            externalUrl: String = "https://home.example.com",
+            allowInsecureConnection: Boolean?,
+        ) = TemporaryServer(
+            externalUrl = externalUrl,
+            installId = "install789",
+            session = ServerSession(
+                accessToken = "access123",
+                refreshToken = "refresh456",
+                tokenExpiration = Instant.fromEpochSeconds(1234567890),
+                tokenType = "Bearer",
+            ),
+            allowInsecureConnection = allowInsecureConnection,
+        )
+
         @Test
         fun `Given TemporaryServer then creates Server with correct values`() {
-            val temporaryServer = TemporaryServer(
-                externalUrl = "https://home.example.com",
-                session = ServerSessionInfo(
-                    accessToken = "access123",
-                    refreshToken = "refresh456",
-                    tokenExpiration = 1234567890L,
-                    tokenType = "Bearer",
-                    installId = "install789",
-                ),
-                allowInsecureConnection = false,
-            )
+            val temporaryServer = temporaryServer(allowInsecureConnection = false)
 
             val server = Server.fromTemporaryServer(temporaryServer)
 
             assertEquals("", server._name)
             assertEquals("https://home.example.com", server.connection.externalUrl)
             assertEquals(false, server.connection.allowInsecureConnection)
-            assertEquals("access123", server.session.accessToken)
-            assertEquals("refresh456", server.session.refreshToken)
-            assertEquals(1234567890L, server.session.tokenExpiration)
-            assertEquals("Bearer", server.session.tokenType)
-            assertEquals("install789", server.session.installId)
+            // The tokens go to the session datastore, only the install stays on the row.
+            assertEquals("install789", server.installId)
         }
 
         @Test
         fun `Given TemporaryServer with null allowInsecureConnection then Server preserves null`() {
-            val temporaryServer = TemporaryServer(
+            val temporaryServer = temporaryServer(
                 externalUrl = "http://192.168.1.1:8123",
-                session = ServerSessionInfo(),
                 allowInsecureConnection = null,
             )
 
@@ -140,9 +142,8 @@ class ServerTest {
 
         @Test
         fun `Given TemporaryServer then Server has default id of 0`() {
-            val temporaryServer = TemporaryServer(
+            val temporaryServer = temporaryServer(
                 externalUrl = "https://example.com",
-                session = ServerSessionInfo(),
                 allowInsecureConnection = null,
             )
 
@@ -153,9 +154,8 @@ class ServerTest {
 
         @Test
         fun `Given TemporaryServer then Server has empty user info`() {
-            val temporaryServer = TemporaryServer(
+            val temporaryServer = temporaryServer(
                 externalUrl = "https://example.com",
-                session = ServerSessionInfo(),
                 allowInsecureConnection = null,
             )
 

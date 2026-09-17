@@ -18,10 +18,15 @@ import androidx.sqlite.driver.SupportSQLiteConnection
 import androidx.sqlite.execSQL
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.IconDialogCompat
+import io.homeassistant.companion.android.datastore.ServerSession
+import io.homeassistant.companion.android.datastore.SessionDatastore
 import java.util.UUID
+import javax.inject.Provider
+import kotlin.time.Instant
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
-internal fun migrationPath(context: Context): Array<Migration> = arrayOf(
+internal fun migrationPath(context: Context, sessionDatastore: Provider<SessionDatastore>): Array<Migration> = arrayOf(
     MIGRATION_1_2,
     MIGRATION_2_3,
     MIGRATION_3_4,
@@ -47,6 +52,7 @@ internal fun migrationPath(context: Context): Array<Migration> = arrayOf(
     MIGRATION_23_24,
     Migration37to38(context),
     Migration40to41(context),
+    Migration53to54(sessionDatastore),
 )
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -871,3 +877,88 @@ private class Migration40to41(private val context: Context) : Migration(40, 41) 
     toColumnName = "name",
 )
 internal class Migration52to53 : AutoMigrationSpec
+
+/** Last schema holding the tokens in the `servers` table. */
+private const val VERSION_WITH_SESSION_IN_DB = 53
+
+/** First schema where the tokens live in [SessionDatastore] instead. */
+private const val VERSION_WITH_SESSION_IN_DATASTORE = 54
+
+/**
+ * Moves the authentication tokens out of `servers` and into [SessionDatastore], keeping
+ * `install_id` in the table.
+ *
+ * `servers` is part of the Android backup, so tokens stored there let a restored install adopt
+ * another install's session and webhook. The datastore lives under `files/`, which the backup
+ * rules do not cover. `install_id` stays behind on purpose: together with `webhook_id` it records
+ * which install owns the registration, and a row whose `install_id` no longer matches this install
+ * is exactly how a restored backup is recognised.
+ *
+ * A token that cannot be written to the datastore is dropped rather than failing the migration.
+ * The server keeps its configuration and the user re-authenticates, which beats an app that cannot
+ * open its database.
+ */
+internal class Migration53to54(private val sessionDatastore: Provider<SessionDatastore>) :
+    Migration(VERSION_WITH_SESSION_IN_DB, VERSION_WITH_SESSION_IN_DATASTORE) {
+
+    override fun migrate(connection: SQLiteConnection) {
+        if (connection is SupportSQLiteConnection) {
+            copyTokensToDatastore(connection.db)
+        }
+
+        connection.execSQL(
+            "CREATE TABLE IF NOT EXISTS `_new_servers` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `_name` TEXT NOT NULL, `name_override` TEXT, `_version` TEXT, `device_registry_id` TEXT, `list_order` INTEGER NOT NULL, `device_name` TEXT, `install_id` TEXT, `external_url` TEXT NOT NULL, `internal_url` TEXT, `cloud_url` TEXT, `webhook_id` TEXT, `secret` TEXT, `cloudhook_url` TEXT, `use_cloud` INTEGER NOT NULL, `internal_ssids` TEXT NOT NULL, `internal_ethernet` INTEGER, `internal_vpn` INTEGER, `prioritize_internal` INTEGER NOT NULL, `allow_insecure_connection` INTEGER, `user_id` TEXT, `user_name` TEXT, `user_is_owner` INTEGER, `user_is_admin` INTEGER)",
+        )
+        connection.execSQL(
+            "INSERT INTO `_new_servers` (`id`,`_name`,`name_override`,`_version`,`device_registry_id`,`list_order`,`device_name`,`install_id`,`external_url`,`internal_url`,`cloud_url`,`webhook_id`,`secret`,`cloudhook_url`,`use_cloud`,`internal_ssids`,`internal_ethernet`,`internal_vpn`,`prioritize_internal`,`allow_insecure_connection`,`user_id`,`user_name`,`user_is_owner`,`user_is_admin`) SELECT `id`,`_name`,`name_override`,`_version`,`device_registry_id`,`list_order`,`device_name`,`install_id`,`external_url`,`internal_url`,`cloud_url`,`webhook_id`,`secret`,`cloudhook_url`,`use_cloud`,`internal_ssids`,`internal_ethernet`,`internal_vpn`,`prioritize_internal`,`allow_insecure_connection`,`user_id`,`user_name`,`user_is_owner`,`user_is_admin` FROM `servers`",
+        )
+        connection.execSQL("DROP TABLE `servers`")
+        connection.execSQL("ALTER TABLE `_new_servers` RENAME TO `servers`")
+    }
+
+    private fun copyTokensToDatastore(db: SupportSQLiteDatabase) {
+        db.query(
+            "SELECT `id`, `access_token`, `refresh_token`, `token_expiration`, `token_type` FROM `servers`",
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                val accessToken = cursor.getStringOrNull(COLUMN_ACCESS_TOKEN)
+                val refreshToken = cursor.getStringOrNull(COLUMN_REFRESH_TOKEN)
+                val tokenType = cursor.getStringOrNull(COLUMN_TOKEN_TYPE)
+                val expiration = if (cursor.isNull(COLUMN_TOKEN_EXPIRATION)) {
+                    null
+                } else {
+                    cursor.getLong(COLUMN_TOKEN_EXPIRATION)
+                }
+
+                // A server that never finished signing in has nothing worth moving.
+                val complete = accessToken != null && refreshToken != null
+                val session = if (complete && tokenType != null && expiration != null) {
+                    ServerSession(
+                        accessToken = accessToken,
+                        refreshToken = refreshToken,
+                        tokenExpiration = Instant.fromEpochSeconds(expiration),
+                        tokenType = tokenType,
+                    )
+                } else {
+                    null
+                }
+
+                val serverId = cursor.getInt(COLUMN_ID)
+                try {
+                    session?.let { runBlocking { sessionDatastore.get().updateSession(serverId, it) } }
+                } catch (e: Exception) {
+                    Timber.e(e, "Unable to migrate the session of server $serverId, it has to sign in again")
+                }
+            }
+        }
+    }
+
+    private companion object {
+        // Positions in the SELECT issued by copyTokensToDatastore.
+        const val COLUMN_ID = 0
+        const val COLUMN_ACCESS_TOKEN = 1
+        const val COLUMN_REFRESH_TOKEN = 2
+        const val COLUMN_TOKEN_EXPIRATION = 3
+        const val COLUMN_TOKEN_TYPE = 4
+    }
+}

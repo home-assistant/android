@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
@@ -432,7 +431,6 @@ class FrontendUrlManagerTest {
             _name = "Test Server",
             _version = version,
             connection = connection,
-            session = ServerSessionInfo(),
             user = ServerUserInfo(),
         )
     }

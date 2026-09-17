@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
 import io.homeassistant.companion.android.frontend.permissions.FcmSupport
 import javax.inject.Singleton
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @Module
@@ -40,10 +39,6 @@ object ApplicationModule {
     }
 
     @OptIn(ExperimentalTime::class)
-    @Provides
-    @Singleton
-    fun providesClock(): Clock = Clock.System
-
     @Provides
     @Singleton
     @LocationTrackingSupport

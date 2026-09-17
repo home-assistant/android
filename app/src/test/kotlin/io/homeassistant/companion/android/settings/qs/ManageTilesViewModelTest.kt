@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.mockk.coEvery
@@ -81,7 +80,6 @@ class ManageTilesViewModelTest {
         id = id,
         _name = "Server $id",
         connection = ServerConnectionInfo(externalUrl = "https://example.com"),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(),
     )
 

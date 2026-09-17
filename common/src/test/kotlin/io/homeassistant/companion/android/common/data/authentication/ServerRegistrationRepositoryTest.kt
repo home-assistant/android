@@ -4,10 +4,12 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService.Companion.SEGMENT_AUTH_TOKEN
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.Token
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
+import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -23,8 +25,9 @@ class ServerRegistrationRepositoryTest {
 
     private val authenticationService: AuthenticationService = mockk()
     private val installIdProvider: SuspendProvider<String> = mockk()
+    private val clock = FakeClock()
 
-    private var repository: ServerRegistrationRepository = ServerRegistrationRepository({ authenticationService }, installIdProvider)
+    private var repository: ServerRegistrationRepository = ServerRegistrationRepository({ authenticationService }, installIdProvider, clock)
 
     @Test
     fun `Given valid URL and token with refresh token, when registering auth code, then return TemporaryServer and call service correctly`() = runTest {
@@ -56,7 +59,7 @@ class ServerRegistrationRepositoryTest {
         assertEquals("access_token_123", result.session.accessToken)
         assertEquals("refresh_token_456", result.session.refreshToken)
         assertEquals("Bearer", result.session.tokenType)
-        assertEquals(installId, result.session.installId)
+        assertEquals(installId, result.installId)
         assertNotNull(result.session.tokenExpiration)
 
         val capturedUrl = urlSlot.captured
@@ -155,11 +158,8 @@ class ServerRegistrationRepositoryTest {
             allowInsecureConnection = null,
         )
 
-        val afterCallTime = System.currentTimeMillis() / 1000
-
         assertNotNull(result)
-        val tokenExpiration = result.session.tokenExpiration!!
-        assertTrue(tokenExpiration >= beforeCallTime + expiresInSeconds)
-        assertTrue(tokenExpiration <= afterCallTime + expiresInSeconds)
+        // The clock is fixed, so the expiry is exact rather than a window.
+        assertEquals(clock.now() + expiresInSeconds.seconds, result.session.tokenExpiration)
     }
 }

@@ -48,6 +48,9 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     ksp(project(":provides-sensor-processor"))
 
+    implementation(libs.androidx.datastore)
+    implementation(libs.androidx.datastore.tink)
+
     api(libs.androidx.work.runtime.ktx)
 
     // TODO should not expose retrofit outside of common https://github.com/home-assistant/android/issues/5421

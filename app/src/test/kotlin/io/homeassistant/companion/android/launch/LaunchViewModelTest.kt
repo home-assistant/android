@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
@@ -266,7 +265,6 @@ class LaunchViewModelTest {
             connection = ServerConnectionInfo(
                 externalUrl = "http://invalid.com",
             ),
-            session = ServerSessionInfo(),
             user = ServerUserInfo(
                 id = null,
                 name = null,
@@ -280,7 +278,6 @@ class LaunchViewModelTest {
             connection = ServerConnectionInfo(
                 externalUrl = "http://valid.com",
             ),
-            session = ServerSessionInfo(),
             user = ServerUserInfo(
                 id = null,
                 name = null,
@@ -521,14 +518,12 @@ class LaunchViewModelTest {
             id = 1,
             _name = "Connected Server 1",
             connection = ServerConnectionInfo(externalUrl = "http://server1.com"),
-            session = ServerSessionInfo(),
             user = ServerUserInfo(id = null, name = null, isOwner = false, isAdmin = false),
         )
         val connectedServer2 = Server(
             id = 2,
             _name = "Connected Server 2",
             connection = ServerConnectionInfo(externalUrl = "http://server2.com"),
-            session = ServerSessionInfo(),
             user = ServerUserInfo(id = null, name = null, isOwner = false, isAdmin = false),
         )
 

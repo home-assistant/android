@@ -11,7 +11,6 @@ import io.homeassistant.companion.android.common.data.integration.display.Entiti
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
 import io.homeassistant.companion.android.settings.shortcuts.SHORTCUT_EXTRA_PATH
@@ -70,7 +69,6 @@ class ManageShortcutsViewModelTest {
         id = id,
         _name = "Server $id",
         connection = ServerConnectionInfo(externalUrl = "https://example.com"),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(),
     )
 

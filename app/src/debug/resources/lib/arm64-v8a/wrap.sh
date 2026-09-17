@@ -11,7 +11,10 @@ if [ "$os_version" -eq "27" ]; then
 elif [ "$os_version" -eq "28" ]; then
   cmd="$cmd -XjdwpProvider:adbconnection -XjdwpOptions:suspend=n,server=y -Xcompiler-option --debuggable $@"
 else
-  cmd="$cmd -XjdwpProvider:adbconnection -XjdwpOptions:suspend=n,server=y $@"
+  # `--debuggable` is what lets JVMTI agents attach. The runtime normally derives it from
+  # the manifest, but launching through this script bypasses that, which breaks App
+  # Inspection (database, network, background task) and the profiler.
+  cmd="$cmd -XjdwpProvider:adbconnection -XjdwpOptions:suspend=n,server=y -Xcompiler-option --debuggable $@"
 fi
 
 # Enables HWAddressSanitizer (HWASan) for debug builds on ARM64 devices running Android 14+.

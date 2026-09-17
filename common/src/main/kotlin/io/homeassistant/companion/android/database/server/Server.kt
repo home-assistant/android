@@ -7,6 +7,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
+import io.homeassistant.companion.android.datastore.ServerSession
 import kotlinx.parcelize.Parcelize
 
 @Entity(tableName = "servers")
@@ -27,7 +28,14 @@ data class Server(
     @ColumnInfo(name = "device_name")
     val deviceName: String? = null,
     @Embedded val connection: ServerConnectionInfo,
-    @Embedded val session: ServerSessionInfo,
+    /**
+     * The install that registered this server. Kept next to [ServerConnectionInfo.webhookId]
+     * because both describe the registration, not the session: a row whose [installId] differs
+     * from this install's owns a webhook belonging to another device, which is what a restored
+     * backup looks like. The tokens themselves live in the session datastore.
+     */
+    @ColumnInfo(name = "install_id")
+    val installId: String? = null,
     @Embedded val user: ServerUserInfo,
 ) {
 
@@ -39,7 +47,7 @@ data class Server(
                     externalUrl = temporaryServer.externalUrl,
                     allowInsecureConnection = temporaryServer.allowInsecureConnection,
                 ),
-                session = temporaryServer.session,
+                installId = temporaryServer.installId,
                 user = ServerUserInfo(),
             )
         }
@@ -55,6 +63,7 @@ data class Server(
 @Parcelize
 data class TemporaryServer(
     val externalUrl: String,
-    val session: ServerSessionInfo,
+    val installId: String,
+    val session: ServerSession,
     val allowInsecureConnection: Boolean?,
 ) : Parcelable

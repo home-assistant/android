@@ -13,9 +13,9 @@ import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.server.TemporaryServer
+import io.homeassistant.companion.android.datastore.ServerSession
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.Runs
@@ -26,6 +26,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
+import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -61,7 +62,6 @@ class NameYourDeviceViewModelTest {
         id = serverId,
         _name = "Test Server",
         connection = ServerConnectionInfo(externalUrl = externalUrl),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(),
     )
 
@@ -70,8 +70,14 @@ class NameYourDeviceViewModelTest {
         allowInsecureConnection: Boolean? = null,
     ) = TemporaryServer(
         externalUrl = externalUrl,
+        installId = "install-id",
+        session = ServerSession(
+            accessToken = "access",
+            refreshToken = "refresh",
+            tokenExpiration = Instant.fromEpochSeconds(1789634869),
+            tokenType = "Bearer",
+        ),
         allowInsecureConnection = allowInsecureConnection,
-        session = ServerSessionInfo(),
     )
 
     @BeforeEach

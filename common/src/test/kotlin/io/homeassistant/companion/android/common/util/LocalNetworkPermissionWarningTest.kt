@@ -7,7 +7,6 @@ import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -91,7 +90,6 @@ class LocalNetworkPermissionWarningTest {
         connection = ServerConnectionInfo(
             externalUrl = "http://192.168.1.$id:8123",
         ),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(),
     )
 }

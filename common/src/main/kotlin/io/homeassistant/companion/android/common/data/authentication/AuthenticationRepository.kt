@@ -5,10 +5,12 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
+import io.homeassistant.companion.android.datastore.SessionDatastore
 import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
 import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import javax.inject.Inject
 import javax.inject.Provider
+import kotlin.time.Clock
 
 interface AuthenticationRepository {
 
@@ -37,6 +39,8 @@ internal class AuthenticationRepositoryFactory @Inject constructor(
     private val serverManagerProvider: Provider<ServerManager>,
     @NamedSessionStorage private val localStorage: LocalStorage,
     @NamedInstallId private val installIdProvider: SuspendProvider<String>,
+    private val sessionDatastore: SessionDatastore,
+    private val clock: Clock,
 ) {
     suspend fun create(serverId: Int): AuthenticationRepositoryImpl {
         return AuthenticationRepositoryImpl(
@@ -45,6 +49,8 @@ internal class AuthenticationRepositoryFactory @Inject constructor(
             serverId = serverId,
             localStorage = localStorage,
             installId = installIdProvider(),
+            sessionDatastore = sessionDatastore,
+            clock = clock,
         )
     }
 }

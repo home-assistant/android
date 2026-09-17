@@ -3,10 +3,12 @@ package io.homeassistant.companion.android.common.data.authentication
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService.Companion.SEGMENT_AUTH_TOKEN
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.TemporaryServer
+import io.homeassistant.companion.android.datastore.ServerSession
 import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
 import javax.inject.Inject
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
@@ -17,6 +19,7 @@ import timber.log.Timber
 class ServerRegistrationRepository @Inject constructor(
     private val authenticationServiceProvider: SuspendProvider<AuthenticationService>,
     @param:NamedInstallId private val installIdProvider: SuspendProvider<String>,
+    private val clock: Clock,
 ) {
 
     /**
@@ -48,12 +51,12 @@ class ServerRegistrationRepository @Inject constructor(
                     TemporaryServer(
                         externalUrl = url,
                         allowInsecureConnection = allowInsecureConnection,
-                        session = ServerSessionInfo(
+                        installId = installIdProvider(),
+                        session = ServerSession(
                             accessToken = it.accessToken,
                             refreshToken = it.refreshToken,
-                            tokenExpiration = System.currentTimeMillis() / 1000 + it.expiresIn,
+                            tokenExpiration = clock.now() + it.expiresIn.seconds,
                             tokenType = it.tokenType,
-                            installId = installIdProvider(),
                         ),
                     )
                 }

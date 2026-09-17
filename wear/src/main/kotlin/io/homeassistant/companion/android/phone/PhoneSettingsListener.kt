@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.replaceAll
+import io.homeassistant.companion.android.datastore.SessionDatastore
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.tiles.CameraTile
@@ -51,6 +52,9 @@ class PhoneSettingsListener :
 
     @Inject
     lateinit var serverManager: ServerManager
+
+    @Inject
+    lateinit var sessionDatastore: SessionDatastore
 
     @Inject
     lateinit var serverRegistrationRepository: ServerRegistrationRepository
@@ -112,7 +116,7 @@ class PhoneSettingsListener :
                 )
                 dataMap.putString(
                     WearDataMessages.CONFIG_SERVER_REFRESH_TOKEN,
-                    serverManager.getServer()?.session?.refreshToken ?: "",
+                    serverManager.getServer()?.id?.let { sessionDatastore.getSession(it) }?.refreshToken.orEmpty(),
                 )
             }
             dataMap.putString(

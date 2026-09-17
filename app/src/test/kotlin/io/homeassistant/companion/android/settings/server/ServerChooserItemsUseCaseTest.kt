@@ -5,7 +5,6 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.util.ServerUserAvatarUseCase
 import io.mockk.coEvery
@@ -35,7 +34,6 @@ class ServerChooserItemsUseCaseTest {
         id = id,
         _name = name,
         connection = ServerConnectionInfo(externalUrl = ""),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(id = "uid-$id", name = userName),
     )
 

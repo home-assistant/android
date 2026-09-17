@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerDao
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.mockk.coEvery
 import io.mockk.every
@@ -93,7 +92,6 @@ class ServerConnectionStateProviderImplTest {
             listOrder = 0,
             deviceName = null,
             connection = connection,
-            session = ServerSessionInfo(),
             user = ServerUserInfo(),
         )
         coEvery { serverManager.getServer(serverId) } returns server

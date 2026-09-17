@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.util.VOICE_SAMPLE_RATE
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.mockk.CapturingSlot
 import io.mockk.coEvery
@@ -301,7 +300,6 @@ class WebSocketRepositoryImplTest {
             connection = ServerConnectionInfo(
                 externalUrl = "https://example.com",
             ),
-            session = ServerSessionInfo(),
             user = ServerUserInfo(),
         )
     }

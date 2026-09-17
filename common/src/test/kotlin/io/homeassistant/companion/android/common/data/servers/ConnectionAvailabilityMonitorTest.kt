@@ -4,7 +4,6 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -31,7 +30,6 @@ class ConnectionAvailabilityMonitorTest {
             id = SERVER_ID,
             _name = "Home",
             connection = ServerConnectionInfo(externalUrl = "http://example.com"),
-            session = ServerSessionInfo(),
             user = ServerUserInfo(),
         )
         coEvery { serverManager.getServer(any<Int>()) } returns server

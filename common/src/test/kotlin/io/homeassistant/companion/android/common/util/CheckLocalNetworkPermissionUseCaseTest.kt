@@ -5,7 +5,6 @@ import android.content.Context
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -167,7 +166,6 @@ class CheckLocalNetworkPermissionUseCaseTest {
             externalUrl = externalUrl,
             internalUrl = internalUrl,
         ),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(),
     )
 }

@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -50,7 +49,6 @@ class ServerUserAvatarUseCaseTest {
         id = id,
         _name = "Home",
         connection = ServerConnectionInfo(externalUrl = ""),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(id = userId, name = "Alice"),
     )
 

@@ -10,7 +10,6 @@ import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.mockk.coEvery
@@ -161,6 +160,5 @@ private fun serverWithSsids(ssids: List<String>): Server = Server(
         externalUrl = "https://example.com",
         internalSsids = ssids,
     ),
-    session = ServerSessionInfo(),
     user = ServerUserInfo(),
 )

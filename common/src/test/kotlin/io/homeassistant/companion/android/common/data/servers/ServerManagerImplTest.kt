@@ -14,10 +14,10 @@ import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerDao
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.database.server.TemporaryServer
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.datastore.ServerSession
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -26,6 +26,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
+import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -66,7 +67,6 @@ class ServerManagerImplTest {
         id = id,
         _name = name,
         connection = ServerConnectionInfo(externalUrl = externalUrl, webhookId = webhookId),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(),
     )
 
@@ -195,7 +195,13 @@ class ServerManagerImplTest {
         fun `Given TemporaryServer when addServer then adds to DAO and return new ID`() = runTest {
             val temporaryServer = TemporaryServer(
                 externalUrl = "https://home.example.com",
-                session = ServerSessionInfo(accessToken = "token123"),
+                installId = "install123",
+                session = ServerSession(
+                    accessToken = "token123",
+                    refreshToken = "refresh123",
+                    tokenExpiration = Instant.fromEpochSeconds(1234567890),
+                    tokenType = "Bearer",
+                ),
                 allowInsecureConnection = false,
             )
             val serverSlot = slot<Server>()
@@ -206,7 +212,8 @@ class ServerManagerImplTest {
             assertEquals(42, result)
             assertEquals("https://home.example.com", serverSlot.captured.connection.externalUrl)
             assertEquals(false, serverSlot.captured.connection.allowInsecureConnection)
-            assertEquals("token123", serverSlot.captured.session.accessToken)
+            // The session itself goes to the datastore; the row only records the install.
+            assertEquals("install123", serverSlot.captured.installId)
         }
     }
 

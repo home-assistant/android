@@ -4,7 +4,6 @@ import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
@@ -33,7 +32,6 @@ class LocationForSecureConnectionViewModelTest {
             externalUrl = "https://example.com",
             allowInsecureConnection = allowInsecureConnection,
         ),
-        session = ServerSessionInfo(),
         user = ServerUserInfo(),
     )
 

@@ -3,4 +3,13 @@
     <include domain="database" path="." />
     <include domain="sharedpref" path="." />
     <exclude domain="sharedpref" path="session_0.xml" />
+    <!-- Only the database and sharedpref domains are included, so the session tokens in
+         files/datastore/ are outside the backup by construction. Do not add a `file`
+         include: tokens must never reach another install. Lint rejects an explicit
+         exclude here, since excluding a domain that is not included means nothing. -->
+    <!-- The Tink keyset is wrapped by a Keystore key that is never backed up. A restored copy
+         cannot be unwrapped, and Tink throws rather than replacing a keyset it cannot read
+         (AndroidKeysetManager: "the master key %s exists but is unusable"). Leaving it out lets
+         a restored install generate a fresh keyset and simply ask the user to sign in. -->
+    <exclude domain="sharedpref" path="keyset_prefs.xml" />
 </full-backup-content>

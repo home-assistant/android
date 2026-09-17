@@ -26,6 +26,8 @@ import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWid
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
+import io.homeassistant.companion.android.datastore.SessionDatastore
+import javax.inject.Provider
 import javax.inject.Singleton
 
 private const val DATABASE_NAME = "HomeAssistantDB"
@@ -35,10 +37,15 @@ private const val DATABASE_NAME = "HomeAssistantDB"
 internal object DatabaseModule {
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
+    fun provideAppDatabase(
+        @ApplicationContext context: Context,
+        // A Provider because the migration only touches the datastore when it actually runs,
+        // and building it eagerly would unwrap the Keystore key on every database open.
+        sessionDatastore: Provider<SessionDatastore>,
+    ): AppDatabase {
         return Room
             .databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
-            .addMigrations(*migrationPath(context))
+            .addMigrations(*migrationPath(context, sessionDatastore))
             .build()
     }
 

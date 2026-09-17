@@ -45,6 +45,7 @@ import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
 import java.util.UUID
 import javax.inject.Singleton
+import kotlin.time.Clock
 import okhttp3.OkHttpClient
 
 @Module
@@ -156,6 +157,10 @@ internal abstract class DataModule {
                 uuid
             }
         }
+
+        @Provides
+        @Singleton
+        fun providesClock(): Clock = Clock.System
 
         @Provides
         @Singleton

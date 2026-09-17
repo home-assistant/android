@@ -10,7 +10,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
-import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
 import io.homeassistant.companion.android.frontend.session.AuthPayload
@@ -69,7 +68,6 @@ class FrontendJsBridgeTest {
             _name = "test",
             _version = version,
             connection = ServerConnectionInfo(externalUrl = serverUrl),
-            session = ServerSessionInfo(),
             user = ServerUserInfo(),
         )
         coEvery { serverManager.getServer(any<Int>()) } returns server

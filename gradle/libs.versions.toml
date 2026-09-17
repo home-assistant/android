@@ -37,6 +37,7 @@ coreKtx = "1.19.0"
 core-splashscreen = "1.2.0"
 core-remoteviews = "1.1.0"
 cronet = "500.0.2"
+datastore = "1.3.0-alpha11"
 detekt = "2.0.0-alpha.6"
 emojiJava = "5.1.1"
 firebase-bom = "34.19.0"
@@ -131,6 +132,8 @@ android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", ve
 androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycle" }
 compose-screenshot-gradle-plugin = { group = "com.android.compose.screenshot", name = "screenshot-test-gradle-plugin", version.ref = "screenshot" }
 androidx-concurrent-ktx = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version.ref = "androidxConcurrent" }
+androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore"}
+androidx-datastore-tink = { group = "androidx.datastore", name = "datastore-tink", version.ref = "datastore"}
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material = { module = "androidx.glance:glance-material", version.ref = "glance" }
 androidx-glance-preview = { module = "androidx.glance:glance-preview", version.ref = "glance" }

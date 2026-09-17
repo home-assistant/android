@@ -131,7 +131,7 @@ class SetHomeNetworkViewModelTest {
         initialEthernet: Boolean = false,
     ): Server {
         val fakeConnectionInfo = ServerConnectionInfo("", internalSsids = initialSsids, internalVpn = initialVpn, internalEthernet = initialEthernet)
-        val fakeServer = Server(_name = "", id = MOCK_SERVER_ID, connection = fakeConnectionInfo, session = mockk(), user = mockk())
+        val fakeServer = Server(_name = "", id = MOCK_SERVER_ID, connection = fakeConnectionInfo, user = mockk())
         return fakeServer
     }
 

@@ -13,8 +13,6 @@ import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import javax.inject.Singleton
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 
@@ -52,9 +50,4 @@ object ApplicationModule {
             )
         }
     }
-
-    @OptIn(ExperimentalTime::class)
-    @Provides
-    @Singleton
-    fun clock(): Clock = Clock.System
 }
