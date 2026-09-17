@@ -443,7 +443,7 @@ private fun FrontendErrorScreenPreview() {
             connectivityCheckState = ConnectivityCheckState(),
             onRetryConnectivityCheck = {},
             errorDescription = "Connection timed out after 30 seconds",
-            url = "http://homeassistant.local:8123",
+            url = "http://homeassistant.local",
             icon = ImageVector.vectorResource(R.drawable.ic_casita_no_connection),
             errorDetailsExpanded = true,
         )
