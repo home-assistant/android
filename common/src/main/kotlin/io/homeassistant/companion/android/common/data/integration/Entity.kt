@@ -241,7 +241,21 @@ private fun validateStateElement(element: JsonElement, entityId: String): String
     is JsonNull -> ""
     else -> {
         Timber.w(
-            "Entity $entityId state is not a String: $element. Please open an issue on the relevant integration.",
+            buildString {
+                appendLine(
+                    """
+        ████████████████████████████
+        !!! INVALID ENTITY STATE !!!
+        ████████████████████████████
+                    """.trimIndent(),
+                )
+                appendLine()
+                appendLine("Entity $entityId state is not a String: $element")
+                appendLine("The state of an entity is always expected to be a String.")
+                appendLine()
+                appendLine("ACTION REQUIRED: Please open an issue on the relevant integration.")
+                appendLine("----------------------------------------------------------------")
+            },
         )
         ""
     }
