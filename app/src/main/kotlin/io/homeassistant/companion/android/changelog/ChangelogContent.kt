@@ -27,6 +27,11 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.Gestures),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_native_media_controls,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.MediaControls),
+        ),
     ),
     improved = listOf(
         ChangelogEntry(
