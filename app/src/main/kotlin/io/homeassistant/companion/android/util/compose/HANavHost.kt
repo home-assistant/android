@@ -28,7 +28,7 @@ import io.homeassistant.companion.android.onboarding.onboarding
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.setHomeNetworkScreen
 import io.homeassistant.companion.android.onboarding.wearOnboarding
-import io.homeassistant.companion.android.settings.navigation.navigateToSettings
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 
 /**
@@ -113,8 +113,8 @@ internal fun HANavHost(
                 onOpenExternalLink = { uri ->
                     navController.navigateToUri(uri.toString(), onShowSnackbar)
                 },
-                onNavigateToSettings = {
-                    navController.navigateToSettings(it)
+                onNavigateToSettings = { deepLink ->
+                    activity?.let { it.startActivity(SettingsActivity.newInstance(it, deepLink)) }
                 },
                 onSecurityLevelHelpClick = {
                     navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
@@ -136,7 +136,7 @@ internal fun HANavHost(
             )
             changelogScreen(
                 navController = navController,
-                onOpenUrl = { url -> navController.navigateToUri(url, onShowSnackbar) },
+                onShowSnackbar = onShowSnackbar,
             )
             setHomeNetworkScreen(
                 onGotoNextScreen = {
