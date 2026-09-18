@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.common.data
 
 import android.annotation.SuppressLint
-import android.os.Build
-import androidx.annotation.RequiresApi
 import java.net.Socket
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
@@ -24,7 +22,6 @@ import javax.net.ssl.X509ExtendedTrustManager
  *
  * Requires API 24: [X509ExtendedTrustManager] and its hostname-aware overloads don't exist below it.
  */
-@RequiresApi(Build.VERSION_CODES.N)
 @SuppressLint("CustomX509TrustManager")
 internal class CompositeX509ExtendedTrustManager(
     private val primary: X509ExtendedTrustManager,
