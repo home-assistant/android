@@ -442,7 +442,6 @@
     <ID>SwallowedException:SettingsWearActivity.kt:SettingsWearActivity$throwable: Throwable</ID>
     <ID>SwallowedException:TLSWebViewClient.kt:TLSWebViewClient$ex: CertificateException</ID>
     <ID>SwallowedException:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$e: Exception</ID>
-    <ID>ThrowsCount:CameraWidget.kt:CameraWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
     <ID>ThrowsCount:NFCUtil.kt:NFCUtil$@Throws(IllegalArgumentException::class, IOException::class, Exception::class) private fun writeMessageToTag: Boolean</ID>
     <ID>ThrowsCount:ThreadManagerImpl.kt:ThreadManagerImpl$private suspend fun fullSyncPreferredDataset: ThreadManager.SyncResult</ID>
     <ID>TooManyFunctions:ActivitySensorManager.kt:ActivitySensorManager : SensorManager</ID>
@@ -553,8 +552,6 @@
     <ID>UnusedPrivateProperty:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$private val entitiesForDisplayManager: EntitiesForDisplayManager</ID>
     <ID>UnusedVariable:SensorDetailView.kt:val context = LocalContext.current</ID>
     <ID>UnusedVariable:SensorListView.kt:val context = LocalContext.current</ID>
-    <ID>UseCheckOrError:AssistVoiceInteractionService.kt:AssistVoiceInteractionService$throw IllegalStateException("No wake word models found in assets")</ID>
-    <ID>UseCheckOrError:CameraWidget.kt:CameraWidget$throw IllegalStateException("No URL available to retrieve picture")</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$server?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverManager.getServer(selectedServerId)?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverPipelines?.pipelines ?: emptyList()</ID>

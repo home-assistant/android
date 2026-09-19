@@ -23,6 +23,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.fail
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.NullSource
+import org.junit.jupiter.params.provider.ValueSource
 
 class JsonUtilTest {
     @Test
@@ -357,21 +360,17 @@ class JsonUtilTest {
         assertEquals(200, valueJsonObject1["string value 2"]?.jsonPrimitive?.int)
     }
 
-    @Test
-    fun `Given a map of map with an int key when toJsonObject is called then throws exception`() {
-        val value1 = mapOf(
-            1 to 100,
-            2 to 200,
-        )
-        val input = mapOf(
-            "key1" to value1,
-        )
-        val exception = assertThrows(Exception::class.java) {
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(ints = [1])
+    fun `Given a nested map with a non-string key when toJsonObject is called then rejects key before value`(key: Int?) {
+        val input = mapOf("key1" to mapOf(key to Any()))
+
+        val exception = assertThrows(IllegalArgumentException::class.java) {
             input.toJsonObject()
         }
-        assertNotNull(exception)
-        assertTrue(exception is IllegalArgumentException)
-        assertTrue(exception.message?.contains("Unsupported type: ") ?: false)
+
+        assertEquals("Unsupported type: ${key?.javaClass} as map key", exception.message)
     }
 
     @Test

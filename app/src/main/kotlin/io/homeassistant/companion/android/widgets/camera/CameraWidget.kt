@@ -128,7 +128,7 @@ class CameraWidget : AppWidgetProvider() {
                         val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
                         url = "$baseUrl$entityPictureUrl"
                     } else {
-                        throw IllegalStateException("No URL available to retrieve picture")
+                        error("No URL available to retrieve picture")
                     }
                 } catch (e: CancellationException) {
                     throw e
