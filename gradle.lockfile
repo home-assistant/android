@@ -2,8 +2,8 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 # To regenerate this file, run: ./gradlew :dependencies --write-locks
-ch.qos.logback:logback-classic:1.3.14=ktlint
-ch.qos.logback:logback-core:1.3.14=ktlint
+ch.qos.logback:logback-classic:1.6.3=ktlint
+ch.qos.logback:logback-core:1.6.3=ktlint
 com.github.ajalt.clikt:clikt-jvm:5.0.2=ktlint
 com.github.ajalt.clikt:clikt:5.0.2=ktlint
 com.github.ben-manes.caffeine:caffeine:2.9.3=detekt
@@ -91,6 +91,6 @@ org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1=detekt,ktlintReporter
 org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1=detekt,ktlintReporter
 org.jetbrains:annotations:13.0=ktlint,ktlintBaselineReporter,ktlintReporter,ktlintRuleset
 org.jetbrains:annotations:23.0.0=detekt
-org.slf4j:slf4j-api:2.0.7=ktlint
+org.slf4j:slf4j-api:2.0.18=ktlint
 org.snakeyaml:snakeyaml-engine:2.10=detekt
 empty=detektPlugins

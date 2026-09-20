@@ -25,3 +25,8 @@ style:
       - Preview
       - HAPreviews
       - PreviewLightDark
+  ForbiddenImport:
+    active: true
+    forbiddenImports:
+      - value: 'org.json.*'
+        reason: 'Use kotlinx.serialization instead of org.json.'

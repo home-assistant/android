@@ -3,6 +3,8 @@
     <string name="aa_launch_native">Native mode</string>
     <string name="aa_driving_optimized_change">Use Home Assistant in drive mode?</string>
     <string name="aa_navigation">Navigation</string>
+    <string name="aa_connection_error_title">Unable to connect</string>
+    <string name="aa_connection_error_message">Home Assistant can\'t be reached. Check your connection.</string>
     <string name="aa_no_entities_with_locations">No entities with locations found</string>
     <string name="aa_change_server">Change server</string>
     <string name="account">Account</string>
@@ -302,6 +304,7 @@
     <string name="gestures_action_navigate_dashboard">Go to default dashboard</string>
     <string name="gestures_action_navigate_forward">Go to next page</string>
     <string name="gestures_action_navigate_reload">Reload page</string>
+    <string name="gestures_action_navigate_open_in_browser">Open page in browser</string>
     <string name="gestures_action_open_app_settings">Open app settings</string>
     <string name="gestures_action_open_app_developer">Open app troubleshooting</string>
     <string name="gestures_action_open_assist">Open Assist</string>
@@ -342,7 +345,7 @@
     <string name="input_booleans">Input booleans</string>
     <string name="input_buttons">Input buttons</string>
     <string name="input_cloud">Use Home Assistant Cloud</string>
-    <string name="input_url_hint">https://example.duckdns.org:8123</string>
+    <string name="input_url_hint">https://example.duckdns.org</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="install">Install</string>
     <string name="install_app">Install app on Wear device</string>
@@ -782,6 +785,7 @@
     <string name="sensor_setting_nextalarm_allow_list_title">Allow list</string>
     <string name="sensor_setting_notification_allow_list_title">Allow list</string>
     <string name="sensor_setting_notification_disable_allow_list_title">Disable allow list requirement</string>
+    <string name="sensor_setting_allow_list_no_results">No results</string>
     <string name="sensor_setting_active_notification_count_content_attrs_title">Include content from all notifications as attributes</string>
     <string name="sensor_setting_battery_current_divisor_title">Battery current divisor</string>
     <string name="sensor_setting_battery_voltage_divisor_title">Battery voltage divisor</string>

@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getDomainsGridItem
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
+import io.homeassistant.companion.android.util.vehicle.tryFireNavigationEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -164,6 +165,9 @@ class EntityGridVehicleScreen(
                             when (displayed.domain) {
                                 in MAP_DOMAINS -> {
                                     displayed.coordinates?.let { coordinates ->
+                                        lifecycleScope.launch {
+                                            displayed.tryFireNavigationEvent(integrationRepositoryProvider())
+                                        }
                                         val intent = Intent(
                                             CarContext.ACTION_NAVIGATE,
                                             "geo:${coordinates.latitude},${coordinates.longitude}".toUri(),
