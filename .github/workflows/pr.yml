@@ -374,8 +374,8 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      - name: Build x86 APKs
-        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86,x86_64
+      - name: Build x86_64 APKs
+        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86_64
 
       - name: Build device list
         run: |
@@ -434,7 +434,7 @@ jobs:
             gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
     steps:
       - name: Delete unnecessary tools 🔧
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        uses: jlumbroso/free-disk-space@3f13feab2962a87273d379ebc36ea159527e6cc9 # v1.3.2
         with:
           android: false # Don't remove Android tools
           tool-cache: true # Remove image tool cache - rm -rf "$AGENT_TOOLSDIRECTORY"
