@@ -437,7 +437,7 @@ jobs:
         uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
         with:
           android: false # Don't remove Android tools
-          tool-cache: true # Remove image tool cache - rm -rf "$AGENT_TOOLSDIRECTORY"
+          preinstalled-runtimes: true # Remove image tool cache - rm -rf "$AGENT_TOOLSDIRECTORY"
           docker-images: false # Takes 16s, enable if needed in the future
           large-packages: false # includes google-cloud-sdk and it's slow
 
