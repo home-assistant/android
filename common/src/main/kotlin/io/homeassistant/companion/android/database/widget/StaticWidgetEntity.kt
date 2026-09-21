@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.database.widget
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 
 @Entity(tableName = "static_widget")
 data class StaticWidgetEntity(

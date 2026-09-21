@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.database.migration
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.database.Cursor
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -14,18 +13,6 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 
 private const val NOTIFICATION_ID = 45
 private const val TAG = "AppDatabase"
-
-internal fun <T> Cursor.map(transform: (Cursor) -> T): List<T> {
-    return if (moveToFirst()) {
-        val results = mutableListOf<T>()
-        do {
-            results.add(transform(this))
-        } while (moveToNext())
-        results
-    } else {
-        emptyList()
-    }
-}
 
 private fun createNotificationChannel(context: Context) {
     if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
