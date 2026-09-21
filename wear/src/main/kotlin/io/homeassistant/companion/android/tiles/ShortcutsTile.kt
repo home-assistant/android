@@ -2,11 +2,11 @@ package io.homeassistant.companion.android.tiles
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
-import androidx.core.graphics.drawable.toBitmap
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders.argb
 import androidx.wear.protolayout.DimensionBuilders.dp
@@ -113,7 +113,7 @@ class ShortcutsTile : TileService() {
                             entity.icon,
                             entity.domain,
                         )
-                        val iconBitmap = createBitmap(iconSizePx, iconSizePx).also { bitmap ->
+                        val iconBitmap = createBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565).also { bitmap ->
                             val canvas = Canvas(bitmap)
                             canvas.drawColor(getColor(R.color.colorOverlay))
                             canvas.drawBitmap(icon.toBitmap(iconSizePx, Color.WHITE), 0f, 0f, null)
