@@ -162,7 +162,7 @@ private suspend fun isPubliclyAccessible(fqdn: String): Boolean {
             InetAddress.getAllByName(fqdn)
         }
         addresses.none { it.isPrivateOrLocal() }
-    } catch (e: UnknownHostException) {
+    } catch (_: UnknownHostException) {
         false
     }
 }
