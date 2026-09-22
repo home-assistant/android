@@ -23,6 +23,10 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_health_connect_sleep_stages,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_gesture_action,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.Gestures),
