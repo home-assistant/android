@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.database.widget
 
-import androidx.room.TypeConverter
+import androidx.room3.ColumnTypeConverter
 
 interface ThemeableWidgetEntity {
     val backgroundType: WidgetBackgroundType
@@ -13,10 +13,10 @@ enum class WidgetBackgroundType {
     TRANSPARENT,
 }
 
-class WidgetBackgroundTypeConverter {
-    @TypeConverter
+class WidgetBackgroundColumnTypeConverter {
+    @ColumnTypeConverter
     fun toWidgetBackgroundType(setting: String): WidgetBackgroundType = WidgetBackgroundType.valueOf(setting)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromWidgetBackgroundType(setting: WidgetBackgroundType): String = setting.name
 }

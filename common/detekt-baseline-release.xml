@@ -23,8 +23,8 @@
     <ID>CyclomaticComplexMethod:AssistViewModelBase.kt:AssistViewModelBase$protected fun runAssistPipelineInternal</ID>
     <ID>CyclomaticComplexMethod:AudioSensorManager.kt:AudioSensorManager$private suspend fun updateAudioState</ID>
     <ID>CyclomaticComplexMethod:BluetoothSensorManager.kt:BluetoothSensorManager$private suspend fun updateBLESensor</ID>
-    <ID>CyclomaticComplexMethod:DatabaseMigration.kt:Migration16to17$@SuppressLint("Range") override fun migrate</ID>
-    <ID>CyclomaticComplexMethod:DatabaseMigration.kt:Migration37to38$fun onPostMigrate</ID>
+    <ID>CyclomaticComplexMethod:DatabaseMigration.kt:Migration16to17$override suspend fun migrate</ID>
+    <ID>CyclomaticComplexMethod:DatabaseMigration.kt:Migration37to38$private fun onPostMigrate</ID>
     <ID>CyclomaticComplexMethod:DeviceCommands.kt:private fun checkCommandFormat: Boolean</ID>
     <ID>CyclomaticComplexMethod:DeviceCommands.kt:suspend fun commandBleTransmitter: Boolean</ID>
     <ID>CyclomaticComplexMethod:Entity.kt:fun Entity.isActive</ID>
@@ -72,9 +72,9 @@
     <ID>InstanceOfCheckForException:SensorUpdater.kt:SensorUpdater$e is IntegrationException</ID>
     <ID>LargeClass:WebSocketCoreImpl.kt:WebSocketCoreImpl : WebSocketListenerWebSocketCore</ID>
     <ID>LongMethod:AssistViewModelBase.kt:AssistViewModelBase$protected fun runAssistPipelineInternal</ID>
-    <ID>LongMethod:DatabaseMigration.kt:Migration16to17$@SuppressLint("Range") override fun migrate</ID>
-    <ID>LongMethod:DatabaseMigration.kt:Migration37to38$fun onPostMigrate</ID>
-    <ID>LongMethod:DatabaseMigration.kt:Migration40to41$@SuppressLint("Range") override fun migrate</ID>
+    <ID>LongMethod:DatabaseMigration.kt:Migration16to17$override suspend fun migrate</ID>
+    <ID>LongMethod:DatabaseMigration.kt:Migration37to38$private fun onPostMigrate</ID>
+    <ID>LongMethod:DatabaseMigration.kt:Migration40to41$override suspend fun migrate</ID>
     <ID>LongMethod:DeviceCommands.kt:suspend fun commandBleTransmitter: Boolean</ID>
     <ID>LongMethod:Entity.kt:private fun Entity.getIcon: MdiIcon</ID>
     <ID>LongMethod:Entity.kt:private fun sensorIcon: MdiIcon</ID>
@@ -173,13 +173,10 @@
     <ID>MatchingDeclarationName:DeviceCommands.kt:DeviceCommandData</ID>
     <ID>MatchingDeclarationName:HARadioGroup.kt:RadioOption&lt;T&gt;</ID>
     <ID>MatchingDeclarationName:NotificationFunctions.kt:NotificationData</ID>
-    <ID>NestedBlockDepth:DatabaseMigration.kt:Migration37to38$fun onPostMigrate</ID>
     <ID>NestedBlockDepth:Entity.kt:private fun Entity.getIcon: MdiIcon</ID>
     <ID>NestedBlockDepth:NotificationManagerExtensions.kt:fun cancelNotificationGroupIfNeeded: Boolean</ID>
     <ID>NestedBlockDepth:PhoneStateSensorManager.kt:PhoneStateSensorManager$@SuppressLint("MissingPermission") private suspend fun updateSimSensor</ID>
     <ID>NestedBlockDepth:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
-    <ID>NoNameShadowing:DatabaseMigration.kt:MIGRATION6to7${ it.put("id", cursor.getString(cursor.getColumnIndex("unique_id"))) it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled"))) it.put( "registered", cursor.getInt(cursor.getColumnIndex("registered")), ) it.put("state", "") it.put("state_type", "") it.put("type", "") it.put("icon", "") it.put("name", "") it.put("device_class", "") }</ID>
-    <ID>NoNameShadowing:DatabaseMigration.kt:Migration9to10${ it.put("id", cursor.getString(cursor.getColumnIndex("id"))) it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled"))) it.put( "registered", cursor.getInt(cursor.getColumnIndex("registered")), ) it.put("state", "") it.put("last_sent_state", "") it.put("state_type", "") it.put("type", "") it.put("icon", "") it.put("name", "") }</ID>
     <ID>ReturnCount:AlarmDisplay.kt:private fun Entity.alarmOnPressedAction: String?</ID>
     <ID>ReturnCount:AssistViewModelBase.kt:AssistViewModelBase$private fun handleError: Boolean</ID>
     <ID>ReturnCount:AudioSensorManager.kt:AudioSensorManager$private suspend fun areAttributesOfSensorAlreadyForcedAtRuntimeOrMatching: Boolean</ID>
@@ -272,6 +269,7 @@
     <ID>UnsafeCallOnNullableType:NetworkSensorManager.kt:NetworkSensorManager$applicationContext.getSystemService()!!</ID>
     <ID>UnsafeCallOnNullableType:NetworkSensorManager.kt:NetworkSensorManager$applicationContext.getSystemService&lt;WifiManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:NextAlarmManager.kt:NextAlarmManager$applicationContext.getSystemService&lt;AlarmManager&gt;()!!</ID>
+    <ID>UnsafeCallOnNullableType:NotificationUtils.kt:context.getSystemService&lt;NotificationManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:PhoneStateSensorManager.kt:PhoneStateSensorManager$applicationContext.getSystemService&lt;TelephonyManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:PowerSensorManager.kt:PowerSensorManager$applicationContext.getSystemService&lt;PowerManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:PressureSensorManager.kt:PressureSensorManager$applicationContext.getSystemService()!!</ID>
@@ -285,7 +283,6 @@
     <ID>UnsafeCallOnNullableType:StepsSensorManager.kt:StepsSensorManager$applicationContext.getSystemService()!!</ID>
     <ID>UnsafeCallOnNullableType:TrafficStatsManager.kt:TrafficStatsManager$applicationContext.getSystemService&lt;ConnectivityManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:UrlUtil.kt:UrlUtil$url.toHttpUrlOrNull()!!</ID>
-    <ID>UnsafeCallOnNullableType:Utils.kt:context.getSystemService&lt;NotificationManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$removeTemplateTile(UNKNOWN_TEMPLATE_TILE_ID)!!</ID>
     <ID>UnsafeCallOnNullableType:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$removeTileShortcuts(null)!!</ID>
     <ID>UnsafeCallOnNullableType:WebSocketCoreImpl.kt:WebSocketCoreImpl$urlObserverJob!!</ID>

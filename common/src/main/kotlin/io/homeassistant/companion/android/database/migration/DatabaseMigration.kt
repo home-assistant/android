@@ -1,20 +1,13 @@
 package io.homeassistant.companion.android.database.migration
 
-import android.annotation.SuppressLint
-import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
 import androidx.core.content.edit
-import androidx.core.database.getStringOrNull
-import androidx.room.OnConflictStrategy
-import androidx.room.RenameColumn
-import androidx.room.RenameTable
-import androidx.room.migration.AutoMigrationSpec
-import androidx.room.migration.Migration
+import androidx.room3.RenameColumn
+import androidx.room3.RenameTable
+import androidx.room3.migration.AutoMigrationSpec
+import androidx.room3.migration.Migration
 import androidx.sqlite.SQLiteConnection
-import androidx.sqlite.db.SupportSQLiteDatabase
-import androidx.sqlite.driver.SupportSQLiteConnection
+import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.execSQL
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.IconDialogCompat
@@ -50,72 +43,63 @@ internal fun migrationPath(context: Context): Array<Migration> = arrayOf(
 )
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))",
         )
     }
 }
 
 private val MIGRATION_2_3 = object : Migration(2, 3) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `icon_id` INTEGER NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, PRIMARY KEY(`id`))",
         )
-        db.execSQL(
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_id` TEXT, `label` TEXT, PRIMARY KEY(`id`))",
         )
     }
 }
 
 private val MIGRATION_3_4 = object : Migration(3, 4) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `static_widget` ADD `text_size` FLOAT NOT NULL DEFAULT '30'")
-        db.execSQL("ALTER TABLE `static_widget` ADD `separator` TEXT NOT NULL DEFAULT ' '")
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `static_widget` ADD `text_size` FLOAT NOT NULL DEFAULT '30'")
+        connection.execSQL("ALTER TABLE `static_widget` ADD `separator` TEXT NOT NULL DEFAULT ' '")
     }
 }
 
 private val MIGRATION_4_5 = object : Migration(4, 5) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `template_widgets` (`id` INTEGER NOT NULL, `template` TEXT NOT NULL, PRIMARY KEY(`id`))",
         )
     }
 }
 
+private const val CREATE_STATIC_WIDGET_V6 =
+    "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, " +
+        "`attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', " +
+        "`state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', " +
+        "PRIMARY KEY(`id`))"
+
 private val MIGRATION_5_6 = object : Migration(5, 6) {
-    @SuppressLint("Range")
-    override fun migrate(db: SupportSQLiteDatabase) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         try {
-            val widgets = db.query("SELECT * FROM `static_widget`")
-            widgets.use {
-                if (widgets.count > 0) {
-                    val contentValues = widgets.map { widgets ->
-                        ContentValues().apply {
-                            put("id", widgets.getInt(widgets.getColumnIndex("id")))
-                            put("entity_id", widgets.getString(widgets.getColumnIndex("entity_id")))
-                            put("attribute_ids", widgets.getString(widgets.getColumnIndex("attribute_id")))
-                            put("label", widgets.getString(widgets.getColumnIndex("label")))
-                            put("text_size", widgets.getFloat(widgets.getColumnIndex("text_size")))
-                            put("state_separator", widgets.getString(widgets.getColumnIndex("separator")))
-                            put("attribute_separator", " ")
-                        }
-                    }
-                    db.execSQL("DROP TABLE IF EXISTS `static_widget`")
-                    db.execSQL(
-                        "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))",
-                    )
-                    for (cv in contentValues) {
-                        db.insert("static_widget", 0, cv)
-                    }
-                } else {
-                    db.execSQL("DROP TABLE IF EXISTS `static_widget`")
-                    db.execSQL(
-                        "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))",
-                    )
-                }
+            // Read the old rows fully before dropping the table they came from.
+            val widgets = connection.query("SELECT * FROM `static_widget`") { row ->
+                mapOf(
+                    "id" to row.getIntByColumnName("id"),
+                    "entity_id" to row.getStringByColumnName("entity_id"),
+                    "attribute_ids" to row.getStringByColumnNameOrNull("attribute_id"),
+                    "label" to row.getStringByColumnNameOrNull("label"),
+                    "text_size" to row.getFloatByColumnNameOrZero("text_size"),
+                    "state_separator" to row.getStringByColumnNameOrNull("separator"),
+                    "attribute_separator" to " ",
+                )
             }
-            widgets.close()
+            connection.execSQL("DROP TABLE IF EXISTS `static_widget`")
+            connection.execSQL(CREATE_STATIC_WIDGET_V6)
+            widgets.forEach { connection.insertOrReplace("static_widget", it) }
         } catch (exception: Exception) {
             Timber.e(exception, "Failed to migrate database version 5 to version 6")
         }
@@ -123,98 +107,86 @@ private val MIGRATION_5_6 = object : Migration(5, 6) {
 }
 
 private class MIGRATION6to7(private val context: Context) : Migration(6, 7) {
-    @SuppressLint("Range")
-    override fun migrate(db: SupportSQLiteDatabase) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         var migrationFailed = false
         val sensors = try {
-            db.query("SELECT * FROM sensors").use { cursor ->
-                cursor.map {
-                    ContentValues().also {
-                        it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
-                        it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                        it.put(
-                            "registered",
-                            cursor.getInt(cursor.getColumnIndex("registered")),
-                        )
-                        it.put("state", "")
-                        it.put("state_type", "")
-                        it.put("type", "")
-                        it.put("icon", "")
-                        it.put("name", "")
-                        it.put("device_class", "")
-                    }
-                }
+            connection.query("SELECT * FROM sensors") { row ->
+                mapOf(
+                    "id" to row.getStringByColumnName("unique_id"),
+                    "enabled" to row.getIntByColumnName("enabled"),
+                    "registered" to row.getIntByColumnName("registered"),
+                    "state" to "",
+                    "state_type" to "",
+                    "type" to "",
+                    "icon" to "",
+                    "name" to "",
+                    "device_class" to "",
+                )
             }
         } catch (e: Exception) {
             migrationFailed = true
             Timber.e(e, "Unable to migrate, proceeding with recreating the table")
             null
         }
-        db.execSQL("DROP TABLE IF EXISTS `sensors`")
-        db.execSQL(
+        connection.execSQL("DROP TABLE IF EXISTS `sensors`")
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))",
         )
 
         sensors?.forEach {
-            db.insert("sensors", OnConflictStrategy.REPLACE, it)
+            connection.insertOrReplace("sensors", it)
         }
         if (migrationFailed) {
             notifyMigrationFailed(context)
         }
 
-        db.execSQL(
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))",
         )
     }
 }
 
 private val MIGRATION_7_8 = object : Migration(7, 8) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `sensor_attributes` ADD `value_type` TEXT NOT NULL DEFAULT 'string'")
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `sensor_attributes` ADD `value_type` TEXT NOT NULL DEFAULT 'string'")
     }
 }
 
 private val MIGRATION_8_9 = object : Migration(8, 9) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `sensors` ADD `state_changed` INTEGER NOT NULL DEFAULT ''")
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `sensors` ADD `state_changed` INTEGER NOT NULL DEFAULT ''")
     }
 }
 
 private class Migration9to10(private val context: Context) : Migration(9, 10) {
-    @SuppressLint("Range")
-    override fun migrate(db: SupportSQLiteDatabase) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         var migrationFailed = false
         val sensors = try {
-            db.query("SELECT * FROM sensors").use { cursor ->
-                cursor.map {
-                    ContentValues().also {
-                        it.put("id", cursor.getString(cursor.getColumnIndex("id")))
-                        it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                        it.put(
-                            "registered",
-                            cursor.getInt(cursor.getColumnIndex("registered")),
-                        )
-                        it.put("state", "")
-                        it.put("last_sent_state", "")
-                        it.put("state_type", "")
-                        it.put("type", "")
-                        it.put("icon", "")
-                        it.put("name", "")
-                    }
-                }
+            connection.query("SELECT * FROM sensors") { row ->
+                mapOf(
+                    "id" to row.getStringByColumnName("id"),
+                    "enabled" to row.getIntByColumnName("enabled"),
+                    "registered" to row.getIntByColumnName("registered"),
+                    "state" to "",
+                    "last_sent_state" to "",
+                    "state_type" to "",
+                    "type" to "",
+                    "icon" to "",
+                    "name" to "",
+                )
             }
         } catch (e: Exception) {
             migrationFailed = true
             Timber.e(e, "Unable to migrate, proceeding with recreating the table")
             null
         }
-        db.execSQL("DROP TABLE IF EXISTS `sensors`")
-        db.execSQL(
+        connection.execSQL("DROP TABLE IF EXISTS `sensors`")
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))",
         )
 
         sensors?.forEach {
-            db.insert("sensors", OnConflictStrategy.REPLACE, it)
+            connection.insertOrReplace("sensors", it)
         }
         if (migrationFailed) {
             notifyMigrationFailed(context)
@@ -223,187 +195,185 @@ private class Migration9to10(private val context: Context) : Migration(9, 10) {
 }
 
 private val MIGRATION_10_11 = object : Migration(10, 11) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', PRIMARY KEY(`sensor_id`, `name`))",
         )
     }
 }
 
 private val MIGRATION_11_12 = object : Migration(11, 12) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `mediaplayctrls_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, `label` TEXT, `showSkip` INTEGER NOT NULL, `showSeek` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         )
     }
 }
 
 private val MIGRATION_12_13 = object : Migration(12, 13) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `notification_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `received` INTEGER NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL)",
         )
     }
 }
 
 private val MIGRATION_13_14 = object : Migration(13, 14) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `static_widget` ADD `last_update` TEXT NOT NULL DEFAULT ''")
-        db.execSQL("ALTER TABLE `template_widgets` ADD `last_update` TEXT NOT NULL DEFAULT ''")
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `static_widget` ADD `last_update` TEXT NOT NULL DEFAULT ''")
+        connection.execSQL("ALTER TABLE `template_widgets` ADD `last_update` TEXT NOT NULL DEFAULT ''")
     }
 }
 
 private val MIGRATION_14_15 = object : Migration(14, 15) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `sensor_settings` ADD `enabled` INTEGER NOT NULL DEFAULT '1'")
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `sensor_settings` ADD `enabled` INTEGER NOT NULL DEFAULT '1'")
     }
 }
 
 private val MIGRATION_15_16 = object : Migration(15, 16) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `camera_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, PRIMARY KEY(`id`))",
         )
     }
 }
 
 private class Migration16to17(private val context: Context) : Migration(16, 17) {
-    @SuppressLint("Range")
-    override fun migrate(db: SupportSQLiteDatabase) {
-        val cursor = db.query("SELECT * FROM sensor_settings")
-        val sensorSettings = mutableListOf<ContentValues>()
+    override suspend fun migrate(connection: SQLiteConnection) {
+        val sensorSettings = mutableListOf<Map<String, Any?>>()
         var migrationFailed = false
         try {
-            if (cursor.moveToFirst()) {
-                while (cursor.moveToNext()) {
-                    sensorSettings.add(
-                        ContentValues().also {
-                            val currentSensorId = cursor.getString(cursor.getColumnIndex("sensor_id"))
-                            val currentSensorSettingName = cursor.getString(cursor.getColumnIndex("name"))
-                            var entries = ""
-                            var newSensorSettingName = currentSensorSettingName
+            val migrated = connection.query("SELECT * FROM sensor_settings") { row ->
+                val currentSensorId = row.getStringByColumnName("sensor_id")
+                val currentSensorSettingName = row.getStringByColumnName("name")
+                var entries = ""
+                var newSensorSettingName = currentSensorSettingName
 
-                            if (currentSensorId == "next_alarm" && currentSensorSettingName == "Allow List") {
-                                newSensorSettingName = "nextalarm_allow_list"
-                            } else if ((
-                                    currentSensorId == "last_removed_notification" ||
-                                        currentSensorId == "last_notification"
-                                    ) &&
-                                currentSensorSettingName == "Allow List"
-                            ) {
-                                newSensorSettingName = "notification_allow_list"
-                            } else if (currentSensorId == "geocoded_location" &&
-                                currentSensorSettingName == "Minimum Accuracy"
-                            ) {
-                                newSensorSettingName = "geocode_minimum_accuracy"
-                            } else if ((
-                                    currentSensorId == "zone_background" ||
-                                        currentSensorId == "accurate_location" ||
-                                        currentSensorId == "location_background"
-                                    ) &&
-                                currentSensorSettingName == "Minimum Accuracy"
-                            ) {
-                                newSensorSettingName = "location_minimum_accuracy"
-                            } else if (currentSensorId == "accurate_location" &&
-                                currentSensorSettingName == "Minimum time between updates"
-                            ) {
-                                newSensorSettingName = "location_minimum_time_updates"
-                            } else if (currentSensorId == "accurate_location" &&
-                                currentSensorSettingName == "Include in sensor update"
-                            ) {
-                                newSensorSettingName = "location_include_sensor_update"
-                            } else if (currentSensorId == "location_background" &&
-                                currentSensorSettingName == "High accuracy mode (May drain battery fast)"
-                            ) {
-                                newSensorSettingName = "location_ham_enabled"
-                            } else if (currentSensorId == "location_background" &&
-                                currentSensorSettingName == "High accuracy mode update interval (seconds)"
-                            ) {
-                                newSensorSettingName = "location_ham_update_interval"
-                            } else if (currentSensorId == "location_background" &&
-                                currentSensorSettingName ==
-                                "High accuracy mode only when connected to BT devices"
-                            ) {
-                                newSensorSettingName = "location_ham_only_bt_dev"
-                            } else if (currentSensorId == "location_background" &&
-                                currentSensorSettingName == "High accuracy mode only when entering zone"
-                            ) {
-                                newSensorSettingName = "location_ham_only_enter_zone"
-                            } else if (currentSensorId == "location_background" &&
-                                currentSensorSettingName == "High accuracy mode trigger range for zone (meters)"
-                            ) {
-                                newSensorSettingName = "location_ham_trigger_range"
-                            } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "UUID") {
-                                newSensorSettingName = "ble_uuid"
-                            } else if (currentSensorId == "ble_emitter" &&
-                                currentSensorSettingName == "Major"
-                            ) {
-                                newSensorSettingName = "ble_major"
-                            } else if (currentSensorId == "ble_emitter" &&
-                                currentSensorSettingName == "Minor"
-                            ) {
-                                newSensorSettingName = "ble_minor"
-                            } else if (currentSensorId == "ble_emitter" &&
-                                currentSensorSettingName == "transmit_power"
-                            ) {
-                                newSensorSettingName = "ble_transmit_power"
-                                entries = "ultraLow|low|medium|high"
-                            } else if (currentSensorId == "ble_emitter" &&
-                                currentSensorSettingName == "Enable Transmitter"
-                            ) {
-                                newSensorSettingName = "ble_transmit_enabled"
-                            } else if (currentSensorId == "ble_emitter" &&
-                                currentSensorSettingName == "Include when enabling all sensors"
-                            ) {
-                                newSensorSettingName = "ble_enable_toggle_all"
-                            } else if (currentSensorId == "last_reboot" &&
-                                currentSensorSettingName == "deadband"
-                            ) {
-                                newSensorSettingName = "lastreboot_deadband"
-                            } else if (currentSensorId == "last_update" &&
-                                currentSensorSettingName == "Add New Intent"
-                            ) {
-                                newSensorSettingName = "lastupdate_add_new_intent"
-                            } else if (currentSensorId == "last_update" &&
-                                currentSensorSettingName.startsWith("intent")
-                            ) {
-                                newSensorSettingName =
-                                    "lastupdate_intent_var1:" +
-                                    currentSensorSettingName.substringAfter("intent") +
-                                    ":"
-                            } else if (currentSensorId == "wifi_bssid" &&
-                                currentSensorSettingName == "get_current_bssid"
-                            ) {
-                                newSensorSettingName = "network_get_current_bssid"
-                            } else if (currentSensorId == "wifi_bssid" &&
-                                currentSensorSettingName.startsWith("replace_")
-                            ) {
-                                newSensorSettingName =
-                                    "network_replace_mac_var1:" +
-                                    currentSensorSettingName.substringAfter("replace_") +
-                                    ":"
-                            }
-                            it.put("sensor_id", cursor.getString(cursor.getColumnIndex("sensor_id")))
-                            it.put("name", newSensorSettingName)
-                            it.put("value", cursor.getString(cursor.getColumnIndex("value")))
-                            it.put("value_type", cursor.getString(cursor.getColumnIndex("value_type")))
-                            it.put("entries", entries)
-                            it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                        },
-                    )
+                if (currentSensorId == "next_alarm" && currentSensorSettingName == "Allow List") {
+                    newSensorSettingName = "nextalarm_allow_list"
+                } else if ((
+                        currentSensorId == "last_removed_notification" ||
+                            currentSensorId == "last_notification"
+                        ) &&
+                    currentSensorSettingName == "Allow List"
+                ) {
+                    newSensorSettingName = "notification_allow_list"
+                } else if (currentSensorId == "geocoded_location" &&
+                    currentSensorSettingName == "Minimum Accuracy"
+                ) {
+                    newSensorSettingName = "geocode_minimum_accuracy"
+                } else if ((
+                        currentSensorId == "zone_background" ||
+                            currentSensorId == "accurate_location" ||
+                            currentSensorId == "location_background"
+                        ) &&
+                    currentSensorSettingName == "Minimum Accuracy"
+                ) {
+                    newSensorSettingName = "location_minimum_accuracy"
+                } else if (currentSensorId == "accurate_location" &&
+                    currentSensorSettingName == "Minimum time between updates"
+                ) {
+                    newSensorSettingName = "location_minimum_time_updates"
+                } else if (currentSensorId == "accurate_location" &&
+                    currentSensorSettingName == "Include in sensor update"
+                ) {
+                    newSensorSettingName = "location_include_sensor_update"
+                } else if (currentSensorId == "location_background" &&
+                    currentSensorSettingName == "High accuracy mode (May drain battery fast)"
+                ) {
+                    newSensorSettingName = "location_ham_enabled"
+                } else if (currentSensorId == "location_background" &&
+                    currentSensorSettingName == "High accuracy mode update interval (seconds)"
+                ) {
+                    newSensorSettingName = "location_ham_update_interval"
+                } else if (currentSensorId == "location_background" &&
+                    currentSensorSettingName ==
+                    "High accuracy mode only when connected to BT devices"
+                ) {
+                    newSensorSettingName = "location_ham_only_bt_dev"
+                } else if (currentSensorId == "location_background" &&
+                    currentSensorSettingName == "High accuracy mode only when entering zone"
+                ) {
+                    newSensorSettingName = "location_ham_only_enter_zone"
+                } else if (currentSensorId == "location_background" &&
+                    currentSensorSettingName == "High accuracy mode trigger range for zone (meters)"
+                ) {
+                    newSensorSettingName = "location_ham_trigger_range"
+                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "UUID") {
+                    newSensorSettingName = "ble_uuid"
+                } else if (currentSensorId == "ble_emitter" &&
+                    currentSensorSettingName == "Major"
+                ) {
+                    newSensorSettingName = "ble_major"
+                } else if (currentSensorId == "ble_emitter" &&
+                    currentSensorSettingName == "Minor"
+                ) {
+                    newSensorSettingName = "ble_minor"
+                } else if (currentSensorId == "ble_emitter" &&
+                    currentSensorSettingName == "transmit_power"
+                ) {
+                    newSensorSettingName = "ble_transmit_power"
+                    entries = "ultraLow|low|medium|high"
+                } else if (currentSensorId == "ble_emitter" &&
+                    currentSensorSettingName == "Enable Transmitter"
+                ) {
+                    newSensorSettingName = "ble_transmit_enabled"
+                } else if (currentSensorId == "ble_emitter" &&
+                    currentSensorSettingName == "Include when enabling all sensors"
+                ) {
+                    newSensorSettingName = "ble_enable_toggle_all"
+                } else if (currentSensorId == "last_reboot" &&
+                    currentSensorSettingName == "deadband"
+                ) {
+                    newSensorSettingName = "lastreboot_deadband"
+                } else if (currentSensorId == "last_update" &&
+                    currentSensorSettingName == "Add New Intent"
+                ) {
+                    newSensorSettingName = "lastupdate_add_new_intent"
+                } else if (currentSensorId == "last_update" &&
+                    currentSensorSettingName.startsWith("intent")
+                ) {
+                    newSensorSettingName =
+                        "lastupdate_intent_var1:" +
+                        currentSensorSettingName.substringAfter("intent") +
+                        ":"
+                } else if (currentSensorId == "wifi_bssid" &&
+                    currentSensorSettingName == "get_current_bssid"
+                ) {
+                    newSensorSettingName = "network_get_current_bssid"
+                } else if (currentSensorId == "wifi_bssid" &&
+                    currentSensorSettingName.startsWith("replace_")
+                ) {
+                    newSensorSettingName =
+                        "network_replace_mac_var1:" +
+                        currentSensorSettingName.substringAfter("replace_") +
+                        ":"
                 }
+                mapOf(
+                    "sensor_id" to row.getStringByColumnName("sensor_id"),
+                    "name" to newSensorSettingName,
+                    "value" to row.getStringByColumnName("value"),
+                    "value_type" to row.getStringByColumnName("value_type"),
+                    "entries" to entries,
+                    "enabled" to row.getIntByColumnName("enabled"),
+                )
             }
+            // TODO check with Joris if it was wanted
+            // The original iterated with moveToFirst() then while(moveToNext()), skipping the
+            // first row; drop(1) preserves that exact behaviour so migration output is unchanged.
+            sensorSettings.addAll(migrated.drop(1))
         } catch (e: Exception) {
             migrationFailed = true
             Timber.e(e, "Unable to migrate, proceeding with recreating the table")
         }
-        db.execSQL("DROP TABLE IF EXISTS `sensor_settings`")
-        db.execSQL(
+        connection.execSQL("DROP TABLE IF EXISTS `sensor_settings`")
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', `entries` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT '1', PRIMARY KEY(`sensor_id`, `name`))",
         )
 
         sensorSettings.forEach {
-            db.insert("sensor_settings", OnConflictStrategy.REPLACE, it)
+            connection.insertOrReplace("sensor_settings", it)
         }
         if (migrationFailed) {
             notifyMigrationFailed(context)
@@ -412,61 +382,61 @@ private class Migration16to17(private val context: Context) : Migration(16, 17) 
 }
 
 private val MIGRATION_17_18 = object : Migration(17, 18) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tileId` TEXT NOT NULL, `icon_id` INTEGER, `entityId` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT)",
         )
     }
 }
 
 private val MIGRATION_18_19 = object : Migration(18, 19) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `sensors` ADD `state_class` TEXT")
-        db.execSQL("ALTER TABLE `sensors` ADD `entity_category` TEXT")
-        db.execSQL("ALTER TABLE `sensors` ADD `core_registration` TEXT")
-        db.execSQL("ALTER TABLE `sensors` ADD `app_registration` TEXT")
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `sensors` ADD `state_class` TEXT")
+        connection.execSQL("ALTER TABLE `sensors` ADD `entity_category` TEXT")
+        connection.execSQL("ALTER TABLE `sensors` ADD `core_registration` TEXT")
+        connection.execSQL("ALTER TABLE `sensors` ADD `app_registration` TEXT")
     }
 }
 
 private val MIGRATION_19_20 = object : Migration(19, 20) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `favorites` (`id` TEXT PRIMARY KEY NOT NULL, `position` INTEGER)",
         )
     }
 }
 
 private val MIGRATION_20_21 = object : Migration(20, 21) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL(
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `settings` (`id` INTEGER NOT NULL, `websocketSetting` TEXT NOT NULL, PRIMARY KEY(`id`))",
         )
     }
 }
 
 private val MIGRATION_21_22 = object : Migration(21, 22) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `notification_history` ADD `source` TEXT NOT NULL DEFAULT 'FCM'")
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `notification_history` ADD `source` TEXT NOT NULL DEFAULT 'FCM'")
     }
 }
 
 private val MIGRATION_22_23 = object : Migration(22, 23) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `mediaplayctrls_widgets` ADD `showVolume` INTEGER NOT NULL DEFAULT '0'")
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `mediaplayctrls_widgets` ADD `showVolume` INTEGER NOT NULL DEFAULT '0'")
     }
 }
 
 private val MIGRATION_23_24 = object : Migration(23, 24) {
-    override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL DEFAULT 'NORMAL'")
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL DEFAULT 'NORMAL'")
     }
 }
 
 internal class Migration27to28 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase) {
+    override suspend fun onPostMigrate(connection: SQLiteConnection) {
         // Update 'registered' in the sensors table to set the value to null instead of the previous default of 0
         // This will force an update to indicate whether a sensor is not registered (null) or registered as disabled (0)
-        db.execSQL("UPDATE `sensors` SET `registered` = NULL")
+        connection.execSQL("UPDATE `sensors` SET `registered` = NULL")
     }
 }
 
@@ -567,7 +537,7 @@ private class Migration37to38(private val context: Context) : Migration(37, 38) 
     /**
      * Migrate code has been taken out of an autogenerated migration, to be able to use the context in onPostMigrate
      */
-    override fun migrate(connection: SQLiteConnection) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         connection.execSQL("ALTER TABLE `button_widgets` ADD COLUMN `server_id` INTEGER NOT NULL DEFAULT 0")
         connection.execSQL("ALTER TABLE `camera_widgets` ADD COLUMN `server_id` INTEGER NOT NULL DEFAULT 0")
         connection.execSQL(
@@ -588,18 +558,16 @@ private class Migration37to38(private val context: Context) : Migration(37, 38) 
         )
         connection.execSQL("DROP TABLE `sensors`")
         connection.execSQL("ALTER TABLE `_new_sensors` RENAME TO `sensors`")
-        if (connection is SupportSQLiteConnection) {
-            onPostMigrate(connection.db)
-        }
+        onPostMigrate(connection)
     }
 
-    fun onPostMigrate(db: SupportSQLiteDatabase) {
+    private fun onPostMigrate(connection: SQLiteConnection) {
         val urlStorage = context.getSharedPreferences("url_0", Context.MODE_PRIVATE)
         val urlExternal = urlStorage.getString("remote_url", null)
         if (urlExternal.isNullOrBlank()) { // Cleanup anything that shouldn't be linked
-            db.execSQL("DELETE FROM `sensors`")
-            db.execSQL("DELETE FROM `sensor_attributes`")
-            db.execSQL("DELETE FROM `sensor_settings`")
+            connection.execSQL("DELETE FROM `sensors`")
+            connection.execSQL("DELETE FROM `sensor_attributes`")
+            connection.execSQL("DELETE FROM `sensor_settings`")
             return
         }
 
@@ -636,28 +604,28 @@ private class Migration37to38(private val context: Context) : Migration(37, 38) 
         val integrationDeviceName = integrationStorage.getString("device_name", null)
         val integrationSecret = integrationStorage.getString("secret", null)
 
-        val serverValues = ContentValues().apply {
-            put("_name", "")
-            putNull("name_override")
-            integrationHaVersion?.let { put("_version", it) } ?: run { putNull("_version") }
-            put("list_order", -1)
-            integrationDeviceName?.let { put("device_name", it) } ?: run { putNull("device_name") }
-            put("external_url", urlExternal)
-            urlInternal?.let { put("internal_url", it) } ?: run { putNull("internal_url") }
-            urlCloud?.let { put("cloud_url", it) } ?: run { putNull("cloud_url") }
-            urlWebhook?.let { put("webhook_id", it) } ?: run { putNull("webhook_id") }
-            integrationSecret?.let { put("secret", it) } ?: run { putNull("secret") }
-            urlCloudhook?.let { put("cloudhook_url", it) } ?: run { putNull("cloudhook_url") }
-            put("use_cloud", urlUseCloud)
-            put("internal_ssids", kotlinJsonMapper.encodeToString(urlInternalSsids))
-            put("prioritize_internal", urlPrioritizeInternal)
-            authAccessToken?.let { put("access_token", it) } ?: run { putNull("access_token") }
-            authRefreshToken?.let { put("refresh_token", it) } ?: run { putNull("refresh_token") }
-            authTokenExpiration?.let { put("token_expiration", it) } ?: run { putNull("token_expiration") }
-            authTokenType?.let { put("token_type", it) } ?: run { putNull("token_type") }
-            authAccessToken?.let { put("install_id", authInstallId) } ?: run { putNull("install_id") }
-        }
-        val serverId = db.insert("servers", SQLiteDatabase.CONFLICT_REPLACE, serverValues)
+        val serverValues = mapOf(
+            "_name" to "",
+            "name_override" to null,
+            "_version" to integrationHaVersion,
+            "list_order" to -1,
+            "device_name" to integrationDeviceName,
+            "external_url" to urlExternal,
+            "internal_url" to urlInternal,
+            "cloud_url" to urlCloud,
+            "webhook_id" to urlWebhook,
+            "secret" to integrationSecret,
+            "cloudhook_url" to urlCloudhook,
+            "use_cloud" to urlUseCloud,
+            "internal_ssids" to kotlinJsonMapper.encodeToString(urlInternalSsids),
+            "prioritize_internal" to urlPrioritizeInternal,
+            "access_token" to authAccessToken,
+            "refresh_token" to authRefreshToken,
+            "token_expiration" to authTokenExpiration,
+            "token_type" to authTokenType,
+            "install_id" to authInstallId.takeIf { authAccessToken != null },
+        )
+        val serverId = connection.insertOrReplace("servers", serverValues)
 
         urlStorage.edit { clear() }
         authStorage.edit {
@@ -672,24 +640,15 @@ private class Migration37to38(private val context: Context) : Migration(37, 38) 
             remove("secret")
         }
 
-        // Copy existing DB settings to existing server - ID 0 is used for shared settings
-        val existingSettings = db.query("SELECT * FROM `settings`")
-        existingSettings.use {
-            if (existingSettings.count > 0) {
-                if (it.moveToFirst()) {
-                    val settingValues = ContentValues().apply {
-                        put("id", serverId)
-                        it.getColumnIndex("websocket_setting").let { index ->
-                            put("websocket_setting", if (index > -1) it.getString(index) else "NEVER")
-                        }
-                        it.getColumnIndex("sensor_update_frequency").let { index ->
-                            put("sensor_update_frequency", if (index > -1) it.getString(index) else "NORMAL")
-                        }
-                    }
-                    db.insert("settings", SQLiteDatabase.CONFLICT_REPLACE, settingValues)
-                }
-            }
-        }
+        // Copy existing DB settings to existing server - ID 0 is used for shared settings.
+        // TODO check with Joris we only get the first value?
+        connection.query("SELECT * FROM `settings`") { row ->
+            mapOf(
+                "id" to serverId,
+                "websocket_setting" to (row.getStringByColumnNameOrNull("websocket_setting") ?: "NEVER"),
+                "sensor_update_frequency" to (row.getStringByColumnNameOrNull("sensor_update_frequency") ?: "NORMAL"),
+            )
+        }.firstOrNull()?.let { connection.insertOrReplace("settings", it) }
 
         // Attribute existing shared preferences to the existing server
         if (authStorage.contains("biometric_enabled")) {
@@ -734,14 +693,14 @@ private class Migration37to38(private val context: Context) : Migration(37, 38) 
         }
 
         // Attribute existing rows to the existing server
-        db.execSQL("UPDATE `button_widgets` SET `server_id` = $serverId")
-        db.execSQL("UPDATE `camera_widgets` SET `server_id` = $serverId")
-        db.execSQL("UPDATE `media_player_controls_widgets` SET `server_id` = $serverId")
-        db.execSQL("UPDATE `notification_history` SET `server_id` = $serverId")
-        db.execSQL("UPDATE `qs_tiles` SET `server_id` = $serverId")
-        db.execSQL("UPDATE `sensors` SET `server_id` = $serverId")
-        db.execSQL("UPDATE `static_widget` SET `server_id` = $serverId")
-        db.execSQL("UPDATE `template_widgets` SET `server_id` = $serverId")
+        connection.execSQL("UPDATE `button_widgets` SET `server_id` = $serverId")
+        connection.execSQL("UPDATE `camera_widgets` SET `server_id` = $serverId")
+        connection.execSQL("UPDATE `media_player_controls_widgets` SET `server_id` = $serverId")
+        connection.execSQL("UPDATE `notification_history` SET `server_id` = $serverId")
+        connection.execSQL("UPDATE `qs_tiles` SET `server_id` = $serverId")
+        connection.execSQL("UPDATE `sensors` SET `server_id` = $serverId")
+        connection.execSQL("UPDATE `static_widget` SET `server_id` = $serverId")
+        connection.execSQL("UPDATE `template_widgets` SET `server_id` = $serverId")
 
         val prefsStorage = context.getSharedPreferences("themes_0", Context.MODE_PRIVATE)
         prefsStorage.getStringSet("controls_auth_entities", null)?.let {
@@ -751,25 +710,15 @@ private class Migration37to38(private val context: Context) : Migration(37, 38) 
             }
         }
 
-        val existingZones = db.query(
+        val existingZoneSetting = connection.query(
             "SELECT * FROM `sensor_settings` WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'",
-        )
-        existingZones.use {
-            if (existingZones.count > 0) {
-                if (it.moveToFirst()) {
-                    it.getColumnIndex("value").let { index ->
-                        val setting = if (index > -1) it.getString(index) else null
-                        if (!setting.isNullOrBlank()) {
-                            val newSetting = setting.split(", ")
-                                .joinToString { zone -> "${serverId}_$zone" }
-                            db.execSQL(
-                                "UPDATE `sensor_settings` SET `value` = '$newSetting' " +
-                                    "WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'",
-                            )
-                        }
-                    }
-                }
-            }
+        ) { row -> row.getStringByColumnNameOrNull("value") }.firstOrNull()
+        if (!existingZoneSetting.isNullOrBlank()) {
+            val newSetting = existingZoneSetting.split(", ").joinToString { zone -> "${serverId}_$zone" }
+            connection.execSQL(
+                "UPDATE `sensor_settings` SET `value` = '$newSetting' " +
+                    "WHERE `sensor_id` = 'location_background' AND `name` = 'location_ham_only_enter_zone'",
+            )
         }
     }
 }
@@ -777,67 +726,59 @@ private class Migration37to38(private val context: Context) : Migration(37, 38) 
 private class Migration40to41(private val context: Context) : Migration(40, 41) {
     private val iconIdToName: Map<Int, String> by lazy { IconDialogCompat(context.assets).loadAllIcons() }
 
-    private fun Cursor.getIconName(columnIndex: Int): String {
-        val iconId = getInt(columnIndex)
+    private fun SQLiteStatement.getIconName(name: String): String {
+        val iconId = getIntByColumnName(name)
         return "mdi:${iconIdToName.getValue(iconId)}"
     }
 
-    @SuppressLint("Range")
-    override fun migrate(db: SupportSQLiteDatabase) {
+    override suspend fun migrate(connection: SQLiteConnection) {
         var migrationFailed = false
         val widgets = try {
-            db.query("SELECT * FROM `button_widgets`").use { cursor ->
-                cursor.map {
-                    ContentValues().apply {
-                        put("id", cursor.getString(cursor.getColumnIndex("id")))
-                        put("server_id", cursor.getInt(cursor.getColumnIndex("server_id")))
-                        put("domain", cursor.getString(cursor.getColumnIndex("domain")))
-                        put("service", cursor.getString(cursor.getColumnIndex("service")))
-                        put("service_data", cursor.getString(cursor.getColumnIndex("service_data")))
-                        put("label", cursor.getStringOrNull(cursor.getColumnIndex("label")))
-                        put("background_type", cursor.getString(cursor.getColumnIndex("background_type")))
-                        put("text_color", cursor.getStringOrNull(cursor.getColumnIndex("text_color")))
-                        put(
-                            "require_authentication",
-                            cursor.getInt(cursor.getColumnIndex("require_authentication")),
-                        )
-
-                        put("icon_name", cursor.getIconName(cursor.getColumnIndex("icon_id")))
-                    }
-                }
+            connection.query("SELECT * FROM `button_widgets`") { row ->
+                mapOf(
+                    "id" to row.getStringByColumnName("id"),
+                    "server_id" to row.getIntByColumnName("server_id"),
+                    "domain" to row.getStringByColumnName("domain"),
+                    "service" to row.getStringByColumnName("service"),
+                    "service_data" to row.getStringByColumnName("service_data"),
+                    "label" to row.getStringByColumnNameOrNull("label"),
+                    "background_type" to row.getStringByColumnName("background_type"),
+                    "text_color" to row.getStringByColumnNameOrNull("text_color"),
+                    "require_authentication" to row.getIntByColumnName("require_authentication"),
+                    "icon_name" to row.getIconName("icon_id"),
+                )
             }
         } catch (e: Exception) {
             migrationFailed = true
             Timber.e(e, "Unable to migrate, proceeding with recreating the table")
             null
         }
-        db.execSQL("DROP TABLE IF EXISTS `button_widgets`")
-        db.execSQL(
+        connection.execSQL("DROP TABLE IF EXISTS `button_widgets`")
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `require_authentication` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`id`))",
         )
         widgets?.forEach {
-            db.insert("button_widgets", OnConflictStrategy.REPLACE, it)
+            connection.insertOrReplace("button_widgets", it)
         }
         Timber.d("Migrated ${widgets?.size ?: "no"} button widgets to MDI icon names")
 
         val tiles = try {
-            db.query("SELECT * FROM `qs_tiles`").use { cursor ->
-                cursor.map {
-                    ContentValues().apply {
-                        put("id", cursor.getString(cursor.getColumnIndex("id")))
-                        put("tile_id", cursor.getString(cursor.getColumnIndex("tile_id")))
-                        put("added", cursor.getInt(cursor.getColumnIndex("added")))
-                        put("server_id", cursor.getInt(cursor.getColumnIndex("server_id")))
-                        put("entity_id", cursor.getString(cursor.getColumnIndex("entity_id")))
-                        put("label", cursor.getString(cursor.getColumnIndex("label")))
-                        put("subtitle", cursor.getStringOrNull(cursor.getColumnIndex("subtitle")))
-                        put("should_vibrate", cursor.getInt(cursor.getColumnIndex("should_vibrate")))
-                        put("auth_required", cursor.getInt(cursor.getColumnIndex("auth_required")))
+            connection.query("SELECT * FROM `qs_tiles`") { row ->
+                buildMap<String, Any?> {
+                    put("id", row.getStringByColumnName("id"))
+                    put("tile_id", row.getStringByColumnName("tile_id"))
+                    put("added", row.getIntByColumnName("added"))
+                    put("server_id", row.getIntByColumnName("server_id"))
+                    put("entity_id", row.getStringByColumnName("entity_id"))
+                    put("label", row.getStringByColumnName("label"))
+                    put("subtitle", row.getStringByColumnNameOrNull("subtitle"))
+                    put("should_vibrate", row.getIntByColumnName("should_vibrate"))
+                    put("auth_required", row.getIntByColumnName("auth_required"))
 
-                        val oldIconColumn = cursor.getColumnIndex("icon_id")
-                        if (!cursor.isNull(oldIconColumn)) {
-                            put("icon_name", cursor.getIconName(oldIconColumn))
-                        }
+                    // Only carry over the icon when the old row actually had one.
+                    val oldIconColumn = row.columnIndex("icon_id")
+                    if (oldIconColumn > -1 && !row.isNull(oldIconColumn)) {
+                        put("icon_name", row.getIconName("icon_id"))
                     }
                 }
             }
@@ -846,12 +787,12 @@ private class Migration40to41(private val context: Context) : Migration(40, 41) 
             Timber.e(e, "Unable to migrate, proceeding with recreating the table")
             null
         }
-        db.execSQL("DROP TABLE IF EXISTS `qs_tiles`")
-        db.execSQL(
+        connection.execSQL("DROP TABLE IF EXISTS `qs_tiles`")
+        connection.execSQL(
             "CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tile_id` TEXT NOT NULL, `added` INTEGER NOT NULL DEFAULT 1, `server_id` INTEGER NOT NULL DEFAULT 0, `icon_name` TEXT, `entity_id` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT, `should_vibrate` INTEGER NOT NULL DEFAULT 0, `auth_required` INTEGER NOT NULL DEFAULT 0)",
         )
         tiles?.forEach {
-            db.insert("qs_tiles", OnConflictStrategy.REPLACE, it)
+            connection.insertOrReplace("qs_tiles", it)
         }
         Timber.d("Migrated ${tiles?.size ?: "no"} QS tiles to MDI icon names")
 
