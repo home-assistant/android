@@ -16,10 +16,11 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.settings.shortcuts.legacy.views.ManageShortcutsView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import io.homeassistant.companion.android.util.icondialog.IconDialog
+import io.homeassistant.companion.android.util.icondialog.IconDialogM3
 import timber.log.Timber
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
@@ -40,13 +41,15 @@ class ManageShortcutsSettingsFragment : Fragment() {
                 HomeAssistantAppTheme {
                     var showingTag by remember { mutableStateOf<String?>(null) }
                     showingTag?.let { tag ->
-                        IconDialog(
-                            onSelect = {
-                                onIconDialogIconsSelected(tag, it)
-                                showingTag = null
-                            },
-                            onDismissRequest = { showingTag = null },
-                        )
+                        HATheme {
+                            IconDialogM3(
+                                onSelect = {
+                                    onIconDialogIconsSelected(tag, it)
+                                    showingTag = null
+                                },
+                                onDismissRequest = { showingTag = null },
+                            )
+                        }
                     }
 
                     ManageShortcutsView(viewModel = viewModel, showIconDialog = { showingTag = it })
