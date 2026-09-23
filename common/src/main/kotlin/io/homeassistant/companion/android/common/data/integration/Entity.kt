@@ -221,6 +221,9 @@ import io.homeassistant.companion.android.common.util.fromHaName
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import kotlin.math.round
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Polymorphic
@@ -381,9 +384,77 @@ data class ClimateControls(
 @Immutable
 data class NumberControls(val range: EntityPosition, val step: Float)
 
-/** Volume control of a media player entity, [volume] null when it cannot be set. */
+/** Playback state of a media player entity, resolved from its raw state. */
 @Immutable
-data class MediaPlayerControls(val volume: EntityPosition?, val volumeStep: Float)
+sealed interface MediaPlaybackState {
+    data object Playing : MediaPlaybackState
+    data object Paused : MediaPlaybackState
+    data object Idle : MediaPlaybackState
+    data object Buffering : MediaPlaybackState
+
+    /** The player is off, unavailable, or in a state the app does not model. */
+    data object Off : MediaPlaybackState
+}
+
+/** Repeat mode of a media player entity, matching the `repeat` attribute values. */
+@Immutable
+sealed interface MediaRepeatMode {
+    data object Off : MediaRepeatMode
+    data object One : MediaRepeatMode
+    data object All : MediaRepeatMode
+}
+
+/**
+ * Controls of a media player entity: what it can be asked to do, and the settings a caller can
+ * change. [volume] is null when the volume cannot be set.
+ */
+@Immutable
+data class MediaPlayerControls(
+    val volume: EntityPosition?,
+    val volumeStep: Float,
+    val isVolumeMuted: Boolean = false,
+    val shuffle: Boolean = false,
+    val repeatMode: MediaRepeatMode = MediaRepeatMode.Off,
+    val supportsPlay: Boolean = false,
+    val supportsPause: Boolean = false,
+    val supportsStop: Boolean = false,
+    val supportsSeek: Boolean = false,
+    val supportsPreviousTrack: Boolean = false,
+    val supportsNextTrack: Boolean = false,
+    val supportsVolumeSet: Boolean = false,
+    val supportsVolumeMute: Boolean = false,
+    val supportsShuffleSet: Boolean = false,
+    val supportsRepeatSet: Boolean = false,
+)
+
+/**
+ * What a media player entity is currently playing, null for other domains.
+ *
+ * [entityPicturePath] is the raw `entity_picture` attribute, a path the caller resolves against
+ * the URL of its own server.
+ *
+ * [position] is only valid as of [positionUpdatedAt]: Home Assistant reports the position at
+ * discontinuities (track start, seek, resume) rather than continuously, so a caller rendering a
+ * running progress bar extrapolates from that timestamp. It is null for the integrations that
+ * omit it, and the position is then a static value that must not be extrapolated.
+ */
+@Immutable
+data class MediaPlayback(
+    val state: MediaPlaybackState,
+    val title: String? = null,
+    val artist: String? = null,
+    val albumName: String? = null,
+    val albumArtist: String? = null,
+    val seriesTitle: String? = null,
+    val channel: String? = null,
+    val track: Int? = null,
+    val contentType: String? = null,
+    val appName: String? = null,
+    val entityPicturePath: String? = null,
+    val duration: Duration? = null,
+    val position: Duration? = null,
+    val positionUpdatedAt: Instant? = null,
+)
 
 /** Controls of a cover entity, [position] null when it is not set. */
 @Immutable
@@ -411,7 +482,24 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
+    const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
+    const val MEDIA_PLAYER_SUPPORT_PAUSE = 1
+    const val MEDIA_PLAYER_SUPPORT_SEEK = 2
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
+    const val MEDIA_PLAYER_SUPPORT_VOLUME_MUTE = 8
+    const val MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK = 16
+    const val MEDIA_PLAYER_SUPPORT_NEXT_TRACK = 32
+    const val MEDIA_PLAYER_SUPPORT_STOP = 4096
+    const val MEDIA_PLAYER_SUPPORT_PLAY = 16384
+    const val MEDIA_PLAYER_SUPPORT_SHUFFLE_SET = 32768
+    const val MEDIA_PLAYER_SUPPORT_REPEAT_SET = 262144
+    const val MEDIA_PLAYER_STATE_PLAYING = "playing"
+    const val MEDIA_PLAYER_STATE_PAUSED = "paused"
+    const val MEDIA_PLAYER_STATE_BUFFERING = "buffering"
+    const val MEDIA_PLAYER_STATE_IDLE = "idle"
+    const val MEDIA_PLAYER_STATE_STANDBY = "standby"
+    const val MEDIA_PLAYER_REPEAT_ONE = "one"
+    const val MEDIA_PLAYER_REPEAT_ALL = "all"
     const val VACUUM_SUPPORT_TURN_ON = 1
 
     val DOMAINS_PRESS = listOf("button", "input_button")
@@ -730,6 +818,41 @@ fun Entity.getMediaPlayerControls(): MediaPlayerControls? {
     return MediaPlayerControls(
         volume = if (supportsVolumeSet()) getVolumeLevel() else null,
         volumeStep = getVolumeStep(),
+        isVolumeMuted = getVolumeMuted(),
+        shuffle = getShuffle(),
+        repeatMode = getRepeatMode(),
+        supportsPlay = supportsPlay(),
+        supportsPause = supportsPause(),
+        supportsStop = supportsStop(),
+        supportsSeek = supportsSeek(),
+        supportsPreviousTrack = supportsPreviousTrack(),
+        supportsNextTrack = supportsNextTrack(),
+        supportsVolumeSet = supportsVolumeSet(),
+        supportsVolumeMute = supportsVolumeMute(),
+        supportsShuffleSet = supportsShuffleSet(),
+        supportsRepeatSet = supportsRepeatSet(),
+    )
+}
+
+/** What the entity is currently playing, null for other domains. */
+fun Entity.getMediaPlayback(): MediaPlayback? {
+    if (domain != MEDIA_PLAYER_DOMAIN) return null
+
+    return MediaPlayback(
+        state = getMediaPlaybackState(),
+        title = getMediaTitle(),
+        artist = getMediaArtist(),
+        albumName = getMediaAlbumName(),
+        albumArtist = getMediaAlbumArtist(),
+        seriesTitle = getMediaSeriesTitle(),
+        channel = getMediaChannel(),
+        track = getMediaTrack(),
+        contentType = getMediaContentType(),
+        appName = getAppName(),
+        entityPicturePath = entityPicturePath(),
+        duration = getMediaDuration(),
+        position = getMediaPosition(),
+        positionUpdatedAt = getMediaPositionUpdatedAt(),
     )
 }
 
@@ -808,6 +931,15 @@ fun Entity.getVolumeLevel(): EntityPosition? {
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeLevel")
         null
+    }
+}
+
+fun Entity.getVolumeMuted(): Boolean {
+    return try {
+        (attributes["is_volume_muted"] as? Boolean) ?: false
+    } catch (e: Exception) {
+        Timber.tag(EntityExt.TAG).e(e, "Unable to get getVolumeMuted")
+        false
     }
 }
 
@@ -1412,3 +1544,125 @@ fun Entity.isActive() = when {
  * `person` entity whose `user_id` attribute matches.
  */
 fun Entity.isPersonOf(userId: String): Boolean = domain == PERSON_DOMAIN && attributes["user_id"] == userId
+
+/** Returns the bitmask of supported features for this entity, or 0 if unavailable. */
+private fun Entity.supportedFeatures(): Int = (attributes["supported_features"] as? Number)?.toInt() ?: 0
+
+/** Whether this media_player entity supports the given feature flag from [EntityExt]. */
+internal fun Entity.supportsMediaFeature(feature: Int): Boolean =
+    domain == MEDIA_PLAYER_DOMAIN && (supportedFeatures() and feature != 0)
+
+/** Whether this media_player entity supports pause. */
+internal fun Entity.supportsPause(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE)
+
+/** Whether this media_player entity supports seek. */
+internal fun Entity.supportsSeek(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_SEEK)
+
+/** Whether this media_player entity supports previous track. */
+internal fun Entity.supportsPreviousTrack(): Boolean =
+    supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK)
+
+/** Whether this media_player entity supports next track. */
+internal fun Entity.supportsNextTrack(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_NEXT_TRACK)
+
+/** Whether this media_player entity supports play. */
+internal fun Entity.supportsPlay(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_PLAY)
+
+/** Returns the media title, if available. */
+internal fun Entity.getMediaTitle(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_title"]?.toString() else null
+
+/** Returns the media artist, falling back to album artist if available. */
+internal fun Entity.getMediaArtist(): String? = if (domain == MEDIA_PLAYER_DOMAIN) {
+    (attributes["media_artist"] ?: attributes["media_album_artist"])?.toString()
+} else {
+    null
+}
+
+/** Returns the media album name, if available. */
+internal fun Entity.getMediaAlbumName(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_album_name"]?.toString() else null
+
+/** Returns the current media position, if available. */
+internal fun Entity.getMediaPosition(): Duration? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_position"]?.toString()?.toDoubleOrNull()?.seconds else null
+
+/**
+ * Returns when [getMediaPosition] was valid, if the integration reports it.
+ *
+ * Home Assistant sends `homeassistant.util.dt.utcnow()` as an ISO-8601 string.
+ */
+internal fun Entity.getMediaPositionUpdatedAt(): Instant? {
+    val rawValue = attributes["media_position_updated_at"]
+        ?.takeIf { domain == MEDIA_PLAYER_DOMAIN }
+        ?.toString()
+        ?: return null
+
+    return try {
+        Instant.parse(rawValue)
+    } catch (e: IllegalArgumentException) {
+        Timber.tag(EntityExt.TAG).e(e, "Unable to parse media_position_updated_at")
+        null
+    }
+}
+
+/** Returns the media duration, if available. */
+internal fun Entity.getMediaDuration(): Duration? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_duration"]?.toString()?.toDoubleOrNull()?.seconds else null
+
+/** Returns the playback state, [MediaPlaybackState.Off] for any state the app does not model. */
+internal fun Entity.getMediaPlaybackState(): MediaPlaybackState = when (state) {
+    EntityExt.MEDIA_PLAYER_STATE_PLAYING -> MediaPlaybackState.Playing
+    EntityExt.MEDIA_PLAYER_STATE_PAUSED -> MediaPlaybackState.Paused
+    EntityExt.MEDIA_PLAYER_STATE_BUFFERING -> MediaPlaybackState.Buffering
+    EntityExt.MEDIA_PLAYER_STATE_IDLE, EntityExt.MEDIA_PLAYER_STATE_STANDBY -> MediaPlaybackState.Idle
+    else -> MediaPlaybackState.Off
+}
+
+/** Returns the repeat mode, [MediaRepeatMode.Off] when it is not set. */
+internal fun Entity.getRepeatMode(): MediaRepeatMode =
+    when (if (domain == MEDIA_PLAYER_DOMAIN) attributes["repeat"]?.toString() else null) {
+        EntityExt.MEDIA_PLAYER_REPEAT_ONE -> MediaRepeatMode.One
+        EntityExt.MEDIA_PLAYER_REPEAT_ALL -> MediaRepeatMode.All
+        else -> MediaRepeatMode.Off
+    }
+
+/** Whether this media_player entity supports stop. */
+internal fun Entity.supportsStop(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_STOP)
+
+/** Whether this media_player entity supports explicit mute toggling via the volume_mute service. */
+internal fun Entity.supportsVolumeMute(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE)
+
+/** Whether this media_player entity supports setting shuffle mode. */
+internal fun Entity.supportsShuffleSet(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_SHUFFLE_SET)
+
+/** Whether this media_player entity supports setting repeat mode. */
+internal fun Entity.supportsRepeatSet(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_REPEAT_SET)
+
+/** Returns whether shuffle mode is currently enabled. */
+internal fun Entity.getShuffle(): Boolean =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["shuffle"] as? Boolean ?: false else false
+
+/** Returns the album artist attribute directly, without falling back to media_artist. */
+internal fun Entity.getMediaAlbumArtist(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_album_artist"]?.toString() else null
+
+/** Returns the media content type (e.g. "music", "tvshow", "movie"), if available. */
+internal fun Entity.getMediaContentType(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_content_type"]?.toString() else null
+
+/** Returns the track number within the album, if available. */
+internal fun Entity.getMediaTrack(): Int? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_track"]?.toString()?.toIntOrNull() else null
+
+/** Returns the TV or radio channel name, if available. */
+internal fun Entity.getMediaChannel(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_channel"]?.toString() else null
+
+/** Returns the TV series title when playing an episode, if available. */
+internal fun Entity.getMediaSeriesTitle(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["media_series_title"]?.toString() else null
+
+/** Returns the name of the app currently active on this media player, if available. */
+internal fun Entity.getAppName(): String? =
+    if (domain == MEDIA_PLAYER_DOMAIN) attributes["app_name"]?.toString() else null
