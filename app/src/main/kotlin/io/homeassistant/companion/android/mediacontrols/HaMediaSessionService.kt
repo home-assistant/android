@@ -145,9 +145,9 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             foregroundNotificationId = null
         }
-        // Snapshot and clear activeSessions before calling removeSession so that the
-        // onUpdateNotification guard (!isActive check) treats these sessions as inactive and
-        // cancels rather than re-posts their notifications during teardown.
+        // Snapshot and clear activeSessions before calling removeSession so that any
+        // onUpdateNotification triggered during teardown no longer finds the session in the map
+        // and cancels its notification instead of re-posting it.
         val sessionsToClean = activeSessions.values.toList()
         activeSessions.clear()
         sessionsToClean.forEach { (session, job) ->
