@@ -2,6 +2,7 @@ import dev.detekt.gradle.Detekt
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 val kotlinVersion = libs.versions.kotlin.get()
+val bouncyCastleVersion = libs.versions.bouncycastle.get()
 
 plugins {
     alias(libs.plugins.detekt)
@@ -58,6 +59,17 @@ allprojects {
             ) {
                 useVersion(kotlinVersion)
                 because("Keep Kotlin ABI validation tooling aligned with the configured Kotlin version.")
+            }
+        }
+    }
+
+    // Android Lint's tool classpath pulls Bouncy Castle 1.80.2 through com.android.tools:sdk-common,
+    // which is still the case on AGP 9.5 previews, so there is no upstream version to bump to yet.
+    configurations.matching { it.name == "androidLintTool" }.configureEach {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.bouncycastle") {
+                useVersion(bouncyCastleVersion)
+                because("Bouncy Castle before 1.85 is affected by GHSA-9pwp-9qqc-pr26 and GHSA-qp49-qgx5-5m26.")
             }
         }
     }
