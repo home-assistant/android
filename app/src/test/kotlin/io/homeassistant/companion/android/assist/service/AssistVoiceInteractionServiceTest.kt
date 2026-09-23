@@ -28,6 +28,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -181,6 +182,24 @@ class AssistVoiceInteractionServiceTest {
         advanceUntilIdle()
 
         coVerify { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
+    }
+
+    @Test
+    fun `Given no wake word models when starting then stop listener and fail with missing models error`() {
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns null
+        coEvery { assistConfigManager.getAvailableModels() } returns emptyList()
+
+        // runTest reports uncaught exceptions launched on Dispatchers.Main by the service scope.
+        val exception = assertThrows(IllegalStateException::class.java) {
+            runTest {
+                sendAction(ACTION_START_LISTENING)
+                advanceUntilIdle()
+            }
+        }
+
+        assertEquals("No wake word models found in assets", exception.message)
+        coVerify(exactly = 1) { wakeWordListener.stop() }
+        coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
     }
 
     @Test
