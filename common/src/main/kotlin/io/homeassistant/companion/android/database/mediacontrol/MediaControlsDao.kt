@@ -17,13 +17,7 @@ interface MediaControlsDao {
     suspend fun getAll(): List<MediaControlsConfig>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(configs: List<MediaControlsConfig>)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(config: MediaControlsConfig)
-
-    @Query("DELETE FROM media_controls_entity_config")
-    suspend fun deleteAll()
 
     @Delete
     suspend fun delete(config: MediaControlsConfig)
