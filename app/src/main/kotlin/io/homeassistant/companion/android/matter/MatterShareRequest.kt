@@ -31,13 +31,17 @@ data class MatterShareRequest(
     companion object {
         /**
          * Reads a `matter/share_device` payload, returning `null` when the passcode or discriminator
-         * is missing or invalid. Invalid optional fields are dropped.
+         * is missing or invalid, or when the window has already expired. Invalid optional fields are
+         * dropped.
          */
         fun fromPayload(payload: JsonObject): MatterShareRequest? {
             val passcode = payload.long("setup_pin_code")
                 ?.takeIf { it in PASSCODE_RANGE && it !in INVALID_PASSCODES }
             val discriminator = payload.long("discriminator")?.takeIf { it in DISCRIMINATOR_RANGE }
-            if (passcode == null || discriminator == null) return null
+            val remainingSeconds = payload.long("remaining_seconds")
+            // An expired window must not fall back to the default length.
+            val expired = remainingSeconds != null && remainingSeconds <= 0
+            if (passcode == null || discriminator == null || expired) return null
             return MatterShareRequest(
                 passcode = passcode,
                 discriminator = discriminator.toInt(),
@@ -45,7 +49,7 @@ data class MatterShareRequest(
                 productId = payload.id("product_id"),
                 deviceName = (payload["device_name"] as? JsonPrimitive)
                     ?.takeIf { it.isString }?.contentOrNull?.takeIf { it.isNotBlank() },
-                remainingSeconds = payload.long("remaining_seconds")?.takeIf { it > 0 },
+                remainingSeconds = remainingSeconds,
             )
         }
     }

@@ -57,7 +57,6 @@ class MatterShareRequestTest {
                 "discriminator" to 3840,
                 "vendor_id" to 0x10000,
                 "device_name" to "",
-                "remaining_seconds" to 0,
             ),
         )
 
@@ -74,5 +73,16 @@ class MatterShareRequestTest {
         assertNull(MatterShareRequest.fromPayload(payload("setup_pin_code" to 0, "discriminator" to 3840)))
         assertNull(MatterShareRequest.fromPayload(payload("setup_pin_code" to 99999999, "discriminator" to 3840)))
         assertNull(MatterShareRequest.fromPayload(payload("setup_pin_code" to 12345678, "discriminator" to 3840)))
+    }
+
+    @Test
+    fun `Given an expired window when fromPayload then returns null`() {
+        for (remaining in listOf(0, -5)) {
+            assertNull(
+                MatterShareRequest.fromPayload(
+                    payload("setup_pin_code" to 20202021, "discriminator" to 3840, "remaining_seconds" to remaining),
+                ),
+            )
+        }
     }
 }
