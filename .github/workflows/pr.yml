@@ -375,7 +375,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Build x86_64 APKs
-        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86_64
+        run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86,x86_64
 
       - name: Build device list
         run: |
