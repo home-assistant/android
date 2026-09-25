@@ -16,6 +16,7 @@ class OutgoingExternalBusMessageTest {
                 id = 1,
                 hasNfc = true,
                 canCommissionMatter = true,
+                canShareMatterDevice = true,
                 canExportThread = true,
                 hasBarCodeScanner = 0,
                 canSetupImprov = true,
@@ -23,7 +24,18 @@ class OutgoingExternalBusMessageTest {
             ),
         )
         assertEquals(
-            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true,"hasSplashscreen":true,"hasMatterStatusReport":true},"error":null}""",
+            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true,"hasSplashscreen":true,"hasMatterStatusReport":true,"matterShareTarget":"app_chooser"},"error":null}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given an error result message when serializing then it carries code and message`() {
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(
+            ErrorResultMessage(id = 3, code = "cancelled", message = "Cancelled by the user"),
+        )
+        assertEquals(
+            """{"type":"result","id":3,"success":false,"result":null,"error":{"code":"cancelled","message":"Cancelled by the user"}}""",
             json,
         )
     }
@@ -35,6 +47,7 @@ class OutgoingExternalBusMessageTest {
                 id = 2,
                 hasNfc = false,
                 canCommissionMatter = false,
+                canShareMatterDevice = false,
                 canExportThread = false,
                 hasBarCodeScanner = 0,
                 canSetupImprov = false,
@@ -49,6 +62,7 @@ class OutgoingExternalBusMessageTest {
         val config = ConfigResultMessage.ConfigResult.create(
             hasNfc = false,
             canCommissionMatter = false,
+            canShareMatterDevice = false,
             canExportThread = false,
             hasBarCodeScanner = 0,
             canSetupImprov = true,

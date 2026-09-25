@@ -28,4 +28,14 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
 
     override fun parseCommissioningIntentResult(result: ActivityResult): MatterManager.CommissioningRequestResult =
         MatterManager.CommissioningRequestResult.Failed
+
+    override fun appSupportsSharing(): Boolean = false
+
+    override suspend fun prepareDeviceSharing(request: MatterShareRequest): MatterManager.CommissioningResult =
+        MatterManager.CommissioningResult.Error(
+            IllegalStateException("Matter sharing is not supported with the minimal flavor"),
+        )
+
+    override fun parseSharingIntentResult(result: ActivityResult): MatterManager.SharingRequestResult =
+        MatterManager.SharingRequestResult.Failed
 }

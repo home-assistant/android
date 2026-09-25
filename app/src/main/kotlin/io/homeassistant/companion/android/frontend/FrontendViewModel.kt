@@ -949,6 +949,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 viewModelScope.launch { matterThreadHandler.onStartMatterCommissioning() }
             }
 
+            is FrontendHandlerEvent.StartMatterSharing -> {
+                viewModelScope.launch {
+                    matterThreadHandler.onStartMatterSharing(messageId = result.messageId, payload = result.payload)
+                }
+            }
+
             is FrontendHandlerEvent.ImportThreadCredentials -> {
                 viewModelScope.launch {
                     matterThreadHandler.onImportThreadCredentials(serverId = _viewState.value.serverId)

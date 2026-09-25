@@ -49,6 +49,26 @@ object SuccessResultMessage {
     }
 }
 
+object ErrorResultMessage {
+    /**
+     * Creates a failed result, which the frontend rejects with `{code, message}`.
+     *
+     * @param id The message ID of the request that failed
+     * @param code Machine-readable reason the frontend can branch on
+     * @param message Human-readable detail for logs
+     */
+    operator fun invoke(id: Int?, code: String, message: String): OutgoingExternalBusMessage {
+        return ResultMessage(
+            id = id,
+            success = false,
+            error = frontendExternalBusJson.encodeToJsonElement(ResultError(code = code, message = message)),
+        )
+    }
+
+    @Serializable
+    private data class ResultError(val code: String, val message: String)
+}
+
 object ConfigResultMessage {
     /**
      * Creates a config response with app capabilities.
@@ -59,6 +79,7 @@ object ConfigResultMessage {
         id: Int?,
         hasNfc: Boolean,
         canCommissionMatter: Boolean,
+        canShareMatterDevice: Boolean,
         canExportThread: Boolean,
         hasBarCodeScanner: Int,
         canSetupImprov: Boolean,
@@ -70,6 +91,7 @@ object ConfigResultMessage {
                 ConfigResult.create(
                     hasNfc,
                     canCommissionMatter,
+                    canShareMatterDevice,
                     canExportThread,
                     hasBarCodeScanner,
                     canSetupImprov,
@@ -101,11 +123,13 @@ object ConfigResultMessage {
         val hasAssistSettings: Boolean = true,
         val hasSplashscreen: Boolean = true,
         val hasMatterStatusReport: Boolean = true,
+        val matterShareTarget: String?,
     ) {
         companion object {
             fun create(
                 hasNfc: Boolean,
                 canCommissionMatter: Boolean,
+                canShareMatterDevice: Boolean,
                 canExportThread: Boolean,
                 hasBarCodeScanner: Int,
                 canSetupImprov: Boolean,
@@ -113,6 +137,7 @@ object ConfigResultMessage {
             ) = ConfigResult(
                 canWriteTag = hasNfc,
                 canCommissionMatter = canCommissionMatter,
+                matterShareTarget = MATTER_SHARE_TARGET_APP_CHOOSER.takeIf { canShareMatterDevice },
                 canImportThreadCredentials = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
                 canSetupImprov = canSetupImprov,
@@ -141,3 +166,6 @@ object EntityAddToActionsResultMessage {
     @Serializable
     private data class EntityAddToActionsResult(val actions: List<ExternalEntityAddToAction>)
 }
+
+/** Play Services shares through a system sheet listing every app that accepts Matter devices. */
+private const val MATTER_SHARE_TARGET_APP_CHOOSER = "app_chooser"
