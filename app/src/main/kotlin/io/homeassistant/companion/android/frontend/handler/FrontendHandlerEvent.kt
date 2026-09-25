@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Events emitted by [FrontendMessageHandler].
@@ -115,6 +116,18 @@ sealed interface FrontendHandlerEvent {
      * by [messageId].
      */
     data object StartMatterCommissioning : FrontendHandlerEvent
+
+    /**
+     * Frontend requested to share a device already commissioned to Home Assistant with another app,
+     * through the commissioning window described by [payload] (validated by the handler).
+     *
+     * The ViewModel drives the Google Play Services share intent and replies to the frontend with a
+     * result correlated by [messageId].
+     */
+    data class StartMatterSharing(val messageId: Int?, val payload: JsonObject) : FrontendHandlerEvent {
+        // The payload carries the setup passcode, keep it out of logs.
+        override fun toString(): String = "StartMatterSharing(messageId=$messageId)"
+    }
 
     /**
      * Frontend requested the app to share its locally-stored Thread credentials with the server.

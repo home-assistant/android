@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.util.UnknownJsonContentDeserial
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.modules.SerializersModule
 
 /**
@@ -295,6 +296,25 @@ data class EntityAddToPayload(
 @Serializable
 @SerialName("matter/commission")
 data class MatterCommissionMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to add a device already commissioned to Home Assistant to the
+ * platform's home app (Matter multi-admin), through the commissioning window Home Assistant opened.
+ *
+ * The app replies with a success result, or an error result whose code is `cancelled` when the user
+ * backed out and `failed` otherwise.
+ *
+ * Only sent by the frontend when the app reports
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.matterShareTarget].
+ */
+@Serializable
+@SerialName("matter/share_device")
+data class MatterShareDeviceMessage(
+    override val id: Int? = null,
+    // Validated by the handler, so a payload with missing or mistyped fields still gets an error result
+    // instead of failing deserialization without a reply.
+    val payload: JsonObject = JsonObject(emptyMap()),
+) : IncomingExternalBusMessage
 
 /**
  * Message requesting the app to share its locally-stored Thread credentials with the Home Assistant

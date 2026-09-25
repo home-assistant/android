@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovCo
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDeviceMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -71,6 +72,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
@@ -105,6 +108,7 @@ class FrontendMessageHandlerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_NFC) } returns false
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
         every { matterManager.appSupportsCommissioning() } returns false
+        every { matterManager.appSupportsSharing() } returns false
         every { threadManager.appSupportsThread() } returns false
         every { externalBusRepository.webViewActions() } returns emptyFlow()
 
@@ -190,6 +194,7 @@ class FrontendMessageHandlerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_NFC) } returns true
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
         every { matterManager.appSupportsCommissioning() } returns true
+        every { matterManager.appSupportsSharing() } returns true
         every { threadManager.appSupportsThread() } returns true
 
         val testHandler = FrontendMessageHandler(
@@ -220,6 +225,7 @@ class FrontendMessageHandlerTest {
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(true, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(true, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
+        assertEquals("app_chooser", configResult["matterShareTarget"]?.jsonPrimitive?.content)
         assertEquals(true, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(1, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
         assertEquals(true, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())
@@ -261,6 +267,7 @@ class FrontendMessageHandlerTest {
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(false, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
+        assertEquals(JsonNull, configResult["matterShareTarget"])
         assertEquals(false, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(0, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
         assertEquals(false, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())
@@ -386,6 +393,21 @@ class FrontendMessageHandlerTest {
 
         handler.messageResults().test {
             assertInstanceOf(FrontendHandlerEvent.StartMatterCommissioning::class.java, awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given Matter share_device message when messageResults then emits StartMatterSharing`() = runTest {
+        val payload = JsonObject(mapOf("setup_pin_code" to JsonPrimitive(20202021), "discriminator" to JsonPrimitive(3840)))
+        val message = MatterShareDeviceMessage(id = 62, payload = payload)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            assertEquals(
+                FrontendHandlerEvent.StartMatterSharing(messageId = 62, payload = payload),
+                awaitItem(),
+            )
             expectNoEvents()
         }
     }
