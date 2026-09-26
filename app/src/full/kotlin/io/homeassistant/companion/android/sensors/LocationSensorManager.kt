@@ -9,6 +9,7 @@ import android.location.Location
 import android.os.Build
 import android.os.Looper
 import android.os.PowerManager
+import androidx.annotation.VisibleForTesting
 import androidx.core.content.getSystemService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
@@ -49,6 +50,7 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager.Companio
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -60,6 +62,16 @@ import timber.log.Timber
 // First core release accepting `location_time` in update_location
 private const val LOCATION_TIME_MIN_CORE_YEAR = 2026
 private const val LOCATION_TIME_MIN_CORE_MONTH = 11
+
+/**
+ * Identifies an exact location update for duplicate suppression. It includes the fix time when it is
+ * sent, so a newer fix at identical coordinates still reaches Home Assistant, while the same fix
+ * delivered again is still suppressed.
+ */
+@VisibleForTesting
+@OptIn(ExperimentalTime::class)
+internal fun UpdateLocation.duplicateKey(): String =
+    listOfNotNull(gps?.toString(), locationTime?.toString()).joinToString(separator = "@")
 
 @Singleton
 class LocationSensorManager @Inject constructor(
@@ -956,7 +968,7 @@ class LocationSensorManager @Inject constructor(
                     null
                 },
             )
-            updateLocationString = updateLocation.gps.toString()
+            updateLocationString = updateLocation.duplicateKey()
         }
 
         val now = System.currentTimeMillis()
