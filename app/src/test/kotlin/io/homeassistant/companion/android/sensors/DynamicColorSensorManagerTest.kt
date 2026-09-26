@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
 import android.provider.Settings
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
+import com.google.android.material.color.DynamicColors
+import com.google.android.material.color.MaterialColors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -15,13 +18,13 @@ import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.testing.unit.seedFakeAndroidId
 import javax.inject.Inject
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNotNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -29,7 +32,7 @@ import org.robolectric.annotation.Config
 
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [36], application = HiltTestApplication::class)
+@Config(application = HiltTestApplication::class)
 class DynamicColorSensorManagerTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -90,15 +93,17 @@ class DynamicColorSensorManagerTest {
 
         val state = sensorRepository.get(id).single().state
 
-        // Default accent color for Robolectric
-        assertEquals("#475D92", state)
+        val context = DynamicColors.wrapContextIfAvailable(getApplicationContext())
+        val color = MaterialColors.getColor(context, android.R.attr.colorAccent, 0)
+        val colorStr = "%06X".format(color and 0x00FFFFFF)
+
+        assertEquals("#$colorStr", state)
 
         val attrs = getSensorAttributes(id)
         val rgbColor = attrs.find { it.name == "rgb_color" }
         assertNotNull(rgbColor)
 
-        // Fixed accent color for Robolectric is 475D92
-        assertEquals("[71,93,146]", rgbColor.value)
+        assertEquals("[${Color.red(color)},${Color.green(color)},${Color.blue(color)}]", rgbColor.value)
     }
 
     @Test

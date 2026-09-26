@@ -16,8 +16,10 @@ import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import javax.inject.Inject
 import javax.inject.Singleton
-import org.json.JSONException
-import org.json.JSONObject
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 import timber.log.Timber
 
 @Singleton
@@ -37,8 +39,7 @@ class DynamicColorSensorManager @Inject constructor(
             "TONAL_SPOT",
             "VIBRANT",
         )
-        private const val THEME_OVERLAY_JSON = "theme_customization_overlay_packages"
-        private const val THEME_STYLE = "android.theme.customization.theme_style"
+        private const val THEME_OVERLAY_JSON_KEY = "theme_customization_overlay_packages"
 
         @ProvidesSensor
         val accentColorSensor = SensorManager.BasicSensor(
@@ -125,35 +126,34 @@ class DynamicColorSensorManager @Inject constructor(
         }
 
         val jsonString = try {
-            Settings.Secure.getString(applicationContext.contentResolver, THEME_OVERLAY_JSON)
-        } catch (ex: Exception) {
-            Timber.w(ex, "Exception reading %s", THEME_OVERLAY_JSON)
+            Settings.Secure.getString(applicationContext.contentResolver, THEME_OVERLAY_JSON_KEY)
+        } catch (ex: SecurityException) {
+            Timber.w(ex, "Exception reading $THEME_OVERLAY_JSON_KEY")
             updateState(STATE_UNAVAILABLE)
             return
         }
 
         if (jsonString == null) {
-            Timber.w("No value found for %s", THEME_OVERLAY_JSON)
+            Timber.w("No value found for $THEME_OVERLAY_JSON_KEY")
             updateState(STATE_UNAVAILABLE)
             return
         }
 
-        val jsonObject = try {
-            JSONObject(jsonString)
-        } catch (ex: JSONException) {
-            Timber.w(ex, "Exception parsing JSON for %s", THEME_OVERLAY_JSON)
+        val themeBundle = try {
+            Json.decodeFromString<ThemeBundle>(jsonString)
+        } catch (ex: SerializationException) {
+            Timber.w(ex, "Exception parsing JSON for $THEME_OVERLAY_JSON_KEY")
+            updateState(STATE_UNKNOWN)
+            return
+        } catch (ex: IllegalArgumentException) {
+            Timber.w(ex, "Invalid JSON for ThemeBundle")
             updateState(STATE_UNKNOWN)
             return
         }
 
-        val themeStyle = try {
-            jsonObject.getString(THEME_STYLE)
-        } catch (ex: JSONException) {
-            Timber.w(ex, "Missing %s in JSON for %s", THEME_STYLE, THEME_OVERLAY_JSON)
-            updateState(STATE_UNKNOWN)
-            return
-        }
-
-        updateState(themeStyle)
+        updateState(themeBundle.themeStyle)
     }
+
+    @Serializable
+    private data class ThemeBundle(@SerialName("android.theme.customization.theme_style") val themeStyle: String)
 }
