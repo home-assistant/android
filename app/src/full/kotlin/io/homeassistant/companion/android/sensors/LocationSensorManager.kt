@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.instant
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
 import io.homeassistant.companion.android.database.location.LocationHistoryItemResult
@@ -55,6 +56,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+// First core release accepting `location_time` in update_location
+private const val LOCATION_TIME_MIN_CORE_YEAR = 2026
+private const val LOCATION_TIME_MIN_CORE_MONTH = 11
 
 @Singleton
 class LocationSensorManager @Inject constructor(
@@ -919,6 +924,7 @@ class LocationSensorManager @Inject constructor(
                 altitude = null,
                 course = null,
                 verticalAccuracy = null,
+                locationTime = null,
             )
             updateLocationString = locationName
         } else {
@@ -937,6 +943,17 @@ class LocationSensorManager @Inject constructor(
                     location.verticalAccuracyMeters.toInt()
                 } else {
                     0
+                },
+                // When the fix was obtained, which can be minutes before it is sent (batched or cached
+                // locations). Older cores reject unknown keys, so only send it to servers that accept it.
+                locationTime = if (serverManager.getServer(serverId)?.version?.isAtLeast(
+                        LOCATION_TIME_MIN_CORE_YEAR,
+                        LOCATION_TIME_MIN_CORE_MONTH,
+                    ) == true
+                ) {
+                    location.instant()
+                } else {
+                    null
                 },
             )
             updateLocationString = updateLocation.gps.toString()
