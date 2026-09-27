@@ -141,7 +141,7 @@ internal class NativeCallService : LifecycleService() {
         val workers = mutableListOf<Job>()
         val invitation = incoming.invitation
         val clientId = UUID.randomUUID().toString()
-        val calls = CallsManager(this@NativeCallService)
+        val calls = CallsManager(applicationContext)
         var control: CallControlScope? = null
         var answered = false
         var ringtone: Ringtone? = null
@@ -168,6 +168,10 @@ internal class NativeCallService : LifecycleService() {
                 }
             }
         }
+        val callbacks = NativeCallCallbacks(
+            onAnswer = { answer() },
+            onDisconnect = { repository.request(invitation, if (answered) "hangup" else "decline", clientId) },
+        )
         try {
             ringtone = startRinging(calls)
             calls.addCall(
@@ -177,8 +181,8 @@ internal class NativeCallService : LifecycleService() {
                     CallAttributesCompat.DIRECTION_INCOMING,
                     callCapabilities = 0,
                 ),
-                onAnswer = { answer() },
-                onDisconnect = { repository.request(invitation, if (answered) "hangup" else "decline", clientId) },
+                onAnswer = { callbacks.answer() },
+                onDisconnect = { callbacks.disconnect() },
                 onSetActive = {},
                 onSetInactive = { throw IllegalStateException("Hold is not advertised") },
             ) {
@@ -195,6 +199,7 @@ internal class NativeCallService : LifecycleService() {
                 }
             }
         } finally {
+            callbacks.close()
             workers.forEach { it.cancel() }
             ringtone?.stop()
             withContext(NonCancellable) {
