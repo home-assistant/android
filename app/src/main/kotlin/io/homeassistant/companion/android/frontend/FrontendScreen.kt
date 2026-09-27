@@ -46,7 +46,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -55,7 +54,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.graphics.ColorUtils
 import androidx.core.util.TypedValueCompat.pxToDp
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -71,6 +69,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.compose.util.isLight
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
@@ -846,9 +845,6 @@ private fun SystemBarsAppearanceEffect(statusBarColor: Color?, navigationBarColo
         }
     }
 }
-
-/** Whether this color is light enough that dark foreground icons are needed for contrast. */
-private fun Color.isLight(): Boolean = ColorUtils.calculateLuminance(toArgb()) >= 0.5
 
 /**
  * Reports the device safe-area insets (system bars and display cutouts, in dp) to

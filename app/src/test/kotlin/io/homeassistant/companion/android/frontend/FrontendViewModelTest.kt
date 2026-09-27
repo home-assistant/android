@@ -3339,4 +3339,80 @@ class FrontendViewModelTest {
             }
         }
     }
+
+    @Nested
+    inner class OpenInBrowser {
+        @Test
+        fun `Given OpenInBrowser gesture when webview has URL then reads current URL and emits OpenExternalLink event`() = runTest {
+            coEvery {
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+            } returns GestureResult.OpenInBrowser
+            val mockUri = mockk<Uri>()
+
+            val viewModel = createViewModel()
+            val webViewActions = mutableListOf<WebViewAction>()
+            val webViewJob = backgroundScope.launch {
+                viewModel.webViewActions.collect {
+                    webViewActions.add(it)
+                    if (it is WebViewAction.ReadCurrentUriForExternal) it.result.complete(mockUri)
+                }
+            }
+            val viewModelEvents = mutableListOf<FrontendEvent>()
+            val viewModelJob = backgroundScope.launch {
+                viewModel.events.collect {
+                    viewModelEvents.add(it)
+                }
+            }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onGesture(GestureDirection.UP, pointerCount = 2)
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            assertEquals(1, webViewActions.size)
+            assertInstanceOf(WebViewAction.ReadCurrentUriForExternal::class.java, webViewActions[0])
+            advanceUntilIdle()
+
+            assertEquals(1, viewModelEvents.size)
+            val event = assertInstanceOf(FrontendEvent.OpenExternalLink::class.java, viewModelEvents[0])
+            assertEquals(mockUri, event.uri)
+
+            webViewJob.cancel()
+            viewModelJob.cancel()
+        }
+
+        @Test
+        fun `Given OpenInBrowser gesture when webview has no URL then reads current URL and returns early`() = runTest {
+            coEvery {
+                gestureManager.handleGesture(serverId = any(), direction = any(), pointerCount = any())
+            } returns GestureResult.OpenInBrowser
+
+            val viewModel = createViewModel()
+            val webViewActions = mutableListOf<WebViewAction>()
+            val webViewJob = backgroundScope.launch {
+                viewModel.webViewActions.collect {
+                    webViewActions.add(it)
+                    if (it is WebViewAction.ReadCurrentUriForExternal) it.result.complete(null)
+                }
+            }
+            val viewModelEvents = mutableListOf<FrontendEvent>()
+            val viewModelJob = backgroundScope.launch {
+                viewModel.events.collect {
+                    viewModelEvents.add(it)
+                }
+            }
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            viewModel.onGesture(GestureDirection.UP, pointerCount = 2)
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+
+            assertEquals(1, webViewActions.size)
+            assertInstanceOf(WebViewAction.ReadCurrentUriForExternal::class.java, webViewActions[0])
+            advanceUntilIdle()
+
+            assertEquals(0, viewModelEvents.size)
+
+            webViewJob.cancel()
+            viewModelJob.cancel()
+        }
+    }
 }

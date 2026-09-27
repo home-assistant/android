@@ -273,7 +273,7 @@ data class EntityDisplayWithContext(
      */
     fun subtitle(layoutDirection: LayoutDirection): String? = listOfNotNull(areaName, deviceName)
         .takeIf { it.isNotEmpty() }
-        ?.joinToString(if (layoutDirection == LayoutDirection.Ltr) " ▸ " else " ◂ ")
+        ?.joinToString(entitySubtitleSeparator(layoutDirection))
         ?.takeIf { it != name }
 
     /** [subtitle] resolved against the layout direction the composition is in. */
@@ -281,3 +281,16 @@ data class EntityDisplayWithContext(
     @ReadOnlyComposable
     fun subtitle(): String? = subtitle(LocalLayoutDirection.current)
 }
+
+/**
+ * Separator between the segments of an entity subtitle, pointing along [layoutDirection]. Callers
+ * prepending their own segment to [EntityDisplayWithContext.subtitle] join it with this, so the
+ * whole line reads as one breadcrumb.
+ */
+fun entitySubtitleSeparator(layoutDirection: LayoutDirection): String =
+    if (layoutDirection == LayoutDirection.Ltr) " ▸ " else " ◂ "
+
+/** The separator resolved against the layout direction of the current composition. */
+@Composable
+@ReadOnlyComposable
+fun entitySubtitleSeparator(): String = entitySubtitleSeparator(LocalLayoutDirection.current)

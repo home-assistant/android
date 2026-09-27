@@ -16,6 +16,7 @@ enum class GestureAction(@StringRes val description: Int, val category: GestureA
     NAVIGATE_FORWARD(R.string.gestures_action_navigate_forward, GestureActionCategory.NAVIGATION),
     NAVIGATE_DASHBOARD(R.string.gestures_action_navigate_dashboard, GestureActionCategory.NAVIGATION),
     NAVIGATE_RELOAD(R.string.gestures_action_navigate_reload, GestureActionCategory.NAVIGATION),
+    NAVIGATE_OPEN_IN_BROWSER(R.string.gestures_action_navigate_open_in_browser, GestureActionCategory.NAVIGATION),
     SERVER_LIST(R.string.gestures_action_server_list, GestureActionCategory.SERVERS),
     SERVER_NEXT(R.string.gestures_action_server_next, GestureActionCategory.SERVERS),
     SERVER_PREVIOUS(R.string.gestures_action_server_previous, GestureActionCategory.SERVERS),

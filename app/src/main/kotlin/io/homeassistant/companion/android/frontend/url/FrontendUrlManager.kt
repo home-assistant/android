@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.compose.webview.EXTERNAL_AUTH_QUERY_PARAM
 import io.homeassistant.companion.android.util.sensitive
 import java.net.URL
 import javax.inject.Inject
@@ -149,7 +150,7 @@ class FrontendUrlManager @Inject constructor(
 
         val urlWithAuth = httpUrl.newBuilder()
             .apply { moreInfoEntityIdForQuery?.let { addQueryParameter("more-info-entity-id", it) } }
-            .addQueryParameter("external_auth", "1")
+            .addQueryParameter(EXTERNAL_AUTH_QUERY_PARAM, "1")
             .build()
             .toString()
 
