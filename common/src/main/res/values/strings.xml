@@ -1537,4 +1537,7 @@
     <string name="learn_more">Learn more</string>
     <string name="default_assistant_required">Home Assistant must be your default assistant to perform %s.</string>
     <string name="hidden_entity">Hidden entity</string>
+    <string name="native_calls">Phone calls</string>
+    <string name="native_call_incoming">Incoming call</string>
+    <string name="native_call_active">In call</string>
 </resources>

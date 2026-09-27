@@ -83,6 +83,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "implementation"(libs.core.remoteviews)
                     "implementation"(libs.core.splashscreen)
                     "implementation"(libs.core.ktx)
+                    "implementation"(libs.androidx.core.telecom)
                     "implementation"(libs.accompanist.permissions)
                     "implementation"(libs.androidx.hilt.navigation.compose)
 

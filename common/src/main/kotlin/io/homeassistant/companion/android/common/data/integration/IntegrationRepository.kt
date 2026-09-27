@@ -105,6 +105,7 @@ internal class IntegrationRepositoryFactory @Inject constructor(
     @NamedModel private val model: String,
     @NamedOsVersion private val osVersion: String,
     @NamedDeviceId private val deviceId: String,
+    @NativeCallsSupport private val nativeCallsSupport: Boolean,
 ) {
     suspend fun create(serverId: Int): IntegrationRepositoryImpl {
         return IntegrationRepositoryImpl(
@@ -116,6 +117,7 @@ internal class IntegrationRepositoryFactory @Inject constructor(
             model = model,
             osVersion = osVersion,
             deviceId = deviceId,
+            nativeCallsSupport = nativeCallsSupport,
         )
     }
 }

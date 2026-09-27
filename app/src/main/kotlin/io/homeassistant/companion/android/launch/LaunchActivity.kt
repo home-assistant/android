@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.launch
 
+import android.Manifest
 import android.app.PictureInPictureParams
 import android.content.ComponentName
 import android.content.Context
@@ -11,6 +12,7 @@ import android.os.Parcelable
 import android.view.ViewTreeObserver
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.SnackbarDuration
@@ -24,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
@@ -39,9 +42,13 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
+import io.homeassistant.companion.android.calls.NativeCallCommand
+import io.homeassistant.companion.android.calls.NativeCallPhase
+import io.homeassistant.companion.android.calls.NativeCallStateRepository
 import io.homeassistant.companion.android.changelog.navigation.ChangelogAutoShowEffect
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.data.call.NativeCallInvitation
 import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -60,6 +67,7 @@ import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
 private const val DEEP_LINK_KEY = "deep_link_key"
+private const val CALL_PERMISSION_ALIAS_CLASS = "io.homeassistant.companion.android.launch.CallPermission"
 
 /**
  * Fully qualified class name of the non-exported `<activity-alias>` declared in the manifest.
@@ -127,6 +135,10 @@ class LaunchActivity : AppCompatActivity() {
          */
         data class NavigateTo(val target: FrontendTarget, val serverId: Int) : DeepLink
 
+        /** Request microphone access for an addressed incoming native call. */
+        @Parcelize
+        data class RequestCallPermission(val serverId: Int, val callId: String, val path: String) : DeepLink
+
         /**
          * Opens the Wear OS device onboarding flow.
          * @property wearName The name of the Wear device being onboarded.
@@ -136,6 +148,13 @@ class LaunchActivity : AppCompatActivity() {
     }
 
     companion object {
+        /** Ask for microphone access without displaying the dashboard over the keyguard. */
+        internal fun callPermissionIntent(context: Context, invitation: NativeCallInvitation): Intent = newInstance(
+            context,
+            DeepLink.RequestCallPermission(invitation.serverId, invitation.callId, invitation.path),
+        )
+            .setComponent(ComponentName(context, CALL_PERMISSION_ALIAS_CLASS))
+
         /**
          * Builds an intent to start [LaunchActivity].
          *
@@ -158,6 +177,36 @@ class LaunchActivity : AppCompatActivity() {
         }
     }
 
+    @Inject internal lateinit var nativeCallState: NativeCallStateRepository
+
+    private val callMicrophonePermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) pendingNativeCall()?.let { nativeCallState.send(NativeCallCommand.Answer(it)) }
+        }
+
+    private fun pendingNativeCall(): NativeCallInvitation? {
+        if (intent.component?.className != CALL_PERMISSION_ALIAS_CLASS) return null
+        val link = IntentCompat.getParcelableExtra(intent, DEEP_LINK_KEY, DeepLink::class.java)
+        return (link as? DeepLink.RequestCallPermission)?.let {
+            NativeCallInvitation(it.serverId, it.callId, it.path)
+        }?.takeIf {
+            nativeCallState.state.value?.let { current ->
+                current.invitation == it && current.phase == NativeCallPhase.Ringing
+            } == true
+        }
+    }
+
+    private fun requestCallPermission() {
+        val invitation = pendingNativeCall() ?: return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            nativeCallState.send(NativeCallCommand.Answer(invitation))
+        } else {
+            callMicrophonePermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
     private val viewModel: LaunchViewModel by viewModels(
         extrasProducer = {
             defaultViewModelCreationExtras.withCreationCallback<LaunchViewModelFactory> {
@@ -177,6 +226,7 @@ class LaunchActivity : AppCompatActivity() {
         }
 
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) requestCallPermission()
         val splashScreen = installSplashScreen()
 
         splashScreen.setKeepOnScreenCondition {

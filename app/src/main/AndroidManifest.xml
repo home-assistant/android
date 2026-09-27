@@ -88,6 +88,8 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
 
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
     <application
         android:name="io.homeassistant.companion.android.HomeAssistantApplication"
         android:allowBackup="true"
@@ -111,6 +113,8 @@
         Android shortcuts are tied to its component name; renaming it will permanently
         break all user-created shortcuts from previous versions.
         -->
+        <service android:name=".calls.NativeCallService" android:exported="false"
+            android:foregroundServiceType="phoneCall|microphone" />
         <activity
             android:name="io.homeassistant.companion.android.launch.LaunchActivity"
             android:exported="true"
@@ -156,6 +160,11 @@
         -->
         <activity-alias
             android:name="io.homeassistant.companion.android.launch.LaunchOverLockScreen"
+            android:exported="false"
+            android:targetActivity="io.homeassistant.companion.android.launch.LaunchActivity" />
+
+        <activity-alias
+            android:name="io.homeassistant.companion.android.launch.CallPermission"
             android:exported="false"
             android:targetActivity="io.homeassistant.companion.android.launch.LaunchActivity" />
 

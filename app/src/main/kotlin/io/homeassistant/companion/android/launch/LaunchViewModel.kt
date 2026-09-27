@@ -206,6 +206,8 @@ internal class LaunchViewModel @VisibleForTesting constructor(
 
     private suspend fun handleInitialState(initialDeepLink: LaunchActivity.DeepLink?) {
         when (initialDeepLink) {
+            is LaunchActivity.DeepLink.RequestCallPermission ->
+                connectToServer(initialDeepLink.serverId, FrontendTarget.Default)
             is LaunchActivity.DeepLink.OpenOnboarding -> navigateToOnboarding(
                 initialDeepLink.urlToOnboard,
                 hideExistingServers = initialDeepLink.hideExistingServers,

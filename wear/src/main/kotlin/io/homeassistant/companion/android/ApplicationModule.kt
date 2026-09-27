@@ -18,9 +18,15 @@ import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 
+private const val NATIVE_CALLS_SUPPORTED = false
+
 @Module
 @InstallIn(SingletonComponent::class)
 object ApplicationModule {
+    @Provides
+    @io.homeassistant.companion.android.common.data.integration.NativeCallsSupport
+    fun providesNativeCallsSupport(): Boolean = NATIVE_CALLS_SUPPORTED
+
     @Provides
     @Singleton
     fun providesAppVersion(): AppVersion = AppVersion(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)

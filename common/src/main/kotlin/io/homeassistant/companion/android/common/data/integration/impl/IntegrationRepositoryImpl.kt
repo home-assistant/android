@@ -78,6 +78,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     @NamedModel private val model: String,
     @NamedOsVersion private val osVersion: String,
     @NamedDeviceId private val deviceId: String,
+    @io.homeassistant.companion.android.common.data.integration.NativeCallsSupport private val nativeCallsSupport:
+    Boolean = false,
 ) : IntegrationRepository {
 
     companion object {
@@ -713,6 +715,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
 
         val appData = mutableMapOf<String, Any>("push_websocket_channel" to deviceRegistration.pushWebsocket)
+        if (nativeCallsSupport) {
+            appData["native_calls"] = 1
+        }
         if (!pushToken.isNullOrBlank()) {
             appData["push_url"] = PUSH_URL
             appData["push_token"] = pushToken

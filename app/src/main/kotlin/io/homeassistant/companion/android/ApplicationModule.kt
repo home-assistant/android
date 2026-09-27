@@ -23,6 +23,14 @@ import kotlin.time.ExperimentalTime
 @InstallIn(SingletonComponent::class)
 object ApplicationModule {
     @Provides
+    @io.homeassistant.companion.android.common.data.integration.NativeCallsSupport
+    fun providesNativeCallsSupport(@ApplicationContext context: Context): Boolean =
+        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+            context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TELECOM) &&
+            !context.isAutomotive() &&
+            !io.homeassistant.companion.android.util.QuestUtil.isQuest
+
+    @Provides
     @Singleton
     fun providesAppVersion(): AppVersion = AppVersion(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
 

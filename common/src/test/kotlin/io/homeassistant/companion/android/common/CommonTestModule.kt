@@ -15,6 +15,10 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object CommonTestModule {
     @Provides
+    @io.homeassistant.companion.android.common.data.integration.NativeCallsSupport
+    fun providesNativeCallsSupport(): Boolean = false
+
+    @Provides
     @Singleton
     fun providesAppVersion(): AppVersion = AppVersion.from("1.0.0 (1)")
 

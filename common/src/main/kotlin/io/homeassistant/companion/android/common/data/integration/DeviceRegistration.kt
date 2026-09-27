@@ -14,3 +14,7 @@ data class DeviceRegistration(
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class PushWebsocketSupport
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class NativeCallsSupport

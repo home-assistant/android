@@ -33,6 +33,7 @@ compose-bom = "2026.08.00"
 composeLintChecks = "1.6.0"
 connectClient = "1.1.0"
 constraintlayout = "2.2.2"
+coreTelecom = "1.0.1"
 coreKtx = "1.19.0"
 core-splashscreen = "1.2.0"
 core-remoteviews = "1.1.0"
@@ -122,6 +123,7 @@ homeassistant-android-dependencies = { id = "homeassistant.android.dependencies"
 homeassistant-android-flavor = { id = "homeassistant.android.flavor" }
 
 [libraries]
+androidx-core-telecom = { module = "androidx.core:core-telecom", version.ref = "coreTelecom" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanist" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }

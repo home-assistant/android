@@ -137,6 +137,7 @@ class MessagingManager @Inject constructor(
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
     private val bluetoothSensorManager: BluetoothSensorManager,
+    private val nativeCallDispatcher: io.homeassistant.companion.android.calls.NativeCallDispatcher,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -366,6 +367,9 @@ class MessagingManager @Inject constructor(
 
             val allowCommands = serverManager.integrationRepository(webhookServerId).isTrusted()
             when {
+                jsonData[NotificationData.MESSAGE] == "command_call" && allowCommands -> {
+                    nativeCallDispatcher.receive(webhookServerId, jsonData)
+                }
                 jsonData[NotificationData.MESSAGE] == REQUEST_LOCATION_UPDATE && allowCommands -> {
                     Timber.d("Request location update")
                     requestAccurateLocationUpdate()
