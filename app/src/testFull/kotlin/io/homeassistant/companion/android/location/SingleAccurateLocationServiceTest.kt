@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -53,28 +54,58 @@ class SingleAccurateLocationServiceTest {
         val context = mockk<Context>(relaxed = true)
         every { context.startForegroundService(any()) } throws IllegalStateException("not allowed")
 
-        assertFalse(SingleAccurateLocationService.start(context))
+        assertNull(SingleAccurateLocationService.start(context))
     }
 
     @Test
     fun `Given two requests running when the first one stops then the service keeps running until the second stops`() {
         val context = mockk<Context>(relaxed = true)
-        SingleAccurateLocationService.start(context)
-        SingleAccurateLocationService.start(context)
+        val first = checkNotNull(SingleAccurateLocationService.start(context))
+        val second = checkNotNull(SingleAccurateLocationService.start(context))
         verify(exactly = 1) { context.startForegroundService(any()) }
         createService()
 
-        SingleAccurateLocationService.stop(context)
+        SingleAccurateLocationService.stop(context, first)
         verify(exactly = 0) { context.stopService(any()) }
 
-        SingleAccurateLocationService.stop(context)
+        SingleAccurateLocationService.stop(context, second)
+        verify(exactly = 1) { context.stopService(any()) }
+    }
+
+    @Test
+    fun `Given two requests running when the first one stops twice then the service keeps running for the second`() {
+        val context = mockk<Context>(relaxed = true)
+        val first = checkNotNull(SingleAccurateLocationService.start(context))
+        checkNotNull(SingleAccurateLocationService.start(context))
+        createService()
+
+        SingleAccurateLocationService.stop(context, first)
+        SingleAccurateLocationService.stop(context, first)
+
+        verify(exactly = 0) { context.stopService(any()) }
+    }
+
+    @Test
+    fun `Given a request from before the service stopped when it stops then a newer request keeps the service`() {
+        val context = mockk<Context>(relaxed = true)
+        val old = checkNotNull(SingleAccurateLocationService.start(context))
+        createService()
+        controller?.destroy()
+        val newer = checkNotNull(SingleAccurateLocationService.start(context))
+        createService()
+
+        SingleAccurateLocationService.stop(context, old)
+        verify(exactly = 0) { context.stopService(any()) }
+
+        SingleAccurateLocationService.stop(context, newer)
         verify(exactly = 1) { context.stopService(any()) }
     }
 
     @Test
     fun `Given stop requested before the service was created when created then it stops itself`() {
-        SingleAccurateLocationService.start(ApplicationProvider.getApplicationContext())
-        SingleAccurateLocationService.stop(ApplicationProvider.getApplicationContext())
+        val context = ApplicationProvider.getApplicationContext<HiltTestApplication>()
+        val request = checkNotNull(SingleAccurateLocationService.start(context))
+        SingleAccurateLocationService.stop(context, request)
 
         val service = createService()
 

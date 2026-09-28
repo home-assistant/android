@@ -34,10 +34,14 @@ private const val NOTIFICATION_ID = "SingleAccurateLocationNotification"
  * foreground service are not throttled.
  *
  * The service makes no location request itself. Each caller calls [start], makes its request and calls
- * [stop] when it has its fix. The service runs until the last caller stopped it, or for [MAX_DURATION] at
- * most.
+ * [stop] with the returned [Request] when it has its fix. The service runs until every request stopped it,
+ * or for [MAX_DURATION] at most.
  */
 class SingleAccurateLocationService : Service() {
+
+    /** A request that keeps the service running, returned by [start] and released with [stop]. */
+    @JvmInline
+    value class Request(private val id: Long)
 
     companion object {
         /** Upper bound for one single accurate location request, and for this service. */
@@ -45,39 +49,49 @@ class SingleAccurateLocationService : Service() {
 
         private var isRunning = false
 
-        // Callers that started the service and haven't stopped it yet
-        private var activeRequests = 0
+        // Requests that started the service and haven't stopped it yet. Cleared when the service stops, so
+        // a request from before a restart can't stop the service a newer request is waiting on.
+        private val activeRequests = mutableSetOf<Request>()
+        private var lastRequestId = 0L
 
         private var stopRequested = false
 
         /**
          * Starts the service, or joins it when another request already started it.
          *
-         * @return `false` when Android does not allow the app to start a foreground service right now;
-         * the location request then runs throttled, as it would without this service.
+         * @return the request to pass to [stop], or `null` when Android does not allow the app to start a
+         * foreground service right now; the location request then runs throttled, as it would without this
+         * service.
          */
         @Synchronized
-        fun start(context: Context): Boolean {
-            if (activeRequests++ > 0) return true
+        fun start(context: Context): Request? {
+            val request = Request(++lastRequestId)
+            if (activeRequests.isNotEmpty()) {
+                activeRequests += request
+                return request
+            }
             stopRequested = false
             return try {
                 ContextCompat.startForegroundService(
                     context,
                     Intent(context, SingleAccurateLocationService::class.java),
                 )
-                true
+                activeRequests += request
+                request
             } catch (e: Exception) {
                 // ForegroundServiceStartNotAllowedException on Android 12+ when the app has no exemption
                 Timber.w(e, "Unable to start single accurate location service")
-                activeRequests = 0
-                false
+                null
             }
         }
 
-        /** Stops the service once every caller of [start] has called this. */
+        /**
+         * Releases [request], and stops the service once no request is left. Stopping the same request twice,
+         * or a request from before the service last stopped, does nothing.
+         */
         @Synchronized
-        fun stop(context: Context) {
-            if (activeRequests == 0 || --activeRequests > 0) return
+        fun stop(context: Context, request: Request) {
+            if (!activeRequests.remove(request) || activeRequests.isNotEmpty()) return
             if (isRunning) {
                 context.stopService(Intent(context, SingleAccurateLocationService::class.java))
             } else {
@@ -97,7 +111,7 @@ class SingleAccurateLocationService : Service() {
         @Synchronized
         private fun onStopped() {
             isRunning = false
-            activeRequests = 0
+            activeRequests.clear()
         }
     }
 
