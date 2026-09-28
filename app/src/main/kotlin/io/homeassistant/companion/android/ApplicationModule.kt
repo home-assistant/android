@@ -29,6 +29,7 @@ object ApplicationModule {
     @io.homeassistant.companion.android.common.data.integration.NativeCallsSupport
     fun providesNativeCallsSupport(@ApplicationContext context: Context): Boolean =
         SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) &&
             context.packageManager.hasSystemFeature(
                 if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                     PackageManager.FEATURE_TELECOM

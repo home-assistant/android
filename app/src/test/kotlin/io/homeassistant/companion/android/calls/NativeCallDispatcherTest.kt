@@ -21,6 +21,23 @@ import org.junit.jupiter.api.assertNull
 @OptIn(ExperimentalCoroutinesApi::class)
 class NativeCallDispatcherTest {
     @Test
+    fun `Given an outgoing descriptor when ringing is requested then reject it without reserving a call`() = runTest {
+        SdkVersion.sdkInt = 34
+        val context = mockk<Context>(relaxed = true)
+        val repository = mockk<NativeCallRepository>()
+        val state = NativeCallStateRepository()
+        val token = NativeCallInvitation(1, "outgoing", "/api/provider/call")
+        coEvery { repository.request(token) } returns NativeCallDescription(token.callId, "ringing", "Peer", direction = "outgoing")
+        NativeCallDispatcher(context, repository, state, true).receive(
+            1,
+            mapOf("call_id" to token.callId, "call_path" to token.path, "call_action" to "ring"),
+        )
+        assertNull(state.state.value)
+        verify(exactly = 0) { context.startService(any()) }
+        verify(exactly = 0) { context.startForegroundService(any()) }
+    }
+
+    @Test
     fun `Given cancellation during validation when the old response arrives then do not start a service`() = runTest {
         SdkVersion.sdkInt = 34
         val context = mockk<Context>(relaxed = true)

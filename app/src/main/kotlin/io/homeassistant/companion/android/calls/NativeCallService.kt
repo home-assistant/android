@@ -153,7 +153,12 @@ internal class NativeCallService : LifecycleService() {
         var control: CallControlScope? = null
         var answered = false
         var ringtone: Ringtone? = null
-        val terminalAction = { if (answered) "hangup" else "decline" }
+        val terminalAction = {
+            when (state.state.value?.phase) {
+                NativeCallPhase.Connecting, NativeCallPhase.Active -> "hangup"
+                else -> "decline"
+            }
+        }
         suspend fun connectMedia(description: NativeCallDescription) {
             if (answered) return
             val mediaPath = activateMedia(incoming, description) ?: return
@@ -168,12 +173,13 @@ internal class NativeCallService : LifecycleService() {
             }
         }
         suspend fun answer() {
+            if (!state.beginAnswer(invitation)) return
             if (!publish(incoming.copy(phase = NativeCallPhase.Connecting))) return
             connectMedia(repository.request(invitation, "answer", clientId))
         }
         val callbacks = NativeCallCallbacks(
             onAnswer = { answer() },
-            onDisconnect = { repository.request(invitation, terminalAction(), clientId) },
+            onDisconnect = { state.send(NativeCallCommand.Disconnected(invitation)) },
         )
 
         try {
@@ -193,7 +199,7 @@ internal class NativeCallService : LifecycleService() {
                 }
                 val callControl = this
                 workers += callScope.launch {
-                    handleCommands(invitation, callControl, ::answer, terminalAction)
+                    handleCommands(invitation, callControl, ::answer)
                 }
             }
         } finally {
@@ -254,7 +260,6 @@ internal class NativeCallService : LifecycleService() {
         invitation: NativeCallInvitation,
         control: CallControlScope,
         answerCall: suspend () -> Unit,
-        terminalAction: () -> String,
     ) {
         while (true) {
             val command = state.nextCommand()
@@ -269,10 +274,10 @@ internal class NativeCallService : LifecycleService() {
                     }
                 }
                 is NativeCallCommand.End -> {
-                    finishProviderCall(invitation, terminalAction())
                     control.disconnect(DisconnectCause(DisconnectCause.LOCAL))
                     return
                 }
+                is NativeCallCommand.Disconnected -> return
                 is NativeCallCommand.Cancel -> {
                     control.disconnect(DisconnectCause(DisconnectCause.REMOTE))
                     return

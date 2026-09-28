@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.call
 
+import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
@@ -92,7 +93,12 @@ class NativeCallRepository @Inject constructor(
         }.toString().toHttpUrl()
         val url = nativeCallUrl(base, path)
         require(connection.canSafelySendCredentials(url.toString())) { "Unsafe call connection" }
-        val token = serverManager.authenticationRepository(serverId).buildBearerToken()
+        val token = try {
+            serverManager.authenticationRepository(serverId).buildBearerToken()
+        } catch (_: AuthorizationException) {
+            // Authentication errors can contain private server response bodies.
+            throw IOException("Unable to authenticate the call provider")
+        }
         return Request.Builder().url(url).header("Authorization", token)
     }
 }

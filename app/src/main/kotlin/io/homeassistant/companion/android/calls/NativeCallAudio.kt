@@ -67,13 +67,18 @@ internal class NativeCallAudio @Inject constructor(
                     val rx = negotiation["rx_format"]?.jsonPrimitive?.content ?: return
                     val paths = NativeCallAudioPaths.from(
                         negotiation["audio_mode"]?.jsonPrimitive?.content ?: "full_duplex",
-                        negotiation["audio_direction"]?.jsonPrimitive?.content ?: "sendrecv",
-                        negotiation["remote_connection_held"]?.jsonPrimitive?.booleanOrNull ?: false,
+                        requireNotNull(negotiation["audio_direction"]?.jsonPrimitive?.content) {
+                            "Missing audio direction"
+                        },
+                        negotiation["remote_connection_held"]?.let { requireNotNull(it.jsonPrimitive.booleanOrNull) }
+                            ?: false,
                     )
                     formats.value =
                         CallAudioFormats(NativeCallPcmFormat.parse(tx), NativeCallPcmFormat.parse(rx), paths)
-                } catch (error: IllegalArgumentException) {
-                    ended.completeExceptionally(IOException("Invalid call audio negotiation", error))
+                } catch (_: IllegalArgumentException) {
+                    ended.completeExceptionally(IOException("Invalid call audio negotiation"))
+                } catch (_: IllegalStateException) {
+                    ended.completeExceptionally(IOException("Invalid call audio negotiation"))
                 }
             }
 

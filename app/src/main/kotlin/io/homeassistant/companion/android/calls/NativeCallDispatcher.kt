@@ -76,8 +76,9 @@ class NativeCallDispatcher @Inject internal constructor(
         }
     }
 
-    private fun eligible(description: NativeCallDescription): Boolean =
-        description.state == "ringing" && (description.remainingMs?.let { it > 0 } != false)
+    private fun eligible(description: NativeCallDescription): Boolean = description.direction == "incoming" &&
+        description.state == "ringing" &&
+        (description.remainingMs?.let { it > 0 } != false)
 
     @RequiresApi(Build.VERSION_CODES.O)
     private suspend fun startService(invitation: NativeCallInvitation, description: NativeCallDescription): Boolean {

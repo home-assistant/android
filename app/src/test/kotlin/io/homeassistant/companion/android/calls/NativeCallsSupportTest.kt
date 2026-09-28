@@ -33,6 +33,7 @@ class NativeCallsSupportTest {
             every { manager.hasSystemFeature(any()) } returns false
             val feature = if (version >= 33) PackageManager.FEATURE_TELECOM else PackageManager.FEATURE_CONNECTION_SERVICE
             every { manager.hasSystemFeature(feature) } returns true
+            every { manager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) } returns true
             assertTrue(ApplicationModule.providesNativeCallsSupport(context))
         }
     }
@@ -46,6 +47,9 @@ class NativeCallsSupportTest {
         SdkVersion.sdkInt = 34
         assertFalse(ApplicationModule.providesNativeCallsSupport(context))
         every { manager.hasSystemFeature(PackageManager.FEATURE_TELECOM) } returns true
+        assertFalse(ApplicationModule.providesNativeCallsSupport(context))
+        every { manager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) } returns true
+        assertTrue(ApplicationModule.providesNativeCallsSupport(context))
         every { manager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) } returns true
         assertFalse(ApplicationModule.providesNativeCallsSupport(context))
         SdkVersion.sdkInt = 25

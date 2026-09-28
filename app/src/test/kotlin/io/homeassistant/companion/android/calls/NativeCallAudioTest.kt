@@ -39,6 +39,44 @@ class NativeCallAudioTest {
 
     @Test fun `Given capture initialization failure then release playback and allow another session`() = checkFailure(true)
 
+    @Test
+    fun `Given malformed negotiation when received then close without capturing and allow a clean session`() = runTest {
+        val repository = mockk<NativeCallRepository>()
+        val socket = mockk<WebSocket>(relaxed = true)
+        mockkConstructor(AudioRecord.Builder::class, AudioTrack.Builder::class)
+        val prefix = "\"tx_format\":\"48000:s16le:1:10\",\"rx_format\":\"48000:s16le:1:10\""
+        var message = "[]"
+        var listener: WebSocketListener? = null
+        coEvery { repository.openMedia(any(), any(), any()) } coAnswers {
+            listener = thirdArg()
+            listener!!.onMessage(socket, message)
+            socket
+        }
+        every { socket.send(any<String>()) } answers {
+            listener!!.onClosed(socket, 1000, "")
+            true
+        }
+        val audio = NativeCallAudio(repository, StandardTestDispatcher(testScheduler))
+        val invalid = listOf("[]", "null", "true", "{$prefix}", "{$prefix,\"audio_direction\":[]}", "{$prefix,\"audio_direction\":\"sendrecv\",\"remote_connection_held\":\"invalid\"}")
+        for (payload in invalid) {
+            message = payload
+            val failed = async { runCatching { audio.run(1, "/api/provider/media") } }
+            advanceUntilIdle()
+            val error = failed.await().exceptionOrNull()
+            assertTrue(error is IOException)
+            assertEquals("Invalid call audio negotiation", error?.message)
+        }
+        verify(exactly = invalid.size) { socket.cancel() }
+        verify(exactly = 0) { anyConstructed<AudioRecord.Builder>().setAudioSource(any()) }
+        verify(exactly = 0) { anyConstructed<AudioTrack.Builder>().setAudioAttributes(any()) }
+        message = "{$prefix,\"audio_direction\":\"inactive\"}"
+        val retry = async { audio.run(1, "/api/provider/media") }
+        advanceUntilIdle()
+        retry.await()
+        verify(exactly = invalid.size + 1) { socket.cancel() }
+        verify(exactly = 1) { socket.send("{\"type\":\"audio_ready\"}") }
+    }
+
     private fun checkFailure(failCapture: Boolean) = runTest {
         val repository = mockk<NativeCallRepository>()
         val socket = mockk<WebSocket>(relaxed = true)

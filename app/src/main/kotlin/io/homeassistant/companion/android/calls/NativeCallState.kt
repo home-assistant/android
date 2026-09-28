@@ -30,6 +30,7 @@ internal sealed interface NativeCallCommand {
     sealed interface Terminal : NativeCallCommand
     data class End(override val invitation: NativeCallInvitation) : Terminal
     data class Cancel(override val invitation: NativeCallInvitation) : Terminal
+    data class Disconnected(override val invitation: NativeCallInvitation) : Terminal
 }
 
 /** Call-scoped mailbox; terminal intent survives command backpressure. */
@@ -41,6 +42,15 @@ internal class NativeCallStateRepository @Inject constructor() {
     private val terminalWakeup = Channel<NativeCallCommand.Terminal>(Channel.CONFLATED)
 
     fun start(state: NativeCallState): Boolean = mutableState.compareAndSet(null, state)
+
+    /** Reserve the answer attempt before any suspending provider request. */
+    fun beginAnswer(invitation: NativeCallInvitation): Boolean {
+        val current = mutableState.value ?: return false
+        return current.invitation == invitation &&
+            current.phase == NativeCallPhase.Ringing &&
+            current.termination == null &&
+            mutableState.compareAndSet(current, current.copy(phase = NativeCallPhase.Connecting))
+    }
 
     fun publish(state: NativeCallState): Boolean = mutableState.updateAndGet { current ->
         if (current?.invitation == state.invitation && current.termination == null) state else current

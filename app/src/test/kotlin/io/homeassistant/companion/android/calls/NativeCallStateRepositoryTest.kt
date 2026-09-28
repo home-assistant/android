@@ -9,6 +9,23 @@ import org.junit.jupiter.api.Test
 
 class NativeCallStateRepositoryTest {
     @Test
+    fun `Given repeated answers when starting then only one attempt owns the transition`() {
+        val state = NativeCallStateRepository()
+        val token = NativeCallInvitation(1, "call", "/api/call?generation=1")
+        state.start(NativeCallState(token, "Peer", NativeCallPhase.Ringing))
+        assertFalse(state.beginAnswer(token.copy(serverId = 2)))
+        assertTrue(state.beginAnswer(token))
+        assertFalse(state.beginAnswer(token))
+        assertEquals(NativeCallPhase.Connecting, state.state.value?.phase)
+        state.send(NativeCallCommand.Disconnected(token))
+        assertFalse(state.publish(NativeCallState(token, "Late answer", NativeCallPhase.Active)))
+        state.finish(token)
+        val next = token.copy(path = "/api/call?generation=2")
+        assertTrue(state.start(NativeCallState(next, "Peer", NativeCallPhase.Ringing)))
+        assertTrue(state.beginAnswer(next))
+    }
+
+    @Test
     fun `Given another generation or server when answering then leave the current call alone`() {
         val repository = NativeCallStateRepository()
         val current = NativeCallInvitation(1, "call", "/api/call?generation=2")
