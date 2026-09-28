@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import io.homeassistant.companion.android.settings.sensor.SensorSettingsViewMode
 import io.homeassistant.companion.android.settings.views.SettingsRow
 import io.homeassistant.companion.android.settings.views.SettingsSubheader
 import io.homeassistant.companion.android.settings.views.SettingsSubheaderDefaults
+import io.homeassistant.companion.android.util.compose.verticalScrollBar
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -29,23 +31,25 @@ fun SensorListView(
     onSensorClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val lazyListState = rememberLazyListState()
+    val filteredSensors = viewModel.allSensors.filter { it.value.isNotEmpty() }.entries.toList()
+
     LazyColumn(
-        modifier = modifier,
+        state = lazyListState,
+        modifier = modifier.verticalScrollBar(lazyListState),
         contentPadding = safeBottomPaddingValues(applyHorizontal = false),
     ) {
-        viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
+        filteredSensors.forEachIndexed { index, (manager, currentSensors) ->
             stickyHeader(
                 key = manager.id(),
             ) {
-                if (currentSensors.any()) {
-                    SettingsSubheader(
-                        text = stringResource(manager.name),
-                        modifier = Modifier
-                            .background(MaterialTheme.colors.background)
-                            .fillMaxWidth(),
-                        textPadding = SettingsSubheaderDefaults.TextWithIconRowPadding,
-                    )
-                }
+                SettingsSubheader(
+                    text = stringResource(manager.name),
+                    modifier = Modifier
+                        .background(MaterialTheme.colors.background)
+                        .fillMaxWidth(),
+                    textPadding = SettingsSubheaderDefaults.TextWithIconRowPadding,
+                )
             }
             items(
                 items = currentSensors,
@@ -57,7 +61,7 @@ fun SensorListView(
                     onSensorClicked = onSensorClicked,
                 )
             }
-            if (currentSensors.any() && manager.id() != viewModel.allSensors.keys.last().id()) {
+            if (index < filteredSensors.lastIndex) {
                 item {
                     Divider()
                 }
@@ -73,15 +77,16 @@ fun SensorRow(
     onSensorClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isEnabled = dbSensor?.enabled == true
     var iconToUse = basicSensor.statelessIcon
-    if (dbSensor?.enabled == true && dbSensor.icon.isNotBlank()) {
+    if (isEnabled && dbSensor.icon.isNotBlank()) {
         iconToUse = dbSensor.icon
     }
     val mdiIcon = Mdi.fromHaName(iconToUse)
 
     SettingsRow(
         primaryText = stringResource(basicSensor.name),
-        secondaryText = if (dbSensor?.enabled == true) {
+        secondaryText = if (isEnabled) {
             if (dbSensor.state.isBlank()) {
                 stringResource(commonR.string.enabled)
             } else {
@@ -95,7 +100,7 @@ fun SensorRow(
             stringResource(commonR.string.disabled)
         },
         mdiIcon = mdiIcon,
-        enabled = dbSensor?.enabled == true,
+        enabled = isEnabled,
         modifier = modifier,
     ) { onSensorClicked(basicSensor.id) }
 }
