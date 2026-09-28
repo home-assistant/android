@@ -1,25 +1,15 @@
 package io.homeassistant.companion.android.util
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.annotation.VisibleForTesting
-import coil3.ImageLoader
-import coil3.imageLoader
-import coil3.memory.MemoryCache
-import coil3.network.NetworkHeaders
-import coil3.network.httpHeaders
-import coil3.request.ImageRequest
-import coil3.request.allowHardware
-import coil3.toBitmap
-import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.integration.isPersonOf
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
+import io.homeassistant.companion.android.imageloader.HAImageCachePolicy
+import io.homeassistant.companion.android.imageloader.HAImageLoader
+import io.homeassistant.companion.android.imageloader.HAImageRequest
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 private const val ATTRIBUTE_ENTITY_PICTURE = "entity_picture"
@@ -40,19 +30,12 @@ internal fun avatarCacheKey(serverId: Int, picturePath: String): String = "serve
  * Loads the profile picture of a server's current user.
  *
  * The picture is taken from the `person` entity linked to the user and authenticated with the
- * server's bearer token. Results are cached by Coil, so repeated calls do not re-download.
+ * server's bearer token. Results are cached by [HAImageLoader], so repeated calls do not re-download.
  */
-class ServerUserAvatarUseCase @VisibleForTesting constructor(
-    private val context: Context,
-    private val imageLoader: ImageLoader,
+class ServerUserAvatarUseCase @Inject constructor(
+    private val imageLoader: HAImageLoader,
     private val serverManager: ServerManager,
 ) {
-    @Inject
-    constructor(
-        @ApplicationContext context: Context,
-        serverManager: ServerManager,
-    ) : this(context, imageLoader = context.imageLoader, serverManager)
-
     /**
      * Returns the current user's profile picture for the server identified by [serverId], or `null`
      * when there is no resolvable picture for it.
@@ -71,7 +54,7 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
             if (url != null && serverManager.connectionStateProvider(serverId).canSafelySendCredentials(url)) {
                 downloadAvatar(serverId = serverId, url = url, cacheKey = cacheKey)
             } else {
-                cachedAvatar(cacheKey)
+                imageLoader.getCachedBitmap(cacheKey)
             }
         } catch (e: CancellationException) {
             throw e
@@ -101,29 +84,12 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
 
     private suspend fun downloadAvatar(serverId: Int, url: String, cacheKey: String): Bitmap? {
         val token = serverManager.authenticationRepository(serverId).buildBearerToken()
-        val request = ImageRequest.Builder(context)
-            .data(url)
-            .memoryCacheKey(cacheKey)
-            .diskCacheKey(cacheKey)
-            .httpHeaders(NetworkHeaders.Builder().add(HEADER_AUTHORIZATION, token).build())
-            // We turn the bitmap into a software bitmap so it can be drawn by Compose in any context.
-            .allowHardware(false)
-            .build()
-        return imageLoader.execute(request).image?.toBitmap()
-    }
-
-    /**
-     * Returns a previously cached avatar for [cacheKey] without touching the network, looking first
-     * in Coil's in-memory cache and then in its on-disk cache. Returns `null` on a cache miss.
-     */
-    private suspend fun cachedAvatar(cacheKey: String): Bitmap? {
-        imageLoader.memoryCache?.get(MemoryCache.Key(cacheKey))?.image?.toBitmap()?.let { return it }
-
-        val diskCache = imageLoader.diskCache ?: return null
-        return withContext(Dispatchers.IO) {
-            diskCache.openSnapshot(cacheKey)?.use { snapshot ->
-                BitmapFactory.decodeFile(snapshot.data.toString())
-            }
-        }
+        return imageLoader.loadBitmap(
+            HAImageRequest(
+                url = url,
+                cachePolicy = HAImageCachePolicy.Enabled(key = cacheKey),
+                headers = mapOf(HEADER_AUTHORIZATION to token),
+            ),
+        )
     }
 }

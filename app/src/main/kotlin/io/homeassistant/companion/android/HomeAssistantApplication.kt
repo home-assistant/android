@@ -14,9 +14,6 @@ import android.telephony.TelephonyManager
 import android.webkit.WebView
 import androidx.core.content.ContextCompat
 import androidx.webkit.WebViewCompat
-import coil3.ImageLoader
-import coil3.SingletonImageLoader
-import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
@@ -29,6 +26,7 @@ import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.imageloader.HAImageLoader
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
@@ -63,6 +61,9 @@ open class HomeAssistantApplication : Application() {
 
     @Inject
     lateinit var okHttpClientProvider: SuspendProvider<OkHttpClient>
+
+    @Inject
+    lateinit var imageLoader: HAImageLoader
 
     @Inject
     lateinit var languagesManager: LanguagesManager
@@ -104,19 +105,7 @@ open class HomeAssistantApplication : Application() {
                 prefsRepository.isCrashReporting(),
             )
             initCrashSaving(applicationContext)
-            val okHttpClient = okHttpClientProvider()
-
-            SingletonImageLoader.setSafe {
-                ImageLoader.Builder(this@HomeAssistantApplication)
-                    .components {
-                        add(
-                            OkHttpNetworkFetcherFactory(
-                                callFactory = okHttpClient,
-                            ),
-                        )
-                    }
-                    .build()
-            }
+            imageLoader.init(okHttpClientProvider())
 
             configureWebViewDebugging(enabled = BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled())
 

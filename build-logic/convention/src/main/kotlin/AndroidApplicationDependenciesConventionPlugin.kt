@@ -27,6 +27,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                 dependencies {
                     "implementation"(project(":common"))
                     "implementation"(project(":microwakeword"))
+                    "implementation"(project(":image-loader"))
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
@@ -53,8 +54,6 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(platform(libs.okhttp.bom))
                     "implementation"(libs.okhttp.android)
-
-                    "implementation"(libs.bundles.coil)
 
                     "fullImplementation"(libs.play.services.location)
                     "fullImplementation"(libs.play.services.home)

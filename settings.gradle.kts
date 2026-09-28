@@ -7,6 +7,7 @@ include(
     ":lint",
     ":microwakeword",
     ":provides-sensor-processor",
+    ":image-loader",
 )
 
 rootProject.name = "home-assistant-android"

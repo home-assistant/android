@@ -9,10 +9,6 @@ import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
-import coil3.imageLoader
-import coil3.request.ImageRequest
-import coil3.request.allowHardware
-import coil3.toBitmap
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.timoptr.mdiicons.Mdi
@@ -28,8 +24,12 @@ import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.imageloader.HAImageLoader
+import io.homeassistant.companion.android.imageloader.HAImageRequest
+import io.homeassistant.companion.android.imageloader.HAImageSize
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import java.util.LinkedList
+import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 private const val MEDIA_ICON_SIZE_DP = 24
+private const val MEDIA_IMAGE_SIZE_PX = 1024
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -59,6 +60,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         internal const val CALL_VOLUME_UP =
             "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_VOLUME_UP"
     }
+
+    @Inject
+    lateinit var imageLoader: HAImageLoader
 
     override fun getWidgetProvider(context: Context): ComponentName =
         ComponentName(context, MediaPlayerControlsWidget::class.java)
@@ -254,14 +258,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     )
                     Timber.d("Fetching media preview image")
                     try {
-                        context.imageLoader.execute(
-                            ImageRequest.Builder(context)
-                                .data(url)
-                                // RemoteViews requires software bitmaps for serialization
-                                .allowHardware(false)
-                                .size(1024)
-                                .build(),
-                        ).image?.toBitmap()?.let {
+                        imageLoader.loadBitmap(
+                            HAImageRequest(url = url, size = HAImageSize.Exact(MEDIA_IMAGE_SIZE_PX)),
+                        )?.let {
                             setImageViewBitmap(R.id.widgetMediaImage, it)
                         }
                     } catch (e: CancellationException) {

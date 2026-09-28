@@ -1,13 +1,5 @@
 package io.homeassistant.companion.android.util
 
-import coil3.Image
-import coil3.ImageLoader
-import coil3.disk.DiskCache
-import coil3.memory.MemoryCache
-import coil3.network.httpHeaders
-import coil3.request.ImageRequest
-import coil3.request.ImageResult
-import coil3.request.allowHardware
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -16,32 +8,30 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.homeassistant.companion.android.imageloader.HAImageCachePolicy
+import io.homeassistant.companion.android.imageloader.HAImageLoader
+import io.homeassistant.companion.android.imageloader.HAImageRequest
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import io.mockk.verify
 import java.net.URL
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerUserAvatarUseCaseTest {
 
-    // The context is only stored on the ImageRequest (its methods are never called at build time),
-    // so a relaxed mock is enough and we avoid needing Robolectric.
-    private val imageLoader: ImageLoader = mockk()
+    private val imageLoader: HAImageLoader = mockk()
     private val serverManager: ServerManager = mockk()
 
     private val useCase = ServerUserAvatarUseCase(
-        context = mockk(relaxed = true),
         imageLoader = imageLoader,
         serverManager = serverManager,
     )
@@ -64,12 +54,6 @@ class ServerUserAvatarUseCaseTest {
         lastChanged = LocalDateTime.now(),
         lastUpdated = LocalDateTime.now(),
     )
-
-    private fun imageResult(image: Image? = null): ImageResult {
-        val result = mockk<ImageResult>()
-        every { result.image } returns image
-        return result
-    }
 
     /** Stubs [serverManager] so the user on [serverId] resolves to a person with [picture]. */
     private fun givenServerWithPersonPicture(serverId: Int, picture: String) {
@@ -113,37 +97,37 @@ class ServerUserAvatarUseCaseTest {
     @Test
     fun `Given a resolvable picture when getUserAvatar then the avatar is downloaded`() = runTest {
         givenServerWithPersonPicture(serverId = 1, picture = "http://homeassistant.local:8123/api/image/serve/abc")
-        coEvery { imageLoader.execute(any()) } returns imageResult()
+        coEvery { imageLoader.loadBitmap(any()) } returns null
 
         useCase.getUserAvatar(1)
 
-        coVerify { imageLoader.execute(any()) }
+        coVerify { imageLoader.loadBitmap(any()) }
     }
 
     @Test
     fun `Given a download when getUserAvatar then the request is keyed by the base-URL-agnostic cache key`() = runTest {
         val picture = "http://homeassistant.local:8123/api/image/serve/abc"
         givenServerWithPersonPicture(serverId = 1, picture = picture)
-        val request = slot<ImageRequest>()
-        coEvery { imageLoader.execute(capture(request)) } returns imageResult()
+        val request = slot<HAImageRequest>()
+        coEvery { imageLoader.loadBitmap(capture(request)) } returns null
 
         useCase.getUserAvatar(1)
 
-        val cacheKey = avatarCacheKey(serverId = 1, picturePath = picture)
-        assertEquals(cacheKey, request.captured.diskCacheKey)
-        assertEquals(cacheKey, request.captured.memoryCacheKey)
+        assertEquals(
+            HAImageCachePolicy.Enabled(key = avatarCacheKey(serverId = 1, picturePath = picture)),
+            request.captured.cachePolicy,
+        )
     }
 
     @Test
-    fun `Given a download when getUserAvatar then the request disables hardware bitmaps and carries the bearer token`() = runTest {
+    fun `Given a download when getUserAvatar then the request carries the bearer token`() = runTest {
         givenServerWithPersonPicture(serverId = 1, picture = "http://homeassistant.local:8123/api/image/serve/abc")
-        val request = slot<ImageRequest>()
-        coEvery { imageLoader.execute(capture(request)) } returns imageResult()
+        val request = slot<HAImageRequest>()
+        coEvery { imageLoader.loadBitmap(capture(request)) } returns null
 
         useCase.getUserAvatar(1)
 
-        assertFalse(request.captured.allowHardware)
-        assertEquals("Bearer token", request.captured.httpHeaders["Authorization"])
+        assertEquals(mapOf("Authorization" to "Bearer token"), request.captured.headers)
     }
 
     @Test
@@ -153,12 +137,12 @@ class ServerUserAvatarUseCaseTest {
             every { urlFlow() } returns flowOf(UrlState.HasUrl(URL("http://homeassistant.local:8123/")))
             coEvery { canSafelySendCredentials(any()) } returns true
         }
-        val request = slot<ImageRequest>()
-        coEvery { imageLoader.execute(capture(request)) } returns imageResult()
+        val request = slot<HAImageRequest>()
+        coEvery { imageLoader.loadBitmap(capture(request)) } returns null
 
         useCase.getUserAvatar(1)
 
-        assertEquals("http://homeassistant.local:8123/api/image/serve/abc", request.captured.data)
+        assertEquals("http://homeassistant.local:8123/api/image/serve/abc", request.captured.url)
     }
 
     @Test
@@ -168,20 +152,17 @@ class ServerUserAvatarUseCaseTest {
         coEvery { serverManager.connectionStateProvider(1) } returns mockk {
             coEvery { canSafelySendCredentials(any()) } returns false
         }
-        val memoryCache = mockk<MemoryCache>()
-        every { memoryCache.get(any()) } returns null
-        every { imageLoader.memoryCache } returns memoryCache
-        every { imageLoader.diskCache } returns null
+        coEvery { imageLoader.getCachedBitmap(any()) } returns null
 
         assertNull(useCase.getUserAvatar(1))
-        coVerify(exactly = 0) { imageLoader.execute(any()) }
-        verify { memoryCache.get(MemoryCache.Key(avatarCacheKey(serverId = 1, picturePath = picture))) }
+        coVerify(exactly = 0) { imageLoader.loadBitmap(any()) }
+        coVerify { imageLoader.getCachedBitmap(avatarCacheKey(serverId = 1, picturePath = picture)) }
     }
 
     @Test
     fun `Given the download yields no image when getUserAvatar then returns null`() = runTest {
         givenServerWithPersonPicture(serverId = 1, picture = "http://homeassistant.local:8123/api/image/serve/abc")
-        coEvery { imageLoader.execute(any()) } returns imageResult(image = null)
+        coEvery { imageLoader.loadBitmap(any()) } returns null
 
         assertNull(useCase.getUserAvatar(1))
     }
@@ -194,32 +175,11 @@ class ServerUserAvatarUseCaseTest {
         coEvery { serverManager.connectionStateProvider(1) } returns mockk {
             every { urlFlow() } returns flowOf(UrlState.HasUrl(null))
         }
-        val memoryCache = mockk<MemoryCache>()
-        every { memoryCache.get(any()) } returns null
-        every { imageLoader.memoryCache } returns memoryCache
-        every { imageLoader.diskCache } returns null
+        coEvery { imageLoader.getCachedBitmap(any()) } returns null
 
         assertNull(useCase.getUserAvatar(1))
-        verify { memoryCache.get(MemoryCache.Key(avatarCacheKey(serverId = 1, picturePath = picture))) }
-        coVerify(exactly = 0) { imageLoader.execute(any()) }
-    }
-
-    @Test
-    fun `Given the server is unreachable and the memory cache misses when getUserAvatar then the disk cache is queried`() = runTest {
-        val picture = "/api/image/serve/abc"
-        givenServerWithPersonPicture(serverId = 1, picture = picture)
-        coEvery { serverManager.connectionStateProvider(1) } returns mockk {
-            every { urlFlow() } returns flowOf(UrlState.HasUrl(null))
-        }
-        val memoryCache = mockk<MemoryCache>()
-        every { memoryCache.get(any()) } returns null
-        every { imageLoader.memoryCache } returns memoryCache
-        val diskCache = mockk<DiskCache>()
-        every { diskCache.openSnapshot(any()) } returns null
-        every { imageLoader.diskCache } returns diskCache
-
-        assertNull(useCase.getUserAvatar(1))
-        verify { diskCache.openSnapshot(avatarCacheKey(serverId = 1, picturePath = picture)) }
+        coVerify { imageLoader.getCachedBitmap(avatarCacheKey(serverId = 1, picturePath = picture)) }
+        coVerify(exactly = 0) { imageLoader.loadBitmap(any()) }
     }
 
     @Test

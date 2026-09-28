@@ -10,13 +10,6 @@ import android.content.res.Resources
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.os.BundleCompat
-import coil3.imageLoader
-import coil3.request.CachePolicy
-import coil3.request.ImageRequest
-import coil3.request.allowHardware
-import coil3.size.Precision
-import coil3.size.Size
-import coil3.toBitmap
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -26,6 +19,10 @@ import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.imageloader.HAImageCachePolicy
+import io.homeassistant.companion.android.imageloader.HAImageLoader
+import io.homeassistant.companion.android.imageloader.HAImageRequest
+import io.homeassistant.companion.android.imageloader.HAImageSize
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
@@ -56,6 +53,9 @@ class CameraWidget : AppWidgetProvider() {
 
     @Inject
     lateinit var cameraWidgetDao: CameraWidgetDao
+
+    @Inject
+    lateinit var imageLoader: HAImageLoader
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         // There may be multiple widgets active, so update all of them
@@ -159,18 +159,13 @@ class CameraWidget : AppWidgetProvider() {
                     )
                     Timber.d("Fetching camera image")
                     try {
-                        context.imageLoader.execute(
-                            ImageRequest.Builder(context)
-                                .data(url)
-                                // RemoteViews requires software bitmaps for serialization
-                                .allowHardware(false)
-                                .diskCachePolicy(CachePolicy.DISABLED)
-                                .memoryCachePolicy(CachePolicy.DISABLED)
-                                .networkCachePolicy(CachePolicy.READ_ONLY)
-                                .size(getWidgetBitmapSize(AppWidgetManager.getInstance(context), appWidgetId))
-                                .precision(Precision.INEXACT)
-                                .build(),
-                        ).image?.toBitmap()?.let {
+                        imageLoader.loadBitmap(
+                            HAImageRequest(
+                                url = url,
+                                size = getWidgetBitmapSize(AppWidgetManager.getInstance(context), appWidgetId),
+                                cachePolicy = HAImageCachePolicy.Disabled,
+                            ),
+                        )?.let {
                             setImageViewBitmap(R.id.widgetCameraImage, it)
                         }
                     } catch (e: CancellationException) {
@@ -267,7 +262,7 @@ class CameraWidget : AppWidgetProvider() {
     }
 
     /**
-     * Returns a [Size] based on the widget's allocated dimensions, capped to stay within the
+     * Returns a [HAImageSize.Inexact] based on the widget's allocated dimensions, capped to stay within the
      * RemoteViews bitmap memory limit. Falls back to the full screen width and height when the
      * widget manager does not report a size.
      *
@@ -278,7 +273,7 @@ class CameraWidget : AppWidgetProvider() {
      * under roughly 90% of that limit to leave headroom for other bitmap work in the same
      * RemoteViews.
      */
-    private fun getWidgetBitmapSize(appWidgetManager: AppWidgetManager, appWidgetId: Int): Size {
+    private fun getWidgetBitmapSize(appWidgetManager: AppWidgetManager, appWidgetId: Int): HAImageSize.Inexact {
         val res = Resources.getSystem()
         val screenWidth = res.displayMetrics.widthPixels
         val screenHeight = res.displayMetrics.heightPixels
@@ -307,15 +302,18 @@ class CameraWidget : AppWidgetProvider() {
             // bitmap stays within limits even if the source image is unusually tall.
             val cappedWidth = minOf(widthPx, maxPixels / maxOf(screenHeight, 1)).coerceAtLeast(1)
             val maxHeight = (maxPixels / cappedWidth).coerceAtLeast(1)
-            return Size(cappedWidth, maxHeight)
+            return HAImageSize.Inexact(cappedWidth, maxHeight)
         }
 
         // Scale down proportionally if the bitmap would exceed the safe pixel budget
         return if (widthPx.toLong() * heightPx > maxPixels) {
             val scale = sqrt(maxPixels.toDouble() / (widthPx.toLong() * heightPx)).toFloat()
-            Size((widthPx * scale).toInt().coerceAtLeast(1), (heightPx * scale).toInt().coerceAtLeast(1))
+            HAImageSize.Inexact(
+                width = (widthPx * scale).toInt().coerceAtLeast(1),
+                height = (heightPx * scale).toInt().coerceAtLeast(1),
+            )
         } else {
-            Size(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1))
+            HAImageSize.Inexact(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1))
         }
     }
 }
