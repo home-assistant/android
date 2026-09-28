@@ -49,6 +49,7 @@
     <ID>ImplicitDefaultLocale:StorageSensorManager.kt:StorageSensorManager$String.format("%,d", sizeLong)</ID>
     <ID>InjectDispatcher:BluetoothSensorManager.kt:BluetoothSensorManager$IO</ID>
     <ID>InjectDispatcher:ContextExt.kt:IO</ID>
+    <ID>InjectDispatcher:DataModule.kt:DataModule.Companion$IO</ID>
     <ID>InjectDispatcher:DefaultConnectivityChecker.kt:DefaultConnectivityChecker$IO</ID>
     <ID>InjectDispatcher:EntitiesForDisplayManager.kt:EntitiesForDisplayManager$Default</ID>
     <ID>InjectDispatcher:ExoPlayerExt.kt:Default</ID>
@@ -219,7 +220,6 @@
     <ID>SwallowedException:NetworkSensorManager.kt:NetworkSensorManager$e: NoSuchMethodException</ID>
     <ID>SwallowedException:TransmitterManager.kt:TransmitterManager$e: IllegalArgumentException</ID>
     <ID>SwallowedException:UrlUtil.kt:UrlUtil$e: IllegalArgumentException</ID>
-    <ID>SwallowedException:UrlUtil.kt:e: UnknownHostException</ID>
     <ID>ThrowsCount:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$private suspend fun maybeReregisterDeviceOnFailedUpdate</ID>
     <ID>ThrowsCount:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
     <ID>ThrowsCount:ServerConnectionStateProvider.kt:suspend fun &lt;T&gt; tryOnUrls: T</ID>
@@ -314,7 +314,6 @@
     <ID>UseOrEmpty:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$jsonArray?.toStringList() ?: emptyList()</ID>
     <ID>UseOrEmpty:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$localStorage().getString(PREF_TILE_SHORTCUTS)?.let { jsonStr -&gt; runCatching { jsonStr.toJsonObjectOrNull() }.fold( onSuccess = { jsonObject -&gt; buildMap { jsonObject?.keys?.forEach { stringKey -&gt; val intKey = stringKey.takeUnless { it == "null" }?.toInt() val jsonArray = jsonObject[stringKey]?.jsonArrayOrNull() val entities = jsonArray?.toStringList() ?: emptyList() put(intKey, entities) } } }, onFailure = { // backward compatibility with the previous format when there was only one Shortcut Tile: val jsonArray = jsonStr.toJsonObjectOrNull()?.jsonArrayOrNull() jsonArray?.let { val entities = jsonArray.toStringList() mapOf( // the key is null since we don't (yet) have the tileId null to entities, ) } }, ) } ?: emptyMap()</ID>
     <ID>UseOrEmpty:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$localStorage().getString(PREF_TILE_TEMPLATES)?.let { jsonStr -&gt; kotlinJsonMapper.decodeFromString&lt;Map&lt;String, TemplateTileConfig&gt;&gt;(jsonStr) .mapKeys { it.key.toInt() } } ?: emptyMap()</ID>
-    <ID>UseRequire:JsonUtil.kt:throw IllegalArgumentException("Unsupported type: ${key?.javaClass} as map key")</ID>
     <ID>UseRequire:TransmitterManager.kt:TransmitterManager$throw IllegalArgumentException("Invalid Major or Minor")</ID>
     <ID>VarCouldBeVal:AssistViewModelBase.kt:AssistViewModelBase$private var continueConversation = AtomicBoolean(false)</ID>
     <ID>VarCouldBeVal:BluetoothSensorManager.kt:BluetoothSensorManager.Companion$private var beaconMonitoringDevice = IBeaconMonitor()</ID>

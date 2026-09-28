@@ -21,14 +21,20 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkAll
+import java.net.InetAddress
+import java.net.URL
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -90,6 +96,11 @@ class NameYourDeviceViewModelTest {
             messagingTokenProvider,
             defaultName = DEFAULT_DEVICE_NAME,
         )
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
@@ -233,7 +244,17 @@ class NameYourDeviceViewModelTest {
 
     @Test
     fun `Given public secure url when onSaveClick then emits DeviceNameSaved with hasPlainTextAccess to false and isPubliclyAccessible true and enforces secure connection`() = runTest {
-        val secureRoute = NameYourDeviceRoute("https://www.home-assistant.io", "auth_code")
+        val url = URL("https://www.home-assistant.io")
+        mockkStatic(InetAddress::class)
+        every { InetAddress.getAllByName(url.host) } returns arrayOf(
+            mockk<InetAddress>().apply {
+                every { isSiteLocalAddress } returns false
+                every { isLoopbackAddress } returns false
+                every { isLinkLocalAddress } returns false
+                every { isAnyLocalAddress } returns false
+            },
+        )
+        val secureRoute = NameYourDeviceRoute(url.toString(), "auth_code")
         viewModel = NameYourDeviceViewModel(
             secureRoute,
             serverManager,
