@@ -5,8 +5,10 @@ import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.io.IOException
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -31,11 +33,14 @@ private const val REQUEST_TIMEOUT_SECONDS = 5L
 private const val SOCKET_PING_SECONDS = 15L
 
 /** Authenticated access to a call provider on an already registered HA server. */
+@Singleton
 class NativeCallRepository @Inject constructor(
     private val serverManager: ServerManager,
     private val clientProvider: SuspendProvider<OkHttpClient>,
     @NativeCallIoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
+    val mediaClientId: String = UUID.randomUUID().toString()
+
     /** Fetch or control the exact call referenced by an invitation. */
     suspend fun request(
         invitation: NativeCallInvitation,
@@ -53,8 +58,8 @@ class NativeCallRepository @Inject constructor(
         val client = clientProvider().newBuilder().followRedirects(false).followSslRedirects(false)
             .callTimeout(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS).build()
         val response = client.newCall(builder.build()).awaitResponse()
-        return withContext(ioDispatcher) {
-            response.use {
+        return response.use {
+            withContext(ioDispatcher) {
                 if (!it.isSuccessful) throw IOException("Call provider returned HTTP ${it.code}")
                 val source = it.body.source()
                 require(!source.request(MAX_CALL_DESCRIPTION_BYTES + 1)) { "Call description is too large" }
@@ -72,7 +77,9 @@ class NativeCallRepository @Inject constructor(
 
     /** Open a bounded PCM session without handing credentials to the WebView. */
     suspend fun openMedia(serverId: Int, path: String, listener: WebSocketListener): WebSocket {
-        val request = authorizedRequest(serverId, path).build()
+        val base = authorizedRequest(serverId, path).build()
+        val url = base.url.newBuilder().setQueryParameter("client_id", mediaClientId).build()
+        val request = base.newBuilder().url(url).build()
         return clientProvider().newBuilder().followRedirects(false).followSslRedirects(false)
             .pingInterval(SOCKET_PING_SECONDS, TimeUnit.SECONDS).build().newWebSocket(request, listener)
     }

@@ -2,6 +2,8 @@ package io.homeassistant.companion.android
 
 import android.app.DownloadManager
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.content.getSystemService
 import androidx.work.WorkManager
 import dagger.Module
@@ -11,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
 import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
@@ -25,8 +28,14 @@ object ApplicationModule {
     @Provides
     @io.homeassistant.companion.android.common.data.integration.NativeCallsSupport
     fun providesNativeCallsSupport(@ApplicationContext context: Context): Boolean =
-        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
-            context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TELECOM) &&
+        SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
+            context.packageManager.hasSystemFeature(
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+                    PackageManager.FEATURE_TELECOM
+                } else {
+                    PackageManager.FEATURE_CONNECTION_SERVICE
+                },
+            ) &&
             !context.isAutomotive() &&
             !io.homeassistant.companion.android.util.QuestUtil.isQuest
 

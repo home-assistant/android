@@ -1540,4 +1540,5 @@
     <string name="native_calls">Phone calls</string>
     <string name="native_call_incoming">Incoming call</string>
     <string name="native_call_active">In call</string>
+    <string name="native_call_connecting">Connecting</string>
 </resources>

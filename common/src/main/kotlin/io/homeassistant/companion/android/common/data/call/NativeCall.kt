@@ -43,8 +43,9 @@ data class NativeCallDescription(
     val id: String,
     val state: String,
     val caller: String,
-    @SerialName("remaining_ms") val remainingMs: Long,
+    @SerialName("remaining_ms") val remainingMs: Long? = null,
     @SerialName("media_path") val mediaPath: String? = null,
+    val direction: String = "incoming",
 )
 
 /** PCM framing shared by the native media adapter and its server. */

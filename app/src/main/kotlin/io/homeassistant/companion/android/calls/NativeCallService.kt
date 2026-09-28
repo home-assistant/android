@@ -24,8 +24,8 @@ import io.homeassistant.companion.android.common.data.call.NativeCallDescription
 import io.homeassistant.companion.android.common.data.call.NativeCallInvitation
 import io.homeassistant.companion.android.common.data.call.NativeCallIoDispatcher
 import io.homeassistant.companion.android.common.data.call.NativeCallRepository
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.io.IOException
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -38,7 +38,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
-private const val MAX_RINGING_MS = 120_000L
 private const val CLEANUP_TIMEOUT_MS = 3000L
 
 private const val EXTRA_SERVER = "call_server"
@@ -88,21 +87,30 @@ internal class NativeCallService : LifecycleService() {
             }
             session?.isActive != true -> {
                 val incoming =
-                    NativeCallState(invitation, intent.getStringExtra(EXTRA_CALLER).orEmpty(), NativeCallPhase.Ringing)
-                publish(incoming)
-                session = lifecycleScope.launch { runCall(incoming, intent.getLongExtra(EXTRA_REMAINING, 0)) }
+                    NativeCallState(
+                        invitation,
+                        intent.getStringExtra(EXTRA_CALLER).orEmpty(),
+                        NativeCallPhase.Ringing,
+                    )
+                if (publish(incoming)) {
+                    session =
+                        lifecycleScope.launch { runCall(incoming, intent.getLongExtra(EXTRA_REMAINING, 0)) }
+                } else {
+                    state.finish(invitation)
+                    stopSelf(startId)
+                }
             }
         }
         return START_NOT_STICKY
     }
 
-    private fun publish(value: NativeCallState) {
-        state.publish(value)
+    private fun publish(value: NativeCallState): Boolean {
+        if (!state.publish(value)) return false
         val notification = callNotification(this, value)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
             val types = ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL or
                 if (value.phase == NativeCallPhase.Active &&
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                    SdkVersion.isAtLeast(Build.VERSION_CODES.R)
                 ) {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
                 } else {
@@ -112,6 +120,7 @@ internal class NativeCallService : LifecycleService() {
         } else {
             startForeground(CALL_NOTIFICATION_ID, notification)
         }
+        return true
     }
 
     private suspend fun runCall(incoming: NativeCallState, remainingMs: Long) {
@@ -129,10 +138,9 @@ internal class NativeCallService : LifecycleService() {
         } catch (error: IllegalStateException) {
             Timber.e(error, "Failed native call state for server %d", invitation.serverId)
         } finally {
-            while (state.commands.tryReceive().isSuccess) { /* Release commands owned by the completed call. */ }
-            state.finish(invitation)
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
+            state.finish(invitation)
         }
     }
 
@@ -140,26 +148,17 @@ internal class NativeCallService : LifecycleService() {
         val callScope = this
         val workers = mutableListOf<Job>()
         val invitation = incoming.invitation
-        val clientId = UUID.randomUUID().toString()
+        val clientId = repository.mediaClientId
         val calls = CallsManager(applicationContext)
         var control: CallControlScope? = null
         var answered = false
         var ringtone: Ringtone? = null
-        suspend fun answer() {
+        val terminalAction = { if (answered) "hangup" else "decline" }
+        suspend fun connectMedia(description: NativeCallDescription) {
             if (answered) return
-            check(
-                ContextCompat.checkSelfPermission(this@NativeCallService, Manifest.permission.RECORD_AUDIO) ==
-                    PackageManager.PERMISSION_GRANTED,
-            ) {
-                "Microphone permission is required to answer"
-            }
-            publish(incoming.copy(phase = NativeCallPhase.Connecting))
-            val description = repository.request(invitation, "answer", clientId)
-            check(description.state == "in_call" && description.mediaPath != null) { "Call is no longer answerable" }
-            val mediaPath = requireNotNull(description.mediaPath)
+            val mediaPath = activateMedia(incoming, description) ?: return
             answered = true
             ringtone?.stop()
-            publish(incoming.copy(phase = NativeCallPhase.Active))
             workers += callScope.launch {
                 try {
                     audio.run(invitation.serverId, mediaPath)
@@ -168,74 +167,97 @@ internal class NativeCallService : LifecycleService() {
                 }
             }
         }
+        suspend fun answer() {
+            if (!publish(incoming.copy(phase = NativeCallPhase.Connecting))) return
+            connectMedia(repository.request(invitation, "answer", clientId))
+        }
         val callbacks = NativeCallCallbacks(
             onAnswer = { answer() },
-            onDisconnect = { repository.request(invitation, if (answered) "hangup" else "decline", clientId) },
+            onDisconnect = { repository.request(invitation, terminalAction(), clientId) },
         )
+
         try {
-            ringtone = startRinging(calls)
+            ringtone = preparePresentation(calls)
             calls.addCall(
-                CallAttributesCompat(
-                    incoming.caller,
-                    Uri.fromParts("homeassistant-call", invitation.callId, null),
-                    CallAttributesCompat.DIRECTION_INCOMING,
-                    callCapabilities = 0,
-                ),
+                callAttributes(incoming),
                 onAnswer = { callbacks.answer() },
                 onDisconnect = { callbacks.disconnect() },
                 onSetActive = {},
                 onSetInactive = { throw IllegalStateException("Hold is not advertised") },
             ) {
                 control = this
-                workers += callScope.launch {
-                    delay(remainingMs.coerceIn(1, MAX_RINGING_MS))
-                    if (!answered) disconnect(DisconnectCause(DisconnectCause.MISSED))
+                if (remainingMs > 0) {
+                    workers += callScope.launch {
+                        expireUnanswered(remainingMs, this@addCall) { answered }
+                    }
                 }
                 val callControl = this
                 workers += callScope.launch {
-                    handleCommands(invitation, clientId, callControl, ::answer) {
-                        if (answered) "hangup" else "decline"
-                    }
+                    handleCommands(invitation, callControl, ::answer, terminalAction)
                 }
             }
         } finally {
             callbacks.close()
             workers.forEach { it.cancel() }
             ringtone?.stop()
-            withContext(NonCancellable) {
-                withTimeoutOrNull(CLEANUP_TIMEOUT_MS) {
-                    try {
-                        repository.request(invitation, if (answered) "hangup" else "decline", clientId)
-                    } catch (
-                        error: IOException,
-                    ) {
-                        Timber.d(error, "Call provider already unavailable during cleanup")
-                    }
+            finishProviderCall(invitation, terminalAction())
+        }
+    }
+
+    private fun activateMedia(incoming: NativeCallState, description: NativeCallDescription): String? {
+        if (!state.isCurrent(incoming.invitation)) return null
+        val path = checkedMediaPath(description)
+        return if (publish(incoming.copy(phase = NativeCallPhase.Active))) path else null
+    }
+
+    private suspend fun expireUnanswered(remainingMs: Long, control: CallControlScope, answered: () -> Boolean) {
+        delay(remainingMs)
+        if (!answered()) control.disconnect(DisconnectCause(DisconnectCause.MISSED))
+    }
+
+    private fun checkedMediaPath(description: NativeCallDescription): String {
+        check(
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED,
+        ) {
+            "Microphone permission is required to answer"
+        }
+        check(description.state == "in_call" && description.mediaPath != null) { "Call is no longer answerable" }
+        return requireNotNull(description.mediaPath)
+    }
+
+    private suspend fun finishProviderCall(invitation: NativeCallInvitation, action: String) {
+        withContext(NonCancellable) {
+            withTimeoutOrNull(CLEANUP_TIMEOUT_MS) {
+                try {
+                    repository.request(invitation, action, repository.mediaClientId)
+                } catch (error: IOException) {
+                    Timber.d(error, "Call provider already unavailable during cleanup")
                 }
             }
         }
     }
 
-    private suspend fun startRinging(calls: CallsManager): Ringtone? = withContext(ioDispatcher) {
+    private suspend fun preparePresentation(calls: CallsManager): Ringtone? = withContext(ioDispatcher) {
         calls.registerAppWithTelecom(CallsManager.CAPABILITY_BASELINE)
         RingtoneManager.getRingtone(
             this@NativeCallService,
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
         )
             ?.also { tone ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) tone.isLooping = true
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) tone.isLooping = true
                 tone.play()
             }
     }
 
     private suspend fun handleCommands(
         invitation: NativeCallInvitation,
-        clientId: String,
         control: CallControlScope,
         answerCall: suspend () -> Unit,
         terminalAction: () -> String,
     ) {
-        for (command in state.commands) {
+        while (true) {
+            val command = state.nextCommand()
             if (command.invitation != invitation) continue
             when (command) {
                 is NativeCallCommand.Answer -> {
@@ -247,10 +269,14 @@ internal class NativeCallService : LifecycleService() {
                     }
                 }
                 is NativeCallCommand.End -> {
-                    repository.request(invitation, terminalAction(), clientId)
+                    finishProviderCall(invitation, terminalAction())
                     control.disconnect(DisconnectCause(DisconnectCause.LOCAL))
+                    return
                 }
-                is NativeCallCommand.Cancel -> control.disconnect(DisconnectCause(DisconnectCause.REMOTE))
+                is NativeCallCommand.Cancel -> {
+                    control.disconnect(DisconnectCause(DisconnectCause.REMOTE))
+                    return
+                }
             }
         }
     }
@@ -260,7 +286,10 @@ internal class NativeCallService : LifecycleService() {
             ContextCompat.startForegroundService(
                 context,
                 baseIntent(context, invitation)
-                    .putExtra(EXTRA_CALLER, description.caller).putExtra(EXTRA_REMAINING, description.remainingMs),
+                    .putExtra(
+                        EXTRA_CALLER,
+                        description.caller,
+                    ).putExtra(EXTRA_REMAINING, description.remainingMs ?: 0L),
             )
         }
         fun answerIntent(context: Context, invitation: NativeCallInvitation): Intent =
@@ -280,3 +309,11 @@ internal class NativeCallService : LifecycleService() {
                 .putExtra(EXTRA_ID, invitation.callId).putExtra(EXTRA_PATH, invitation.path)
     }
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun callAttributes(incoming: NativeCallState): CallAttributesCompat = CallAttributesCompat(
+    incoming.caller,
+    Uri.fromParts("homeassistant-call", incoming.invitation.callId, null),
+    CallAttributesCompat.DIRECTION_INCOMING,
+    callCapabilities = 0,
+)

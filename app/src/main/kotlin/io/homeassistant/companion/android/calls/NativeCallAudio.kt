@@ -131,6 +131,8 @@ internal class NativeCallAudio @Inject constructor(
                 if (microphone != null) launch(ioDispatcher) { sendFrames(microphone, formats.tx, socket) }
                 awaitCancellation()
             }
+        } catch (error: UnsupportedOperationException) {
+            throw IOException("Native audio device could not be opened", error)
         } finally {
             if (record?.recordingState == AudioRecord.RECORDSTATE_RECORDING) record.stop()
             record?.release()

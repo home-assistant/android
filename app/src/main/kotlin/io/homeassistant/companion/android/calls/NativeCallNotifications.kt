@@ -7,6 +7,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.Person
 import androidx.core.content.ContextCompat
@@ -16,6 +18,7 @@ import io.homeassistant.companion.android.launch.LaunchActivity
 internal const val CALL_NOTIFICATION_ID = 49001
 private const val CALL_CHANNEL_ID = "native_calls"
 
+@RequiresApi(Build.VERSION_CODES.O)
 internal fun callNotification(context: Context, state: NativeCallState): Notification {
     val manager = context.getSystemService(NotificationManager::class.java)
     manager.createNotificationChannel(
@@ -57,12 +60,10 @@ internal fun callNotification(context: Context, state: NativeCallState): Notific
         .setSmallIcon(commonR.drawable.ic_stat_ic_notification).setContentTitle(state.caller)
         .setContentText(
             context.getString(
-                if (state.phase ==
-                    NativeCallPhase.Ringing
-                ) {
-                    commonR.string.native_call_incoming
-                } else {
-                    commonR.string.native_call_active
+                when (state.phase) {
+                    NativeCallPhase.Ringing -> commonR.string.native_call_incoming
+                    NativeCallPhase.Validating, NativeCallPhase.Connecting -> commonR.string.native_call_connecting
+                    NativeCallPhase.Active -> commonR.string.native_call_active
                 },
             ),
         )
