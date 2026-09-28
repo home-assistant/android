@@ -222,7 +222,7 @@ class LaunchActivity : AppCompatActivity() {
                 )
 
                 // We don't apply the overlay on top of the dialogs
-                if (!isAppLocked) {
+                if (isAppLocked) {
                     HazeLockOverlay(hazeState)
                 }
 
