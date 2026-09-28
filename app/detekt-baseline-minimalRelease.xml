@@ -55,7 +55,6 @@
     <ID>CyclomaticComplexMethod:ServerSettingsFragment.kt:ServerSettingsFragment$@Deprecated("Deprecated in Java") override fun onCreatePreferences</ID>
     <ID>CyclomaticComplexMethod:SettingsActivity.kt:SettingsActivity$override fun onCreate</ID>
     <ID>CyclomaticComplexMethod:SettingsFragment.kt:SettingsFragment$override fun onCreatePreferences</ID>
-    <ID>CyclomaticComplexMethod:SsidView.kt:@OptIn(ExperimentalMaterialApi::class) @Composable fun SsidView</ID>
     <ID>CyclomaticComplexMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>CyclomaticComplexMethod:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$override fun onBindViewHolder</ID>
     <ID>DoubleMutabilityForCollection:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$private var actions = mutableMapOf&lt;Int, HashMap&lt;String, Action&gt;&gt;()</ID>
@@ -229,7 +228,6 @@
     <ID>MagicNumber:FrontendGestureManager.kt:FrontendGestureManager$2026</ID>
     <ID>MagicNumber:FrontendJsBridge.kt:FrontendJsBridge.Companion$2026</ID>
     <ID>MagicNumber:FrontendJsBridge.kt:FrontendJsBridge.Companion$4</ID>
-    <ID>MagicNumber:FrontendScreen.kt:0.5</ID>
     <ID>MagicNumber:FrontendUrlManager.kt:FrontendUrlManager$2025</ID>
     <ID>MagicNumber:FrontendUrlManager.kt:FrontendUrlManager$6</ID>
     <ID>MagicNumber:FrontendViewModel.kt:FrontendViewModel$2026</ID>
@@ -376,7 +374,6 @@
     <ID>SwallowedException:SensorDetailViewModel.kt:SensorDetailViewModel$e: NameNotFoundException</ID>
     <ID>SwallowedException:TLSWebViewClient.kt:TLSWebViewClient$ex: CertificateException</ID>
     <ID>SwallowedException:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$e: Exception</ID>
-    <ID>ThrowsCount:CameraWidget.kt:CameraWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
     <ID>ThrowsCount:NFCUtil.kt:NFCUtil$@Throws(IllegalArgumentException::class, IOException::class, Exception::class) private fun writeMessageToTag: Boolean</ID>
     <ID>TooManyFunctions:AppSensorModule.kt:AppSensorModule</ID>
     <ID>TooManyFunctions:AssistSheet.kt:io.homeassistant.companion.android.assist.ui.AssistSheet.kt</ID>
@@ -482,9 +479,6 @@
     <ID>UnusedPrivateProperty:SensorDetailViewModel.kt:SensorDetailViewModel$private val managers: Set&lt;@JvmSuppressWildcards SensorManager&gt;</ID>
     <ID>UnusedPrivateProperty:SettingsPresenterImpl.kt:SettingsPresenterImpl$private val settingsDao: SettingsDao</ID>
     <ID>UnusedPrivateProperty:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$private val entitiesForDisplayManager: EntitiesForDisplayManager</ID>
-    <ID>UseCheckOrError:AssistVoiceInteractionService.kt:AssistVoiceInteractionService$throw IllegalStateException("No wake word models found in assets")</ID>
-    <ID>UseCheckOrError:CameraWidget.kt:CameraWidget$throw IllegalStateException("No URL available to retrieve picture")</ID>
-    <ID>UseCheckOrError:ThreadManagerImpl.kt:ThreadManagerImpl$throw IllegalStateException("Thread is not supported with the minimal flavor")</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$server?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverManager.getServer(selectedServerId)?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverPipelines?.pipelines ?: emptyList()</ID>
@@ -518,7 +512,6 @@
     <ID>UseOrEmpty:ServerSettingsPresenterImpl.kt:ServerSettingsPresenterImpl$serverManager.getServer(serverId)?.connection?.internalUrl ?: ""</ID>
     <ID>UseOrEmpty:ServerSettingsPresenterImpl.kt:ServerSettingsPresenterImpl$serverManager.getServer(serverId)?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:SetHomeNetworkViewModel.kt:SetHomeNetworkViewModel$currentWifiNetwork.takeIf { it.isNotEmpty() } ?.let { listOf(currentWifiNetwork) } ?: emptyList()</ID>
-    <ID>UseOrEmpty:SetHomeNetworkViewModel.kt:SetHomeNetworkViewModel$wifiHelper.getWifiSsid()?.removeSurrounding("\"") ?: ""</ID>
     <ID>UseOrEmpty:TodoWidgetState.kt:TodoItemState.Companion$todoItem.summary ?: ""</ID>
     <ID>UseOrEmpty:TodoWidgetState.kt:TodoStateWithData.Companion$todoEntity.latestUpdateData?.todos?.map(TodoItemState::from) ?: emptyList()</ID>
     <ID>VarCouldBeVal:ButtonWidget.kt:ButtonWidget.Companion$private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())</ID>
