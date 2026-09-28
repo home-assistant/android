@@ -49,6 +49,7 @@
     <ID>ImplicitDefaultLocale:StorageSensorManager.kt:StorageSensorManager$String.format("%,d", sizeLong)</ID>
     <ID>InjectDispatcher:BluetoothSensorManager.kt:BluetoothSensorManager$IO</ID>
     <ID>InjectDispatcher:ContextExt.kt:IO</ID>
+    <ID>InjectDispatcher:DataModule.kt:DataModule.Companion$IO</ID>
     <ID>InjectDispatcher:DefaultConnectivityChecker.kt:DefaultConnectivityChecker$IO</ID>
     <ID>InjectDispatcher:EntitiesForDisplayManager.kt:EntitiesForDisplayManager$Default</ID>
     <ID>InjectDispatcher:ExoPlayerExt.kt:Default</ID>
