@@ -63,32 +63,46 @@ fun initCrashReporting(context: Context, enabled: Boolean) {
  * Currently:
  *
  * anrEnabled: true
+ * anrProfilingSampleRate: null
  * anrReportInDebug: false
  * anrTimeoutIntervalMillis: 5000
  * attachAnrThreadDump: false
+ * attachRawTombstone: false
  * attachScreenshot: false
  * attachViewHierarchy: false
  * beforeScreenshotCaptureCallback: null
  * beforeViewHierarchyCaptureCallback: null
  * collectAdditionalContext: true
- * debugImagesLoader: io.sentry.android.core.NoOpDebugImagesLoader@OBJECT_REF
+ * collectExternalStorageContext: false
+ * debugImagesLoader: io.sentry.android.core.NoOpDebugImagesLoader@a6986d9
+ * deviceInfoUtil: null
  * enableActivityLifecycleBreadcrumbs: true
  * enableActivityLifecycleTracingAutoFinish: true
+ * enableAnrFingerprinting: true
  * enableAppComponentBreadcrumbs: true
  * enableAppLifecycleBreadcrumbs: true
  * enableAutoActivityLifecycleTracing: true
  * enableAutoTraceIdGeneration: true
  * enableFramesTracking: true
  * enableNdk: false
+ * enableNdkAppHangTracking: false
  * enableNetworkEventBreadcrumbs: true
  * enablePerformanceV2: true
  * enableRootCheck: true
  * enableScopeSync: true
+ * enableStandaloneAppStartTracing: false
  * enableSystemEventBreadcrumbs: true
- * frameMetricsCollector: io.sentry.android.core.internal.util.SentryFrameMetricsCollector@OBJECT_REF
+ * enableSystemEventBreadcrumbsExtras: false
+ * enableTombstone: false
+ * frameMetricsCollector: io.sentry.android.core.internal.util.SentryFrameMetricsCollector@417f026
+ * memoryLimiterEnabled: false
  * nativeSdkName: null
+ * ndkAppHangTimeoutIntervalMillis: 5000
  * ndkHandlerStrategy: SENTRY_HANDLER_STRATEGY_DEFAULT
  * reportHistoricalAnrs: false
+ * reportHistoricalMemoryLimiterExits: false
+ * reportHistoricalTombstones: false
+ * screenshot: io.sentry.android.core.SentryScreenshotOptions@cc10467
  * startupCrashDurationThresholdMillis: 2000
  * startupCrashFlushTimeoutMillis: 5000
  */
