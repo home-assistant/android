@@ -129,29 +129,27 @@ class DynamicColorSensorManager @Inject constructor(
             Settings.Secure.getString(applicationContext.contentResolver, THEME_OVERLAY_JSON_KEY)
         } catch (ex: SecurityException) {
             Timber.w(ex, "Exception reading $THEME_OVERLAY_JSON_KEY")
-            updateState(STATE_UNAVAILABLE)
-            return
+            null
         }
 
-        if (jsonString == null) {
-            Timber.w("No value found for $THEME_OVERLAY_JSON_KEY")
-            updateState(STATE_UNAVAILABLE)
-            return
+        val state = when {
+            jsonString == null -> {
+                Timber.w("No value found for $THEME_OVERLAY_JSON_KEY")
+                STATE_UNAVAILABLE
+            }
+
+            else -> try {
+                Json.decodeFromString<ThemeBundle>(jsonString).themeStyle
+            } catch (ex: SerializationException) {
+                Timber.w(ex, "Exception parsing JSON for $THEME_OVERLAY_JSON_KEY")
+                STATE_UNKNOWN
+            } catch (ex: IllegalArgumentException) {
+                Timber.w(ex, "Invalid JSON for ThemeBundle")
+                STATE_UNKNOWN
+            }
         }
 
-        val themeBundle = try {
-            Json.decodeFromString<ThemeBundle>(jsonString)
-        } catch (ex: SerializationException) {
-            Timber.w(ex, "Exception parsing JSON for $THEME_OVERLAY_JSON_KEY")
-            updateState(STATE_UNKNOWN)
-            return
-        } catch (ex: IllegalArgumentException) {
-            Timber.w(ex, "Invalid JSON for ThemeBundle")
-            updateState(STATE_UNKNOWN)
-            return
-        }
-
-        updateState(themeBundle.themeStyle)
+        updateState(state)
     }
 
     @Serializable
