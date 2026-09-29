@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.database.migration
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -30,6 +31,8 @@ private fun createNotificationChannel(context: Context) {
         }
     }
 }
+
+@SuppressLint("MissingPermission")
 internal fun notifyMigrationFailed(context: Context) {
     createNotificationChannel(context)
     val notification = NotificationCompat.Builder(context, CHANNEL_DATABASE)
