@@ -138,7 +138,13 @@ class TodoWidgetConfigureViewModelTest {
         viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
         viewModel.onTextColorSelected(BLACK_HEX)
 
-        assertTrue(viewModel.updateWidgetConfiguration(mockk()))
+        // fromHex/resolve are covered by WidgetTextColorTest; here we only need a Context that
+        // resolves colors so the persisted entity can be verified.
+        mockkStatic(Context::getHexForColor) {
+            val context = mockk<Context>(relaxed = true)
+            every { context.getHexForColor(any()) } returns BLACK_HEX
+            assertTrue(viewModel.updateWidgetConfiguration(context))
+        }
 
         coVerify {
             dao.add(
@@ -155,33 +161,6 @@ class TodoWidgetConfigureViewModelTest {
                     ),
                 ),
             )
-        }
-    }
-
-    @Test
-    fun `Given a transparent background and no chosen text color when saved then the black default is persisted`() = runTest {
-        coEvery { webSocketRepository.getTodos(chores.entityId) } returns GetTodosResponse(
-            mapOf(
-                chores.entityId to GetTodosResponse.TodoResponse(
-                    listOf(GetTodosResponse.TodoItem(uid = "1", summary = "Vacuum", status = "needs_action")),
-                ),
-            ),
-        )
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onEntitySelected(chores.entityId)
-        viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
-
-        // A relaxed Context reports uiMode 0 (not night), so the default resolves to BLACK.
-        mockkStatic(Context::getHexForColor) {
-            val context = mockk<Context>(relaxed = true)
-            every { context.getHexForColor(any()) } returns BLACK_HEX
-            assertTrue(viewModel.updateWidgetConfiguration(context))
-        }
-
-        coVerify {
-            dao.add(match { it.backgroundType == WidgetBackgroundType.TRANSPARENT && it.textColor == BLACK_HEX })
         }
     }
 

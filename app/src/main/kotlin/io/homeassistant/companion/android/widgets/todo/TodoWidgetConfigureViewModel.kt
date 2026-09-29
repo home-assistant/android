@@ -4,7 +4,6 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Build
 import android.os.RemoteException
 import androidx.annotation.RequiresApi
@@ -270,7 +269,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
                 // light mode, light text in dark mode. Persist that default rather than null; the
                 // color only applies to a transparent background.
                 textColor = if (current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                    current.textColorHex ?: defaultTextColor(context).resolve(context)
+                    WidgetTextColor.fromHex(context, current.textColorHex).resolve(context)
                 } else {
                     null
                 },
@@ -283,12 +282,6 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
         } else {
             null
         }
-    }
-
-    /** The text color a transparent widget uses when none is chosen, following the system theme. */
-    private fun defaultTextColor(context: Context): WidgetTextColor {
-        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-        return if (nightMode == Configuration.UI_MODE_NIGHT_YES) WidgetTextColor.WHITE else WidgetTextColor.BLACK
     }
 
     @AssistedFactory
