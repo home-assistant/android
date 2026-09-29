@@ -129,11 +129,7 @@ private fun checkCanScroll(lazyListState: LazyListState): Boolean {
         visibleItems.last().size > layoutInfo.viewportSize.height - visibleItems.last().offset
 }
 
-private data class ScrollBarMetrics(
-    val thumbHeight: Float,
-    val thumbOffsetY: Float,
-    val maxThumbOffsetY: Float,
-)
+private data class ScrollBarMetrics(val thumbHeight: Float, val thumbOffsetY: Float, val maxThumbOffsetY: Float)
 
 private data class ScrollBarConfig(
     val widthPx: Float,
