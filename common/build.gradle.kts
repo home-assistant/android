@@ -80,7 +80,7 @@ dependencies {
     implementation(libs.media3.datasource.cronet) {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
-    implementation(libs.cronet.api)
+    implementation(libs.cronet)
 
     // Force patched protobuf-javalite version to fix CVE-2024-7254 (DoS via StackOverflow in nested groups/map fields)
     implementation(libs.protobuf.javalite)
