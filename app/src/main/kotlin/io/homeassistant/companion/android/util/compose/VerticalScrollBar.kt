@@ -93,13 +93,18 @@ fun Modifier.verticalScrollBar(
         }
     }
 
+    val config = ScrollBarConfig(
+        widthPx = widthPx,
+        touchWidthPx = touchWidthPx,
+        estimatedItemHeightPx = estimatedItemHeightPx,
+        minThumbHeightPx = minThumbHeightPx,
+    )
+
     return this
         .scrollbarDragInput(
             lazyListState = lazyListState,
             canScroll = canScroll,
-            touchWidthPx = touchWidthPx,
-            estimatedItemHeightPx = estimatedItemHeightPx,
-            minThumbHeightPx = minThumbHeightPx,
+            config = config,
             coroutineScope = coroutineScope,
             onDraggingChanged = { isDragging = it },
         )
@@ -108,9 +113,7 @@ fun Modifier.verticalScrollBar(
             canScroll = canScroll,
             alpha = alpha.value,
             color = color,
-            widthPx = widthPx,
-            estimatedItemHeightPx = estimatedItemHeightPx,
-            minThumbHeightPx = minThumbHeightPx,
+            config = config,
         )
 }
 
@@ -130,6 +133,13 @@ private data class ScrollBarMetrics(
     val thumbHeight: Float,
     val thumbOffsetY: Float,
     val maxThumbOffsetY: Float,
+)
+
+private data class ScrollBarConfig(
+    val widthPx: Float,
+    val touchWidthPx: Float,
+    val estimatedItemHeightPx: Float,
+    val minThumbHeightPx: Float,
 )
 
 private fun calculateScrollBarMetrics(
@@ -163,9 +173,7 @@ private fun calculateScrollBarMetrics(
 private fun Modifier.scrollbarDragInput(
     lazyListState: LazyListState,
     canScroll: Boolean,
-    touchWidthPx: Float,
-    estimatedItemHeightPx: Float,
-    minThumbHeightPx: Float,
+    config: ScrollBarConfig,
     coroutineScope: CoroutineScope,
     onDraggingChanged: (Boolean) -> Unit,
 ): Modifier = pointerInput(lazyListState, canScroll) {
@@ -182,14 +190,14 @@ private fun Modifier.scrollbarDragInput(
         val metrics = calculateScrollBarMetrics(
             lazyListState = lazyListState,
             viewportHeight = viewportHeight,
-            estimatedItemHeightPx = estimatedItemHeightPx,
-            minThumbHeightPx = minThumbHeightPx,
+            estimatedItemHeightPx = config.estimatedItemHeightPx,
+            minThumbHeightPx = config.minThumbHeightPx,
         ) ?: return@awaitEachGesture
 
         val thumbTop = metrics.thumbOffsetY
         val thumbBottom = thumbTop + metrics.thumbHeight
 
-        val isTouchOnThumb = touchX >= size.width - touchWidthPx && touchY in thumbTop..thumbBottom
+        val isTouchOnThumb = touchX >= size.width - config.touchWidthPx && touchY in thumbTop..thumbBottom
 
         if (isTouchOnThumb) {
             down.consume()
@@ -226,9 +234,7 @@ private fun Modifier.drawScrollBar(
     canScroll: Boolean,
     alpha: Float,
     color: Color,
-    widthPx: Float,
-    estimatedItemHeightPx: Float,
-    minThumbHeightPx: Float,
+    config: ScrollBarConfig,
 ): Modifier = drawWithContent {
     drawContent()
 
@@ -240,16 +246,16 @@ private fun Modifier.drawScrollBar(
             val metrics = calculateScrollBarMetrics(
                 lazyListState = lazyListState,
                 viewportHeight = size.height,
-                estimatedItemHeightPx = estimatedItemHeightPx,
-                minThumbHeightPx = minThumbHeightPx,
+                estimatedItemHeightPx = config.estimatedItemHeightPx,
+                minThumbHeightPx = config.minThumbHeightPx,
             )
 
             if (metrics != null) {
-                val x = size.width - widthPx
+                val x = size.width - config.widthPx
                 drawRect(
                     color = color,
                     topLeft = Offset(x, metrics.thumbOffsetY),
-                    size = Size(widthPx, metrics.thumbHeight),
+                    size = Size(config.widthPx, metrics.thumbHeight),
                     alpha = alpha,
                 )
             }
