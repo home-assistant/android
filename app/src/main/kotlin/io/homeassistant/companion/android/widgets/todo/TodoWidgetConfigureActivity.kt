@@ -79,7 +79,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
                     finish()
                 }
             } else {
-                if (viewModel.updateWidgetConfiguration()) {
+                if (viewModel.updateWidgetConfiguration(this@TodoWidgetConfigureActivity)) {
                     viewModel.updateWidget(this@TodoWidgetConfigureActivity)
                     setResult(
                         RESULT_OK,

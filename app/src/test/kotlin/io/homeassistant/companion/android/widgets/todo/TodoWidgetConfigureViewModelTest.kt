@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.widgets.todo
 
 import android.appwidget.AppWidgetManager
+import android.content.Context
 import android.os.Build
 import android.os.RemoteException
 import app.cash.turbine.test
@@ -22,12 +23,12 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.homeassistant.companion.android.util.getHexForColor
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -137,7 +138,7 @@ class TodoWidgetConfigureViewModelTest {
         viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
         viewModel.onTextColorSelected(BLACK_HEX)
 
-        assertTrue(viewModel.updateWidgetConfiguration())
+        assertTrue(viewModel.updateWidgetConfiguration(mockk()))
 
         coVerify {
             dao.add(
@@ -158,14 +159,41 @@ class TodoWidgetConfigureViewModelTest {
     }
 
     @Test
-    fun `Given an opaque background when configuration is saved then no text color is persisted`() = runTest {
+    fun `Given a transparent background and no chosen text color when saved then the black default is persisted`() = runTest {
+        coEvery { webSocketRepository.getTodos(chores.entityId) } returns GetTodosResponse(
+            mapOf(
+                chores.entityId to GetTodosResponse.TodoResponse(
+                    listOf(GetTodosResponse.TodoItem(uid = "1", summary = "Vacuum", status = "needs_action")),
+                ),
+            ),
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onEntitySelected(chores.entityId)
+        viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
+
+        // A relaxed Context reports uiMode 0 (not night), so the default resolves to BLACK.
+        mockkStatic(Context::getHexForColor) {
+            val context = mockk<Context>(relaxed = true)
+            every { context.getHexForColor(any()) } returns BLACK_HEX
+            assertTrue(viewModel.updateWidgetConfiguration(context))
+        }
+
+        coVerify {
+            dao.add(match { it.backgroundType == WidgetBackgroundType.TRANSPARENT && it.textColor == BLACK_HEX })
+        }
+    }
+
+    @Test
+    fun `Given an DAYNIGHT background when configuration is saved then no text color is persisted`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.onTextColorSelected(BLACK_HEX)
         viewModel.onBackgroundTypeSelected(WidgetBackgroundType.DAYNIGHT)
 
-        assertTrue(viewModel.updateWidgetConfiguration())
+        assertTrue(viewModel.updateWidgetConfiguration(mockk()))
 
         coVerify { dao.add(match { it.textColor == null && it.backgroundType == WidgetBackgroundType.DAYNIGHT }) }
     }
@@ -176,7 +204,7 @@ class TodoWidgetConfigureViewModelTest {
         advanceUntilIdle()
 
         viewModel.errors.test {
-            assertFalse(viewModel.updateWidgetConfiguration())
+            assertFalse(viewModel.updateWidgetConfiguration(mockk()))
             assertEquals(commonR.string.widget_update_error, awaitItem())
         }
         coVerify(exactly = 0) { dao.add(any()) }
@@ -189,7 +217,7 @@ class TodoWidgetConfigureViewModelTest {
         advanceUntilIdle()
 
         viewModel.errors.test {
-            assertFalse(viewModel.updateWidgetConfiguration())
+            assertFalse(viewModel.updateWidgetConfiguration(mockk()))
             assertEquals(commonR.string.widget_update_error, awaitItem())
         }
         coVerify(exactly = 0) { dao.add(any()) }
@@ -252,8 +280,7 @@ class TodoWidgetConfigureViewModelTest {
         configure: AppWidgetManager.() -> Unit,
     ) {
         SdkVersion.sdkInt = Build.VERSION_CODES.O
-        mockkStatic(AppWidgetManager::class)
-        try {
+        mockkStatic(AppWidgetManager::class) {
             val appWidgetManager = mockk<AppWidgetManager>()
             every { AppWidgetManager.getInstance(any()) } returns appWidgetManager
             appWidgetManager.configure()
@@ -265,8 +292,6 @@ class TodoWidgetConfigureViewModelTest {
                 assertFalse(viewModel.requestWidgetCreation(mockk()))
                 assertEquals(commonR.string.widget_creation_error, awaitItem())
             }
-        } finally {
-            unmockkStatic(AppWidgetManager::class)
         }
     }
 

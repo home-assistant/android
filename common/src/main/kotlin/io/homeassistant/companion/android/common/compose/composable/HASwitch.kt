@@ -28,7 +28,7 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 @Composable
 fun HASwitch(
     checked: Boolean,
-    onCheckedChange: ((Boolean) -> Unit)?,
+    onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource? = null,

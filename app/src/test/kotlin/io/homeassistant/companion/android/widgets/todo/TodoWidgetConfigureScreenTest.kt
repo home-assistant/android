@@ -44,27 +44,27 @@ class TodoWidgetConfigureScreenTest {
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
     @Test
-    fun `Given no list selected when displayed then the add action is disabled and the configuration is hidden`() {
+    fun `Given no list selected for new widget when displayed then the add action is disabled and the configuration is hidden`() {
         composeTestRule.apply {
             testScreen(newWidgetState) {
                 onNodeWithText(activity.getString(commonR.string.add_widget))
                     .performScrollTo()
                     .assertIsNotEnabled()
                 onNodeWithText(activity.getString(commonR.string.widget_todo_show_completed)).assertDoesNotExist()
-                onNodeWithText(activity.getString(commonR.string.widget_background_type_label), substring = true)
+                onNodeWithText(activity.getString(commonR.string.widget_background_type_label))
                     .assertDoesNotExist()
             }
         }
     }
 
     @Test
-    fun `Given a list selected when displayed then the configuration is shown`() {
+    fun `Given a list selected for new widget when displayed then the configuration is shown`() {
         composeTestRule.apply {
             testScreen(configuredState) {
                 onNodeWithText(activity.getString(commonR.string.widget_todo_show_completed))
                     .performScrollTo()
                     .assertIsDisplayed()
-                onNodeWithText(activity.getString(commonR.string.widget_background_type_label), substring = true)
+                onNodeWithText(activity.getString(commonR.string.widget_background_type_label))
                     .performScrollTo()
                     .assertIsDisplayed()
             }
@@ -141,7 +141,7 @@ class TodoWidgetConfigureScreenTest {
     fun `Given several servers when displayed then the server selector is shown`() {
         composeTestRule.apply {
             testScreen(multipleServersState) {
-                onNodeWithText(activity.getString(commonR.string.server_select), substring = true)
+                onNodeWithText(activity.getString(commonR.string.server_select))
                     .performScrollTo()
                     .assertIsDisplayed()
             }
@@ -152,7 +152,7 @@ class TodoWidgetConfigureScreenTest {
     fun `Given a transparent background when displayed then the text color selector is shown`() {
         composeTestRule.apply {
             testScreen(configuredState.copy(selectedBackgroundType = WidgetBackgroundType.TRANSPARENT)) {
-                onNodeWithText(activity.getString(commonR.string.widget_text_color_label), substring = true)
+                onNodeWithText(activity.getString(commonR.string.widget_text_color_label))
                     .performScrollTo()
                     .assertIsDisplayed()
             }
@@ -163,7 +163,7 @@ class TodoWidgetConfigureScreenTest {
     fun `Given an opaque background when displayed then the text color selector is hidden`() {
         composeTestRule.apply {
             testScreen(configuredState.copy(selectedBackgroundType = WidgetBackgroundType.DAYNIGHT)) {
-                onNodeWithText(activity.getString(commonR.string.widget_text_color_label), substring = true)
+                onNodeWithText(activity.getString(commonR.string.widget_text_color_label))
                     .assertDoesNotExist()
             }
         }

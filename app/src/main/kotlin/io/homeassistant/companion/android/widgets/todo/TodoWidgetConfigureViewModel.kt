@@ -1,12 +1,13 @@
 package io.homeassistant.companion.android.widgets.todo
 
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import android.os.RemoteException
+import androidx.annotation.RequiresApi
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,6 +28,7 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
+import io.homeassistant.companion.android.widgets.WidgetTextColor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -113,12 +115,12 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
      * Persists the current configuration, reporting through [errors] and returning false when it
      * cannot be saved.
      */
-    suspend fun updateWidgetConfiguration(): Boolean {
+    suspend fun updateWidgetConfiguration(context: Context): Boolean {
         val widget = if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             Timber.e("Cannot save the widget configuration, the widget ID is invalid")
             null
         } else {
-            getPendingDaoEntity()
+            getPendingDaoEntity(context)
         }
 
         if (widget == null) {
@@ -142,7 +144,6 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
      * Asks the launcher to pin the configured widget and suspends until it is added, reporting
      * through [errors] and returning false when the widget cannot be requested at all.
      */
-    @SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs.
     suspend fun requestWidgetCreation(context: Context): Boolean {
         // when keeps this under detekt's ReturnCount limit (entity/template are grandfathered in the baseline).
         val widget = when {
@@ -154,7 +155,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
                 Timber.e("Cannot pin the widget, the launcher does not support it")
                 null
             }
-            else -> getPendingDaoEntity()
+            else -> getPendingDaoEntity(context)
         }
         if (widget == null) {
             _errors.emit(commonR.string.widget_creation_error)
@@ -249,7 +250,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
      * Builds the widget to persist from the current configuration, or null when it is incomplete
      * or the items of the selected list cannot be retrieved.
      */
-    private suspend fun getPendingDaoEntity(): TodoWidgetEntity? {
+    private suspend fun getPendingDaoEntity(context: Context): TodoWidgetEntity? {
         val current = _state.value
         // The selected list must still exist on a known server, which the picker state tells us.
         val entity = current.selectedEntity?.takeIf { serverManager.getServer(current.selectedServerId) != null }
@@ -265,8 +266,13 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
                 serverId = current.selectedServerId,
                 entityId = entity.entityId,
                 backgroundType = current.selectedBackgroundType,
-                textColor = current.textColorHex.takeIf {
-                    current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
+                // A transparent widget with no chosen color follows the system theme: dark text in
+                // light mode, light text in dark mode. Persist that default rather than null; the
+                // color only applies to a transparent background.
+                textColor = if (current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+                    current.textColorHex ?: defaultTextColor(context).resolve(context)
+                } else {
+                    null
                 },
                 showCompleted = current.showCompleted,
                 latestUpdateData = TodoWidgetEntity.LastUpdateData(
@@ -279,13 +285,19 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
         }
     }
 
+    /** The text color a transparent widget uses when none is chosen, following the system theme. */
+    private fun defaultTextColor(context: Context): WidgetTextColor {
+        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return if (nightMode == Configuration.UI_MODE_NIGHT_YES) WidgetTextColor.WHITE else WidgetTextColor.BLACK
+    }
+
     @AssistedFactory
     interface Factory {
         fun create(widgetId: Int, preselectedEntityId: String?): TodoWidgetConfigureViewModel
     }
 }
 
-@SuppressLint("NewApi")
+@RequiresApi(Build.VERSION_CODES.O)
 private fun isPinningSupported(context: Context): Boolean = try {
     AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported
 } catch (e: RemoteException) {

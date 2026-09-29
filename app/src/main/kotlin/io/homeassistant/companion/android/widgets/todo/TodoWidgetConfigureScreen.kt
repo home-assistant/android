@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.todo
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -258,7 +259,14 @@ private fun AppearanceSection(
     if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
         // Widgets persist the resolved hex, so the Context needed to convert stays in the UI layer.
         val context = LocalContext.current
-        val selected = remember(context, textColorHex) { WidgetTextColor.fromHex(context, textColorHex) }
+
+        // A transparent widget with no chosen color follows the system theme: dark text in light
+        // mode, light text in dark mode. The ViewModel persists this same default when saving.
+        val selected = if (textColorHex == null) {
+            if (isSystemInDarkTheme()) WidgetTextColor.WHITE else WidgetTextColor.BLACK
+        } else {
+            WidgetTextColor.fromHex(context, textColorHex)
+        }
 
         WidgetTextColorDropdown(
             selected = selected,
