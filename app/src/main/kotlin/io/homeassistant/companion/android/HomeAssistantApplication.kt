@@ -86,7 +86,6 @@ open class HomeAssistantApplication : Application() {
     @Inject
     internal lateinit var shortcutManager: HaShortcutManager
 
-    @OptIn(ExperimentalCoilApi::class)
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())

@@ -220,7 +220,6 @@
     <ID>SwallowedException:NetworkSensorManager.kt:NetworkSensorManager$e: NoSuchMethodException</ID>
     <ID>SwallowedException:TransmitterManager.kt:TransmitterManager$e: IllegalArgumentException</ID>
     <ID>SwallowedException:UrlUtil.kt:UrlUtil$e: IllegalArgumentException</ID>
-    <ID>SwallowedException:UrlUtil.kt:e: UnknownHostException</ID>
     <ID>ThrowsCount:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$private suspend fun maybeReregisterDeviceOnFailedUpdate</ID>
     <ID>ThrowsCount:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
     <ID>ThrowsCount:ServerConnectionStateProvider.kt:suspend fun &lt;T&gt; tryOnUrls: T</ID>
