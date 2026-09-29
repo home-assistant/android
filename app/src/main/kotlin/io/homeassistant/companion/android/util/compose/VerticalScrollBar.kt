@@ -155,7 +155,9 @@ private fun calculateScrollBarMetrics(
     val scrollProgress = (scrolledOffset / maxScrolledOffset).coerceIn(0f, 1f)
 
     val viewportRatio = (viewportHeight / totalEstimatedHeight).coerceIn(0f, 1f)
-    val thumbHeight = (viewportHeight * viewportRatio).coerceIn(minThumbHeightPx, viewportHeight)
+    val thumbHeight = (viewportHeight * viewportRatio)
+        .coerceAtLeast(minThumbHeightPx)
+        .coerceAtMost(viewportHeight)
     val maxThumbOffsetY = viewportHeight - thumbHeight
     val thumbOffsetY = scrollProgress * maxThumbOffsetY
 
