@@ -19,6 +19,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -26,15 +27,12 @@ import timber.log.Timber
 
 /**
  * [HAImageLoader] backed by Coil.
- *
- * The Coil [ImageLoader] is only built once [init] provides the [OkHttpClient]; requests made before
- * that wait on [imageLoader]. Coil's own singleton (`SingletonImageLoader`) is never used, so no
- * request can end up on a loader missing the app's [OkHttpClient].
  */
 @Singleton
 internal class CoilHAImageLoader @VisibleForTesting constructor(
     private val context: Context,
     private val imageLoaderFactory: (OkHttpClient) -> ImageLoader,
+    private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : HAImageLoader {
 
     @Inject
@@ -70,10 +68,11 @@ internal class CoilHAImageLoader @VisibleForTesting constructor(
         val loader = imageLoader.await()
         loader.memoryCache?.get(MemoryCache.Key(cacheKey))?.image?.toBitmap()?.let { return it }
 
-        val diskCache = loader.diskCache ?: return null
-        return withContext(Dispatchers.IO) {
-            diskCache.openSnapshot(cacheKey)?.use { snapshot ->
-                BitmapFactory.decodeFile(snapshot.data.toString())
+        return loader.diskCache?.let { diskCache ->
+            withContext(backgroundDispatcher) {
+                diskCache.openSnapshot(cacheKey)?.use { snapshot ->
+                    BitmapFactory.decodeFile(snapshot.data.toString())
+                }
             }
         }
     }
@@ -103,12 +102,9 @@ private fun ImageRequest.Builder.applySize(size: HAImageSize): ImageRequest.Buil
 }
 
 private fun ImageRequest.Builder.applyCachePolicy(policy: HAImageCachePolicy): ImageRequest.Builder = when (policy) {
-    is HAImageCachePolicy.Enabled -> apply {
-        policy.key?.let { key ->
-            memoryCacheKey(key)
-            diskCacheKey(key)
-        }
-    }
-
-    HAImageCachePolicy.Disabled -> diskCachePolicy(CachePolicy.DISABLED).memoryCachePolicy(CachePolicy.DISABLED)
+    HAImageCachePolicy.Default -> this
+    is HAImageCachePolicy.Keyed -> memoryCacheKey(policy.key).diskCacheKey(policy.key)
+    HAImageCachePolicy.Disabled -> diskCachePolicy(CachePolicy.DISABLED)
+        .memoryCachePolicy(CachePolicy.DISABLED)
+        .networkCachePolicy(CachePolicy.READ_ONLY)
 }

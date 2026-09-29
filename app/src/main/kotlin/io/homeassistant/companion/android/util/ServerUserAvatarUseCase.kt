@@ -87,7 +87,7 @@ class ServerUserAvatarUseCase @Inject constructor(
         return imageLoader.loadBitmap(
             HAImageRequest(
                 url = url,
-                cachePolicy = HAImageCachePolicy.Enabled(key = cacheKey),
+                cachePolicy = HAImageCachePolicy.Keyed(key = cacheKey),
                 headers = mapOf(HEADER_AUTHORIZATION to token),
             ),
         )

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.imageloader
 
 import android.graphics.Bitmap
+import androidx.annotation.Px
 import okhttp3.OkHttpClient
 
 /**
@@ -19,8 +20,6 @@ interface HAImageLoader {
     /**
      * Makes the loader ready to serve requests using [okHttpClient] for every network call, and
      * resumes the requests waiting for it.
-     *
-     * Only the first call has an effect, later calls are ignored.
      */
     fun init(okHttpClient: OkHttpClient)
 
@@ -32,7 +31,7 @@ interface HAImageLoader {
     suspend fun loadBitmap(request: HAImageRequest): Bitmap?
 
     /**
-     * Returns the image previously stored under [cacheKey] (see [HAImageCachePolicy.Enabled.key])
+     * Returns the image previously stored under [cacheKey] (see [HAImageCachePolicy.Keyed.key])
      * without touching the network, looking first in memory and then on disk. Suspends until
      * [init] has been called.
      *
@@ -52,7 +51,7 @@ interface HAImageLoader {
 data class HAImageRequest(
     val url: String,
     val size: HAImageSize = HAImageSize.Original,
-    val cachePolicy: HAImageCachePolicy = HAImageCachePolicy.Enabled(),
+    val cachePolicy: HAImageCachePolicy = HAImageCachePolicy.Default,
     val headers: Map<String, String> = emptyMap(),
 )
 
@@ -66,28 +65,34 @@ sealed interface HAImageSize {
      * Scale the image so it fits within [width] x [height] while keeping its aspect ratio, scaling it
      * up if it is smaller.
      */
-    data class Exact(val width: Int, val height: Int) : HAImageSize {
+    data class Exact(@Px val width: Int, @Px val height: Int) : HAImageSize {
         /** Fits the image within a [size] x [size] square. */
-        constructor(size: Int) : this(width = size, height = size)
+        constructor(@Px size: Int) : this(width = size, height = size)
     }
 
     /**
      * Allow the image to not match [width] x [height] exactly: it is scaled down to roughly fit
      * within it, but never scaled up. Uses less memory than [Exact] for small images.
      */
-    data class Inexact(val width: Int, val height: Int) : HAImageSize
+    data class Inexact(@Px val width: Int, @Px val height: Int) : HAImageSize
 }
 
 /** Caching behavior of a [HAImageRequest]. */
 sealed interface HAImageCachePolicy {
 
     /**
-     * Read from and write to the memory and disk caches.
-     *
-     * @property key the key the image is stored under, to retrieve it later with
-     * [HAImageLoader.getCachedBitmap]. When `null` the key is derived from the URL.
+     * Use Coil's default caching. Use [Keyed] when the image must be retrievable with
+     * [HAImageLoader.getCachedBitmap].
      */
-    data class Enabled(val key: String? = null) : HAImageCachePolicy
+    data object Default : HAImageCachePolicy
+
+    /**
+     * Read from and write to the memory and disk caches under [key], so the image can be retrieved
+     * later with [HAImageLoader.getCachedBitmap].
+     *
+     * @property key the key the image is stored under
+     */
+    data class Keyed(val key: String) : HAImageCachePolicy
 
     /** Always fetch the image, never read from nor write to the memory and disk caches. */
     data object Disabled : HAImageCachePolicy

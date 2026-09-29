@@ -101,7 +101,6 @@
     <ID>InjectDispatcher:SensorDetailSettingSheet.kt:Default</ID>
     <ID>InjectDispatcher:SensorDetailViewModel.kt:SensorDetailViewModel$Default</ID>
     <ID>InjectDispatcher:SensorSettingsViewModel.kt:SensorSettingsViewModel$IO</ID>
-    <ID>InjectDispatcher:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$IO</ID>
     <ID>InjectDispatcher:SettingsPresenterImpl.kt:SettingsPresenterImpl$IO</ID>
     <ID>InjectDispatcher:TLSWebViewClient.kt:SafeKeyChainAliasCallback$IO</ID>
     <ID>InjectDispatcher:TemplateWidget.kt:TemplateWidget.Companion$Default</ID>
@@ -245,7 +244,6 @@
     <ID>MagicNumber:ManageShortcutsView.kt:6</ID>
     <ID>MagicNumber:MapVehicleScreen.kt:MapVehicleScreen$64</ID>
     <ID>MagicNumber:MediaPlayerControl.kt:MediaPlayerControl$0.1f</ID>
-    <ID>MagicNumber:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$1024</ID>
     <ID>MagicNumber:MessagingManager.kt:MessagingManager$1000L</ID>
     <ID>MagicNumber:MessagingManager.kt:MessagingManager$3</ID>
     <ID>MagicNumber:MessagingManager.kt:MessagingManager$30</ID>
@@ -352,7 +350,6 @@
     <ID>ReturnCount:PermissionManager.kt:PermissionManager$suspend fun checkLocalNetworkPermission: Boolean</ID>
     <ID>ReturnCount:PermissionManager.kt:PermissionManager$suspend fun checkStoragePermissionForDownload: Boolean</ID>
     <ID>ReturnCount:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$private suspend fun String.toAbsoluteUrl: String?</ID>
-    <ID>ReturnCount:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$private suspend fun cachedAvatar: Bitmap?</ID>
     <ID>ReturnCount:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$suspend fun getUserAvatar: Bitmap?</ID>
     <ID>ReturnCount:SsidViewModel.kt:SsidViewModel$fun addHomeWifiSsid: Boolean</ID>
     <ID>ReturnCount:TLSWebViewClient.kt:TLSWebViewClient$private fun getActivity: Activity?</ID>

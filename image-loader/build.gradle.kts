@@ -14,6 +14,6 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
 
-    api(platform(libs.okhttp.bom))
-    api(libs.okhttp.android)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp.android)
 }

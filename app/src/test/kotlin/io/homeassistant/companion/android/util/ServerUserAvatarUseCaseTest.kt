@@ -114,7 +114,7 @@ class ServerUserAvatarUseCaseTest {
         useCase.getUserAvatar(1)
 
         assertEquals(
-            HAImageCachePolicy.Enabled(key = avatarCacheKey(serverId = 1, picturePath = picture)),
+            HAImageCachePolicy.Keyed(key = avatarCacheKey(serverId = 1, picturePath = picture)),
             request.captured.cachePolicy,
         )
     }

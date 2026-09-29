@@ -33,8 +33,6 @@ class CoilHAImageLoaderTest {
     private val coilImageLoader: ImageLoader = mockk(relaxed = true)
     private val createdWith = mutableListOf<OkHttpClient>()
 
-    // The context is only stored on the ImageRequest (its methods are never called at build time),
-    // so a relaxed mock is enough and we avoid needing Robolectric.
     private val loader = CoilHAImageLoader(
         context = mockk(relaxed = true),
         imageLoaderFactory = { okHttpClient ->
@@ -106,7 +104,7 @@ class CoilHAImageLoaderTest {
     @Test
     fun `Given a memory cache miss when getCachedBitmap then the disk cache is queried with the key`() = runTest {
         val memoryCache = mockk<MemoryCache>()
-        every { memoryCache.get(any()) } returns null
+        every { memoryCache[any()] } returns null
         every { coilImageLoader.memoryCache } returns memoryCache
         val diskCache = mockk<DiskCache>()
         every { diskCache.openSnapshot(any()) } returns null
@@ -115,7 +113,7 @@ class CoilHAImageLoaderTest {
 
         assertNull(loader.getCachedBitmap("key"))
 
-        verify { memoryCache.get(MemoryCache.Key("key")) }
+        verify { memoryCache[MemoryCache.Key("key")] }
         verify { diskCache.openSnapshot("key") }
     }
 
@@ -135,7 +133,7 @@ class CoilHAImageLoaderTest {
     @Test
     fun `Given a cache key when loading then it keys both memory and disk caches`() = runTest {
         val request = coilRequestFor(
-            HAImageRequest(url = "http://ha.local/image.png", cachePolicy = HAImageCachePolicy.Enabled(key = "key")),
+            HAImageRequest(url = "http://ha.local/image.png", cachePolicy = HAImageCachePolicy.Keyed(key = "key")),
         )
 
         assertEquals("key", request.memoryCacheKey)
@@ -150,6 +148,7 @@ class CoilHAImageLoaderTest {
 
         assertEquals(CachePolicy.DISABLED, request.memoryCachePolicy)
         assertEquals(CachePolicy.DISABLED, request.diskCachePolicy)
+        assertEquals(CachePolicy.READ_ONLY, request.networkCachePolicy)
     }
 
     @Test
