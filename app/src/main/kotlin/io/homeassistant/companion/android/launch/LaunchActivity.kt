@@ -200,7 +200,7 @@ class LaunchActivity : AppCompatActivity() {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val isFullScreen by viewModel.isFullScreen.collectAsStateWithLifecycle()
                 val isAppLocked by viewModel.isAppLocked.collectAsStateWithLifecycle()
-                val hazeState = rememberHazeState(blurEnabled = isAppLocked)
+                val hazeState = rememberHazeState()
                 val snackbarHostState = remember { SnackbarHostState() }
 
                 FullscreenEffect(isFullScreen = isFullScreen)
@@ -223,7 +223,9 @@ class LaunchActivity : AppCompatActivity() {
                 )
 
                 // We don't apply the overlay on top of the dialogs
-                HazeLockOverlay(hazeState)
+                if (isAppLocked) {
+                    HazeLockOverlay(hazeState)
+                }
 
                 when (uiState) {
                     LaunchUiState.NetworkUnavailable -> NetworkUnavailableDialog(onBackClick = ::finish)

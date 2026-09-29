@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.applyCompressedStateDiff
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ActionRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.CallServiceIntegrationRequest
-import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventIntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigIntegrationRequest
@@ -302,7 +301,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun getZones(): List<Entity> {
         return tryOnUrls("get_zones") { url ->
             integrationService.getZones(url, GetZonesIntegrationRequest)
-        }.let(::createZonesResponse)
+        }
     }
 
     override suspend fun isAppLocked(): Boolean {
@@ -479,7 +478,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun getEntities(): List<Entity>? {
         val response = webSocketRepository().getStates()
 
-        return response?.map { it.toEntity() }?.sortedBy { it.entityId }
+        return response?.sortedBy { it.entityId }
     }
 
     override suspend fun getEntity(entityId: String): Entity? {
@@ -495,7 +494,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             url.newBuilder().addPathSegments("api/states/$entityId").build(),
             serverManager.authenticationRepository(serverId).buildBearerToken(),
         )
-        return response.toEntity()
+        return response
     }
 
     override suspend fun getEntityUpdates(): Flow<Entity>? {
@@ -572,7 +571,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
         states.forEach { response ->
             if (entityIds == null || response.entityId in entityIds) {
-                put(response.entityId, response.toEntity())
+                put(response.entityId, response)
             }
         }
     }
@@ -747,9 +746,5 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 verticalAccuracy = updateLocation.verticalAccuracy,
             ),
         )
-    }
-
-    private fun createZonesResponse(zones: List<EntityResponse>): List<Entity> {
-        return zones.map { it.toEntity() }
     }
 }
