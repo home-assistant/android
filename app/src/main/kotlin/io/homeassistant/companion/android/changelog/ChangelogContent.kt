@@ -27,6 +27,10 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.Gestures),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_tonal_palette_sensor,
+            platforms = setOf(ChangelogPlatform.APP),
+        ),
     ),
     improved = listOf(
         ChangelogEntry(
