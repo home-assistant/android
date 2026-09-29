@@ -26,13 +26,14 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
  * Adds an interactive vertical scrollbar to a composable with a [LazyListState].
  *
- * @param lazyListState State of the scrollable list.
+ * @param lazyListState State of the scrollbar list.
  * @param width Width of the scrollbar thumb indicator.
  * @param touchWidth Width of the touchable area along the right edge for drag interaction.
  * @param color Color of the scrollbar thumb. Defaults to [LocalHAColorScheme]'s colorBorderNeutralNormal.
@@ -54,7 +55,6 @@ fun Modifier.verticalScrollBar(
     val widthPx = with(density) { width.toPx() }
     val touchWidthPx = with(density) { touchWidth.toPx() }
     val minThumbHeightPx = with(density) { minThumbHeight.toPx() }
-    val rightPaddingPx = 0f
     val estimatedItemHeightPx = with(density) { estimatedItemHeight.toPx() }
 
     var isDragging by remember { mutableStateOf(false) }
@@ -63,18 +63,7 @@ fun Modifier.verticalScrollBar(
     val alpha = remember { Animatable(0f) }
 
     val canScroll by remember {
-        derivedStateOf {
-            val layoutInfo = lazyListState.layoutInfo
-            val totalItems = layoutInfo.totalItemsCount
-            val visibleItems = layoutInfo.visibleItemsInfo
-            if (totalItems == 0 || visibleItems.isEmpty()) {
-                false
-            } else {
-                visibleItems.size < totalItems ||
-                    lazyListState.firstVisibleItemScrollOffset > 0 ||
-                    visibleItems.last().size > layoutInfo.viewportSize.height - visibleItems.last().offset
-            }
-        }
+        derivedStateOf { checkCanScroll(lazyListState) }
     }
 
     val totalItemsCount by remember {
@@ -105,95 +94,165 @@ fun Modifier.verticalScrollBar(
     }
 
     return this
-        .pointerInput(lazyListState, canScroll) {
-            if (!canScroll) return@pointerInput
+        .scrollbarDragInput(
+            lazyListState = lazyListState,
+            canScroll = canScroll,
+            touchWidthPx = touchWidthPx,
+            estimatedItemHeightPx = estimatedItemHeightPx,
+            minThumbHeightPx = minThumbHeightPx,
+            coroutineScope = coroutineScope,
+            onDraggingChanged = { isDragging = it },
+        )
+        .drawScrollBar(
+            lazyListState = lazyListState,
+            canScroll = canScroll,
+            alpha = alpha.value,
+            color = color,
+            widthPx = widthPx,
+            estimatedItemHeightPx = estimatedItemHeightPx,
+            minThumbHeightPx = minThumbHeightPx,
+        )
+}
 
-            awaitEachGesture {
-                val down = awaitFirstDown(requireUnconsumed = false)
-                val touchX = down.position.x
-                val touchY = down.position.y
+private fun checkCanScroll(lazyListState: LazyListState): Boolean {
+    val layoutInfo = lazyListState.layoutInfo
+    val totalItems = layoutInfo.totalItemsCount
+    val visibleItems = layoutInfo.visibleItemsInfo
+    if (totalItems == 0 || visibleItems.isEmpty()) {
+        return false
+    }
+    return visibleItems.size < totalItems ||
+        lazyListState.firstVisibleItemScrollOffset > 0 ||
+        visibleItems.last().size > layoutInfo.viewportSize.height - visibleItems.last().offset
+}
 
-                val currentLayoutInfo = lazyListState.layoutInfo
-                val currentTotalItems = currentLayoutInfo.totalItemsCount
-                if (currentTotalItems == 0) return@awaitEachGesture
+private data class ScrollBarMetrics(
+    val thumbHeight: Float,
+    val thumbOffsetY: Float,
+    val maxThumbOffsetY: Float,
+)
 
-                val viewportHeight = size.height.toFloat()
-                val totalEstimatedHeight = currentTotalItems * estimatedItemHeightPx
-                val maxScrolledOffset = (totalEstimatedHeight - viewportHeight).coerceAtLeast(1f)
-                val scrolledOffset =
-                    lazyListState.firstVisibleItemIndex * estimatedItemHeightPx +
-                        lazyListState.firstVisibleItemScrollOffset
-                val scrollProgress = (scrolledOffset / maxScrolledOffset).coerceIn(0f, 1f)
+private fun calculateScrollBarMetrics(
+    lazyListState: LazyListState,
+    viewportHeight: Float,
+    estimatedItemHeightPx: Float,
+    minThumbHeightPx: Float,
+): ScrollBarMetrics? {
+    val currentTotalItems = lazyListState.layoutInfo.totalItemsCount
+    if (currentTotalItems == 0) return null
 
-                val viewportRatio = (viewportHeight / totalEstimatedHeight).coerceIn(0f, 1f)
-                val thumbHeight = (viewportHeight * viewportRatio).coerceIn(minThumbHeightPx, viewportHeight)
-                val maxThumbOffsetY = viewportHeight - thumbHeight
-                val thumbTop = scrollProgress * maxThumbOffsetY
-                val thumbBottom = thumbTop + thumbHeight
+    val totalEstimatedHeight = currentTotalItems * estimatedItemHeightPx
+    val maxScrolledOffset = (totalEstimatedHeight - viewportHeight).coerceAtLeast(1f)
+    val scrolledOffset =
+        lazyListState.firstVisibleItemIndex * estimatedItemHeightPx +
+            lazyListState.firstVisibleItemScrollOffset
+    val scrollProgress = (scrolledOffset / maxScrolledOffset).coerceIn(0f, 1f)
 
-                val isTouchOnThumb = touchX >= size.width - touchWidthPx && touchY in thumbTop..thumbBottom
+    val viewportRatio = (viewportHeight / totalEstimatedHeight).coerceIn(0f, 1f)
+    val thumbHeight = (viewportHeight * viewportRatio).coerceIn(minThumbHeightPx, viewportHeight)
+    val maxThumbOffsetY = viewportHeight - thumbHeight
+    val thumbOffsetY = scrollProgress * maxThumbOffsetY
 
-                if (isTouchOnThumb) {
-                    down.consume()
-                    isDragging = true
+    return ScrollBarMetrics(
+        thumbHeight = thumbHeight,
+        thumbOffsetY = thumbOffsetY,
+        maxThumbOffsetY = maxThumbOffsetY,
+    )
+}
 
-                    fun scrollToTouch(y: Float) {
-                        if (currentTotalItems == 0) return
-                        if (viewportHeight <= 0f) return
+private fun Modifier.scrollbarDragInput(
+    lazyListState: LazyListState,
+    canScroll: Boolean,
+    touchWidthPx: Float,
+    estimatedItemHeightPx: Float,
+    minThumbHeightPx: Float,
+    coroutineScope: CoroutineScope,
+    onDraggingChanged: (Boolean) -> Unit,
+): Modifier = pointerInput(lazyListState, canScroll) {
+    if (!canScroll) return@pointerInput
 
-                        val targetThumbOffsetY = (y - thumbHeight / 2f).coerceIn(0f, maxThumbOffsetY)
-                        val targetFraction = if (maxThumbOffsetY > 0f) targetThumbOffsetY / maxThumbOffsetY else 0f
-                        val targetIndex =
-                            (targetFraction * (currentTotalItems - 1)).roundToInt().coerceIn(0, currentTotalItems - 1)
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        val touchX = down.position.x
+        val touchY = down.position.y
 
-                        coroutineScope.launch {
-                            lazyListState.scrollToItem(targetIndex)
-                        }
-                    }
+        val currentTotalItems = lazyListState.layoutInfo.totalItemsCount
+        val viewportHeight = size.height.toFloat()
 
-                    scrollToTouch(touchY)
+        val metrics = calculateScrollBarMetrics(
+            lazyListState = lazyListState,
+            viewportHeight = viewportHeight,
+            estimatedItemHeightPx = estimatedItemHeightPx,
+            minThumbHeightPx = minThumbHeightPx,
+        ) ?: return@awaitEachGesture
 
-                    drag(down.id) { change ->
-                        change.consume()
-                        scrollToTouch(change.position.y)
-                    }
+        val thumbTop = metrics.thumbOffsetY
+        val thumbBottom = thumbTop + metrics.thumbHeight
 
-                    isDragging = false
+        val isTouchOnThumb = touchX >= size.width - touchWidthPx && touchY in thumbTop..thumbBottom
+
+        if (isTouchOnThumb) {
+            down.consume()
+            onDraggingChanged(true)
+
+            fun scrollToTouch(y: Float) {
+                if (currentTotalItems == 0 || viewportHeight <= 0f) return
+
+                val targetThumbOffsetY = (y - metrics.thumbHeight / 2f).coerceIn(0f, metrics.maxThumbOffsetY)
+                val targetFraction =
+                    if (metrics.maxThumbOffsetY > 0f) targetThumbOffsetY / metrics.maxThumbOffsetY else 0f
+                val targetIndex =
+                    (targetFraction * (currentTotalItems - 1)).roundToInt().coerceIn(0, currentTotalItems - 1)
+
+                coroutineScope.launch {
+                    lazyListState.scrollToItem(targetIndex)
                 }
             }
+
+            scrollToTouch(touchY)
+
+            drag(down.id) { change ->
+                change.consume()
+                scrollToTouch(change.position.y)
+            }
+
+            onDraggingChanged(false)
         }
-        .drawWithContent {
-            drawContent()
+    }
+}
 
-            if (canScroll && alpha.value > 0f) {
-                val currentLayoutInfo = lazyListState.layoutInfo
-                val currentTotalItems = currentLayoutInfo.totalItemsCount
-                val currentVisibleItems = currentLayoutInfo.visibleItemsInfo
+private fun Modifier.drawScrollBar(
+    lazyListState: LazyListState,
+    canScroll: Boolean,
+    alpha: Float,
+    color: Color,
+    widthPx: Float,
+    estimatedItemHeightPx: Float,
+    minThumbHeightPx: Float,
+): Modifier = drawWithContent {
+    drawContent()
 
-                if (currentTotalItems > 0 && currentVisibleItems.isNotEmpty()) {
-                    val viewportHeight = size.height
-                    val firstVisibleIndex = lazyListState.firstVisibleItemIndex
-                    val firstVisibleOffset = lazyListState.firstVisibleItemScrollOffset
+    if (canScroll && alpha > 0f) {
+        val currentTotalItems = lazyListState.layoutInfo.totalItemsCount
+        val currentVisibleItems = lazyListState.layoutInfo.visibleItemsInfo
 
-                    val totalEstimatedHeight = currentTotalItems * estimatedItemHeightPx
-                    val maxScrolledOffset = (totalEstimatedHeight - viewportHeight).coerceAtLeast(1f)
-                    val scrolledOffset = firstVisibleIndex * estimatedItemHeightPx + firstVisibleOffset
-                    val scrollProgress = (scrolledOffset / maxScrolledOffset).coerceIn(0f, 1f)
+        if (currentTotalItems > 0 && currentVisibleItems.isNotEmpty()) {
+            val metrics = calculateScrollBarMetrics(
+                lazyListState = lazyListState,
+                viewportHeight = size.height,
+                estimatedItemHeightPx = estimatedItemHeightPx,
+                minThumbHeightPx = minThumbHeightPx,
+            )
 
-                    val viewportRatio = (viewportHeight / totalEstimatedHeight).coerceIn(0f, 1f)
-                    val thumbHeight = (viewportHeight * viewportRatio).coerceIn(minThumbHeightPx, viewportHeight)
-                    val maxThumbOffsetY = viewportHeight - thumbHeight
-                    val thumbOffsetY = scrollProgress * maxThumbOffsetY
-
-                    val x = size.width - rightPaddingPx - widthPx
-
-                    drawRect(
-                        color = color,
-                        topLeft = Offset(x, thumbOffsetY),
-                        size = Size(widthPx, thumbHeight),
-                        alpha = alpha.value,
-                    )
-                }
+            if (metrics != null) {
+                val x = size.width - widthPx
+                drawRect(
+                    color = color,
+                    topLeft = Offset(x, metrics.thumbOffsetY),
+                    size = Size(widthPx, metrics.thumbHeight),
+                    alpha = alpha,
+                )
             }
         }
+    }
 }
