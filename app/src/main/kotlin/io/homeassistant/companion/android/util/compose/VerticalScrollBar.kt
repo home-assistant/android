@@ -24,10 +24,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Adds an interactive vertical scrollbar to a composable with a [LazyListState].
@@ -120,7 +120,9 @@ fun Modifier.verticalScrollBar(
                 val viewportHeight = size.height.toFloat()
                 val totalEstimatedHeight = currentTotalItems * estimatedItemHeightPx
                 val maxScrolledOffset = (totalEstimatedHeight - viewportHeight).coerceAtLeast(1f)
-                val scrolledOffset = lazyListState.firstVisibleItemIndex * estimatedItemHeightPx + lazyListState.firstVisibleItemScrollOffset
+                val scrolledOffset =
+                    lazyListState.firstVisibleItemIndex * estimatedItemHeightPx +
+                        lazyListState.firstVisibleItemScrollOffset
                 val scrollProgress = (scrolledOffset / maxScrolledOffset).coerceIn(0f, 1f)
 
                 val viewportRatio = (viewportHeight / totalEstimatedHeight).coerceIn(0f, 1f)
@@ -141,7 +143,8 @@ fun Modifier.verticalScrollBar(
 
                         val targetThumbOffsetY = (y - thumbHeight / 2f).coerceIn(0f, maxThumbOffsetY)
                         val targetFraction = if (maxThumbOffsetY > 0f) targetThumbOffsetY / maxThumbOffsetY else 0f
-                        val targetIndex = (targetFraction * (currentTotalItems - 1)).roundToInt().coerceIn(0, currentTotalItems - 1)
+                        val targetIndex =
+                            (targetFraction * (currentTotalItems - 1)).roundToInt().coerceIn(0, currentTotalItems - 1)
 
                         coroutineScope.launch {
                             lazyListState.scrollToItem(targetIndex)

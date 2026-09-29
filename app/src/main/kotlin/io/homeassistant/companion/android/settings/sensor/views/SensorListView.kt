@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.settings.sensor.SensorSettingsViewMode
 import io.homeassistant.companion.android.settings.views.SettingsRow
 import io.homeassistant.companion.android.settings.views.SettingsSubheader
 import io.homeassistant.companion.android.settings.views.SettingsSubheaderDefaults
-import io.homeassistant.companion.android.util.compose.verticalScrollBar
+import io.homeassistant.companion.android.util.compose.VerticalScrollBar
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @OptIn(ExperimentalFoundationApi::class)
