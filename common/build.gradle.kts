@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.media)
+    implementation(libs.paging.runtime)
 
     api(libs.androidx.room.runtime)
     api(libs.androidx.room.paging)

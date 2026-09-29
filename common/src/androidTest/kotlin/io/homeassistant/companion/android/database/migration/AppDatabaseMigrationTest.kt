@@ -95,7 +95,7 @@ class AppDatabaseMigrationTest {
     }
 
     @Test
-    fun migration16to17_renamesSettingsAndPreservesFirstRowSkip() = runTest {
+    fun migration16to17_renamesEverySettingAndKeepsAllRows() = runTest {
         val connection = openDirectDb()
         connection.use { connection ->
             connection.execSQL(
@@ -103,12 +103,10 @@ class AppDatabaseMigrationTest {
                     "`value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', " +
                     "`enabled` INTEGER NOT NULL DEFAULT '1', PRIMARY KEY(`sensor_id`, `name`))",
             )
-            // First row is intentionally skipped by the original algorithm (moveToFirst + moveToNext);
-            // the rewrite preserves that, so this row must NOT appear after migration.
+            // Every row must be migrated and renamed; the original bug skipped the first one.
             connection.execSQL(
                 "INSERT INTO `sensor_settings` VALUES ('next_alarm','Allow List','a','string',1)",
             )
-            // Second row is migrated and its name is renamed.
             connection.execSQL(
                 "INSERT INTO `sensor_settings` VALUES ('geocoded_location','Minimum Accuracy','50','string',1)",
             )
@@ -116,11 +114,17 @@ class AppDatabaseMigrationTest {
             migration(16).migrate(connection)
 
             val names = buildList {
-                connection.prepare("SELECT `sensor_id`,`name` FROM `sensor_settings`").use {
+                connection.prepare("SELECT `sensor_id`,`name` FROM `sensor_settings` ORDER BY `sensor_id`").use {
                     while (it.step()) add(it.getText(0) to it.getText(1))
                 }
             }
-            assertEquals(listOf("geocoded_location" to "geocode_minimum_accuracy"), names)
+            assertEquals(
+                listOf(
+                    "geocoded_location" to "geocode_minimum_accuracy",
+                    "next_alarm" to "nextalarm_allow_list",
+                ),
+                names,
+            )
         }
     }
 

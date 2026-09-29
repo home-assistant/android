@@ -359,10 +359,7 @@ private class Migration16to17(private val context: Context) : Migration(16, 17) 
                     "enabled" to row.getIntByColumnName("enabled"),
                 )
             }
-            // TODO check with Joris if it was wanted
-            // The original iterated with moveToFirst() then while(moveToNext()), skipping the
-            // first row; drop(1) preserves that exact behaviour so migration output is unchanged.
-            sensorSettings.addAll(migrated.drop(1))
+            sensorSettings.addAll(migrated)
         } catch (e: Exception) {
             migrationFailed = true
             Timber.e(e, "Unable to migrate, proceeding with recreating the table")
@@ -640,8 +637,7 @@ private class Migration37to38(private val context: Context) : Migration(37, 38) 
             remove("secret")
         }
 
-        // Copy existing DB settings to existing server - ID 0 is used for shared settings.
-        // TODO check with Joris we only get the first value?
+        // Copy the single existing settings row (ID 0 is shared settings) to the server-specific row.
         connection.query("SELECT * FROM `settings`") { row ->
             mapOf(
                 "id" to serverId,
