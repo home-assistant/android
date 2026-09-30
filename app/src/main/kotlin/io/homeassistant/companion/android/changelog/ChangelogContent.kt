@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.changelog
 
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
+import io.homeassistant.companion.android.sensors.DynamicColorSensorManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 
 /**
@@ -30,6 +31,9 @@ internal val currentChangelog = Changelog(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_tonal_palette_sensor,
             platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(
+                SettingsActivity.Deeplink.Sensor(DynamicColorSensorManager.tonalPaletteSensor.id),
+            ),
         ),
     ),
     improved = listOf(

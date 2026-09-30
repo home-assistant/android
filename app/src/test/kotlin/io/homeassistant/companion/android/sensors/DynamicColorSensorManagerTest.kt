@@ -165,7 +165,7 @@ class DynamicColorSensorManagerTest {
         Settings.Secure.putString(
             getApplicationContext<Context>().contentResolver,
             "theme_customization_overlay_packages",
-            """{ "android.theme.customization.theme_style": "VIBRANT" }""",
+            """{ "android.theme.customization.theme_style": "VIBRANT", "unknown_new_field": "Hello" }""",
         )
 
         createManager().requestSensorUpdate()

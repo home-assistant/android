@@ -14,13 +14,13 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import timber.log.Timber
 
 @Singleton
@@ -148,7 +148,7 @@ class DynamicColorSensorManager @Inject constructor(
             }
 
             else -> try {
-                Json.decodeFromString<ThemeBundle>(jsonString).themeStyle
+                kotlinJsonMapper.decodeFromString<ThemeBundle>(jsonString).themeStyle
             } catch (ex: SerializationException) {
                 Timber.w(ex, "Exception parsing JSON for $THEME_OVERLAY_JSON_KEY")
                 STATE_UNKNOWN
