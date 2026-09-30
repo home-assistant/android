@@ -34,6 +34,7 @@ internal val currentChangelog = Changelog(
             action = ChangelogAction.OpenSettings(
                 SettingsActivity.Deeplink.Sensor(DynamicColorSensorManager.tonalPaletteSensor.id),
             ),
+            actionRequiresPlatform = true,
         ),
     ),
     improved = listOf(
