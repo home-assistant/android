@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
+import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.serialization.SerialName
@@ -25,6 +26,7 @@ import timber.log.Timber
 @Singleton
 class DynamicColorSensorManager @Inject constructor(
     @ApplicationContext override val applicationContext: Context,
+    @param:IsAutomotive private val isAutomotive: Boolean,
     override val sensorRepository: SensorRepository,
     override val serverManager: ServerManager,
 ) : SensorManager {
@@ -71,7 +73,12 @@ class DynamicColorSensorManager @Inject constructor(
         get() = commonR.string.sensor_name_dynamic_color
 
     override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
-        return listOf(accentColorSensor, tonalPaletteSensor)
+        return buildList {
+            add(accentColorSensor)
+            if (!isAutomotive) {
+                add(tonalPaletteSensor)
+            }
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -80,7 +87,9 @@ class DynamicColorSensorManager @Inject constructor(
 
     override suspend fun requestSensorUpdate() {
         updateAccentColor(applicationContext)
-        updateTonalPalette(applicationContext)
+        if (!isAutomotive) {
+            updateTonalPalette(applicationContext)
+        }
     }
 
     override fun hasSensor(): Boolean {
