@@ -30,7 +30,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
-                    "implementation"(libs.haze.materials)
+                    "implementation"(libs.haze.blur.materials)
                     "implementation"(libs.androidx.health.connect.client)
 
                     "implementation"(libs.kotlin.stdlib)
