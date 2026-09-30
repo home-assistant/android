@@ -39,4 +39,10 @@ class WidgetTextColorTest {
     fun `Given an unrecognized hex in light mode when converting from hex then it falls back to BLACK`() {
         assertEquals(WidgetTextColor.BLACK, WidgetTextColor.fromHex(context, "#123456"))
     }
+
+    @Test
+    @Config(qualifiers = "+night")
+    fun `Given an unrecognized hex in dark mode when converting from hex then it falls back to WHITE`() {
+        assertEquals(WidgetTextColor.WHITE, WidgetTextColor.fromHex(context, "#123456"))
+    }
 }

@@ -43,6 +43,34 @@ class TodoWidgetConfigureScreenTest {
     @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
+    private val listEntity = Entity(
+        entityId = "todo.shopping_list",
+        state = "3",
+        attributes = emptyMap(),
+        lastChanged = LocalDateTime.MIN,
+        lastUpdated = LocalDateTime.MIN,
+    )
+
+    private val newWidgetState = TodoWidgetConfigureState(
+        serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
+        selectedServerId = 1,
+        entityDisplayState = EntityDisplayState.Loaded(
+            listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(listEntity, name = "Shopping List"))),
+        ),
+    )
+
+    private val configuredState = newWidgetState.copy(
+        selectedEntityId = listEntity.entityId,
+        isUpdateWidget = true,
+    )
+
+    private val multipleServersState = configuredState.copy(
+        serversDropdownItems = listOf(
+            HADropdownItem(key = 1, label = "Home"),
+            HADropdownItem(key = 2, label = "Vacation home"),
+        ),
+    )
+
     @Test
     fun `Given no list selected for new widget when displayed then the add action is disabled and the configuration is hidden`() {
         composeTestRule.apply {
@@ -203,35 +231,5 @@ class TodoWidgetConfigureScreenTest {
             }
             dsl()
         }
-    }
-
-    private companion object {
-        val ENTITY = Entity(
-            entityId = "todo.shopping_list",
-            state = "3",
-            attributes = emptyMap(),
-            lastChanged = LocalDateTime.MIN,
-            lastUpdated = LocalDateTime.MIN,
-        )
-
-        val newWidgetState = TodoWidgetConfigureState(
-            serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
-            selectedServerId = 1,
-            entityDisplayState = EntityDisplayState.Loaded(
-                listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(ENTITY, name = "Shopping List"))),
-            ),
-        )
-
-        val configuredState = newWidgetState.copy(
-            selectedEntityId = ENTITY.entityId,
-            isUpdateWidget = true,
-        )
-
-        val multipleServersState = configuredState.copy(
-            serversDropdownItems = listOf(
-                HADropdownItem(key = 1, label = "Home"),
-                HADropdownItem(key = 2, label = "Vacation home"),
-            ),
-        )
     }
 }
