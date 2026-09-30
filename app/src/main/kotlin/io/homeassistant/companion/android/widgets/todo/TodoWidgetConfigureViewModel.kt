@@ -265,9 +265,6 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
                 serverId = current.selectedServerId,
                 entityId = entity.entityId,
                 backgroundType = current.selectedBackgroundType,
-                // A transparent widget with no chosen color follows the system theme: dark text in
-                // light mode, light text in dark mode. Persist that default rather than null; the
-                // color only applies to a transparent background.
                 textColor = if (current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
                     WidgetTextColor.fromHex(context, current.textColorHex).resolve(context)
                 } else {
