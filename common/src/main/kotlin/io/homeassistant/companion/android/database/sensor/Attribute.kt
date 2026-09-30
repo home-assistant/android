@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.database.sensor
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
 
 @Entity(tableName = "sensor_attributes", primaryKeys = ["sensor_id", "name"])
 data class Attribute(

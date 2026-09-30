@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.database
 
 import android.content.Context
-import androidx.room.Room
+import androidx.room3.Room
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
