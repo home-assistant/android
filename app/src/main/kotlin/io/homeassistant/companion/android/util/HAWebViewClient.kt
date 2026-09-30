@@ -10,7 +10,6 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
@@ -269,13 +268,8 @@ class HAWebViewClient internal constructor(
         return true
     }
 
-    // Override deprecated method for backward compatibility with API 23 and below.
-    // The non-deprecated shouldOverrideUrlLoading(WebView, WebResourceRequest) is not invoked
-    // on these older Android versions, so this method remains necessary.
-    @Suppress("DEPRECATION")
-    @Deprecated("Deprecated in Java for SDK >= 24", ReplaceWith("shouldOverrideUrlLoading(view, request)"))
-    override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-        return url?.toUri()?.let { onUrlIntercepted?.invoke(it, isTLSClientAuthNeeded) } ?: false
+    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+        return request?.url?.let { onUrlIntercepted?.invoke(it, isTLSClientAuthNeeded) } ?: false
     }
 
     private fun formatErrorDetails(context: Context?, code: Int?, description: String?): String {
