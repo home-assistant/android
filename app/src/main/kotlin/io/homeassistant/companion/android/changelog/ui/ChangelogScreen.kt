@@ -257,8 +257,6 @@ private fun ChangelogEntryContent(
     currentPlatform: ChangelogPlatform,
     onActionClick: (ChangelogAction) -> Unit,
 ) {
-    // A platform-restricted action is only offered while running on one of the entry's platforms,
-    // so an action deeplinking to a target absent on this platform is not shown as tappable.
     val action = entry.action?.takeUnless {
         entry.actionRequiresPlatform && currentPlatform !in entry.platforms
     }
