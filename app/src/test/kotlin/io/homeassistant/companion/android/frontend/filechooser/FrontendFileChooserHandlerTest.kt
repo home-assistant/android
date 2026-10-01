@@ -111,12 +111,12 @@ class FrontendFileChooserHandlerTest {
     }
 
     @Test
-    fun `Given pickFiles called then previous captures are deleted before a new one is created`() = runTest {
+    fun `Given pickFiles called then stale captures are deleted before a new one is created`() = runTest {
         backgroundScope.launch { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*"))) }
         awaitPick()
 
         coVerifyOrder {
-            cameraCaptureRepository.deleteAll()
+            cameraCaptureRepository.deleteStale()
             cameraCaptureRepository.createImageFile()
         }
     }

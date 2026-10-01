@@ -9,6 +9,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.util.fileProviderAuthority
 import java.io.File
 import javax.inject.Inject
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,6 +22,9 @@ const val CAPTURE_DIRECTORY = "file_chooser_captures"
 private const val CAPTURE_PREFIX = "capture_"
 private const val IMAGE_SUFFIX = ".jpg"
 
+/** Long enough that the page has submitted or dropped a photo it was handed. */
+private val CAPTURE_MAX_AGE = 1.days
+
 /**
  * Creates the files a camera app writes photos to.
  *
@@ -27,11 +33,12 @@ private const val IMAGE_SUFFIX = ".jpg"
  */
 internal class CameraCaptureRepository @VisibleForTesting constructor(
     private val context: Context,
+    private val clock: Clock,
     private val backgroundDispatcher: CoroutineDispatcher,
 ) {
 
     @Inject
-    constructor(@ApplicationContext context: Context) : this(context, Dispatchers.IO)
+    constructor(@ApplicationContext context: Context, clock: Clock) : this(context, clock, Dispatchers.IO)
 
     /** `true` when the device has a camera to capture with. */
     val hasCamera: Boolean
@@ -49,10 +56,16 @@ internal class CameraCaptureRepository @VisibleForTesting constructor(
         withContext(backgroundDispatcher) { context.contentResolver.delete(uri, null, null) }
     }
 
-    /** Deletes every file created by [createImageFile]. */
-    suspend fun deleteAll() {
+    /**
+     * Deletes files created by [createImageFile] more than a day ago. Recent files are kept, as a
+     * camera may still write to them or the page may still have to upload them.
+     */
+    suspend fun deleteStale() {
         withContext(backgroundDispatcher) {
-            File(context.cacheDir, CAPTURE_DIRECTORY).listFiles()?.forEach { it.delete() }
+            val staleBefore = clock.now() - CAPTURE_MAX_AGE
+            File(context.cacheDir, CAPTURE_DIRECTORY).listFiles()
+                ?.filter { Instant.fromEpochMilliseconds(it.lastModified()) < staleBefore }
+                ?.forEach { it.delete() }
         }
     }
 }

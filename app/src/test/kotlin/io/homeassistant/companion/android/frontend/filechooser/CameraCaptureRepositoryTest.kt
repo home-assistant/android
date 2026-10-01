@@ -2,11 +2,15 @@ package io.homeassistant.companion.android.frontend.filechooser
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
+import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.util.fileProviderAuthority
 import java.io.File
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -25,6 +29,7 @@ import org.robolectric.annotation.Config
 class CameraCaptureRepositoryTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
+    private val clock = FakeClock()
 
     @Before
     fun setUp() {
@@ -34,10 +39,10 @@ class CameraCaptureRepositoryTest {
 
     @Test
     fun `Given capture file created when deleting it then the file is removed`() = runTest {
-        val repository = CameraCaptureRepository(context, StandardTestDispatcher(testScheduler))
+        val repository = CameraCaptureRepository(context, clock, StandardTestDispatcher(testScheduler))
 
         val uri = repository.createImageFile()
-        val file = File(File(context.cacheDir, CAPTURE_DIRECTORY), uri.lastPathSegment!!)
+        val file = captureFile(uri)
 
         assertEquals(context.fileProviderAuthority, uri.authority)
         assertTrue(file.exists())
@@ -48,21 +53,22 @@ class CameraCaptureRepositoryTest {
     }
 
     @Test
-    fun `Given capture files created when deleting all then every capture file is removed`() = runTest {
-        val repository = CameraCaptureRepository(context, StandardTestDispatcher(testScheduler))
-        repository.createImageFile()
-        repository.createImageFile()
-        val directory = File(context.cacheDir, CAPTURE_DIRECTORY)
-        assertEquals(2, directory.listFiles()?.size)
+    fun `Given old and recent captures when deleting stale then only the old capture is removed`() = runTest {
+        val repository = CameraCaptureRepository(context, clock, StandardTestDispatcher(testScheduler))
+        val oldFile = captureFile(repository.createImageFile())
+        val recentFile = captureFile(repository.createImageFile())
+        oldFile.setLastModified((clock.now() - 2.days).toEpochMilliseconds())
+        recentFile.setLastModified((clock.now() - 1.hours).toEpochMilliseconds())
 
-        repository.deleteAll()
+        repository.deleteStale()
 
-        assertEquals(0, directory.listFiles()?.size)
+        assertFalse(oldFile.exists())
+        assertTrue(recentFile.exists())
     }
 
     @Test
     fun `Given camera feature when checking camera then it is reported`() {
-        val repository = CameraCaptureRepository(context)
+        val repository = CameraCaptureRepository(context, clock)
 
         shadowOf(context.packageManager).setSystemFeature(PackageManager.FEATURE_CAMERA_ANY, false)
         assertFalse(repository.hasCamera)
@@ -70,4 +76,6 @@ class CameraCaptureRepositoryTest {
         shadowOf(context.packageManager).setSystemFeature(PackageManager.FEATURE_CAMERA_ANY, true)
         assertTrue(repository.hasCamera)
     }
+
+    private fun captureFile(uri: Uri) = File(File(context.cacheDir, CAPTURE_DIRECTORY), uri.lastPathSegment!!)
 }

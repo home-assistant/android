@@ -53,9 +53,7 @@ internal class FrontendFileChooserHandler @Inject constructor(
      * capture file deleted before returning, including on cancellation of the calling coroutine.
      */
     suspend fun pickFiles(params: FileChooserParams): Array<Uri>? {
-        // Photos from previous choosers were already handed to the page; drop them so the cache
-        // doesn't grow. A photo selected in a form that isn't submitted yet is lost.
-        cameraCaptureRepository.deleteAll()
+        cameraCaptureRepository.deleteStale()
         val cameraCapture = createCameraCaptureIfImagesAccepted(params)
         var uris: Array<Uri>? = null
         try {
