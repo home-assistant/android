@@ -32,7 +32,6 @@ fun SensorListView(
     modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
-    
     LazyColumn(
         state = lazyListState,
         modifier = modifier.verticalScrollBar(lazyListState),
