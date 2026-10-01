@@ -5,13 +5,14 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.MediaStore
 import android.webkit.WebChromeClient.FileChooserParams
+import androidx.core.content.IntentCompat
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,10 +25,11 @@ class ShowWebFileChooserTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val contract = ShowWebFileChooser()
+    private val outputUri = Uri.parse("content://provider/capture.jpg")
 
     @Test
     fun `Given no accept types when creating intent then any openable file can be picked`() {
-        val intent = contract.createIntent(context, FakeFileChooserParams(acceptTypes = arrayOf("")))
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("")))
 
         assertEquals(Intent.ACTION_GET_CONTENT, intent.action)
         assertTrue(intent.hasCategory(Intent.CATEGORY_OPENABLE))
@@ -38,10 +40,7 @@ class ShowWebFileChooserTest {
 
     @Test
     fun `Given MIME types and extensions when creating intent then they are passed as MIME types`() {
-        val intent = contract.createIntent(
-            context,
-            FakeFileChooserParams(acceptTypes = arrayOf("image/*", " .PDF ", "application/pdf")),
-        )
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*", " .PDF ", "application/pdf")))
 
         assertEquals("*/*", intent.type)
         assertArrayEquals(
@@ -52,72 +51,94 @@ class ShowWebFileChooserTest {
 
     @Test
     fun `Given an unknown extension when creating intent then no MIME type filter is applied`() {
-        val intent = contract.createIntent(
-            context,
-            FakeFileChooserParams(acceptTypes = arrayOf("image/*", ".unknownextension")),
-        )
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*", ".unknownextension")))
 
         assertFalse(intent.hasExtra(Intent.EXTRA_MIME_TYPES))
     }
 
     @Test
     fun `Given a wildcard accept type when creating intent then no MIME type filter is applied`() {
-        val intent = contract.createIntent(context, FakeFileChooserParams(acceptTypes = arrayOf("image/*", "*/*")))
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "*/*")))
 
         assertFalse(intent.hasExtra(Intent.EXTRA_MIME_TYPES))
     }
 
     @Test
     fun `Given multiple mode when creating intent then multiple selection is allowed`() {
-        val intent = contract.createIntent(context, FakeFileChooserParams(mode = FileChooserParams.MODE_OPEN_MULTIPLE))
+        val intent = createIntent(FakeFileChooserParams(mode = FileChooserParams.MODE_OPEN_MULTIPLE))
 
         assertTrue(intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false))
     }
 
     @Test
-    fun `Given several files in clip data when parsing result then all uris are returned`() {
+    fun `Given direct camera capture when creating intent then the camera writes to the output uri`() {
+        val intent = createIntent(FakeFileChooserParams(), CameraCapture.Direct(outputUri))
+
+        assertCaptureIntent(intent)
+    }
+
+    @Test
+    fun `Given offered camera capture when creating intent then a chooser shows the picker and the camera`() {
+        val intent = createIntent(
+            FakeFileChooserParams(acceptTypes = arrayOf("image/*")),
+            CameraCapture.Offered(outputUri),
+        )
+
+        assertEquals(Intent.ACTION_CHOOSER, intent.action)
+        val pickerIntent = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_INTENT, Intent::class.java)
+        assertEquals(Intent.ACTION_GET_CONTENT, pickerIntent?.action)
+        assertArrayEquals(arrayOf("image/*"), pickerIntent?.getStringArrayExtra(Intent.EXTRA_MIME_TYPES))
+        val initialIntents = IntentCompat.getParcelableArrayExtra(intent, Intent.EXTRA_INITIAL_INTENTS, Intent::class.java)
+        assertEquals(1, initialIntents?.size)
+        assertCaptureIntent(initialIntents!!.single() as Intent)
+    }
+
+    @Test
+    fun `Given several files in clip data when parsing result then all uris are selected`() {
         val first = Uri.parse("content://provider/first")
         val second = Uri.parse("content://provider/second")
         val intent = Intent().apply {
             clipData = ClipData.newRawUri(null, first).apply { addItem(ClipData.Item(second)) }
         }
 
-        assertArrayEquals(arrayOf(first, second), contract.parseResult(Activity.RESULT_OK, intent))
+        assertEquals(FileChooserResult.Selected(listOf(first, second)), contract.parseResult(Activity.RESULT_OK, intent))
     }
 
     @Test
-    fun `Given a single file in clip data without data when parsing result then the uri is returned`() {
+    fun `Given a single file in clip data without data when parsing result then the uri is selected`() {
         val uri = Uri.parse("content://provider/file")
         val intent = Intent().apply { clipData = ClipData.newRawUri(null, uri) }
 
-        assertArrayEquals(arrayOf(uri), contract.parseResult(Activity.RESULT_OK, intent))
+        assertEquals(FileChooserResult.Selected(listOf(uri)), contract.parseResult(Activity.RESULT_OK, intent))
     }
 
     @Test
-    fun `Given only data when parsing result then the uri is returned`() {
+    fun `Given only data when parsing result then the uri is selected`() {
         val uri = Uri.parse("content://provider/file")
 
-        assertArrayEquals(arrayOf(uri), contract.parseResult(Activity.RESULT_OK, Intent().setData(uri)))
+        assertEquals(FileChooserResult.Selected(listOf(uri)), contract.parseResult(Activity.RESULT_OK, Intent().setData(uri)))
     }
 
     @Test
-    fun `Given cancelled or empty result when parsing result then null is returned`() {
-        val uri = Uri.parse("content://provider/file")
-
-        assertNull(contract.parseResult(Activity.RESULT_CANCELED, Intent().setData(uri)))
-        assertNull(contract.parseResult(Activity.RESULT_OK, null))
-        assertNull(contract.parseResult(Activity.RESULT_OK, Intent()))
+    fun `Given success without uri when parsing result then it is captured`() {
+        assertEquals(FileChooserResult.Captured, contract.parseResult(Activity.RESULT_OK, null))
+        assertEquals(FileChooserResult.Captured, contract.parseResult(Activity.RESULT_OK, Intent()))
     }
-}
 
-private class FakeFileChooserParams(
-    private val acceptTypes: Array<String> = emptyArray(),
-    private val mode: Int = MODE_OPEN,
-) : FileChooserParams() {
-    override fun getMode(): Int = mode
-    override fun getAcceptTypes(): Array<String> = acceptTypes
-    override fun isCaptureEnabled(): Boolean = false
-    override fun getTitle(): CharSequence? = null
-    override fun getFilenameHint(): String? = null
-    override fun createIntent(): Intent = error("Not used by ShowWebFileChooser")
+    @Test
+    fun `Given cancelled result when parsing result then it is cancelled`() {
+        val intent = Intent().setData(Uri.parse("content://provider/file"))
+
+        assertEquals(FileChooserResult.Cancelled, contract.parseResult(Activity.RESULT_CANCELED, intent))
+    }
+
+    private fun createIntent(params: FileChooserParams, cameraCapture: CameraCapture? = null): Intent = contract.createIntent(context, FileChooserInput(params, cameraCapture))
+
+    private fun assertCaptureIntent(intent: Intent) {
+        assertEquals(MediaStore.ACTION_IMAGE_CAPTURE, intent.action)
+        assertEquals(outputUri, IntentCompat.getParcelableExtra(intent, MediaStore.EXTRA_OUTPUT, Uri::class.java))
+        assertEquals(outputUri, intent.clipData?.getItemAt(0)?.uri)
+        assertTrue(intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION != 0)
+        assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+    }
 }
