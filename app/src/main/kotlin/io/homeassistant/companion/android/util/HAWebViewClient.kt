@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.util
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
 import android.webkit.HttpAuthHandler
@@ -10,14 +12,58 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import androidx.annotation.VisibleForTesting
 import androidx.core.net.toUri
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import java.lang.ref.WeakReference
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 import timber.log.Timber
+
+@VisibleForTesting
+internal const val HISTORY_CHANGED_LISTENER = "androidInternalHaHistoryChanged"
+
+/**
+ * Notifies once when a new document starts in any frame, then on every same-document history change
+ * through the Navigation API.
+ */
+private val HISTORY_CHANGED_SCRIPT = """
+    (() => {
+      // Captured before page scripts run, so a page global with the same name cannot replace it.
+      const listener = $HISTORY_CHANGED_LISTENER;
+      const notify = () => listener.postMessage("");
+      window.navigation?.addEventListener("currententrychange", notify);
+      notify();
+    })();
+""".trimIndent()
+
+/**
+ * Reports [WebView.canGoBack] through [onCanGoBackChanged] when the history entry of any frame changes.
+ *
+ * `doUpdateVisitedHistory` only fires for the main frame, so a script injected in every frame posts an
+ * empty message whenever the frame's history entry changes, triggering a new read of [WebView.canGoBack].
+ * The script only runs in frames that begin loading afterward, so call it from `onPageStarted` at the latest.
+ */
+@SuppressLint("RequiresFeature")
+private fun WebView.observeHistoryChanges(onCanGoBackChanged: (canGoBack: Boolean) -> Unit) {
+    if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) &&
+        WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
+    ) {
+        // Frames (e.g. iframe panels) can be on any origin, and the message carries no data.
+        val allowedOriginRules = setOf("*")
+        WebViewCompat.addWebMessageListener(this, HISTORY_CHANGED_LISTENER, allowedOriginRules) { webView, _, _, _, _ ->
+            onCanGoBackChanged(webView.canGoBack())
+        }
+        WebViewCompat.addDocumentStartJavaScript(this, HISTORY_CHANGED_SCRIPT, allowedOriginRules)
+    } else {
+        Timber.w("History changes not observable, back navigation inside iframes may be skipped")
+    }
+}
 
 /**
  * Factory for creating [HAWebViewClient] instances dedicated to loading Home Assistant frontend.
@@ -41,7 +87,8 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
      * @param onReceivedHttpAuthRequest Optional callback when the server requests HTTP Basic Auth.
      *        Receives the handler, host, the resource URL that triggered the request, and the realm.
      * @param onCanGoBackChanged Optional callback invoked when the WebView back/forward list changes,
-     *        reporting whether the WebView can currently navigate back.
+     *        reporting whether the WebView can currently navigate back. Covers navigations inside
+     *        iframes too, when the WebView supports it.
      * @param onSubresourceSslError Optional callback when an SSL error occurs on a resource other than
      *        the main URL being loaded. Receives the URL of the failing resource. The frontend itself
      *        is unaffected, so this is a notice rather than a connection error.
@@ -101,6 +148,18 @@ class HAWebViewClient internal constructor(
 
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
     private var lastResourceUrl: String? = null
+
+    /** WebView already reporting history changes, the client outlives WebViews recreated by the screen. */
+    private var historyObservedWebView: WeakReference<WebView>? = null
+
+    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+        super.onPageStarted(view, url, favicon)
+        val onCanGoBackChanged = onCanGoBackChanged
+        if (view != null && onCanGoBackChanged != null && historyObservedWebView?.get() !== view) {
+            historyObservedWebView = WeakReference(view)
+            view.observeHistoryChanges(onCanGoBackChanged)
+        }
+    }
 
     override fun onLoadResource(view: WebView?, url: String?) {
         super.onLoadResource(view, url)
