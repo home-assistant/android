@@ -123,7 +123,6 @@ class HaMediaSession @AssistedInject constructor(
     @MainThread
     fun buildNotification(): Notification? {
         val session = mediaSession ?: return null
-        session.setMediaButtonPreferences(buildMediaButtonPreferences(session.player))
         val metadata = session.player.mediaMetadata
         return NotificationCompat.Builder(context, CHANNEL_MEDIA_SESSION)
             .setStyle(MediaStyleNotificationHelper.MediaStyle(session))
@@ -131,7 +130,7 @@ class HaMediaSession @AssistedInject constructor(
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setContentTitle(metadata.title ?: notificationEntityName ?: id)
-            .setContentText(metadata.artist)
+            .setContentText(metadata.artist ?: "")
             .setLargeIcon(notificationArtwork)
             .setOngoing(session.player.isPlaying)
             .setContentIntent(session.sessionActivity)
@@ -389,6 +388,19 @@ class HaMediaSession @AssistedInject constructor(
                 id.hashCode(),
                 tapIntent,
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            player.addListener(
+                object : Player.Listener {
+                    override fun onEvents(player: Player, events: Player.Events) {
+                        // The buttons carry the mode they request next, so they are rebuilt on any
+                        // change. Media3 refreshes the notification on every preferences update,
+                        // hence only pushing them when they differ.
+                        val buttons = buildMediaButtonPreferences(player)
+                        if (buttons != session.mediaButtonPreferences) {
+                            session.setMediaButtonPreferences(buttons)
+                        }
+                    }
+                },
             )
         }
 

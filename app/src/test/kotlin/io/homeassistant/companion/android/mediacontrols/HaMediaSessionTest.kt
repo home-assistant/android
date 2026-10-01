@@ -2,11 +2,13 @@ package io.homeassistant.companion.android.mediacontrols
 
 import android.os.Looper
 import androidx.media3.common.Player
+import androidx.media3.session.CommandButton
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.MediaPlaybackState
+import io.homeassistant.companion.android.common.data.integration.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
@@ -449,5 +451,55 @@ class HaMediaSessionTest {
         assertNotNull(capturedSession)
 
         job.cancel()
+    }
+
+    // -- Media button preferences tests --
+
+    @Test
+    fun `Given shuffle on when the server turns it off then the shuffle button turns it back on`() {
+        val buttons = observeButtonsAfter(
+            mediaDisplayItem(entityId = config.entityId, supportsShuffleSet = true, shuffle = true),
+            mediaDisplayItem(entityId = config.entityId, supportsShuffleSet = true, shuffle = false),
+        )
+
+        val shuffleButton = buttons.single { it.playerCommand == Player.COMMAND_SET_SHUFFLE_MODE }
+        assertEquals(true, shuffleButton.parameter)
+    }
+
+    @Test
+    fun `Given repeat off when the server sets repeat all then the repeat button sets repeat one`() {
+        val buttons = observeButtonsAfter(
+            mediaDisplayItem(entityId = config.entityId, supportsRepeatSet = true, repeatMode = MediaRepeatMode.Off),
+            mediaDisplayItem(entityId = config.entityId, supportsRepeatSet = true, repeatMode = MediaRepeatMode.All),
+        )
+
+        val repeatButton = buttons.single { it.playerCommand == Player.COMMAND_SET_REPEAT_MODE }
+        assertEquals(Player.REPEAT_MODE_ONE, repeatButton.parameter)
+    }
+
+    /**
+     * Observes [initial] then [updated] without building a notification, and returns the media
+     * button preferences of the session at that point.
+     */
+    private fun observeButtonsAfter(
+        initial: EntityDisplayWithoutContext,
+        updated: EntityDisplayWithoutContext,
+    ): List<CommandButton> {
+        val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
+        stateFlow.tryEmit(loadedState(initial))
+        every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
+
+        var capturedSession: androidx.media3.session.MediaSession? = null
+        val job = testScope.launch {
+            buildSession().observe { capturedSession = it }
+        }
+        idleMainLooper()
+
+        stateFlow.tryEmit(loadedState(updated))
+        idleMainLooper()
+
+        val buttons = checkNotNull(capturedSession).mediaButtonPreferences
+        job.cancel()
+        return buttons
     }
 }
