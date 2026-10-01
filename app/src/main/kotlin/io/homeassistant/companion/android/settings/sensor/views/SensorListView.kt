@@ -39,17 +39,19 @@ fun SensorListView(
         modifier = modifier.verticalScrollBar(lazyListState),
         contentPadding = safeBottomPaddingValues(applyHorizontal = false),
     ) {
-        filteredSensors.forEachIndexed { index, (manager, currentSensors) ->
+         viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
             stickyHeader(
                 key = manager.id(),
             ) {
-                SettingsSubheader(
-                    text = stringResource(manager.name),
-                    modifier = Modifier
-                        .background(MaterialTheme.colors.background)
-                        .fillMaxWidth(),
-                    textPadding = SettingsSubheaderDefaults.TextWithIconRowPadding,
-                )
+                if (currentSensors.any()) {
+                    SettingsSubheader(
+                        text = stringResource(manager.name),
+                        modifier = Modifier
+                            .background(MaterialTheme.colors.background)
+                            .fillMaxWidth(),
+                        textPadding = SettingsSubheaderDefaults.TextWithIconRowPadding,
+                    )
+                }
             }
             items(
                 items = currentSensors,
@@ -61,7 +63,7 @@ fun SensorListView(
                     onSensorClicked = onSensorClicked,
                 )
             }
-            if (index < filteredSensors.lastIndex) {
+            if (currentSensors.any() && manager.id() != viewModel.allSensors.keys.last().id()) {
                 item {
                     Divider()
                 }
@@ -77,16 +79,15 @@ fun SensorRow(
     onSensorClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isEnabled = dbSensor?.enabled == true
     var iconToUse = basicSensor.statelessIcon
-    if (isEnabled && dbSensor.icon.isNotBlank()) {
+    if (dbSensor?.enabled == true && dbSensor.icon.isNotBlank()) {
         iconToUse = dbSensor.icon
     }
     val mdiIcon = Mdi.fromHaName(iconToUse)
 
     SettingsRow(
         primaryText = stringResource(basicSensor.name),
-        secondaryText = if (isEnabled) {
+        secondaryText = if (dbSensor?.enabled == true) {
             if (dbSensor.state.isBlank()) {
                 stringResource(commonR.string.enabled)
             } else {
@@ -100,7 +101,7 @@ fun SensorRow(
             stringResource(commonR.string.disabled)
         },
         mdiIcon = mdiIcon,
-        enabled = isEnabled,
+        enabled = dbSensor?.enabled == true,
         modifier = modifier,
     ) { onSensorClicked(basicSensor.id) }
 }
