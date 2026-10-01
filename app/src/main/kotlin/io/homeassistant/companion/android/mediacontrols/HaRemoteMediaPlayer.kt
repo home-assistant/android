@@ -9,7 +9,36 @@ import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.Player.COMMAND_ADJUST_DEVICE_VOLUME
+import androidx.media3.common.Player.COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS
+import androidx.media3.common.Player.COMMAND_GET_CURRENT_MEDIA_ITEM
+import androidx.media3.common.Player.COMMAND_GET_DEVICE_VOLUME
+import androidx.media3.common.Player.COMMAND_GET_METADATA
+import androidx.media3.common.Player.COMMAND_GET_TIMELINE
+import androidx.media3.common.Player.COMMAND_PLAY_PAUSE
+import androidx.media3.common.Player.COMMAND_SEEK_BACK
+import androidx.media3.common.Player.COMMAND_SEEK_FORWARD
+import androidx.media3.common.Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM
+import androidx.media3.common.Player.COMMAND_SEEK_TO_DEFAULT_POSITION
+import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT
+import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM
+import androidx.media3.common.Player.COMMAND_SEEK_TO_PREVIOUS
+import androidx.media3.common.Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM
+import androidx.media3.common.Player.COMMAND_SET_DEVICE_VOLUME
+import androidx.media3.common.Player.COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS
+import androidx.media3.common.Player.COMMAND_SET_REPEAT_MODE
+import androidx.media3.common.Player.COMMAND_SET_SHUFFLE_MODE
+import androidx.media3.common.Player.COMMAND_STOP
+import androidx.media3.common.Player.PLAY_WHEN_READY_CHANGE_REASON_REMOTE
+import androidx.media3.common.Player.REPEAT_MODE_ALL
+import androidx.media3.common.Player.REPEAT_MODE_OFF
+import androidx.media3.common.Player.REPEAT_MODE_ONE
+import androidx.media3.common.Player.STATE_BUFFERING
+import androidx.media3.common.Player.STATE_ENDED
+import androidx.media3.common.Player.STATE_IDLE
+import androidx.media3.common.Player.STATE_READY
 import androidx.media3.common.SimpleBasePlayer
+import androidx.media3.common.SimpleBasePlayer.State
 import androidx.media3.common.util.UnstableApi
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
@@ -24,6 +53,20 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+
+private const val CURRENT_ITEM_INDEX = 0
+private const val PLAYBACK_SPEED = 1.0f
+
+/**
+ * HA uses 0.0–1.0; we tell Media3 our volume range is 0–100 via
+ * REMOTE_DEVICE_INFO, so Media3 will call handleSetDeviceVolume with values in that range.
+ */
+private const val VOLUME_SCALE = 100
+
+private val REMOTE_DEVICE_INFO: DeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
+    .setMinVolume(0)
+    .setMaxVolume(VOLUME_SCALE)
+    .build()
 
 /**
  * A [SimpleBasePlayer] that acts as a remote control proxy for a Home Assistant media_player entity.
@@ -180,21 +223,6 @@ internal class HaRemoteMediaPlayer(
             .build()
     }
 
-    private fun buildMetadata(state: EntityDisplayWithoutContext, artwork: ByteArray?): MediaMetadata {
-        val playback = state.mediaPlayback
-        val builder = MediaMetadata.Builder()
-            .setTitle(playback?.title)
-            .setArtist(playback?.artist)
-            .setAlbumTitle(playback?.albumName)
-            .setAlbumArtist(playback?.albumArtist)
-            .setTrackNumber(playback?.track)
-            .setStation(playback?.channel)
-            .setSubtitle(playback?.seriesTitle ?: playback?.appName)
-            .setMediaType(playback?.contentType?.toMedia3MediaType())
-        artwork?.let { builder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
-        return builder.build()
-    }
-
     /**
      * Returns the estimated current playback position.
      *
@@ -256,113 +284,114 @@ internal class HaRemoteMediaPlayer(
         }
         return future
     }
+}
 
-    private fun buildIdleState(): State = State.Builder()
-        .setAvailableCommands(Player.Commands.EMPTY)
-        .setPlaybackState(STATE_IDLE)
-        .setPlayWhenReady(false, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
-        .setDeviceInfo(REMOTE_DEVICE_INFO)
-        .build()
+private fun buildMetadata(state: EntityDisplayWithoutContext, artwork: ByteArray?): MediaMetadata {
+    val playback = state.mediaPlayback
+    val builder = MediaMetadata.Builder()
+        .setTitle(playback?.title)
+        .setArtist(playback?.artist)
+        .setAlbumTitle(playback?.albumName)
+        .setAlbumArtist(playback?.albumArtist)
+        .setTrackNumber(playback?.track)
+        .setStation(playback?.channel)
+        .setSubtitle(playback?.seriesTitle ?: playback?.appName)
+        .setMediaType(playback?.contentType?.toMedia3MediaType())
+    artwork?.let { builder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
+    return builder.build()
+}
 
-    private fun buildAvailableCommands(state: EntityDisplayWithoutContext): Player.Commands {
-        val controls = state.mediaPlayerControls
-        val builder = Player.Commands.Builder()
-        if (controls?.supportsPlay == true || controls?.supportsPause == true) builder.add(COMMAND_PLAY_PAUSE)
-        if (controls?.supportsStop == true) builder.add(COMMAND_STOP)
-        if (controls?.supportsSeek == true) {
-            builder.add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
-            builder.add(COMMAND_SEEK_TO_DEFAULT_POSITION)
-            builder.add(COMMAND_SEEK_BACK)
-            builder.add(COMMAND_SEEK_FORWARD)
-        }
-        builder.add(COMMAND_GET_CURRENT_MEDIA_ITEM)
-        if (controls?.supportsPreviousTrack == true) {
-            builder.add(COMMAND_SEEK_TO_PREVIOUS)
-            builder.add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-        }
-        if (controls?.supportsNextTrack == true) {
-            builder.add(COMMAND_SEEK_TO_NEXT)
-            builder.add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
-        }
-        if (controls?.supportsVolumeSet == true) {
-            builder.add(COMMAND_GET_DEVICE_VOLUME)
-            // Both the deprecated and _WITH_FLAGS variants are required: the deprecated ones are
-            // checked by Media3's MediaSessionLegacyStub when setting up VolumeProviderCompat
-            // (which drives the SystemUI device-chip volume slider), while the _WITH_FLAGS variants
-            // are used by newer clients and the volume button key-event path.
-            @Suppress("DEPRECATION")
-            builder.add(COMMAND_SET_DEVICE_VOLUME)
-            builder.add(COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS)
-            @Suppress("DEPRECATION")
-            builder.add(COMMAND_ADJUST_DEVICE_VOLUME)
-            builder.add(COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
-        }
-        if (controls?.supportsShuffleSet == true) builder.add(COMMAND_SET_SHUFFLE_MODE)
-        if (controls?.supportsRepeatSet == true) builder.add(COMMAND_SET_REPEAT_MODE)
-        builder.add(COMMAND_GET_METADATA)
-        builder.add(COMMAND_GET_TIMELINE)
-        return builder.build()
+@OptIn(UnstableApi::class)
+private fun buildIdleState(): State = State.Builder()
+    .setAvailableCommands(Player.Commands.EMPTY)
+    .setPlaybackState(STATE_IDLE)
+    .setPlayWhenReady(false, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+    .setDeviceInfo(REMOTE_DEVICE_INFO)
+    .build()
+
+@OptIn(UnstableApi::class)
+private fun buildAvailableCommands(state: EntityDisplayWithoutContext): Player.Commands {
+    val controls = state.mediaPlayerControls
+    val builder = Player.Commands.Builder()
+    if (controls?.supportsPlay == true || controls?.supportsPause == true) builder.add(COMMAND_PLAY_PAUSE)
+    if (controls?.supportsStop == true) builder.add(COMMAND_STOP)
+    if (controls?.supportsSeek == true) {
+        builder.add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+        builder.add(COMMAND_SEEK_TO_DEFAULT_POSITION)
+        builder.add(COMMAND_SEEK_BACK)
+        builder.add(COMMAND_SEEK_FORWARD)
     }
-
-    /** Maps the Home Assistant playback state to the corresponding Media3 [Player.State]. */
-    private fun MediaPlaybackState?.toMedia3PlaybackState(): Int = when (this) {
-        is MediaPlaybackState.Playing -> STATE_READY
-        is MediaPlaybackState.Paused -> STATE_READY
-        is MediaPlaybackState.Buffering -> STATE_BUFFERING
-        // HA "Idle" (on, nothing playing) and Media3 STATE_IDLE share a name but mean different
-        // things: STATE_IDLE means "not prepared", which suppresses the notification until the
-        // player plays something. STATE_ENDED keeps the notification visible so the entity
-        // remains controllable. HA "Off" maps to STATE_IDLE for the opposite reason: the device
-        // is unavailable, so letting the notification disappear is the right behavior.
-        is MediaPlaybackState.Idle -> STATE_ENDED
-        is MediaPlaybackState.Off, null -> STATE_IDLE
+    builder.add(COMMAND_GET_CURRENT_MEDIA_ITEM)
+    if (controls?.supportsPreviousTrack == true) {
+        builder.add(COMMAND_SEEK_TO_PREVIOUS)
+        builder.add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
     }
-
-    /**
-     * Whether Media3 should consider the player as playing or about to play.
-     *
-     * Buffering is playback intent, not a pause: the entity is loading in order to play, so only
-     * STATE_BUFFERING from [toMedia3PlaybackState] says it is not audible yet. Reporting it as not
-     * play-when-ready would make Media3 offer Play instead of Pause (see Util.shouldShowPlayButton)
-     * and would let onTaskRemoved stop the service mid-buffer, since HaMediaSession.isPlaying reads this.
-     */
-    private fun MediaPlaybackState?.isPlayWhenReady(): Boolean =
-        this is MediaPlaybackState.Playing || this is MediaPlaybackState.Buffering
-
-    /** Maps the Home Assistant repeat mode to the corresponding Media3 [Player.RepeatMode]. */
-    private fun MediaRepeatMode?.toMedia3RepeatMode(): Int = when (this) {
-        is MediaRepeatMode.One -> REPEAT_MODE_ONE
-        is MediaRepeatMode.All -> REPEAT_MODE_ALL
-        is MediaRepeatMode.Off, null -> REPEAT_MODE_OFF
+    if (controls?.supportsNextTrack == true) {
+        builder.add(COMMAND_SEEK_TO_NEXT)
+        builder.add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
     }
-
-    /**
-     * Maps a Home Assistant media_content_type string to the corresponding Media3 media type
-     * constant, or null if there is no suitable mapping.
-     */
-    private fun String.toMedia3MediaType(): Int? = when (this) {
-        "music" -> MediaMetadata.MEDIA_TYPE_MUSIC
-        "tvshow", "episode" -> MediaMetadata.MEDIA_TYPE_TV_SHOW
-        "movie" -> MediaMetadata.MEDIA_TYPE_MOVIE
-        "video" -> MediaMetadata.MEDIA_TYPE_VIDEO
-        "channel" -> MediaMetadata.MEDIA_TYPE_TV_CHANNEL
-        "playlist" -> MediaMetadata.MEDIA_TYPE_PLAYLIST
-        else -> null
+    if (controls?.supportsVolumeSet == true) {
+        builder.add(COMMAND_GET_DEVICE_VOLUME)
+        // Both the deprecated and _WITH_FLAGS variants are required: the deprecated ones are
+        // checked by Media3's MediaSessionLegacyStub when setting up VolumeProviderCompat
+        // (which drives the SystemUI device-chip volume slider), while the _WITH_FLAGS variants
+        // are used by newer clients and the volume button key-event path.
+        @Suppress("DEPRECATION")
+        builder.add(COMMAND_SET_DEVICE_VOLUME)
+        builder.add(COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS)
+        @Suppress("DEPRECATION")
+        builder.add(COMMAND_ADJUST_DEVICE_VOLUME)
+        builder.add(COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
     }
+    if (controls?.supportsShuffleSet == true) builder.add(COMMAND_SET_SHUFFLE_MODE)
+    if (controls?.supportsRepeatSet == true) builder.add(COMMAND_SET_REPEAT_MODE)
+    builder.add(COMMAND_GET_METADATA)
+    builder.add(COMMAND_GET_TIMELINE)
+    return builder.build()
+}
 
-    private companion object {
-        const val CURRENT_ITEM_INDEX = 0
-        const val PLAYBACK_SPEED = 1.0f
+/** Maps the Home Assistant playback state to the corresponding Media3 [Player.State]. */
+private fun MediaPlaybackState?.toMedia3PlaybackState(): Int = when (this) {
+    is MediaPlaybackState.Playing -> STATE_READY
+    is MediaPlaybackState.Paused -> STATE_READY
+    is MediaPlaybackState.Buffering -> STATE_BUFFERING
+    // HA "Idle" (on, nothing playing) and Media3 STATE_IDLE share a name but mean different
+    // things: STATE_IDLE means "not prepared", which suppresses the notification until the
+    // player plays something. STATE_ENDED keeps the notification visible so the entity
+    // remains controllable. HA "Off" maps to STATE_IDLE for the opposite reason: the device
+    // is unavailable, so letting the notification disappear is the right behavior.
+    is MediaPlaybackState.Idle -> STATE_ENDED
+    is MediaPlaybackState.Off, null -> STATE_IDLE
+}
 
-        /**
-         * HA uses 0.0–1.0; we tell Media3 our volume range is 0–100 via
-         * REMOTE_DEVICE_INFO, so Media3 will call handleSetDeviceVolume with values in that range.
-         */
-        const val VOLUME_SCALE = 100
+/**
+ * Whether Media3 should consider the player as playing or about to play.
+ *
+ * Buffering is playback intent, not a pause: the entity is loading in order to play, so only
+ * STATE_BUFFERING from [toMedia3PlaybackState] says it is not audible yet. Reporting it as not
+ * play-when-ready would make Media3 offer Play instead of Pause (see Util.shouldShowPlayButton)
+ * and would let onTaskRemoved stop the service mid-buffer, since HaMediaSession.isPlaying reads this.
+ */
+private fun MediaPlaybackState?.isPlayWhenReady(): Boolean =
+    this is MediaPlaybackState.Playing || this is MediaPlaybackState.Buffering
 
-        val REMOTE_DEVICE_INFO: DeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
-            .setMinVolume(0)
-            .setMaxVolume(VOLUME_SCALE)
-            .build()
-    }
+/** Maps the Home Assistant repeat mode to the corresponding Media3 [Player.RepeatMode]. */
+private fun MediaRepeatMode?.toMedia3RepeatMode(): Int = when (this) {
+    is MediaRepeatMode.One -> REPEAT_MODE_ONE
+    is MediaRepeatMode.All -> REPEAT_MODE_ALL
+    is MediaRepeatMode.Off, null -> REPEAT_MODE_OFF
+}
+
+/**
+ * Maps a Home Assistant media_content_type string to the corresponding Media3 media type
+ * constant, or null if there is no suitable mapping.
+ */
+private fun String.toMedia3MediaType(): Int? = when (this) {
+    "music" -> MediaMetadata.MEDIA_TYPE_MUSIC
+    "tvshow", "episode" -> MediaMetadata.MEDIA_TYPE_TV_SHOW
+    "movie" -> MediaMetadata.MEDIA_TYPE_MOVIE
+    "video" -> MediaMetadata.MEDIA_TYPE_VIDEO
+    "channel" -> MediaMetadata.MEDIA_TYPE_TV_CHANNEL
+    "playlist" -> MediaMetadata.MEDIA_TYPE_PLAYLIST
+    else -> null
 }
