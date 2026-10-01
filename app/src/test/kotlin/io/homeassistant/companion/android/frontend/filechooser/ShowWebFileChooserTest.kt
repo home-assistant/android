@@ -64,6 +64,13 @@ class ShowWebFileChooserTest {
     }
 
     @Test
+    fun `Given accept entries when converting each then unknown extensions are null and others MIME types`() {
+        val params = FakeFileChooserParams(acceptTypes = arrayOf("image/*", " .JPG ", ".unknownextension", "*/*", ""))
+
+        assertEquals(listOf("image/*", "image/jpeg", null, "*/*"), params.acceptEntryMimeTypes())
+    }
+
+    @Test
     fun `Given multiple mode when creating intent then multiple selection is allowed`() {
         val intent = createIntent(FakeFileChooserParams(mode = FileChooserParams.MODE_OPEN_MULTIPLE))
 

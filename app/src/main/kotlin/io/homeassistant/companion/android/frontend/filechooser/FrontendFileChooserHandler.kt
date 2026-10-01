@@ -97,8 +97,8 @@ internal class FrontendFileChooserHandler @Inject constructor(
      * file, or `null` if the page accepts no image or the device has no camera.
      */
     private fun FileChooserParams.cameraCaptureForAcceptedTypes(): ((Uri) -> CameraCapture)? {
-        val mimeTypes = acceptedMimeTypes()?.takeIf { cameraCaptureRepository.hasCamera } ?: return null
-        val imageTypeCount = mimeTypes.count { it.startsWith(IMAGE_MIME_TYPE_PREFIX) }
+        val mimeTypes = acceptEntryMimeTypes().takeIf { cameraCaptureRepository.hasCamera } ?: return null
+        val imageTypeCount = mimeTypes.count { it?.startsWith(IMAGE_MIME_TYPE_PREFIX) == true }
         return when {
             imageTypeCount == 0 -> null
             isCaptureEnabled && imageTypeCount == mimeTypes.size -> CameraCapture::Direct

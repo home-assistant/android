@@ -78,16 +78,21 @@ internal class ShowWebFileChooser : ActivityResultContract<FileChooserInput, Fil
 }
 
 /**
- * Converts the `accept` attribute values (MIME types or file extensions) into MIME types.
- *
- * Returns `null` when the picker should not filter: nothing is accepted explicitly, everything is
- * accepted, or an entry can't be converted (filtering would hide files the page accepts).
+ * Converts each `accept` attribute value (MIME type or file extension) into a MIME type, or `null`
+ * when it can't be converted (unknown extension).
  */
-internal fun FileChooserParams.acceptedMimeTypes(): List<String>? {
-    val entries = acceptTypes.orEmpty().map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotEmpty() }
-    if (entries.isEmpty() || ANY_MIME_TYPE in entries) return null
-    val mimeTypes = entries.mapNotNull { it.toMimeType() }
-    return mimeTypes.takeIf { it.size == entries.size }?.distinct()
+internal fun FileChooserParams.acceptEntryMimeTypes(): List<String?> =
+    acceptTypes.orEmpty().map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotEmpty() }.map { it.toMimeType() }
+
+/**
+ * Returns the MIME types to filter the picker with, or `null` when it should not filter: nothing is
+ * accepted explicitly, everything is accepted, or an entry can't be converted (filtering would hide
+ * files the page accepts).
+ */
+private fun FileChooserParams.acceptedMimeTypes(): List<String>? {
+    val mimeTypes = acceptEntryMimeTypes()
+    if (mimeTypes.isEmpty() || ANY_MIME_TYPE in mimeTypes || null in mimeTypes) return null
+    return mimeTypes.filterNotNull().distinct()
 }
 
 private fun FileChooserParams.toPickerIntent(): Intent = Intent(Intent.ACTION_GET_CONTENT).apply {

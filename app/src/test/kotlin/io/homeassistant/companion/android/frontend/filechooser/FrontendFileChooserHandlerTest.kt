@@ -122,8 +122,17 @@ class FrontendFileChooserHandlerTest {
     }
 
     @Test
+    fun `Given images accepted with a wildcard when picking then camera is offered`() = runTest {
+        backgroundScope.launch {
+            handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "*/*"), captureEnabled = true))
+        }
+
+        assertEquals(CameraCapture.Offered(outputUri), awaitPick().input.cameraCapture)
+    }
+
+    @Test
     fun `Given no image accepted when picking then camera is not involved`() = runTest {
-        listOf(arrayOf(""), arrayOf("*/*"), arrayOf("application/pdf"), arrayOf("image/*", "*/*")).forEach { acceptTypes ->
+        listOf(arrayOf(""), arrayOf("*/*"), arrayOf("application/pdf")).forEach { acceptTypes ->
             async { handler.pickFiles(FakeFileChooserParams(acceptTypes = acceptTypes, captureEnabled = true)) }
 
             val pending = awaitPick()
