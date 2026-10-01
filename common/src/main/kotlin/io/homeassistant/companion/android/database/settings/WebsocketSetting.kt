@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.database.settings
 
-import androidx.room.TypeConverter
+import androidx.room3.ColumnTypeConverter
 
 enum class WebsocketSetting {
     NEVER,
@@ -9,10 +9,10 @@ enum class WebsocketSetting {
     HOME_WIFI,
 }
 
-class LocalNotificationSettingConverter {
-    @TypeConverter
+class LocalNotificationSettingColumnTypeConverter {
+    @ColumnTypeConverter
     fun toLocalNotificationSetting(setting: String): WebsocketSetting = WebsocketSetting.valueOf(setting)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromLocalNotificationSetting(setting: WebsocketSetting): String = setting.name
 }
