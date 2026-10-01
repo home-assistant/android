@@ -372,11 +372,12 @@ class HaRemoteMediaPlayerTest {
     fun `Given player when seek requested then callback onSeekRequested called with position`() {
         player.updateState(state = createState(), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
+        val position = 60.seconds
 
-        player.seekTo(60_000L)
+        player.seekTo(position.inWholeMilliseconds)
         shadowOf(Looper.getMainLooper()).idle()
 
-        verify { commandCallback.onSeekRequested(positionMs = 60_000L) }
+        verify { commandCallback.onSeekRequested(position = position) }
     }
 
     @Test
@@ -752,6 +753,39 @@ class HaRemoteMediaPlayerTest {
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(300_000L, player.currentPosition)
+    }
+
+    @Test
+    fun `Given no duration when playing then the position is extrapolated without an upper bound`() {
+        // Live streams have no duration, so nothing bounds the extrapolated position
+        player.updateState(
+            state = createState(
+                playbackState = MediaPlaybackState.Playing,
+                mediaPosition = 120.0.seconds,
+                mediaPositionUpdatedAt = fakeClock.now() - 1.hours,
+                mediaDuration = null,
+            ),
+            artworkBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(3_720_000L, player.currentPosition)
+    }
+
+    @Test
+    fun `Given a timestamp in the future when playing then the position is bound to zero`() {
+        // A server clock ahead of the phone stamps the position later than now
+        player.updateState(
+            state = createState(
+                playbackState = MediaPlaybackState.Playing,
+                mediaPosition = 10.0.seconds,
+                mediaPositionUpdatedAt = fakeClock.now() + 30.seconds,
+            ),
+            artworkBytes = null,
+        )
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals(0L, player.currentPosition)
     }
 
     // -- Pending command future tests --

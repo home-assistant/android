@@ -1545,12 +1545,9 @@ fun Entity.isActive() = when {
  */
 fun Entity.isPersonOf(userId: String): Boolean = domain == PERSON_DOMAIN && attributes["user_id"] == userId
 
-/** Returns the bitmask of supported features for this entity, or 0 if unavailable. */
-private fun Entity.supportedFeatures(): Int = (attributes["supported_features"] as? Number)?.toInt() ?: 0
-
 /** Whether this media_player entity supports the given feature flag from [EntityExt]. */
 internal fun Entity.supportsMediaFeature(feature: Int): Boolean =
-    domain == MEDIA_PLAYER_DOMAIN && (supportedFeatures() and feature != 0)
+    domain == MEDIA_PLAYER_DOMAIN && supportsFeature(feature)
 
 /** Whether this media_player entity supports pause. */
 internal fun Entity.supportsPause(): Boolean = supportsMediaFeature(EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE)

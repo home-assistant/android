@@ -68,8 +68,6 @@ internal fun MediaControlsSettingsContent(
     onRemoveEntity: (MediaControlsSelectedEntity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val hasMultiServer = uiState.serversDropdownItems.size > 1
-
     LazyColumn(
         contentPadding = safeBottomPaddingValues(applyHorizontal = false),
         modifier = modifier.padding(top = HADimens.SPACE4),
@@ -77,7 +75,7 @@ internal fun MediaControlsSettingsContent(
         item {
             DescriptionSection()
 
-            if (hasMultiServer) {
+            if (uiState.showServerSelector) {
                 ServerSelector(
                     items = uiState.serversDropdownItems,
                     selectedServerId = uiState.selectedServerId,
@@ -98,7 +96,7 @@ internal fun MediaControlsSettingsContent(
         configuredEntities(
             isLoading = uiState.isLoading,
             selectedEntities = uiState.selectedEntities,
-            hasMultiServer = hasMultiServer,
+            hasMultiServer = uiState.showServerSelector,
             onRemoveEntity = onRemoveEntity,
         )
     }
@@ -121,18 +119,17 @@ private fun ServerSelector(
     onServerSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.padding(horizontal = HADimens.SPACE4)) {
-        HADropdownMenu(
-            items = items,
-            selectedKey = selectedServerId,
-            onItemSelected = onServerSelected,
-            label = stringResource(commonR.string.server_select),
-            placeholder = stringResource(commonR.string.server_select),
-            modifier = Modifier
-                .widthIn(max = MaxButtonWidth)
-                .fillMaxWidth(),
-        )
-    }
+    HADropdownMenu(
+        items = items,
+        selectedKey = selectedServerId,
+        onItemSelected = onServerSelected,
+        label = stringResource(commonR.string.server_select),
+        placeholder = stringResource(commonR.string.server_select),
+        modifier = modifier
+            .padding(horizontal = HADimens.SPACE4)
+            .widthIn(max = MaxButtonWidth)
+            .fillMaxWidth(),
+    )
 }
 
 @Composable

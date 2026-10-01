@@ -45,6 +45,8 @@ import io.homeassistant.companion.android.util.sensitive
 import java.io.ByteArrayOutputStream
 import java.net.URL
 import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -188,10 +190,10 @@ class HaMediaSession @AssistedInject constructor(
             callMediaAction(ACTION_MEDIA_PAUSE)
         }
 
-        override fun onSeekRequested(positionMs: Long) = scope.launch {
+        override fun onSeekRequested(position: Duration) = scope.launch {
             callMediaAction(
                 action = ACTION_MEDIA_SEEK,
-                extraData = mapOf("seek_position" to positionMs / 1000.0),
+                extraData = mapOf("seek_position" to position.toDouble(DurationUnit.SECONDS)),
             )
         }
 
@@ -414,28 +416,21 @@ class HaMediaSession @AssistedInject constructor(
      * Resolves and loads artwork for [state], returning an [ArtworkCache] for the result.
      * Returns an empty [ArtworkCache] if the URL cannot be resolved or the load fails.
      */
-    private suspend fun loadArtwork(state: EntityDisplayWithoutContext): ArtworkCache {
-        val url = resolveArtworkUrl(state) ?: return ArtworkCache()
-        val (bytes, bitmap) = loadArtworkData(url) ?: return ArtworkCache()
-        return ArtworkCache(url = state.mediaPlayback?.entityPicturePath, bytes = bytes, bitmap = bitmap)
-    }
+    private suspend fun loadArtwork(state: EntityDisplayWithoutContext): ArtworkCache = resolveArtworkUrl(state)
+        ?.let { url -> loadArtworkData(url) }
+        ?.let { (bytes, bitmap) ->
+            ArtworkCache(url = state.mediaPlayback?.entityPicturePath, bytes = bytes, bitmap = bitmap)
+        }
+        ?: ArtworkCache()
 
     private suspend fun resolveArtworkUrl(state: EntityDisplayWithoutContext): String? {
-        val entityPicturePath = state.mediaPlayback?.entityPicturePath ?: return null
-        if (entityPicturePath.startsWith(HTTP_SCHEME_PREFIX)) return entityPicturePath
-
-        val baseUrl = try {
-            serverManager.connectionStateProvider(config.serverId)
-                .urlFlow()
-                .firstUrlOrNull()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to resolve artwork base URL for server ${config.serverId}")
-            null
-        } ?: return null
-
-        return URL(baseUrl, entityPicturePath).toString()
+        val entityPicturePath = state.mediaPlayback?.entityPicturePath
+        return when {
+            entityPicturePath == null -> null
+            entityPicturePath.startsWith(HTTP_SCHEME_PREFIX) -> entityPicturePath
+            else -> serverManager.baseUrlOrNull(config.serverId)
+                ?.let { baseUrl -> URL(baseUrl, entityPicturePath).toString() }
+        }
     }
 
     /**
@@ -558,4 +553,15 @@ class HaMediaSession @AssistedInject constructor(
     interface Factory {
         fun create(config: MediaControlsEntityConfig): HaMediaSession
     }
+}
+
+private suspend fun ServerManager.baseUrlOrNull(serverId: Int): URL? = try {
+    connectionStateProvider(serverId)
+        .urlFlow()
+        .firstUrlOrNull()
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    Timber.e(e, "Failed to resolve artwork base URL for server $serverId")
+    null
 }

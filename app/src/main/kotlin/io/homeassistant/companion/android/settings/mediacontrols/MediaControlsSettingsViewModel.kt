@@ -84,6 +84,9 @@ data class MediaControlsSettingsUiState(
                 ?: config.serverId.toString(),
         )
     }
+
+    /** Whether the user has more than one server to pick entities from. */
+    val showServerSelector = serversDropdownItems.size > 1
 }
 
 @HiltViewModel

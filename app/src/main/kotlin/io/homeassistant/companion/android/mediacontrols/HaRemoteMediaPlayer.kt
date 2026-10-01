@@ -14,10 +14,13 @@ import androidx.media3.common.util.UnstableApi
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
+import io.homeassistant.companion.android.common.data.integration.MediaPlayback
 import io.homeassistant.companion.android.common.data.integration.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.integration.MediaRepeatMode
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -45,7 +48,7 @@ internal class HaRemoteMediaPlayer(
         fun onPlayRequested(): Job
         fun onPauseRequested(): Job
         fun onStopRequested(): Job
-        fun onSeekRequested(positionMs: Long): Job
+        fun onSeekRequested(position: Duration): Job
         fun onNextRequested(): Job
         fun onPreviousRequested(): Job
 
@@ -66,7 +69,7 @@ internal class HaRemoteMediaPlayer(
      * [updateState] when the server confirms the new state via WebSocket. Exposed for testing only.
      */
     @VisibleForTesting
-    internal var pendingCommandFuture: SettableFuture<Void>? = null
+    internal var pendingCommandFuture: SettableFuture<Unit>? = null
 
     /**
      * Updates the internal state from a new [EntityDisplayWithoutContext] and triggers a state refresh.
@@ -89,106 +92,6 @@ internal class HaRemoteMediaPlayer(
         return buildConnectedState(state, artworkBytes)
     }
 
-    private fun buildConnectedState(state: EntityDisplayWithoutContext, artwork: ByteArray?): State {
-        val availableCommands = buildAvailableCommands(state)
-        // Both are null only for a non media_player entity, which cannot be configured here
-        val playback = state.mediaPlayback
-        val controls = state.mediaPlayerControls
-
-        val playbackState = when (playback?.state) {
-            is MediaPlaybackState.Playing -> STATE_READY
-            is MediaPlaybackState.Paused -> STATE_READY
-            is MediaPlaybackState.Buffering -> STATE_BUFFERING
-            // HA "Idle" (on, nothing playing) and Media3 STATE_IDLE share a name but mean different
-            // things: STATE_IDLE means "not prepared", which suppresses the notification until the
-            // player plays something. STATE_ENDED keeps the notification visible so the entity
-            // remains controllable. HA "Off" maps to STATE_IDLE for the opposite reason: the device
-            // is unavailable, so letting the notification disappear is the right behavior.
-            is MediaPlaybackState.Idle -> STATE_ENDED
-            is MediaPlaybackState.Off, null -> STATE_IDLE
-        }
-
-        // Buffering is playback intent, not a pause: the entity is loading in order to play, so
-        // only STATE_BUFFERING above says it is not audible yet. Reporting it as not play-when-ready
-        // would make Media3 offer Play instead of Pause (see Util.shouldShowPlayButton) and would
-        // let onTaskRemoved stop the service mid-buffer, since HaMediaSession.isPlaying reads this.
-        val playWhenReady = when (playback?.state) {
-            is MediaPlaybackState.Playing, is MediaPlaybackState.Buffering -> true
-            else -> false
-        }
-
-        val durationUs = playback?.duration?.inWholeMicroseconds ?: C.TIME_UNSET
-        val positionMs = computeCurrentPositionMs(state)
-
-        val currentItem = MediaItemData.Builder(state.entityId)
-            .setMediaMetadata(buildMetadata(state, artwork))
-            .setDurationUs(durationUs)
-            .build()
-
-        val deviceVolume = controls?.volume?.value?.toInt() ?: 0
-
-        val media3RepeatMode = when (controls?.repeatMode) {
-            is MediaRepeatMode.One -> REPEAT_MODE_ONE
-            is MediaRepeatMode.All -> REPEAT_MODE_ALL
-            is MediaRepeatMode.Off, null -> REPEAT_MODE_OFF
-        }
-
-        return State.Builder()
-            .setAvailableCommands(availableCommands)
-            .setPlaybackState(playbackState)
-            .setPlayWhenReady(playWhenReady, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
-            .setPlaybackParameters(PlaybackParameters(PLAYBACK_SPEED))
-            .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
-            .setContentPositionMs(positionMs)
-            .setPlaylist(buildPlaylist(currentItem))
-            .setDeviceInfo(REMOTE_DEVICE_INFO)
-            .setDeviceVolume(deviceVolume)
-            .setIsDeviceMuted(controls?.isVolumeMuted == true)
-            .setShuffleModeEnabled(controls?.shuffle == true)
-            .setRepeatMode(media3RepeatMode)
-            .build()
-    }
-
-    private fun buildMetadata(state: EntityDisplayWithoutContext, artwork: ByteArray?): MediaMetadata {
-        val playback = state.mediaPlayback
-        val builder = MediaMetadata.Builder()
-            .setTitle(playback?.title)
-            .setArtist(playback?.artist)
-            .setAlbumTitle(playback?.albumName)
-            .setAlbumArtist(playback?.albumArtist)
-            .setTrackNumber(playback?.track)
-            .setStation(playback?.channel)
-            .setSubtitle(playback?.seriesTitle ?: playback?.appName)
-            .setMediaType(playback?.contentType?.toMedia3MediaType())
-        artwork?.let { builder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
-        return builder.build()
-    }
-
-    private fun buildPlaylist(currentItem: MediaItemData): List<MediaItemData> = listOf(currentItem)
-
-    /**
-     * Returns the estimated current playback position in milliseconds.
-     *
-     * The anchor comes from the server: Home Assistant reports where the media was at
-     * `media_position_updated_at` rather than sending the position continuously, so a running
-     * progress bar advances from that timestamp. A volume-only delta carries the same pair and
-     * therefore resolves to the same position, without needing to detect it.
-     *
-     * This matches how the frontend renders progress, including its exposure to phone-versus-server
-     * clock skew, which the duration bound below keeps harmless.
-     */
-    private fun computeCurrentPositionMs(state: EntityDisplayWithoutContext): Long {
-        val playback = state.mediaPlayback
-        val anchorMs = playback?.position?.inWholeMilliseconds ?: 0L
-        // Without a server timestamp the position is a static value, the frontend does not
-        // extrapolate one either (see getCurrentProgress in src/data/media-player.ts)
-        val anchorTime = playback?.positionUpdatedAt ?: return anchorMs
-        if (playback.state !is MediaPlaybackState.Playing) return anchorMs
-        val compensatedMs = anchorMs + (clock.now() - anchorTime).inWholeMilliseconds
-        val maxMs = playback.duration?.inWholeMilliseconds
-        return if (maxMs != null) compensatedMs.coerceIn(0L, maxMs) else compensatedMs.coerceAtLeast(0L)
-    }
-
     override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> = handleCommand {
         if (playWhenReady) commandCallback.onPlayRequested() else commandCallback.onPauseRequested()
     }
@@ -206,7 +109,7 @@ internal class HaRemoteMediaPlayer(
 
                 else -> {
                     if (mediaState?.mediaPlayerControls?.supportsSeek == true) {
-                        commandCallback.onSeekRequested(positionMs)
+                        commandCallback.onSeekRequested(positionMs.milliseconds)
                     } else {
                         null
                     }
@@ -245,6 +148,76 @@ internal class HaRemoteMediaPlayer(
         commandCallback.onRepeatRequested(repeatMode = haRepeatMode)
     }
 
+    private fun buildConnectedState(state: EntityDisplayWithoutContext, artwork: ByteArray?): State {
+        val availableCommands = buildAvailableCommands(state)
+        // Both are null only for a non media_player entity, which cannot be configured here
+        val playback = state.mediaPlayback
+        val controls = state.mediaPlayerControls
+
+        val durationUs = playback?.duration?.inWholeMicroseconds ?: C.TIME_UNSET
+        val position = computeCurrentPosition(playback)
+
+        val currentItem = MediaItemData.Builder(state.entityId)
+            .setMediaMetadata(buildMetadata(state, artwork))
+            .setDurationUs(durationUs)
+            .build()
+
+        val deviceVolume = controls?.volume?.value?.toInt() ?: 0
+
+        return State.Builder()
+            .setAvailableCommands(availableCommands)
+            .setPlaybackState(playback?.state.toMedia3PlaybackState())
+            .setPlayWhenReady(playback?.state.isPlayWhenReady(), PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+            .setPlaybackParameters(PlaybackParameters(PLAYBACK_SPEED))
+            .setCurrentMediaItemIndex(CURRENT_ITEM_INDEX)
+            .setContentPositionMs(position.inWholeMilliseconds)
+            .setPlaylist(listOf(currentItem))
+            .setDeviceInfo(REMOTE_DEVICE_INFO)
+            .setDeviceVolume(deviceVolume)
+            .setIsDeviceMuted(controls?.isVolumeMuted == true)
+            .setShuffleModeEnabled(controls?.shuffle == true)
+            .setRepeatMode(controls?.repeatMode.toMedia3RepeatMode())
+            .build()
+    }
+
+    private fun buildMetadata(state: EntityDisplayWithoutContext, artwork: ByteArray?): MediaMetadata {
+        val playback = state.mediaPlayback
+        val builder = MediaMetadata.Builder()
+            .setTitle(playback?.title)
+            .setArtist(playback?.artist)
+            .setAlbumTitle(playback?.albumName)
+            .setAlbumArtist(playback?.albumArtist)
+            .setTrackNumber(playback?.track)
+            .setStation(playback?.channel)
+            .setSubtitle(playback?.seriesTitle ?: playback?.appName)
+            .setMediaType(playback?.contentType?.toMedia3MediaType())
+        artwork?.let { builder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER) }
+        return builder.build()
+    }
+
+    /**
+     * Returns the estimated current playback position.
+     *
+     * The anchor comes from the server: Home Assistant reports where the media was at
+     * `media_position_updated_at` rather than sending the position continuously, so a running
+     * progress bar advances from that timestamp. A volume-only delta carries the same pair and
+     * therefore resolves to the same position, without needing to detect it.
+     *
+     * This matches how the frontend renders progress, including its exposure to phone-versus-server
+     * clock skew, which the duration bound below keeps harmless.
+     */
+    private fun computeCurrentPosition(playback: MediaPlayback?): Duration {
+        val anchor = playback?.position ?: Duration.ZERO
+        val anchorTime = playback?.positionUpdatedAt
+        // Without a server timestamp the position is a static value, the frontend does not
+        // extrapolate one either (see getCurrentProgress in src/data/media-player.ts)
+        return if (anchorTime != null && playback.state is MediaPlaybackState.Playing) {
+            (anchor + (clock.now() - anchorTime)).coerceIn(Duration.ZERO, playback.duration ?: Duration.INFINITE)
+        } else {
+            anchor
+        }
+    }
+
     /**
      * Executes [block] to launch a command coroutine and returns a [ListenableFuture] that stays
      * pending until [updateState] is called with the server-confirmed state. This prevents
@@ -260,15 +233,18 @@ internal class HaRemoteMediaPlayer(
      * If the [Job] completes with a non-[CancellationException] error, the future is failed as a
      * safety fallback (though [callMediaAction] already catches all non-cancellation exceptions).
      */
-    private inline fun handleCommand(block: () -> Job?): ListenableFuture<Void> {
-        val job = try {
-            block()
-        } catch (e: Exception) {
-            return Futures.immediateFailedFuture(e)
-        } ?: return Futures.immediateFailedFuture(UnsupportedOperationException("Command not supported"))
+    private inline fun handleCommand(block: () -> Job?): ListenableFuture<Unit> = try {
+        block()?.let { job -> trackCommand(job) }
+            ?: Futures.immediateFailedFuture(UnsupportedOperationException("Command not supported"))
+    } catch (e: Exception) {
+        Futures.immediateFailedFuture(e)
+    }
+
+    /** Returns a future pending until [updateState], replacing the in-flight one, failed if [job] fails. */
+    private fun trackCommand(job: Job): ListenableFuture<Unit> {
         // Complete any in-flight future so it doesn't stay in SimpleBasePlayer's pendingOperations.
         pendingCommandFuture?.set(null)
-        val future = SettableFuture.create<Void>()
+        val future = SettableFuture.create<Unit>()
         pendingCommandFuture = future
         job.invokeOnCompletion { cause ->
             // Do NOT complete the future on normal success or cancellation: updateState() is the
@@ -326,6 +302,38 @@ internal class HaRemoteMediaPlayer(
         builder.add(COMMAND_GET_METADATA)
         builder.add(COMMAND_GET_TIMELINE)
         return builder.build()
+    }
+
+    /** Maps the Home Assistant playback state to the corresponding Media3 [Player.State]. */
+    private fun MediaPlaybackState?.toMedia3PlaybackState(): Int = when (this) {
+        is MediaPlaybackState.Playing -> STATE_READY
+        is MediaPlaybackState.Paused -> STATE_READY
+        is MediaPlaybackState.Buffering -> STATE_BUFFERING
+        // HA "Idle" (on, nothing playing) and Media3 STATE_IDLE share a name but mean different
+        // things: STATE_IDLE means "not prepared", which suppresses the notification until the
+        // player plays something. STATE_ENDED keeps the notification visible so the entity
+        // remains controllable. HA "Off" maps to STATE_IDLE for the opposite reason: the device
+        // is unavailable, so letting the notification disappear is the right behavior.
+        is MediaPlaybackState.Idle -> STATE_ENDED
+        is MediaPlaybackState.Off, null -> STATE_IDLE
+    }
+
+    /**
+     * Whether Media3 should consider the player as playing or about to play.
+     *
+     * Buffering is playback intent, not a pause: the entity is loading in order to play, so only
+     * STATE_BUFFERING from [toMedia3PlaybackState] says it is not audible yet. Reporting it as not
+     * play-when-ready would make Media3 offer Play instead of Pause (see Util.shouldShowPlayButton)
+     * and would let onTaskRemoved stop the service mid-buffer, since HaMediaSession.isPlaying reads this.
+     */
+    private fun MediaPlaybackState?.isPlayWhenReady(): Boolean =
+        this is MediaPlaybackState.Playing || this is MediaPlaybackState.Buffering
+
+    /** Maps the Home Assistant repeat mode to the corresponding Media3 [Player.RepeatMode]. */
+    private fun MediaRepeatMode?.toMedia3RepeatMode(): Int = when (this) {
+        is MediaRepeatMode.One -> REPEAT_MODE_ONE
+        is MediaRepeatMode.All -> REPEAT_MODE_ALL
+        is MediaRepeatMode.Off, null -> REPEAT_MODE_OFF
     }
 
     /**

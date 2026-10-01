@@ -29,6 +29,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 
 private const val DEFAULT_SERVER_ID = 1
 private const val OTHER_SERVER_ID = 2
@@ -139,6 +141,20 @@ class MediaControlsSettingsViewModelTest {
                 listOf(DEFAULT_SERVER_ID, OTHER_SERVER_ID),
                 viewModel.uiState.value.serversDropdownItems.map { it.key },
             )
+        }
+
+        @ParameterizedTest(name = "{0} server(s) shows selector: {1}")
+        @CsvSource("1, false", "2, true", "3, true")
+        fun `Given servers when viewModel created then the server selector is shown only with several`(
+            serverCount: Int,
+            expectedShown: Boolean,
+        ) = runTest(testDispatcher) {
+            serversFlow.value = (1..serverCount).map { fakeServer(it) }
+
+            viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(expectedShown, viewModel.uiState.value.showServerSelector)
         }
     }
 
