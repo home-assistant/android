@@ -30,6 +30,19 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
 
+private const val SHARE_MESSAGE_ID = 42
+private val SHARE_PAYLOAD = JsonObject(
+    mapOf(
+        "setup_qr_code" to JsonPrimitive("MT:-24J0AFN00KA0648G00"),
+        "setup_pin_code" to JsonPrimitive(20202021),
+        "discriminator" to JsonPrimitive(3840),
+        "vendor_id" to JsonPrimitive(0xFFF1),
+        "product_id" to JsonPrimitive(0x8000),
+        "device_name" to JsonPrimitive("Kitchen light"),
+        "remaining_seconds" to JsonPrimitive(250),
+    ),
+)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class FrontendMatterThreadHandlerTest {
 
@@ -329,7 +342,31 @@ class FrontendMatterThreadHandlerTest {
             assertEquals(intent, event.intentSender)
             cancelAndIgnoreRemainingEvents()
         }
-        coVerify { matterManager.prepareDeviceSharing(MatterShareRequest.fromPayload(SHARE_PAYLOAD)!!) }
+        coVerify {
+            matterManager.prepareDeviceSharing(
+                MatterShareRequest(
+                    passcode = 20202021,
+                    discriminator = 3840,
+                    remainingSeconds = 250,
+                    vendorId = 0xFFF1,
+                    productId = 0x8000,
+                    deviceName = "Kitchen light",
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `Given no message id when onStartMatterSharing then nothing happens`() = runTest {
+        val handler = createHandler()
+
+        handler.onStartMatterSharing(null, SHARE_PAYLOAD)
+
+        coVerify(exactly = 0) { matterManager.prepareDeviceSharing(any()) }
+        coVerify(exactly = 0) { externalBusRepository.send(any()) }
+        // Nothing was claimed, so the next request still gets through.
+        handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+        coVerify { matterManager.prepareDeviceSharing(any()) }
     }
 
     @Test
@@ -344,11 +381,15 @@ class FrontendMatterThreadHandlerTest {
                 ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "failed", message = "Invalid matter/share_device payload"),
             )
         }
+        handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+        coVerify { matterManager.prepareDeviceSharing(any()) }
     }
 
     @Test
-    fun `Given another flow in flight when onStartMatterSharing then replies failed`() = runTest {
+    fun `Given another flow in flight when onStartMatterSharing then replies failed and leaves that flow alone`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
+        every { matterManager.parseCommissioningIntentResult(any()) } returns
+            MatterManager.CommissioningRequestResult.Success(deviceName = "Kitchen light")
         val handler = createHandler()
         handler.onStartMatterCommissioning()
 
@@ -360,6 +401,8 @@ class FrontendMatterThreadHandlerTest {
                 ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "failed", message = "Another Matter flow is in progress"),
             )
         }
+        handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null))
+        coVerify { externalBusRepository.send(MatterCommissionFinishMessage(name = "Kitchen light", success = true)) }
     }
 
     @Test
@@ -375,6 +418,24 @@ class FrontendMatterThreadHandlerTest {
                 ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "failed", message = "Sharing could not be prepared"),
             )
         }
+        handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+        coVerify(exactly = 2) { matterManager.prepareDeviceSharing(any()) }
+    }
+
+    @Test
+    fun `Given prepareDeviceSharing throws when onStartMatterSharing then replies failed and releases`() = runTest {
+        coEvery { matterManager.prepareDeviceSharing(any()) } throws IllegalStateException("nope")
+        val handler = createHandler()
+
+        handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+
+        coVerify {
+            externalBusRepository.send(
+                ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "failed", message = "Sharing could not be prepared"),
+            )
+        }
+        handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+        coVerify(exactly = 2) { matterManager.prepareDeviceSharing(any()) }
     }
 
     @Test
@@ -398,7 +459,7 @@ class FrontendMatterThreadHandlerTest {
 
         coVerify {
             externalBusRepository.send(
-                ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "cancelled", message = "Cancelled by the user"),
+                ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "canceled", message = "Cancelled by the user"),
             )
         }
     }
@@ -421,13 +482,3 @@ class FrontendMatterThreadHandlerTest {
         every { matterManager.parseSharingIntentResult(any()) } returns outcome
     }
 }
-
-private const val SHARE_MESSAGE_ID = 42
-private val SHARE_PAYLOAD = JsonObject(
-    mapOf(
-        "setup_pin_code" to JsonPrimitive(20202021),
-        "discriminator" to JsonPrimitive(3840),
-        "device_name" to JsonPrimitive("Kitchen light"),
-        "remaining_seconds" to JsonPrimitive(250),
-    ),
-)

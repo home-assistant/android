@@ -117,17 +117,8 @@ sealed interface FrontendHandlerEvent {
      */
     data object StartMatterCommissioning : FrontendHandlerEvent
 
-    /**
-     * Frontend requested to share a device already commissioned to Home Assistant with another app,
-     * through the commissioning window described by [payload] (validated by the handler).
-     *
-     * The ViewModel drives the Google Play Services share intent and replies to the frontend with a
-     * result correlated by [messageId].
-     */
-    data class StartMatterSharing(val messageId: Int?, val payload: JsonObject) : FrontendHandlerEvent {
-        // The payload carries the setup passcode, keep it out of logs.
-        override fun toString(): String = "StartMatterSharing(messageId=$messageId)"
-    }
+    /** Frontend requested to share a commissioned Matter device; the reply goes to [messageId]. */
+    data class StartMatterSharing(val messageId: Int?, val payload: JsonObject) : FrontendHandlerEvent
 
     /**
      * Frontend requested the app to share its locally-stored Thread credentials with the server.

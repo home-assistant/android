@@ -50,13 +50,7 @@ object SuccessResultMessage {
 }
 
 object ErrorResultMessage {
-    /**
-     * Creates a failed result, which the frontend rejects with `{code, message}`.
-     *
-     * @param id The message ID of the request that failed
-     * @param code Machine-readable reason the frontend can branch on
-     * @param message Human-readable detail for logs
-     */
+    /** The frontend branches on [code] and shows its own text; [message] is for the log. */
     operator fun invoke(id: Int?, code: String, message: String): OutgoingExternalBusMessage {
         return ResultMessage(
             id = id,
@@ -123,7 +117,7 @@ object ConfigResultMessage {
         val hasAssistSettings: Boolean = true,
         val hasSplashscreen: Boolean = true,
         val hasMatterStatusReport: Boolean = true,
-        val matterShareTarget: String?,
+        val canShareMatterDeviceToOtherApps: Boolean,
     ) {
         companion object {
             fun create(
@@ -137,7 +131,7 @@ object ConfigResultMessage {
             ) = ConfigResult(
                 canWriteTag = hasNfc,
                 canCommissionMatter = canCommissionMatter,
-                matterShareTarget = MATTER_SHARE_TARGET_APP_CHOOSER.takeIf { canShareMatterDevice },
+                canShareMatterDeviceToOtherApps = canShareMatterDevice,
                 canImportThreadCredentials = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
                 canSetupImprov = canSetupImprov,
@@ -166,6 +160,3 @@ object EntityAddToActionsResultMessage {
     @Serializable
     private data class EntityAddToActionsResult(val actions: List<ExternalEntityAddToAction>)
 }
-
-/** Play Services shares through a system sheet listing every app that accepts Matter devices. */
-private const val MATTER_SHARE_TARGET_APP_CHOOSER = "app_chooser"

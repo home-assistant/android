@@ -1,70 +1,33 @@
 package io.homeassistant.companion.android.matter
 
+import io.homeassistant.companion.android.common.util.getIntOrNull
+import io.homeassistant.companion.android.common.util.getStringOrNull
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.longOrNull
 
-/**
- * A commissioning window Home Assistant opened for one of its Matter devices, as the frontend sends
- * it with `matter/share_device`.
- *
- * @property passcode Setup passcode of the open window
- * @property discriminator Long (12-bit) discriminator the device advertises while the window is open
- * @property vendorId Vendor ID of the device, if known
- * @property productId Product ID of the device, if known
- * @property deviceName Home Assistant's name for the device, suggested to the receiving app
- * @property remainingSeconds Seconds until the window closes, if known
- */
+/** The window from `matter/share_device`. [discriminator] is the long, 12-bit form. */
 data class MatterShareRequest(
     val passcode: Long,
     val discriminator: Int,
+    val remainingSeconds: Long,
     val vendorId: Int? = null,
     val productId: Int? = null,
     val deviceName: String? = null,
-    val remainingSeconds: Long? = null,
 ) {
-    // The passcode lets anyone on the network add the device while the window is open, keep it out of logs.
-    override fun toString(): String = "MatterShareRequest(discriminator=$discriminator, vendorId=$vendorId, " +
-        "productId=$productId, deviceName=$deviceName, remainingSeconds=$remainingSeconds)"
-
     companion object {
-        /**
-         * Reads a `matter/share_device` payload, returning `null` when the passcode or discriminator
-         * is missing or invalid, or when the window has already expired. Invalid optional fields are
-         * dropped.
-         */
+        /** The server's values are trusted; null only without a readable passcode, discriminator or remaining time. */
         fun fromPayload(payload: JsonObject): MatterShareRequest? {
-            val passcode = payload.long("setup_pin_code")
-                ?.takeIf { it in PASSCODE_RANGE && it !in INVALID_PASSCODES }
-            val discriminator = payload.long("discriminator")?.takeIf { it in DISCRIMINATOR_RANGE }
-            val remainingSeconds = payload.long("remaining_seconds")
-            // An expired window must not fall back to the default length.
-            val expired = remainingSeconds != null && remainingSeconds <= 0
-            if (passcode == null || discriminator == null || expired) return null
+            val passcode = payload.getIntOrNull("setup_pin_code")
+            val discriminator = payload.getIntOrNull("discriminator")
+            val remainingSeconds = payload.getIntOrNull("remaining_seconds")
+            if (passcode == null || discriminator == null || remainingSeconds == null) return null
             return MatterShareRequest(
-                passcode = passcode,
-                discriminator = discriminator.toInt(),
-                vendorId = payload.id("vendor_id"),
-                productId = payload.id("product_id"),
-                deviceName = (payload["device_name"] as? JsonPrimitive)
-                    ?.takeIf { it.isString }?.contentOrNull?.takeIf { it.isNotBlank() },
-                remainingSeconds = remainingSeconds,
+                passcode = passcode.toLong(),
+                discriminator = discriminator,
+                remainingSeconds = remainingSeconds.toLong(),
+                vendorId = payload.getIntOrNull("vendor_id"),
+                productId = payload.getIntOrNull("product_id"),
+                deviceName = payload.getStringOrNull("device_name"),
             )
         }
     }
 }
-
-private val PASSCODE_RANGE = 1L..99_999_998L
-
-// Matter Core spec 5.1.7.1 forbids these besides the out-of-range values.
-private val INVALID_PASSCODES = setOf(
-    11_111_111L, 22_222_222L, 33_333_333L, 44_444_444L, 55_555_555L,
-    66_666_666L, 77_777_777L, 88_888_888L, 12_345_678L, 87_654_321L,
-)
-private val DISCRIMINATOR_RANGE = 0L..0xFFFL
-private val ID_RANGE = 0L..0xFFFFL
-
-private fun JsonObject.long(key: String): Long? = (this[key] as? JsonPrimitive)?.takeUnless { it.isString }?.longOrNull
-
-private fun JsonObject.id(key: String): Int? = long(key)?.takeIf { it in ID_RANGE }?.toInt()

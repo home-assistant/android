@@ -72,7 +72,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -225,7 +224,7 @@ class FrontendMessageHandlerTest {
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(true, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(true, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
-        assertEquals("app_chooser", configResult["matterShareTarget"]?.jsonPrimitive?.content)
+        assertEquals(true, configResult["canShareMatterDeviceToOtherApps"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(true, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(1, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
         assertEquals(true, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())
@@ -267,7 +266,7 @@ class FrontendMessageHandlerTest {
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(false, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
-        assertEquals(JsonNull, configResult["matterShareTarget"])
+        assertEquals(false, configResult["canShareMatterDeviceToOtherApps"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(0, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
         assertEquals(false, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())

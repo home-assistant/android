@@ -5,13 +5,9 @@ import android.content.ComponentName
 import android.os.Build
 import android.os.SystemClock
 import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult
 import androidx.annotation.ChecksSdkIntAtLeast
 import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.moduleinstall.InstallStatusListener
-import com.google.android.gms.common.moduleinstall.ModuleInstallClient
-import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
-import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
-import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState
 import com.google.android.gms.home.matter.commissioning.CommissioningClient
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
 import com.google.android.gms.home.matter.commissioning.CommissioningResult
@@ -26,17 +22,21 @@ import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
+// `shareDevice` may never answer. A fixed cap rather than the window's remaining time, which can be very short.
+private val SHARE_PREPARE_TIMEOUT = 60.seconds
+
 class MatterManagerImpl @Inject constructor(
     private val serverManager: ServerManager,
     @param:IsAutomotive private val isAutomotive: Boolean,
     private val commissioningClient: CommissioningClient,
-    private val moduleInstallClient: ModuleInstallClient,
     @param:MatterCommissioningServiceComponent private val commissioningServiceComponent: ComponentName,
 ) : MatterManager {
 
@@ -131,30 +131,30 @@ class MatterManagerImpl @Inject constructor(
                 IllegalStateException("Matter sharing is not supported on this device"),
             )
         }
-        val window = CommissioningWindow.builder()
-            .setDiscriminator(Discriminator.forLongValue(request.discriminator))
-            .setPasscode(request.passcode)
-            // Play Services counts the window in elapsed realtime; the frontend reports what is left of it.
-            .setWindowOpenMillis(SystemClock.elapsedRealtime())
-            .setDurationSeconds(request.remainingSeconds ?: DEFAULT_COMMISSIONING_WINDOW_SECONDS)
-            .build()
-        val descriptor = DeviceDescriptor.Builder().apply {
-            request.vendorId?.let { setVendorId(it) }
-            request.productId?.let { setProductId(it) }
-        }.build()
-        val shareRequest = ShareDeviceRequest.builder()
-            .setDeviceDescriptor(descriptor)
-            .setDeviceName(request.deviceName.orEmpty())
-            .setCommissioningWindow(window)
-            .build()
-        // One deadline for the whole preparation: Play Services has been seen to never answer, which would
-        // leave the frontend waiting for good while the commissioning window runs out.
-        return withTimeoutOrNull(SHARE_PREPARE_TIMEOUT_MILLIS) {
-            moduleInstallClient.installMatterModule(commissioningClient)
+        return withTimeoutOrNull(SHARE_PREPARE_TIMEOUT) {
             try {
+                // Inside the try, so a value Play Services rejects is reported like any other failure.
+                val window = CommissioningWindow.builder()
+                    .setDiscriminator(Discriminator.forLongValue(request.discriminator))
+                    .setPasscode(request.passcode)
+                    // As in Google's Matter sample; the API does not say which clock it means.
+                    .setWindowOpenMillis(SystemClock.elapsedRealtime())
+                    .setDurationSeconds(request.remainingSeconds)
+                    .build()
+                val descriptor = DeviceDescriptor.Builder().apply {
+                    request.vendorId?.let { setVendorId(it) }
+                    request.productId?.let { setProductId(it) }
+                }.build()
+                val shareRequest = ShareDeviceRequest.builder()
+                    .setDeviceDescriptor(descriptor)
+                    .setDeviceName(request.deviceName.orEmpty())
+                    .setCommissioningWindow(window)
+                    .build()
                 MatterManager.CommissioningResult.Ready(commissioningClient.shareDevice(shareRequest).await())
             } catch (e: CancellationException) {
-                throw e
+                // A cancelled Task throws this too, and only a cancelled coroutine may propagate it.
+                ensureActive()
+                MatterManager.CommissioningResult.Error(e)
             } catch (e: Exception) {
                 MatterManager.CommissioningResult.Error(e)
             }
@@ -163,64 +163,16 @@ class MatterManagerImpl @Inject constructor(
         )
     }
 
-    override fun parseSharingIntentResult(result: ActivityResult): MatterManager.SharingRequestResult =
-        when (result.resultCode) {
-            Activity.RESULT_OK -> MatterManager.SharingRequestResult.Shared
-            Activity.RESULT_CANCELED -> MatterManager.SharingRequestResult.Cancelled
+    override fun parseSharingIntentResult(result: ActivityResult): MatterManager.SharingRequestResult {
+        // A sender that could not be launched also comes back as cancelled, with the reason attached.
+        val launchFailed =
+            result.data?.hasExtra(StartIntentSenderForResult.EXTRA_SEND_INTENT_EXCEPTION) == true
+        return when {
+            result.resultCode == Activity.RESULT_OK -> MatterManager.SharingRequestResult.Shared
+            result.resultCode == Activity.RESULT_CANCELED && !launchFailed ->
+                MatterManager.SharingRequestResult.Cancelled
+
             else -> MatterManager.SharingRequestResult.Failed
         }
-}
-
-/**
- * Play Services ships the Matter commissioning API as an optional module that is only downloaded
- * on demand, so a device may not have it yet. Requests it and waits for the install within the
- * caller's deadline; if that fails, the share request reports the missing API itself.
- */
-private suspend fun ModuleInstallClient.installMatterModule(api: CommissioningClient) {
-    try {
-        if (areModulesAvailable(api).await().areModulesAvailable()) return
-        Timber.i("Installing the Matter module of Google Play services")
-        if (!awaitModuleInstall(api)) Timber.w("Matter module of Google Play services not installed")
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Timber.w(e, "Could not install the Matter module of Google Play services")
     }
 }
-
-private suspend fun ModuleInstallClient.awaitModuleInstall(api: CommissioningClient): Boolean =
-    suspendCancellableCoroutine { cont ->
-        val listener = object : InstallStatusListener {
-            override fun onInstallStatusUpdated(update: ModuleInstallStatusUpdate) {
-                val installed = when (update.installState) {
-                    InstallState.STATE_COMPLETED -> true
-                    InstallState.STATE_FAILED, InstallState.STATE_CANCELED -> false
-                    else -> return
-                }
-                unregisterListener(this)
-                if (cont.isActive) cont.resume(installed)
-            }
-        }
-        cont.invokeOnCancellation { unregisterListener(listener) }
-        installModules(ModuleInstallRequest.newBuilder().addApi(api).setListener(listener).build())
-            .addOnSuccessListener { response ->
-                if (response.areModulesAlreadyInstalled()) {
-                    unregisterListener(listener)
-                    if (cont.isActive) cont.resume(true)
-                }
-            }
-            .addOnFailureListener { exception ->
-                Timber.w(exception, "Matter module install request failed")
-                unregisterListener(listener)
-                if (cont.isActive) cont.resume(false)
-            }
-    }
-
-/** Window length to assume when the frontend does not report the remaining time. */
-private const val DEFAULT_COMMISSIONING_WINDOW_SECONDS = 300L
-
-/**
- * How long preparing the share sheet may take, including downloading the Matter module of Play
- * Services when it is missing, so a stuck call cannot use up the commissioning window.
- */
-private const val SHARE_PREPARE_TIMEOUT_MILLIS = 60_000L

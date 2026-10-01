@@ -298,21 +298,14 @@ data class EntityAddToPayload(
 data class MatterCommissionMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
- * Message requesting the app to add a device already commissioned to Home Assistant to the
- * platform's home app (Matter multi-admin), through the commissioning window Home Assistant opened.
- *
- * The app replies with a success result, or an error result whose code is `cancelled` when the user
- * backed out and `failed` otherwise.
- *
- * Only sent by the frontend when the app reports
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.matterShareTarget].
+ * Message requesting the app to share a device already commissioned to Home Assistant through the
+ * platform share sheet. Answered with a success result, or an error coded `canceled` or `failed`.
  */
 @Serializable
 @SerialName("matter/share_device")
 data class MatterShareDeviceMessage(
     override val id: Int? = null,
-    // Validated by the handler, so a payload with missing or mistyped fields still gets an error result
-    // instead of failing deserialization without a reply.
+    // Parsed by the handler, so missing or mistyped fields still get an error result instead of no reply.
     val payload: JsonObject = JsonObject(emptyMap()),
 ) : IncomingExternalBusMessage
 

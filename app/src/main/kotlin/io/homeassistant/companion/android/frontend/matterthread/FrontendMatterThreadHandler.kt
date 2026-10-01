@@ -23,6 +23,9 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.json.JsonObject
 import timber.log.Timber
 
+private const val SHARE_ERROR_CANCELED = "canceled"
+private const val SHARE_ERROR_FAILED = "failed"
+
 /**
  * Coordinates the Matter commissioning, Matter sharing and Thread credential export flows.
  * Sits between the external-bus handler events
@@ -35,7 +38,8 @@ import timber.log.Timber
  * Play-Services-intent → result round-trip. Method calls are not independent: callers must
  * invoke them in the natural sequence (start → result, or start → terminal). Calling
  * [onMatterThreadIntentResult] without a preceding start is a no-op (the handler logs and
- * ignores); calling a second start while a flow is in-flight is also a no-op. This is why the
+ * ignores); a second start while a flow is in-flight is refused, which for commissioning and Thread
+ * means it is ignored and for sharing means the frontend gets a `failed` result. This is why the
  * scope is `@ViewModelScoped`.
  *
  * **User-facing dialogs** go through [FrontendDialogManager] just like all other dialogs on the
@@ -110,21 +114,25 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     }
 
     /**
-     * Start sharing a device already commissioned to Home Assistant with another app through the
-     * platform share sheet. Emits [Event.LaunchIntent] when Play Services is ready; every other path
-     * replies to the frontend's request [messageId] with a `failed` error result, so the frontend
-     * never waits for an answer that does not come.
+     * Emits [Event.LaunchIntent] for the share sheet, or answers [messageId] with `failed`. The frontend
+     * has no timeout, so a path that never answers (cancelled scope, uncollected event, lost intent
+     * result) leaves its dialog waiting until the user closes it.
      */
     suspend fun onStartMatterSharing(messageId: Int?, payload: JsonObject) {
-        val request = MatterShareRequest.fromPayload(payload)
-        if (request == null) {
-            Timber.w("matter/share_device ignored: invalid payload")
-            sendShareError(messageId, SHARE_ERROR_FAILED, "Invalid matter/share_device payload")
+        if (messageId == null) {
+            Timber.w("matter/share_device ignored: no message id")
             return
         }
-        if (!inFlight.compareAndSet(null, InFlight.MatterShare(messageId))) {
-            Timber.w("matter/share_device ignored: another flow is in-flight")
-            sendShareError(messageId, SHARE_ERROR_FAILED, "Another Matter flow is in progress")
+        val request = MatterShareRequest.fromPayload(payload)
+        // Short-circuits, so nothing is claimed for a payload that cannot be used.
+        if (request == null || !inFlight.compareAndSet(null, InFlight.MatterShare(messageId))) {
+            val reason = if (request == null) {
+                "Invalid matter/share_device payload"
+            } else {
+                "Another Matter flow is in progress"
+            }
+            Timber.w("matter/share_device refused: $reason")
+            sendShareError(messageId, SHARE_ERROR_FAILED, reason)
             return
         }
         var awaitingIntentResult = false
@@ -136,15 +144,14 @@ internal class FrontendMatterThreadHandler @Inject constructor(
                 }
 
                 is MatterManager.CommissioningResult.Error -> {
-                    Timber.e(result.cause, "Matter sharing couldn't be prepared")
+                    Timber.e(result.cause, "Failed to prepare Matter sharing")
                     sendShareError(messageId, SHARE_ERROR_FAILED, "Sharing could not be prepared")
                 }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // Builder validation errors may echo the rejected passcode, so log only the type.
-            Timber.e("Unexpected error preparing Matter sharing: ${e::class.simpleName}")
+            Timber.e(e, "Failed to prepare Matter sharing")
             sendShareError(messageId, SHARE_ERROR_FAILED, "Sharing could not be prepared")
         } finally {
             if (!awaitingIntentResult) inFlight.set(null)
@@ -222,8 +229,9 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     /**
      * Process the result of the Play Services intent launched in response to [Event.LaunchIntent].
      * Dispatches based on what's [inFlight] — Matter reports the outcome (and the user-entered
-     * device name) to the frontend via [MatterCommissionFinishMessage], Thread forwards the
-     * dataset to the server and reports success / no-dataset.
+     * device name) to the frontend via [MatterCommissionFinishMessage], sharing answers the
+     * frontend's `matter/share_device` request, Thread forwards the dataset to the server and
+     * reports success / no-dataset.
      *
      * Silently ignores stale results when nothing is in-flight (shouldn't happen in practice
      * since only one launcher exists, but guards against bugs).
@@ -263,7 +271,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         }
     }
 
-    private suspend fun handleMatterShareIntentResult(result: ActivityResult, messageId: Int?) {
+    private suspend fun handleMatterShareIntentResult(result: ActivityResult, messageId: Int) {
         when (matterManager.parseSharingIntentResult(result)) {
             is MatterManager.SharingRequestResult.Shared -> {
                 Timber.d("Matter sharing returned success")
@@ -272,7 +280,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
 
             is MatterManager.SharingRequestResult.Cancelled -> {
                 Timber.d("Matter sharing was cancelled")
-                sendShareError(messageId, SHARE_ERROR_CANCELLED, "Cancelled by the user")
+                sendShareError(messageId, SHARE_ERROR_CANCELED, "Cancelled by the user")
             }
 
             is MatterManager.SharingRequestResult.Failed -> {
@@ -282,7 +290,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         }
     }
 
-    private suspend fun sendShareError(messageId: Int?, code: String, message: String) {
+    private suspend fun sendShareError(messageId: Int, code: String, message: String) {
         externalBusRepository.send(ErrorResultMessage(id = messageId, code = code, message = message))
     }
 
@@ -334,16 +342,13 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         data class ShowSnackbar(val snackbar: MatterThreadTerminal.Snackbar) : Event
     }
 
-    /** Tracks which flow is awaiting completion. Carries the [Thread.serverId] needed by the result handler. */
+    /**
+     * Tracks which flow is awaiting completion. Carries the [Thread.serverId] or [MatterShare.messageId]
+     * needed by the result handler.
+     */
     private sealed interface InFlight {
         data object Matter : InFlight
-        data class MatterShare(val messageId: Int?) : InFlight
+        data class MatterShare(val messageId: Int) : InFlight
         data class Thread(val serverId: Int) : InFlight
     }
 }
-
-/** Error code of a `matter/share_device` result when the user backed out of the platform sheet. */
-private const val SHARE_ERROR_CANCELLED = "cancelled"
-
-/** Error code of a `matter/share_device` result for every other failure. */
-private const val SHARE_ERROR_FAILED = "failed"

@@ -24,7 +24,7 @@ class OutgoingExternalBusMessageTest {
             ),
         )
         assertEquals(
-            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true,"hasSplashscreen":true,"hasMatterStatusReport":true,"matterShareTarget":"app_chooser"},"error":null}""",
+            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true,"hasSplashscreen":true,"hasMatterStatusReport":true,"canShareMatterDeviceToOtherApps":true},"error":null}""",
             json,
         )
     }
@@ -32,10 +32,10 @@ class OutgoingExternalBusMessageTest {
     @Test
     fun `Given an error result message when serializing then it carries code and message`() {
         val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(
-            ErrorResultMessage(id = 3, code = "cancelled", message = "Cancelled by the user"),
+            ErrorResultMessage(id = 3, code = "canceled", message = "Cancelled by the user"),
         )
         assertEquals(
-            """{"type":"result","id":3,"success":false,"result":null,"error":{"code":"cancelled","message":"Cancelled by the user"}}""",
+            """{"type":"result","id":3,"success":false,"result":null,"error":{"code":"canceled","message":"Cancelled by the user"}}""",
             json,
         )
     }

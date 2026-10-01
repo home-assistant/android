@@ -2,8 +2,6 @@ package io.homeassistant.companion.android.matter
 
 import android.content.ComponentName
 import android.content.Context
-import com.google.android.gms.common.moduleinstall.ModuleInstall
-import com.google.android.gms.common.moduleinstall.ModuleInstallClient
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.CommissioningClient
 import dagger.Module
@@ -29,11 +27,6 @@ object MatterPlayServicesModule {
     @Singleton
     fun provideCommissioningClient(@ApplicationContext context: Context): CommissioningClient =
         Matter.getCommissioningClient(context)
-
-    @Provides
-    @Singleton
-    fun provideModuleInstallClient(@ApplicationContext context: Context): ModuleInstallClient =
-        ModuleInstall.getClient(context)
 
     @Provides
     @Singleton

@@ -46,22 +46,15 @@ interface MatterManager {
         data object Failed : CommissioningRequestResult
     }
 
-    /**
-     * Terminal outcome of the platform share request launched from the
-     * [CommissioningResult.Ready.intentSender] returned by [prepareDeviceSharing], derived from its
-     * `ActivityResult` by [parseSharingIntentResult].
-     */
+    /** Outcome of the share sheet, derived from its `ActivityResult` by [parseSharingIntentResult]. */
     sealed interface SharingRequestResult {
-        /**
-         * The platform finished its share flow. The user either added the device to an app, or took
-         * a pairing code from the sheet to enter elsewhere.
-         */
+        /** The sheet finished; Play Services does not say whether a device was added. */
         data object Shared : SharingRequestResult
 
         /** The user backed out of the platform sheet. */
         data object Cancelled : SharingRequestResult
 
-        /** The platform could not add the device, for example because the commissioning window closed. */
+        /** The sheet could not be launched, or Play Services reported an error. */
         data object Failed : SharingRequestResult
     }
 
@@ -110,26 +103,14 @@ interface MatterManager {
     fun parseCommissioningIntentResult(result: ActivityResult): CommissioningRequestResult
 
     /**
-     * Indicates if the app on this device can share a device already commissioned to Home Assistant
-     * with another app through the platform share sheet (Matter multi-admin).
+     * Indicates if the app on this device can share a commissioned Matter device with another app.
+     * Best effort, like [appSupportsCommissioning]: Play Services can still refuse the share.
      */
     fun appSupportsSharing(): Boolean
 
-    /**
-     * Prepare sharing a device already commissioned to Home Assistant with the platform's home app,
-     * through the commissioning window Home Assistant opened for it.
-     *
-     * Returns [CommissioningResult.Ready] with the `IntentSender` of the platform share sheet the
-     * caller must launch from an Activity, or [CommissioningResult.Error] when sharing is unsupported
-     * or Play Services failed.
-     *
-     * @param request the open commissioning window to share
-     */
+    /** Returns the share sheet's `IntentSender`, to be launched from an Activity. */
     suspend fun prepareDeviceSharing(request: MatterShareRequest): CommissioningResult
 
-    /**
-     * Interpret the `ActivityResult` of the share flow launched from the
-     * [CommissioningResult.Ready.intentSender] returned by [prepareDeviceSharing].
-     */
+    /** Interpret the `ActivityResult` of the share sheet launched from [prepareDeviceSharing]. */
     fun parseSharingIntentResult(result: ActivityResult): SharingRequestResult
 }
