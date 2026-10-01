@@ -32,14 +32,13 @@ fun SensorListView(
     modifier: Modifier = Modifier,
 ) {
     val lazyListState = rememberLazyListState()
-    val filteredSensors = viewModel.allSensors.filter { it.value.isNotEmpty() }.entries.toList()
-
+    
     LazyColumn(
         state = lazyListState,
         modifier = modifier.verticalScrollBar(lazyListState),
         contentPadding = safeBottomPaddingValues(applyHorizontal = false),
     ) {
-         viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
+        viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
             stickyHeader(
                 key = manager.id(),
             ) {
