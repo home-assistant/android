@@ -148,9 +148,9 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
             serverId = serverManager.addServer(temporaryServer)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    appVersion,
-                    deviceNameFlow.value,
-                    messagingTokenProvider(),
+                    appVersion = appVersion,
+                    deviceName = deviceNameFlow.value,
+                    pushToken = messagingTokenProvider(),
                 ),
             )
             // Active the newly added server
