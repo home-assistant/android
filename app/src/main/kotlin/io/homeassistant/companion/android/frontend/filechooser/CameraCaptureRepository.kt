@@ -48,4 +48,11 @@ internal class CameraCaptureRepository @VisibleForTesting constructor(
     suspend fun delete(uri: Uri) {
         withContext(backgroundDispatcher) { context.contentResolver.delete(uri, null, null) }
     }
+
+    /** Deletes every file created by [createImageFile]. */
+    suspend fun deleteAll() {
+        withContext(backgroundDispatcher) {
+            File(context.cacheDir, CAPTURE_DIRECTORY).listFiles()?.forEach { it.delete() }
+        }
+    }
 }

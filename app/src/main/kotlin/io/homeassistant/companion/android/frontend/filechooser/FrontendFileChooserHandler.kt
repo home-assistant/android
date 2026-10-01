@@ -7,7 +7,9 @@ import io.homeassistant.companion.android.common.util.SingleSlotQueue
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import java.io.IOException
 import javax.inject.Inject
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 private const val IMAGE_MIME_TYPE_PREFIX = "image/"
@@ -47,23 +49,31 @@ internal class FrontendFileChooserHandler @Inject constructor(
     /**
      * Launches a file chooser for the given [params] and suspends until the user responds.
      *
-     * Returns the selected URIs, or `null` if the user cancelled. The slot is
-     * freed before returning, including on cancellation of the calling coroutine.
+     * Returns the selected URIs, or `null` if the user cancelled. The slot is freed and an unused
+     * capture file deleted before returning, including on cancellation of the calling coroutine.
      */
     suspend fun pickFiles(params: FileChooserParams): Array<Uri>? {
+        // Photos from previous choosers were already handed to the page; drop them so the cache
+        // doesn't grow. A photo selected in a form that isn't submitted yet is lost.
+        cameraCaptureRepository.deleteAll()
         val cameraCapture = createCameraCaptureIfImagesAccepted(params)
-        val result = queue.awaitResult { onResult ->
-            FileChooserRequest(FileChooserInput(params, cameraCapture), onResult)
+        var uris: Array<Uri>? = null
+        try {
+            val result = queue.awaitResult { onResult ->
+                FileChooserRequest(FileChooserInput(params, cameraCapture), onResult)
+            }
+            uris = when (result) {
+                is FileChooserResult.Selected -> result.uris.toTypedArray()
+                FileChooserResult.Captured -> cameraCapture?.let { arrayOf(it.outputUri) }
+                FileChooserResult.Cancelled -> null
+            }
+            return uris
+        } finally {
+            if (cameraCapture != null && uris?.contains(cameraCapture.outputUri) != true) {
+                // NonCancellable so the deletion also runs when the calling coroutine is cancelled.
+                withContext(NonCancellable) { cameraCaptureRepository.delete(cameraCapture.outputUri) }
+            }
         }
-        val uris = when (result) {
-            is FileChooserResult.Selected -> result.uris.toTypedArray()
-            FileChooserResult.Captured -> cameraCapture?.let { arrayOf(it.outputUri) }
-            FileChooserResult.Cancelled -> null
-        }
-        if (cameraCapture != null && uris?.contains(cameraCapture.outputUri) != true) {
-            cameraCaptureRepository.delete(cameraCapture.outputUri)
-        }
-        return uris
     }
 
     /**

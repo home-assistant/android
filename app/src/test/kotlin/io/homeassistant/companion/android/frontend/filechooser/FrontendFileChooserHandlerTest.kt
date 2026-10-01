@@ -4,6 +4,7 @@ import android.net.Uri
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
@@ -95,6 +96,29 @@ class FrontendFileChooserHandlerTest {
         advanceUntilIdle()
 
         assertNull(handler.pendingFileChooser.value)
+    }
+
+    @Test
+    fun `Given camera offered when scope cancels then the capture file is deleted`() = runTest {
+        val outcome = async { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*"))) }
+        awaitPick()
+
+        outcome.cancel()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { cameraCaptureRepository.delete(outputUri) }
+        assertNull(handler.pendingFileChooser.value)
+    }
+
+    @Test
+    fun `Given pickFiles called then previous captures are deleted before a new one is created`() = runTest {
+        backgroundScope.launch { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*"))) }
+        awaitPick()
+
+        coVerifyOrder {
+            cameraCaptureRepository.deleteAll()
+            cameraCaptureRepository.createImageFile()
+        }
     }
 
     @Test
