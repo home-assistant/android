@@ -111,11 +111,12 @@ class FrontendFileChooserHandlerTest {
     }
 
     @Test
-    fun `Given images accepted without capture when picking then camera is not involved`() = runTest {
-        backgroundScope.launch { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*"))) }
+    fun `Given only images accepted without capture when picking then camera is offered`() = runTest {
+        backgroundScope.launch {
+            handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/png", "image/jpeg", "image/gif")))
+        }
 
-        assertNull(awaitPick().input.cameraCapture)
-        coVerify(exactly = 0) { permissionManager.checkCameraPermission() }
+        assertEquals(CameraCapture.Offered(outputUri), awaitPick().input.cameraCapture)
     }
 
     @Test
@@ -161,7 +162,7 @@ class FrontendFileChooserHandlerTest {
     }
 
     @Test
-    fun `Given capture without images accepted when picking then camera permission is not checked`() = runTest {
+    fun `Given no image accepted when picking then camera permission is not checked`() = runTest {
         backgroundScope.launch {
             handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("application/pdf"), captureEnabled = true))
         }

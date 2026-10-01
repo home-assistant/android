@@ -31,7 +31,7 @@ internal sealed interface CameraCapture {
     /** Opens the camera directly, as the page requested with the `capture` attribute. */
     data class Direct(override val outputUri: Uri) : CameraCapture
 
-    /** Offers the camera next to the file picker, as the page also accepts other types than images. */
+    /** Offers the camera next to the file picker. */
     data class Offered(override val outputUri: Uri) : CameraCapture
 }
 

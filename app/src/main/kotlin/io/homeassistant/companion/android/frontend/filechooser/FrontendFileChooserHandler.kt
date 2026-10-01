@@ -29,9 +29,9 @@ internal data class FileChooserRequest(val input: FileChooserInput, val onResult
  * has responded to the first, so callers can dispatch a request without first checking whether
  * one is already in flight and the previous request's result delivery is never silently dropped.
  *
- * When the page sets the `capture` attribute and accepts images, the camera is opened directly, or
- * offered next to the file picker if other types are accepted too. Without the camera permission
- * only the file picker is shown.
+ * When the page accepts images, the camera is offered next to the file picker, or opened directly
+ * when the page also sets the `capture` attribute and only accepts images. Without the camera
+ * permission only the file picker is shown.
  */
 @ViewModelScoped
 internal class FrontendFileChooserHandler @Inject constructor(
@@ -51,7 +51,7 @@ internal class FrontendFileChooserHandler @Inject constructor(
      * freed before returning, including on cancellation of the calling coroutine.
      */
     suspend fun pickFiles(params: FileChooserParams): Array<Uri>? {
-        val cameraCapture = createCameraCaptureIfRequested(params)
+        val cameraCapture = createCameraCaptureIfImagesAccepted(params)
         val result = queue.awaitResult { onResult ->
             FileChooserRequest(FileChooserInput(params, cameraCapture), onResult)
         }
@@ -67,11 +67,11 @@ internal class FrontendFileChooserHandler @Inject constructor(
     }
 
     /**
-     * Returns the [CameraCapture] to use when the page requested the camera with `capture` and the
-     * device can take the photo, or `null` to only show the file picker.
+     * Returns the [CameraCapture] to use when the page accepts images and the device can take the
+     * photo, or `null` to only show the file picker.
      */
-    private suspend fun createCameraCaptureIfRequested(params: FileChooserParams): CameraCapture? {
-        val toCameraCapture = params.requestedCameraCapture()
+    private suspend fun createCameraCaptureIfImagesAccepted(params: FileChooserParams): CameraCapture? {
+        val toCameraCapture = params.cameraCaptureForAcceptedTypes()
             ?.takeIf { permissionManager.checkCameraPermission() }
             ?: return null
         return try {
@@ -83,16 +83,15 @@ internal class FrontendFileChooserHandler @Inject constructor(
     }
 
     /**
-     * Returns how the page requested the camera, as the [CameraCapture] constructor to apply to the
-     * output file, or `null` if it didn't request it (no `capture` or no image accepted) or the
-     * device has no camera.
+     * Returns how to involve the camera, as the [CameraCapture] constructor to apply to the output
+     * file, or `null` if the page accepts no image or the device has no camera.
      */
-    private fun FileChooserParams.requestedCameraCapture(): ((Uri) -> CameraCapture)? {
-        val canCapture = isCaptureEnabled && cameraCaptureRepository.hasCamera
-        val mimeTypes = acceptedMimeTypes()?.takeIf { canCapture } ?: return null
-        return when (mimeTypes.count { it.startsWith(IMAGE_MIME_TYPE_PREFIX) }) {
-            0 -> null
-            mimeTypes.size -> CameraCapture::Direct
+    private fun FileChooserParams.cameraCaptureForAcceptedTypes(): ((Uri) -> CameraCapture)? {
+        val mimeTypes = acceptedMimeTypes()?.takeIf { cameraCaptureRepository.hasCamera } ?: return null
+        val imageTypeCount = mimeTypes.count { it.startsWith(IMAGE_MIME_TYPE_PREFIX) }
+        return when {
+            imageTypeCount == 0 -> null
+            isCaptureEnabled && imageTypeCount == mimeTypes.size -> CameraCapture::Direct
             else -> CameraCapture::Offered
         }
     }
