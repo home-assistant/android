@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.database.mediacontrol
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
 
 /** Stores a single `media_player` entity configured to be exposed as a native media control. */
 @Entity(tableName = "media_controls_entity_config", primaryKeys = ["server_id", "entity_id"])
