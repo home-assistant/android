@@ -344,7 +344,7 @@
     <string name="icon">Icon</string>
     <string name="input_booleans">Input booleans</string>
     <string name="input_buttons">Input buttons</string>
-    <string name="input_cloud">Use Home Assistant Cloud</string>
+    <string name="input_cloud">Use Home Assistant Link</string>
     <string name="input_url_hint">https://example.duckdns.org</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="install">Install</string>
