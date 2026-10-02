@@ -178,4 +178,48 @@ class HealthConnectSensorManagerTest {
         coVerify(exactly = expectedStates.size) { sensorRepository.update(any()) }
         coVerify(exactly = expectedStates.size) { healthConnectClient.aggregate(any()) }
     }
+
+    @Test
+    fun `Given empty nutrition aggregates when requesting update then resets all nutrition sensors to zero`() = runTest {
+        val nutritionPermission = HealthPermission.getReadPermission(NutritionRecord::class)
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returns setOf(nutritionPermission)
+        mockkObject(healthConnectClient.features)
+        every {
+            healthConnectClient.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
+        } returns HealthConnectFeatures.FEATURE_STATUS_UNAVAILABLE
+
+        val sensorIds = listOf(
+            HealthConnectSensorManager.nutritionCalories.id,
+            HealthConnectSensorManager.nutritionCarbohydrates.id,
+            HealthConnectSensorManager.nutritionFat.id,
+            HealthConnectSensorManager.nutritionProtein.id,
+            HealthConnectSensorManager.nutritionSugar.id,
+        )
+        sensorIds.forEach { sensorId ->
+            coEvery { sensorRepository.get(sensorId) } returns listOf(
+                Sensor(id = sensorId, serverId = 0, enabled = true, state = "123.45"),
+            )
+        }
+
+        val aggregateResult = mockk<AggregationResult>()
+        every { aggregateResult[NutritionRecord.ENERGY_TOTAL] } returns null
+        every { aggregateResult[NutritionRecord.PROTEIN_TOTAL] } returns null
+        every { aggregateResult[NutritionRecord.TOTAL_CARBOHYDRATE_TOTAL] } returns null
+        every { aggregateResult[NutritionRecord.TOTAL_FAT_TOTAL] } returns null
+        every { aggregateResult[NutritionRecord.SUGAR_TOTAL] } returns null
+        every { aggregateResult.dataOrigins } returns emptySet()
+        coEvery { healthConnectClient.aggregate(any()) } returns aggregateResult
+
+        val updatedStates = mutableMapOf<String, String>()
+        val updatedSensor = slot<Sensor>()
+        coEvery { sensorRepository.update(capture(updatedSensor)) } answers {
+            updatedStates[updatedSensor.captured.id] = updatedSensor.captured.state
+        }
+
+        sensorManager.requestSensorUpdate()
+
+        assertEquals(sensorIds.associateWith { "0.00" }, updatedStates)
+        coVerify(exactly = sensorIds.size) { sensorRepository.update(any()) }
+        coVerify(exactly = sensorIds.size) { healthConnectClient.aggregate(any()) }
+    }
 }

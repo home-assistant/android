@@ -1043,14 +1043,12 @@ class HealthConnectSensorManager @Inject constructor(
         val nutritionRequest = healthConnectClient.aggregateOrNull(
             buildNutritionAggregationRequest(metric),
         ) ?: return
-        value(nutritionRequest)?.let {
-            onSensorUpdated(
-                sensor,
-                it,
-                sensor.statelessIcon,
-                attributes = buildAggregationAttributes(nutritionRequest),
-            )
-        }
+        onSensorUpdated(
+            sensor,
+            value(nutritionRequest) ?: BigDecimal.ZERO.setScale(2),
+            sensor.statelessIcon,
+            attributes = buildAggregationAttributes(nutritionRequest),
+        )
     }
 
     private suspend fun updateVo2MaxSensor() {
