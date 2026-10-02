@@ -9,6 +9,7 @@ import android.location.Location
 import android.os.Build
 import android.os.Looper
 import android.os.PowerManager
+import androidx.annotation.VisibleForTesting
 import androidx.core.content.getSystemService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
@@ -43,11 +44,14 @@ import io.homeassistant.companion.android.database.location.LocationHistoryItemT
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
+import io.homeassistant.companion.android.location.SingleAccurateLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -55,6 +59,14 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+// Marks a single accurate location request sent by the request_location_update notification command.
+// Only those requests run in SingleAccurateLocationService: the high priority push that delivers the
+// command is what lets a background app start a location foreground service with location access.
+// Without it, the service either isn't allowed to start or starts without location access, and only
+// shows its notification.
+// Other apps can't set it: RequestAccurateLocationReceiver forwards their intents without extras.
+private const val EXTRA_FROM_NOTIFICATION_COMMAND = "from_notification_command"
 
 @Singleton
 class LocationSensorManager @Inject constructor(
@@ -188,6 +200,7 @@ class LocationSensorManager @Inject constructor(
         private var isZoneLocationSetup = false
 
         private var lastLocationSend = mutableMapOf<Int, Long>()
+        private val lastLocationSendFixTimeMs = mutableMapOf<Int, Long>()
         private var lastLocationReceived = mutableMapOf<Int, Long>()
         private var lastUpdateLocation = mutableMapOf<Int, String?>()
 
@@ -220,13 +233,42 @@ class LocationSensorManager @Inject constructor(
         /**
          * Builds an explicit-component [Intent] addressed to [LocationSensorReceiver] that triggers a
          * single accurate location update via [ACTION_REQUEST_ACCURATE_LOCATION_UPDATE].
+         *
+         * @param fromNotificationCommand whether the request comes from the `request_location_update`
+         * notification command, which lets the update run in a foreground service
          */
-        fun createRequestAccurateLocationUpdateIntent(context: Context): Intent = Intent(
+        fun createRequestAccurateLocationUpdateIntent(
+            context: Context,
+            fromNotificationCommand: Boolean = false,
+        ): Intent = Intent(
             context,
             LocationSensorReceiver::class.java,
         ).apply {
             action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+            if (fromNotificationCommand) putExtra(EXTRA_FROM_NOTIFICATION_COMMAND, true)
         }
+
+        private const val SINGLE_ACCURATE_LOCATION_MAX_UPDATES = 5
+        private val SINGLE_ACCURATE_LOCATION_INTERVAL = 10.seconds
+        private val SINGLE_ACCURATE_LOCATION_MIN_INTERVAL = 5.seconds
+        private val SINGLE_ACCURATE_LOCATION_WAKE_LOCK_TIMEOUT = 10.minutes
+
+        /**
+         * Builds the location request for a single accurate location. With [inForegroundService] it ends with
+         * [SingleAccurateLocationService]; other requests keep running throttled, until they get a location.
+         */
+        @VisibleForTesting
+        fun createSingleAccurateLocationRequest(inForegroundService: Boolean): LocationRequest =
+            LocationRequest.Builder(SINGLE_ACCURATE_LOCATION_INTERVAL.inWholeMilliseconds).apply {
+                setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                setMaxUpdates(SINGLE_ACCURATE_LOCATION_MAX_UPDATES)
+                setMinUpdateIntervalMillis(SINGLE_ACCURATE_LOCATION_MIN_INTERVAL.inWholeMilliseconds)
+                // Only a fix obtained after this request counts, never a cached one
+                setMaxUpdateAgeMillis(0)
+                if (inForegroundService) {
+                    setDurationMillis(SingleAccurateLocationService.MAX_DURATION.inWholeMilliseconds)
+                }
+            }.build()
 
         suspend fun SensorRepository.setHighAccuracyModeSetting(enabled: Boolean) {
             updateSettingValue(
@@ -259,7 +301,9 @@ class LocationSensorManager @Inject constructor(
                 -> handleLocationUpdate(intent)
 
                 ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
-                ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
+                ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation(
+                    useForegroundService = intent.getBooleanExtra(EXTRA_FROM_NOTIFICATION_COMMAND, false),
+                )
                 ACTION_FORCE_HIGH_ACCURACY -> {
                     when (val command = intent.extras?.getString("command")) {
                         DeviceCommandData.TURN_ON, DeviceCommandData.TURN_OFF, MessagingManager.FORCE_ON -> {
@@ -953,9 +997,9 @@ class LocationSensorManager @Inject constructor(
             return
         }
 
-        if (location.time < (lastLocationSend[serverId] ?: 0)) {
+        if (location.time < (lastLocationSendFixTimeMs[serverId] ?: 0)) {
             Timber.d(
-                "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastLocationSend",
+                "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastLocationSendFixTimeMs",
             )
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_NOT_LATEST)
             return
@@ -978,10 +1022,10 @@ class LocationSensorManager @Inject constructor(
                     return
                 }
             } else {
-                if (now < (lastLocationSend[serverId] ?: 0) + 5000 &&
-                    trigger?.isGeofence != true &&
-                    !highAccuracyModeEnabled
-                ) {
+                val bypassDebounce = trigger?.isGeofence == true ||
+                    trigger == LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION ||
+                    highAccuracyModeEnabled
+                if (now < (lastLocationSend[serverId] ?: 0) + 5000 && !bypassDebounce) {
                     Timber.d(
                         "New location update not possible within 5 seconds, not sending to HA",
                     )
@@ -1011,6 +1055,8 @@ class LocationSensorManager @Inject constructor(
                 serverManager.integrationRepository(serverId).updateLocation(updateLocation)
                 Timber.d("Location update sent successfully for $serverId as $updateLocationAs")
                 lastLocationSend[serverId] = now
+                // Sends complete out of order, so an older one must not lower this
+                lastLocationSendFixTimeMs[serverId] = maxOf(lastLocationSendFixTimeMs[serverId] ?: 0L, location.time)
                 lastUpdateLocation[serverId] = updateLocationString
                 logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
 
@@ -1173,7 +1219,15 @@ class LocationSensorManager @Inject constructor(
         }
     }
 
-    private suspend fun requestSingleAccurateLocation() {
+    /**
+     * Requests one new, accurate location and sends it to the servers.
+     *
+     * With [useForegroundService], the request runs while [SingleAccurateLocationService] keeps the app in
+     * the foreground, because Android stretches location requests from background apps to about one update
+     * every 10 minutes. Only the notification command uses it: a high priority push is what allows a
+     * background app to start a location foreground service that can get a location.
+     */
+    private suspend fun requestSingleAccurateLocation(useForegroundService: Boolean = false) {
         if (!checkPermission(singleAccurateLocation.id)) {
             Timber.w("Not getting single accurate location because of permissions.")
             return
@@ -1201,12 +1255,17 @@ class LocationSensorManager @Inject constructor(
             Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"),
         )
 
-        val maxRetries = 5
-        val request = LocationRequest.Builder(10000).apply {
-            setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            setMaxUpdates(maxRetries)
-            setMinUpdateIntervalMillis(5000)
-        }.build()
+        val serviceRequest = if (useForegroundService && !highAccuracyModeEnabled) {
+            SingleAccurateLocationService.start(applicationContext)
+        } else {
+            null
+        }
+
+        val maxRetries = SINGLE_ACCURATE_LOCATION_MAX_UPDATES
+        val request = createSingleAccurateLocationRequest(inForegroundService = serviceRequest != null)
+        // A request in the foreground service ends with it, others may wait for a throttled location
+        val wakeLockTimeout = serviceRequest?.let { SingleAccurateLocationService.MAX_DURATION }
+            ?: SINGLE_ACCURATE_LOCATION_WAKE_LOCK_TIMEOUT
         try {
             LocationServices.getFusedLocationProviderClient(applicationContext)
                 .requestLocationUpdates(
@@ -1218,7 +1277,7 @@ class LocationSensorManager @Inject constructor(
                                     PowerManager.PARTIAL_WAKE_LOCK,
                                     "HomeAssistant::AccurateLocation",
                                 )?.apply {
-                                    acquire(10 * 60 * 1000L) // 10 minutes
+                                    acquire(wakeLockTimeout.inWholeMilliseconds)
                                 }
                         var numberCalls = 0
                         override fun onLocationResult(locationResult: LocationResult) {
@@ -1250,6 +1309,7 @@ class LocationSensorManager @Inject constructor(
                                         }
                                     }
                                     if (wakeLock?.isHeld == true) wakeLock.release()
+                                    serviceRequest?.let { SingleAccurateLocationService.stop(applicationContext, it) }
                                 }
 
                                 numberCalls >= maxRetries -> {
@@ -1270,6 +1330,7 @@ class LocationSensorManager @Inject constructor(
                                         }
                                     }
                                     if (wakeLock?.isHeld == true) wakeLock.release()
+                                    serviceRequest?.let { SingleAccurateLocationService.stop(applicationContext, it) }
                                 }
 
                                 else -> {
@@ -1282,8 +1343,13 @@ class LocationSensorManager @Inject constructor(
                     },
                     Looper.getMainLooper(),
                 )
+                .addOnFailureListener { e ->
+                    Timber.e(e, "Failed to request location data for single accurate sensor")
+                    serviceRequest?.let { SingleAccurateLocationService.stop(applicationContext, it) }
+                }
         } catch (e: Exception) {
             Timber.e(e, "Failed to get location data for single accurate sensor")
+            serviceRequest?.let { SingleAccurateLocationService.stop(applicationContext, it) }
         }
     }
 
