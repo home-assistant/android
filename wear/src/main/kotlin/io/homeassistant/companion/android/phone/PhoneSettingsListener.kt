@@ -197,10 +197,10 @@ class PhoneSettingsListener :
             serverId = serverManager.addServer(temporaryServer)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    appVersion,
-                    deviceName,
-                    messagingTokenProvider(),
-                    false,
+                    appVersion = appVersion,
+                    deviceName = deviceName,
+                    pushToken = messagingTokenProvider(),
+                    pushWebsocket = false,
                 ),
             )
             launch {
