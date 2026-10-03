@@ -3,21 +3,35 @@ package io.homeassistant.companion.android.matter
 import android.app.Activity
 import android.content.ComponentName
 import android.os.Build
+import android.os.SystemClock
 import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult
 import androidx.annotation.ChecksSdkIntAtLeast
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.home.matter.commissioning.CommissioningClient
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
 import com.google.android.gms.home.matter.commissioning.CommissioningResult
+import com.google.android.gms.home.matter.commissioning.CommissioningWindow
+import com.google.android.gms.home.matter.commissioning.ShareDeviceRequest
+import com.google.android.gms.home.matter.common.DeviceDescriptor
+import com.google.android.gms.home.matter.common.Discriminator
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
+import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
+
+// `shareDevice` may never answer. A fixed cap rather than the window's remaining time, which can be very short.
+private val SHARE_PREPARE_TIMEOUT = 60.seconds
 
 class MatterManagerImpl @Inject constructor(
     private val serverManager: ServerManager,
@@ -106,6 +120,59 @@ class MatterManagerImpl @Inject constructor(
             // when the result payload cannot be read; only the user-entered name is lost.
             Timber.w(e, "Commissioning succeeded but its result could not be parsed")
             MatterManager.CommissioningRequestResult.Success(deviceName = null)
+        }
+    }
+
+    override fun appSupportsSharing(): Boolean = appSupportsCommissioning()
+
+    override suspend fun prepareDeviceSharing(request: MatterShareRequest): MatterManager.CommissioningResult {
+        if (!appSupportsSharing()) {
+            return MatterManager.CommissioningResult.Error(
+                IllegalStateException("Matter sharing is not supported on this device"),
+            )
+        }
+        return withTimeoutOrNull(SHARE_PREPARE_TIMEOUT) {
+            try {
+                // Inside the try, so a value Play Services rejects is reported like any other failure.
+                val window = CommissioningWindow.builder()
+                    .setDiscriminator(Discriminator.forLongValue(request.discriminator))
+                    .setPasscode(request.passcode)
+                    // As in Google's Matter sample; the API does not say which clock it means.
+                    .setWindowOpenMillis(SystemClock.elapsedRealtime())
+                    .setDurationSeconds(request.remainingSeconds)
+                    .build()
+                val descriptor = DeviceDescriptor.Builder().apply {
+                    request.vendorId?.let { setVendorId(it) }
+                    request.productId?.let { setProductId(it) }
+                }.build()
+                val shareRequest = ShareDeviceRequest.builder()
+                    .setDeviceDescriptor(descriptor)
+                    .setDeviceName(request.deviceName.orEmpty())
+                    .setCommissioningWindow(window)
+                    .build()
+                MatterManager.CommissioningResult.Ready(commissioningClient.shareDevice(shareRequest).await())
+            } catch (e: CancellationException) {
+                // A cancelled Task throws this too, and only a cancelled coroutine may propagate it.
+                ensureActive()
+                MatterManager.CommissioningResult.Error(e)
+            } catch (e: Exception) {
+                MatterManager.CommissioningResult.Error(e)
+            }
+        } ?: MatterManager.CommissioningResult.Error(
+            TimeoutException("Play Services did not prepare the share sheet in time"),
+        )
+    }
+
+    override fun parseSharingIntentResult(result: ActivityResult): MatterManager.SharingRequestResult {
+        // A sender that could not be launched also comes back as cancelled, with the reason attached.
+        val launchFailed =
+            result.data?.hasExtra(StartIntentSenderForResult.EXTRA_SEND_INTENT_EXCEPTION) == true
+        return when {
+            result.resultCode == Activity.RESULT_OK -> MatterManager.SharingRequestResult.Shared
+            result.resultCode == Activity.RESULT_CANCELED && !launchFailed ->
+                MatterManager.SharingRequestResult.Cancelled
+
+            else -> MatterManager.SharingRequestResult.Failed
         }
     }
 }
