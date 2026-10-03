@@ -98,6 +98,7 @@ import io.homeassistant.companion.android.settings.assist.DefaultAssistantManage
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.fileProviderAuthority
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -1449,7 +1450,7 @@ class MessagingManager @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Couldn't download image for notification")
             }
-            return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+            return@withContext FileProvider.getUriForFile(context, context.fileProviderAuthority, file)
         }
 
     private suspend fun handleVideo(builder: NotificationCompat.Builder, data: Map<String, String>) {

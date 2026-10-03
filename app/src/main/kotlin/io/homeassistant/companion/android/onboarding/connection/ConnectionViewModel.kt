@@ -14,8 +14,10 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.util.SuspendLazy
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
-import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
+import io.homeassistant.companion.android.frontend.filechooser.FrontendFileChooserHandler
+import io.homeassistant.companion.android.frontend.permissions.PermissionManager
+import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
@@ -70,7 +72,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawUrl: String,
     webViewClientFactory: HAWebViewClientFactory,
     private val connectivityCheckRepository: ConnectivityCheckRepository,
-    private val fileChooserManager: FileChooserManager,
+    fileChooserHandler: FrontendFileChooserHandler,
+    permissionManager: PermissionManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -79,12 +82,14 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         savedStateHandle: SavedStateHandle,
         webViewClientFactory: HAWebViewClientFactory,
         connectivityCheckRepository: ConnectivityCheckRepository,
-        fileChooserManager: FileChooserManager,
+        fileChooserHandler: FrontendFileChooserHandler,
+        permissionManager: PermissionManager,
     ) : this(
         savedStateHandle.toRoute<ConnectionRoute>().url,
         webViewClientFactory,
         connectivityCheckRepository,
-        fileChooserManager,
+        fileChooserHandler,
+        permissionManager,
     )
 
     /**
@@ -161,14 +166,17 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     val webChromeClient: HAWebChromeClient = HAWebChromeClient(
         onShowFileChooser = { filePathCallback, fileChooserParams ->
             viewModelScope.launch {
-                filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
+                filePathCallback.onReceiveValue(fileChooserHandler.pickFiles(fileChooserParams))
             }
             true
         },
     )
 
     /** The current pending file chooser request from the WebView, or `null` if none. */
-    val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
+    val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserHandler.pendingFileChooser
+
+    /** The current pending permission request, or `null` if none. */
+    val pendingPermissionRequest: StateFlow<PermissionRequest?> = permissionManager.pendingPermissionRequest
 
     init {
         viewModelScope.launch {

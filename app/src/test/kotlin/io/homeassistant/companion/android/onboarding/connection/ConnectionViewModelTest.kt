@@ -17,7 +17,10 @@ import io.homeassistant.companion.android.common.data.keychain.ClientCertProvide
 import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
-import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserResult
+import io.homeassistant.companion.android.frontend.filechooser.FrontendFileChooserHandler
+import io.homeassistant.companion.android.frontend.permissions.PermissionManager
+import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -31,6 +34,7 @@ import java.net.URL
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -84,7 +88,11 @@ class ConnectionViewModelTest {
         }
     }
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk()
-    private val fileChooserManager = FileChooserManager()
+    private val permissionManager: PermissionManager = mockk(relaxed = true)
+    private val fileChooserHandler = FrontendFileChooserHandler(
+        cameraCaptureRepository = mockk(relaxed = true),
+        permissionManager = permissionManager,
+    )
 
     @BeforeEach
     fun setup() {
@@ -95,7 +103,7 @@ class ConnectionViewModelTest {
     @ParameterizedTest
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url when buildAuthUrl then urlFlow emits correct auth url and isLoading is false`(baseUrl: String) = runTest {
-        val viewModel = ConnectionViewModel(baseUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(baseUrl, webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -126,7 +134,7 @@ class ConnectionViewModelTest {
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url with suffix when buildAuthUrl then urlFlow emits correct auth url with path stripped`(baseUrl: String) = runTest {
         val suffix = "/hello?query=param&isHA=true#segment"
-        val viewModel = ConnectionViewModel("$baseUrl$suffix", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("$baseUrl$suffix", webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -143,7 +151,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given a malformed url when buildAuthUrl then errorFlow emits malformed url error`() = runTest {
         val malformedUrl = "not_a_url"
-        val viewModel = ConnectionViewModel(malformedUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(malformedUrl, webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -172,7 +180,7 @@ class ConnectionViewModelTest {
         val authCode = "test_auth_code"
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -206,7 +214,8 @@ class ConnectionViewModelTest {
             "http://homeassistant.local:8123",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         turbineScope {
@@ -234,7 +243,8 @@ class ConnectionViewModelTest {
             "http://[::1]:8123",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         turbineScope {
@@ -260,7 +270,8 @@ class ConnectionViewModelTest {
             "https://homeassistant.local:8123",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         turbineScope {
@@ -286,7 +297,8 @@ class ConnectionViewModelTest {
             "http://homeassistant.local:8123",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         turbineScope {
@@ -312,7 +324,8 @@ class ConnectionViewModelTest {
             "http://homeassistant.local:8123/lovelace?foo=bar#baz",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         turbineScope {
@@ -338,7 +351,8 @@ class ConnectionViewModelTest {
             "http://homeassistant.local:8123",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         turbineScope {
@@ -361,7 +375,8 @@ class ConnectionViewModelTest {
             "http://homeassistant.local:8123/lovelace?foo=bar#baz",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         turbineScope {
@@ -385,7 +400,8 @@ class ConnectionViewModelTest {
             "http://homeassistant.local:8123",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         turbineScope {
@@ -409,7 +425,7 @@ class ConnectionViewModelTest {
     fun `Given auth callback uri without code when shouldRedirect then no event and returns false`() = runTest {
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = null)
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -437,7 +453,7 @@ class ConnectionViewModelTest {
             isOpaque = true,
         )
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -458,7 +474,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given unmatching uri and webview not null when shouldRedirect is invoked then open in external browser and return true`() = runTest {
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
 
         // Used to parse the rawUrl given in the constructor of ConnectionViewModel
         mockUriParse()
@@ -545,7 +561,7 @@ class ConnectionViewModelTest {
         val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>()
         every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
 
-        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
         val webView = mockWebView()
 
         advanceUntilIdle()
@@ -586,7 +602,7 @@ class ConnectionViewModelTest {
 
         every { connectivityCheckRepository.runChecks(rawUrl) } returnsMany listOf(first, second)
 
-        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
 
         // When: first click on "Run checks"
         viewModel.runConnectivityChecks()
@@ -615,7 +631,7 @@ class ConnectionViewModelTest {
         val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>()
         every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
 
-        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager)
         advanceUntilIdle()
 
         assertNull(viewModel.errorFlow.value)
@@ -636,12 +652,29 @@ class ConnectionViewModelTest {
     }
 
     @Test
+    fun `Given permission manager when created then pendingPermissionRequest exposes its pending request`() = runTest {
+        val pendingPermissionRequest = MutableStateFlow<PermissionRequest?>(PermissionRequest.Camera(onResult = {}))
+        every { permissionManager.pendingPermissionRequest } returns pendingPermissionRequest
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserHandler,
+            permissionManager,
+        )
+
+        assertEquals(pendingPermissionRequest, viewModel.pendingPermissionRequest)
+    }
+
+    @Test
     fun `Given webChromeClient when onShowFileChooser is invoked then pendingFileChooser exposes the params`() = runTest {
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
@@ -657,7 +690,7 @@ class ConnectionViewModelTest {
         assertTrue(handled)
         val pending = viewModel.pendingFileChooser.value
         assertNotNull(pending)
-        assertTrue(pending.fileChooserParams === fileChooserParams)
+        assertTrue(pending.input.params === fileChooserParams)
     }
 
     @Test
@@ -666,7 +699,8 @@ class ConnectionViewModelTest {
             "http://homeassistant.local:8123",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
@@ -681,7 +715,7 @@ class ConnectionViewModelTest {
         val pending = viewModel.pendingFileChooser.value
         assertNotNull(pending)
         val uris = arrayOf(mockk<Uri>())
-        pending.onResult(uris)
+        pending.onResult(FileChooserResult.Selected(uris.toList()))
         advanceUntilIdle()
 
         verify { filePathCallback.onReceiveValue(uris) }
@@ -694,7 +728,8 @@ class ConnectionViewModelTest {
             "http://homeassistant.local:8123",
             webViewClientFactory,
             connectivityCheckRepository,
-            fileChooserManager,
+            fileChooserHandler,
+            permissionManager,
         )
 
         val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
@@ -708,7 +743,7 @@ class ConnectionViewModelTest {
 
         val pending = viewModel.pendingFileChooser.value
         assertNotNull(pending)
-        pending.onResult(null)
+        pending.onResult(FileChooserResult.Cancelled)
         advanceUntilIdle()
 
         verify { filePathCallback.onReceiveValue(null) }
