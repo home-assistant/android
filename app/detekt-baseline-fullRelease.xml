@@ -106,6 +106,7 @@
     <ID>InjectDispatcher:FrontendEntityAddToManager.kt:FrontendEntityAddToManager$Default</ID>
     <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService$IO</ID>
     <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService.&lt;no name provided&gt;$IO</ID>
+    <ID>InjectDispatcher:HaMediaSession.kt:HaMediaSession$IO</ID>
     <ID>InjectDispatcher:HaShortcutManager.kt:HaShortcutManager$IO</ID>
     <ID>InjectDispatcher:HighAccuracyLocationReceiver.kt:HighAccuracyLocationReceiver$IO</ID>
     <ID>InjectDispatcher:HomeAssistantApplication.kt:HomeAssistantApplication$IO</ID>
@@ -456,6 +457,8 @@
     <ID>TooManyFunctions:FakePlayer.kt:FakePlayer : Player</ID>
     <ID>TooManyFunctions:FrontendScreen.kt:io.homeassistant.companion.android.frontend.FrontendScreen.kt</ID>
     <ID>TooManyFunctions:FrontendViewModel.kt:FrontendViewModel : ViewModelFrontendConnectionErrorStateProvider</ID>
+    <ID>TooManyFunctions:HaRemoteMediaPlayer.kt:HaRemoteMediaPlayer : SimpleBasePlayer</ID>
+    <ID>TooManyFunctions:HaRemoteMediaPlayer.kt:HaRemoteMediaPlayer$CommandCallback</ID>
     <ID>TooManyFunctions:HealthConnectSensorManager.kt:HealthConnectSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:LaunchViewModel.kt:LaunchViewModel : ViewModel</ID>
     <ID>TooManyFunctions:LocationSensorManager.kt:LocationSensorManager : SensorManager</ID>
