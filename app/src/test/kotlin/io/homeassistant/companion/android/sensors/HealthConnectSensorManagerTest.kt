@@ -10,7 +10,9 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import kotlin.time.Duration.Companion.minutes
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -103,7 +105,126 @@ class HealthConnectSensorManagerTest {
             },
         )
 
-        val result = sensorManager.calculateSleepDurationInMinutes(mockSleepStages)
-        assertEquals(300L, result)
+        val result = sensorManager.calculateSleepDuration(mockSleepStages)
+        assertEquals(300.minutes, result)
+    }
+
+    @Test
+    fun `Given repeated sleep stages when analyzed then durations are summed by stage type`() {
+        val midnight = Instant.parse("2026-07-01T00:00:00Z")
+        val stages = listOf(
+            SleepSessionRecord.Stage(
+                startTime = midnight,
+                endTime = midnight.plus(30, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_LIGHT,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(30, ChronoUnit.MINUTES),
+                endTime = midnight.plus(90, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_DEEP,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(90, ChronoUnit.MINUTES),
+                endTime = midnight.plus(150, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_LIGHT,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(150, ChronoUnit.MINUTES),
+                endTime = midnight.plus(180, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_REM,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(180, ChronoUnit.MINUTES),
+                endTime = midnight.plus(195, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_AWAKE,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(195, ChronoUnit.MINUTES),
+                endTime = midnight.plus(205, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(205, ChronoUnit.MINUTES),
+                endTime = midnight.plus(215, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(215, ChronoUnit.MINUTES),
+                endTime = midnight.plus(245, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_SLEEPING,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(245, ChronoUnit.MINUTES),
+                endTime = midnight.plus(260, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_UNKNOWN,
+            ),
+        )
+
+        val result = sensorManager.analyzeSleepStages(stages)
+
+        assertEquals(90.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_LIGHT])
+        assertEquals(60.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_DEEP])
+        assertEquals(30.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_REM])
+        assertEquals(15.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_AWAKE])
+        assertEquals(10.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED])
+        assertEquals(10.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_OUT_OF_BED])
+        assertEquals(30.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_SLEEPING])
+        assertEquals(15.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_UNKNOWN])
+        assertEquals(225.minutes, result.sleepDuration)
+    }
+
+    @Test
+    fun `Given a missing sleep stage when analyzed then no duration is created for that stage`() {
+        val midnight = Instant.parse("2026-07-01T00:00:00Z")
+        val stages = listOf(
+            SleepSessionRecord.Stage(
+                startTime = midnight,
+                endTime = midnight.plus(1, ChronoUnit.HOURS),
+                stage = SleepSessionRecord.STAGE_TYPE_LIGHT,
+            ),
+        )
+
+        val result = sensorManager.analyzeSleepStages(stages)
+
+        assertFalse(result.durationByStage.containsKey(SleepSessionRecord.STAGE_TYPE_DEEP))
+    }
+
+    @Test
+    fun `Given sleep stages when analyzed then complete ordered timeline is preserved as primitive lists`() {
+        val midnight = Instant.parse("2026-07-01T00:00:00Z")
+        val stages = listOf(
+            SleepSessionRecord.Stage(
+                startTime = midnight,
+                endTime = midnight.plus(30, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_LIGHT,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(30, ChronoUnit.MINUTES),
+                endTime = midnight.plus(1, ChronoUnit.HOURS),
+                stage = SleepSessionRecord.STAGE_TYPE_DEEP,
+            ),
+        )
+
+        val result = sensorManager.analyzeSleepStages(stages)
+
+        assertEquals(listOf("light", "deep"), result.stageTypes)
+        assertEquals(
+            listOf(SleepSessionRecord.STAGE_TYPE_LIGHT, SleepSessionRecord.STAGE_TYPE_DEEP),
+            result.stageTypeIds,
+        )
+        assertEquals(
+            listOf(
+                midnight,
+                midnight.plus(30, ChronoUnit.MINUTES),
+            ),
+            result.stageStartTimes,
+        )
+        assertEquals(
+            listOf(
+                midnight.plus(30, ChronoUnit.MINUTES),
+                midnight.plus(1, ChronoUnit.HOURS),
+            ),
+            result.stageEndTimes,
+        )
     }
 }
