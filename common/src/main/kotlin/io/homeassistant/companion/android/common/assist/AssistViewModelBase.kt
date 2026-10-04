@@ -324,9 +324,13 @@ abstract class AssistViewModelBase(
      *
      * Collects from [audioStrategy]'s [AssistAudioStrategy.audioData] flow, converts
      * each [ShortArray] chunk to bytes via [toAudioBytes], and sends them to the server.
+     *
+     * @param onError called when capturing or sending audio fails
+     * @param beforeRecording runs before audio capture starts, for example to play a chime that
+     * should not be captured. Stopping the recording cancels it.
      */
     @VisibleForTesting(otherwise = PROTECTED)
-    fun setupRecorder(onError: (Throwable) -> Unit) {
+    fun setupRecorder(onError: (Throwable) -> Unit, beforeRecording: suspend () -> Unit = {}) {
         Timber.d("Setting up recorder")
         sttReady = CompletableDeferred()
 
@@ -334,6 +338,8 @@ abstract class AssistViewModelBase(
             val audioChannel = Channel<ByteArray>(Channel.UNLIMITED)
 
             producerJob = launch {
+                // Part of the producer so that stopping the recording also cancels it
+                beforeRecording()
                 audioStrategy.audioData().catch {
                     Timber.e(it, "Error collecting audio data")
                     onError(it)

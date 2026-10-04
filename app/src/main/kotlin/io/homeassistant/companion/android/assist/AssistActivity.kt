@@ -56,6 +56,16 @@ class AssistActivity : BaseActivity() {
         private const val EXTRA_START_LISTENING = "start_listening"
         private const val EXTRA_FROM_FRONTEND = "from_frontend"
         private const val EXTRA_FROM_WAKE_WORD_PHRASE = "from_wake_word_phrase"
+        private const val EXTRA_FROM_SYSTEM_ASSISTANT = "from_system_assistant"
+        private val SYSTEM_ASSISTANT_ACTIONS =
+            listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
+
+        /**
+         * Whether this intent comes from Android's assistant mechanisms (gesture, button, wake word) or a
+         * voice command, for example from a Bluetooth headset, rather than from a screen interface.
+         */
+        internal fun Intent.isSystemAssistantLaunch(): Boolean =
+            getBooleanExtra(EXTRA_FROM_SYSTEM_ASSISTANT, false) || action in SYSTEM_ASSISTANT_ACTIONS
 
         fun newInstance(
             context: Context,
@@ -64,6 +74,7 @@ class AssistActivity : BaseActivity() {
             startListening: Boolean = true,
             fromFrontend: Boolean = true,
             wakeWordPhrase: String? = null,
+            fromSystemAssistant: Boolean = false,
         ): Intent {
             return Intent(context, AssistActivity::class.java).apply {
                 putExtra(EXTRA_SERVER, serverId)
@@ -71,6 +82,7 @@ class AssistActivity : BaseActivity() {
                 putExtra(EXTRA_START_LISTENING, startListening)
                 putExtra(EXTRA_FROM_FRONTEND, fromFrontend)
                 putExtra(EXTRA_FROM_WAKE_WORD_PHRASE, wakeWordPhrase)
+                putExtra(EXTRA_FROM_SYSTEM_ASSISTANT, fromSystemAssistant)
             }
         }
     }
@@ -112,7 +124,7 @@ class AssistActivity : BaseActivity() {
                 } else {
                     null
                 },
-                wakeWordPhrase = intent.getStringExtra(EXTRA_FROM_WAKE_WORD_PHRASE),
+                launchTrigger = launchTrigger(),
             )
         }
 
@@ -210,6 +222,15 @@ class AssistActivity : BaseActivity() {
             } else {
                 setShowWhenLocked(false)
             }
+        }
+    }
+
+    private fun launchTrigger(): AssistTrigger {
+        val wakeWordPhrase = intent.getStringExtra(EXTRA_FROM_WAKE_WORD_PHRASE)
+        return when {
+            wakeWordPhrase != null -> AssistTrigger.WakeWord(wakeWordPhrase)
+            intent.isSystemAssistantLaunch() -> AssistTrigger.SystemAssistant
+            else -> AssistTrigger.ScreenUi
         }
     }
 
