@@ -200,6 +200,11 @@ interface PrefsRepository {
 
     suspend fun setWakeWordEnabled(enabled: Boolean)
 
+    /** Whether a chime plays when Assist starts listening hands-free. Enabled by default. */
+    suspend fun isAssistListeningChimeEnabled(): Boolean
+
+    suspend fun setAssistListeningChimeEnabled(enabled: Boolean)
+
     suspend fun getSelectedWakeWord(): String?
 
     suspend fun setSelectedWakeWord(wakeWord: String)
