@@ -89,6 +89,13 @@ android {
     }
 }
 
+aboutLibraries {
+    collect {
+        // Same third-party asset definitions as `:app`, whose resources this module reuses
+        configPath = rootProject.file("config/aboutlibraries")
+    }
+}
+
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:app` module.
     implementation(libs.car.automotive)
