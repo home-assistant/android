@@ -6,7 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -39,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -315,11 +318,19 @@ private fun DefaultAssistantCard(isDefault: Boolean, onSetDefault: () -> Unit) {
 @Composable
 private fun SettingsSwitchRow(text: String, checked: Boolean, canToggle: Boolean, onToggle: (Boolean) -> Unit) {
     val colorScheme = LocalHAColorScheme.current
+    val interactionSource = remember { MutableInteractionSource() }
 
     HASettingsCard(
+        // One accessibility node announcing the label and the on/off state together
         modifier = Modifier.clip(RoundedCornerShape(HARadius.XL))
-            .clickable(role = Role.Switch) { onToggle(!checked) }.takeIf { canToggle }
-            ?: Modifier,
+            .toggleable(
+                value = checked && canToggle,
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                enabled = canToggle,
+                role = Role.Switch,
+                onValueChange = onToggle,
+            ),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -337,6 +348,8 @@ private fun SettingsSwitchRow(text: String, checked: Boolean, canToggle: Boolean
                 checked = checked && canToggle,
                 onCheckedChange = onToggle,
                 enabled = canToggle,
+                interactionSource = interactionSource,
+                modifier = Modifier.clearAndSetSemantics {},
             )
         }
     }
