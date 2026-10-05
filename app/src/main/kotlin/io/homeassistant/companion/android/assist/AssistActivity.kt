@@ -30,6 +30,17 @@ import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
+private const val EXTRA_FROM_SYSTEM_ASSISTANT = "from_system_assistant"
+private val SYSTEM_ASSISTANT_ACTIONS =
+    listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
+
+/**
+ * Whether this intent comes from Android's assistant mechanisms (gesture, button, wake word) or a
+ * voice command, for example from a Bluetooth headset, rather than from a screen interface.
+ */
+internal fun Intent.isSystemAssistantLaunch(): Boolean =
+    getBooleanExtra(EXTRA_FROM_SYSTEM_ASSISTANT, false) || action in SYSTEM_ASSISTANT_ACTIONS
+
 @AndroidEntryPoint
 class AssistActivity : BaseActivity() {
 
@@ -56,16 +67,6 @@ class AssistActivity : BaseActivity() {
         private const val EXTRA_START_LISTENING = "start_listening"
         private const val EXTRA_FROM_FRONTEND = "from_frontend"
         private const val EXTRA_FROM_WAKE_WORD_PHRASE = "from_wake_word_phrase"
-        private const val EXTRA_FROM_SYSTEM_ASSISTANT = "from_system_assistant"
-        private val SYSTEM_ASSISTANT_ACTIONS =
-            listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
-
-        /**
-         * Whether this intent comes from Android's assistant mechanisms (gesture, button, wake word) or a
-         * voice command, for example from a Bluetooth headset, rather than from a screen interface.
-         */
-        internal fun Intent.isSystemAssistantLaunch(): Boolean =
-            getBooleanExtra(EXTRA_FROM_SYSTEM_ASSISTANT, false) || action in SYSTEM_ASSISTANT_ACTIONS
 
         fun newInstance(
             context: Context,
