@@ -2,8 +2,8 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 # To regenerate this file, run: ./gradlew :dependencies --write-locks
-ch.qos.logback:logback-classic:1.6.4=ktlint
-ch.qos.logback:logback-core:1.6.4=ktlint
+ch.qos.logback:logback-classic:1.6.5=ktlint
+ch.qos.logback:logback-core:1.6.5=ktlint
 com.github.ajalt.clikt:clikt-jvm:5.0.2=ktlint
 com.github.ajalt.clikt:clikt:5.0.2=ktlint
 com.github.ben-manes.caffeine:caffeine:2.9.3=detekt
