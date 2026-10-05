@@ -133,6 +133,7 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
             onSetDefaultAssistant = {
                 roleRequestLauncher.launch(viewModel.getSetDefaultAssistantIntent())
             },
+            onToggleListeningChime = viewModel::onToggleListeningChime,
             onToggleWakeWord = { enabled ->
                 if (enabled && !togglePermissionState.status.isGranted) {
                     togglePermissionState.launchPermissionRequest()
@@ -154,6 +155,7 @@ internal fun AssistSettingsContent(
     uiState: AssistSettingsUiState,
     hasAudioPermission: Boolean,
     onSetDefaultAssistant: () -> Unit,
+    onToggleListeningChime: (Boolean) -> Unit,
     onToggleWakeWord: (Boolean) -> Unit,
     onSelectWakeWord: (MicroWakeWordModelConfig) -> Unit,
     onStartTestWakeWord: () -> Unit,
@@ -178,6 +180,15 @@ internal fun AssistSettingsContent(
             DefaultAssistantCard(
                 isDefault = uiState.isDefaultAssistant,
                 onSetDefault = onSetDefaultAssistant,
+            )
+
+            Spacer(modifier = Modifier.height(HADimens.SPACE2))
+
+            SettingsSwitchRow(
+                text = stringResource(commonR.string.assist_listening_chime_enable),
+                checked = uiState.isListeningChimeEnabled,
+                canToggle = true,
+                onToggle = onToggleListeningChime,
             )
 
             Spacer(modifier = Modifier.height(HADimens.SPACE2))
@@ -225,9 +236,10 @@ private fun ColumnScope.WakeWordSection(
     onStopTestWakeWord: () -> Unit,
 ) {
     val isWakeWordEnabled = uiState.isWakeWordEnabled && hasAudioPermission
-    WakeWordEnableRow(
-        enabled = isWakeWordEnabled,
-        canEnable = uiState.isDefaultAssistant,
+    SettingsSwitchRow(
+        text = stringResource(commonR.string.assist_wake_word_enable),
+        checked = isWakeWordEnabled,
+        canToggle = uiState.isDefaultAssistant,
         onToggle = onToggleWakeWord,
     )
 
@@ -301,12 +313,12 @@ private fun DefaultAssistantCard(isDefault: Boolean, onSetDefault: () -> Unit) {
 }
 
 @Composable
-private fun WakeWordEnableRow(enabled: Boolean, canEnable: Boolean, onToggle: (Boolean) -> Unit) {
+private fun SettingsSwitchRow(text: String, checked: Boolean, canToggle: Boolean, onToggle: (Boolean) -> Unit) {
     val colorScheme = LocalHAColorScheme.current
 
     HASettingsCard(
         modifier = Modifier.clip(RoundedCornerShape(HARadius.XL))
-            .clickable(role = Role.Switch) { onToggle(!enabled) }.takeIf { canEnable }
+            .clickable(role = Role.Switch) { onToggle(!checked) }.takeIf { canToggle }
             ?: Modifier,
     ) {
         Row(
@@ -315,16 +327,16 @@ private fun WakeWordEnableRow(enabled: Boolean, canEnable: Boolean, onToggle: (B
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(commonR.string.assist_wake_word_enable),
+                text = text,
                 style = HATextStyle.Body,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Start,
-                color = if (canEnable) colorScheme.colorTextPrimary else colorScheme.colorTextDisabled,
+                color = if (canToggle) colorScheme.colorTextPrimary else colorScheme.colorTextDisabled,
             )
             HASwitch(
-                checked = enabled && canEnable,
+                checked = checked && canToggle,
                 onCheckedChange = onToggle,
-                enabled = canEnable,
+                enabled = canToggle,
             )
         }
     }
@@ -436,6 +448,7 @@ private fun AssistSettingsContentPreview() {
             ),
             hasAudioPermission = true,
             onSetDefaultAssistant = {},
+            onToggleListeningChime = {},
             onToggleWakeWord = {},
             onSelectWakeWord = {},
             onStartTestWakeWord = {},
@@ -458,6 +471,7 @@ private fun AssistSettingsContentNotDefaultPreview() {
             ),
             hasAudioPermission = false,
             onSetDefaultAssistant = {},
+            onToggleListeningChime = {},
             onToggleWakeWord = {},
             onSelectWakeWord = {},
             onStartTestWakeWord = {},
@@ -480,6 +494,7 @@ private fun AssistSettingsContentUnsupportedDevicePreview() {
             ),
             hasAudioPermission = true,
             onSetDefaultAssistant = {},
+            onToggleListeningChime = {},
             onToggleWakeWord = {},
             onSelectWakeWord = {},
             onStartTestWakeWord = {},
