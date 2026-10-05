@@ -43,12 +43,8 @@ internal class AssistChimeManager @VisibleForTesting constructor(
     ) : this(prefsRepository, { playRawResource(context, R.raw.assist_listening_chime) })
 
     /**
-     * Plays the listening chime if it is enabled in the Assist settings, and suspends until it has
-     * finished. Callers open the microphone afterwards, so the chime is a reliable "speak now" signal
-     * and is not recorded as part of the user's request.
-     *
-     * Playback problems are logged and otherwise ignored: a missing chime must never stop Assist
-     * from listening.
+     * Plays the listening chime if it is enabled in the Assist settings and suspends until it has finished.
+     * Failures are logged and never stop Assist from listening.
      */
     suspend fun playListeningChimeIfEnabled() {
         if (!prefsRepository.isAssistListeningChimeEnabled()) return
@@ -62,40 +58,48 @@ private suspend fun playRawResource(
     @RawRes resId: Int,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
-    // Preparing reads the file, so keep it off the main thread
-    val player = withContext(ioDispatcher) { createPreparedPlayer(context, resId) } ?: return
+    // Assigned as soon as it exists so it is released even if cancelled while preparing
+    var player: MediaPlayer? = null
     try {
-        suspendCancellableCoroutine { continuation ->
-            player.setOnCompletionListener { continuation.resume(Unit) }
-            player.setOnErrorListener { _, what, extra ->
-                Timber.w("Failed to play the listening chime (what=$what, extra=$extra)")
-                continuation.resume(Unit)
-                true
-            }
-            player.start()
+        // Preparing reads the file, so keep it off the main thread
+        val prepared = withContext(ioDispatcher) {
+            MediaPlayer().also { player = it }.prepareChime(context, resId)
         }
+        if (prepared) player?.let { awaitPlayback(it) }
     } finally {
-        player.release()
+        player?.release()
     }
 }
 
-private fun createPreparedPlayer(context: Context, @RawRes resId: Int): MediaPlayer? {
-    val player = MediaPlayer()
-    return try {
-        player.setAudioAttributes(listeningChimeAudioAttributes())
-        context.resources.openRawResourceFd(resId).use { file ->
-            player.setDataSource(file.fileDescriptor, file.startOffset, file.length)
+private fun MediaPlayer.prepareChime(context: Context, @RawRes resId: Int): Boolean = try {
+    setAudioAttributes(listeningChimeAudioAttributes())
+    context.resources.openRawResourceFd(resId).use { file ->
+        setDataSource(file.fileDescriptor, file.startOffset, file.length)
+    }
+    prepare()
+    true
+} catch (e: IOException) {
+    Timber.w(e, "Failed to load the listening chime")
+    false
+} catch (e: IllegalStateException) {
+    Timber.w(e, "Failed to prepare the listening chime")
+    false
+}
+
+private suspend fun awaitPlayback(player: MediaPlayer) {
+    suspendCancellableCoroutine { continuation ->
+        player.setOnCompletionListener { continuation.resume(Unit) }
+        player.setOnErrorListener { _, what, extra ->
+            Timber.w("Failed to play the listening chime (what=$what, extra=$extra)")
+            continuation.resume(Unit)
+            true
         }
-        player.prepare()
-        player
-    } catch (e: IOException) {
-        Timber.w(e, "Failed to load the listening chime")
-        player.release()
-        null
-    } catch (e: IllegalStateException) {
-        Timber.w(e, "Failed to prepare the listening chime")
-        player.release()
-        null
+        try {
+            player.start()
+        } catch (e: IllegalStateException) {
+            Timber.w(e, "Failed to start the listening chime")
+            continuation.resume(Unit)
+        }
     }
 }
 
