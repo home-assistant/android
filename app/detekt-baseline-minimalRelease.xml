@@ -334,7 +334,6 @@
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$private suspend fun getPendingDaoEntity: StaticWidgetEntity?</ID>
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:FrontendGestureManager.kt:FrontendGestureManager$private suspend fun switchServerBy: GestureResult</ID>
-    <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun buildUrl: UrlLoadResult</ID>
     <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun shouldSetSecurityLevel: Boolean</ID>
     <ID>ReturnCount:GeocodeSensorManager.kt:GeocodeSensorManager$private suspend fun updateGeocodedLocation</ID>
     <ID>ReturnCount:HomeAssistantSearcher.kt:private fun NsdServiceInfo.toHomeAssistantInstance: HomeAssistantInstance?</ID>
