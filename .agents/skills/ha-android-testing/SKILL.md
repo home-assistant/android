@@ -41,8 +41,10 @@ class MyTest { ... }
 
 Rules that must apply to every test in a module are JUnit Platform `TestExecutionListener`s registered through `ServiceLoader` (`src/test/resources/META-INF/services/org.junit.platform.launcher.TestExecutionListener`). They run for both JUnit 4 (Vintage) and Jupiter tests — use this mechanism instead of per-class setup when introducing a new cross-cutting rule:
 
-- `TestStateResetPlatformListener` for unit tests and `TestStateResetRobolectricPlugin` for Robolectric (per test module) resets process-wide singletons before every test: it installs a FailFast handler that rethrows as `AssertionError`, so any FailFast trigger surfaces as a test failure instead of crashing the JVM, and resets `SdkVersion`.
+- `TestStateResetPlatformListener` (per test module) resets process-wide singletons before every test: it installs a FailFast handler that rethrows as `AssertionError`, so any FailFast trigger surfaces as a test failure instead of crashing the JVM, and resets `SdkVersion`.
 - `ConsoleLogPlatformListener` (from `:testing-unit`) plants a Timber tree that prints to stderr so logs are visible during tests.
+
+Robolectric runs tests in a sandbox class loader with its own copy of every app class, so a JUnit Platform listener never reaches the singletons a Robolectric test sees. A reset that must also apply to Robolectric tests needs a `TestEnvironmentLifecyclePlugin` too, registered in `src/test/resources/META-INF/services/org.robolectric.pluginapi.TestEnvironmentLifecyclePlugin`: Robolectric loads it inside the sandbox and calls it before every test. `TestStateResetRobolectricPlugin` does this for the FailFast and `SdkVersion` reset.
 
 ## Shared Test Utilities: `:testing-unit`
 
