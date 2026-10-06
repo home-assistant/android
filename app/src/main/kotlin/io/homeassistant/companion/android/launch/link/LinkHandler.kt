@@ -6,6 +6,8 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import timber.log.Timber
 
@@ -252,6 +254,9 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
      *
      * A root-level `more-info-entity-id=<entity>` opens that entity's more-info dialog.
      *
+     * An absolute URL is only accepted when it belongs to the server, the frontend must never
+     * load a page from another origin. Otherwise the server's default page is opened instead.
+     *
      * @param uri The navigate URI to process.
      * @return [LinkDestination.Webview] with the resolved target and serverId, or
      *         [LinkDestination.NoDestination] if no server is registered.
@@ -272,26 +277,27 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         } else {
             FrontendTarget.fromRawPath(uri.toFrontendRawPath())
         }
-        return webviewDestination(target, serverId)
+        return if (target is FrontendTarget.Path && !isOnServer(target.path, serverId)) {
+            FailFast.fail {
+                "Navigate deep link outside the server, opening the default page: ${sensitive(target.path)}"
+            }
+            webviewDestination(FrontendTarget.Default, serverId)
+        } else {
+            webviewDestination(target, serverId)
+        }
     }
 
     /**
-     * Rebuilds the raw frontend path (including query and fragment) from a navigate deep link,
-     * dropping the app's server selection parameters. All components are kept encoded as written,
-     * so the path reaches the frontend exactly as it appears in the link.
+     * Whether [path] stays on the server: a relative path, or an absolute URL matching one of the
+     * configured URLs of the server identified by [serverId] (of any registered server when `null`).
      */
-    private fun Uri.toFrontendRawPath(): String = buildString {
-        append(encodedPath.orEmpty().removePrefix("/"))
-        encodedQuery
-            ?.splitToSequence('&')
-            ?.filterNot { param ->
-                val name = param.substringBefore('=')
-                name == SERVER_ID_PARAM || name == SERVER_PARAM
-            }
-            ?.joinToString("&")
-            ?.takeIf { it.isNotEmpty() }
-            ?.let { append('?').append(it) }
-        encodedFragment?.let { append('#').append(it) }
+    private suspend fun isOnServer(path: String, serverId: Int?): Boolean {
+        if (!UrlUtil.isAbsoluteUrl(path)) return true
+        val servers = when (serverId) {
+            null -> serverManager.servers()
+            else -> listOfNotNull(serverManager.getServer(serverId))
+        }
+        return servers.any { it.connection.isKnownUrl(path) }
     }
 
     /**
@@ -307,8 +313,6 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         }
     }
 
-    private fun Uri.isNavigateRoot(): Boolean = path.isNullOrEmpty() || path == "/"
-
     private suspend fun requireServerRegistered(): Boolean {
         return serverManager.isRegistered().also { registered ->
             if (!registered) {
@@ -317,3 +321,24 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         }
     }
 }
+
+/**
+ * Rebuilds the raw frontend path (including query and fragment) from a navigate deep link,
+ * dropping the app's server selection parameters. All components are kept encoded as written,
+ * so the path reaches the frontend exactly as it appears in the link.
+ */
+private fun Uri.toFrontendRawPath(): String = buildString {
+    append(encodedPath.orEmpty().removePrefix("/"))
+    encodedQuery
+        ?.splitToSequence('&')
+        ?.filterNot { param ->
+            val name = param.substringBefore('=')
+            name == SERVER_ID_PARAM || name == SERVER_PARAM
+        }
+        ?.joinToString("&")
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { append('?').append(it) }
+    encodedFragment?.let { append('#').append(it) }
+}
+
+private fun Uri.isNavigateRoot(): Boolean = path.isNullOrEmpty() || path == "/"
