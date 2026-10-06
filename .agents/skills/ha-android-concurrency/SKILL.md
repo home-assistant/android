@@ -58,10 +58,10 @@ Pick the type by what must happen to a value when nobody is collecting:
 | What it is | Use |
 |---|---|
 | State: the latest value matters and re-rendering it is fine (screen state, modes) | `StateFlow` |
-| An event every collector must get, or one that is meaningless once its context is gone and must be dropped when nobody listens (`PermissionRequestMediator`, WebView actions bound to the loaded page) | `SharedFlow` |
+| An event every collector must get, or one that is meaningless once its context is gone and must be dropped when nobody listens (`PermissionRequestMediator`; WebView actions, bound to the loaded page so they never run on another server's page) | `SharedFlow` |
 | An event one consumer must handle exactly once, never lost nor repeated (navigation, snackbar, opening a link) | `Channel(Channel.BUFFERED)` + `receiveAsFlow()` |
 
-A `MutableSharedFlow` without replay drops what is sent before anyone collects, and `replay = 1` delivers the last event again to a new collector: neither fits a one-shot event. A `Channel` hands each value to a single collector. The `ha-android-ui` skill covers one-shot UI events in ViewModels.
+A `MutableSharedFlow` without replay drops what is sent before anyone collects, and `replay = 1` delivers the last event again to a new collector: neither fits a one-shot event, and waiting on `subscriptionCount` only patches the first case. A `Channel` hands each value to a single collector. In a suspending context use `send`; keep `trySend` for callbacks that cannot suspend.
 
 ## Testing Concurrency
 
