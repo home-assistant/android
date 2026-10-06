@@ -60,6 +60,7 @@ Turbine is available in all modules and must be used for testing Flows:
 - Use `turbineScope` with `testIn` for multi-collector tests; assert with `awaitItem`/`awaitComplete`/`expectNoEvents`.
 - Never synchronize on Flow emissions with `CountDownLatch`, `Thread.sleep`, `verify(timeout = ...)`, or raw `launch`/`async`.
 - Flows wrapped with `shareIn` never complete — use `expectNoEvents()` + `cancelAndConsumeRemainingEvents()` instead of `awaitComplete()`.
+- To prove an event is buffered until collected, send it before subscribing: when the send happens in a `launch` (e.g. `viewModelScope`), call `advanceUntilIdle()` first, otherwise the `StandardTestDispatcher` runs it after Turbine has subscribed. Then subscribe a second time and `expectNoEvents()` to prove it is not replayed.
 
 ## Conventions
 
