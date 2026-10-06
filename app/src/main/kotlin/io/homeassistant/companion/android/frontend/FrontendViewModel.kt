@@ -1066,6 +1066,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     ),
                 )
             }
+
+            is UrlLoadResult.ExternalUrl -> {
+                _events.tryEmit(FrontendEvent.OpenExternalLink(result.url.toUri()))
+                // Load the server without the rejected target, so no later restart can reopen it
+                startLoad(serverId = result.serverId)
+            }
         }
     }
 
