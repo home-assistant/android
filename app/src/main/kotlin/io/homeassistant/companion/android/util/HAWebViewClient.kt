@@ -31,39 +31,17 @@ internal const val HISTORY_CHANGED_LISTENER = "androidInternalHaHistoryChanged"
 /**
  * Notifies once when a new document starts in any frame, then on every same-document history change
  * through the Navigation API.
+ *
+ * The listener is captured before page scripts run, so a page global with the same name cannot replace it.
  */
 private val HISTORY_CHANGED_SCRIPT = """
     (() => {
-      // Captured before page scripts run, so a page global with the same name cannot replace it.
       const listener = $HISTORY_CHANGED_LISTENER;
       const notify = () => listener.postMessage("");
       window.navigation?.addEventListener("currententrychange", notify);
       notify();
     })();
 """.trimIndent()
-
-/**
- * Reports [WebView.canGoBack] through [onCanGoBackChanged] when the history entry of any frame changes.
- *
- * `doUpdateVisitedHistory` only fires for the main frame, so a script injected in every frame posts an
- * empty message whenever the frame's history entry changes, triggering a new read of [WebView.canGoBack].
- * The script only runs in frames that begin loading afterward, so call it from `onPageStarted` at the latest.
- */
-@SuppressLint("RequiresFeature")
-private fun WebView.observeHistoryChanges(onCanGoBackChanged: (canGoBack: Boolean) -> Unit) {
-    if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) &&
-        WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
-    ) {
-        // Frames (e.g. iframe panels) can be on any origin, and the message carries no data.
-        val allowedOriginRules = setOf("*")
-        WebViewCompat.addWebMessageListener(this, HISTORY_CHANGED_LISTENER, allowedOriginRules) { webView, _, _, _, _ ->
-            onCanGoBackChanged(webView.canGoBack())
-        }
-        WebViewCompat.addDocumentStartJavaScript(this, HISTORY_CHANGED_SCRIPT, allowedOriginRules)
-    } else {
-        Timber.w("History changes not observable, back navigation inside iframes may be skipped")
-    }
-}
 
 /**
  * Factory for creating [HAWebViewClient] instances dedicated to loading Home Assistant frontend.
@@ -149,7 +127,10 @@ class HAWebViewClient internal constructor(
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
     private var lastResourceUrl: String? = null
 
-    /** WebView already reporting history changes, the client outlives WebViews recreated by the screen. */
+    /**
+     * Weak reference to the WebView already reporting history changes. This client outlives the WebViews
+     * recreated by the screen, so a new WebView is detected and observed as well.
+     */
     private var historyObservedWebView: WeakReference<WebView>? = null
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
@@ -344,5 +325,29 @@ class HAWebViewClient internal constructor(
             description?.takeIf { it.isNotEmpty() }
                 ?: context.getString(commonR.string.no_description),
         ) ?: ""
+    }
+}
+
+/**
+ * Reports [WebView.canGoBack] through [onCanGoBackChanged] when the history entry of any frame changes.
+ *
+ * `doUpdateVisitedHistory` only fires for the main frame, so a script injected in every frame posts an
+ * empty message whenever the frame's history entry changes, triggering a new read of [WebView.canGoBack].
+ * The script only runs in frames that begin loading afterward, so call it from `onPageStarted` at the latest.
+ */
+@SuppressLint("RequiresFeature")
+private fun WebView.observeHistoryChanges(onCanGoBackChanged: (canGoBack: Boolean) -> Unit) {
+    if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) &&
+        WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
+    ) {
+        // Frames (e.g. iframe panels) can be on any origin. The message carries no data and
+        // because of that are safe to accept from all origins.
+        val allowedOriginRules = setOf("*")
+        WebViewCompat.addWebMessageListener(this, HISTORY_CHANGED_LISTENER, allowedOriginRules) { webView, _, _, _, _ ->
+            onCanGoBackChanged(webView.canGoBack())
+        }
+        WebViewCompat.addDocumentStartJavaScript(this, HISTORY_CHANGED_SCRIPT, allowedOriginRules)
+    } else {
+        Timber.w("History changes not observable, back navigation inside iframes may be skipped")
     }
 }

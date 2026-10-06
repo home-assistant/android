@@ -455,6 +455,12 @@ class HAWebViewClientTest {
         assertEquals("myrealm", capturedRealm)
     }
 
+    @Test
+    fun `Given no onReceivedHttpAuthRequest callback when auth requested then does not crash`() {
+        webViewClient.onReceivedHttpAuthRequest(mockk(relaxed = true), mockk(relaxed = true), "example.com", "realm")
+        // No exception thrown
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
     fun `Given onCanGoBackChanged callback when doUpdateVisitedHistory then reports webView canGoBack`(
@@ -565,12 +571,6 @@ class HAWebViewClientTest {
 
             verifyRegistrations(webView, times = 0)
         }
-    }
-
-    @Test
-    fun `Given no onReceivedHttpAuthRequest callback when auth requested then does not crash`() {
-        webViewClient.onReceivedHttpAuthRequest(mockk(relaxed = true), mockk(relaxed = true), "example.com", "realm")
-        // No exception thrown
     }
 
     private fun mockRequest(url: String) = mockk<android.webkit.WebResourceRequest> {
