@@ -120,9 +120,9 @@ private suspend fun Collection<EntityDisplay>.mapToEntitiesWithFields(
                 // Store fields in lowercase to avoid repeated conversions during search
                 add(SearchField(sortingKey, FuzzySearchConfig.Weights.NAME))
                 (entity as? EntityDisplayWithContext)?.let {
-                    entity.deviceName?.let {
-                        add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME))
-                    }
+                    listOfNotNull(entity.deviceName, entity.parentDeviceName)
+                        .plus(entity.omittedOwnerNames)
+                        .forEach { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME)) }
                     entity.areaName?.let { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }
                 }
                 add(SearchField(entity.domain.lowercase(), FuzzySearchConfig.Weights.DOMAIN_NAME))

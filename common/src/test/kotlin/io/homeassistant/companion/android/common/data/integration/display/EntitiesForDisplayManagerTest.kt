@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistrySensorOptions
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.FloorRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.NextNamePart
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -686,6 +687,143 @@ class EntitiesForDisplayManagerTest {
                 assertEquals("My Hub", items.single().deviceName)
             }
 
+            /**
+             * Registers a power strip in the kitchen with a child device Freezer, owning the entity
+             * `switch.freezer`, each part with the given area and next name part.
+             */
+            private fun givenPowerStripChild(
+                entityAreaId: String? = null,
+                entityNextNamePart: NextNamePart? = null,
+                childAreaId: String? = null,
+                childNextNamePart: NextNamePart? = null,
+            ) {
+                givenDisplayEntries(
+                    EntityRegistryDisplayEntry(
+                        entityId = "switch.freezer",
+                        name = "Power",
+                        deviceId = "freezer",
+                        areaId = entityAreaId,
+                        nextNamePart = entityNextNamePart,
+                    ),
+                )
+                coEvery { webSocketRepository.getDeviceRegistry() } returns listOf(
+                    DeviceRegistryResponse(id = "strip", name = "Power strip", areaId = "kitchen"),
+                    DeviceRegistryResponse(
+                        id = "freezer",
+                        name = "Freezer",
+                        areaId = childAreaId,
+                        parentDeviceId = "strip",
+                        nextNamePart = childNextNamePart,
+                    ),
+                )
+                coEvery { webSocketRepository.getAreaRegistry() } returns listOf(
+                    AreaRegistryResponse(areaId = "kitchen", name = "Kitchen"),
+                    AreaRegistryResponse(areaId = "garage", name = "Garage"),
+                )
+            }
+
+            @Test
+            fun `Given a child device without area when resolving then area is inherited from the parent device`() = runTest {
+                givenPowerStripChild(
+                    entityNextNamePart = NextNamePart.Device,
+                    childNextNamePart = NextNamePart.ParentDevice,
+                )
+
+                val item = resolve(entity("switch.freezer")).single()
+
+                assertEquals("Kitchen", item.areaName)
+                assertEquals("Freezer", item.deviceName)
+                assertEquals("Power strip", item.parentDeviceName)
+                assertEquals(emptyList<String>(), item.omittedOwnerNames)
+            }
+
+            @Test
+            fun `Given a child device with its own area when resolving then the parent device is omitted from the context`() = runTest {
+                givenPowerStripChild(
+                    entityNextNamePart = NextNamePart.Device,
+                    childAreaId = "garage",
+                    childNextNamePart = NextNamePart.Area,
+                )
+
+                val item = resolve(entity("switch.freezer")).single()
+
+                assertEquals("Garage", item.areaName)
+                assertEquals("Freezer", item.deviceName)
+                assertNull(item.parentDeviceName)
+                assertEquals(listOf("Power strip"), item.omittedOwnerNames)
+            }
+
+            @Test
+            fun `Given an entity with its own area when resolving then its devices are omitted from the context`() = runTest {
+                givenPowerStripChild(
+                    entityAreaId = "garage",
+                    entityNextNamePart = NextNamePart.Area,
+                    childNextNamePart = NextNamePart.ParentDevice,
+                )
+
+                val item = resolve(entity("switch.freezer")).single()
+
+                assertEquals("Garage", item.areaName)
+                assertNull(item.deviceName)
+                assertNull(item.parentDeviceName)
+                assertEquals(listOf("Freezer", "Power strip"), item.omittedOwnerNames)
+            }
+
+            /**
+             * Asserts that the device of an entity whose registry entry carries [entityNextNamePart] is left
+             * out of the naming context, reading the entry from the classic registry when [classicRegistry].
+             */
+            private suspend fun assertDeviceOmitted(entityNextNamePart: NextNamePart, classicRegistry: Boolean) {
+                if (classicRegistry) {
+                    coEvery { webSocketRepository.getEntityRegistryDisplay() } returns null
+                    coEvery { webSocketRepository.getEntityRegistry() } returns listOf(
+                        EntityRegistryResponse(
+                            entityId = "light.bed",
+                            deviceId = "device1",
+                            nextNamePart = entityNextNamePart,
+                        ),
+                    )
+                } else {
+                    givenDisplayEntries(
+                        EntityRegistryDisplayEntry(
+                            entityId = "light.bed",
+                            deviceId = "device1",
+                            nextNamePart = entityNextNamePart,
+                        ),
+                    )
+                }
+                coEvery { webSocketRepository.getDeviceRegistry() } returns listOf(
+                    DeviceRegistryResponse(id = "device1", name = "Hub"),
+                )
+
+                val item = resolve(entity("light.bed")).single()
+
+                assertNull(item.deviceName)
+                assertEquals(listOf("Hub"), item.omittedOwnerNames)
+            }
+
+            @Test
+            fun `Given a classic entry with its own area when resolving then the device is omitted`() = runTest {
+                assertDeviceOmitted(entityNextNamePart = NextNamePart.Area, classicRegistry = true)
+            }
+
+            @Test
+            fun `Given an unknown next name part when resolving then the device is omitted`() = runTest {
+                assertDeviceOmitted(entityNextNamePart = NextNamePart.Unknown("floor"), classicRegistry = false)
+            }
+
+            @Test
+            fun `Given a server without next name part when resolving then every owner is in the context`() = runTest {
+                givenPowerStripChild(entityAreaId = "garage", childAreaId = "garage")
+
+                val item = resolve(entity("switch.freezer")).single()
+
+                assertEquals("Garage", item.areaName)
+                assertEquals("Freezer", item.deviceName)
+                assertEquals("Power strip", item.parentDeviceName)
+                assertEquals(emptyList<String>(), item.omittedOwnerNames)
+            }
+
             @Test
             fun `Given classic entry when resolving then hidden category and precision are mapped`() = runTest {
                 coEvery { webSocketRepository.getEntityRegistryDisplay() } returns null
@@ -821,6 +959,38 @@ class EntitiesForDisplayManagerTest {
                 )
 
                 assertNull(item.subtitle(LayoutDirection.Ltr))
+            }
+
+            @Test
+            fun `Given a parent device name when reading the subtitle then it sits between area and device`() {
+                val item = EntityDisplayWithContext(
+                    item = EntityDisplayWithoutContext(
+                        entityId = "switch.freezer",
+                        name = "Power",
+                        icon = Mdi.Bookmark,
+                    ),
+                    areaName = "Kitchen",
+                    deviceName = "Freezer",
+                    parentDeviceName = "Power strip",
+                )
+
+                assertEquals("Kitchen ▸ Power strip ▸ Freezer", item.subtitle(LayoutDirection.Ltr))
+            }
+
+            @Test
+            fun `Given an entity named after its device when reading the subtitle then the device is left out`() {
+                val item = EntityDisplayWithContext(
+                    item = EntityDisplayWithoutContext(
+                        entityId = "switch.freezer",
+                        name = "Freezer",
+                        icon = Mdi.Bookmark,
+                    ),
+                    areaName = "Kitchen",
+                    deviceName = "Freezer",
+                    parentDeviceName = "Power strip",
+                )
+
+                assertEquals("Kitchen ▸ Power strip", item.subtitle(LayoutDirection.Ltr))
             }
         }
 
