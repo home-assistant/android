@@ -3168,6 +3168,25 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given events sent before the screen collects when collecting then each is delivered once in order`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.onErrorAction(ErrorActionIntent.GoToSettings)
+            viewModel.onErrorAction(ErrorActionIntent.OpenSecuritySettings)
+
+            viewModel.events.test {
+                assertEquals(FrontendEvent.NavigateToSettings, awaitItem())
+                assertEquals(FrontendEvent.OpenSecuritySettings, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            viewModel.events.test {
+                expectNoEvents()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
         fun `Given OpenSecuritySettings when onErrorAction then emits OpenSecuritySettings`() = runTest {
             val viewModel = createViewModel()
             advanceUntilIdle()

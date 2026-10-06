@@ -106,10 +106,12 @@ class FrontendMatterThreadHandlerTest {
         every { matterManager.parseCommissioningIntentResult(any()) } returns
             MatterManager.CommissioningRequestResult.Success(deviceName = "Kitchen light")
         val handler = createHandler()
-        // Drive the handler to the awaiting-intent-result state.
-        handler.onStartMatterCommissioning()
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onStartMatterCommissioning()
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null))
             expectNoEvents()
         }
@@ -123,9 +125,12 @@ class FrontendMatterThreadHandlerTest {
         every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningRequestResult.Failed
         givenServerVersion(HomeAssistantVersion(2026, 6, 0))
         val handler = createHandler()
-        handler.onStartMatterCommissioning()
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onStartMatterCommissioning()
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             launch { handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_CANCELED, null)) }
             val event = assertInstanceOf(FrontendMatterThreadHandler.Event.ShowSnackbar::class.java, awaitItem())
 
@@ -144,9 +149,12 @@ class FrontendMatterThreadHandlerTest {
         every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningRequestResult.Failed
         givenServerVersion(HomeAssistantVersion(2026, 7, 0))
         val handler = createHandler()
-        handler.onStartMatterCommissioning()
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onStartMatterCommissioning()
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_CANCELED, null))
             expectNoEvents()
         }
@@ -251,9 +259,12 @@ class FrontendMatterThreadHandlerTest {
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
         coEvery { threadManager.sendThreadDatasetExportResult(any(), any()) } returns "My Thread Network"
         val handler = createHandler()
-        handler.onImportThreadCredentials(serverId = 42)
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onImportThreadCredentials(serverId = 42)
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             launch { handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null)) }
             val event = assertInstanceOf(FrontendMatterThreadHandler.Event.ShowSnackbar::class.java, awaitItem())
 
@@ -284,9 +295,12 @@ class FrontendMatterThreadHandlerTest {
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
         coEvery { threadManager.sendThreadDatasetExportResult(any(), any()) } throws IllegalStateException("boom")
         val handler = createHandler()
-        handler.onImportThreadCredentials(serverId = 1)
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onImportThreadCredentials(serverId = 1)
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             launch { handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null)) }
             val event = assertInstanceOf(FrontendMatterThreadHandler.Event.ShowSnackbar::class.java, awaitItem())
 

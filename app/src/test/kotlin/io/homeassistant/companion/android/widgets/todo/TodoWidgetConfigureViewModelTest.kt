@@ -274,6 +274,21 @@ class TodoWidgetConfigureViewModelTest {
         }
     }
 
+    @Test
+    fun `Given an error already shown when the screen collects again then the error is not shown again`() = runTest {
+        val viewModel = createViewModel(widgetId = AppWidgetManager.INVALID_APPWIDGET_ID)
+        advanceUntilIdle()
+        assertFalse(viewModel.updateWidgetConfiguration(mockk()))
+
+        viewModel.errors.test {
+            assertEquals(commonR.string.widget_update_error, awaitItem())
+        }
+        // A new collector, e.g. the screen after a rotation, must not show the error again
+        viewModel.errors.test {
+            expectNoEvents()
+        }
+    }
+
     private fun createViewModel(preselectedEntityId: String? = null, widgetId: Int = this.widgetId) = TodoWidgetConfigureViewModel(
         todoWidgetDao = dao,
         serverManager = serverManager,

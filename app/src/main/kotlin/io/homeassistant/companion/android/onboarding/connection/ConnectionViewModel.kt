@@ -22,11 +22,11 @@ import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import javax.inject.Inject
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
@@ -106,8 +106,8 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
      */
     private val effectiveUrl = MutableStateFlow(rawHttpUrl?.toBaseUrl() ?: rawUrl)
 
-    private val _navigationEventsFlow = MutableSharedFlow<ConnectionNavigationEvent>(replay = 1)
-    val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
+    private val _navigationEventsFlow = Channel<ConnectionNavigationEvent>(Channel.BUFFERED)
+    val navigationEventsFlow = _navigationEventsFlow.receiveAsFlow()
 
     private val _urlFlow = MutableStateFlow<String?>(null)
     override val urlFlow = _urlFlow.asStateFlow()
@@ -239,7 +239,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
             val code = url.getQueryParameter("code")
             if (!code.isNullOrBlank()) {
                 viewModelScope.launch {
-                    _navigationEventsFlow.emit(
+                    _navigationEventsFlow.send(
                         ConnectionNavigationEvent.Authenticated(
                             url = effectiveUrl.value,
                             authCode = code,
@@ -255,7 +255,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         } else if (url.host != rawHttpUrl?.host) {
             Timber.d("$url is not from the server, opening it in an external browser")
             viewModelScope.launch {
-                _navigationEventsFlow.emit(ConnectionNavigationEvent.OpenExternalLink(url))
+                _navigationEventsFlow.send(ConnectionNavigationEvent.OpenExternalLink(url))
             }
             true // Intercepted: External link
         } else {

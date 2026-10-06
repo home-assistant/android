@@ -581,6 +581,29 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
+    fun `Given two failed auths before collecting when collecting messageResults then both AuthErrors are delivered`() = runTest {
+        val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
+        val error = FrontendConnectionError.AuthRevoked(
+            message = commonR.string.error_connection_failed,
+            errorDetails = "Auth failed",
+            rawErrorType = "ExternalAuthFailed",
+        )
+        coEvery { sessionManager.getExternalAuth(1, authPayload) } returns
+            ExternalAuthResult.Failed(callbackScript = "externalAuthSetToken(false)", error = error)
+        coEvery { externalBusRepository.evaluateScript("externalAuthSetToken(false)") } returns null
+        every { externalBusRepository.incomingMessages() } returns emptyFlow()
+
+        handler.getExternalAuth(authPayload, serverId = 1)
+        handler.getExternalAuth(authPayload, serverId = 1)
+
+        handler.messageResults().test {
+            assertEquals(FrontendHandlerEvent.AuthError(error), awaitItem())
+            assertEquals(FrontendHandlerEvent.AuthError(error), awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given failed auth with error when getExternalAuth then evaluates callback and emits AuthError`() = runTest {
         val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
         val error = FrontendConnectionError.AuthRevoked(

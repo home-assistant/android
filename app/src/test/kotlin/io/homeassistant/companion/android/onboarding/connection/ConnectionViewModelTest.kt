@@ -198,6 +198,25 @@ class ConnectionViewModelTest {
     }
 
     @Test
+    fun `Given Authenticated event already handled when the screen collects again then it is not delivered again`() = runTest {
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = "test_auth_code")
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+
+        // Sent before anything collects, it must still reach the screen once
+        assertTrue(viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri))
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            assertTrue(navigationEventsFlow.awaitItem() is ConnectionNavigationEvent.Authenticated)
+            navigationEventsFlow.cancelAndIgnoreRemainingEvents()
+        }
+        // A new collector, e.g. the screen after a rotation, must not navigate again
+        turbineScope {
+            viewModel.navigationEventsFlow.testIn(backgroundScope).expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given same-host redirect to a new port when auth completes then Authenticated url uses the new origin`() = runTest {
         val authCode = "test_auth_code"
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
