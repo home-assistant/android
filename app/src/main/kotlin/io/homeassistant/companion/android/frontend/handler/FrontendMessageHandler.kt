@@ -107,7 +107,7 @@ class FrontendMessageHandler @Inject constructor(
 
             is ExternalAuthResult.Failed -> {
                 externalBusRepository.evaluateScript(result.callbackScript)
-                result.error?.let { jsCallbackEvents.trySend(FrontendHandlerEvent.AuthError(it)) }
+                result.error?.let { jsCallbackEvents.send(FrontendHandlerEvent.AuthError(it)) }
             }
         }
     }

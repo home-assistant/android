@@ -213,6 +213,7 @@ class ConnectionViewModelTest {
 
         // Sent before anything collects, it must still reach the screen once
         assertTrue(viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri))
+        advanceUntilIdle()
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
