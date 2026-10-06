@@ -276,7 +276,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     if (httpAuthHandler.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
                         HttpAuthResult.Cancelled
                     ) {
-                        _events.trySend(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
+                        _events.send(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
                     }
                 }
             },
@@ -446,7 +446,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             var wasFullScreen = false
             exoPlayerManager.state.collect { exoState ->
                 if (wasFullScreen && exoState == null) {
-                    _events.trySend(FrontendEvent.RequestFullscreen(fullscreen = false))
+                    _events.send(FrontendEvent.RequestFullscreen(fullscreen = false))
                 }
                 wasFullScreen = exoState?.isFullScreen == true
                 _viewState.update { currentState ->
@@ -929,7 +929,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.WriteNfcTag -> {
-                _events.trySend(FrontendEvent.NavigateToNfcWrite(messageId = result.messageId, tagId = result.tagId))
+                _events.send(FrontendEvent.NavigateToNfcWrite(messageId = result.messageId, tagId = result.tagId))
             }
 
             is FrontendHandlerEvent.ExoPlayerAction -> {
@@ -942,7 +942,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 improvHandler.onConfigureImprovDevice(result.deviceName)
 
             is FrontendHandlerEvent.EntityAddToExecuted -> {
-                result.event?.let { _events.trySend(it) }
+                result.event?.let { _events.send(it) }
             }
 
             is FrontendHandlerEvent.StartMatterCommissioning -> {
