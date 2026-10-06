@@ -148,6 +148,22 @@ class ManageTilesViewModelTest {
     }
 
     @Test
+    fun `Given tile_data_missing already shown when the screen collects again then it is not shown again`() = runTest {
+        val viewModel = createViewModel(SavedStateHandle(mapOf("id" to tileSlots[1].id.value)))
+        advanceUntilIdle()
+
+        turbineScope {
+            val snackbar = viewModel.tileInfoSnackbar.testIn(backgroundScope)
+            assertEquals(commonR.string.tile_data_missing, snackbar.awaitItem())
+            snackbar.cancelAndIgnoreRemainingEvents()
+        }
+        // A new collector, e.g. the screen after a rotation, must not show the snackbar again
+        turbineScope {
+            viewModel.tileInfoSnackbar.testIn(backgroundScope).expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given an existing setup tile when selectTile then fields are populated from the entity`() = runTest {
         val tileId = tileSlots[0].id.value
         val setupTile = fakeTile(

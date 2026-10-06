@@ -33,11 +33,11 @@ import io.homeassistant.companion.android.settings.qs.ManageTilesState.Companion
 import java.util.concurrent.Executors
 import javax.inject.Inject
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -58,8 +58,8 @@ internal class ManageTilesViewModel @Inject constructor(
     )
     val state: StateFlow<ManageTilesState> = _state.asStateFlow()
 
-    private val _tileInfoSnackbar = MutableSharedFlow<Int>(replay = 1)
-    val tileInfoSnackbar = _tileInfoSnackbar.asSharedFlow()
+    private val _tileInfoSnackbar = Channel<Int>(Channel.BUFFERED)
+    val tileInfoSnackbar = _tileInfoSnackbar.receiveAsFlow()
 
     private var loadEntitiesJob: Job? = null
 
@@ -68,7 +68,7 @@ internal class ManageTilesViewModel @Inject constructor(
         savedStateHandle.get<String>("id")?.let { id ->
             selectTile(TileId(id))
             viewModelScope.launch {
-                _tileInfoSnackbar.emit(commonR.string.tile_data_missing)
+                _tileInfoSnackbar.send(commonR.string.tile_data_missing)
             }
         } ?: run {
             selectTile()
@@ -158,7 +158,7 @@ internal class ManageTilesViewModel @Inject constructor(
             if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) && existing?.added != true) {
                 requestAddTileToSystem(context, tileData.copy(id = insertedId.toInt()), current.selectedIcon)
             } else {
-                _tileInfoSnackbar.emit(commonR.string.tile_updated)
+                _tileInfoSnackbar.send(commonR.string.tile_updated)
             }
         }
     }
@@ -203,11 +203,11 @@ internal class ManageTilesViewModel @Inject constructor(
             if (result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ADDED ||
                 result == StatusBarManager.TILE_ADD_REQUEST_RESULT_TILE_ALREADY_ADDED
             ) {
-                _tileInfoSnackbar.emit(commonR.string.tile_added)
+                _tileInfoSnackbar.send(commonR.string.tile_added)
                 tileDao.add(tileData.copy(added = true))
                 _state.update { it.copy(submitButtonLabel = commonR.string.tile_save) }
             } else { // Silently ignore error, database was still updated
-                _tileInfoSnackbar.emit(commonR.string.tile_updated)
+                _tileInfoSnackbar.send(commonR.string.tile_updated)
             }
         }
     }

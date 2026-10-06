@@ -333,6 +333,29 @@ class NameYourDeviceViewModelTest {
     }
 
     @Test
+    fun `Given Error event sent before the screen collects when collecting then it is delivered once`() = runTest {
+        coEvery {
+            serverRegistrationRepository.registerAuthorizationCode(
+                url = route.url,
+                authorizationCode = route.authCode,
+                allowInsecureConnection = null,
+            )
+        } returns null
+
+        viewModel.onSaveClick()
+        advanceUntilIdle()
+
+        turbineScope {
+            val navEvents = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            assertError(navEvents.awaitItem(), commonR.string.webview_error)
+            navEvents.cancelAndIgnoreRemainingEvents()
+        }
+        turbineScope {
+            viewModel.navigationEventsFlow.testIn(backgroundScope).expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given serverRegistrationRepository Throws when onSaveClick then emits Error event and attempts no cleanup`() = runTest {
         coEvery {
             serverRegistrationRepository.registerAuthorizationCode(
