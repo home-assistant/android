@@ -5,6 +5,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.util.UrlUtil
 import io.mockk.coEvery
@@ -331,12 +332,67 @@ class LinkHandlerTest {
 
     @Test
     fun `Given a navigate deep link built for an absolute URL path when invoking handleLink then it round-trips to the same URL`() = runTest {
+        var failFastCount = 0
+        FailFast.setHandler { _, _ -> failFastCount++ }
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithUrl(id = 2, externalUrl = "http://192.168.1.5:8123")
 
         val uri = navigateDeepLinkUri(FrontendTarget.Path("http://192.168.1.5:8123/lovelace/0?kiosk"), serverId = 2)
         val result = handler.handleLink(uri)
 
         assertEquals(LinkDestination.Webview(FrontendTarget.Path("http://192.168.1.5:8123/lovelace/0?kiosk"), 2), result)
+        assertEquals(0, failFastCount)
+    }
+
+    @Test
+    fun `Given navigate deep link to an absolute URL outside the server when invoking handleLink then opens the server default page`() = runTest {
+        var failFastCount = 0
+        FailFast.setHandler { _, _ -> failFastCount++ }
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithUrl(id = 2, externalUrl = "http://192.168.1.5:8123")
+
+        listOf(
+            "homeassistant://navigate/https://example.com/?server_id=2",
+            "homeassistant://navigate/http://192.168.1.5:8124/lovelace/0?server_id=2",
+            "homeassistant://navigate/https://192.168.1.5:8123/lovelace/0?server_id=2",
+        ).forEach { link ->
+            assertEquals(LinkDestination.Webview(FrontendTarget.Default, 2), handler.handleLink(link.toUri()), link)
+        }
+        assertEquals(3, failFastCount)
+    }
+
+    @Test
+    fun `Given navigate deep link to an absolute URL without server param when invoking handleLink then checks the active server`() = runTest {
+        var failFastCount = 0
+        FailFast.setHandler { _, _ -> failFastCount++ }
+        val server = serverWithUrl(id = 1, externalUrl = "https://home.example.com")
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer() } returns server
+        coEvery { serverManager.getServer(1) } returns server
+
+        assertEquals(
+            LinkDestination.Webview(FrontendTarget.Default, 1),
+            handler.handleLink("homeassistant://navigate/https://example.com/".toUri()),
+        )
+        assertEquals(1, failFastCount)
+        assertEquals(
+            LinkDestination.Webview(FrontendTarget.Path("https://home.example.com/lovelace/0"), 1),
+            handler.handleLink("homeassistant://navigate/https://home.example.com/lovelace/0".toUri()),
+        )
+        assertEquals(1, failFastCount)
+    }
+
+    @Test
+    fun `Given navigate deep link to an absolute URL of an unknown server when invoking handleLink then drops the URL`() = runTest {
+        var caughtException: Throwable? = null
+        FailFast.setHandler { exception, _ -> caughtException = exception }
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(3) } returns null
+
+        val result = handler.handleLink("homeassistant://navigate/https://home.example.com/?server_id=3".toUri())
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Default, 3), result)
+        assertNotNull(caughtException)
     }
 
     @Test
@@ -487,5 +543,10 @@ class LinkHandlerTest {
         val result = handler.handleLink(uri)
 
         assertEquals(LinkDestination.ServerPicker(FrontendTarget.Path("lovelace/dashboard"), servers), result)
+    }
+
+    private fun serverWithUrl(id: Int, externalUrl: String): Server = mockk {
+        coEvery { this@mockk.id } returns id
+        coEvery { connection } returns ServerConnectionInfo(externalUrl = externalUrl)
     }
 }
