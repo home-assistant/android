@@ -41,6 +41,7 @@ import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
+import io.homeassistant.companion.android.settings.backup.SettingsBackupFragment
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
 import io.homeassistant.companion.android.settings.gestures.GesturesFragment
@@ -189,6 +190,14 @@ class SettingsFragment(
             return@setOnPreferenceClickListener true
         }
 
+        findPreference<Preference>("settings_backup")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.content, SettingsBackupFragment::class.java, null)
+                addToBackStack(getString(commonR.string.settings_backup))
+            }
+            true
+        }
+
         findPreference<ListPreference>("page_zoom")?.let {
             // The list of percentages for iOS/Android should match
             // https://github.com/home-assistant/iOS/blob/ff66bbf2e3f9add0abb0b492499b81e824db36ed/Sources/Shared/Settings/SettingsStore.swift#L108
@@ -200,6 +209,8 @@ class SettingsFragment(
         }
 
         val isAutomotive = requireContext().isAutomotive()
+
+        findPreference<Preference>("settings_backup")?.isVisible = !QuestUtil.isQuest && !isAutomotive
 
         findPreference<PreferenceCategory>("assist")?.isVisible = !isAutomotive
 

@@ -38,6 +38,10 @@
     <PreferenceCategory
         android:title="@string/other_settings">
         <Preference
+            android:key="settings_backup"
+            android:title="@string/settings_backup"
+            android:summary="@string/settings_backup_summary" />
+        <Preference
             android:key="gestures"
             android:icon="@drawable/ic_gestures"
             android:title="@string/gestures"/>
