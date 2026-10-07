@@ -20,6 +20,7 @@ import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.size.Precision
+import coil3.size.Scale
 import coil3.toBitmap
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -40,7 +41,6 @@ import io.homeassistant.companion.android.common.util.CHANNEL_MEDIA_SESSION
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.mediacontrols.HaMediaSession.Companion.MAX_ARTWORK_SIZE
 import io.homeassistant.companion.android.util.sensitive
 import java.io.ByteArrayOutputStream
 import java.net.URL
@@ -64,6 +64,35 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+
+/** The `repeat` value Home Assistant uses for no repeat; the others come from [EntityExt]. */
+private const val MEDIA_PLAYER_REPEAT_OFF = "off"
+
+/** Artwork paths already carrying a scheme are absolute and need no base URL. */
+private const val HTTP_SCHEME_PREFIX = "http"
+
+/**
+ * Largest edge, in pixels, of the album art sent as media metadata. Comfortably above every
+ * surface that renders it (the notification icon is `notification_large_icon_width`, the
+ * shade and lock screen a few hundred dp) while keeping the encoded bytes small enough to
+ * hold per session and to send to out-of-process controllers.
+ */
+private const val MAX_ARTWORK_SIZE = 512
+
+private const val ARTWORK_JPEG_QUALITY = 904
+
+private const val ACTION_MEDIA_PLAY = "media_play"
+private const val ACTION_MEDIA_PAUSE = "media_pause"
+private const val ACTION_MEDIA_STOP = "media_stop"
+private const val ACTION_MEDIA_SEEK = "media_seek"
+private const val ACTION_MEDIA_NEXT_TRACK = "media_next_track"
+private const val ACTION_MEDIA_PREVIOUS_TRACK = "media_previous_track"
+private const val ACTION_VOLUME_SET = "volume_set"
+private const val ACTION_VOLUME_UP = "volume_up"
+private const val ACTION_VOLUME_DOWN = "volume_down"
+private const val ACTION_VOLUME_MUTE = "volume_mute"
+private const val ACTION_SHUFFLE_SET = "shuffle_set"
+private const val ACTION_REPEAT_SET = "repeat_set"
 
 /**
  * Owns the [MediaSession] and [HaRemoteMediaPlayer] for a single Home Assistant media_player entity.
@@ -137,6 +166,10 @@ class HaMediaSession @AssistedInject constructor(
             .build()
     }
 
+    /**
+     * Builds the shuffle and repeat buttons for [player]. Each button carries the mode it requests
+     * next, so they must be rebuilt whenever the player changes.
+     */
     @OptIn(UnstableApi::class)
     private fun buildMediaButtonPreferences(player: Player): List<CommandButton> {
         val buttons = mutableListOf<CommandButton>()
@@ -322,51 +355,45 @@ class HaMediaSession @AssistedInject constructor(
                     Timber.d("startObservingState: received null state for ${config.entityId}, skipping update")
                     return@collectLatest
                 }
-                Timber.d(
-                    "startObservingState: received state for ${config.entityId}, playback=${state.mediaPlayback?.state}",
-                )
-                if (state.mediaPlayback?.state is MediaPlaybackState.Off) {
-                    // Entity is off: reset the player to idle (no playlist, no commands) so Media3
-                    // does not create a notification for this session. A notification for an idle
-                    // session with no content would replace the foreground notification of any
-                    // currently-playing session (e.g. another configured entity), hiding its control.
-                    artworkCache = ArtworkCache()
-                    withContext(Dispatchers.Main) {
-                        notificationArtwork = null
-                        notificationEntityName = null
-                        player.updateState(state = null, artworkBytes = null)
-                    }
-                    return@collectLatest
-                }
-
-                // Push metadata and playback state immediately, keeping old artwork bytes in the
-                // player until new artwork finishes loading — avoids a blank gap when the URL
-                // changes (HA sends multiple updates per track change with different cache= params).
-                withContext(Dispatchers.Main) {
-                    notificationEntityName = state.name
-                    player.updateState(state = state, artworkBytes = artworkCache.bytes)
-                }
-
-                when {
-                    state.mediaPlayback?.entityPicturePath == null -> {
-                        artworkCache = ArtworkCache()
-                        withContext(Dispatchers.Main) {
-                            notificationArtwork = null
-                            player.updateState(state = state, artworkBytes = null)
-                        }
-                    }
-
-                    state.mediaPlayback?.entityPicturePath != artworkCache.url -> {
-                        artworkCache = loadArtwork(state)
-                        withContext(Dispatchers.Main) {
-                            notificationArtwork = artworkCache.bitmap
-                            player.updateState(state = state, artworkBytes = artworkCache.bytes)
-                        }
-                    }
-
-                    else -> Unit
-                }
+                artworkCache = updateStateAndArtwork(player, state, artworkCache)
             }
+    }
+
+    /**
+     * Updates [player] and the notification with [state], loading its artwork when it is not in [cache].
+     *
+     * @return the artwork now displayed
+     */
+    private suspend fun updateStateAndArtwork(
+        player: HaRemoteMediaPlayer,
+        state: EntityDisplayWithoutContext,
+        cache: ArtworkCache,
+    ): ArtworkCache {
+        if (state.mediaPlayback?.state is MediaPlaybackState.Off) {
+            // Entity is off: reset the player to idle (no playlist, no commands) so Media3
+            // does not create a notification for this session. A notification for an idle
+            // session with no content would replace the foreground notification of any
+            // currently-playing session (e.g. another configured entity), hiding its control.
+            return ArtworkCache().also { updatePlayerAndNotification(player, state = null, artwork = it) }
+        }
+        return when (state.mediaPlayback?.entityPicturePath) {
+            null -> ArtworkCache().also { updatePlayerAndNotification(player, state, it) }
+            cache.url -> cache.also { updatePlayerAndNotification(player, state, it) }
+            else -> {
+                updatePlayerAndNotification(player, state, cache)
+                loadArtwork(state).also { updatePlayerAndNotification(player, state, it) }
+            }
+        }
+    }
+
+    private suspend fun updatePlayerAndNotification(
+        player: HaRemoteMediaPlayer,
+        state: EntityDisplayWithoutContext?,
+        artwork: ArtworkCache,
+    ) = withContext(Dispatchers.Main) {
+        notificationEntityName = state?.name
+        notificationArtwork = artwork.bitmap
+        player.updateState(state = state, artworkBytes = artwork.bytes)
     }
 
     private fun buildMediaSession(player: HaRemoteMediaPlayer): MediaSession = MediaSession.Builder(context, player)
@@ -392,8 +419,7 @@ class HaMediaSession @AssistedInject constructor(
             player.addListener(
                 object : Player.Listener {
                     override fun onEvents(player: Player, events: Player.Events) {
-                        // The buttons carry the mode they request next, so they are rebuilt on any
-                        // change. Media3 refreshes the notification on every preferences update,
+                        // Media3 refreshes the notification on every preferences update,
                         // hence only pushing them when they differ.
                         val buttons = buildMediaButtonPreferences(player)
                         if (buttons != session.mediaButtonPreferences) {
@@ -456,7 +482,8 @@ class HaMediaSession @AssistedInject constructor(
                 .allowHardware(false)
                 // A bounding box rather than an output size: Scale.FIT keeps the aspect ratio, and
                 // INEXACT stops art smaller than the box from being upscaled to fill it.
-                .size(MAX_ARTWORK_SIZE, MAX_ARTWORK_SIZE)
+                .size(MAX_ARTWORK_SIZE)
+                .scale(Scale.FIT)
                 .precision(Precision.INEXACT)
                 .build()
             val result = context.imageLoader.execute(request)
@@ -504,7 +531,7 @@ class HaMediaSession @AssistedInject constructor(
      * Mirrors AOSP's `Icon.scaleDownIfNecessary`: proportionally scales [bitmap] to fit within
      * [maxWidth] × [maxHeight], preserving aspect ratio. Returns [bitmap] unchanged if it already
      * fits.
-     * 
+     *
      * Run on IO to avoid the StrictMode CustomViolation triggered on API 36+ when the
      * framework calls the same method on the main thread during notification rendering.
      */
@@ -519,37 +546,6 @@ class HaMediaSession @AssistedInject constructor(
 
     /** Immutable cache of the last successfully loaded artwork. */
     private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null, val bitmap: Bitmap? = null)
-
-    companion object {
-        /** The `repeat` value Home Assistant uses for no repeat; the others come from [EntityExt]. */
-        private const val MEDIA_PLAYER_REPEAT_OFF = "off"
-
-        /** Artwork paths already carrying a scheme are absolute and need no base URL. */
-        private const val HTTP_SCHEME_PREFIX = "http"
-
-        /**
-         * Largest edge, in pixels, of the album art sent as media metadata. Comfortably above every
-         * surface that renders it (the notification icon is `notification_large_icon_width`, the
-         * shade and lock screen a few hundred dp) while keeping the encoded bytes small enough to
-         * hold per session and to send to out-of-process controllers.
-         */
-        private const val MAX_ARTWORK_SIZE = 512
-
-        private const val ARTWORK_JPEG_QUALITY = 90
-
-        private const val ACTION_MEDIA_PLAY = "media_play"
-        private const val ACTION_MEDIA_PAUSE = "media_pause"
-        private const val ACTION_MEDIA_STOP = "media_stop"
-        private const val ACTION_MEDIA_SEEK = "media_seek"
-        private const val ACTION_MEDIA_NEXT_TRACK = "media_next_track"
-        private const val ACTION_MEDIA_PREVIOUS_TRACK = "media_previous_track"
-        private const val ACTION_VOLUME_SET = "volume_set"
-        private const val ACTION_VOLUME_UP = "volume_up"
-        private const val ACTION_VOLUME_DOWN = "volume_down"
-        private const val ACTION_VOLUME_MUTE = "volume_mute"
-        private const val ACTION_SHUFFLE_SET = "shuffle_set"
-        private const val ACTION_REPEAT_SET = "repeat_set"
-    }
 
     /** Creates [HaMediaSession] instances with the runtime-provided [config]. */
     @AssistedFactory

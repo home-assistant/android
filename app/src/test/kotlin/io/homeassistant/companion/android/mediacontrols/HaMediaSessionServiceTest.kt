@@ -103,29 +103,10 @@ class HaMediaSessionServiceTest {
 
     @After
     fun tearDown() {
-        // Cancelling observationScope cancels all session observation coroutines, which triggers
-        // each HaMediaSession.observe() finally block → session.release() → auto-removed from
-        // getSessions(). onDestroy() is not called here to avoid double-calling it in tests that
-        // explicitly invoke it (e.g. the onDestroy lifecycle test).
         observationScope.cancel()
-        // Drain the main looper so that the withContext(NonCancellable + Dispatchers.Main) calls
-        // in the observe() finally blocks complete and session.release() runs before the next test
-        // class starts. Without this, MediaSession IDs linger in Media3's global registry and
-        // cause "Session ID must be unique" failures in subsequent test classes.
         idleMainLooper()
     }
 
-    /**
-     * Starts entity observation on the service using the test-controlled [observationScope]
-     * (passed to the constructor in [setUp]) as the service scope. Because [configuredEntitiesFlow]
-     * uses replay=1 and [observationScope] uses [UnconfinedTestDispatcher], the subscriber receives
-     * any pre-emitted value immediately and reconciliation runs synchronously.
-     * Call [idleMainLooper] after this to flush any Main-thread tasks posted by [HaMediaSession]
-     * (e.g. [HaRemoteMediaPlayer.updateState]).
-     *
-     * Called directly (not via [onCreate]) to avoid triggering Hilt field injection, which requires
-     * a fully-initialized Hilt component unavailable in this test setup.
-     */
     private fun startObserving() {
         service.startObservingEntities()
     }

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.mediacontrols
 import android.os.Looper
 import androidx.media3.common.Player
 import androidx.media3.session.CommandButton
+import androidx.media3.session.MediaSession
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
@@ -34,13 +35,14 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
@@ -131,7 +133,7 @@ class HaMediaSessionTest {
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             session.observe { capturedSession = it }
         }
@@ -165,7 +167,7 @@ class HaMediaSessionTest {
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             session.observe { capturedSession = it }
         }
@@ -185,7 +187,7 @@ class HaMediaSessionTest {
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             session.observe { capturedSession = it }
         }
@@ -212,7 +214,7 @@ class HaMediaSessionTest {
 
         // The flow completed, so observe() exited via its finally block — session is torn down.
         assertNull(session.buildNotification())
-        org.junit.Assert.assertFalse(job.isActive)
+        assertFalse(job.isActive)
     }
 
     // -- Artwork caching tests --
@@ -224,7 +226,7 @@ class HaMediaSessionTest {
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             session.observe { capturedSession = it }
         }
@@ -243,7 +245,7 @@ class HaMediaSessionTest {
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             session.observe { capturedSession = it }
         }
@@ -268,7 +270,7 @@ class HaMediaSessionTest {
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             session.observe { capturedSession = it }
         }
@@ -299,7 +301,7 @@ class HaMediaSessionTest {
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             session.observe { capturedSession = it }
         }
@@ -308,14 +310,16 @@ class HaMediaSessionTest {
         capturedSession?.player?.pause()
         shadowOf(Looper.getMainLooper()).idle()
 
+        val capturedDomain = slot<String>()
         val capturedAction = slot<String>()
         coVerify {
             integrationRepository.callAction(
-                domain = any(),
+                domain = capture(capturedDomain),
                 action = capture(capturedAction),
                 actionData = any(),
             )
         }
+        assertEquals(MEDIA_PLAYER_DOMAIN, capturedDomain.captured)
         assertEquals("media_pause", capturedAction.captured)
 
         job.cancel()
@@ -331,7 +335,7 @@ class HaMediaSessionTest {
         } throws RuntimeException("Simulated server error")
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             session.observe { capturedSession = it }
         }
@@ -358,12 +362,8 @@ class HaMediaSessionTest {
 
     // -- observe() lifecycle tests --
 
-    /**
-     * Verifies that the session is active (produces a notification) during observation and
-     * becomes inactive after the observing job is cancelled, confirming Media3 resources are released.
-     */
     @Test
-    fun `Given observing session when job cancelled then session is no longer active`() {
+    fun `Given playing session with notification when job cancelled then no notification is built`() {
         val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
         stateFlow.tryEmit(loadedState(createState(playbackState = MediaPlaybackState.Playing)))
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
@@ -382,23 +382,20 @@ class HaMediaSessionTest {
         assertNull(session.buildNotification())
     }
 
-    /**
-     * Verifies that [HaMediaSession.observe] calls [onSessionReady] with a non-null session
-     * before starting state observation.
-     */
     @Test
-    fun `Given session when observe called then onSessionReady is invoked with the session`() {
+    fun `Given no state emitted when observe called then onSessionReady receives the media session`() {
         val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>()
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
         val session = buildSession()
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             session.observe { capturedSession = it }
         }
         idleMainLooper()
 
         assertNotNull(capturedSession)
+        assertSame(session.mediaSession, capturedSession)
 
         job.cancel()
     }
@@ -439,7 +436,7 @@ class HaMediaSessionTest {
         stateFlow.tryEmit(loadedState(initial))
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns stateFlow
 
-        var capturedSession: androidx.media3.session.MediaSession? = null
+        var capturedSession: MediaSession? = null
         val job = testScope.launch {
             buildSession().observe { capturedSession = it }
         }

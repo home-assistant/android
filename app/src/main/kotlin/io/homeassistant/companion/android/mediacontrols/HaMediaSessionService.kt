@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.annotation.MainThread
 import androidx.annotation.OptIn
 import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationManagerCompat
@@ -82,9 +83,8 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
         // Keep the service alive while playback is active so the media notification remains
         // visible and controllable from the notification shade after the app is dismissed.
         // If nothing is playing there is no reason to keep the service alive.
-        // Note: there is no automatic stop when playback ends after this point — the service
-        // will only stop when the user removes all configured entities, which causes
-        // reconcileSessions to call stopSelf() on an empty list.
+        // Once no session has media left, promoteForegroundOrStop drops the foreground and the
+        // system reclaims the service like any background service.
         if (!anyPlaying) {
             stopSelf()
         }
@@ -196,7 +196,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      * Cancels the notification for a session, unregisters it from the service, and joins the
      * observation coroutine so all Media3 resources are released before returning.
      */
-     @MainThread
+    @MainThread
     private suspend fun tearDownSession(key: String, pair: Pair<HaMediaSession, Job>) {
         val (haSession, job) = pair
         val notificationId = key.hashCode()
@@ -218,7 +218,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
             session.observe { mediaSession ->
                 withContext(Dispatchers.Main) { addSession(mediaSession) }
             }
-            // Session ended normally. Remove the stale map entry so a subsequent 
+            // Session ended normally. Remove the stale map entry so a subsequent
             // reconcileSessions emission can restart the session if the entity is still configured.
             withContext(Dispatchers.Main) {
                 activeSessions.remove(key)

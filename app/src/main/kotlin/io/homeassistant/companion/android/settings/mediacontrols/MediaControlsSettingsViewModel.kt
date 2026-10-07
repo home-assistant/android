@@ -57,11 +57,6 @@ data class MediaControlsSettingsUiState(
     val entityDisplayStatePerServer: Map<Int, EntityDisplayState<EntityDisplayWithContext>> = emptyMap(),
     val isLoading: Boolean = true,
 ) {
-    /**
-     * Media players of the selected server that are not configured yet, the choices of the entity
-     * picker. Stays [EntityDisplayState.Loading] until that server resolved its entities, so the
-     * picker shows its own loading indicator instead of disappearing.
-     */
     val availableEntities: EntityDisplayState<EntityDisplayWithContext> =
         when (val displayState = entityDisplayStatePerServer[selectedServerId]) {
             null -> EntityDisplayState.Loading

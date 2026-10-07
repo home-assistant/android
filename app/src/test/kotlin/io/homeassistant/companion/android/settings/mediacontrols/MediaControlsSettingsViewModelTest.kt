@@ -130,30 +130,19 @@ class MediaControlsSettingsViewModelTest {
             assertEquals(DEFAULT_SERVER_ID, viewModel.uiState.value.selectedServerId)
         }
 
-        @Test
-        fun `Given servers when viewModel created then the dropdown lists them all`() = runTest(testDispatcher) {
-            serversFlow.value = listOf(fakeServer(DEFAULT_SERVER_ID), fakeServer(OTHER_SERVER_ID))
-
-            viewModel = createViewModel()
-            advanceUntilIdle()
-
-            assertEquals(
-                listOf(DEFAULT_SERVER_ID, OTHER_SERVER_ID),
-                viewModel.uiState.value.serversDropdownItems.map { it.key },
-            )
-        }
-
         @ParameterizedTest(name = "{0} server(s) shows selector: {1}")
         @CsvSource("1, false", "2, true", "3, true")
-        fun `Given servers when viewModel created then the server selector is shown only with several`(
+        fun `Given servers when viewModel created then the selector lists them all and is shown only with several`(
             serverCount: Int,
             expectedShown: Boolean,
         ) = runTest(testDispatcher) {
-            serversFlow.value = (1..serverCount).map { fakeServer(it) }
+            val serverIds = (1..serverCount).toList()
+            serversFlow.value = serverIds.map { fakeServer(it) }
 
             viewModel = createViewModel()
             advanceUntilIdle()
 
+            assertEquals(serverIds, viewModel.uiState.value.serversDropdownItems.map { it.key })
             assertEquals(expectedShown, viewModel.uiState.value.showServerSelector)
         }
     }
@@ -242,18 +231,6 @@ class MediaControlsSettingsViewModelTest {
     inner class AddEntityTest {
 
         @Test
-        fun `Given viewModel when addEntity called then entity appended to list`() = runTest(testDispatcher) {
-            viewModel = createViewModel()
-            advanceUntilIdle()
-
-            viewModel.addEntity("media_player.living_room")
-            advanceUntilIdle()
-
-            assertEquals(1, viewModel.uiState.value.selectedEntities.size)
-            assertEquals("media_player.living_room", viewModel.uiState.value.selectedEntities.first().config.entityId)
-        }
-
-        @Test
         fun `Given entity already in list when addEntity called with same entity then not duplicated`() = runTest(testDispatcher) {
             viewModel = createViewModel()
             viewModel.addEntity("media_player.tv")
@@ -266,7 +243,7 @@ class MediaControlsSettingsViewModelTest {
         }
 
         @Test
-        fun `Given viewModel when addEntity called then repository updated and start event emitted`() = runTest(testDispatcher) {
+        fun `Given viewModel when addEntity called then entity is saved, listed and the service started`() = runTest(testDispatcher) {
             viewModel = createViewModel()
             advanceUntilIdle()
 
@@ -282,6 +259,10 @@ class MediaControlsSettingsViewModelTest {
                 assertEquals(MediaControlServiceEvent.Start, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
+            assertEquals(
+                listOf("media_player.living_room"),
+                viewModel.uiState.value.selectedEntities.map { it.config.entityId },
+            )
         }
 
         @Test
