@@ -8,6 +8,9 @@ import android.net.Uri
 import android.webkit.WebChromeClient.FileChooserParams
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,8 +29,8 @@ class ShowWebFileChooserTest {
     private val contract = ShowWebFileChooser()
 
     @Test
-    fun `Given no accept types when creating intent then any openable file can be picked`() {
-        val intent = contract.createIntent(context, FakeFileChooserParams(acceptTypes = arrayOf("")))
+    fun `Given no accept types when creating intent then any openable file can be picked`() = runTest {
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("")))
 
         assertEquals(Intent.ACTION_GET_CONTENT, intent.action)
         assertTrue(intent.hasCategory(Intent.CATEGORY_OPENABLE))
@@ -37,11 +40,8 @@ class ShowWebFileChooserTest {
     }
 
     @Test
-    fun `Given MIME types and extensions when creating intent then they are passed as MIME types`() {
-        val intent = contract.createIntent(
-            context,
-            FakeFileChooserParams(acceptTypes = arrayOf("image/*", " .PDF ", "application/pdf")),
-        )
+    fun `Given MIME types and extensions when creating intent then they are passed as MIME types`() = runTest {
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*", " .PDF ", "application/pdf")))
 
         assertEquals("*/*", intent.type)
         assertArrayEquals(
@@ -51,25 +51,22 @@ class ShowWebFileChooserTest {
     }
 
     @Test
-    fun `Given an unknown extension when creating intent then no MIME type filter is applied`() {
-        val intent = contract.createIntent(
-            context,
-            FakeFileChooserParams(acceptTypes = arrayOf("image/*", ".unknownextension")),
-        )
+    fun `Given an unknown extension when creating intent then no MIME type filter is applied`() = runTest {
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*", ".unknownextension")))
 
         assertFalse(intent.hasExtra(Intent.EXTRA_MIME_TYPES))
     }
 
     @Test
-    fun `Given a wildcard accept type when creating intent then no MIME type filter is applied`() {
-        val intent = contract.createIntent(context, FakeFileChooserParams(acceptTypes = arrayOf("image/*", "*/*")))
+    fun `Given a wildcard accept type when creating intent then no MIME type filter is applied`() = runTest {
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "*/*")))
 
         assertFalse(intent.hasExtra(Intent.EXTRA_MIME_TYPES))
     }
 
     @Test
-    fun `Given multiple mode when creating intent then multiple selection is allowed`() {
-        val intent = contract.createIntent(context, FakeFileChooserParams(mode = FileChooserParams.MODE_OPEN_MULTIPLE))
+    fun `Given multiple mode when creating intent then multiple selection is allowed`() = runTest {
+        val intent = createIntent(FakeFileChooserParams(mode = FileChooserParams.MODE_OPEN_MULTIPLE))
 
         assertTrue(intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false))
     }
@@ -107,6 +104,11 @@ class ShowWebFileChooserTest {
         assertNull(contract.parseResult(Activity.RESULT_CANCELED, Intent().setData(uri)))
         assertNull(contract.parseResult(Activity.RESULT_OK, null))
         assertNull(contract.parseResult(Activity.RESULT_OK, Intent()))
+    }
+
+    private suspend fun TestScope.createIntent(params: FileChooserParams): Intent {
+        val input = FileChooserInput(params, params.acceptedMimeTypes(StandardTestDispatcher(testScheduler)))
+        return contract.createIntent(context, input)
     }
 }
 

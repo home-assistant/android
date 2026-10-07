@@ -8,10 +8,21 @@ import android.webkit.MimeTypeMap
 import android.webkit.WebChromeClient.FileChooserParams
 import androidx.activity.result.contract.ActivityResultContract
 import java.util.Locale
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private const val ANY_MIME_TYPE = "*/*"
 private const val EXTENSION_PREFIX = "."
 private const val MIME_TYPE_SEPARATOR = "/"
+
+/**
+ * What to launch for an `<input type="file">`.
+ *
+ * @param params The WebView file chooser parameters
+ * @param pickerMimeTypes MIME types to filter the file picker with, or `null` to show any file
+ */
+internal data class FileChooserInput(val params: FileChooserParams, val pickerMimeTypes: List<String>?)
 
 /**
  * Launches the system file picker for an `<input type="file">` and returns the selected URIs,
@@ -22,14 +33,14 @@ private const val MIME_TYPE_SEPARATOR = "/"
  * nothing) and the latter ignores [Intent.getClipData], dropping multi-selections
  * (https://github.com/home-assistant/android/issues/7548).
  */
-internal class ShowWebFileChooser : ActivityResultContract<FileChooserParams, Array<Uri>?>() {
+internal class ShowWebFileChooser : ActivityResultContract<FileChooserInput, Array<Uri>?>() {
 
-    override fun createIntent(context: Context, input: FileChooserParams): Intent {
+    override fun createIntent(context: Context, input: FileChooserInput): Intent {
         return Intent(Intent.ACTION_GET_CONTENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = ANY_MIME_TYPE
-            input.acceptTypes.toMimeTypes()?.let { putExtra(Intent.EXTRA_MIME_TYPES, it) }
-            if (input.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
+            input.pickerMimeTypes?.let { putExtra(Intent.EXTRA_MIME_TYPES, it.toTypedArray()) }
+            if (input.params.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
                 putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             }
         }
@@ -47,12 +58,16 @@ internal class ShowWebFileChooser : ActivityResultContract<FileChooserParams, Ar
  *
  * Returns `null` when the picker should not filter: nothing is accepted explicitly, everything is
  * accepted, or an entry can't be converted (filtering would hide files the page accepts).
+ *
+ * Runs on [dispatcher], as the system MIME table is read from disk on first use.
  */
-private fun Array<String>?.toMimeTypes(): Array<String>? {
-    val entries = orEmpty().map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotEmpty() }
-    if (entries.isEmpty() || ANY_MIME_TYPE in entries) return null
+internal suspend fun FileChooserParams.acceptedMimeTypes(
+    dispatcher: CoroutineDispatcher = Dispatchers.IO,
+): List<String>? = withContext(dispatcher) {
+    val entries = acceptTypes.orEmpty().map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotEmpty() }
+    if (entries.isEmpty() || ANY_MIME_TYPE in entries) return@withContext null
     val mimeTypes = entries.mapNotNull { it.toMimeType() }
-    return mimeTypes.takeIf { it.size == entries.size }?.distinct()?.toTypedArray()
+    mimeTypes.takeIf { it.size == entries.size }?.distinct()
 }
 
 private fun String.toMimeType(): String? = when {

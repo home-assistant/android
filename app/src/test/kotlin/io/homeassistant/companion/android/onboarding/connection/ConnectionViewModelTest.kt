@@ -33,6 +33,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -637,6 +638,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given webChromeClient when onShowFileChooser is invoked then pendingFileChooser exposes the params`() = runTest {
+        val fileChooserManager = FileChooserManager(StandardTestDispatcher(testScheduler))
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
             webViewClientFactory,
@@ -657,11 +659,12 @@ class ConnectionViewModelTest {
         assertTrue(handled)
         val pending = viewModel.pendingFileChooser.value
         assertNotNull(pending)
-        assertTrue(pending.fileChooserParams === fileChooserParams)
+        assertTrue(pending.input.params === fileChooserParams)
     }
 
     @Test
     fun `Given pending file chooser when result delivered then filePathCallback receives uris and slot clears`() = runTest {
+        val fileChooserManager = FileChooserManager(StandardTestDispatcher(testScheduler))
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
             webViewClientFactory,
@@ -690,6 +693,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given pending file chooser when user cancels then filePathCallback receives null and slot clears`() = runTest {
+        val fileChooserManager = FileChooserManager(StandardTestDispatcher(testScheduler))
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
             webViewClientFactory,

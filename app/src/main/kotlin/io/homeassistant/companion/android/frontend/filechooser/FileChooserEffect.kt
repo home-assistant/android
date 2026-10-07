@@ -32,7 +32,7 @@ internal fun FileChooserEffect(pendingRequest: FileChooserRequest?) {
     if (pendingRequest != null) {
         LaunchedEffect(pendingRequest) {
             currentRequest = pendingRequest
-            launcher.launch(pendingRequest.fileChooserParams)
+            launcher.launch(pendingRequest.input)
         }
     }
 }
