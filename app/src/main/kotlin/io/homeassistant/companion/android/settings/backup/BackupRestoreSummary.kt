@@ -55,7 +55,11 @@ internal fun ColumnScope.BackupRestoreSummary(summary: BackupRestoreSummaryState
 private fun BackupSummaryRow(row: BackupSummaryRow) {
     val value = when (val value = row.value) {
         is BackupSummaryValue.Count -> value.count.toString()
-        is BackupSummaryValue.Sensors -> stringResource(R.string.backup_sensor_counts, value.enabled, value.disabled)
+        is BackupSummaryValue.Sensors -> stringResource(
+            R.string.backup_sensor_counts,
+            pluralStringResource(R.plurals.backup_sensors_on, value.enabled, value.enabled),
+            pluralStringResource(R.plurals.backup_sensors_off, value.disabled, value.disabled),
+        )
         is BackupSummaryValue.Servers -> pluralStringResource(R.plurals.backup_server_count, value.count, value.count)
         is BackupSummaryValue.Frequency -> stringResource(value.label)
     }

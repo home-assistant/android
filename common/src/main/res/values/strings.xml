@@ -1580,7 +1580,15 @@
     <string name="backup_favorites_replace">Replaces Android Auto favorites on the selected servers.</string>
     <string name="backup_favorites_clear">Clears Android Auto favorites on the selected servers.</string>
     <string name="backup_shared_settings">Applies to all servers.</string>
-    <string name="backup_sensor_counts">%1$d on, %2$d off</string>
+    <string name="backup_sensor_counts">%1$s, %2$s</string>
+    <plurals name="backup_sensors_on">
+        <item quantity="one">%d on</item>
+        <item quantity="other">%d on</item>
+    </plurals>
+    <plurals name="backup_sensors_off">
+        <item quantity="one">%d off</item>
+        <item quantity="other">%d off</item>
+    </plurals>
     <plurals name="backup_server_count">
         <item quantity="one">%d server</item>
         <item quantity="other">%d servers</item>

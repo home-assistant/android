@@ -49,6 +49,6 @@ internal interface SettingsBackupDao {
             saveSetting(current.copy(sensorUpdateFrequency = it))
         }
     }
-
-    private fun defaultSetting(id: Int) = Setting(id, WebsocketSetting.NEVER, SensorUpdateFrequencySetting.NORMAL)
 }
+
+private fun defaultSetting(id: Int) = Setting(id, WebsocketSetting.NEVER, SensorUpdateFrequencySetting.NORMAL)
