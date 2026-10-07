@@ -5,14 +5,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
-import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -31,78 +28,60 @@ internal fun BackupRestoreContent(
     key(state?.reviewSummary != null) {
         BackupColumn {
             val summary = state?.reviewSummary
-            val title = if (summary == null) R.string.backup_choose_settings else R.string.backup_confirm_title
-            Text(stringResource(title), style = HATextStyle.HeadlineMedium, textAlign = TextAlign.Start)
             when {
-                state?.restore == null -> Text(
-                    stringResource(R.string.backup_select_again),
-                    style = HATextStyle.Body,
-                    textAlign = TextAlign.Start,
-                )
-                summary == null -> {
-                    BackupSectionChoices(state.sectionRows, !state.busy, onSelect)
-                    BackupServerChoices(state.restoreServers, state.servers, !state.busy, onMapServer)
-                    HAAccentButton(
-                        stringResource(R.string.backup_review),
-                        onReview,
-                        enabled = state.canReview,
-                        modifier = Modifier.fillMaxWidth(),
+                state?.restore == null -> BackupInsetContent {
+                    Text(
+                        stringResource(R.string.backup_select_again),
+                        style = HATextStyle.Body,
+                        textAlign = TextAlign.Start,
                     )
                 }
-                else -> {
+                summary == null -> BackupRestoreSelection(state, onSelect, onMapServer, onReview)
+                else -> BackupSettingsSection(R.string.backup_confirm_title) {
                     BackupDestinationSummary(state.restoreServers?.rows.orEmpty())
                     BackupRestoreSummary(summary)
                     HAAccentButton(
                         stringResource(R.string.backup_apply),
                         onRestore,
-                        enabled =
-                        !state.busy && summary.hasChanges,
+                        enabled = !state.busy && summary.hasChanges,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
-            if (state?.busy == true) HALoading()
-            val action = if (summary == null) onCancel else onEdit
-            val label = if (summary == null) R.string.cancel else R.string.backup_edit_selection
-            HAFilledButton(
-                stringResource(label),
-                action,
-                enabled = state?.busy != true,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            BackupInsetContent {
+                if (state?.busy == true) HALoading()
+                val action = if (summary == null) onCancel else onEdit
+                val label = if (summary == null) R.string.cancel else R.string.backup_edit_selection
+                HAFilledButton(
+                    stringResource(label),
+                    action,
+                    enabled = state?.busy != true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ColumnScope.BackupServerChoices(
-    selections: BackupServerSelections?,
-    servers: List<BackupDestination>,
-    enabled: Boolean,
+private fun ColumnScope.BackupRestoreSelection(
+    state: SettingsBackupUiState.Content,
+    onSelect: (BackupSection, Boolean) -> Unit,
     onMapServer: (String, BackupServerTarget) -> Unit,
+    onReview: () -> Unit,
 ) {
-    if (selections == null || selections.rows.isEmpty()) return
-    val skip = stringResource(R.string.backup_skip_server)
-    val choose = stringResource(R.string.backup_choose_server)
-    val destinations = remember(servers, skip, choose) {
-        listOf(HADropdownItem<BackupServerTarget>(BackupServerTarget.Unselected, choose)) +
-            servers.map { HADropdownItem<BackupServerTarget>(BackupServerTarget.Server(it.id), it.name) } +
-            HADropdownItem<BackupServerTarget>(BackupServerTarget.Skip, skip)
+    BackupSettingsSection(R.string.backup_choose_settings) {
+        BackupSectionChoices(state.sectionRows, !state.busy, onSelect)
     }
-    Text(stringResource(R.string.backup_servers_title), style = HATextStyle.HeadlineMedium, textAlign = TextAlign.Start)
-    Text(stringResource(R.string.backup_restore_description), style = HATextStyle.Body, textAlign = TextAlign.Start)
-    selections.rows.forEach { server ->
-        HADropdownMenu(
-            items = destinations,
-            selectedKey = server.target,
-            onItemSelected = { onMapServer(server.reference, it) },
-            label = stringResource(R.string.backup_server_destination, server.name),
-            placeholder = choose,
-            enabled = enabled,
+    BackupServerChoices(state.restoreServers, state.servers, !state.busy, onMapServer)
+    BackupInsetContent {
+        HAAccentButton(
+            stringResource(R.string.backup_review),
+            onReview,
+            enabled = state.canReview,
             modifier = Modifier.fillMaxWidth(),
         )
     }
-    selections.problem?.let { Text(stringResource(it), style = HATextStyle.BodyMedium, textAlign = TextAlign.Start) }
 }
 
 @Composable

@@ -32,8 +32,10 @@ are retained. The importer rejects malformed documents and unknown fields.
 
 The user signs in first, selects sections, assigns source references to destination
 servers, reviews the proposed changes, and confirms. Destination questions start
-unanswered, not skipped. Each relevant source needs a destination or an explicit
-skip, and at least one destination is required for selected server-specific settings.
+unanswered, not skipped. Each included source needs an explicit radio-button
+destination choice. When multiple sources need destinations, separate inclusion
+switches allow excluding individual sources. A single source always requires a
+destination; at least one destination is required for selected server-specific settings.
 A destination can be mapped only once. Skipped servers retain their server-specific configuration. Sensor
 options and update frequency are app-wide, so they also affect skipped servers.
 Zones with any unmapped reference are skipped as a whole rather than partially

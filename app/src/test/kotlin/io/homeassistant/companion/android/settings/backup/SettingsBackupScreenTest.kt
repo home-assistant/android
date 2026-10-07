@@ -4,10 +4,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -21,6 +27,7 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.backup.BackupSections
+import io.homeassistant.companion.android.common.data.backup.BackupServerData
 import io.homeassistant.companion.android.testing.unit.stringResource
 import org.junit.Rule
 import org.junit.Test
@@ -56,6 +63,8 @@ class SettingsBackupScreenTest {
             }
         }
         compose.onNodeWithText(compose.stringResource(R.string.backup_export)).performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText(compose.stringResource(R.string.backup_choose_export)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(compose.stringResource(R.string.backup_section_favorites)).assertIsOff()
         compose.onNodeWithText(compose.stringResource(R.string.backup_section_favorites)).performScrollTo().performClick()
         assertEquals(BackupSection.AndroidAutoFavorites, selected)
     }
@@ -74,12 +83,42 @@ class SettingsBackupScreenTest {
             }
         }
         compose.onNode(hasText(compose.stringResource(R.string.backup_review)) and hasClickAction()).performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithText(compose.stringResource(R.string.backup_choose_server)).performScrollTo().performClick()
-        compose.onNodeWithText("Destination").performClick()
+        compose.onNode(hasText(compose.activity.getString(R.string.backup_restore_server, "Home")) and isToggleable()).assertDoesNotExist()
+        compose.onNodeWithText("Destination").performScrollTo().performClick()
+        compose.onNodeWithText("Destination").assertIsSelected()
         assertEquals("home" to BackupServerTarget.Server(42), mapping)
         compose.onNode(hasText(compose.stringResource(R.string.backup_review)) and hasClickAction()).performScrollTo().performClick()
         assertTrue(reviewed)
         compose.onNodeWithText(compose.stringResource(R.string.backup_apply)).assertDoesNotExist()
+    }
+
+    @Test
+    fun `Given multiple saved servers when excluding and including one then destinations and validation follow the server switches`() {
+        val backup = backupFixture().copy(servers = listOf(BackupServerData("home", "Home"), BackupServerData("cabin", "Cabin")), sensorOptions = null)
+        var state by mutableStateOf(
+            SettingsBackupUiState.Content(
+                listOf(BackupDestination(42, "Destination")),
+                restore = RestoreDraft(backup),
+                sectionRows = sectionSelections(BackupSections(), backup),
+            ),
+        )
+        compose.setContent {
+            HATheme {
+                BackupRestoreContent(state, { _, _ -> }, { reference, target ->
+                    state = state.copy(restore = state.restore?.let { it.copy(targets = it.targets + (reference to target)) })
+                }, {}, {}, {}, {})
+            }
+        }
+        compose.onAllNodesWithText("Destination")[0].performScrollTo().performClick()
+        val cabin = compose.onNodeWithText(compose.activity.getString(R.string.backup_restore_server, "Cabin"))
+        cabin.performScrollTo().assertIsOn().performClick()
+        cabin.assertIsOff()
+        compose.onNodeWithText(compose.stringResource(R.string.backup_server_excluded)).assertIsDisplayed()
+        compose.onAllNodesWithText("Destination").fetchSemanticsNodes().let { assertEquals(1, it.size) }
+        compose.onNodeWithText(compose.stringResource(R.string.backup_review)).performScrollTo().assertIsEnabled()
+        cabin.performScrollTo().performClick()
+        compose.onNodeWithText(compose.stringResource(R.string.backup_review)).performScrollTo().assertIsNotEnabled()
+        compose.runOnIdle { assertEquals(BackupServerTarget.Unselected, state.restore?.targets?.get("cabin")) }
     }
 
     @Test

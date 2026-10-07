@@ -16,13 +16,17 @@ internal data class BackupServerSelection(
     val name: String,
     val target: BackupServerTarget,
     val destinationName: String?,
-)
+) {
+    val included: Boolean = target != BackupServerTarget.Skip
+}
 
 internal data class BackupServerSelections(
     val rows: List<BackupServerSelection>,
     val mapping: Map<String, Int>,
     @StringRes val problem: Int?,
-)
+) {
+    val canExcludeServers: Boolean = rows.size > 1
+}
 
 /** Only ask for destinations used by the selected sections, including server references in zones. */
 internal fun backupServerSelections(

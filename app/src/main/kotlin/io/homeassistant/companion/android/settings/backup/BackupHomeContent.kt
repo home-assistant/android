@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.composable.HAHint
+import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -33,30 +34,39 @@ internal fun BackupHomeContent(
     onManageSensors: () -> Unit,
 ) {
     BackupColumn {
-        Text(stringResource(R.string.backup_description), style = HATextStyle.Body, textAlign = TextAlign.Start)
-        BackupSectionChoices(state.sectionRows, enabled = !state.busy, onSelect)
-        HAAccentButton(
-            text = stringResource(R.string.backup_export),
-            onClick = onExport,
-            enabled = !state.busy && state.sections.hasSelection,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        HAFilledButton(
-            text = stringResource(R.string.backup_import),
-            onClick = onImport,
-            enabled = !state.busy,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        if (state.busy) HALoading()
-        HAHint(stringResource(R.string.backup_privacy))
-        state.lastSummary?.let { summary ->
+        BackupSettingsSection(R.string.backup_choose_export) {
+            BackupSectionChoices(state.sectionRows, enabled = !state.busy, onSelect)
+            HAAccentButton(
+                text = stringResource(R.string.backup_export),
+                onClick = onExport,
+                enabled = !state.busy && state.sections.hasSelection,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        HAHorizontalDivider()
+        BackupSettingsSection(R.string.backup_restore_heading) {
             Text(
-                stringResource(R.string.backup_restore_success),
-                style = HATextStyle.HeadlineMedium,
+                stringResource(R.string.backup_import_description),
+                style = HATextStyle.BodyMedium,
                 textAlign = TextAlign.Start,
             )
-            BackupRestoreSummary(summary)
-            HAFilledButton(stringResource(R.string.sensor_title), onClick = onManageSensors)
+            HAFilledButton(
+                text = stringResource(R.string.backup_import),
+                onClick = onImport,
+                enabled = !state.busy,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        state.lastSummary?.let { summary ->
+            HAHorizontalDivider()
+            BackupSettingsSection(R.string.backup_restore_success) {
+                BackupRestoreSummary(summary)
+                HAFilledButton(stringResource(R.string.sensor_title), onClick = onManageSensors)
+            }
+        }
+        BackupInsetContent {
+            if (state.busy) HALoading()
+            HAHint(stringResource(R.string.backup_privacy))
         }
     }
 }
@@ -65,7 +75,7 @@ internal fun BackupHomeContent(
 internal fun BackupColumn(content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-            .padding(safeBottomPaddingValues()).padding(HADimens.SPACE4),
+            .padding(safeBottomPaddingValues()).padding(vertical = HADimens.SPACE4),
         verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
         content = content,
     )
@@ -74,8 +84,14 @@ internal fun BackupColumn(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 internal fun BackupErrorContent(onRetry: () -> Unit) {
     BackupColumn {
-        Text(stringResource(R.string.backup_operation_failed), style = HATextStyle.Body, textAlign = TextAlign.Start)
-        HAFilledButton(stringResource(R.string.retry), onClick = onRetry)
+        BackupInsetContent {
+            Text(
+                stringResource(R.string.backup_operation_failed),
+                style = HATextStyle.Body,
+                textAlign = TextAlign.Start,
+            )
+            HAFilledButton(stringResource(R.string.retry), onClick = onRetry)
+        }
     }
 }
 

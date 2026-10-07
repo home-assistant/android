@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 
 @Composable
 internal fun ColumnScope.BackupRestoreSummary(summary: BackupRestoreSummaryState) {
@@ -34,7 +35,8 @@ internal fun ColumnScope.BackupRestoreSummary(summary: BackupRestoreSummaryState
     if (summary.issues.isNotEmpty()) {
         Text(
             stringResource(R.string.backup_not_restored),
-            style = HATextStyle.HeadlineMedium,
+            style = HATextStyle.BodyMedium,
+            color = LocalHAColorScheme.current.colorTextLink,
             textAlign = TextAlign.Start,
         )
         summary.issues.forEach { issue ->
