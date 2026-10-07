@@ -51,8 +51,20 @@ class ShowWebFileChooserTest {
     }
 
     @Test
-    fun `Given an unknown extension when creating intent then no MIME type filter is applied`() = runTest {
-        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*", ".unknownextension")))
+    fun `Given extensions and MIME types unknown to Android when creating intent then they are mapped to octet-stream`() = runTest {
+        val intent = createIntent(
+            FakeFileChooserParams(acceptTypes = arrayOf(".tar", ".backup", "application/integration.custom", "video/*", "text/plain")),
+        )
+
+        assertArrayEquals(
+            arrayOf("application/x-tar", "application/octet-stream", "video/*", "text/plain"),
+            intent.getStringArrayExtra(Intent.EXTRA_MIME_TYPES),
+        )
+    }
+
+    @Test
+    fun `Given entries that are neither extension nor MIME type when creating intent then no filter is applied`() = runTest {
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("png", "image")))
 
         assertFalse(intent.hasExtra(Intent.EXTRA_MIME_TYPES))
     }
