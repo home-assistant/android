@@ -36,6 +36,20 @@ class SettingsBackupCodecTest {
     )
 
     @Test
+    fun `Given a historical version one document when decoding then portable configuration remains compatible`() {
+        val document = javaClass.getResource("/backup/settings-v1.json")!!.readBytes()
+        val decoded = codec.decode(document)
+        assertEquals("ALWAYS", decoded.servers.single().persistentConnection)
+        assertEquals(false, decoded.servers.single().sensors?.get("location_background"))
+        assertEquals(listOf("cover.garage", "light.driveway"), decoded.favorites?.map { it.entityId })
+        assertEquals(
+            listOf(BackupEntityReference("server-0", "zone.home")),
+            decoded.sensorOptions?.single()?.options?.get("high_accuracy_mode_zone")?.zones,
+        )
+        assertEquals(decoded, codec.decode(codec.encode(decoded)))
+    }
+
+    @Test
     fun `Given multiple servers and disabled sensors when round tripping then all configuration and order survive`() {
         assertEquals(backup, codec.decode(codec.encode(backup)))
     }

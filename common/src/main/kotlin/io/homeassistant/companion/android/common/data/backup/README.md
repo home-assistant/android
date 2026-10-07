@@ -1,0 +1,71 @@
+# Companion settings backup, version 1
+
+The document is pretty-printed UTF-8 JSON, limited to 1 MiB. The codec is independent
+of Android's document picker so another storage destination can reuse the format.
+The entry point is available in the phone app (full and minimal flavors). Android
+Auto favorites are owned by that phone. The entry is hidden on Android Automotive
+and Meta Quest until the document-picker workflow has been verified there.
+
+Required metadata:
+
+- `format`: `home-assistant-companion-settings`
+- `schemaVersion`: `1`; unsupported versions are rejected before applying changes
+- `appVersion`: source app version, informational
+- `createdAt`: ISO-8601 UTC instant, informational
+- `servers`: document-local `reference` and display `name` for each source server
+
+Optional sections:
+
+- `favorites`: ordered `{ "server": "reference", "entityId": "domain.object" }` list
+- `servers[].sensors`: sensor ID to enabled/disabled boolean
+- `servers[].persistentConnection`: `NEVER`, `SCREEN_ON`, `ALWAYS`, or `HOME_WIFI`
+- `sensorOptions`: sensor ID and map of declared setting names to values. Each
+  option has `enabled` (visibility in sensor settings) and exactly one of `value`
+  (the existing string representation) or `zones` (portable entity references).
+- `sensorUpdateFrequency`: `NORMAL`, `FAST_WHILE_CHARGING`, or `FAST_ALWAYS`
+
+An omitted/null section leaves the destination unchanged. An explicit empty
+favorites list clears favorites for mapped servers. Missing individual settings
+are retained. The importer rejects malformed documents and unknown fields.
+
+## Restore behavior
+
+The user signs in first, maps source references to destination servers, selects
+sections, reviews the proposed changes, and confirms. A destination can be mapped
+only once. Skipped servers retain their server-specific configuration. Sensor
+options and update frequency are app-wide, so they also affect skipped servers.
+Zones with any unmapped reference are skipped as a whole rather than partially
+replacing a setting. Favorite order within the imported list is retained;
+favorites on unmapped destination servers are retained ahead of that list.
+
+Unavailable sensors, options unknown to this app, invalid option types/choices,
+and enabled sensors lacking permissions are reported and skipped. Entity IDs
+are retained without contacting the server; users must map to servers containing
+those entities. Importing the same document repeatedly does not add duplicates.
+Permission and capability checks run again immediately before applying changes.
+As in the existing update-frequency screen, changing sensor update frequency
+requires an app restart to register the fast-update receiver.
+
+Database changes use one Room transaction. Favorites use the existing preferences
+store and are compensated if that transaction fails. This is not a cross-store
+crash-atomic transaction: abrupt process termination can leave favorites applied
+alone. Reimporting the same file safely completes the restore. Lifecycle
+cancellation does not interrupt the short commit/compensation sequence.
+
+## Portability boundaries
+
+The format never contains authentication, server URLs, webhooks, push tokens,
+device registrations, cached sensor readings, or generated BLE transmitter
+identity. Only declared sensor options are exported, excluding text options
+(currently the BLE transmitter UUID/major/minor). Dynamic/runtime settings are
+excluded. Destination sensor registrations and readings are retained.
+
+Android permissions, battery exemptions, app locks, notification channels,
+home-Wi-Fi detection configuration, widgets, and Wear OS settings are not part of
+this version. The document may still contain personal entity IDs, server labels,
+app selections, Bluetooth addresses, and location preferences. It is intentionally
+unencrypted for portability and should be stored accordingly.
+
+The historical fixture in `common/src/test/resources/backup/settings-v1.json`
+pins compatibility separately from encoder/decoder round-trip tests. Future
+format changes should add explicit migrations and compatibility fixtures.

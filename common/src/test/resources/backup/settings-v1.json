@@ -1,0 +1,30 @@
+{
+    "format": "home-assistant-companion-settings",
+    "schemaVersion": 1,
+    "appVersion": "2026.10.2-full",
+    "createdAt": "2026-10-07T12:00:00Z",
+    "servers": [
+        {
+            "reference": "server-0",
+            "name": "Home",
+            "sensors": { "battery_level": true, "location_background": false },
+            "persistentConnection": "ALWAYS"
+        }
+    ],
+    "favorites": [
+        { "server": "server-0", "entityId": "cover.garage" },
+        { "server": "server-0", "entityId": "light.driveway" }
+    ],
+    "sensorOptions": [
+        {
+            "sensor": "location_background",
+            "options": {
+                "high_accuracy_mode_zone": {
+                    "zones": [ { "server": "server-0", "entityId": "zone.home" } ],
+                    "enabled": true
+                }
+            }
+        }
+    ],
+    "sensorUpdateFrequency": "FAST_WHILE_CHARGING"
+}
