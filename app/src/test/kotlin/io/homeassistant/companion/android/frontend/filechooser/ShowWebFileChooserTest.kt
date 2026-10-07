@@ -51,13 +51,13 @@ class ShowWebFileChooserTest {
     }
 
     @Test
-    fun `Given extensions and MIME types unknown to Android when creating intent then they are mapped to octet-stream`() = runTest {
+    fun `Given extensions and MIME types unknown to Android when creating intent then octet-stream is accepted and custom types kept`() = runTest {
         val intent = createIntent(
             FakeFileChooserParams(acceptTypes = arrayOf(".tar", ".backup", "application/integration.custom", "video/*", "text/plain")),
         )
 
         assertArrayEquals(
-            arrayOf("application/x-tar", "application/octet-stream", "video/*", "text/plain"),
+            arrayOf("application/x-tar", "application/octet-stream", "application/integration.custom", "video/*", "text/plain"),
             intent.getStringArrayExtra(Intent.EXTRA_MIME_TYPES),
         )
     }

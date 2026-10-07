@@ -60,16 +60,17 @@ internal class ShowWebFileChooser : ActivityResultContract<FileChooserInput, Arr
 /**
  * Converts the `accept` attribute values (MIME types or file extensions) into MIME types.
  *
- * | Entry                                            | Example              | Result              |
- * |--------------------------------------------------|----------------------|---------------------|
- * | Extension known to Android                       | `.pdf`               | `application/pdf`   |
- * | Extension unknown to Android                     | `.backup`            | [UNKNOWN_MIME_TYPE] |
- * | MIME type known to Android, or a wildcard type   | `text/plain`         | Kept                |
- * | MIME type unknown to Android                     | `application/custom` | [UNKNOWN_MIME_TYPE] |
- * | Neither (invalid per the HTML spec)              | `png`                | Ignored             |
+ * | Entry                                          | Example              | Result                        |
+ * |------------------------------------------------|----------------------|-------------------------------|
+ * | Extension known to Android                     | `.pdf`               | `application/pdf`             |
+ * | Extension unknown to Android                   | `.backup`            | [UNKNOWN_MIME_TYPE]           |
+ * | MIME type known to Android, or a wildcard type | `text/plain`         | Kept                          |
+ * | MIME type unknown to Android                   | `application/custom` | Kept, and [UNKNOWN_MIME_TYPE] |
+ * | Neither (invalid per the HTML spec)            | `png`                | Ignored                       |
  *
- * Unknown entries become [UNKNOWN_MIME_TYPE], the type document providers report for such files, so
- * third-party integrations using custom extensions or types can still pick their files.
+ * [UNKNOWN_MIME_TYPE] is what Android's local document providers report for files of a type they don't
+ * know, and custom MIME types are kept for providers reporting them, so third-party integrations using
+ * custom extensions or types can still pick their files.
  *
  * Returns `null` when the picker should not filter: nothing valid is accepted or any file type is
  * accepted.
@@ -81,17 +82,17 @@ internal suspend fun FileChooserParams.acceptedMimeTypes(
 ): List<String>? = withContext(dispatcher) {
     val entries = acceptTypes.orEmpty().map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotEmpty() }
     if (entries.isEmpty() || ANY_MIME_TYPE in entries) return@withContext null
-    entries.mapNotNull { it.toMimeType() }.distinct().takeIf { it.isNotEmpty() }
+    entries.flatMap { it.toMimeTypes() }.distinct().takeIf { it.isNotEmpty() }
 }
 
-/** Returns the MIME type for an `accept` entry, or `null` if it's neither an extension nor a MIME type. */
-private fun String.toMimeType(): String? {
+/** Returns the MIME types for an `accept` entry, none if it's neither an extension nor a MIME type. */
+private fun String.toMimeTypes(): List<String> {
     val mimeTypeMap = MimeTypeMap.getSingleton()
     return when {
         startsWith(EXTENSION_PREFIX) ->
-            mimeTypeMap.getMimeTypeFromExtension(removePrefix(EXTENSION_PREFIX)) ?: UNKNOWN_MIME_TYPE
-        !contains(MIME_TYPE_SEPARATOR) -> null
-        endsWith(WILDCARD_SUBTYPE) || mimeTypeMap.hasMimeType(this) -> this
-        else -> UNKNOWN_MIME_TYPE
+            listOf(mimeTypeMap.getMimeTypeFromExtension(removePrefix(EXTENSION_PREFIX)) ?: UNKNOWN_MIME_TYPE)
+        !contains(MIME_TYPE_SEPARATOR) -> emptyList()
+        endsWith(WILDCARD_SUBTYPE) || mimeTypeMap.hasMimeType(this) -> listOf(this)
+        else -> listOf(this, UNKNOWN_MIME_TYPE)
     }
 }
