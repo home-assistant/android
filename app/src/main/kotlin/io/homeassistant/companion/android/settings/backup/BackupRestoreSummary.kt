@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -65,17 +66,30 @@ private fun BackupSummaryRow(row: BackupSummaryRow) {
     ) {
         Row(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            BackupPreferenceIcon(row.section.icon)
             Text(
                 stringResource(row.section.label),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).padding(end = HADimens.SPACE4),
                 style = HATextStyle.Body,
+                color = LocalHAColorScheme.current.colorTextPrimary,
                 textAlign = TextAlign.Start,
             )
-            Text(value, modifier = Modifier.weight(1f), style = HATextStyle.Body, textAlign = TextAlign.End)
+            Text(
+                value,
+                modifier = if (row.value is BackupSummaryValue.Frequency) Modifier.weight(1f) else Modifier,
+                style = HATextStyle.Body,
+                textAlign = TextAlign.End,
+            )
         }
-        row.note?.let { Text(stringResource(it), style = HATextStyle.BodyMedium, textAlign = TextAlign.Start) }
+        row.note?.let {
+            Text(
+                stringResource(it),
+                modifier = Modifier.padding(start = HADimens.SPACE14),
+                style = HATextStyle.BodyMedium,
+                textAlign = TextAlign.Start,
+            )
+        }
     }
 }

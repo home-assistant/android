@@ -62,14 +62,7 @@ internal fun BackupPreferenceRow(
         modifier.fillMaxWidth().heightIn(min = HADimens.SPACE18).padding(vertical = HADimens.SPACE2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.width(HADimens.SPACE14)) {
-            Icon(
-                painterResource(icon),
-                contentDescription = null,
-                tint = LocalHAColorScheme.current.colorTextLink,
-                modifier = Modifier.size(HADimens.SPACE6),
-            )
-        }
+        BackupPreferenceIcon(icon)
         Column(Modifier.weight(1f).padding(end = HADimens.SPACE2)) {
             Text(
                 title,
@@ -80,5 +73,17 @@ internal fun BackupPreferenceRow(
             description?.let { Text(it, style = HATextStyle.BodyMedium, textAlign = TextAlign.Start) }
         }
         trailingContent()
+    }
+}
+
+@Composable
+internal fun BackupPreferenceIcon(@DrawableRes icon: Int) {
+    Box(Modifier.width(HADimens.SPACE14)) {
+        Icon(
+            painterResource(icon),
+            contentDescription = null,
+            tint = LocalHAColorScheme.current.colorTextLink,
+            modifier = Modifier.size(HADimens.SPACE6),
+        )
     }
 }
