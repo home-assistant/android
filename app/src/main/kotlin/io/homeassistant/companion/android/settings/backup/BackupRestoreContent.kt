@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 internal fun BackupRestoreContent(
     state: SettingsBackupUiState.Content?,
     onSelect: (BackupSection, Boolean) -> Unit,
-    onMapServer: (String, Int?) -> Unit,
+    onMapServer: (String, BackupServerTarget) -> Unit,
     onReview: () -> Unit,
     onRestore: () -> Unit,
     onCancel: () -> Unit,
@@ -55,30 +55,33 @@ internal fun BackupRestoreContent(
 private fun BackupRestoreSelection(
     state: SettingsBackupUiState.Content,
     onSelect: (BackupSection, Boolean) -> Unit,
-    onMapServer: (String, Int?) -> Unit,
+    onMapServer: (String, BackupServerTarget) -> Unit,
 ) {
     val restore = state.restore ?: return
     val skip = stringResource(R.string.backup_skip_server)
-    val destinations = remember(state.servers, skip) {
-        listOf(HADropdownItem<Int?>(null, skip)) + state.servers.map { HADropdownItem<Int?>(it.id, it.name) }
+    val choose = stringResource(R.string.backup_choose_server)
+    val destinations = remember(state.servers, skip, choose) {
+        listOf(HADropdownItem<BackupServerTarget>(BackupServerTarget.Unselected, choose)) +
+            state.servers.map { HADropdownItem<BackupServerTarget>(BackupServerTarget.Server(it.id), it.name) } +
+            HADropdownItem<BackupServerTarget>(BackupServerTarget.Skip, skip)
     }
     Text(
         stringResource(R.string.backup_source, restore.backup.appVersion, restore.backup.createdAt.toString()),
         style = HATextStyle.Body,
     )
     HAHint(stringResource(R.string.backup_restore_description))
-    restore.backup.servers.forEach { server ->
+    state.restoreServers?.rows.orEmpty().forEach { server ->
         HADropdownMenu(
             items = destinations,
-            selectedKey = restore.mapping[server.reference],
+            selectedKey = server.target,
             onItemSelected = { onMapServer(server.reference, it) },
             label = server.name,
-            placeholder = skip,
+            placeholder = choose,
             enabled = !state.busy,
             modifier = Modifier.fillMaxWidth(),
         )
     }
-    if (!state.mappingValid) HAHint(stringResource(R.string.backup_duplicate_destination))
+    state.restoreServers?.problem?.let { HAHint(stringResource(it)) }
     BackupSectionChoices(state.sectionRows, enabled = !state.busy, onSelect)
 }
 

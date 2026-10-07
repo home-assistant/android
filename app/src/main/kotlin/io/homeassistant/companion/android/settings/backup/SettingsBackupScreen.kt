@@ -87,7 +87,7 @@ internal fun BackupNavigation(
     onSelect: (BackupSection, Boolean) -> Unit,
     onExport: () -> Unit,
     onImport: () -> Unit,
-    onMapServer: (String, Int?) -> Unit,
+    onMapServer: (String, BackupServerTarget) -> Unit,
     onReview: () -> Unit,
     onRestore: () -> Unit,
     onCancel: () -> Unit,

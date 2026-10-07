@@ -30,13 +30,17 @@ are retained. The importer rejects malformed documents and unknown fields.
 
 ## Restore behavior
 
-The user signs in first, maps source references to destination servers, selects
-sections, reviews the proposed changes, and confirms. A destination can be mapped
-only once. Skipped servers retain their server-specific configuration. Sensor
+The user signs in first, selects sections, assigns source references to destination
+servers, reviews the proposed changes, and confirms. Destination questions start
+unanswered, not skipped. Each relevant source needs a destination or an explicit
+skip, and at least one destination is required for selected server-specific settings.
+A destination can be mapped only once. Skipped servers retain their server-specific configuration. Sensor
 options and update frequency are app-wide, so they also affect skipped servers.
 Zones with any unmapped reference are skipped as a whole rather than partially
 replacing a setting. Favorite order within the imported list is retained;
-favorites on unmapped destination servers are retained ahead of that list.
+favorites on unmapped destination servers are retained ahead of that list. Version
+1's `favorites` section is exclusively Android Auto favorites; any future favorite
+types must have their own sections rather than reinterpreting existing backups.
 
 Unavailable sensors, options unknown to this app, invalid option types/choices,
 and enabled sensors lacking permissions are reported and skipped. Entity IDs

@@ -55,7 +55,7 @@ internal class SettingsBackupViewModel @Inject constructor(
         val state = _uiState.value as? SettingsBackupUiState.Content ?: return
         if (state.busy) return
         val sections = when (section) {
-            BackupSection.Favorites -> state.sections.copy(favorites = selected)
+            BackupSection.AndroidAutoFavorites -> state.sections.copy(favorites = selected)
             BackupSection.Sensors -> state.sections.copy(sensors = selected)
             BackupSection.SensorOptions -> state.sections.copy(sensorOptions = selected)
             BackupSection.Connection -> state.sections.copy(connection = selected)
@@ -86,30 +86,24 @@ internal class SettingsBackupViewModel @Inject constructor(
         eventChannel.send(BackupEvent.ShowRestore)
     }
 
-    fun mapServer(reference: String, destination: Int?) {
+    fun mapServer(reference: String, destination: BackupServerTarget) {
         val state = _uiState.value as? SettingsBackupUiState.Content ?: return
         val restore = state.restore?.takeUnless { state.busy } ?: return
-        val mapping = if (destination ==
-            null
-        ) {
-            restore.mapping - reference
-        } else {
-            restore.mapping + (reference to destination)
-        }
-        _uiState.value = state.copy(restore = restore.copy(mapping = mapping, plan = null))
+        _uiState.value =
+            state.copy(restore = restore.copy(targets = restore.targets + (reference to destination), plan = null))
     }
 
     fun review() = perform { state ->
         val restore = state.restore?.takeIf { state.canReview } ?: return@perform
-        val plan = handler.prepare(restore.backup.select(state.sections), restore.mapping)
+        val plan = handler.prepare(restore.backup.select(state.sections), state.restoreServers?.mapping.orEmpty())
         _uiState.value = state.copy(restore = restore.copy(plan = plan), busy = true)
     }
 
     fun restore() = perform { state ->
-        val restore = state.restore ?: return@perform
+        val restore = state.restore?.takeIf { state.canReview } ?: return@perform
         val plan = restore.plan ?: return@perform
         if (plan.changeCount == 0) return@perform
-        handler.restore(restore.backup.select(state.sections), restore.mapping, plan)
+        handler.restore(restore.backup.select(state.sections), state.restoreServers?.mapping.orEmpty(), plan)
         // Consume the plan before starting services: a refresh error must never invite a second apply.
         _uiState.value =
             state.copy(restore = null, lastRestore = plan, sectionRows = sectionSelections(state.sections), busy = true)

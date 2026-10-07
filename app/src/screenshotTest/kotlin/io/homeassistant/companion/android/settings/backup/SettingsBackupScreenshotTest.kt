@@ -37,7 +37,7 @@ class SettingsBackupScreenshotTest {
             BackupRestoreContent(
                 SettingsBackupUiState.Content(
                     listOf(BackupDestination(42, "Home server"), BackupDestination(99, "Cabin server")),
-                    restore = RestoreDraft(backup, mapOf("home" to 42)),
+                    restore = RestoreDraft(backup, mapOf("home" to BackupServerTarget.Server(42))),
                 ),
                 { _, _ -> },
                 { _, _ -> },

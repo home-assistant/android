@@ -4,13 +4,20 @@ import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.backup.BackupSections
 import io.homeassistant.companion.android.common.data.backup.SettingsBackupData
+import io.homeassistant.companion.android.common.data.backup.select
 
-internal sealed class BackupSection(@StringRes val label: Int) {
-    data object Favorites : BackupSection(R.string.backup_section_favorites)
-    data object Sensors : BackupSection(R.string.backup_section_sensors)
-    data object SensorOptions : BackupSection(R.string.backup_section_sensor_options)
-    data object Connection : BackupSection(R.string.backup_section_connection)
-    data object Frequency : BackupSection(R.string.sensor_update_frequency)
+internal sealed class BackupSection(@StringRes val label: Int, @StringRes val description: Int) {
+    data object AndroidAutoFavorites : BackupSection(
+        R.string.backup_section_favorites,
+        R.string.backup_favorites_description,
+    )
+    data object Sensors : BackupSection(R.string.backup_section_sensors, R.string.backup_sensors_description)
+    data object SensorOptions : BackupSection(
+        R.string.backup_section_sensor_options,
+        R.string.backup_sensor_options_description,
+    )
+    data object Connection : BackupSection(R.string.backup_section_connection, R.string.backup_connection_description)
+    data object Frequency : BackupSection(R.string.sensor_update_frequency, R.string.backup_frequency_description)
 }
 
 internal data class BackupSectionSelection(
@@ -21,7 +28,7 @@ internal data class BackupSectionSelection(
 
 internal data class RestoreDraft(
     val backup: SettingsBackupData,
-    val mapping: Map<String, Int> = emptyMap(),
+    val targets: Map<String, BackupServerTarget> = emptyMap(),
     val plan: SettingsRestorePlan? = null,
 )
 
@@ -36,8 +43,11 @@ internal sealed interface SettingsBackupUiState {
         val lastRestore: SettingsRestorePlan? = null,
         val busy: Boolean = false,
     ) : SettingsBackupUiState {
-        val mappingValid: Boolean = restore?.mapping?.values?.let { it.distinct().size == it.size } != false
-        val canReview: Boolean = !busy && mappingValid && sectionRows.any { it.available && it.selected }
+        val restoreServers: BackupServerSelections? = restore?.let {
+            backupServerSelections(it.backup.select(sections), it.targets, servers)
+        }
+        val canReview: Boolean =
+            !busy && restoreServers?.problem == null && sectionRows.any { it.available && it.selected }
     }
 }
 
@@ -48,7 +58,11 @@ internal sealed interface BackupEvent {
 }
 
 internal fun sectionSelections(sections: BackupSections, backup: SettingsBackupData? = null) = listOf(
-    BackupSectionSelection(BackupSection.Favorites, sections.favorites, backup == null || backup.favorites != null),
+    BackupSectionSelection(
+        BackupSection.AndroidAutoFavorites,
+        sections.favorites,
+        backup == null || backup.favorites != null,
+    ),
     BackupSectionSelection(
         BackupSection.Sensors,
         sections.sensors,

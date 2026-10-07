@@ -57,22 +57,26 @@ class SettingsBackupScreenTest {
         }
         compose.onNodeWithText(compose.stringResource(R.string.backup_export)).performScrollTo().assertIsNotEnabled()
         compose.onNodeWithText(compose.stringResource(R.string.backup_section_favorites)).performScrollTo().performClick()
-        assertEquals(BackupSection.Favorites, selected)
+        assertEquals(BackupSection.AndroidAutoFavorites, selected)
     }
 
     @Test
     fun `Given a restore draft when mapping and reviewing then callbacks fire and applying requires a preview`() {
-        var mapping: Pair<String, Int?>? = null
+        var mapping: Pair<String, BackupServerTarget>? = null
         var reviewed = false
-        val state = SettingsBackupUiState.Content(listOf(BackupDestination(42, "Destination")), restore = RestoreDraft(backupFixture()))
+        var state by mutableStateOf(SettingsBackupUiState.Content(listOf(BackupDestination(42, "Destination")), restore = RestoreDraft(backupFixture())))
         compose.setContent {
             HATheme {
-                BackupRestoreContent(state, { _, _ -> }, { reference, id -> mapping = reference to id }, { reviewed = true }, {}, {})
+                BackupRestoreContent(state, { _, _ -> }, { reference, target ->
+                    mapping = reference to target
+                    state = state.copy(restore = state.restore?.copy(targets = mapOf(reference to target)))
+                }, { reviewed = true }, {}, {})
             }
         }
-        compose.onNodeWithText(compose.stringResource(R.string.backup_skip_server)).performClick()
+        compose.onNode(hasText(compose.stringResource(R.string.backup_review)) and hasClickAction()).performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText(compose.stringResource(R.string.backup_choose_server)).performScrollTo().performClick()
         compose.onNodeWithText("Destination").performClick()
-        assertEquals("home" to 42, mapping)
+        assertEquals("home" to BackupServerTarget.Server(42), mapping)
         compose.onNode(hasText(compose.stringResource(R.string.backup_review)) and hasClickAction()).performScrollTo().performClick()
         assertTrue(reviewed)
         compose.onNodeWithText(compose.stringResource(R.string.backup_apply)).assertDoesNotExist()

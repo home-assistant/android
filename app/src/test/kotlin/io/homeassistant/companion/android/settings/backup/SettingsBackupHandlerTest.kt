@@ -70,8 +70,10 @@ class SettingsBackupHandlerTest {
     @Test
     fun `Given other server favorites when repeatedly restoring then order is retained without duplicates`() = runTest {
         val backup = backupFixture().copy(sensorOptions = null)
-        repeat(2) {
+        repeat(3) { iteration ->
+            if (iteration == 1) favorites = favorites.filterNot { it.serverId == 42 }
             handler.restore(backup, mapOf("home" to 42), handler.prepare(backup, mapOf("home" to 42)))
+            assertEquals(listOf(AutoFavorite(99, "light.office"), AutoFavorite(42, "cover.garage"), AutoFavorite(42, "light.driveway")), favorites)
         }
         assertEquals(listOf(AutoFavorite(99, "light.office"), AutoFavorite(42, "cover.garage"), AutoFavorite(42, "light.driveway")), favorites)
     }
