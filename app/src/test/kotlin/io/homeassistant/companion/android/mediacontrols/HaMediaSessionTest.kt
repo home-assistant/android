@@ -116,11 +116,7 @@ class HaMediaSessionTest {
 
     /**
      * Drains the Robolectric main looper so that `player.updateState` calls dispatched via
-     * `withContext(Dispatchers.Main)` take effect.
-     *
-     * `testScope` uses [UnconfinedTestDispatcher], so coroutines run eagerly on the calling
-     * thread until they reach a `withContext(Dispatchers.Main)` suspension point. A single
-     * `idle()` is enough to flush those pending main-looper tasks and resume the coroutine.
+     * `withContext(Dispatchers.Main)` take effect before assertions.
      */
     private fun idleMainLooper() {
         shadowOf(Looper.getMainLooper()).idle()
@@ -182,12 +178,6 @@ class HaMediaSessionTest {
         job.cancel()
     }
 
-    /**
-     * Verifies that when `observeEntityState` emits a paused state, the player transitions
-     * to STATE_READY with `playWhenReady = false`.
-     *
-     * Uses `replay=1` so the emission is cached and replayed to the late collector.
-     */
     @Test
     fun `Given observeEntityState emits paused state when startObservingState then player is ready and not playing`() {
         val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
@@ -208,11 +198,6 @@ class HaMediaSessionTest {
         job.cancel()
     }
 
-    /**
-     * Verifies that when `observeEntityState` flow completes naturally (e.g. WebSocket subscription
-     * ended), `observe()` returns normally and tears down the session. `mediaSession` becomes null
-     * and `buildNotification()` returns null, preventing a stale notification from remaining.
-     */
     @Test
     fun `Given observeEntityState flow completes when startObservingState then session is torn down`() {
         every { entitiesForDisplayManager.observe(SERVER_ID, listOf(config.entityId)) } returns flowOf(
@@ -232,12 +217,6 @@ class HaMediaSessionTest {
 
     // -- Artwork caching tests --
 
-    /**
-     * Verifies that when the emitted state has a null artwork URL, the player's media metadata
-     * contains no artwork bytes.
-     *
-     * Uses `replay=1` so the emission is available immediately when the collector starts.
-     */
     @Test
     fun `Given state with null artwork URL when startObservingState then player artwork is null`() {
         val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
@@ -257,13 +236,6 @@ class HaMediaSessionTest {
         job.cancel()
     }
 
-    /**
-     * Verifies that when a second state emission arrives with a null artwork URL, the player
-     * state still updates — the second state's title is applied and artwork stays null.
-     *
-     * Uses `replay=1` for reliable delivery to the collector. The second emission is made after
-     * the first is confirmed to be processed.
-     */
     @Test
     fun `Given two consecutive states both with null artwork URL when startObservingState then title updates and artwork stays null`() {
         val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
@@ -289,14 +261,6 @@ class HaMediaSessionTest {
 
     // -- callMediaAction tests --
 
-    /**
-     * Verifies that triggering play on the media session player causes `callMediaAction` to
-     * dispatch a `media_play` action to the integration repository for the configured entity.
-     *
-     * Uses `replay=1` so the paused state is reliably received by the collector before
-     * `player.play()` is invoked. `callMediaAction` launches on [UnconfinedTestDispatcher] and
-     * runs eagerly inside the main looper drain, so no additional wait is required.
-     */
     @Test
     fun `Given paused player when play requested then media_play action is called`() {
         val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
@@ -328,12 +292,6 @@ class HaMediaSessionTest {
         job.cancel()
     }
 
-    /**
-     * Verifies that triggering pause dispatches a `media_pause` action to the integration
-     * repository.
-     *
-     * Uses `replay=1` so the playing state is reliably received before `player.pause()` is called.
-     */
     @Test
     fun `Given playing player when pause requested then media_pause action is called`() {
         val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)
@@ -363,14 +321,6 @@ class HaMediaSessionTest {
         job.cancel()
     }
 
-    /**
-     * Verifies that a failed action does not leave the player showing it as if it had succeeded.
-     *
-     * Media3 holds the optimistic placeholder state until the command future completes, and a
-     * failed action changes nothing on the server, so no state update arrives to complete it.
-     * `callMediaAction` therefore rethrows, which fails the future and makes Media3 re-read the
-     * real state.
-     */
     @Test
     fun `Given callAction throws when play requested then the player reverts to the real state`() {
         val stateFlow = MutableSharedFlow<EntityDisplayState<EntityDisplayWithoutContext>>(replay = 1)

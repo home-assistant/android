@@ -109,7 +109,7 @@ internal class HaRemoteMediaPlayer(
 
     /**
      * The pending future from the most recent [handleCommand] call, if any. Completed by
-     * [updateState] when the server confirms the new state via WebSocket. Exposed for testing only.
+     * [updateState] when the server confirms the new state via WebSocket.
      */
     @VisibleForTesting
     internal var pendingCommandFuture: SettableFuture<Unit>? = null
@@ -119,7 +119,7 @@ internal class HaRemoteMediaPlayer(
      * Completes any in-flight [pendingCommandFuture] so SimpleBasePlayer calls [getState] with
      * the fresh data rather than the stale pre-command state.
      * Must be called on the looper thread passed to the constructor.
-     * @param artworkBytes Pre-compressed JPEG bytes for album art (compress off main thread).
+     * @param artworkBytes Pre-compressed JPEG bytes for album art
      */
     @MainThread
     fun updateState(state: EntityDisplayWithoutContext?, artworkBytes: ByteArray?) {
@@ -226,13 +226,7 @@ internal class HaRemoteMediaPlayer(
     /**
      * Returns the estimated current playback position.
      *
-     * The anchor comes from the server: Home Assistant reports where the media was at
-     * `media_position_updated_at` rather than sending the position continuously, so a running
-     * progress bar advances from that timestamp. A volume-only delta carries the same pair and
-     * therefore resolves to the same position, without needing to detect it.
-     *
-     * This matches how the frontend renders progress, including its exposure to phone-versus-server
-     * clock skew, which the duration bound below keeps harmless.
+     * This matches how the frontend calculates progress.
      */
     private fun computeCurrentPosition(playback: MediaPlayback?): Duration {
         val anchor = playback?.position ?: Duration.ZERO
@@ -250,7 +244,7 @@ internal class HaRemoteMediaPlayer(
      * Executes [block] to launch a command coroutine and returns a [ListenableFuture] that stays
      * pending until [updateState] is called with the server-confirmed state. This prevents
      * [SimpleBasePlayer] from calling [getState] with the stale pre-command [mediaState] during
-     * the window between the HTTP response and the WebSocket confirmation, which would cause a
+     * the window between sending the command and the entity updating, which would cause a
      * visible seek-bar regression.
      *
      * Any previously in-flight future is completed immediately to avoid leaking pending operations
@@ -364,14 +358,7 @@ private fun MediaPlaybackState?.toMedia3PlaybackState(): Int = when (this) {
     is MediaPlaybackState.Off, null -> STATE_IDLE
 }
 
-/**
- * Whether Media3 should consider the player as playing or about to play.
- *
- * Buffering is playback intent, not a pause: the entity is loading in order to play, so only
- * STATE_BUFFERING from [toMedia3PlaybackState] says it is not audible yet. Reporting it as not
- * play-when-ready would make Media3 offer Play instead of Pause (see Util.shouldShowPlayButton)
- * and would let onTaskRemoved stop the service mid-buffer, since HaMediaSession.isPlaying reads this.
- */
+/** Whether Media3 should consider the player as playing or about to play.  */
 private fun MediaPlaybackState?.isPlayWhenReady(): Boolean =
     this is MediaPlaybackState.Playing || this is MediaPlaybackState.Buffering
 

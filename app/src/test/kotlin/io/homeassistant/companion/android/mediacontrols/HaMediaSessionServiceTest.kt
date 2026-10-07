@@ -55,13 +55,6 @@ private val sessionCounter = AtomicInteger(0)
  * [observationScope] (backed by [UnconfinedTestDispatcher]) is passed directly to the
  * [HaMediaSessionService] constructor before observation starts, so that flow collection and
  * session coroutines run eagerly and synchronously on the test dispatcher.
- *
- * Each test pre-populates [configuredEntitiesFlow] (replay=1) before starting observation, so
- * the subscriber receives the value immediately upon subscribing. Subsequent emissions are
- * delivered to the active subscriber.
- *
- * Main-looper tasks (such as [HaRemoteMediaPlayer.updateState] dispatched by [HaMediaSession])
- * are flushed with [idleMainLooper].
  */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 @RunWith(RobolectricTestRunner::class)
@@ -74,7 +67,6 @@ class HaMediaSessionServiceTest {
     private val haMediaSessionFactory: HaMediaSession.Factory = mockk()
     private val fakeClock = FakeClock()
 
-    // replay=1 ensures tryEmit always succeeds and the value is available to new subscribers.
     private lateinit var configuredEntitiesFlow: MutableSharedFlow<List<MediaControlsEntityConfig>>
 
     // A non-completing SharedFlow: the observation suspends indefinitely by default so that
@@ -93,8 +85,6 @@ class HaMediaSessionServiceTest {
         every { mediaControlsRepository.observeEntities() } returns configuredEntitiesFlow
         every { entitiesForDisplayManager.observe(any(), any()) } returns entityStateFlow
 
-        // Each session is created without a scope — HaMediaSession.observe() derives its scope
-        // from the coroutine that calls it (observationScope with UnconfinedTestDispatcher).
         every { haMediaSessionFactory.create(any()) } answers {
             HaMediaSession(
                 context = ApplicationProvider.getApplicationContext(),
@@ -144,9 +134,6 @@ class HaMediaSessionServiceTest {
      * Drains the Robolectric main looper so that tasks posted via [withContext(Dispatchers.Main)]
      * from within [HaMediaSession] (e.g. [HaRemoteMediaPlayer.updateState] dispatched by
      * [HaMediaSession.startObservingState]) take effect before assertions.
-     *
-     * Robolectric's [shadowOf(Looper.getMainLooper()).idle()] processes nested posts too, so a
-     * single call is sufficient even when multiple tasks are queued in sequence.
      */
     private fun idleMainLooper() {
         shadowOf(Looper.getMainLooper()).idle()
@@ -268,9 +255,6 @@ class HaMediaSessionServiceTest {
 
         configuredEntitiesFlow.tryEmit(listOf(config))
         startObserving()
-        // idleMainLooper processes both reconcileSessions (from the entities flow) and
-        // player.updateState (posted back to Main by startObservingState).
-        // Robolectric's idle() drains all queued and nested tasks.
         idleMainLooper()
 
         service.onTaskRemoved(rootIntent = null)

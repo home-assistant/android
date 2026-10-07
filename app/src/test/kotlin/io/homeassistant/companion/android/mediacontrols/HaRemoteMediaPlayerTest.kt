@@ -114,7 +114,7 @@ class HaRemoteMediaPlayerTest {
     // -- getState tests --
 
     @Test
-    fun `Given null state when getState then return idle state`() {
+    fun `Given null state when getState then has STATE_IDLE`() {
         player.updateState(state = null, artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -123,7 +123,7 @@ class HaRemoteMediaPlayerTest {
     }
 
     @Test
-    fun `Given playing state when getState then return ready with playWhenReady true`() {
+    fun `Given playing state when getState then has STATE_READY with playWhenReady true`() {
         player.updateState(state = createState(playbackState = MediaPlaybackState.Playing), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -132,7 +132,7 @@ class HaRemoteMediaPlayerTest {
     }
 
     @Test
-    fun `Given paused state when getState then return ready with playWhenReady false`() {
+    fun `Given paused state when getState then has STATE_READY with playWhenReady false`() {
         player.updateState(state = createState(playbackState = MediaPlaybackState.Paused), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -141,20 +141,18 @@ class HaRemoteMediaPlayerTest {
     }
 
     @Test
-    fun `Given buffering state when getState then return buffering while still intending to play`() {
+    fun `Given buffering state when getState then has STATE_BUFFERING with playWhenReady true`() {
         player.updateState(state = createState(playbackState = MediaPlaybackState.Buffering), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
         assertEquals(Player.STATE_BUFFERING, player.playbackState)
-        // Buffering is on the way to playing, so the shade keeps offering Pause and the service
-        // does not treat the session as stopped
         assertTrue(player.playWhenReady)
         // Media3 still reports it as not playing, since nothing is audible yet
         assertFalse(player.isPlaying)
     }
 
     @Test
-    fun `Given idle state when getState then return ended`() {
+    fun `Given idle state when getState then has STATE_ENDED`() {
         player.updateState(state = createState(playbackState = MediaPlaybackState.Idle), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 
@@ -162,7 +160,7 @@ class HaRemoteMediaPlayerTest {
     }
 
     @Test
-    fun `Given off state when getState then return idle`() {
+    fun `Given off state when getState then has STATE_IDLE`() {
         player.updateState(state = createState(playbackState = MediaPlaybackState.Off), artworkBytes = null)
         shadowOf(Looper.getMainLooper()).idle()
 

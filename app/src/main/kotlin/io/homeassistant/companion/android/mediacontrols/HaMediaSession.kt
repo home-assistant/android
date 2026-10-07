@@ -418,7 +418,7 @@ class HaMediaSession @AssistedInject constructor(
             // Rethrow so the command Job fails: HaRemoteMediaPlayer fails the pending Media3
             // future on it, which drops the optimistic placeholder state and re-reads the real
             // one. Swallowing here would leave the future pending, since a failed action changes
-            // nothing on the server and so produces no state update to complete it, and the shade
+            // nothing on the server and so produces no state update to complete it, and the notification
             // would keep showing the action as if it had succeeded. The command scope logs it.
             throw IllegalStateException("Failed to call media action $action on ${config.entityId}", e)
         }
@@ -446,19 +446,8 @@ class HaMediaSession @AssistedInject constructor(
     }
 
     /**
-     * Loads album art bounded to [MAX_ARTWORK_SIZE] and returns JPEG-compressed bytes for media
+     * Loads and resizes album art, returning a pair with JPEG-compressed bytes for media
      * metadata alongside a notification-icon-sized bitmap for [setLargeIcon][android.app.Notification.Builder.setLargeIcon].
-     *
-     * The bound matters because the source art is arbitrarily large: without it every configured
-     * entity retains a native-resolution JPEG and bitmap for the lifetime of its session, and the
-     * full resolution is compressed only to be thrown away for a notification-icon-sized bitmap.
-     *
-     * It also bounds what leaves the process. Media3 neither paginates nor resizes
-     * [androidx.media3.common.MediaMetadata.artworkData]: it could throw `TransactionTooLargeException` if
-     * the buffer is too big.
-     *
-     * Both outputs derive from that one bitmap, scaled with [scaleDownIfNecessary] here on IO
-     * rather than during notification rendering.
      */
     private suspend fun loadArtworkData(url: String): Pair<ByteArray, Bitmap>? = withContext(Dispatchers.IO) {
         try {
@@ -514,7 +503,9 @@ class HaMediaSession @AssistedInject constructor(
     /**
      * Mirrors AOSP's `Icon.scaleDownIfNecessary`: proportionally scales [bitmap] to fit within
      * [maxWidth] × [maxHeight], preserving aspect ratio. Returns [bitmap] unchanged if it already
-     * fits. Run on IO to avoid the StrictMode CustomViolation triggered on API 36+ when the
+     * fits.
+     * 
+     * Run on IO to avoid the StrictMode CustomViolation triggered on API 36+ when the
      * framework calls the same method on the main thread during notification rendering.
      */
     private fun scaleDownIfNecessary(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {

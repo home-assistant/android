@@ -343,7 +343,7 @@ class MediaControlsSettingsViewModelTest {
         }
 
         @Test
-        fun `Given one entity when removeEntity called then repository cleared and no event emitted`() = runTest(testDispatcher) {
+        fun `Given one entity when removeEntity called then repository cleared and no start event emitted`() = runTest(testDispatcher) {
             viewModel = createViewModel()
             advanceUntilIdle()
             viewModel.addEntity("media_player.tv")

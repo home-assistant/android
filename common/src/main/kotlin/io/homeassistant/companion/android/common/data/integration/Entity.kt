@@ -482,7 +482,6 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
-    const val ALARM_CONTROL_PANEL_SUPPORT_ARM_AWAY = 2
     const val MEDIA_PLAYER_SUPPORT_PAUSE = 1
     const val MEDIA_PLAYER_SUPPORT_SEEK = 2
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4

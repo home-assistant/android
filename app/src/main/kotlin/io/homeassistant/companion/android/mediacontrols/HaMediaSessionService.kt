@@ -96,8 +96,7 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
      * so each entity appears as its own card in the media controls carousel.
      *
      * POST_NOTIFICATIONS is not required for notifications linked to an active MediaSession
-     * (MediaStyle notifications). This is a platform-level guarantee on API 33+; on API < 33
-     * the permission does not exist at all.
+     * (MediaStyle notifications).
      */
     @SuppressLint("MissingPermission")
     @OptIn(UnstableApi::class)
@@ -116,26 +115,16 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
 
         val notification = haSession.buildNotification() ?: return
         if (foregroundNotificationId == null && startInForegroundRequired) {
-            // Service is not yet in the foreground and playback requires it — start foreground
-            // with this session's notification. All subsequent sessions (and updates to this one)
-            // go through notificationManager.notify() to avoid replacing the foreground
-            // notification ID, which would dismiss the previously-shown notification on Android 13+.
             try {
                 startForeground(notificationId, notification)
                 foregroundNotificationId = notificationId
             } catch (e: IllegalStateException) {
-                // Android 12+ refuses a foreground start from the background with a
-                // ForegroundServiceStartNotAllowedException. State updates arrive over the
-                // websocket while the app is backgrounded, so this is a normal outcome rather
-                // than a failure: show the notification anyway and retry the promotion on the
-                // next update, since foregroundNotificationId stays null.
+                // Foreground start may return ForegroundServiceStartNotAllowedException.
+                // Show the notification anyway and retry the promotion on the next update.
                 Timber.d(e, "Not allowed to start in foreground, posting the notification instead")
                 notificationManager.notify(notificationId, notification)
             }
         } else {
-            // Service is already in the foreground (or foreground not yet required).
-            // notificationManager.notify() works for both regular notifications and for updating
-            // the foreground notification in-place when the ID matches.
             notificationManager.notify(notificationId, notification)
         }
     }
@@ -206,8 +195,8 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
     /**
      * Cancels the notification for a session, unregisters it from the service, and joins the
      * observation coroutine so all Media3 resources are released before returning.
-     * Must be called from the Main thread.
      */
+     @MainThread
     private suspend fun tearDownSession(key: String, pair: Pair<HaMediaSession, Job>) {
         val (haSession, job) = pair
         val notificationId = key.hashCode()
@@ -229,12 +218,8 @@ class HaMediaSessionService @VisibleForTesting constructor(private val serviceSc
             session.observe { mediaSession ->
                 withContext(Dispatchers.Main) { addSession(mediaSession) }
             }
-            // observe() returned normally (the entity state flow completed rather than suspending
-            // indefinitely). The finally block in observe() has already released Media3 resources.
-            // Remove the stale map entry so a subsequent reconcileSessions emission can restart
-            // the session if the entity is still configured. This path is not taken on cancellation
-            // (tearDownSession calls job.cancelAndJoin()), because CancellationException propagates
-            // past the line above and skips this cleanup.
+            // Session ended normally. Remove the stale map entry so a subsequent 
+            // reconcileSessions emission can restart the session if the entity is still configured.
             withContext(Dispatchers.Main) {
                 activeSessions.remove(key)
                 Timber.d("Session $key observation ended normally, removed stale entry")
