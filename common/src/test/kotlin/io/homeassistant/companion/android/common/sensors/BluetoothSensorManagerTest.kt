@@ -1,40 +1,53 @@
 package io.homeassistant.companion.android.common.sensors
 
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import dagger.Lazy
+import io.homeassistant.companion.android.common.bluetooth.ble.MonitoringManager
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.verify
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 
 private const val ANDROID_12_SDK = 31
 
 class BluetoothSensorManagerTest {
 
+    private val scope = TestScope()
     private val context = mockk<Context>(relaxed = true) {
         every { checkPermission(any(), any(), any()) } returns PackageManager.PERMISSION_DENIED
     }
     private val sensorRepository = mockk<SensorRepository>(relaxed = true)
+    private val monitoringManager = spyk(MonitoringManager())
     private val manager = BluetoothSensorManager(
         context,
         sensorRepository,
         mockk<ServerManager>(relaxed = true),
         mockk<Lazy<SensorUpdater>>(relaxed = true),
+        monitoringManager,
+        scope,
     )
 
     @Test
-    fun `Given no Bluetooth UUID when updating twice then generated UUID is persisted once and reused`() = runTest {
+    fun `Given no Bluetooth UUID when updating twice then generated UUID is persisted once and reused`() = scope.runTest {
         SdkVersion.sdkInt = ANDROID_12_SDK
         var persistedUuid = ""
         coEvery { sensorRepository.getSettings(BluetoothSensorManager.bleTransmitter.id) } answers {
@@ -78,7 +91,7 @@ class BluetoothSensorManagerTest {
     }
 
     @Test
-    fun `Given a stored number when reading it as a number then returns the stored value`() = runTest {
+    fun `Given a stored number when reading it as a number then returns the stored value`() = scope.runTest {
         storedSetting(BluetoothSensorManager.SETTING_BLE_MEASURED_POWER, "-70")
 
         assertEquals(
@@ -91,7 +104,7 @@ class BluetoothSensorManagerTest {
     }
 
     @Test
-    fun `Given an unparsable number when reading it as a number then returns the declared default`() = runTest {
+    fun `Given an unparsable number when reading it as a number then returns the declared default`() = scope.runTest {
         storedSetting(BluetoothSensorManager.SETTING_BLE_MEASURED_POWER, "")
 
         assertEquals(
@@ -104,7 +117,7 @@ class BluetoothSensorManagerTest {
     }
 
     @Test
-    fun `Given a toggle setting when reading it as a number then fails fast`() = runTest {
+    fun `Given a toggle setting when reading it as a number then fails fast`() = scope.runTest {
         var throwableCaptured: Throwable? = null
         FailFast.setHandler { throwable, _ -> throwableCaptured = throwable }
         storedSetting(BluetoothSensorManager.SETTING_BLE_HOME_WIFI_ONLY, "true")
@@ -126,6 +139,68 @@ class BluetoothSensorManagerTest {
         assertEquals(1, decimals.size)
         assertEquals(1.05, decimals.single().default)
         assertEquals(SensorSettingType.NUMBER, decimals.single().type)
+    }
+
+    @ParameterizedTest
+    @CsvSource("2200, 500", "1100, 1000", "2200, 1000")
+    fun `Given active beacon monitoring when restored scan timing is refreshed then scanning resumes in the same update`(
+        scanPeriod: Long,
+        scanInterval: Long,
+    ) = scope.runTest {
+        configureBeaconMonitoring(scanPeriod, scanInterval)
+        var scanning = true
+        var activeScanPeriod = monitoringManager.scanPeriod
+        var activeScanInterval = monitoringManager.scanInterval
+        every { monitoringManager.isMonitoring() } answers { scanning }
+        every { monitoringManager.stopMonitoring(any(), any()) } answers { scanning = false }
+        every { monitoringManager.startMonitoring(any(), any()) } answers {
+            scanning = true
+            activeScanPeriod = monitoringManager.scanPeriod
+            activeScanInterval = monitoringManager.scanInterval
+        }
+
+        manager.requestSensorUpdate()
+
+        assertTrue(scanning)
+        assertEquals(scanPeriod, activeScanPeriod)
+        assertEquals(scanInterval, activeScanInterval)
+        verify(exactly = 1) { monitoringManager.stopMonitoring(context, any()) }
+    }
+
+    @Test
+    fun `Given active beacon monitoring when restoring disabled monitoring and changed timing then scanning stays stopped`() = scope.runTest {
+        configureBeaconMonitoring(scanPeriod = 2200, scanInterval = 1000, enabled = false)
+        var scanning = true
+        every { monitoringManager.isMonitoring() } answers { scanning }
+        every { monitoringManager.stopMonitoring(any(), any()) } answers { scanning = false }
+
+        manager.requestSensorUpdate()
+
+        assertFalse(scanning)
+        verify(exactly = 0) { monitoringManager.startMonitoring(any(), any()) }
+    }
+
+    private fun configureBeaconMonitoring(scanPeriod: Long, scanInterval: Long, enabled: Boolean = true) {
+        SdkVersion.sdkInt = ANDROID_12_SDK
+        every { context.checkPermission(any(), any(), any()) } returns PackageManager.PERMISSION_GRANTED
+        every { context.applicationContext } returns context
+        every { context.getSystemService(BluetoothManager::class.java) } returns mockk {
+            every { adapter } returns mockk { every { isEnabled } returns true }
+        }
+        storedSetting(BluetoothSensorManager.SETTING_BLE_ID1, "existing-uuid")
+        val sensor = BluetoothSensorManager.beaconMonitor
+        coEvery { sensorRepository.get(sensor.id) } returns listOf(Sensor(sensor.id, 1, enabled = true, state = "Monitoring"))
+        coEvery { sensorRepository.getSettings(sensor.id) } returns sensor.settings.map {
+            it.toSensorSetting(
+                sensor.id,
+                value = when (it.name) {
+                    "beacon_monitor_scan_period" -> scanPeriod.toString()
+                    "beacon_monitor_scan_interval" -> scanInterval.toString()
+                    "beacon_monitor_enabled" -> enabled.toString()
+                    else -> it.defaultValue
+                },
+            )
+        }
     }
 
     private fun storedSetting(name: String, value: String) {

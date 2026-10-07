@@ -12,6 +12,8 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.sensors.StopBeaconScanningReceiver
 import io.homeassistant.companion.android.common.util.CHANNEL_BEACON_MONITOR
 import io.homeassistant.companion.android.common.util.SdkVersion
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,7 +22,8 @@ import org.altbeacon.beacon.BeaconManager
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.Region
 
-class MonitoringManager {
+@Singleton
+class MonitoringManager @Inject constructor() {
     private lateinit var beaconManager: BeaconManager
     private lateinit var region: Region
     var scanPeriod: Long = 1100

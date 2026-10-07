@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
+import androidx.annotation.VisibleForTesting
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
@@ -31,13 +32,31 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 @Singleton
-class BluetoothSensorManager @Inject constructor(
-    @ApplicationContext override val applicationContext: Context,
+class BluetoothSensorManager @VisibleForTesting internal constructor(
+    override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
     override val serverManager: ServerManager,
     // Lazy to break the dependency cycle: SensorUpdater injects the Set<SensorManager> that contains this manager.
     private val sensorUpdater: Lazy<SensorUpdater>,
+    private val monitoringManager: MonitoringManager,
+    private val ioScope: CoroutineScope,
 ) : SensorManager {
+    @Inject
+    constructor(
+        @ApplicationContext context: Context,
+        sensorRepository: SensorRepository,
+        serverManager: ServerManager,
+        sensorUpdater: Lazy<SensorUpdater>,
+        monitoringManager: MonitoringManager,
+    ) : this(
+        context,
+        sensorRepository,
+        serverManager,
+        sensorUpdater,
+        monitoringManager,
+        CoroutineScope(Dispatchers.IO),
+    )
+
     companion object {
 
         const val SETTING_BLE_ID1 = "ble_uuid"
@@ -149,8 +168,6 @@ class BluetoothSensorManager @Inject constructor(
             ),
         )
 
-        private val monitoringManager = MonitoringManager()
-
         @ProvidesSensor
         val beaconMonitor = SensorManager.BasicSensor(
             "beacon_monitor",
@@ -180,7 +197,6 @@ class BluetoothSensorManager @Inject constructor(
         )
     }
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
     private val bleUuidMutex = Mutex()
 
     override fun docsLink(): String {
@@ -436,9 +452,10 @@ class BluetoothSensorManager @Inject constructor(
         monitoringManager.scanPeriod = scanPeriod
         monitoringManager.scanInterval = scanInterval
 
-        if (!isEnabled(beaconMonitor) || !monitoringActive || restart) {
+        if (!isEnabled(beaconMonitor) || !monitoringActive) {
             monitoringManager.stopMonitoring(applicationContext, beaconMonitoringDevice)
         } else {
+            if (restart) monitoringManager.stopMonitoring(applicationContext, beaconMonitoringDevice)
             monitoringManager.startMonitoring(applicationContext, beaconMonitoringDevice)
         }
     }
