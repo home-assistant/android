@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.common.data.backup
 import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
-internal const val SETTINGS_BACKUP_FORMAT = "home-assistant-companion-settings"
-internal const val SETTINGS_BACKUP_VERSION = 1
+const val SETTINGS_BACKUP_FORMAT = "home-assistant-companion-settings"
+const val SETTINGS_BACKUP_VERSION = 1
 const val SETTINGS_BACKUP_MAX_BYTES = 1_048_576
 
 /** A portable configuration document. A missing section leaves destination settings unchanged. */

@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.server.ServerDao
+import io.homeassistant.companion.android.database.settings.SettingsBackupDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
@@ -87,6 +88,9 @@ internal object DatabaseModule {
 
     @Provides
     fun provideSettingsDao(database: AppDatabase): SettingsDao = database.settingsDao()
+
+    @Provides
+    fun provideSettingsBackupDao(database: AppDatabase): SettingsBackupDao = database.settingsBackupDao()
 
     @Provides
     fun provideCameraTileDao(database: AppDatabase): CameraTileDao = database.cameraTileDao()

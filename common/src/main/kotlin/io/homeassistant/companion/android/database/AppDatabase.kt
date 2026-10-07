@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.database.server.ServerDao
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingColumnTypeConverter
 import io.homeassistant.companion.android.database.settings.LocalSensorSettingColumnTypeConverter
 import io.homeassistant.companion.android.database.settings.Setting
+import io.homeassistant.companion.android.database.settings.SettingsBackupDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
@@ -139,4 +140,5 @@ internal abstract class AppDatabase : RoomDatabase() {
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao
+    abstract fun settingsBackupDao(): SettingsBackupDao
 }
