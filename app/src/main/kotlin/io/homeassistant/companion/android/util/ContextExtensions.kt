@@ -12,6 +12,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.util.SdkVersion
 
+/** Must match the `FileProvider` authorities in `AndroidManifest.xml` (`${applicationId}.provider`). */
+private const val FILE_PROVIDER_AUTHORITY_SUFFIX = ".provider"
+
 fun Context.getAttribute(attr: Int, fallbackAttr: Int): Int {
     val value = TypedValue()
     theme.resolveAttribute(attr, value, true)
@@ -41,3 +44,7 @@ fun Context.getActivity(): ComponentActivity? = when (this) {
     is ContextWrapper -> baseContext.getActivity()
     else -> null
 }
+
+/** Authority of the app `FileProvider`, to share app files through content URIs. */
+val Context.fileProviderAuthority: String
+    get() = packageName + FILE_PROVIDER_AUTHORITY_SUFFIX
