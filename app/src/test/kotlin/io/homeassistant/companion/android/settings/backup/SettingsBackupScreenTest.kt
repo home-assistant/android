@@ -70,7 +70,7 @@ class SettingsBackupScreenTest {
                 BackupRestoreContent(state, { _, _ -> }, { reference, target ->
                     mapping = reference to target
                     state = state.copy(restore = state.restore?.copy(targets = mapOf(reference to target)))
-                }, { reviewed = true }, {}, {})
+                }, { reviewed = true }, {}, {}, {})
             }
         }
         compose.onNode(hasText(compose.stringResource(R.string.backup_review)) and hasClickAction()).performScrollTo().assertIsNotEnabled()
@@ -99,7 +99,7 @@ class SettingsBackupScreenTest {
                         cancelled++
                         state = state.copy(restore = null)
                     },
-                    onRetry = {}, onManageSensors = {},
+                    onEdit = {}, onRetry = {}, onManageSensors = {},
                 )
             }
         }
@@ -116,6 +116,39 @@ class SettingsBackupScreenTest {
         compose.runOnIdle {
             assertTrue(navigation.currentDestination!!.hasRoute<BackupHomeRoute>())
             assertEquals(2, cancelled)
+            assertEquals(0, applied)
+        }
+    }
+
+    @Test
+    fun `Given confirmation when shown then Android Auto has its own count and back returns to selection without applying`() {
+        val backup = backupFixture().copy(sensorOptions = null, servers = backupFixture().servers.map { it.copy(sensors = null, persistentConnection = null) })
+        val destinations = listOf(BackupDestination(42, "Destination"))
+        val plan = prepareSettingsRestore(backup, mapOf("home" to 42), destinations, emptyMap())
+        var applied = 0
+        lateinit var navigation: NavHostController
+        var state by mutableStateOf(SettingsBackupUiState.Content(destinations, restore = RestoreDraft(backup, mapOf("home" to BackupServerTarget.Server(42)), plan)))
+        compose.setContent {
+            navigation = rememberNavController()
+            HATheme {
+                BackupNavigation(
+                    state, navigation, { _, _ -> }, {},
+                    onImport = { navigation.navigate(BackupRestoreRoute) },
+                    onMapServer = { _, _ -> }, onReview = {}, onRestore = { applied++ }, onCancel = {},
+                    onEdit = { state = state.copy(restore = state.restore?.copy(plan = null)) },
+                    onRetry = {}, onManageSensors = {},
+                )
+            }
+        }
+        compose.onNodeWithText(compose.stringResource(R.string.backup_import)).performScrollTo().performClick()
+        compose.onNode(hasText(compose.stringResource(R.string.backup_section_favorites)) and hasText("2")).assertIsDisplayed()
+        compose.onNodeWithText(compose.stringResource(R.string.backup_section_sensor_options)).assertDoesNotExist()
+        compose.onNodeWithText(compose.stringResource(R.string.backup_favorites_description)).assertDoesNotExist()
+        compose.runOnIdle { compose.activity.onBackPressedDispatcher.onBackPressed() }
+        compose.onNodeWithText(compose.stringResource(R.string.backup_choose_settings)).assertIsDisplayed()
+        compose.runOnIdle {
+            assertTrue(navigation.currentDestination!!.hasRoute<BackupRestoreRoute>())
+            assertEquals(mapOf("home" to 42), state.restoreServers?.mapping)
             assertEquals(0, applied)
         }
     }

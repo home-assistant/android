@@ -124,6 +124,11 @@ internal class SettingsBackupViewModel @Inject constructor(
         if (!state.busy) _uiState.value = state.copy(restore = null, sectionRows = sectionSelections(state.sections))
     }
 
+    fun editRestore() {
+        val state = _uiState.value as? SettingsBackupUiState.Content ?: return
+        if (!state.busy) _uiState.value = state.copy(restore = state.restore?.copy(plan = null))
+    }
+
     private fun perform(block: suspend (SettingsBackupUiState.Content) -> Unit) {
         viewModelScope.launch {
             // A picker result can arrive while the ViewModel is loading after process recreation.

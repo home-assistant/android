@@ -39,6 +39,7 @@
         android:title="@string/other_settings">
         <Preference
             android:key="settings_backup"
+            android:icon="@drawable/ic_backup_restore"
             android:title="@string/settings_backup"
             android:summary="@string/settings_backup_summary" />
         <Preference

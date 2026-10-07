@@ -48,6 +48,8 @@ internal sealed interface SettingsBackupUiState {
         }
         val canReview: Boolean =
             !busy && restoreServers?.problem == null && sectionRows.any { it.available && it.selected }
+        val reviewSummary: BackupRestoreSummaryState? = restore?.plan?.let(::backupRestoreSummary)
+        val lastSummary: BackupRestoreSummaryState? = lastRestore?.let(::backupRestoreSummary)
     }
 }
 
@@ -83,4 +85,4 @@ internal fun sectionSelections(sections: BackupSections, backup: SettingsBackupD
         sections.frequency,
         backup == null || backup.sensorUpdateFrequency != null,
     ),
-)
+).filter { it.available }

@@ -1,17 +1,19 @@
 package io.homeassistant.companion.android.settings.backup
 
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
-import io.homeassistant.companion.android.common.compose.composable.HAHint
 import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 
@@ -23,92 +25,95 @@ internal fun BackupRestoreContent(
     onReview: () -> Unit,
     onRestore: () -> Unit,
     onCancel: () -> Unit,
+    onEdit: () -> Unit,
 ) {
-    BackupColumn {
-        Text(stringResource(R.string.backup_review), style = HATextStyle.Headline)
-        if (state?.restore == null) {
-            Text(stringResource(R.string.backup_select_again), style = HATextStyle.Body)
-        } else {
-            BackupRestoreSelection(state, onSelect, onMapServer)
-            if (state.restore.plan == null) {
-                HAAccentButton(
-                    stringResource(R.string.backup_review),
-                    onReview,
-                    enabled = state.canReview,
+    // A separate scroll position for confirmation keeps its summary visible when continuing.
+    key(state?.reviewSummary != null) {
+        BackupColumn {
+            val summary = state?.reviewSummary
+            val title = if (summary == null) R.string.backup_choose_settings else R.string.backup_confirm_title
+            Text(stringResource(title), style = HATextStyle.HeadlineMedium, textAlign = TextAlign.Start)
+            when {
+                state?.restore == null -> Text(
+                    stringResource(R.string.backup_select_again),
+                    style = HATextStyle.Body,
+                    textAlign = TextAlign.Start,
                 )
-            } else {
-                HAHint(stringResource(R.string.backup_restore_effects))
-                BackupRestoreSummary(state.restore.plan)
-                HAAccentButton(
-                    stringResource(R.string.backup_apply),
-                    onRestore,
-                    enabled = !state.busy && state.restore.plan.changeCount > 0,
-                )
+                summary == null -> {
+                    BackupSectionChoices(state.sectionRows, !state.busy, onSelect)
+                    BackupServerChoices(state.restoreServers, state.servers, !state.busy, onMapServer)
+                    HAAccentButton(
+                        stringResource(R.string.backup_review),
+                        onReview,
+                        enabled = state.canReview,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                else -> {
+                    BackupDestinationSummary(state.restoreServers?.rows.orEmpty())
+                    BackupRestoreSummary(summary)
+                    HAAccentButton(
+                        stringResource(R.string.backup_apply),
+                        onRestore,
+                        enabled =
+                        !state.busy && summary.hasChanges,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
-            if (state.busy) HALoading()
+            if (state?.busy == true) HALoading()
+            val action = if (summary == null) onCancel else onEdit
+            val label = if (summary == null) R.string.cancel else R.string.backup_edit_selection
+            HAFilledButton(
+                stringResource(label),
+                action,
+                enabled = state?.busy != true,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
-        HAFilledButton(stringResource(R.string.cancel), onCancel, enabled = state?.busy != true)
     }
 }
 
 @Composable
-private fun BackupRestoreSelection(
-    state: SettingsBackupUiState.Content,
-    onSelect: (BackupSection, Boolean) -> Unit,
+private fun ColumnScope.BackupServerChoices(
+    selections: BackupServerSelections?,
+    servers: List<BackupDestination>,
+    enabled: Boolean,
     onMapServer: (String, BackupServerTarget) -> Unit,
 ) {
-    val restore = state.restore ?: return
+    if (selections == null || selections.rows.isEmpty()) return
     val skip = stringResource(R.string.backup_skip_server)
     val choose = stringResource(R.string.backup_choose_server)
-    val destinations = remember(state.servers, skip, choose) {
+    val destinations = remember(servers, skip, choose) {
         listOf(HADropdownItem<BackupServerTarget>(BackupServerTarget.Unselected, choose)) +
-            state.servers.map { HADropdownItem<BackupServerTarget>(BackupServerTarget.Server(it.id), it.name) } +
+            servers.map { HADropdownItem<BackupServerTarget>(BackupServerTarget.Server(it.id), it.name) } +
             HADropdownItem<BackupServerTarget>(BackupServerTarget.Skip, skip)
     }
-    Text(
-        stringResource(R.string.backup_source, restore.backup.appVersion, restore.backup.createdAt.toString()),
-        style = HATextStyle.Body,
-    )
-    HAHint(stringResource(R.string.backup_restore_description))
-    state.restoreServers?.rows.orEmpty().forEach { server ->
+    Text(stringResource(R.string.backup_servers_title), style = HATextStyle.HeadlineMedium, textAlign = TextAlign.Start)
+    Text(stringResource(R.string.backup_restore_description), style = HATextStyle.Body, textAlign = TextAlign.Start)
+    selections.rows.forEach { server ->
         HADropdownMenu(
             items = destinations,
             selectedKey = server.target,
             onItemSelected = { onMapServer(server.reference, it) },
-            label = server.name,
+            label = stringResource(R.string.backup_server_destination, server.name),
             placeholder = choose,
-            enabled = !state.busy,
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
         )
     }
-    state.restoreServers?.problem?.let { HAHint(stringResource(it)) }
-    BackupSectionChoices(state.sectionRows, enabled = !state.busy, onSelect)
+    selections.problem?.let { Text(stringResource(it), style = HATextStyle.BodyMedium, textAlign = TextAlign.Start) }
 }
 
 @Composable
-internal fun BackupRestoreSummary(plan: SettingsRestorePlan) {
-    Text(
-        stringResource(
-            R.string.backup_restore_counts,
-            plan.favorites?.size ?: 0,
-            plan.changes.sensors.size,
-            plan.changes.options.size,
-            plan.changes.connections.size,
-        ),
-        style = HATextStyle.Body,
-    )
-    if (plan.changes.frequency !=
-        null
-    ) {
-        Text(stringResource(R.string.backup_frequency_included), style = HATextStyle.Body)
-    }
-    if (plan.changeCount == 0) Text(stringResource(R.string.backup_nothing_to_restore), style = HATextStyle.Body)
-    plan.issues.forEach { issue ->
-        val message = when (issue) {
-            is RestoreIssue.UnsupportedSensor -> R.string.backup_unsupported_sensor
-            is RestoreIssue.PermissionRequired -> R.string.backup_permission_required
-            is RestoreIssue.UnsupportedOption -> R.string.backup_unsupported_option
+private fun ColumnScope.BackupDestinationSummary(servers: List<BackupServerSelection>) {
+    servers.forEach { server ->
+        val destination = server.destinationName
+        val text = if (destination == null) {
+            stringResource(R.string.backup_server_skipped, server.name)
+        } else {
+            stringResource(R.string.backup_restore_destination, server.name, destination)
         }
-        Text(stringResource(message, issue.identifier), style = HATextStyle.Body)
+        Text(text, style = HATextStyle.Body, textAlign = TextAlign.Start)
     }
 }

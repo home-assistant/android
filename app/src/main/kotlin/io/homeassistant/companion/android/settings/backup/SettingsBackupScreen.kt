@@ -73,6 +73,7 @@ internal fun SettingsBackupScreen(viewModel: SettingsBackupViewModel, onManageSe
             onReview = viewModel::review,
             onRestore = viewModel::restore,
             onCancel = viewModel::dismissRestore,
+            onEdit = viewModel::editRestore,
             onRetry = viewModel::load,
             onManageSensors = onManageSensors,
             modifier = Modifier.padding(padding),
@@ -91,6 +92,7 @@ internal fun BackupNavigation(
     onReview: () -> Unit,
     onRestore: () -> Unit,
     onCancel: () -> Unit,
+    onEdit: () -> Unit,
     onRetry: () -> Unit,
     onManageSensors: () -> Unit,
     modifier: Modifier = Modifier,
@@ -123,9 +125,13 @@ internal fun BackupNavigation(
                 onReview = onReview,
                 onRestore = onRestore,
                 onCancel = cancel,
+                onEdit = onEdit,
             )
             BackHandler {
-                if ((state as? SettingsBackupUiState.Content)?.busy != true) cancel()
+                val content = state as? SettingsBackupUiState.Content
+                if (content?.busy != true) {
+                    if (content?.restore?.plan == null) cancel() else onEdit()
+                }
             }
         }
     }

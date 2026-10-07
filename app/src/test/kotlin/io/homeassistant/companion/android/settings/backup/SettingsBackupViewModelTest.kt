@@ -32,7 +32,6 @@ class SettingsBackupViewModelTest {
     private val savedState = SavedStateHandle()
     private val backup = backupFixture()
     private val destinations = listOf(BackupDestination(42, "Home"))
-    private val plan = prepareSettingsRestore(backup, mapOf("home" to 42), destinations, emptyMap())
 
     @BeforeEach
     fun setup() {
@@ -244,6 +243,27 @@ class SettingsBackupViewModelTest {
             runCurrent()
             assertNull((viewModel.uiState.value as SettingsBackupUiState.Content).restore?.plan?.favorites)
             assertEquals(1, (viewModel.uiState.value as SettingsBackupUiState.Content).restore?.plan?.changeCount)
+        }
+    }
+
+    @Test
+    fun `Given a reviewed backup when editing then mapping is retained and unchecked categories disappear from the summary`() = runTest {
+        val viewModel = SettingsBackupViewModel(handler, documents, savedState, runtime)
+        viewModel.events.test {
+            viewModel.importBackup("document")
+            assertEquals(BackupEvent.ShowRestore, awaitItem())
+            viewModel.mapServer("home", BackupServerTarget.Server(42))
+            viewModel.review()
+            runCurrent()
+            viewModel.editRestore()
+            assertNull((viewModel.uiState.value as SettingsBackupUiState.Content).reviewSummary)
+            assertEquals(mapOf("home" to 42), (viewModel.uiState.value as SettingsBackupUiState.Content).restoreServers?.mapping)
+            viewModel.select(BackupSection.AndroidAutoFavorites, false)
+            viewModel.review()
+            runCurrent()
+            val summary = (viewModel.uiState.value as SettingsBackupUiState.Content).reviewSummary!!
+            assertFalse(summary.rows.any { it.section == BackupSection.AndroidAutoFavorites })
+            coVerify(exactly = 0) { handler.restore(any(), any(), any()) }
         }
     }
 

@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -32,8 +33,7 @@ internal fun BackupHomeContent(
     onManageSensors: () -> Unit,
 ) {
     BackupColumn {
-        Text(stringResource(R.string.backup_description), style = HATextStyle.Body)
-        HAHint(stringResource(R.string.backup_privacy))
+        Text(stringResource(R.string.backup_description), style = HATextStyle.Body, textAlign = TextAlign.Start)
         BackupSectionChoices(state.sectionRows, enabled = !state.busy, onSelect)
         HAAccentButton(
             text = stringResource(R.string.backup_export),
@@ -48,9 +48,14 @@ internal fun BackupHomeContent(
             modifier = Modifier.fillMaxWidth(),
         )
         if (state.busy) HALoading()
-        state.lastRestore?.let { plan ->
-            Text(stringResource(R.string.backup_restore_success), style = HATextStyle.Headline)
-            BackupRestoreSummary(plan)
+        HAHint(stringResource(R.string.backup_privacy))
+        state.lastSummary?.let { summary ->
+            Text(
+                stringResource(R.string.backup_restore_success),
+                style = HATextStyle.HeadlineMedium,
+                textAlign = TextAlign.Start,
+            )
+            BackupRestoreSummary(summary)
             HAFilledButton(stringResource(R.string.sensor_title), onClick = onManageSensors)
         }
     }
@@ -69,7 +74,7 @@ internal fun BackupColumn(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 internal fun BackupErrorContent(onRetry: () -> Unit) {
     BackupColumn {
-        Text(stringResource(R.string.backup_operation_failed), style = HATextStyle.Body)
+        Text(stringResource(R.string.backup_operation_failed), style = HATextStyle.Body, textAlign = TextAlign.Start)
         HAFilledButton(stringResource(R.string.retry), onClick = onRetry)
     }
 }
