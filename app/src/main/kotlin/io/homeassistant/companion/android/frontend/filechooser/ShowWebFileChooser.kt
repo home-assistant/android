@@ -37,16 +37,41 @@ internal data class FileChooserInput(
     val cameraCapture: CameraCapture?,
 )
 
-/** How the camera is involved in a file chooser, writing the photo to [outputUri]. */
+/**
+ * Kind of media a camera app captures.
+ *
+ * @param captureAction Intent action opening a camera app for this kind of media
+ * @param suffix File suffix of the captured media
+ */
+internal enum class CaptureKind(private val mimeTypePrefix: String, val captureAction: String, val suffix: String) {
+    Photo(mimeTypePrefix = "image/", captureAction = MediaStore.ACTION_IMAGE_CAPTURE, suffix = ".jpg"),
+    Video(mimeTypePrefix = "video/", captureAction = MediaStore.ACTION_VIDEO_CAPTURE, suffix = ".mp4"),
+    ;
+
+    /** `true` when [mimeType] is of this kind of media, like `image/png` for [Photo]. */
+    fun matches(mimeType: String): Boolean = mimeType.startsWith(mimeTypePrefix)
+}
+
+/**
+ * File a camera app writes newly captured media to.
+ *
+ * @param kind The kind of media captured
+ * @param uri Content URI of the file the camera app writes to
+ */
+internal data class CaptureOutput(val kind: CaptureKind, val uri: Uri)
+
+/** How the camera is involved in a file chooser. */
 internal sealed interface CameraCapture {
-    /** Content URI of the file the camera app writes the photo to. */
-    val outputUri: Uri
+    /** The files camera apps may write to. */
+    val outputs: List<CaptureOutput>
 
-    /** Opens the camera directly, as the page requested with the `capture` attribute. */
-    data class Direct(override val outputUri: Uri) : CameraCapture
+    /** Opens the camera app for [output] directly, as the page requested with the `capture` attribute. */
+    data class Direct(val output: CaptureOutput) : CameraCapture {
+        override val outputs: List<CaptureOutput> get() = listOf(output)
+    }
 
-    /** Offers the camera next to the file picker. */
-    data class Offered(override val outputUri: Uri) : CameraCapture
+    /** Offers a camera app for each of [outputs] next to the file picker. */
+    data class Offered(override val outputs: List<CaptureOutput>) : CameraCapture
 }
 
 /** Outcome of a file chooser launched with [ShowWebFileChooser]. */
@@ -55,8 +80,8 @@ internal sealed interface FileChooserResult {
     data class Selected(val uris: List<Uri>) : FileChooserResult
 
     /**
-     * Completed without returning any URI, which is how a camera app reports a photo written to
-     * [CameraCapture.outputUri].
+     * Completed without returning any URI, which is how a camera app reports media written to one
+     * of [CameraCapture.outputs].
      */
     data object Captured : FileChooserResult
 
@@ -78,9 +103,9 @@ internal class ShowWebFileChooser : ActivityResultContract<FileChooserInput, Fil
     override fun createIntent(context: Context, input: FileChooserInput): Intent {
         return when (val capture = input.cameraCapture) {
             null -> input.toPickerIntent()
-            is CameraCapture.Direct -> capture.toCaptureIntent()
+            is CameraCapture.Direct -> capture.output.toCaptureIntent()
             is CameraCapture.Offered -> Intent.createChooser(input.toPickerIntent(), input.params.title)
-                .putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(capture.toCaptureIntent()))
+                .putExtra(Intent.EXTRA_INITIAL_INTENTS, capture.outputs.map { it.toCaptureIntent() }.toTypedArray())
         }
     }
 
@@ -121,9 +146,9 @@ private fun FileChooserParams.opensWritable(): Boolean = SdkVersion.isAtLeast(Bu
  * The output URI is also set as clip data, since URI permissions are only granted for the data
  * and clip data of an intent, not for extras.
  */
-private fun CameraCapture.toCaptureIntent(): Intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-    putExtra(MediaStore.EXTRA_OUTPUT, outputUri)
-    clipData = ClipData.newRawUri(null, outputUri)
+private fun CaptureOutput.toCaptureIntent(): Intent = Intent(kind.captureAction).apply {
+    putExtra(MediaStore.EXTRA_OUTPUT, uri)
+    clipData = ClipData.newRawUri(null, uri)
     addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
 }
 
