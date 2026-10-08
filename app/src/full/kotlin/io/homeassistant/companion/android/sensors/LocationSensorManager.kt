@@ -877,7 +877,7 @@ class LocationSensorManager @Inject constructor(
             """
                 Last Location:
                 Coords:${sensitive { "(${location.latitude}, ${location.longitude})" }}
-                Accuracy: ${location.accuracy}"
+                Accuracy: ${location.accuracy}
                 Bearing: ${location.bearing}
             """.trimIndent(),
         )
