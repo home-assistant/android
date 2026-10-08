@@ -303,6 +303,40 @@ class ServerConnectionInfoTest {
     }
 
     @Nested
+    inner class IsFrontendUrl {
+        private val connection = ServerConnectionInfo(
+            externalUrl = "https://external.example.com",
+            internalUrl = "http://192.168.1.1:8123",
+            cloudUrl = "https://cloud.example.com",
+            cloudhookUrl = "https://hooks.nabu.casa/abc",
+        )
+
+        @ParameterizedTest
+        @ValueSource(
+            strings = [
+                "https://external.example.com/lovelace/0",
+                "http://192.168.1.1:8123/lovelace/0",
+                "https://cloud.example.com/lovelace/0",
+            ],
+        )
+        fun `Given URL on a frontend origin then isFrontendUrl returns true`(url: String) {
+            assertTrue(connection.isFrontendUrl(url))
+        }
+
+        @ParameterizedTest
+        @ValueSource(
+            strings = [
+                "https://hooks.nabu.casa/abc/lovelace/0",
+                "https://unknown.example.com/lovelace/0",
+                "not-a-valid-url",
+            ],
+        )
+        fun `Given URL on the cloudhook or an unknown origin then isFrontendUrl returns false`(url: String) {
+            assertFalse(connection.isFrontendUrl(url))
+        }
+    }
+
+    @Nested
     inner class InternalSsidColumnTypeConverterTest {
 
         private val converter = InternalSsidColumnTypeConverter()
