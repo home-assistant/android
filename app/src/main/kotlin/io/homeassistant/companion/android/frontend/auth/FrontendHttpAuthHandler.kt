@@ -13,6 +13,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Time window within which a repeated auth request indicates rejected credentials. */
 private val RAPID_REAUTH_THRESHOLD = 500.milliseconds
@@ -87,7 +88,9 @@ internal class FrontendHttpAuthHandler @Inject constructor(
         realm: String,
     ): HttpAuthResult {
         val hostKey = resource + realm
-        val storedAuth = authenticationDao.get(hostKey)
+        // The resource is the last URL loaded by any frame, it may not be the one challenging for credentials
+        val isResourceFromHost = resource.toHttpUrlOrNull()?.host.equals(host, ignoreCase = true)
+        val storedAuth = if (isResourceFromHost) authenticationDao.get(hostKey) else null
         val isSameHostAsLastProceed = lastProceededHostKey == hostKey
         val isRapidReauth = isSameHostAsLastProceed &&
             (clock.now() - lastProceededAt) < RAPID_REAUTH_THRESHOLD
@@ -106,7 +109,7 @@ internal class FrontendHttpAuthHandler @Inject constructor(
         ) {
             is HttpAuthOutcome.Proceed -> {
                 handler.proceed(hostKey = hostKey, username = outcome.username, password = outcome.password)
-                if (outcome.remember) {
+                if (outcome.remember && isResourceFromHost) {
                     persistCredentials(
                         hostKey = hostKey,
                         username = outcome.username,

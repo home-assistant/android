@@ -87,6 +87,32 @@ class FrontendHttpAuthHandlerTest {
             advanceUntilIdle()
             assertEquals(HttpAuthResult.Cancelled, result.await())
         }
+
+        @Test
+        fun `Given stored credentials for resource when another host challenges then shows dialog`() = runTest {
+            coEvery { authenticationDao.get("https://proxy.example.com/testrealm") } returns Authentication(
+                host = "https://proxy.example.com/testrealm",
+                username = "user",
+                password = "pass",
+            )
+
+            val result = async {
+                handler.handleAuthRequest(
+                    handler = httpAuthHandler,
+                    host = "other.example.org",
+                    resource = "https://proxy.example.com/",
+                    realm = "testrealm",
+                )
+            }
+            advanceUntilIdle()
+
+            assertInstanceOf(FrontendDialog.HttpAuth::class.java, dialogManager.pendingDialog.value)
+            verify(exactly = 0) { httpAuthHandler.proceed(any(), any()) }
+
+            pendingHttpAuthDialog().onCancel()
+            advanceUntilIdle()
+            assertEquals(HttpAuthResult.Cancelled, result.await())
+        }
     }
 
     @Nested
