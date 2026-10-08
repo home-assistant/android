@@ -404,6 +404,38 @@ class AssistViewModelTest {
         }
 
         @Test
+        fun `Given screen UI session reused with a wake word intent when recording stops and response arrives then timer fires`() = runTest {
+            setupVoicePipeline()
+
+            // The session starts from the screen, so the inactivity timer is disabled.
+            viewModel = createAndInitialize(hasPermission = true)
+            runCurrent()
+
+            // A new wake-word intent reaches the running (singleTask) activity, reclassifying the session.
+            viewModel.onNewIntent(
+                intent = mockk(relaxed = true),
+                lockedMatches = true,
+                launchTrigger = AssistTrigger.WakeWord("Okay Nabu"),
+            )
+            runCurrent()
+
+            // Reusing the active session stops recording and moves to VOICE_INACTIVE, but the last
+            // message is still a placeholder so the timer does not start yet.
+            advanceTimeBy(CLOSE_INACTIVE + 1.seconds)
+            runCurrent()
+            assertFalse(viewModel.shouldFinish)
+
+            // Pipeline emits a response, replacing the placeholder with a real message.
+            emitIntentEnd()
+            runCurrent()
+
+            // The wake-word classification survived the reuse, so the timer now closes the dialog.
+            advanceTimeBy(CLOSE_INACTIVE)
+            runCurrent()
+            assertTrue(viewModel.shouldFinish)
+        }
+
+        @Test
         fun `Given voice inactive mode with placeholder message when CLOSE_INACTIVE elapses then shouldFinish is false`() = runTest {
             setupVoicePipeline()
             coEvery {
@@ -667,6 +699,22 @@ class AssistViewModelTest {
             runCurrent()
 
             assertEquals(listOf(CHIME, CAPTURE), events)
+        }
+
+        @Test
+        fun `Given hands-free launch without permission when the user taps the microphone and grants permission then do not play the chime`() = runTest {
+            viewModel = createAndInitialize(hasPermission = false, fromSystemAssistant = true, audioStrategy = audioStrategy)
+            runCurrent()
+            // The hands-free request is still waiting on the permission prompt.
+            assertTrue(events.isEmpty())
+
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi) // User taps the microphone, re-requesting permission.
+            runCurrent()
+            viewModel.onPermissionResult(granted = true)
+            runCurrent()
+
+            // The grant resumes the screen tap, not the hands-free launch, so no chime plays.
+            assertEquals(listOf(CAPTURE), events)
         }
 
         @Test

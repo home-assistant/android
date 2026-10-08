@@ -192,7 +192,7 @@ class AssistActivity : BaseActivity() {
         this.intent = intent
 
         val isLocked = getSystemService<KeyguardManager>()?.isKeyguardLocked ?: false
-        viewModel.onNewIntent(intent, contextIsLocked == isLocked)
+        viewModel.onNewIntent(intent, contextIsLocked == isLocked, getLaunchTrigger())
         updateShowWhenLocked(isLocked)
     }
 
