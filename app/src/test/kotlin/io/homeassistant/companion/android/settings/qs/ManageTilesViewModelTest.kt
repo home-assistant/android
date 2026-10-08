@@ -133,7 +133,7 @@ class ManageTilesViewModelTest {
     }
 
     @Test
-    fun `Given a saved tile id when created then that tile is selected and tile_data_missing is emitted`() = runTest {
+    fun `Given a saved tile id when created then that tile is selected and tile_data_missing is sent`() = runTest {
         val targetId = tileSlots[1].id
 
         turbineScope {
@@ -306,7 +306,7 @@ class ManageTilesViewModelTest {
     }
 
     @Test
-    fun `Given current state when addTile then tileDao receives a TileEntity with the mapped fields and tile_updated is emitted`() = runTest {
+    fun `Given current state when addTile then tileDao receives a TileEntity with the mapped fields and tile_updated is sent`() = runTest {
         // Store a tile so that selectedTileId is populated from the DB primary key.
         val tileId = tileSlots[0].id.value
         val storedTile = fakeTile(
@@ -337,7 +337,7 @@ class ManageTilesViewModelTest {
             advanceUntilIdle()
 
             // On SDK S (31 < TIRAMISU 33) the StatusBarManager branch is skipped and
-            // tile_updated is emitted unconditionally.
+            // tile_updated is sent unconditionally.
             coVerify(exactly = 1) {
                 tileDao.add(
                     match {
