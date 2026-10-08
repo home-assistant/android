@@ -149,7 +149,7 @@ interface ServerConnectionStateProvider {
      *
      * Credentials are only ever sent to a URL that belongs to this server, and only when:
      * - The URL uses HTTPS, or
-     * - The device is on an home network, or
+     * - The device is on a home network, or
      * - Insecure connections are explicitly allowed
      *
      * @param url the URL to check
