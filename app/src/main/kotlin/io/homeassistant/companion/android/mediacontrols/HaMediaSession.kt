@@ -94,6 +94,30 @@ private const val ACTION_VOLUME_MUTE = "volume_mute"
 private const val ACTION_SHUFFLE_SET = "shuffle_set"
 private const val ACTION_REPEAT_SET = "repeat_set"
 
+/** Immutable cache of the last successfully loaded artwork. */
+private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null, val bitmap: Bitmap? = null)
+
+/**
+ * Restricts media session connections to trusted controllers (same app, system,
+ * or apps with MEDIA_CONTENT_CONTROL / notification listener access).
+ */
+@OptIn(UnstableApi::class)
+private class MediaSessionCallback : MediaSession.Callback {
+    override fun onConnect(
+        session: MediaSession,
+        controller: MediaSession.ControllerInfo,
+    ): MediaSession.ConnectionResult {
+        if (!controller.isTrusted) {
+            Timber.w("Rejecting connection from untrusted media controller package=${controller.packageName}")
+            return MediaSession.ConnectionResult.reject()
+        }
+        return MediaSession.ConnectionResult.accept(
+            MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS,
+            MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS,
+        )
+    }
+}
+
 /**
  * Owns the [MediaSession] and [HaRemoteMediaPlayer] for a single Home Assistant media_player entity.
  *
@@ -164,6 +188,51 @@ class HaMediaSession @AssistedInject constructor(
             .setOngoing(session.player.isPlaying)
             .setContentIntent(session.sessionActivity)
             .build()
+    }
+
+    /**
+     * Creates the [MediaSession] and player, starts observing entity state, and suspends until
+     * the calling coroutine is cancelled. Calls [onSessionReady] with the new session immediately
+     * after creation so the caller can register it with
+     * [androidx.media3.session.MediaSessionService.addSession].
+     *
+     * All Media3 resources are released in a `finally` block, so they are always cleaned up
+     * regardless of how the coroutine ends (cancellation or normal flow completion).
+     */
+    suspend fun observe(onSessionReady: suspend (MediaSession) -> Unit) {
+        coroutineScope {
+            FailFast.failWhen(mediaSession != null) {
+                "observe() called while a session is already active for ${config.entityId}"
+            }
+
+            // Dedicated scope to not block coroutineScope from completing
+            // when the entity state flow ends naturally. Cancelled explicitly in the finally block.
+            val commandScope = CoroutineScope(
+                coroutineContext + SupervisorJob() + CoroutineExceptionHandler { _, e ->
+                    Timber.e(e, "Command failed for ${config.entityId}")
+                },
+            )
+            val (player, session) = withContext(Dispatchers.Main) {
+                val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(commandScope), clock)
+                val session = buildMediaSession(player)
+                mediaSession = session
+                player to session
+            }
+            try {
+                onSessionReady(session)
+                startObservingState(player)
+            } finally {
+                commandScope.cancel()
+                Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
+                withContext(NonCancellable + Dispatchers.Main) {
+                    mediaSession = null
+                    notificationArtwork = null
+                    notificationEntityName = null
+                    player.release()
+                    session.release()
+                }
+            }
+        }
     }
 
     /**
@@ -281,51 +350,6 @@ class HaMediaSession @AssistedInject constructor(
                     action = ACTION_REPEAT_SET,
                     extraData = mapOf("repeat" to haRepeatValue),
                 )
-            }
-        }
-    }
-
-    /**
-     * Creates the [MediaSession] and player, starts observing entity state, and suspends until
-     * the calling coroutine is cancelled. Calls [onSessionReady] with the new session immediately
-     * after creation so the caller can register it with
-     * [androidx.media3.session.MediaSessionService.addSession].
-     *
-     * All Media3 resources are released in a `finally` block, so they are always cleaned up
-     * regardless of how the coroutine ends (cancellation or normal flow completion).
-     */
-    suspend fun observe(onSessionReady: suspend (MediaSession) -> Unit) {
-        coroutineScope {
-            FailFast.failWhen(mediaSession != null) {
-                "observe() called while a session is already active for ${config.entityId}"
-            }
-
-            // Dedicated scope to not block coroutineScope from completing
-            // when the entity state flow ends naturally. Cancelled explicitly in the finally block.
-            val commandScope = CoroutineScope(
-                coroutineContext + SupervisorJob() + CoroutineExceptionHandler { _, e ->
-                    Timber.e(e, "Command failed for ${config.entityId}")
-                },
-            )
-            val (player, session) = withContext(Dispatchers.Main) {
-                val player = HaRemoteMediaPlayer(Looper.getMainLooper(), getCommandCallback(commandScope), clock)
-                val session = buildMediaSession(player)
-                mediaSession = session
-                player to session
-            }
-            try {
-                onSessionReady(session)
-                startObservingState(player)
-            } finally {
-                commandScope.cancel()
-                Timber.d("observe: finally block running for ${config.entityId}, releasing player and session")
-                withContext(NonCancellable + Dispatchers.Main) {
-                    mediaSession = null
-                    notificationArtwork = null
-                    notificationEntityName = null
-                    player.release()
-                    session.release()
-                }
             }
         }
     }
@@ -506,52 +530,28 @@ class HaMediaSession @AssistedInject constructor(
         }
     }
 
-    /**
-     * Restricts media session connections to trusted controllers (same app, system,
-     * or apps with MEDIA_CONTENT_CONTROL / notification listener access).
-     */
-    @OptIn(UnstableApi::class)
-    private class MediaSessionCallback : MediaSession.Callback {
-        override fun onConnect(
-            session: MediaSession,
-            controller: MediaSession.ControllerInfo,
-        ): MediaSession.ConnectionResult {
-            if (!controller.isTrusted) {
-                Timber.w("Rejecting connection from untrusted media controller package=${controller.packageName}")
-                return MediaSession.ConnectionResult.reject()
-            }
-            return MediaSession.ConnectionResult.accept(
-                MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS,
-                MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS,
-            )
-        }
-    }
-
-    /**
-     * Mirrors AOSP's `Icon.scaleDownIfNecessary`: proportionally scales [bitmap] to fit within
-     * [maxWidth] × [maxHeight], preserving aspect ratio. Returns [bitmap] unchanged if it already
-     * fits.
-     *
-     * Run on IO to avoid the StrictMode CustomViolation triggered on API 36+ when the
-     * framework calls the same method on the main thread during notification rendering.
-     */
-    private fun scaleDownIfNecessary(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
-        if (bitmap.width <= maxWidth && bitmap.height <= maxHeight) return bitmap
-        val scale = minOf(maxWidth.toFloat() / bitmap.width, maxHeight.toFloat() / bitmap.height)
-        return bitmap.scale(
-            maxOf(1, (scale * bitmap.width).toInt()),
-            maxOf(1, (scale * bitmap.height).toInt()),
-        )
-    }
-
-    /** Immutable cache of the last successfully loaded artwork. */
-    private data class ArtworkCache(val url: String? = null, val bytes: ByteArray? = null, val bitmap: Bitmap? = null)
-
     /** Creates [HaMediaSession] instances with the runtime-provided [config]. */
     @AssistedFactory
     interface Factory {
         fun create(config: MediaControlsEntityConfig): HaMediaSession
     }
+}
+
+/**
+ * Mirrors AOSP's `Icon.scaleDownIfNecessary`: proportionally scales [bitmap] to fit within
+ * [maxWidth] × [maxHeight], preserving aspect ratio. Returns [bitmap] unchanged if it already
+ * fits.
+ *
+ * Run on IO to avoid the StrictMode CustomViolation triggered on API 36+ when the
+ * framework calls the same method on the main thread during notification rendering.
+ */
+private fun scaleDownIfNecessary(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
+    if (bitmap.width <= maxWidth && bitmap.height <= maxHeight) return bitmap
+    val scale = minOf(maxWidth.toFloat() / bitmap.width, maxHeight.toFloat() / bitmap.height)
+    return bitmap.scale(
+        maxOf(1, (scale * bitmap.width).toInt()),
+        maxOf(1, (scale * bitmap.height).toInt()),
+    )
 }
 
 private suspend fun ServerManager.baseUrlOrNull(serverId: Int): URL? = try {

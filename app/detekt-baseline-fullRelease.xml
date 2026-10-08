@@ -456,6 +456,7 @@
     <ID>TooManyFunctions:FakePlayer.kt:FakePlayer : Player</ID>
     <ID>TooManyFunctions:FrontendScreen.kt:io.homeassistant.companion.android.frontend.FrontendScreen.kt</ID>
     <ID>TooManyFunctions:FrontendViewModel.kt:FrontendViewModel : ViewModelFrontendConnectionErrorStateProvider</ID>
+    <ID>TooManyFunctions:HaMediaSession.kt:HaMediaSession</ID>
     <ID>TooManyFunctions:HaRemoteMediaPlayer.kt:HaRemoteMediaPlayer : SimpleBasePlayer</ID>
     <ID>TooManyFunctions:HaRemoteMediaPlayer.kt:HaRemoteMediaPlayer$CommandCallback</ID>
     <ID>TooManyFunctions:HealthConnectSensorManager.kt:HealthConnectSensorManager : SensorManager</ID>
