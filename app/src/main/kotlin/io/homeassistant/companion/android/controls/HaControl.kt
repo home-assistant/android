@@ -40,7 +40,7 @@ interface HaControl {
                 context,
                 info.entityId.hashCode(),
                 controlIntent,
-                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_MUTABLE,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             ),
         )
         control.setTitle(item.name)
