@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.ViewTreeObserver
+import android.view.WindowManager
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -193,6 +194,10 @@ class LaunchActivity : AppCompatActivity() {
 
         enableEdgeToEdgeCompat()
 
+        lifecycleScope.launch {
+            viewModel.isAppLockEnabled.collect(::setRecentsProtection)
+        }
+
         setContent {
             HATheme {
                 val navController = rememberNavController()
@@ -243,6 +248,20 @@ class LaunchActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         viewModel.refreshAppLockState()
+    }
+
+    /**
+     * Keeps the dashboard out of the Recents thumbnail while app lock is on, since the system captures
+     * it before the lock overlay is displayed.
+     */
+    private fun setRecentsProtection(enabled: Boolean) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
+            setRecentsScreenshotEnabled(!enabled)
+        } else if (enabled) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
     }
 
     override fun onResume() {

@@ -135,6 +135,11 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     private val _isAppLocked = MutableStateFlow(false)
     val isAppLocked: StateFlow<Boolean> = _isAppLocked.asStateFlow()
 
+    private val _isAppLockEnabled = MutableStateFlow(false)
+
+    /** Whether app lock is turned on, so the app content must stay out of the Recents screen. */
+    val isAppLockEnabled: StateFlow<Boolean> = _isAppLockEnabled.asStateFlow()
+
     private val _pipReadiness = MutableStateFlow<PipReadiness?>(null)
 
     /**
@@ -163,6 +168,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
      */
     fun refreshAppLockState() {
         viewModelScope.launch {
+            _isAppLockEnabled.value = appLockStateManager.isAppLockEnabled()
             _isAppLocked.value = appLockStateManager.isAppLocked()
         }
     }
