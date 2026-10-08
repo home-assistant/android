@@ -91,7 +91,7 @@ android {
 
 aboutLibraries {
     collect {
-        // Same third-party asset definitions as `:app`, whose resources this module reuses
+        // Third-party assets that are not Gradle dependencies (e.g. the Assist listening chime)
         configPath = rootProject.file("config/aboutlibraries")
     }
 }
