@@ -1044,7 +1044,7 @@ class HealthConnectSensorManager @Inject constructor(
         updateSleepStageSensors(analysis, basicAttributes)
     }
 
-    private fun isAnySleepSensorEnabled(): Boolean = listOf(
+    private suspend fun isAnySleepSensorEnabled(): Boolean = listOf(
         sleepDuration,
         sleepStart,
         sleepEnd,
@@ -1056,7 +1056,7 @@ class HealthConnectSensorManager @Inject constructor(
         sleepOutOfBedDuration,
         sleepUnspecifiedDuration,
         sleepUnknownDuration,
-    ).any(::isEnabled)
+    ).any { sensor -> isEnabled(sensor) }
 
     private suspend fun updateSleepStageSensors(analysis: SleepStageAnalysis, attributes: Map<String, Any?>) {
         val stageSensors = listOf(
