@@ -53,8 +53,7 @@ interface AssistConfigManager {
     suspend fun setSelectedWakeWordModel(model: MicroWakeWordModelConfig)
 
     /**
-     * Returns whether a chime plays when Assist starts listening without the user tapping the screen
-     * (wake word, headset button, assistant gesture, or continued conversation).
+     * Returns whether a chime plays when Assist starts listening without the user tapping the screen.
      */
     suspend fun isListeningChimeEnabled(): Boolean
 
