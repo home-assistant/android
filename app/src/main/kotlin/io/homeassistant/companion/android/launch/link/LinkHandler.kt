@@ -140,14 +140,17 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
 
     private suspend fun webviewDestination(target: FrontendTarget, serverId: Int? = null): LinkDestination {
         if (serverId != null) {
-            return LinkDestination.Webview(target, serverId)
+            return LinkDestination.Webview(targetOnServer(target) { serverManager.getServer(serverId) }, serverId)
         }
 
         val servers = serverManager.servers()
         return if (servers.size <= 1) {
-            LinkDestination.Webview(target, ServerManager.SERVER_ID_ACTIVE)
+            LinkDestination.Webview(targetOnServer(target) { servers.firstOrNull() }, ServerManager.SERVER_ID_ACTIVE)
         } else {
-            LinkDestination.ServerPicker(target, servers)
+            // The user still has to pick one of these servers, so there is no single origin to validate
+            // an absolute URL against: drop it to the default page, it would otherwise open externally
+            // whenever the picked server does not match it. A relative path works on any server.
+            LinkDestination.ServerPicker(targetOnServer(target) { null }, servers)
         }
     }
 
@@ -252,6 +255,9 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
      * - `server=<name>`: Searches for a server with matching friendly name (case-insensitive)
      * - No parameter or `server=default`: Uses the active server
      *
+     * When this resolves to no existing server, the active server or the server picker is used instead
+     * rather than forwarding a server that no longer exists.
+     *
      * A root-level `more-info-entity-id=<entity>` opens that entity's more-info dialog.
      *
      * An absolute URL is only accepted when it belongs to the server, the frontend must never
@@ -277,35 +283,37 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         } else {
             FrontendTarget.fromRawPath(uri.toFrontendRawPath())
         }
-        return if (target is FrontendTarget.Path && !isOnServer(target.path, serverId)) {
-            FailFast.fail {
-                "Navigate deep link outside the server, opening the default page: ${sensitive(target.path)}"
-            }
-            webviewDestination(FrontendTarget.Default, serverId)
-        } else {
-            webviewDestination(target, serverId)
-        }
+        return webviewDestination(target, serverId)
     }
 
     /**
-     * Whether [path] stays on the server: a relative path, or an absolute URL matching one of the
-     * configured URLs of the server identified by [serverId] (of any registered server when `null`).
+     * Keeps [target] when the frontend may open it, otherwise returns [FrontendTarget.Default]. A
+     * relative path is always kept; an absolute URL must match a frontend origin of [server], which is
+     * only resolved in that case and may be `null`.
      */
-    private suspend fun isOnServer(path: String, serverId: Int?): Boolean {
-        if (!UrlUtil.isAbsoluteUrl(path)) return true
-        val servers = when (serverId) {
-            null -> serverManager.servers()
-            else -> listOfNotNull(serverManager.getServer(serverId))
+    private suspend fun targetOnServer(target: FrontendTarget, server: suspend () -> Server?): FrontendTarget {
+        if (target !is FrontendTarget.Path || !UrlUtil.isAbsoluteUrl(target.path)) {
+            return target
         }
-        return servers.any { it.connection.isKnownUrl(path) }
+        return if (server()?.connection?.isFrontendUrl(target.path) == true) {
+            target
+        } else {
+            FailFast.fail {
+                "Navigate deep link outside the server, opening the default page: ${sensitive(target.path)}"
+            }
+            FrontendTarget.Default
+        }
     }
 
     /**
      * Resolves the target server for a navigate link: a stable `server_id` takes precedence,
-     * otherwise the `server` friendly-name lookup (`default`/absent uses the active server).
+     * otherwise the `server` friendly-name lookup (`default`/absent uses the active server). Returns
+     * `null` when it resolves to no existing server.
      */
     private suspend fun resolveNavigateServerId(uri: Uri): Int? {
-        uri.getQueryParameter(SERVER_ID_PARAM)?.toIntOrNull()?.let { return it }
+        uri.getQueryParameter(SERVER_ID_PARAM)?.toIntOrNull()?.let { id ->
+            return serverManager.getServer(id)?.id
+        }
         val serverName = uri.getQueryParameter(SERVER_PARAM).takeIf { !it.isNullOrBlank() }
         return when (serverName) {
             "default", null -> serverManager.getServer()?.id
