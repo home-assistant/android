@@ -37,4 +37,7 @@ dependencies {
     implementation(libs.bundles.androidx.compose.ui.test)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.play.services.wearable)
+
+    // Only for the Robolectric plugin API: modules running Robolectric tests bring Robolectric themselves
+    compileOnly(libs.robolectric)
 }
