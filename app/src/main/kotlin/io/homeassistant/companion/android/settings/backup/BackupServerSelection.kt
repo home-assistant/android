@@ -38,7 +38,7 @@ internal fun backupServerSelections(
         sensor.options.values.flatMap { it.zones.orEmpty() }.map { it.server }
     }.toSet()
     val serverSections = backup.servers.filter {
-        backup.favorites != null || it.sensors != null || it.persistentConnection != null
+        backup.androidAutoFavorites != null || it.sensors != null || it.persistentConnection != null
     }.map { it.reference }.toSet()
     val rows = backup.servers.filter { it.reference in serverSections || it.reference in zoneServers }.map { server ->
         val target = targets[server.reference] ?: BackupServerTarget.Unselected

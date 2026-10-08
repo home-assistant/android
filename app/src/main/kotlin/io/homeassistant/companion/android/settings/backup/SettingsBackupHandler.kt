@@ -72,7 +72,7 @@ internal class SettingsBackupHandler @VisibleForTesting constructor(
                         ).name,
                 )
             },
-            favorites = prefsRepository.getAutoFavorites().mapNotNull { favorite ->
+            androidAutoFavorites = prefsRepository.getAutoFavorites().mapNotNull { favorite ->
                 references[favorite.serverId]?.let { BackupEntityReference(it, favorite.entityId) }
             },
             sensorOptions = sensorManager.options(capabilities, references),

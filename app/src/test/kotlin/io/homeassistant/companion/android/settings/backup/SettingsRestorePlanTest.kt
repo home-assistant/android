@@ -26,7 +26,7 @@ internal fun backupFixture() = SettingsBackupData(
     "test",
     Instant.parse("2026-10-07T12:00:00Z"),
     listOf(BackupServerData("home", "Home", mapOf("battery" to false, "location" to true), "ALWAYS")),
-    favorites = listOf(BackupEntityReference("home", "cover.garage"), BackupEntityReference("home", "light.driveway")),
+    androidAutoFavorites = listOf(BackupEntityReference("home", "cover.garage"), BackupEntityReference("home", "light.driveway")),
     sensorOptions = listOf(
         BackupSensorOptionsData(
             "location",
@@ -86,8 +86,8 @@ class SettingsRestorePlanTest {
 
     @Test
     fun `Given empty favorites versus an omitted section when preparing then only explicit empty favorites are cleared`() {
-        val empty = prepareSettingsRestore(backupFixture().copy(favorites = emptyList()), mapOf("home" to 42), destinations, capabilities)
-        val absent = prepareSettingsRestore(backupFixture().copy(favorites = null), mapOf("home" to 42), destinations, capabilities)
+        val empty = prepareSettingsRestore(backupFixture().copy(androidAutoFavorites = emptyList()), mapOf("home" to 42), destinations, capabilities)
+        val absent = prepareSettingsRestore(backupFixture().copy(androidAutoFavorites = null), mapOf("home" to 42), destinations, capabilities)
         assertEquals(emptyList<AutoFavorite>(), empty.favorites)
         assertNull(absent.favorites)
     }

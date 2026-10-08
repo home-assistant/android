@@ -16,7 +16,8 @@ Required metadata:
 
 Optional sections:
 
-- `favorites`: ordered `{ "server": "reference", "entityId": "domain.object" }` list
+- `androidAutoFavorites`: ordered `{ "server": "reference", "entityId": "domain.object" }`
+  list of Android Auto favorites
 - `servers[].sensors`: sensor ID to enabled/disabled boolean
 - `servers[].persistentConnection`: `NEVER`, `SCREEN_ON`, `ALWAYS`, or `HOME_WIFI`
 - `sensorOptions`: sensor ID and map of declared setting names to values. Each
@@ -25,8 +26,9 @@ Optional sections:
 - `sensorUpdateFrequency`: `NORMAL`, `FAST_WHILE_CHARGING`, or `FAST_ALWAYS`
 
 An omitted/null section leaves the destination unchanged. An explicit empty
-favorites list clears favorites for mapped servers. Missing individual settings
-are retained. The importer rejects malformed documents and unknown fields.
+`androidAutoFavorites` list clears Android Auto favorites for mapped servers.
+Missing individual settings are retained. The importer rejects malformed documents
+and unknown fields.
 
 ## Restore behavior
 
@@ -40,9 +42,9 @@ A destination can be mapped only once. Skipped servers retain their server-speci
 options and update frequency are app-wide, so they also affect skipped servers.
 Zones with any unmapped reference are skipped as a whole rather than partially
 replacing a setting. Favorite order within the imported list is retained;
-favorites on unmapped destination servers are retained ahead of that list. Version
-1's `favorites` section is exclusively Android Auto favorites; any future favorite
-types must have their own sections rather than reinterpreting existing backups.
+favorites on unmapped destination servers are retained ahead of that list. The
+`androidAutoFavorites` section is exclusively Android Auto favorites; any future
+favorite types must have their own sections rather than reinterpreting existing backups.
 
 Unavailable sensors, options unknown to this app, invalid option types/choices,
 and enabled sensors lacking permissions are reported and skipped. Entity IDs
@@ -72,6 +74,6 @@ this version. The document may still contain personal entity IDs, server labels,
 app selections, Bluetooth addresses, and location preferences. It is intentionally
 unencrypted for portability and should be stored accordingly.
 
-The historical fixture in `common/src/test/resources/backup/settings-v1.json`
+The version-one fixture in `common/src/test/resources/backup/settings-v1.json`
 pins compatibility separately from encoder/decoder round-trip tests. Future
 format changes should add explicit migrations and compatibility fixtures.

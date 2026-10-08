@@ -15,7 +15,7 @@ data class SettingsBackupData(
     val appVersion: String,
     val createdAt: Instant,
     val servers: List<BackupServerData>,
-    val favorites: List<BackupEntityReference>? = null,
+    val androidAutoFavorites: List<BackupEntityReference>? = null,
     val sensorOptions: List<BackupSensorOptionsData>? = null,
     val sensorUpdateFrequency: String? = null,
 )
@@ -63,7 +63,7 @@ fun SettingsBackupData.select(sections: BackupSections): SettingsBackupData = co
             persistentConnection = it.persistentConnection.takeIf { sections.connection },
         )
     },
-    favorites = favorites.takeIf { sections.favorites },
+    androidAutoFavorites = androidAutoFavorites.takeIf { sections.favorites },
     sensorOptions = sensorOptions.takeIf { sections.sensorOptions },
     sensorUpdateFrequency = sensorUpdateFrequency.takeIf { sections.frequency },
 )

@@ -44,7 +44,7 @@ class SettingsBackupScreenshotTest {
             "2026.10.2",
             Instant.parse("2026-10-07T12:00:00Z"),
             listOf(BackupServerData("home", "Home"), BackupServerData("cabin", "Cabin")),
-            favorites = emptyList(),
+            androidAutoFavorites = emptyList(),
         )
         HAThemeForPreview {
             BackupRestoreContent(
@@ -74,7 +74,7 @@ class SettingsBackupScreenshotTest {
             "2026.10.2",
             Instant.parse("2026-10-07T12:00:00Z"),
             listOf(BackupServerData("home", "Home")),
-            favorites = listOf(
+            androidAutoFavorites = listOf(
                 BackupEntityReference("home", "cover.garage"),
                 BackupEntityReference("home", "light.driveway"),
             ),
@@ -114,7 +114,7 @@ class SettingsBackupScreenshotTest {
             "2026.10.2",
             Instant.parse("2026-10-07T12:00:00Z"),
             listOf(BackupServerData("home", "Home")),
-            favorites = listOf(
+            androidAutoFavorites = listOf(
                 BackupEntityReference("home", "cover.garage"),
                 BackupEntityReference("home", "light.driveway"),
             ),
@@ -178,7 +178,7 @@ class SettingsBackupScreenshotTest {
             "2026.10.2",
             Instant.parse("2026-10-07T12:00:00Z"),
             servers,
-            favorites = emptyList(),
+            androidAutoFavorites = emptyList(),
         )
         HAThemeForPreview {
             BackupRestoreContent(

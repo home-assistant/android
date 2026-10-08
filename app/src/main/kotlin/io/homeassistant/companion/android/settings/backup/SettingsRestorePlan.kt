@@ -54,7 +54,7 @@ internal fun prepareSettingsRestore(
             connections = connections,
             frequency = backup.sensorUpdateFrequency?.let(SensorUpdateFrequencySetting::valueOf),
         ),
-        favorites = backup.favorites?.takeIf { mapping.isNotEmpty() }?.mapNotNull { favorite ->
+        favorites = backup.androidAutoFavorites?.takeIf { mapping.isNotEmpty() }?.mapNotNull { favorite ->
             mapping[favorite.server]?.let { AutoFavorite(it, favorite.entityId) }
         },
         issues = issues.distinct(),

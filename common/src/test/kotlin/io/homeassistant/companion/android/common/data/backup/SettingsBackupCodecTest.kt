@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.data.backup
 
 import kotlin.time.Instant
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -20,7 +22,7 @@ class SettingsBackupCodecTest {
             BackupServerData("home", "Home", mapOf("battery_level" to true, "geocoded_location" to false), "ALWAYS"),
             BackupServerData("work", "Work"),
         ),
-        favorites = listOf(BackupEntityReference("work", "light.desk"), BackupEntityReference("home", "cover.garage")),
+        androidAutoFavorites = listOf(BackupEntityReference("work", "light.desk"), BackupEntityReference("home", "cover.garage")),
         sensorOptions = listOf(
             BackupSensorOptionsData(
                 "location_background",
@@ -36,12 +38,12 @@ class SettingsBackupCodecTest {
     )
 
     @Test
-    fun `Given a historical version one document when decoding then portable configuration remains compatible`() {
+    fun `Given a version one fixture when decoding then portable configuration remains compatible`() {
         val document = javaClass.getResource("/backup/settings-v1.json")!!.readBytes()
         val decoded = codec.decode(document)
         assertEquals("ALWAYS", decoded.servers.single().persistentConnection)
         assertEquals(false, decoded.servers.single().sensors?.get("location_background"))
-        assertEquals(listOf("cover.garage", "light.driveway"), decoded.favorites?.map { it.entityId })
+        assertEquals(listOf("cover.garage", "light.driveway"), decoded.androidAutoFavorites?.map { it.entityId })
         assertEquals(
             listOf(BackupEntityReference("server-0", "zone.home")),
             decoded.sensorOptions?.single()?.options?.get("high_accuracy_mode_zone")?.zones,
@@ -55,21 +57,42 @@ class SettingsBackupCodecTest {
     }
 
     @Test
-    fun `Given a favorites only export when encoding then other sections are absent rather than reset`() {
+    fun `Given an Android Auto favorites only export when encoding then the explicit section name is used`() {
         val selected = backup.select(BackupSections(sensors = false, sensorOptions = false, connection = false, frequency = false))
         val encoded = codec.encode(selected)
         val restored = codec.decode(encoded)
-        assertEquals(backup.favorites, restored.favorites)
+        assertEquals(backup.androidAutoFavorites, restored.androidAutoFavorites)
+        assertEquals(
+            setOf("format", "schemaVersion", "appVersion", "createdAt", "servers", "androidAutoFavorites"),
+            Json.parseToJsonElement(encoded.decodeToString()).jsonObject.keys,
+        )
         assertNull(restored.servers.first().sensors)
         assertNull(restored.servers.first().persistentConnection)
-        assertFalse(encoded.decodeToString().contains("sensorOptions"))
         assertNull(restored.sensorUpdateFrequency)
     }
 
     @Test
     fun `Given an empty favorites list when round tripping then it remains distinct from an absent section`() {
-        assertEquals(emptyList<BackupEntityReference>(), codec.decode(codec.encode(backup.copy(favorites = emptyList()))).favorites)
-        assertNull(codec.decode(codec.encode(backup.copy(favorites = null))).favorites)
+        val empty = backup.copy(androidAutoFavorites = emptyList())
+        val absent = backup.copy(androidAutoFavorites = null)
+        assertEquals(emptyList<BackupEntityReference>(), codec.decode(codec.encode(empty)).androidAutoFavorites)
+        assertNull(codec.decode(codec.encode(absent)).androidAutoFavorites)
+    }
+
+    @Test
+    fun `Given Android Auto favorites deselected when encoding then they are omitted without removing other settings`() {
+        val selected = backup.select(BackupSections(favorites = false))
+        val encoded = codec.encode(selected)
+        val restored = codec.decode(encoded)
+        assertFalse("androidAutoFavorites" in Json.parseToJsonElement(encoded.decodeToString()).jsonObject)
+        assertEquals(backup.copy(androidAutoFavorites = null), restored)
+    }
+
+    @Test
+    fun `Given the generic favorites field when decoding then it is rejected as an unknown section`() {
+        val document = javaClass.getResource("/backup/settings-v1.json")!!.readText()
+            .replace("\"androidAutoFavorites\"", "\"favorites\"")
+        assertThrows(InvalidSettingsBackupException::class.java) { codec.decode(document.encodeToByteArray()) }
     }
 
     @ParameterizedTest
@@ -94,8 +117,8 @@ class SettingsBackupCodecTest {
     fun `Given ambiguous or broken references when encoding then validation fails`() {
         val invalid = listOf(
             backup.copy(servers = backup.servers + backup.servers.first()),
-            backup.copy(favorites = listOf(BackupEntityReference("missing", "light.desk"))),
-            backup.copy(favorites = backup.favorites!! + backup.favorites.first()),
+            backup.copy(androidAutoFavorites = listOf(BackupEntityReference("missing", "light.desk"))),
+            backup.copy(androidAutoFavorites = backup.androidAutoFavorites!! + backup.androidAutoFavorites.first()),
             backup.copy(sensorUpdateFrequency = "UNRECOGNIZED"),
             backup.copy(servers = listOf(backup.servers.first().copy(persistentConnection = "INVALID"))),
         )

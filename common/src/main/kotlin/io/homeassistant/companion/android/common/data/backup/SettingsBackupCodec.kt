@@ -57,7 +57,7 @@ class SettingsBackupCodec @Inject constructor() {
         val references = backup.servers.map { it.reference }.toSet()
         verify(references.size == backup.servers.size, "Duplicate server references")
         backup.servers.forEach { validateServer(it) }
-        backup.favorites?.let { validateReferences(it, references) }
+        backup.androidAutoFavorites?.let { validateReferences(it, references) }
         backup.sensorUpdateFrequency?.let { value ->
             verify(SensorUpdateFrequencySetting.entries.any { it.name == value }, "Invalid update frequency")
         }

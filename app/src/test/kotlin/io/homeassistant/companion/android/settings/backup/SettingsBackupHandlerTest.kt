@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.backup
 
+import io.homeassistant.companion.android.common.data.backup.BackupEntityReference
 import io.homeassistant.companion.android.common.data.backup.BackupSections
 import io.homeassistant.companion.android.common.data.backup.BackupSettingsRepository
 import io.homeassistant.companion.android.common.data.backup.SettingsBackupCodec
@@ -65,6 +66,7 @@ class SettingsBackupHandlerTest {
         assertFalse(json.contains("example.invalid"))
         assertEquals("server-0", data.servers.single().reference)
         assertEquals(mapOf("battery" to true), data.servers.single().sensors)
+        assertEquals(listOf(BackupEntityReference("server-0", "switch.old")), data.androidAutoFavorites)
     }
 
     @Test

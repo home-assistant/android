@@ -63,7 +63,7 @@ internal fun sectionSelections(sections: BackupSections, backup: SettingsBackupD
     BackupSectionSelection(
         BackupSection.AndroidAutoFavorites,
         sections.favorites,
-        backup == null || backup.favorites != null,
+        backup == null || backup.androidAutoFavorites != null,
     ),
     BackupSectionSelection(
         BackupSection.Sensors,

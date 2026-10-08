@@ -11,7 +11,7 @@
             "persistentConnection": "ALWAYS"
         }
     ],
-    "favorites": [
+    "androidAutoFavorites": [
         { "server": "server-0", "entityId": "cover.garage" },
         { "server": "server-0", "entityId": "light.driveway" }
     ],
