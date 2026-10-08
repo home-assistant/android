@@ -1069,7 +1069,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.ExternalUrl -> {
                 // Suspends while the screen is busy with a previous event instead of dropping this one
-                _events.emit(FrontendEvent.OpenExternalLink(result.url.toUri()))
+                _events.send(FrontendEvent.OpenExternalLink(result.url.toUri()))
                 // Load the server without the rejected target, so no later restart can reopen it
                 startLoad(serverId = result.serverId)
             }

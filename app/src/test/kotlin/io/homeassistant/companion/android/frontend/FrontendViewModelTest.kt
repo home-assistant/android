@@ -393,7 +393,7 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given external url target when loading then opens it and loads the server without it`() = runTest {
+        fun `Given external url target when loading then sends OpenExternalLink and loads the server without it`() = runTest {
             val externalUrl = "https://example.com/"
             val externalTarget = FrontendTarget.Path(externalUrl)
             val externalUri: Uri = mockk()
