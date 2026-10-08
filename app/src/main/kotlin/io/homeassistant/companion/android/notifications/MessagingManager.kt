@@ -1431,14 +1431,20 @@ class MessagingManager @Inject constructor(
 
             // delete previous images that are no longer needed
             val imageCutoff = LocalDateTime.now().minusDays(2)
-            context.externalCacheDir?.listFiles()?.filter { file ->
-                file.absolutePath.endsWith("_animated_notification.gif") &&
+            val imageCacheFolderPath = context.externalCacheDir?.absolutePath?.plus("/animated_notification_image")
+            imageCacheFolderPath?.let { path ->
+                val cacheFolder = File(path)
+                // Create folder, if it does not yet exist
+                cacheFolder.mkdir()
+                // Clean up stale images
+                cacheFolder.listFiles()?.filter { file ->
                     imageCutoff.isAfter(
                         LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()),
                     )
-            }?.forEach { expired -> expired.delete() }
+                }?.forEach { expired -> expired.delete() }
+            }
 
-            val file = File(context.externalCacheDir, "${System.currentTimeMillis()}_animated_notification.gif")
+            val file = File(imageCacheFolderPath, "${System.currentTimeMillis()}_animated_notification.gif")
             try {
                 val request = Request.Builder().apply {
                     url(url)
