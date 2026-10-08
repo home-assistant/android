@@ -68,7 +68,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given LaunchIntent emitted before collecting when collecting then it is delivered once`() = runTest {
+    fun `Given LaunchIntent sent before collecting when collecting then it is delivered once`() = runTest {
         val intent: IntentSender = mockk()
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(intent)
         val handler = createHandler()
@@ -85,7 +85,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Matter Error result when onStartMatterCommissioning then emits MatterError snackbar event`() = runTest {
+    fun `Given Matter Error result when onStartMatterCommissioning then sends MatterError snackbar event`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns
             MatterManager.CommissioningResult.Error(IllegalStateException("nope"))
         val handler = createHandler()
