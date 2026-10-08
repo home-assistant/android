@@ -252,7 +252,7 @@ class LocationSensorManager @Inject constructor(
             when (intent.action) {
                 Intent.ACTION_BOOT_COMPLETED,
                 ACTION_REQUEST_LOCATION_UPDATES,
-                -> setupLocationTracking()
+                -> refreshLocationTrackingSetup()
 
                 ACTION_PROCESS_LOCATION,
                 ACTION_PROCESS_HIGH_ACCURACY_LOCATION,
@@ -303,7 +303,7 @@ class LocationSensorManager @Inject constructor(
             ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
     }
 
-    private suspend fun setupLocationTracking() {
+    private suspend fun refreshLocationTrackingSetup() {
         if (!checkPermission(backgroundLocation.id)) {
             Timber.w("Not starting location reporting because of permissions.")
             return
@@ -1328,9 +1328,7 @@ class LocationSensorManager @Inject constructor(
     }
 
     override suspend fun requestSensorUpdate() {
-        if (isEnabled(zoneLocation) || isEnabled(backgroundLocation)) {
-            setupLocationTracking()
-        }
+        refreshLocationTrackingSetup()
         cleanupLocationHistory()
         if (getToggleSetting(singleAccurateLocation, SETTING_INCLUDE_SENSOR_UPDATE)) {
             if (isEnabled(singleAccurateLocation)) {
