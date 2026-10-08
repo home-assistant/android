@@ -197,7 +197,7 @@
         </activity>
         <activity android:name=".widgets.common.WidgetAuthenticationActivity"
             android:configChanges="orientation|screenSize"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.Transparent">
         </activity>
         <activity android:name=".widgets.camera.CameraWidgetConfigureActivity"
