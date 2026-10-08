@@ -147,10 +147,10 @@ interface ServerConnectionStateProvider {
     /**
      * Checks if it's safe to send authentication credentials to the given URL.
      *
-     * Credentials are safe to send when:
-     * - The URL uses HTTPS (always safe), or
-     * - The URL belongs to this server AND the device is on an home network, or
-     * - The URL belongs to this server AND insecure connections are explicitly allowed
+     * Credentials are only ever sent to a URL that belongs to this server, and only when:
+     * - The URL uses HTTPS, or
+     * - The device is on an home network, or
+     * - Insecure connections are explicitly allowed
      *
      * @param url the URL to check
      * @return `true` if credentials can safely be sent to this URL

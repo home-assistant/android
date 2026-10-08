@@ -135,10 +135,9 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
     }
 
     override suspend fun canSafelySendCredentials(url: String): Boolean {
-        if (url.startsWith("https://")) return true
-
         val connection = connection()
         if (!connection.isKnownUrl(url)) return false
+        if (url.startsWith("https://")) return true
 
         // URL is HTTP and belongs to this server - check if it's safe
         val allowInsecure = connection.allowInsecureConnection ?: true
