@@ -378,12 +378,20 @@ class MessagingManager @Inject constructor(
 
                 jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL &&
                     !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
-                    Timber.d("Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
-                    removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
+                    if (allowCommands) {
+                        Timber.d("Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
+                        removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
+                    } else {
+                        Timber.w("Ignoring remove channel from a server that is not trusted")
+                    }
                 }
 
                 jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
-                    textToSpeechClient.speakText(jsonData)
+                    if (allowCommands) {
+                        textToSpeechClient.speakText(jsonData)
+                    } else {
+                        Timber.w("Ignoring TTS from a server that is not trusted")
+                    }
                 }
 
                 jsonData[NotificationData.MESSAGE] == TextToSpeechData.COMMAND_STOP_TTS -> textToSpeechClient.stopTTS()
