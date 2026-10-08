@@ -54,6 +54,12 @@ Permission and capability checks run again immediately before applying changes.
 As in the existing update-frequency screen, changing sensor update frequency
 requires an app restart to register the fast-update receiver.
 
+Restored sensor selections are marked pending synchronization (`registered = null`),
+even when the restored value matches the cached enabled state. The next sensor
+update re-registers those choices before accepting conflicting enabled states from
+a trusted server. Successful synchronization clears the pending status; subsequent
+server changes follow the normal synchronization rules.
+
 Database changes use one Room transaction. Favorites use the existing preferences
 store and are compensated if that transaction fails. This is not a cross-store
 crash-atomic transaction: abrupt process termination can leave favorites applied
@@ -66,7 +72,9 @@ The format never contains authentication, server URLs, webhooks, push tokens,
 device registrations, cached sensor readings, or generated BLE transmitter
 identity. Only declared sensor options are exported, excluding text options
 (currently the BLE transmitter UUID/major/minor). Dynamic/runtime settings are
-excluded. Destination sensor registrations and readings are retained.
+excluded. Sensor readings and registration version metadata on the destination
+are retained; the synchronization status of restored selections is reset as
+described above.
 
 Android permissions, battery exemptions, app locks, notification channels,
 home-Wi-Fi detection configuration, widgets, and Wear OS settings are not part of

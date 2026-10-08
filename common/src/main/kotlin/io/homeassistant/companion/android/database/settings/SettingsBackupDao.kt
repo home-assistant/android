@@ -36,7 +36,15 @@ internal interface SettingsBackupDao {
         changes.sensors.forEach { selection ->
             val sensor = getSensor(selection.sensorId, selection.serverId)
                 ?: Sensor(selection.sensorId, selection.serverId, enabled = false, state = "")
-            saveSensor(sensor.copy(enabled = selection.enabled, lastSentState = null, lastSentIcon = null))
+            // A restored choice must sync even when it matches the cached enabled state.
+            saveSensor(
+                sensor.copy(
+                    enabled = selection.enabled,
+                    registered = null,
+                    lastSentState = null,
+                    lastSentIcon = null,
+                ),
+            )
         }
         saveOptions(changes.options)
         val settings = getSettings().associateBy { it.id }

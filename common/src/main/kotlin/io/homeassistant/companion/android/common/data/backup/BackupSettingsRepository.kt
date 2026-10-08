@@ -9,7 +9,7 @@ import javax.inject.Inject
 
 data class RestoredSensorSelection(val sensorId: String, val serverId: Int, val enabled: Boolean)
 
-/** Validated changes to configuration columns only, never sensor readings or registrations. */
+/** Validated settings and synchronization changes, never sensor readings or device registrations. */
 data class BackupSettingsChanges(
     val serverIds: Set<Int>,
     val sensors: List<RestoredSensorSelection>,
