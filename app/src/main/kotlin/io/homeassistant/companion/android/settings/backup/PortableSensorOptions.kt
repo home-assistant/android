@@ -13,12 +13,18 @@ internal fun exportSensorOption(
     setting: SensorSetting,
     references: Map<Int, String>,
 ): BackupSensorOptionData? {
+    // Numeric readers fall back to the declared default without replacing the stored text.
+    val value = when (definition) {
+        is Setting.Number -> setting.value.takeIf { it.toIntOrNull() != null } ?: definition.defaultValue
+        is Setting.Decimal -> setting.value.takeIf { it.toDoubleOrNull() != null } ?: definition.defaultValue
+        else -> setting.value
+    }
     return when {
         !definition.isPortable() -> null
-        definition is Setting.Zones -> exportZones(setting.value, references)?.let {
+        definition is Setting.Zones -> exportZones(value, references)?.let {
             BackupSensorOptionData(zones = it, enabled = setting.enabled)
         }
-        else -> BackupSensorOptionData(value = setting.value, enabled = setting.enabled)
+        else -> BackupSensorOptionData(value = value, enabled = setting.enabled)
     }
 }
 

@@ -22,13 +22,20 @@ Optional sections:
 - `servers[].persistentConnection`: `NEVER`, `SCREEN_ON`, `ALWAYS`, or `HOME_WIFI`
 - `sensorOptions`: sensor ID and map of declared setting names to values. Each
   option has `enabled` (visibility in sensor settings) and exactly one of `value`
-  (the existing string representation) or `zones` (portable entity references).
+  (the string representation) or `zones` (portable entity references).
 - `sensorUpdateFrequency`: `NORMAL`, `FAST_WHILE_CHARGING`, or `FAST_ALWAYS`
 
 An omitted/null section leaves the destination unchanged. An explicit empty
 `androidAutoFavorites` list clears Android Auto favorites for mapped servers.
 Missing individual settings are retained. The importer rejects malformed documents
 and unknown fields.
+
+Numeric sensor options capture the effective value on the source. If the stored
+text cannot be parsed as the declared integer or decimal type, including a cleared
+field, export writes the source setting's declared default. Valid numeric strings
+are retained as entered. Restore applies the saved value even if the destination
+has a different default; imported values must still be valid integers or finite
+decimals.
 
 ## Restore behavior
 

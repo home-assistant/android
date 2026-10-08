@@ -2,14 +2,17 @@ package io.homeassistant.companion.android.settings.backup
 
 import io.homeassistant.companion.android.common.data.backup.BackupEntityReference
 import io.homeassistant.companion.android.common.data.backup.BackupSections
+import io.homeassistant.companion.android.common.data.backup.BackupSettingsChanges
 import io.homeassistant.companion.android.common.data.backup.BackupSettingsRepository
 import io.homeassistant.companion.android.common.data.backup.SettingsBackupCodec
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
@@ -25,6 +28,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 
 class SettingsBackupHandlerTest {
     private val servers = mockk<ServerManager>()
@@ -107,5 +112,66 @@ class SettingsBackupHandlerTest {
             coVerify(exactly = 0) { prefs.setAutoFavorites(any()) }
             coVerify(exactly = 0) { settings.apply(any()) }
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource("'', -59", "' ', -59", "not-a-number, -59", "2147483648, -59", "-80, -80", "+0007, +0007")
+    fun `Given an integer sensor setting when exporting and restoring then the source effective value replaces the destination`(
+        storedValue: String,
+        expectedValue: String,
+    ) = runTest {
+        assertNumericOptionRoundTrip(
+            sourceDefinition = Setting.Number("measured_power", -59),
+            destinationDefinition = Setting.Number("measured_power", -65),
+            storedValue = storedValue,
+            destinationValue = "-70",
+            expectedValue = expectedValue,
+        )
+    }
+
+    @ParameterizedTest
+    @CsvSource("'', 1.05", "' ', 1.05", "not-a-number, 1.05", "1.500, 1.500", "1e-3, 1e-3", "0.0, 0.0")
+    fun `Given a decimal sensor setting when exporting and restoring then the source effective value replaces the destination`(
+        storedValue: String,
+        expectedValue: String,
+    ) = runTest {
+        assertNumericOptionRoundTrip(
+            sourceDefinition = Setting.Decimal("multiplier", 1.05),
+            destinationDefinition = Setting.Decimal("multiplier", 2.5),
+            storedValue = storedValue,
+            destinationValue = "0.75",
+            expectedValue = expectedValue,
+        )
+    }
+
+    private suspend fun assertNumericOptionRoundTrip(
+        sourceDefinition: Setting,
+        destinationDefinition: Setting,
+        storedValue: String,
+        destinationValue: String,
+        expectedValue: String,
+    ) {
+        val sensor = SensorManager.BasicSensor("battery", "sensor", settings = listOf(sourceDefinition))
+        val sourceSetting = SensorSetting(sensor.id, sourceDefinition.name, storedValue, sourceDefinition.type, enabled = false)
+        var currentSetting = sourceSetting
+        coEvery { manager.getAvailableSensors() } returns listOf(sensor)
+        coEvery { sensors.getSettings(sensor.id) } answers { listOf(currentSetting) }
+        coEvery { settings.apply(any()) } answers {
+            currentSetting = firstArg<BackupSettingsChanges>().options
+                .find { it.sensorId == sensor.id && it.name == sourceDefinition.name } ?: currentSetting
+        }
+        val codec = SettingsBackupCodec()
+        val exported = handler.export(BackupSections(favorites = false, sensors = false, connection = false, frequency = false))
+        val backup = codec.decode(codec.encode(exported))
+
+        currentSetting = sourceSetting.copy(value = destinationValue, enabled = true)
+        coEvery { manager.getAvailableSensors() } returns listOf(sensor.copy(settings = listOf(destinationDefinition)))
+        val plan = handler.prepare(backup, emptyMap())
+        assertEquals(emptyList<RestoreIssue>(), plan.issues)
+
+        handler.restore(backup, emptyMap(), plan)
+
+        assertEquals(sourceSetting.copy(value = expectedValue), currentSetting)
+        assertEquals(expectedValue, backup.sensorOptions?.single()?.options?.get(sourceDefinition.name)?.value)
     }
 }
