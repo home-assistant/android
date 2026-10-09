@@ -69,6 +69,7 @@ import io.homeassistant.companion.android.common.notifications.parseVibrationPat
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
@@ -724,8 +725,12 @@ class MessagingManager @Inject constructor(
                     if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty()) {
                         intent.setClassName(packageName, className)
                     }
-                    Timber.d("Sending broadcast intent")
-                    context.sendBroadcast(intent)
+                    if (intent.reachesOwnNonExportedReceiver()) {
+                        FailFast.fail { "Blocked broadcast intent to a non-exported component of the app" }
+                    } else {
+                        Timber.d("Sending broadcast intent")
+                        context.sendBroadcast(intent)
+                    }
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to send broadcast intent please check command format")
                     Handler(Looper.getMainLooper()).post {
@@ -1426,14 +1431,20 @@ class MessagingManager @Inject constructor(
 
             // delete previous images that are no longer needed
             val imageCutoff = LocalDateTime.now().minusDays(2)
-            context.externalCacheDir?.listFiles()?.filter { file ->
-                file.absolutePath.endsWith("_animated_notification.gif") &&
+            val imageCacheFolderPath = context.externalCacheDir?.absolutePath?.plus("/animated_notification_image")
+            imageCacheFolderPath?.let { path ->
+                val cacheFolder = File(path)
+                // Create folder, if it does not yet exist
+                cacheFolder.mkdir()
+                // Clean up stale images
+                cacheFolder.listFiles()?.filter { file ->
                     imageCutoff.isAfter(
                         LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()),
                     )
-            }?.forEach { expired -> expired.delete() }
+                }?.forEach { expired -> expired.delete() }
+            }
 
-            val file = File(context.externalCacheDir, "${System.currentTimeMillis()}_animated_notification.gif")
+            val file = File(imageCacheFolderPath, "${System.currentTimeMillis()}_animated_notification.gif")
             try {
                 val request = Request.Builder().apply {
                     url(url)
@@ -1962,6 +1973,16 @@ class MessagingManager @Inject constructor(
         )
     }
 
+    private fun Intent.reachesOwnNonExportedActivity(): Boolean {
+        val target = resolveActivityInfo(context.packageManager, 0) ?: return false
+        return target.packageName == context.packageName && !target.exported
+    }
+
+    private fun Intent.reachesOwnNonExportedReceiver(): Boolean =
+        context.packageManager.queryBroadcastReceivers(this, 0).any {
+            it.activityInfo.packageName == context.packageName && !it.activityInfo.exported
+        }
+
     private fun processActivityCommand(data: Map<String, String>) {
         try {
             val packageName = data[INTENT_PACKAGE_NAME]
@@ -1981,6 +2002,12 @@ class MessagingManager @Inject constructor(
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             if (!packageName.isNullOrEmpty()) {
                 intent.setPackage(packageName)
+            }
+            if (intent.reachesOwnNonExportedActivity()) {
+                FailFast.fail { "Blocked activity intent to a non-exported component of the app" }
+                return
+            }
+            if (!packageName.isNullOrEmpty()) {
                 context.startActivity(intent)
             } else if (intent.resolveActivity(context.packageManager) != null) {
                 context.startActivity(intent)

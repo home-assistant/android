@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.testing.unit
 import androidx.annotation.VisibleForTesting
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
+import org.robolectric.pluginapi.TestEnvironmentLifecyclePlugin
 import timber.log.Timber
 
 /**
@@ -40,14 +41,33 @@ private object ConsoleLogTree : Timber.DebugTree() {
  */
 class ConsoleLogPlatformListener : TestExecutionListener {
     override fun testPlanExecutionStarted(testPlan: TestPlan) {
-        if (!isConsoleLogEnabled()) {
-            Timber.plant(ConsoleLogTree)
-        }
-        ConsoleLogTree.verbose = true
+        plantConsoleLogTree()
     }
 
     companion object {
         @VisibleForTesting
         fun isConsoleLogEnabled(): Boolean = Timber.forest().contains(ConsoleLogTree)
     }
+}
+
+/**
+ * Robolectric counterpart of [ConsoleLogPlatformListener].
+ *
+ * Robolectric runs tests in a sandbox class loader holding its own copy of [Timber], which the JUnit
+ * Platform listener never reaches. Robolectric loads this plugin inside the sandbox and calls it
+ * before every test; the tree is planted once per sandbox.
+ *
+ * Registered via the Robolectric `ServiceLoader` (`org.robolectric.pluginapi.TestEnvironmentLifecyclePlugin`).
+ */
+class ConsoleLogRobolectricPlugin : TestEnvironmentLifecyclePlugin {
+    override fun onSetupApplicationState() {
+        plantConsoleLogTree()
+    }
+}
+
+private fun plantConsoleLogTree() {
+    if (!ConsoleLogPlatformListener.isConsoleLogEnabled()) {
+        Timber.plant(ConsoleLogTree)
+    }
+    ConsoleLogTree.verbose = true
 }

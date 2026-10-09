@@ -257,7 +257,9 @@ private fun ChangelogEntryContent(
     currentPlatform: ChangelogPlatform,
     onActionClick: (ChangelogAction) -> Unit,
 ) {
-    val action = entry.action
+    val action = entry.action?.takeUnless {
+        entry.actionRequiresPlatform && currentPlatform !in entry.platforms
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier

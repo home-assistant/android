@@ -391,6 +391,31 @@ class FrontendViewModelTest {
             assertInstanceOf(FrontendConnectionError.Unreachable::class.java, state.error)
             assertEquals(errorActions(state.error, isInternalConnection = false), state.actions)
         }
+
+        @Test
+        fun `Given external url target when loading then opens it and loads the server without it`() = runTest {
+            val externalUrl = "https://example.com/"
+            val externalTarget = FrontendTarget.Path(externalUrl)
+            val externalUri: Uri = mockk()
+            mockkStatic(Uri::class) {
+                every { Uri.parse(externalUrl) } returns externalUri
+                val externalTargetUrlFlow = MutableSharedFlow<UrlLoadResult>()
+                every { urlManager.serverUrlFlow(serverId, externalTarget) } returns externalTargetUrlFlow
+                every { urlManager.serverUrlFlow(serverId, FrontendTarget.Default) } returns flowOf(
+                    UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+                )
+
+                val viewModel = createViewModel(path = externalUrl)
+                viewModel.events.test {
+                    externalTargetUrlFlow.emit(UrlLoadResult.ExternalUrl(url = externalUrl, serverId = serverId))
+                    advanceTimeBy(1.seconds)
+                    assertEquals(FrontendEvent.OpenExternalLink(externalUri), awaitItem())
+                    val state = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+                    // A restart of the load (e.g. on resume) uses this target, it must not reopen the external URL
+                    assertEquals(FrontendTarget.Default, state.target)
+                }
+            }
+        }
     }
 
     @Nested
