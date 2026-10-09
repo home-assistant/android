@@ -601,7 +601,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             },
             sensorRegistration.type,
             sensorRegistration.icon,
-            sensorRegistration.attributes,
+            // Attributes are shared by all servers, a server where the sensor is disabled must not receive them
+            if (sensorRegistration.disabled) emptyMap() else sensorRegistration.attributes,
             sensorRegistration.name,
             when (sensorRegistration.deviceClass) {
                 "atmospheric_pressure" -> if (canRegisterDeviceClassAtmosphericPressure) {
