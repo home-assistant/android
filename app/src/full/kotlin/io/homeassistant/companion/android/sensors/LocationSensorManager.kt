@@ -303,6 +303,7 @@ class LocationSensorManager @Inject constructor(
             ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
     }
 
+    /** Starts, stops or restarts background and zone location updates to match the current settings and permissions. */
     private suspend fun refreshLocationTrackingSetup() {
         if (!checkPermission(backgroundLocation.id)) {
             Timber.w("Not starting location reporting because of permissions.")
@@ -314,11 +315,6 @@ class LocationSensorManager @Inject constructor(
         val zoneServers = getEnabledServers(zoneLocation)
 
         try {
-            if (!backgroundEnabled && !zoneEnabled) {
-                removeAllLocationUpdateRequests()
-                isBackgroundLocationSetup = false
-                isZoneLocationSetup = false
-            }
             if (!zoneEnabled && isZoneLocationSetup) {
                 removeGeofenceUpdateRequests()
                 isZoneLocationSetup = false
@@ -327,6 +323,13 @@ class LocationSensorManager @Inject constructor(
                 removeBackgroundUpdateRequests()
                 stopHighAccuracyService()
                 isBackgroundLocationSetup = false
+            }
+            // Runs last so the branches above can stop the high accuracy service before the flags
+            // are cleared here.
+            if (!backgroundEnabled && !zoneEnabled) {
+                removeAllLocationUpdateRequests()
+                isBackgroundLocationSetup = false
+                isZoneLocationSetup = false
             }
             if (zoneEnabled && !isZoneLocationSetup) {
                 isZoneLocationSetup = true

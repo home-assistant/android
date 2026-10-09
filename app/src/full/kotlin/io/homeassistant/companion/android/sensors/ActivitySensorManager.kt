@@ -249,10 +249,11 @@ class ActivitySensorManager @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Unable to register for activity updates")
             }
-        } else {
+        } else if (checkPermission(activity.id)) {
             Timber.d("Unregistering for activity updates.")
             ActivityRecognition.getClient(applicationContext)
                 .removeActivityUpdates(getActivityPendingIntent(applicationContext))
+                .addOnFailureListener { Timber.e(it, "Unable to unregister for activity updates") }
         }
         if ((isEnabled(sleepConfidence) || isEnabled(sleepSegment)) && !sleepRegistration) {
             val pendingIntent = getSleepPendingIntent(applicationContext)

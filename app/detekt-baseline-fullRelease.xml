@@ -41,9 +41,9 @@
     <ID>CyclomaticComplexMethod:HealthConnectSensorManager.kt:HealthConnectSensorManager$override suspend fun requestSensorUpdate</ID>
     <ID>CyclomaticComplexMethod:HomeAssistantApplication.kt:HomeAssistantApplication$override fun onCreate</ID>
     <ID>CyclomaticComplexMethod:LocationSensorManager.kt:LocationSensorManager$private suspend fun handleGeoUpdate</ID>
+    <ID>CyclomaticComplexMethod:LocationSensorManager.kt:LocationSensorManager$private suspend fun refreshLocationTrackingSetup</ID>
     <ID>CyclomaticComplexMethod:LocationSensorManager.kt:LocationSensorManager$private suspend fun sendLocationUpdate</ID>
     <ID>CyclomaticComplexMethod:LocationSensorManager.kt:LocationSensorManager$private suspend fun setupBackgroundLocation</ID>
-    <ID>CyclomaticComplexMethod:LocationSensorManager.kt:LocationSensorManager$private suspend fun setupLocationTracking</ID>
     <ID>CyclomaticComplexMethod:LocationSensorManager.kt:LocationSensorManager$private suspend fun shouldEnableHighAccuracyMode: Boolean</ID>
     <ID>CyclomaticComplexMethod:LocationTrackingView.kt:@Composable fun LocationTrackingHistoryRow</ID>
     <ID>CyclomaticComplexMethod:ManageControlsView.kt:@Composable fun ManageControlsView</ID>
