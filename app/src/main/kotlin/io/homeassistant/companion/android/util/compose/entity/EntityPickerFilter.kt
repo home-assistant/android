@@ -40,6 +40,7 @@ private object FuzzySearchConfig {
     object Weights {
         const val NAME = 8
         const val DEVICE_NAME = 7
+        const val PARENT_DEVICE_NAME = 6
         const val AREA_NAME = 6
         const val DOMAIN_NAME = 6
         const val ENTITY_ID = 3
@@ -119,11 +120,16 @@ private suspend fun Collection<EntityDisplay>.mapToEntitiesWithFields(
             searchableFields = buildList {
                 // Store fields in lowercase to avoid repeated conversions during search
                 add(SearchField(sortingKey, FuzzySearchConfig.Weights.NAME))
-                (entity as? EntityDisplayWithContext)?.let {
-                    listOfNotNull(entity.deviceName, entity.parentDeviceName)
-                        .plus(entity.omittedOwnerNames)
-                        .forEach { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME)) }
-                    entity.areaName?.let { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }
+                (entity as? EntityDisplayWithContext)?.let { context ->
+                    context.deviceName?.let {
+                        add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME))
+                    }
+                    // Ancestor devices (the parent shown in the subtitle and the owners omitted from
+                    // it) rank below the entity's own device, matching the frontend.
+                    listOfNotNull(context.parentDeviceName)
+                        .plus(context.omittedOwnerNames)
+                        .forEach { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.PARENT_DEVICE_NAME)) }
+                    context.areaName?.let { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }
                 }
                 add(SearchField(entity.domain.lowercase(), FuzzySearchConfig.Weights.DOMAIN_NAME))
                 add(SearchField(entity.entityId.lowercase(), FuzzySearchConfig.Weights.ENTITY_ID))
