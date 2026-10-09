@@ -113,7 +113,7 @@ class AppLockStateManagerTest {
 
         @Test
         fun `Given an invalid server when checking app lock then returns false`() = runTest {
-            coEvery { serverManager.integrationRepository(any()) } throws IllegalArgumentException("test")
+            coEvery { serverManager.integrationRepository(any()) } throws IllegalStateException("test")
 
             val result = manager.isAppLocked(serverId = 1)
 

@@ -42,7 +42,7 @@ class AppLockStateManager @Inject constructor(private val serverManager: ServerM
         return serverManager.getServer(resolvedId)?.let {
             try {
                 serverManager.authenticationRepository(it.id).isLockEnabledRaw()
-            } catch (e: IllegalArgumentException) {
+            } catch (e: IllegalStateException) {
                 Timber.w(e, "Cannot determine app lock setting for server $resolvedId")
                 false
             }
@@ -59,7 +59,7 @@ class AppLockStateManager @Inject constructor(private val serverManager: ServerM
         return serverManager.getServer(resolvedId)?.let {
             try {
                 serverManager.integrationRepository(it.id).isAppLocked()
-            } catch (e: IllegalArgumentException) {
+            } catch (e: IllegalStateException) {
                 Timber.w(e, "Cannot determine app locked state for server $resolvedId")
                 false
             }
