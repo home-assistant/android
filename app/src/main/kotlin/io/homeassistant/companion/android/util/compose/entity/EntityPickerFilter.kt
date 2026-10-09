@@ -124,8 +124,6 @@ private suspend fun Collection<EntityDisplay>.mapToEntitiesWithFields(
                     context.deviceName?.let {
                         add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME))
                     }
-                    // Ancestor devices (the parent shown in the subtitle and the owners omitted from
-                    // it) rank below the entity's own device, matching the frontend.
                     listOfNotNull(context.parentDeviceName)
                         .plus(context.omittedOwnerNames)
                         .forEach { add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.PARENT_DEVICE_NAME)) }
