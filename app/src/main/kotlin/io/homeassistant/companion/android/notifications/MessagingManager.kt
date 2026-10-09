@@ -655,7 +655,9 @@ class MessagingManager @Inject constructor(
     }
 
     private fun requestAccurateLocationUpdate() {
-        context.sendBroadcast(LocationSensorManager.createRequestAccurateLocationUpdateIntent(context))
+        context.sendBroadcast(
+            LocationSensorManager.createRequestAccurateLocationUpdateIntent(context, fromNotificationCommand = true),
+        )
     }
 
     private fun removeNotificationChannel(channelName: String) {

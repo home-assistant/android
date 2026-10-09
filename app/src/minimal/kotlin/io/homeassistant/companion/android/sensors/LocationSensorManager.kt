@@ -70,7 +70,11 @@ class LocationSensorManager @Inject constructor(
          * single accurate location update via [ACTION_REQUEST_ACCURATE_LOCATION_UPDATE]. No-op in the
          * minimal flavor since [LocationSensorManager.onReceive] does nothing.
          */
-        fun createRequestAccurateLocationUpdateIntent(context: Context): Intent = Intent(
+        @Suppress("UNUSED_PARAMETER")
+        fun createRequestAccurateLocationUpdateIntent(
+            context: Context,
+            fromNotificationCommand: Boolean = false,
+        ): Intent = Intent(
             context,
             LocationSensorReceiver::class.java,
         ).apply {
