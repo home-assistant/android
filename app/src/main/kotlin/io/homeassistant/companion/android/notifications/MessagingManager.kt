@@ -647,7 +647,7 @@ class MessagingManager @Inject constructor(
                 }
 
                 else -> {
-                    Timber.d("Creating notification with following data: $jsonData")
+                    Timber.d("Creating notification with following data: ${sensitive { jsonData.toString() }}")
                     sendNotification(jsonData, notificationId, now)
                 }
             }

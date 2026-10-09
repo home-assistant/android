@@ -20,6 +20,7 @@ import io.homeassistant.companion.android.onboarding.connection.navigation.Conne
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -177,7 +178,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     }
 
     private suspend fun buildAuthUrl(base: String) {
-        Timber.d("Building auth url based on $base")
+        Timber.d("Building auth url based on ${sensitive(base)}")
         try {
             val authUrl = with(base.toHttpUrl()) {
                 HttpUrl.Builder()
@@ -191,7 +192,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                     .build()
                     .toString()
             }
-            Timber.d("Auth url is: $authUrl")
+            Timber.d("Auth url is: ${sensitive(authUrl)}")
             _urlFlow.emit(authUrl)
         } catch (e: Exception) {
             Timber.e(e, "Unable to build authentication URL")
@@ -253,7 +254,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 false // Not intercepted: Auth code missing
             }
         } else if (url.host != rawHttpUrl?.host) {
-            Timber.d("$url is not from the server, opening it in an external browser")
+            Timber.d("${sensitive(url.toString())} URL is not from the server, opening it in an external browser")
             viewModelScope.launch {
                 _navigationEventsFlow.emit(ConnectionNavigationEvent.OpenExternalLink(url))
             }
