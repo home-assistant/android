@@ -60,9 +60,8 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.settings.qs.TileId
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
-import io.homeassistant.companion.android.util.icondialog.IconDialog
+import io.homeassistant.companion.android.util.icondialog.IconDialogM3
 import io.homeassistant.companion.android.util.safeBottomWindowInsets
 
 @Composable
@@ -80,16 +79,13 @@ internal fun ManageTilesScreen(viewModel: ManageTilesViewModel, modifier: Modifi
     }
 
     if (showIconDialog) {
-        // TODO Migrate IconDialog to Material 3 https://github.com/home-assistant/android/issues/7156
-        HomeAssistantAppTheme {
-            IconDialog(
-                onSelect = { icon ->
-                    viewModel.selectIcon(icon)
-                    showIconDialog = false
-                },
-                onDismissRequest = { showIconDialog = false },
-            )
-        }
+        IconDialogM3(
+            onSelect = { icon ->
+                viewModel.selectIcon(icon)
+                showIconDialog = false
+            },
+            onDismissRequest = { showIconDialog = false },
+        )
     }
 
     ManageTilesContent(
