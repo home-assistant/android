@@ -265,16 +265,25 @@ data class EntityDisplayWithContext(
     val areaName: String? = null,
     val floorName: String? = null,
     val deviceName: String? = null,
+    val parentDeviceName: String? = null,
+    /**
+     * Names of the devices owning the entity that are left out of its naming context, because the
+     * entity or a nearer device has an area of its own. They still identify the entity, for example
+     * in a search.
+     */
+    val omittedOwnerNames: List<String> = emptyList(),
 ) : EntityDisplay by item {
 
     /**
-     * Formatted subtitle combining area and device name, adapting the separator to the
-     * layout direction. Null if the item has neither, or when it would just repeat [name].
+     * Formatted subtitle combining area, parent device and device name, adapting the separator to
+     * the layout direction. The device name is left out when the entity is named after it. Null if
+     * the item has none, or when it would just repeat [name].
      */
-    fun subtitle(layoutDirection: LayoutDirection): String? = listOfNotNull(areaName, deviceName)
-        .takeIf { it.isNotEmpty() }
-        ?.joinToString(entitySubtitleSeparator(layoutDirection))
-        ?.takeIf { it != name }
+    fun subtitle(layoutDirection: LayoutDirection): String? =
+        listOfNotNull(areaName, parentDeviceName, deviceName?.takeIf { it != name })
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(entitySubtitleSeparator(layoutDirection))
+            ?.takeIf { it != name }
 
     /** [subtitle] resolved against the layout direction the composition is in. */
     @Composable

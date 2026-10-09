@@ -32,6 +32,8 @@ data class EntityRegistryDisplayEntry(
     @SerialName("pl") val platform: String? = null,
     @SerialName("ai") val areaId: String? = null,
     @SerialName("di") val deviceId: String? = null,
+    /** Next owner of the entity naming context, only sent when set. */
+    @SerialName("np") val nextNamePart: NextNamePart? = null,
     /**
      * Label ids assigned to the entity, only sent when not empty. Available since
      * Home Assistant 2024.3 (https://github.com/home-assistant/core/pull/110821).
