@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.widgets.template
 
 import android.appwidget.AppWidgetManager
+import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -277,6 +278,21 @@ class TemplateWidgetConfigureViewModelTest {
         assertFalse(viewModel.updateWidgetConfiguration())
 
         coVerify(exactly = 0) { dao.add(any()) }
+    }
+
+    @Test
+    fun `Given an error already shown when the screen collects again then the error is not shown again`() = runTest {
+        val viewModel = createViewModel(widgetId = AppWidgetManager.INVALID_APPWIDGET_ID)
+        advanceUntilIdle()
+        assertFalse(viewModel.updateWidgetConfiguration())
+
+        viewModel.errors.test {
+            assertEquals(commonR.string.widget_update_error, awaitItem())
+        }
+        // A new collector, e.g. the screen after a rotation, must not show the error again
+        viewModel.errors.test {
+            expectNoEvents()
+        }
     }
 
     private fun createViewModel(widgetId: Int = this.widgetId) = TemplateWidgetConfigureViewModel(

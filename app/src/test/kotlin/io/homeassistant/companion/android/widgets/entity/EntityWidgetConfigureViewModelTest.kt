@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.entity
 
+import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -223,6 +224,21 @@ class EntityWidgetConfigureViewModelTest {
         viewModel.onTextSizeChanged("24")
 
         assertNull(viewModel.state.value.textSizeError)
+    }
+
+    @Test
+    fun `Given an error already shown when the screen collects again then the error is not shown again`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertFalse(viewModel.updateWidgetConfiguration())
+
+        viewModel.errors.test {
+            assertEquals(commonR.string.widget_update_error, awaitItem())
+        }
+        // A new collector, e.g. the screen after a rotation, must not show the error again
+        viewModel.errors.test {
+            expectNoEvents()
+        }
     }
 
     private fun createViewModel(preselectedEntityId: String? = null) = EntityWidgetConfigureViewModel(

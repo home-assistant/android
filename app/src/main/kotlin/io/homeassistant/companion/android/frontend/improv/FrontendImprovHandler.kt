@@ -12,13 +12,13 @@ import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -98,10 +98,10 @@ internal class FrontendImprovHandler @Inject constructor(
      */
     val uiState: StateFlow<ImprovUIState?> = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<Event>(extraBufferCapacity = 1)
+    private val _events = Channel<Event>(Channel.BUFFERED)
 
     /** Side-effect events to consume. */
-    val events: SharedFlow<Event> = _events.asSharedFlow()
+    val events: Flow<Event> = _events.receiveAsFlow()
 
     /**
      * Handles `improv/scan` from the frontend.
@@ -362,7 +362,7 @@ internal class FrontendImprovHandler @Inject constructor(
         if (NavigateToMessage.isAvailable(version)) {
             externalBusRepository.send(NavigateToMessage(path = path))
         } else {
-            _events.emit(Event.ReloadAtPath(path = path, serverId = serverId))
+            _events.send(Event.ReloadAtPath(path = path, serverId = serverId))
         }
     }
 

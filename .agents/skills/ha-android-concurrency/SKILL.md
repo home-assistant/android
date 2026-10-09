@@ -51,6 +51,18 @@ suspend fun get(): T {
 
 The project already provides this as `SuspendLazy` in `:common` (`common/src/main/kotlin/io/homeassistant/companion/android/common/util/SuspendLazy.kt`) — reuse it for lazy single initialization instead of re-implementing the pattern. Write the pattern by hand only when the caller isn't `suspend` or the state is reset/invalidated over time. Both re-checks inside the lock are required: dropping the second one reintroduces the race the pattern exists to close.
 
+## StateFlow, SharedFlow or Channel
+
+Pick the type by what must happen to a value when nobody is collecting:
+
+| What it is | Use |
+|---|---|
+| State: the latest value matters and re-rendering it is fine (screen state, modes) | `StateFlow` |
+| An event every collector must get, or one that is meaningless once its context is gone and must be dropped when nobody listens (`PermissionRequestMediator`; WebView actions, bound to the loaded page so they never run on another server's page) | `SharedFlow` |
+| An event one consumer must handle exactly once, never lost nor repeated (navigation, snackbar, opening a link) | `Channel(Channel.BUFFERED)` + `receiveAsFlow()` |
+
+A `Channel` hands each value to a single collector. In a suspending context use `send`; keep `trySend` for callbacks that cannot suspend.
+
 ## Testing Concurrency
 
 - Test concurrent behavior with unit tests under `runTest` using a `TestDispatcher` to control virtual time.

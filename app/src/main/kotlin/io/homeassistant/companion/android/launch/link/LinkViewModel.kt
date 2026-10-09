@@ -50,11 +50,11 @@ class LinkViewModel @Inject constructor(
         }
         viewModelScope.launch {
             when (val destination = linkHandler.handleLink(uri)) {
-                LinkDestination.NoDestination -> _navigationEvents.trySend(LinkNavigationEvent.Finish)
+                LinkDestination.NoDestination -> _navigationEvents.send(LinkNavigationEvent.Finish)
                 is LinkDestination.Onboarding ->
-                    _navigationEvents.trySend(LinkNavigationEvent.OpenInvitation(destination.serverUrl))
+                    _navigationEvents.send(LinkNavigationEvent.OpenInvitation(destination.serverUrl))
                 is LinkDestination.Webview ->
-                    _navigationEvents.trySend(
+                    _navigationEvents.send(
                         LinkNavigationEvent.NavigateToWebView(destination.target, destination.serverId),
                     )
                 is LinkDestination.ServerPicker ->

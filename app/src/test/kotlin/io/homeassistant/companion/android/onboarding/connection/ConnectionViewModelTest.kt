@@ -168,7 +168,7 @@ class ConnectionViewModelTest {
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
-    fun `Given auth callback uri with code when shouldRedirect then emits Authenticated event with mTLS status and returns true`(requireMTLS: Boolean) = runTest {
+    fun `Given auth callback uri with code when shouldRedirect then sends Authenticated event with mTLS status and returns true`(requireMTLS: Boolean) = runTest {
         val authCode = "test_auth_code"
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
@@ -194,6 +194,26 @@ class ConnectionViewModelTest {
             assertEquals("http://homeassistant.local:8123", event.url)
             assertEquals(requireMTLS, event.requiredMTLS)
             errorFlow.expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given Authenticated event already handled when the screen collects again then it is not delivered again`() = runTest {
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = "test_auth_code")
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+
+        // Sent before anything collects, it must still reach the screen once
+        assertTrue(viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri))
+        advanceUntilIdle()
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            assertTrue(navigationEventsFlow.awaitItem() is ConnectionNavigationEvent.Authenticated)
+            navigationEventsFlow.cancelAndIgnoreRemainingEvents()
+        }
+        // A new collector, e.g. the screen after a rotation, must not navigate again
+        turbineScope {
+            viewModel.navigationEventsFlow.testIn(backgroundScope).expectNoEvents()
         }
     }
 

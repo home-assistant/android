@@ -80,7 +80,7 @@ class DashboardViewModel @Inject constructor(
 - One ViewState is the single source of truth: don't keep parallel maps or extra mutable fields in the ViewModel that mirror what the state already holds — read and update the state itself.
 - ViewModels never expose Compose or platform types (no `Context`, no icon or lazy-list types); resolve those in the Compose layer and hoist callbacks instead of passing UI objects down.
 - Model distinct screen modes as a sealed hierarchy (`Loading` / `Content` / `Error`) so `when` stays exhaustive.
-- One-shot effects (navigation, snackbar) are events on a consumed-once Flow, never replayed state.
+- One-shot effects (navigation, snackbar, opening a link) are events, never replayed state: pick their Flow type with the table in the `ha-android-concurrency` skill (usually a `Channel`).
 
 ## Navigation
 
