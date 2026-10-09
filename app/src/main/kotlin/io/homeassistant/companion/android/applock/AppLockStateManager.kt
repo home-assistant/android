@@ -32,6 +32,24 @@ class AppLockStateManager @Inject constructor(private val serverManager: ServerM
     }
 
     /**
+     * Return whether the user turned app lock on for the given server (or the active server when
+     * [serverId] is `null`), regardless of whether the app is currently locked.
+     *
+     * Returns `false` if the server cannot be resolved or its authentication repository is unavailable.
+     */
+    suspend fun isAppLockEnabled(serverId: Int? = null): Boolean {
+        val resolvedId = serverId ?: ServerManager.SERVER_ID_ACTIVE
+        return serverManager.getServer(resolvedId)?.let {
+            try {
+                serverManager.authenticationRepository(it.id).isLockEnabledRaw()
+            } catch (e: IllegalStateException) {
+                Timber.w(e, "Cannot determine app lock setting for server $resolvedId")
+                false
+            }
+        } ?: false
+    }
+
+    /**
      * Return whether the given server (or the active server when [serverId] is `null`) is locked.
      *
      * Returns `false` if the server cannot be resolved or its integration repository is unavailable.
@@ -41,7 +59,7 @@ class AppLockStateManager @Inject constructor(private val serverManager: ServerM
         return serverManager.getServer(resolvedId)?.let {
             try {
                 serverManager.integrationRepository(it.id).isAppLocked()
-            } catch (e: IllegalArgumentException) {
+            } catch (e: IllegalStateException) {
                 Timber.w(e, "Cannot determine app locked state for server $resolvedId")
                 false
             }

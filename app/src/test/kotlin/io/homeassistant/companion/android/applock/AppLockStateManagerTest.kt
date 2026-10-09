@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.applock
 
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
@@ -9,6 +10,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -21,6 +23,7 @@ class AppLockStateManagerTest {
 
     private val serverManager: ServerManager = mockk()
     private val integrationRepository: IntegrationRepository = mockk()
+    private val authenticationRepository: AuthenticationRepository = mockk()
     private lateinit var manager: AppLockStateManager
 
     @BeforeEach
@@ -29,6 +32,7 @@ class AppLockStateManagerTest {
             every { id } returns 1
         }
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { serverManager.authenticationRepository(any()) } returns authenticationRepository
         manager = AppLockStateManager(serverManager)
     }
 
@@ -109,11 +113,32 @@ class AppLockStateManagerTest {
 
         @Test
         fun `Given an invalid server when checking app lock then returns false`() = runTest {
-            coEvery { serverManager.integrationRepository(any()) } throws IllegalArgumentException("test")
+            coEvery { serverManager.integrationRepository(any()) } throws IllegalStateException("test")
 
             val result = manager.isAppLocked(serverId = 1)
 
             assertFalse(result)
+        }
+    }
+
+    @Nested
+    inner class IsAppLockEnabled {
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given a valid server when checking app lock setting then returns stored setting`(
+            enabled: Boolean,
+        ) = runTest {
+            coEvery { authenticationRepository.isLockEnabledRaw() } returns enabled
+
+            assertEquals(enabled, manager.isAppLockEnabled(serverId = 1))
+        }
+
+        @Test
+        fun `Given no server when checking app lock setting then returns false`() = runTest {
+            coEvery { serverManager.getServer(any<Int>()) } returns null
+
+            assertFalse(manager.isAppLockEnabled(serverId = 99))
         }
     }
 }
