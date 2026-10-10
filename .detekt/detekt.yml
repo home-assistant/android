@@ -1,0 +1,32 @@
+complexity:
+  LongParameterList:
+    ignoreAnnotated:
+      - Composable
+  TooManyFunctions:
+    ignoreAnnotatedFunctions:
+      - Preview
+      - HAPreviews
+      - PreviewLightDark
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: false
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated:
+      - Composable
+
+style:
+  MaxLineLength:
+    active: false
+  UnusedPrivateFunction:
+    ignoreAnnotated:
+      - Preview
+      - HAPreviews
+      - PreviewLightDark
+  ForbiddenImport:
+    active: true
+    forbiddenImports:
+      - value: 'org.json.*'
+        reason: 'Use kotlinx.serialization instead of org.json.'

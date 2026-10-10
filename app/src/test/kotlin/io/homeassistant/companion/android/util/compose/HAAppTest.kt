@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.util.compose
 
+import android.Manifest
 import android.app.Activity
+import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.activity.compose.LocalActivity
@@ -23,6 +25,7 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
 import androidx.navigation.toRoute
 import androidx.savedstate.SavedState
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -64,6 +67,7 @@ import org.junit.jupiter.api.assertNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -178,6 +182,9 @@ class HAAppTest {
 
     @Test
     fun `Given WearOnboardingRoute without as start when starts then navigate to ServerDiscoveryScreen`() {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        // API 37+ gates the discovery screen on this permission; grant it so the screen renders by default.
+        shadowOf(application).grantPermissions(Manifest.permission.ACCESS_LOCAL_NETWORK)
         testApp(WearOnboardingRoute("wear", null)) {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(R.string.searching_home_network)).assertIsDisplayed()

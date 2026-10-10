@@ -13,15 +13,14 @@ import android.service.controls.templates.TemperatureControlTemplate
 import android.service.controls.templates.ToggleRangeTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import java.util.concurrent.ConcurrentHashMap
 
 @RequiresApi(Build.VERSION_CODES.R)
 object ClimateControl : HaControl {
     private data class ClimateState(val currentMode: String, val supportedModes: ArrayList<String>)
 
-    private const val SUPPORT_TARGET_TEMPERATURE = 1
-    private const val SUPPORT_TARGET_TEMPERATURE_RANGE = 2
     private val temperatureControlModes = mapOf(
         "cool" to TemperatureControlTemplate.MODE_COOL,
         "heat" to TemperatureControlTemplate.MODE_HEAT,
@@ -34,19 +33,18 @@ object ClimateControl : HaControl {
         "heat_cool" to TemperatureControlTemplate.FLAG_MODE_HEAT_COOL,
         "off" to TemperatureControlTemplate.FLAG_MODE_OFF,
     )
-    private val climateStates = HashMap<String, ClimateState>()
+    private val climateStates = ConcurrentHashMap<String, ClimateState>()
 
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity,
+        item: EntityDisplayWithContext,
         info: HaControlInfo,
     ): Control.StatefulBuilder {
-        val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
-        val maxValue = (entity.attributes["max_temp"] as? Number)?.toFloat() ?: 100f
-        var currentValue = (entity.attributes["temperature"] as? Number)?.toFloat() ?: (
-            entity.attributes["current_temperature"] as? Number
-            )?.toFloat() ?: 0f
+        val controls = item.climateControls
+        val minValue = controls?.minTemperature ?: 0f
+        val maxValue = controls?.maxTemperature ?: 100f
+        var currentValue = controls?.targetTemperature ?: controls?.currentTemperature ?: 0f
         // Ensure the current value is never lower than the minimum or higher than the maximum
         if (currentValue < minValue) {
             currentValue = minValue
@@ -55,8 +53,8 @@ object ClimateControl : HaControl {
             currentValue = maxValue
         }
 
-        val temperatureUnit = entity.attributes["temperature_unit"] ?: ""
-        val temperatureStepSize = (entity.attributes["target_temp_step"] as? Number)?.toFloat()
+        val temperatureUnit = controls?.temperatureUnit ?: ""
+        val temperatureStepSize = controls?.targetTemperatureStep
             ?: when (temperatureUnit) {
                 "°C" -> 0.5f
                 else -> 1f
@@ -70,8 +68,8 @@ object ClimateControl : HaControl {
             temperatureStepSize,
             "%.${temperatureFormatSize}f $temperatureUnit",
         )
-        if (entityShouldBePresentedAsThermostat(entity)) {
-            val state = ClimateState(entity.state, ArrayList())
+        if (shouldBePresentedAsThermostat(item)) {
+            val state = ClimateState(item.rawState, ArrayList())
             val toggleRangeTemplate = ToggleRangeTemplate(
                 info.systemId + "_range",
                 // Set checked to true to always show the temperature indicator, regardless of climate mode
@@ -80,7 +78,7 @@ object ClimateControl : HaControl {
                 rangeTemplate,
             )
             var modesFlag = 0
-            (entity.attributes["hvac_modes"] as? List<String>)?.forEach {
+            controls?.hvacModes?.forEach {
                 modesFlag = modesFlag or temperatureControlModeFlags[it]!!
                 state.supportedModes.add(it)
             }
@@ -89,8 +87,8 @@ object ClimateControl : HaControl {
                 TemperatureControlTemplate(
                     info.systemId,
                     toggleRangeTemplate,
-                    temperatureControlModes[entity.state]!!,
-                    temperatureControlModes[entity.state]!!,
+                    temperatureControlModes[item.rawState]!!,
+                    temperatureControlModes[item.rawState]!!,
                     modesFlag,
                 ),
             )
@@ -101,16 +99,20 @@ object ClimateControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int = if (entityShouldBePresentedAsThermostat(entity)) {
+    override fun getDeviceType(item: EntityDisplayWithContext): Int = if (shouldBePresentedAsThermostat(item)) {
         DeviceTypes.TYPE_THERMOSTAT
     } else {
         DeviceTypes.TYPE_AC_HEATER
     }
 
-    override fun getDomainString(context: Context, entity: Entity): String =
+    override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.domain_climate)
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         val entityStr: String = if (action.templateId.split(".").size > 2) {
             action.templateId.split(".", limit = 2)[1]
         } else {
@@ -123,7 +125,7 @@ object ClimateControl : HaControl {
                     "set_temperature",
                     hashMapOf(
                         "entity_id" to entityStr,
-                        "temperature" to (action as? FloatAction)?.newValue.toString(),
+                        "temperature" to action.newValue.toString(),
                     ),
                 )
                 true
@@ -136,7 +138,7 @@ object ClimateControl : HaControl {
                         "entity_id" to entityStr,
                         "hvac_mode" to (
                             temperatureControlModes.entries.find {
-                                it.value == ((action as? ModeAction)?.newMode ?: -1)
+                                it.value == action.newMode
                             }?.key ?: ""
                             ),
                     ),
@@ -166,21 +168,12 @@ object ClimateControl : HaControl {
         }
     }
 
-    private fun entityShouldBePresentedAsThermostat(entity: Entity): Boolean =
-        (entity.attributes["hvac_modes"] as? List<String>).let { modes ->
-            temperatureControlModes.containsKey(entity.state) &&
-                modes?.isNotEmpty() == true &&
-                modes.any { it == entity.state } &&
-                modes.all { temperatureControlModes.containsKey(it) } &&
-                (
-                    (
-                        (entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE ==
-                            SUPPORT_TARGET_TEMPERATURE
-                        ) ||
-                        (
-                            (entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE_RANGE ==
-                                SUPPORT_TARGET_TEMPERATURE_RANGE
-                            )
-                    )
-        }
+    private fun shouldBePresentedAsThermostat(item: EntityDisplayWithContext): Boolean {
+        val controls = item.climateControls ?: return false
+        return temperatureControlModes.containsKey(item.rawState) &&
+            controls.hvacModes.isNotEmpty() &&
+            controls.hvacModes.any { it == item.rawState } &&
+            controls.hvacModes.all { temperatureControlModes.containsKey(it) } &&
+            controls.supportsTargetTemperature
+    }
 }

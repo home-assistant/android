@@ -1,7 +1,8 @@
 package io.homeassistant.companion.android.widgets.todo
 
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Bookmark
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.COMPLETED_STATUS
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
@@ -171,7 +172,7 @@ class TodoWidgetStateTest {
         assertFalse(todoState.hasDisplayableItems())
     }
 
-    private fun fakeEntityDisplay(entityId: String, name: String, icon: IIcon? = null): EntityDisplayWithoutContext {
-        return EntityDisplayWithoutContext(entityId, name, icon ?: Icon.cmd_bookmark)
+    private fun fakeEntityDisplay(entityId: String, name: String, icon: MdiIcon? = null): EntityDisplayWithoutContext {
+        return EntityDisplayWithoutContext(entityId, name, icon ?: Mdi.Bookmark)
     }
 }

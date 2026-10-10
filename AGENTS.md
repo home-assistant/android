@@ -11,6 +11,7 @@ Detailed developer documentation lives at https://developers.home-assistant.io/d
 ./gradlew test                                             # Unit tests (:common:test for one module)
 ./gradlew :build-logic:convention:ktlintFormat ktlintFormat  # Format code, run before committing
 ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --continue  # Check code style
+./gradlew detektMain :build-logic:convention:detektMain --continue  # Detekt static analysis (same as CI)
 ./gradlew lint --continue                                  # Android linter
 ./gradlew validateDebugScreenshotTest                      # Screenshot tests
 ./gradlew alldependencies --write-locks                    # Update dependency locks after any dependency change
@@ -46,13 +47,14 @@ Detailed guidance lives in project skills under `.agents/skills/`. Load the matc
 - `ha-android-concurrency`: coroutines, dispatchers, thread safety, and lifecycle scoping.
 - `ha-android-logging-errors`: Timber, sensitive data, FailFast, and exception handling.
 - `ha-android-testing`: JUnit, MockK, Robolectric, Turbine, screenshot tests, and test naming.
+- `ha-android-e2e-debugging`: triaging an E2E failure through the Maestro report, logcat, Home Assistant logs, and upstream changes.
 - `ha-android-review`: reviewing a diff for correctness, style, convention adherence, and security.
 - `ha-android-committing`: finalizing a change — format, tests, changelog, branch naming, and pull requests.
 - `ha-android-skill-maintenance`: updating AGENTS.md or the skills when guidance is missing, stale, or corrected.
 
 ## Pull Requests
 
-When creating a pull request, use `.github/pull_request_template.md` as the PR body. Keep PRs small and focused. If the change is visible to end users, add it to the changelog in `app/src/main/res/xml/changelog_master.xml`. Before committing, format with ktlint and run the tests.
+When creating a pull request, use `.github/pull_request_template.md` as the PR body. Keep PRs small and focused. If the change adds a feature or changes behavior visibly for end users, add it to the changelog in `app/src/main/kotlin/io/homeassistant/companion/android/changelog/ChangelogContent.kt`; small bug fixes don't get their own entry — the standing "Bug fixes and dependency updates" entry covers them. Before committing, format with ktlint and run the tests.
 
 ## AI policy
 

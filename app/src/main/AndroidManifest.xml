@@ -281,7 +281,7 @@
         </activity>
         <activity android:name=".widgets.common.WidgetAuthenticationActivity"
             android:configChanges="orientation|screenSize"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.Transparent">
         </activity>
         <activity android:name=".widgets.camera.CameraWidgetConfigureActivity"
@@ -342,6 +342,7 @@
         </service>
 
         <activity android:name=".controls.HaControlsPanelActivity"
+            tools:targetApi="upside_down_cake"
             android:permission="android.permission.BIND_CONTROLS"
             android:exported="true"
             android:resizeableActivity="true"
@@ -517,7 +518,6 @@
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
                     android:host="www.home-assistant.io"

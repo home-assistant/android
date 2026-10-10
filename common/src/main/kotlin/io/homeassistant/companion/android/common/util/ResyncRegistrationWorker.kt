@@ -37,7 +37,7 @@ class ResyncRegistrationWorker(context: Context, params: WorkerParameters) :
         @InstallIn(SingletonComponent::class)
         internal interface ResyncRegistrationWorkerEntryPoint {
             fun serverManager(): ServerManager
-            fun appVersionProvider(): AppVersionProvider
+            fun appVersion(): AppVersion
             fun pushToken(): MessagingTokenProvider
 
             @PushWebsocketSupport
@@ -73,7 +73,7 @@ class ResyncRegistrationWorker(context: Context, params: WorkerParameters) :
                         serverManager.integrationRepository(it.id).apply {
                             updateRegistration(
                                 DeviceRegistration(
-                                    appVersion = entryPoints.appVersionProvider()(),
+                                    appVersion = entryPoints.appVersion(),
                                     pushToken = entryPoints.pushToken()(),
                                     pushWebsocket = entryPoints.pushWebsocketSupport(),
                                 ),

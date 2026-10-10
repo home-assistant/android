@@ -8,7 +8,6 @@ import io.homeassistant.companion.android.common.data.integration.SensorRegistra
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.server.Server
 import io.mockk.coEvery
@@ -24,8 +23,7 @@ class SensorUpdaterTest {
 
     private val context = mockk<Context>(relaxed = true)
     private val sensorRepository = mockk<SensorRepository>(relaxed = true)
-    private val appVersion = AppVersion.from("1.0", 1)
-    private val appVersionProvider = AppVersionProvider { appVersion }
+    private val appVersion = AppVersion("1.0", 1)
     private val settingsIntentProvider = SensorSettingsIntentProvider { _, _, _, _ -> null }
 
     private val haVersion = "2022.6.0"
@@ -44,7 +42,7 @@ class SensorUpdaterTest {
         context,
         serverManager,
         sensorRepository,
-        appVersionProvider,
+        appVersion,
         managers,
         settingsIntentProvider,
         notificationManager,
@@ -236,7 +234,7 @@ class SensorUpdaterTest {
         state = "",
         lastSentState = "",
         lastSentIcon = "",
-        appRegistration = appVersion.value,
+        appRegistration = appVersion.toString(),
         coreRegistration = haVersion,
     )
 
@@ -249,7 +247,7 @@ class SensorUpdaterTest {
         state = "on",
         lastSentState = null,
         lastSentIcon = null,
-        appRegistration = appVersion.value,
+        appRegistration = appVersion.toString(),
         coreRegistration = haVersion,
     )
 
@@ -277,7 +275,7 @@ class SensorUpdaterTest {
         state = "",
         lastSentState = "",
         lastSentIcon = "",
-        appRegistration = appVersion.value,
+        appRegistration = appVersion.toString(),
         coreRegistration = haVersion,
     )
 }

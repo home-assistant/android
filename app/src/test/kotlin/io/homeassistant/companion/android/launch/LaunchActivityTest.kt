@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.di.ServerManagerModule
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -28,9 +27,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkConstructor
 import io.mockk.mockkObject
-import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.verify
 import org.junit.After
@@ -71,8 +68,6 @@ class LaunchActivityTest {
         coEvery { WebsocketManager.start(any()) } just Runs
         every { SensorReceiver.updateAllSensors(any()) } just Runs
         every { DisabledLocationHandler.isLocationEnabled(any()) } returns true
-        mockkConstructor(ChangeLog::class)
-        coEvery { anyConstructed<ChangeLog>().showChangeLog(any(), any()) } just Runs
     }
 
     @After
@@ -81,16 +76,14 @@ class LaunchActivityTest {
         unmockkObject(WebsocketManager.Companion)
         unmockkObject(SensorReceiver.Companion)
         unmockkObject(DisabledLocationHandler)
-        unmockkConstructor(ChangeLog::class)
     }
 
     @Test
-    fun `Given activity resumes then sensor worker and websocket manager are started and changelog is shown`() {
+    fun `Given activity resumes then sensor worker and websocket manager are started`() {
         ActivityScenario.launch(LaunchActivity::class.java).use {
             verify { SensorWorker.start(any()) }
             coVerify { WebsocketManager.start(any()) }
             verify { DisabledLocationHandler.isLocationEnabled(any()) }
-            coVerify { anyConstructed<ChangeLog>().showChangeLog(any(), eq(false)) }
         }
     }
 

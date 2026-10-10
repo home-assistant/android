@@ -240,12 +240,6 @@
             android:title="@string/enable_change_log_popup"
             android:summary="@string/enable_change_log_popup_summary" />
         <Preference
-            android:key="changelog_github"
-            android:title="@string/changelog"
-            android:icon="@drawable/ic_github"
-            android:summary="https://github.com/home-assistant/android/releases"
-            app:enableCopying="true" />
-        <Preference
             android:key="version"
             android:icon="@drawable/ic_stat_ic_notification_blue"
             android:title="@string/application_version"

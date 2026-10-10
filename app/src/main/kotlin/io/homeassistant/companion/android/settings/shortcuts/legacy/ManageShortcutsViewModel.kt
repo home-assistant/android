@@ -15,8 +15,8 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.mikepenz.iconics.typeface.IIcon
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -62,7 +62,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
     data class Shortcut(
         var id: MutableState<String?>,
         var serverId: MutableState<Int>,
-        var selectedIcon: MutableState<IIcon?>,
+        var selectedIcon: MutableState<MdiIcon?>,
         var label: MutableState<String>,
         var desc: MutableState<String>,
         var path: MutableState<String>,
@@ -126,7 +126,7 @@ internal class ManageShortcutsViewModel @Inject constructor(
         shortcutLabel: String,
         shortcutDesc: String,
         shortcutPath: String,
-        icon: IIcon?,
+        icon: MdiIcon?,
     ) {
         Timber.d("Attempt to add shortcut $shortcutId")
         val shortcut = shortcutManager.buildShortcutInfo(

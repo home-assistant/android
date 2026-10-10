@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.frontend.handler
 import android.content.pm.PackageManager
 import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
-import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
@@ -75,7 +75,7 @@ class FrontendMessageHandler @Inject constructor(
     private val packageManager: PackageManager,
     private val matterManager: MatterManager,
     private val threadManager: ThreadManager,
-    private val appVersionProvider: AppVersionProvider,
+    private val appVersion: AppVersion,
     private val sessionManager: ServerSessionManager,
     private val downloadManager: FrontendDownloadManager,
     private val bluetoothCapabilities: BluetoothCapabilities,
@@ -324,7 +324,7 @@ class FrontendMessageHandler @Inject constructor(
             canExportThread = canExportThread,
             hasBarCodeScanner = hasBarCodeScanner,
             canSetupImprov = bluetoothCapabilities.hasBluetoothLe(),
-            appVersion = appVersionProvider(),
+            appVersion = appVersion,
         )
         externalBusRepository.send(response)
     }

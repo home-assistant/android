@@ -15,6 +15,12 @@ import androidx.core.content.IntentCompat
 import io.homeassistant.companion.android.BuildConfig
 import java.io.IOException
 
+/**
+ * A candidate NDEF [message] for a Home Assistant NFC tag, with a human readable [name]
+ * describing which application records it includes.
+ */
+data class TagMessage(val name: String, val message: NdefMessage)
+
 object NFCUtil {
     fun extractUrlFromNFCIntent(intent: Intent): Uri? {
         if (intent.action != NfcAdapter.ACTION_NDEF_DISCOVERED && intent.action != NfcAdapter.ACTION_TECH_DISCOVERED) {
@@ -28,6 +34,35 @@ object NFCUtil {
         )
         val ndefMessage = rawMessages?.get(0) as NdefMessage?
         return ndefMessage?.records?.get(0)?.toUri()
+    }
+
+    /**
+     * Returns the URL stored on Home Assistant NFC tags for [tagId], the reverse of
+     * [io.homeassistant.companion.android.util.UrlUtil.splitNfcTagId].
+     */
+    fun createTagUrl(tagId: String): String = "https://www.home-assistant.io/tag/$tagId"
+
+    /**
+     * Returns the candidate NDEF messages for a Home Assistant NFC tag: the tag [url] plus
+     * application records so that scanning the tag launches the app. Messages are ordered from
+     * largest to smallest (fewer or no application records), so callers should write the first
+     * message that fits on the tag.
+     */
+    fun createTagMessages(url: String): List<TagMessage> {
+        val nfcRecord = NdefRecord.createUri(url)
+        val applicationFlavorsRecords = BuildConfig.APPLICATION_IDS.map {
+            NdefRecord.createApplicationRecord(it)
+        }
+        val thisApplicationRecord = NdefRecord.createApplicationRecord(BuildConfig.APPLICATION_ID)
+
+        return listOf(
+            TagMessage("All flavors", NdefMessage(arrayOf(nfcRecord) + applicationFlavorsRecords)),
+            TagMessage(
+                "Current flavor (${BuildConfig.FLAVOR})",
+                NdefMessage(arrayOf(nfcRecord, thisApplicationRecord)),
+            ),
+            TagMessage("No flavor", NdefMessage(arrayOf(nfcRecord))),
+        )
     }
 
     /**
@@ -45,20 +80,10 @@ object NFCUtil {
      */
     @Throws(IllegalArgumentException::class, IOException::class, Exception::class)
     fun createNFCMessage(url: String, intent: Intent?): Boolean {
-        val nfcRecord = NdefRecord.createUri(url)
-        val applicationFlavorsRecords = BuildConfig.APPLICATION_IDS.map {
-            NdefRecord.createApplicationRecord(it)
-        }
-        val thisApplicationRecord = NdefRecord.createApplicationRecord(BuildConfig.APPLICATION_ID)
-
-        val nfcMessages = listOf(
-            NdefMessage(arrayOf(nfcRecord) + applicationFlavorsRecords),
-            NdefMessage(arrayOf(nfcRecord, thisApplicationRecord)),
-            NdefMessage(arrayOf(nfcRecord)),
-        )
+        val nfcMessages = createTagMessages(url)
         intent?.let {
             val tag = IntentCompat.getParcelableExtra(it, NfcAdapter.EXTRA_TAG, Tag::class.java)
-            return writeMessageToTag(nfcMessages, tag)
+            return writeMessageToTag(nfcMessages.map(TagMessage::message), tag)
         }
         return false
     }

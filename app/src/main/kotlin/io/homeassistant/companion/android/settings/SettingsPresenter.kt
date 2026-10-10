@@ -21,7 +21,6 @@ interface SettingsPresenter {
     fun getSuggestionFlow(): StateFlow<SettingsHomeSuggestion?>
     suspend fun getServersFlow(): Flow<List<Server>>
     suspend fun getNotificationRateLimits(): RateLimitResponse?
-    suspend fun showChangeLog(context: Context)
     suspend fun isChangeLogPopupEnabled(): Boolean
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
 }

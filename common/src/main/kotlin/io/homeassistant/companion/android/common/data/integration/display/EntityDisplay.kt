@@ -1,9 +1,14 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
-import com.mikepenz.iconics.typeface.IIcon
+import io.github.timoptr.mdiicons.MdiIcon
+import io.homeassistant.companion.android.common.data.integration.CameraControls
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
+import io.homeassistant.companion.android.common.data.integration.CoverControls
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityCoordinates
 import io.homeassistant.companion.android.common.data.integration.EntityPosition
@@ -11,18 +16,27 @@ import io.homeassistant.companion.android.common.data.integration.FanControls
 import io.homeassistant.companion.android.common.data.integration.FriendlyState
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains
 import io.homeassistant.companion.android.common.data.integration.LightControls
+import io.homeassistant.companion.android.common.data.integration.MediaPlayerControls
+import io.homeassistant.companion.android.common.data.integration.NumberControls
+import io.homeassistant.companion.android.common.data.integration.VacuumControls
+import io.homeassistant.companion.android.common.data.integration.deviceClass
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.integration.friendlyState
+import io.homeassistant.companion.android.common.data.integration.getCameraControls
 import io.homeassistant.companion.android.common.data.integration.getClimateControls
 import io.homeassistant.companion.android.common.data.integration.getColorTemperature
 import io.homeassistant.companion.android.common.data.integration.getCoordinates
+import io.homeassistant.companion.android.common.data.integration.getCoverControls
 import io.homeassistant.companion.android.common.data.integration.getCoverPosition
 import io.homeassistant.companion.android.common.data.integration.getFanSpeed
 import io.homeassistant.companion.android.common.data.integration.getFanSteps
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.getLightBrightness
 import io.homeassistant.companion.android.common.data.integration.getLightColor
+import io.homeassistant.companion.android.common.data.integration.getMediaPlayerControls
+import io.homeassistant.companion.android.common.data.integration.getNumberControls
 import io.homeassistant.companion.android.common.data.integration.getStatelessIcon
+import io.homeassistant.companion.android.common.data.integration.getVacuumControls
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
@@ -58,13 +72,13 @@ enum class EntityCategory {
 interface EntityDisplay {
     val entityId: String
     val name: String
-    val icon: IIcon
+    val icon: MdiIcon
 
     /**
      * Icon of the entity ignoring its state, so it stays the same as the entity changes, for
      * callers persisting an icon reference rather than rendering [icon].
      */
-    val statelessIcon: IIcon
+    val statelessIcon: MdiIcon
     val state: FriendlyState
     val rawState: String
 
@@ -95,6 +109,24 @@ interface EntityDisplay {
     /** Controls of the entity, null when it is not a climate one. */
     val climateControls: ClimateControls?
 
+    /** Value range of the entity, null when it is not a number one. */
+    val numberControls: NumberControls?
+
+    /** Volume control of the entity, null when it is not a media player. */
+    val mediaPlayerControls: MediaPlayerControls?
+
+    /** Controls of the entity, null when it is not a cover. */
+    val coverControls: CoverControls?
+
+    /** Controls of the entity, null when it is not a vacuum. */
+    val vacuumControls: VacuumControls?
+
+    /** Controls of the entity, null when it is not a camera. */
+    val cameraControls: CameraControls?
+
+    /** The `device_class` of the entity, null when it has none. */
+    val deviceClass: String?
+
     /**
      * When the state of the entity last changed.
      *
@@ -121,8 +153,8 @@ interface EntityDisplay {
 data class EntityDisplayWithoutContext(
     override val entityId: String,
     override val name: String,
-    override val icon: IIcon,
-    override val statelessIcon: IIcon = icon,
+    override val icon: MdiIcon,
+    override val statelessIcon: MdiIcon = icon,
     override val state: FriendlyState = FriendlyState.Literal(""),
     override val rawState: String = "",
     override val isExecuting: Boolean = false,
@@ -133,6 +165,12 @@ data class EntityDisplayWithoutContext(
     override val fanControls: FanControls? = null,
     override val lightControls: LightControls? = null,
     override val climateControls: ClimateControls? = null,
+    override val numberControls: NumberControls? = null,
+    override val mediaPlayerControls: MediaPlayerControls? = null,
+    override val coverControls: CoverControls? = null,
+    override val vacuumControls: VacuumControls? = null,
+    override val cameraControls: CameraControls? = null,
+    override val deviceClass: String? = null,
     override val lastChanged: LocalDateTime? = null,
     override val lastUpdated: LocalDateTime? = null,
     override val isHidden: Boolean = false,
@@ -150,7 +188,7 @@ data class EntityDisplayWithoutContext(
     constructor(
         entity: Entity,
         name: String = entity.friendlyName,
-        customIcon: IIcon? = null,
+        customIcon: MdiIcon? = null,
         isHidden: Boolean = false,
         entityCategory: EntityCategory? = null,
         displayPrecision: Int? = null,
@@ -170,6 +208,12 @@ data class EntityDisplayWithoutContext(
         fanControls = entity.fanControls(),
         lightControls = entity.lightControls(),
         climateControls = entity.getClimateControls(),
+        numberControls = entity.getNumberControls(),
+        mediaPlayerControls = entity.getMediaPlayerControls(),
+        coverControls = entity.getCoverControls(),
+        vacuumControls = entity.getVacuumControls(),
+        cameraControls = entity.getCameraControls(),
+        deviceClass = entity.deviceClass(),
         lastChanged = entity.lastChanged,
         lastUpdated = entity.lastUpdated,
         isHidden = isHidden,
@@ -221,14 +265,41 @@ data class EntityDisplayWithContext(
     val areaName: String? = null,
     val floorName: String? = null,
     val deviceName: String? = null,
+    val parentDeviceName: String? = null,
+    /**
+     * Names of the devices owning the entity that are left out of its naming context, because the
+     * entity or a nearer device has an area of its own. They still identify the entity, for example
+     * in a search.
+     */
+    val omittedOwnerNames: List<String> = emptyList(),
 ) : EntityDisplay by item {
 
     /**
-     * Formatted subtitle combining area and device name, adapting the separator to the
-     * layout direction. Null if the item has neither, or when it would just repeat [name].
+     * Formatted subtitle combining area, parent device and device name, adapting the separator to
+     * the layout direction. The device name is left out when the entity is named after it. Null if
+     * the item has none, or when it would just repeat [name].
      */
-    fun subtitle(layoutDirection: LayoutDirection): String? = listOfNotNull(areaName, deviceName)
-        .takeIf { it.isNotEmpty() }
-        ?.joinToString(if (layoutDirection == LayoutDirection.Ltr) " ▸ " else " ◂ ")
-        ?.takeIf { it != name }
+    fun subtitle(layoutDirection: LayoutDirection): String? =
+        listOfNotNull(areaName, parentDeviceName, deviceName?.takeIf { it != name })
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(entitySubtitleSeparator(layoutDirection))
+            ?.takeIf { it != name }
+
+    /** [subtitle] resolved against the layout direction the composition is in. */
+    @Composable
+    @ReadOnlyComposable
+    fun subtitle(): String? = subtitle(LocalLayoutDirection.current)
 }
+
+/**
+ * Separator between the segments of an entity subtitle, pointing along [layoutDirection]. Callers
+ * prepending their own segment to [EntityDisplayWithContext.subtitle] join it with this, so the
+ * whole line reads as one breadcrumb.
+ */
+fun entitySubtitleSeparator(layoutDirection: LayoutDirection): String =
+    if (layoutDirection == LayoutDirection.Ltr) " ▸ " else " ◂ "
+
+/** The separator resolved against the layout direction of the current composition. */
+@Composable
+@ReadOnlyComposable
+fun entitySubtitleSeparator(): String = entitySubtitleSeparator(LocalLayoutDirection.current)

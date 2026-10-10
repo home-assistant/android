@@ -15,6 +15,8 @@ interface WifiHelper {
 
     /** Returns if the active data connection is using one of the provided Wi-Fi networks */
     fun isUsingSpecificWifi(networks: List<String>): Boolean
+
+    /** Returns the unquoted Wi-Fi SSID, or `null` when it is unavailable on Android 11 or newer. */
     fun getWifiSsid(): String?
     fun getWifiBssid(): String?
 }

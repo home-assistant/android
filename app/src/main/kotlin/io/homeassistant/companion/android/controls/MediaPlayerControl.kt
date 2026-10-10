@@ -13,12 +13,8 @@ import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.getVolumeLevel
-import io.homeassistant.companion.android.common.data.integration.getVolumeStep
-import io.homeassistant.companion.android.common.data.integration.isActive
-import io.homeassistant.companion.android.common.data.integration.supportsVolumeSet
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -27,22 +23,22 @@ object MediaPlayerControl : HaControl {
     override fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
-        entity: Entity,
+        item: EntityDisplayWithContext,
         info: HaControlInfo,
     ): Control.StatefulBuilder {
-        if (entity.supportsVolumeSet()) {
-            val volumeLevel = entity.getVolumeLevel()
+        val volume = item.mediaPlayerControls?.volume
+        if (volume != null) {
             control.setControlTemplate(
                 ToggleRangeTemplate(
-                    entity.entityId,
-                    entity.isActive(),
+                    item.entityId,
+                    item.isActive,
                     "",
                     RangeTemplate(
-                        entity.entityId,
-                        volumeLevel?.min ?: 0f,
-                        volumeLevel?.max ?: 100f,
-                        volumeLevel?.value ?: 0f,
-                        entity.getVolumeStep(),
+                        item.entityId,
+                        volume.min,
+                        volume.max,
+                        volume.value,
+                        item.mediaPlayerControls?.volumeStep ?: 0.1f,
                         "%.0f%%",
                     ),
                 ),
@@ -50,9 +46,9 @@ object MediaPlayerControl : HaControl {
         } else {
             control.setControlTemplate(
                 ToggleTemplate(
-                    entity.entityId,
+                    item.entityId,
                     ControlButton(
-                        entity.isActive(),
+                        item.isActive,
                         "",
                     ),
                 ),
@@ -61,12 +57,16 @@ object MediaPlayerControl : HaControl {
         return control
     }
 
-    override fun getDeviceType(entity: Entity): Int = DeviceTypes.TYPE_TV
+    override fun getDeviceType(item: EntityDisplayWithContext): Int = DeviceTypes.TYPE_TV
 
-    override fun getDomainString(context: Context, entity: Entity): String =
+    override fun getDomainString(context: Context, item: EntityDisplayWithContext): String =
         context.getString(commonR.string.media_player)
 
-    override suspend fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean {
+    override suspend fun performAction(
+        integrationRepository: IntegrationRepository,
+        action: ControlAction,
+        serverId: Int,
+    ): Boolean {
         when (action) {
             is BooleanAction -> {
                 integrationRepository.callAction(

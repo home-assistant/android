@@ -47,10 +47,12 @@ private object PreviewSensorRepository : SensorRepository {
     override suspend fun replaceAllAttributes(sensorId: String, attributes: List<Attribute>) = error("preview-only")
     override suspend fun getSettings(id: String): List<SensorSetting> = error("preview-only")
     override fun getSettingsFlow(id: String): Flow<List<SensorSetting>> = error("preview-only")
-    override suspend fun add(sensorSetting: SensorSetting) = error("preview-only")
+    override suspend fun addDynamicSetting(sensorSetting: SensorSetting) = error("preview-only")
     override suspend fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean) =
         error("preview-only")
     override suspend fun updateSettingValue(sensorId: String, settingName: String, value: String) =
+        error("preview-only")
+    override suspend fun getOrInitializeSettingValue(sensorId: String, settingName: String, initialValue: String) =
         error("preview-only")
     override suspend fun removeSetting(sensorId: String, settingName: String) = error("preview-only")
     override suspend fun removeSettings(sensorId: String, settingNames: List<String>) = error("preview-only")

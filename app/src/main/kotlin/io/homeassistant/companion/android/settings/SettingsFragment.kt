@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
+import io.homeassistant.companion.android.changelog.ChangelogFragment
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
@@ -340,22 +341,10 @@ class SettingsFragment(
             }
         }
 
-        findPreference<Preference>("changelog_github")?.let {
-            val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL")) {
-                "https://github.com/home-assistant/android/releases"
-            } else {
-                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace(
-                    "-full",
-                    "",
-                ).replace("-minimal", "")}"
-            }
-            it.summary = link
-            it.intent = Intent(Intent.ACTION_VIEW, link.toUri())
-        }
-
         findPreference<Preference>("changelog_prompt")?.setOnPreferenceClickListener {
-            lifecycleScope.launch {
-                presenter.showChangeLog(requireContext())
+            parentFragmentManager.commit {
+                replace(R.id.content, ChangelogFragment::class.java, null)
+                addToBackStack(getString(commonR.string.changelog_screen_title))
             }
             true
         }

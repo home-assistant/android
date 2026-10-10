@@ -6,12 +6,17 @@ import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.session.ServerSessionManager
 import io.homeassistant.companion.android.util.UrlUtil
-import java.net.URL
+import io.homeassistant.companion.android.util.compose.webview.EXTERNAL_AUTH_QUERY_PARAM
+import io.homeassistant.companion.android.util.hasSameOrigin
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
+
+private const val MORE_INFO_ENTITY_ID_QUERY_PARAM = "more-info-entity-id"
 
 /**
  * Manages URL resolution and security checks for the frontend.
@@ -87,7 +92,7 @@ class FrontendUrlManager @Inject constructor(
         return when (urlState) {
             is UrlState.HasUrl -> {
                 buildUrl(
-                    baseUrl = urlState.url,
+                    baseUrl = urlState.url?.toHttpUrlOrNull(),
                     serverId = serverId,
                     target = target,
                 )
@@ -105,55 +110,66 @@ class FrontendUrlManager @Inject constructor(
         }
     }
 
-    private suspend fun buildUrl(baseUrl: URL?, serverId: Int, target: FrontendTarget): UrlLoadResult {
-        // Set when the more-info dialog must be opened via the `more-info-entity-id` URL parameter
-        // (HA 2025.6+) — added through the query builder below so the entity id is percent-encoded.
-        var moreInfoEntityIdForQuery: String? = null
-        // Set when the more-info dialog must instead be opened via JavaScript after the page loads
-        // (older servers that don't honor the `more-info-entity-id` URL parameter).
-        var moreInfoEntityIdForJs: String? = null
-        val urlToLoad = when (target) {
-            FrontendTarget.Default -> baseUrl
-            is FrontendTarget.Path -> UrlUtil.handle(baseUrl, target.path)
-            is FrontendTarget.EntityMoreInfo -> {
-                if (supportsMoreInfoQueryParam(serverId)) {
-                    moreInfoEntityIdForQuery = target.entityId
-                } else {
-                    moreInfoEntityIdForJs = target.entityId
-                }
-                baseUrl
+    private suspend fun buildUrl(baseUrl: HttpUrl?, serverId: Int, target: FrontendTarget): UrlLoadResult {
+        val resolved = resolveTarget(baseUrl = baseUrl, serverId = serverId, target = target)
+        val url = resolved.url
+        return when {
+            url == null -> {
+                Timber.e("No valid URL available for server $serverId")
+                UrlLoadResult.NoUrlAvailable(serverId)
+            }
+
+            // An absolute target can point anywhere, only the server origin can be used as frontend
+            baseUrl == null || !url.hasSameOrigin(baseUrl) -> {
+                Timber.w("Target ${sensitive(url.toString())} is outside the server origin, opening externally")
+                UrlLoadResult.ExternalUrl(url = url.toString(), serverId = serverId)
+            }
+
+            isSecurityLevelRequired(serverId) -> {
+                Timber.d("Security level not set for server $serverId, showing SecurityLevelRequired")
+                UrlLoadResult.SecurityLevelRequired(serverId)
+            }
+
+            else -> {
+                // Signal the frontend that authentication is provided through the JavaScript bridge
+                val urlWithAuth = url.newBuilder().addQueryParameter(EXTERNAL_AUTH_QUERY_PARAM, "1").build().toString()
+                Timber.d("Loading server URL: ${sensitive(urlWithAuth)}")
+                UrlLoadResult.Success(
+                    url = urlWithAuth,
+                    serverId = serverId,
+                    moreInfoEntityId = resolved.moreInfoEntityIdForJs,
+                )
             }
         }
+    }
 
-        if (urlToLoad == null) {
-            Timber.e("No URL available for server: $serverId")
-            return UrlLoadResult.NoUrlAvailable(serverId)
+    /**
+     * Resolves [target] against [baseUrl]. The resulting URL is `null` when it cannot be resolved
+     * to a valid HTTP(S) URL.
+     */
+    private suspend fun resolveTarget(baseUrl: HttpUrl?, serverId: Int, target: FrontendTarget): ResolvedTarget {
+        return when (target) {
+            FrontendTarget.Default -> ResolvedTarget(url = baseUrl)
+
+            is FrontendTarget.Path -> ResolvedTarget(
+                url = UrlUtil.handle(baseUrl?.toUrl(), target.path)?.toHttpUrlOrNull(),
+            )
+
+            is FrontendTarget.EntityMoreInfo -> if (supportsMoreInfoQueryParam(serverId)) {
+                // The query builder percent-encodes the entity id
+                val url = baseUrl
+                    ?.newBuilder()
+                    ?.addQueryParameter(MORE_INFO_ENTITY_ID_QUERY_PARAM, target.entityId)
+                    ?.build()
+                ResolvedTarget(url = url)
+            } else {
+                ResolvedTarget(url = baseUrl, moreInfoEntityIdForJs = target.entityId)
+            }
         }
+    }
 
-        // Check if security level needs to be configured before loading
-        val shouldShowSecurityLevel = shouldSetSecurityLevel(serverId) &&
-            !connectionSecurityLevelShown.getOrPut(serverId) { false }
-
-        if (shouldShowSecurityLevel) {
-            Timber.d("Security level not set for server $serverId, showing SecurityLevelRequired")
-            return UrlLoadResult.SecurityLevelRequired(serverId)
-        }
-
-        // Add external_auth=1 query parameter for authentication
-        val httpUrl = urlToLoad.toString().toHttpUrlOrNull()
-        if (httpUrl == null) {
-            Timber.e("Failed to parse URL: $urlToLoad")
-            return UrlLoadResult.NoUrlAvailable(serverId)
-        }
-
-        val urlWithAuth = httpUrl.newBuilder()
-            .apply { moreInfoEntityIdForQuery?.let { addQueryParameter("more-info-entity-id", it) } }
-            .addQueryParameter("external_auth", "1")
-            .build()
-            .toString()
-
-        Timber.d("Loading server URL: $urlWithAuth")
-        return UrlLoadResult.Success(url = urlWithAuth, serverId = serverId, moreInfoEntityId = moreInfoEntityIdForJs)
+    private suspend fun isSecurityLevelRequired(serverId: Int): Boolean {
+        return shouldSetSecurityLevel(serverId) && !connectionSecurityLevelShown.getOrPut(serverId) { false }
     }
 
     /**
@@ -184,3 +200,12 @@ class FrontendUrlManager @Inject constructor(
         connectionSecurityLevelShown[serverId] = true
     }
 }
+
+/**
+ * A [FrontendTarget] resolved against the server URL.
+ *
+ * @property url The URL to load, `null` when the target cannot be resolved to a valid HTTP(S) URL
+ * @property moreInfoEntityIdForJs Entity whose more-info dialog must be opened via JavaScript once
+ *   the page has loaded, for servers that ignore the `more-info-entity-id` URL parameter
+ */
+private data class ResolvedTarget(val url: HttpUrl?, val moreInfoEntityIdForJs: String? = null)

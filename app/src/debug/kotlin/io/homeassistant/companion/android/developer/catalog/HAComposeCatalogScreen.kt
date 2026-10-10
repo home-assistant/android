@@ -9,11 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,22 +25,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.DotsVertical
+import io.github.timoptr.mdiicons.generated.GestureTap
+import io.github.timoptr.mdiicons.generated.Pencil
+import io.github.timoptr.mdiicons.generated.TextBox
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 
-private sealed class CatalogScreen(val title: String, val icon: ImageVector) {
-    object ButtonsAndIndicators : CatalogScreen("Buttons & Indicators", Icons.Default.TouchApp)
-    object UserInput : CatalogScreen("User Input", Icons.Default.Edit)
-    object TextAndBanners : CatalogScreen(
-        "Text & Banners",
-        Icons.AutoMirrored.Filled.Article,
-    )
+private sealed class CatalogScreen(val title: String, val icon: MdiIcon) {
+    object ButtonsAndIndicators : CatalogScreen("Buttons & Indicators", Mdi.GestureTap)
+    object UserInput : CatalogScreen("User Input", Mdi.Pencil)
+    object TextAndBanners : CatalogScreen("Text & Banners", Mdi.TextBox)
 }
 
 @Composable
@@ -75,7 +73,7 @@ fun HAComposeCatalogScreen(modifier: Modifier = Modifier) {
                 NavigationBar {
                     screens.forEach { screen ->
                         NavigationBarItem(
-                            icon = { Icon(screen.icon, contentDescription = screen.title) },
+                            icon = { Icon(screen.icon.rememberImageVector(), contentDescription = screen.title) },
                             label = { Text(screen.title) },
                             selected = currentScreen == screen,
                             onClick = { currentScreen = screen },
@@ -112,7 +110,7 @@ private fun VariantDropdownMenu(onVariantClick: (ButtonVariant) -> Unit, modifie
 
     Box(modifier = modifier.padding(HADimens.SPACE4)) {
         IconButton(onClick = { expanded = !expanded }) {
-            Icon(Icons.Default.MoreVert, contentDescription = "Select variant")
+            Icon(Mdi.DotsVertical.rememberImageVector(), contentDescription = "Select variant")
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             ButtonVariant.entries.forEach { variant ->

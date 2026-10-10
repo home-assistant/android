@@ -18,12 +18,12 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -46,6 +46,10 @@ class NotificationListenerSensorManager @Inject constructor(
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
         private const val SETTING_INCLUDE_CONTENTS_AS_ATTRS = "active_notification_count_content_attrs"
+        private val notificationSettings = listOf(
+            Setting.Apps(SETTING_ALLOW_LIST),
+            Setting.Toggle(SETTING_DISABLE_ALLOW_LIST, default = false),
+        )
 
         @ProvidesSensor
         val lastNotification = SensorManager.BasicSensor(
@@ -56,6 +60,7 @@ class NotificationListenerSensorManager @Inject constructor(
             "mdi:bell-ring",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
+            settings = notificationSettings,
         )
 
         @ProvidesSensor
@@ -67,6 +72,7 @@ class NotificationListenerSensorManager @Inject constructor(
             "mdi:bell-ring",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
+            settings = notificationSettings,
         )
 
         @ProvidesSensor
@@ -80,6 +86,9 @@ class NotificationListenerSensorManager @Inject constructor(
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+            settings = listOf(
+                Setting.Toggle(SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true),
+            ),
         )
 
         @ProvidesSensor
@@ -128,10 +137,6 @@ class NotificationListenerSensorManager @Inject constructor(
     }
 
     override suspend fun requestSensorUpdate() {
-        // Load settings to persist their defaults before the sensor detail screen observes them.
-        listOf(lastNotification, lastRemovedNotification)
-            .filter { isEnabled(it) }
-            .forEach { getNotificationSettings(it) }
         updateMediaSession()
     }
 
@@ -233,7 +238,6 @@ class NotificationListenerSensorManager @Inject constructor(
                     getToggleSetting(
                         activeNotificationCount,
                         SETTING_INCLUDE_CONTENTS_AS_ATTRS,
-                        default = true,
                     )
                 val attrs = if (includeContentsAsAttrsSetting) {
                     buildMap {
@@ -328,13 +332,10 @@ class NotificationListenerSensorManager @Inject constructor(
         val allowPackages = getSetting(
             sensor,
             SETTING_ALLOW_LIST,
-            SensorSettingType.LIST_APPS,
-            default = "",
         ).split(", ").filter { it.isNotBlank() }
         val disableAllowListRequirement = getToggleSetting(
             sensor,
             SETTING_DISABLE_ALLOW_LIST,
-            default = false,
         )
 
         return NotificationSettings(allowPackages, disableAllowListRequirement)

@@ -40,6 +40,7 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
@@ -68,6 +69,7 @@ import io.homeassistant.companion.android.common.notifications.parseVibrationPat
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
@@ -107,6 +109,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -375,12 +378,13 @@ class MessagingManager @Inject constructor(
                 }
 
                 jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL &&
-                    !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
+                    !jsonData[NotificationData.CHANNEL].isNullOrBlank() &&
+                    allowCommands -> {
                     Timber.d("Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
                     removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
                 }
 
-                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS && allowCommands -> {
                     textToSpeechClient.speakText(jsonData)
                 }
 
@@ -644,7 +648,7 @@ class MessagingManager @Inject constructor(
                 }
 
                 else -> {
-                    Timber.d("Creating notification with following data: $jsonData")
+                    Timber.d("Creating notification with following data: ${sensitive { jsonData.toString() }}")
                     sendNotification(jsonData, notificationId, now)
                 }
             }
@@ -722,8 +726,12 @@ class MessagingManager @Inject constructor(
                     if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty()) {
                         intent.setClassName(packageName, className)
                     }
-                    Timber.d("Sending broadcast intent")
-                    context.sendBroadcast(intent)
+                    if (intent.reachesOwnNonExportedReceiver()) {
+                        FailFast.fail { "Blocked broadcast intent to a non-exported component of the app" }
+                    } else {
+                        Timber.d("Sending broadcast intent")
+                        context.sendBroadcast(intent)
+                    }
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to send broadcast intent please check command format")
                     Handler(Looper.getMainLooper()).post {
@@ -1424,14 +1432,20 @@ class MessagingManager @Inject constructor(
 
             // delete previous images that are no longer needed
             val imageCutoff = LocalDateTime.now().minusDays(2)
-            context.externalCacheDir?.listFiles()?.filter { file ->
-                file.absolutePath.endsWith("_animated_notification.gif") &&
+            val imageCacheFolderPath = context.externalCacheDir?.absolutePath?.plus("/animated_notification_image")
+            imageCacheFolderPath?.let { path ->
+                val cacheFolder = File(path)
+                // Create folder, if it does not yet exist
+                cacheFolder.mkdir()
+                // Clean up stale images
+                cacheFolder.listFiles()?.filter { file ->
                     imageCutoff.isAfter(
                         LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()),
                     )
-            }?.forEach { expired -> expired.delete() }
+                }?.forEach { expired -> expired.delete() }
+            }
 
-            val file = File(context.externalCacheDir, "${System.currentTimeMillis()}_animated_notification.gif")
+            val file = File(imageCacheFolderPath, "${System.currentTimeMillis()}_animated_notification.gif")
             try {
                 val request = Request.Builder().apply {
                     url(url)
@@ -1561,8 +1575,9 @@ class MessagingManager @Inject constructor(
 
                     mediaRetriever.release()
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                e.printStackTrace()
                 Timber.e(e, "Couldn't download video for notification")
             }
 
@@ -1675,10 +1690,16 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_IMMUTABLE,
                         )
+                        // Intentionally use no icon if the action is first/second, so Android Auto heads-up
+                        // notifications show the action title instead of replacing it with an icon. However, the
+                        // third action MUST have an icon to avoid crashing the Android Auto app.
+                        val actionIcon = if (i == 3) {
+                            IconCompat.createWithResource(context, commonR.drawable.ic_stat_ic_notification)
+                        } else {
+                            null
+                        }
                         val action = NotificationCompat.Action.Builder(
-                            // Intentionally use no icon so Android Auto / heads-up notifications show the action
-                            // title instead of replacing it with an icon
-                            null,
+                            actionIcon,
                             notificationAction.title,
                             actionPendingIntent,
                         )
@@ -1953,6 +1974,16 @@ class MessagingManager @Inject constructor(
         )
     }
 
+    private fun Intent.reachesOwnNonExportedActivity(): Boolean {
+        val target = resolveActivityInfo(context.packageManager, 0) ?: return false
+        return target.packageName == context.packageName && !target.exported
+    }
+
+    private fun Intent.reachesOwnNonExportedReceiver(): Boolean =
+        context.packageManager.queryBroadcastReceivers(this, 0).any {
+            it.activityInfo.packageName == context.packageName && !it.activityInfo.exported
+        }
+
     private fun processActivityCommand(data: Map<String, String>) {
         try {
             val packageName = data[INTENT_PACKAGE_NAME]
@@ -1972,6 +2003,12 @@ class MessagingManager @Inject constructor(
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             if (!packageName.isNullOrEmpty()) {
                 intent.setPackage(packageName)
+            }
+            if (intent.reachesOwnNonExportedActivity()) {
+                FailFast.fail { "Blocked activity intent to a non-exported component of the app" }
+                return
+            }
+            if (!packageName.isNullOrEmpty()) {
                 context.startActivity(intent)
             } else if (intent.resolveActivity(context.packageManager) != null) {
                 context.startActivity(intent)

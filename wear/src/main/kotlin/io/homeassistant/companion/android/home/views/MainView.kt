@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -29,8 +30,10 @@ import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Animation
+import io.github.timoptr.mdiicons.generated.Cog
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -93,7 +96,11 @@ fun MainView(
                                     .fillMaxWidth(),
                                 icon = {
                                     Image(
-                                        asset = getIcon(cached?.icon, favoriteEntityID.split(".")[0]),
+                                        imageVector = getIcon(
+                                            cached?.icon,
+                                            favoriteEntityID.split(".")[0],
+                                        ).rememberImageVector(),
+                                        contentDescription = null,
                                         colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                                     )
                                 },
@@ -257,7 +264,9 @@ fun MainView(
                                             getIcon(
                                                 "",
                                                 domain,
-                                            ).let { Image(asset = it) }
+                                            ).let {
+                                                Image(imageVector = it.rememberImageVector(), contentDescription = null)
+                                            }
                                         },
                                         label = { Text(domainName) },
                                         onClick = {
@@ -283,7 +292,8 @@ fun MainView(
                                         .fillMaxWidth(),
                                     icon = {
                                         Image(
-                                            asset = CommunityMaterial.Icon.cmd_animation,
+                                            imageVector = Mdi.Animation.rememberImageVector(),
+                                            contentDescription = null,
                                             colorFilter = ColorFilter.tint(Color.White),
                                         )
                                     },
@@ -321,7 +331,8 @@ fun MainView(
                         .fillMaxWidth(),
                     icon = {
                         Image(
-                            asset = CommunityMaterial.Icon.cmd_cog,
+                            imageVector = Mdi.Cog.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(Color.White),
                         )
                     },

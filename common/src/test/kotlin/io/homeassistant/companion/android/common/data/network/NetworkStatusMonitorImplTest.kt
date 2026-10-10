@@ -4,6 +4,9 @@ import io.homeassistant.companion.android.common.data.servers.ServerConnectionSt
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import java.net.InetAddress
 import java.net.URL
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -13,6 +16,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,6 +37,11 @@ class NetworkStatusMonitorImplTest {
     @BeforeEach
     fun setup() {
         networkMonitor = NetworkStatusMonitorImpl(networkChangeObserver, networkHelper)
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
@@ -127,10 +136,20 @@ class NetworkStatusMonitorImplTest {
     @Test
     fun `Given public URL when network is not validated then state is CONNECTING`() = runTest {
         // Given - Public URL that requires internet validation
+        val url = URL("https://my-ha.duckdns.org") // Public URL
+        mockkStatic(InetAddress::class)
+        every { InetAddress.getAllByName(url.host) } returns arrayOf(
+            mockk<InetAddress>().apply {
+                every { isSiteLocalAddress } returns false
+                every { isLoopbackAddress } returns false
+                every { isLinkLocalAddress } returns false
+                every { isAnyLocalAddress } returns false
+            },
+        )
         every { networkHelper.hasActiveNetwork() } returns true
         coEvery { connectionStateProvider.isInternal(false) } returns false
         every { networkHelper.isNetworkValidated() } returns false
-        coEvery { connectionStateProvider.getExternalUrl() } returns URL("https://my-ha.duckdns.org") // Public URL
+        coEvery { connectionStateProvider.getExternalUrl() } returns url
         networkChangedFlow.emit(Unit)
 
         // When

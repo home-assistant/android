@@ -158,6 +158,33 @@ class FrontendConnectionErrorScreenTest {
     }
 
     @Test
+    fun `Given a failed check carrying details when rendering then they are shown in its message`() {
+        composeTestRule.apply {
+            setContent {
+                FrontendConnectionErrorScreen(
+                    error = FrontendConnectionError.Unknown("details", "errorType"),
+                    url = "http://ha.org",
+                    onOpenExternalLink = {},
+                    connectivityCheckState = ConnectivityCheckState(
+                        serverConnection = ConnectivityCheckResult.Failure(
+                            R.string.connection_check_error_http_status,
+                            "502",
+                        ),
+                    ),
+                )
+            }
+
+            onNodeWithText(stringResource(R.string.connection_error_more_details))
+                .performScrollTo()
+                .performClick()
+
+            onNodeWithText(activity.getString(R.string.connection_check_error_http_status, "502"))
+                .performScrollTo()
+                .assertIsDisplayed()
+        }
+    }
+
+    @Test
     fun `Given FrontendConnectionErrorScreen with viewmodel when retry is clicked then connectivity check is retried`() {
         val viewModel = mockk<ConnectionViewModel>()
         val error = FrontendConnectionError.Unreachable(

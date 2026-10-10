@@ -10,6 +10,8 @@ data class EntityRegistryResponse(
     val entityId: String,
     val hiddenBy: String? = null,
     val options: EntityRegistryOptions? = null,
+    /** Next owner of the entity naming context, null when none. */
+    val nextNamePart: NextNamePart? = null,
 )
 
 @Serializable

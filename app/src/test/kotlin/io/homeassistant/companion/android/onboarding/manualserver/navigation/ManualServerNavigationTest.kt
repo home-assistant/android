@@ -39,6 +39,7 @@ internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
     @Test
     fun `Given enter manual address when setting url and clicking connect then show ConnectScreen then back goes to ManualServer`() {
         testNavigation {
+            mockCheckPermission(true)
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(commonR.string.manual_setup))
@@ -51,7 +52,7 @@ internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
             coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
-            onNodeWithText("http://homeassistant.local:8123").performTextInput("http://ha.local")
+            onNodeWithText("http://homeassistant.local").performTextInput("http://ha.local")
 
             onNodeWithText(stringResource(commonR.string.connect))
                 .performScrollTo()

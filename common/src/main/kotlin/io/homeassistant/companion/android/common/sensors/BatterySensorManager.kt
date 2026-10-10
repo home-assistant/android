@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -119,6 +120,10 @@ class BatterySensorManager @Inject constructor(
             unitOfMeasurement = "W",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            settings = listOf(
+                Setting.Number(SETTING_BATTERY_CURRENT_DIVISOR, DEFAULT_BATTERY_CURRENT_DIVISOR),
+                Setting.Number(SETTING_BATTERY_VOLTAGE_DIVISOR, DEFAULT_BATTERY_VOLTAGE_DIVISOR),
+            ),
         )
 
         @ProvidesSensor
@@ -468,7 +473,6 @@ class BatterySensorManager @Inject constructor(
             val dividerSetting = getNumberSetting(
                 batteryPower,
                 SETTING_BATTERY_CURRENT_DIVISOR,
-                DEFAULT_BATTERY_CURRENT_DIVISOR,
             )
             current / dividerSetting.toFloat()
         } else {
@@ -482,7 +486,6 @@ class BatterySensorManager @Inject constructor(
             val dividerSetting = getNumberSetting(
                 batteryPower,
                 SETTING_BATTERY_VOLTAGE_DIVISOR,
-                DEFAULT_BATTERY_VOLTAGE_DIVISOR,
             )
             voltage / dividerSetting.toFloat()
         } else {

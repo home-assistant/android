@@ -38,175 +38,158 @@ class PrefsRepositoryImplTest {
         }
     }
     private val integrationStorage = mockk<LocalStorage>()
+    private var hadLegacyChangelogPref = false
 
     private lateinit var repository: PrefsRepositoryImpl
 
     @BeforeEach
     fun setup() {
         coEvery { localStorage.getInt(MIGRATION_PREF) } returns MIGRATION_VERSION
-        repository = PrefsRepositoryImpl(localStorage = localStorage, integrationStorage = integrationStorage)
+        repository = PrefsRepositoryImpl(
+            localStorage = localStorage,
+            integrationStorage = integrationStorage,
+            hadLegacyChangelogPref = { hadLegacyChangelogPref },
+        )
     }
 
-    @ParameterizedTest
-    @CsvSource(
-        "SWIPE_UP_THREE,SERVER_LIST",
-        "SWIPE_DOWN_THREE,QUICKBAR_DEFAULT",
-        "SWIPE_LEFT_THREE,SERVER_PREVIOUS",
-        "SWIPE_RIGHT_THREE,SERVER_NEXT",
-    )
-    fun `Given gesture with default action when getting pref then default action is returned`(
-        gestureName: String,
-        actionName: String,
-    ) = runTest {
-        coEvery { localStorage.getString("gesture_action_$gestureName") } returns null
+    @Nested
+    inner class GestureActions {
+        @ParameterizedTest
+        @CsvSource(
+            "SWIPE_UP_THREE,SERVER_LIST",
+            "SWIPE_DOWN_THREE,QUICKBAR_DEFAULT",
+            "SWIPE_LEFT_THREE,SERVER_PREVIOUS",
+            "SWIPE_RIGHT_THREE,SERVER_NEXT",
+        )
+        fun `Given gesture with default action when getting pref then default action is returned`(
+            gestureName: String,
+            actionName: String,
+        ) = runTest {
+            coEvery { localStorage.getString("gesture_action_$gestureName") } returns null
 
-        val result = repository.getGestureAction(HAGesture.valueOf(gestureName))
+            val result = repository.getGestureAction(HAGesture.valueOf(gestureName))
 
-        assertEquals(GestureAction.valueOf(actionName), result)
-    }
+            assertEquals(GestureAction.valueOf(actionName), result)
+        }
 
-    @Test
-    fun `Given user customized gesture action when getting pref then user action is returned`() = runTest {
-        coEvery { localStorage.getString("gesture_action_SWIPE_LEFT_THREE") } returns "QUICKBAR_DEFAULT"
+        @Test
+        fun `Given user customized gesture action when getting pref then user action is returned`() = runTest {
+            coEvery { localStorage.getString("gesture_action_SWIPE_LEFT_THREE") } returns "QUICKBAR_DEFAULT"
 
-        val result = repository.getGestureAction(HAGesture.valueOf("SWIPE_LEFT_THREE"))
+            val result = repository.getGestureAction(HAGesture.valueOf("SWIPE_LEFT_THREE"))
 
-        assertEquals(GestureAction.QUICKBAR_DEFAULT, result)
-    }
+            assertEquals(GestureAction.QUICKBAR_DEFAULT, result)
+        }
 
-    @ParameterizedTest
-    @ValueSource(strings = ["SWIPE_UP_TWO", "SWIPE_DOWN_TWO", "SWIPE_LEFT_TWO", "SWIPE_RIGHT_TWO"])
-    fun `Given gesture with no default action when getting pref then none action is returned`(
-        gestureName: String,
-    ) = runTest {
-        coEvery { localStorage.getString("gesture_action_$gestureName") } returns null
+        @ParameterizedTest
+        @ValueSource(strings = ["SWIPE_UP_TWO", "SWIPE_DOWN_TWO", "SWIPE_LEFT_TWO", "SWIPE_RIGHT_TWO"])
+        fun `Given gesture with no default action when getting pref then none action is returned`(
+            gestureName: String,
+        ) = runTest {
+            coEvery { localStorage.getString("gesture_action_$gestureName") } returns null
 
-        val result = repository.getGestureAction(HAGesture.valueOf(gestureName))
+            val result = repository.getGestureAction(HAGesture.valueOf(gestureName))
 
-        assertEquals(GestureAction.NONE, result)
-    }
-
-    @Test
-    fun `Given no preference set when checking change log popup enabled then default is true`() = runTest {
-        coEvery { localStorage.getBooleanOrNull("change_log_popup_enabled") } returns null
-
-        val result = repository.isChangeLogPopupEnabled()
-
-        assertTrue(result)
-    }
-
-    @Test
-    fun `Given user sets change log popup enabled to true when retrieving then value is true`() = runTest {
-        coEvery { localStorage.putBoolean("change_log_popup_enabled", true) } returns Unit
-        coEvery { localStorage.getBooleanOrNull("change_log_popup_enabled") } returns true
-        repository.setChangeLogPopupEnabled(true)
-
-        val result = repository.isChangeLogPopupEnabled()
-
-        assertTrue(result)
-    }
-
-    @Test
-    fun `Given user sets change log popup enabled to false when retrieving then value is false`() = runTest {
-        coEvery { localStorage.putBoolean("change_log_popup_enabled", false) } returns Unit
-        coEvery { localStorage.getBooleanOrNull("change_log_popup_enabled") } returns false
-        repository.setChangeLogPopupEnabled(false)
-
-        val result = repository.isChangeLogPopupEnabled()
-
-        assertFalse(result)
-    }
-
-    @Test
-    fun `Given migration already at current version when accessing prefs multiple times then migration check only runs once`() = runTest {
-        // This test verifies the fix where migrationChecked.set(true) is called
-        // even when migration is not needed to prevent repeated migration checks
-
-        // Setup - migration already at current version, no migration needed
-        coEvery { localStorage.getInt(MIGRATION_PREF) } returns MIGRATION_VERSION
-        coEvery { localStorage.getString(any()) } returns "test_value"
-
-        // Execute multiple calls
-        repository.getAppVersion()
-        repository.getCurrentLang()
-        repository.getControlsAuthRequired()
-
-        // Verify migration version check only happened once
-        // This confirms migrationChecked.set(true) was called after first check
-        // even though no actual migration was performed
-        coVerify(exactly = 1) { localStorage.getInt(MIGRATION_PREF) }
-
-        // Verify no integration storage was accessed since no migration was needed
-        coVerify(exactly = 0) { integrationStorage.getString(any()) }
-    }
-
-    @Test
-    fun `Given collecting flow when autoplay key changes then updated value is emitted`() = runTest {
-        coEvery { localStorage.getBoolean("autoplay_video") } returns false
-
-        repository.autoPlayVideoFlow().test {
-            assertFalse(awaitItem())
-
-            coEvery { localStorage.getBoolean("autoplay_video") } returns true
-            keyChangesFlow.emit("autoplay_video")
-
-            assertTrue(awaitItem())
-            cancelAndIgnoreRemainingEvents()
+            assertEquals(GestureAction.NONE, result)
         }
     }
 
-    @Test
-    fun `Given collecting flow when full screen changes then updated full screen enabled is emitted`() = runTest {
-        coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
+    @Nested
+    inner class Migration {
+        @Test
+        fun `Given migration already at current version when accessing prefs multiple times then migration check only runs once`() = runTest {
+            // This test verifies the fix where migrationChecked.set(true) is called
+            // even when migration is not needed to prevent repeated migration checks
 
-        repository.fullScreenEnabledFlow().test {
-            assertTrue(awaitItem())
+            // Setup - migration already at current version, no migration needed
+            coEvery { localStorage.getInt(MIGRATION_PREF) } returns MIGRATION_VERSION
+            coEvery { localStorage.getString(any()) } returns "test_value"
 
-            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns false
-            keyChangesFlow.emit("fullscreen_enabled")
+            // Execute multiple calls
+            repository.getAppVersion()
+            repository.getCurrentLang()
+            repository.getControlsAuthRequired()
 
-            assertFalse(awaitItem())
-            cancelAndIgnoreRemainingEvents()
+            // Verify migration version check only happened once
+            // This confirms migrationChecked.set(true) was called after first check
+            // even though no actual migration was performed
+            coVerify(exactly = 1) { localStorage.getInt(MIGRATION_PREF) }
+
+            // Verify no integration storage was accessed since no migration was needed
+            coVerify(exactly = 0) { integrationStorage.getString(any()) }
         }
     }
 
-    @Test
-    fun `Given collecting flow when screen orientation changes then typed value is emitted`() = runTest {
-        coEvery { localStorage.getString("screen_orientation") } returns null
+    @Nested
+    inner class SettingFlows {
+        @Test
+        fun `Given collecting flow when autoplay key changes then updated value is emitted`() = runTest {
+            coEvery { localStorage.getBoolean("autoplay_video") } returns false
 
-        repository.screenOrientationFlow().test {
-            // Null storage value falls back to SYSTEM
-            assertEquals(ScreenOrientation.SYSTEM, awaitItem())
+            repository.autoPlayVideoFlow().test {
+                assertFalse(awaitItem())
 
-            coEvery { localStorage.getString("screen_orientation") } returns "portrait"
-            keyChangesFlow.emit("screen_orientation")
-            assertEquals(ScreenOrientation.PORTRAIT, awaitItem())
+                coEvery { localStorage.getBoolean("autoplay_video") } returns true
+                keyChangesFlow.emit("autoplay_video")
 
-            coEvery { localStorage.getString("screen_orientation") } returns "landscape"
-            keyChangesFlow.emit("screen_orientation")
-            assertEquals(ScreenOrientation.LANDSCAPE, awaitItem())
-
-            // Unknown value falls back to SYSTEM
-            coEvery { localStorage.getString("screen_orientation") } returns "garbage"
-            keyChangesFlow.emit("screen_orientation")
-            assertEquals(ScreenOrientation.SYSTEM, awaitItem())
-
-            cancelAndIgnoreRemainingEvents()
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
         }
-    }
 
-    @Test
-    fun `Given collecting flow when keep screen on changes then updated keep screen on enabled is emitted`() = runTest {
-        coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns false
+        @Test
+        fun `Given collecting flow when full screen changes then updated full screen enabled is emitted`() = runTest {
+            coEvery { localStorage.getBoolean("fullscreen_enabled") } returns true
 
-        repository.keepScreenOnFlow().test {
-            assertFalse(awaitItem())
+            repository.fullScreenEnabledFlow().test {
+                assertTrue(awaitItem())
 
-            coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns true
-            keyChangesFlow.emit("keep_screen_on_enabled")
+                coEvery { localStorage.getBoolean("fullscreen_enabled") } returns false
+                keyChangesFlow.emit("fullscreen_enabled")
 
-            assertTrue(awaitItem())
-            cancelAndIgnoreRemainingEvents()
+                assertFalse(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given collecting flow when screen orientation changes then typed value is emitted`() = runTest {
+            coEvery { localStorage.getString("screen_orientation") } returns null
+
+            repository.screenOrientationFlow().test {
+                // Null storage value falls back to SYSTEM
+                assertEquals(ScreenOrientation.SYSTEM, awaitItem())
+
+                coEvery { localStorage.getString("screen_orientation") } returns "portrait"
+                keyChangesFlow.emit("screen_orientation")
+                assertEquals(ScreenOrientation.PORTRAIT, awaitItem())
+
+                coEvery { localStorage.getString("screen_orientation") } returns "landscape"
+                keyChangesFlow.emit("screen_orientation")
+                assertEquals(ScreenOrientation.LANDSCAPE, awaitItem())
+
+                // Unknown value falls back to SYSTEM
+                coEvery { localStorage.getString("screen_orientation") } returns "garbage"
+                keyChangesFlow.emit("screen_orientation")
+                assertEquals(ScreenOrientation.SYSTEM, awaitItem())
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given collecting flow when keep screen on changes then updated keep screen on enabled is emitted`() = runTest {
+            coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns false
+
+            repository.keepScreenOnFlow().test {
+                assertFalse(awaitItem())
+
+                coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns true
+                keyChangesFlow.emit("keep_screen_on_enabled")
+
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
         }
     }
 
@@ -304,55 +287,148 @@ class PrefsRepositoryImplTest {
         }
     }
 
-    @Test
-    fun `Given no approved tags when listing then returns empty list`() = runTest {
-        coEvery { localStorage.getStringSet("allowed_tags") } returns null
+    @Nested
+    inner class AllowedTags {
+        @Test
+        fun `Given no approved tags when listing then returns empty list`() = runTest {
+            coEvery { localStorage.getStringSet("allowed_tags") } returns null
 
-        assertEquals(emptySet<String>(), repository.getAllowedTags())
+            assertEquals(emptySet<String>(), repository.getAllowedTags())
+        }
+
+        @Test
+        fun `Given approved tags stored when listing then returns them`() = runTest {
+            coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a", "tag-b")
+
+            assertEquals(setOf("tag-a", "tag-b"), repository.getAllowedTags())
+        }
+
+        @Test
+        fun `Given new tag when approving then it is added to the stored set`() = runTest {
+            coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a")
+            coEvery { localStorage.putStringSet(any(), any()) } returns Unit
+
+            repository.addAllowedTag("tag-b")
+
+            coVerify(exactly = 1) { localStorage.putStringSet("allowed_tags", setOf("tag-a", "tag-b")) }
+        }
+
+        @Test
+        fun `Given no approved tags when approving then writes a single-entry set`() = runTest {
+            coEvery { localStorage.getStringSet("allowed_tags") } returns null
+            coEvery { localStorage.putStringSet(any(), any()) } returns Unit
+
+            repository.addAllowedTag("tag-a")
+
+            coVerify(exactly = 1) { localStorage.putStringSet("allowed_tags", setOf("tag-a")) }
+        }
+
+        @Test
+        fun `Given tag already approved when approving again then storage is not written`() = runTest {
+            coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a")
+
+            repository.addAllowedTag("tag-a")
+
+            coVerify(exactly = 0) { localStorage.putStringSet(any(), any()) }
+        }
+
+        @Test
+        fun `Given approved tags when clearing then storage entry is removed`() = runTest {
+            coEvery { localStorage.remove(any()) } returns Unit
+
+            repository.clearAllowedTags()
+
+            coVerify(exactly = 1) { localStorage.remove("allowed_tags") }
+        }
     }
 
-    @Test
-    fun `Given approved tags stored when listing then returns them`() = runTest {
-        coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a", "tag-b")
+    @Nested
+    inner class Changelog {
+        // Duplicated literal to guard against accidental key renames that would lose the stored state
+        private val key = "last_seen_changelog_version"
+        private val currentVersionCode = 42
 
-        assertEquals(setOf("tag-a", "tag-b"), repository.getAllowedTags())
-    }
+        @Test
+        fun `Given no preference set when checking change log popup enabled then default is true`() = runTest {
+            coEvery { localStorage.getBooleanOrNull("change_log_popup_enabled") } returns null
 
-    @Test
-    fun `Given new tag when approving then it is added to the stored set`() = runTest {
-        coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a")
-        coEvery { localStorage.putStringSet(any(), any()) } returns Unit
+            val result = repository.isChangeLogPopupEnabled()
 
-        repository.addAllowedTag("tag-b")
+            assertTrue(result)
+        }
 
-        coVerify(exactly = 1) { localStorage.putStringSet("allowed_tags", setOf("tag-a", "tag-b")) }
-    }
+        @Test
+        fun `Given user sets change log popup enabled to true when retrieving then value is true`() = runTest {
+            coEvery { localStorage.putBoolean("change_log_popup_enabled", true) } returns Unit
+            coEvery { localStorage.getBooleanOrNull("change_log_popup_enabled") } returns true
+            repository.setChangeLogPopupEnabled(true)
 
-    @Test
-    fun `Given no approved tags when approving then writes a single-entry set`() = runTest {
-        coEvery { localStorage.getStringSet("allowed_tags") } returns null
-        coEvery { localStorage.putStringSet(any(), any()) } returns Unit
+            val result = repository.isChangeLogPopupEnabled()
 
-        repository.addAllowedTag("tag-a")
+            assertTrue(result)
+        }
 
-        coVerify(exactly = 1) { localStorage.putStringSet("allowed_tags", setOf("tag-a")) }
-    }
+        @Test
+        fun `Given user sets change log popup enabled to false when retrieving then value is false`() = runTest {
+            coEvery { localStorage.putBoolean("change_log_popup_enabled", false) } returns Unit
+            coEvery { localStorage.getBooleanOrNull("change_log_popup_enabled") } returns false
+            repository.setChangeLogPopupEnabled(false)
 
-    @Test
-    fun `Given tag already approved when approving again then storage is not written`() = runTest {
-        coEvery { localStorage.getStringSet("allowed_tags") } returns setOf("tag-a")
+            val result = repository.isChangeLogPopupEnabled()
 
-        repository.addAllowedTag("tag-a")
+            assertFalse(result)
+        }
 
-        coVerify(exactly = 0) { localStorage.putStringSet(any(), any()) }
-    }
+        @Test
+        fun `Given no stored version when checking if the app was updated then returns false and stores current version`() = runTest {
+            coEvery { localStorage.getInt(key) } returns null
+            coEvery { localStorage.putInt(key, any()) } returns Unit
 
-    @Test
-    fun `Given approved tags when clearing then storage entry is removed`() = runTest {
-        coEvery { localStorage.remove(any()) } returns Unit
+            assertFalse(repository.wasAppUpdatedSinceChangelogSeen(currentVersionCode))
 
-        repository.clearAllowedTags()
+            coVerify { localStorage.putInt(key, currentVersionCode) }
+        }
 
-        coVerify(exactly = 1) { localStorage.remove("allowed_tags") }
+        @Test
+        fun `Given no stored version but legacy changelog pref when checking if the app was updated then returns true without storing`() = runTest {
+            coEvery { localStorage.getInt(key) } returns null
+            hadLegacyChangelogPref = true
+
+            assertTrue(repository.wasAppUpdatedSinceChangelogSeen(currentVersionCode))
+
+            coVerify(exactly = 0) { localStorage.putInt(any(), any()) }
+        }
+
+        @Test
+        fun `Given older stored version when checking if the app was updated then returns true without storing`() = runTest {
+            coEvery { localStorage.getInt(key) } returns currentVersionCode - 1
+
+            assertTrue(repository.wasAppUpdatedSinceChangelogSeen(currentVersionCode))
+
+            coVerify(exactly = 0) { localStorage.putInt(any(), any()) }
+        }
+
+        @Test
+        fun `Given current stored version when checking if the app was updated then returns false`() = runTest {
+            coEvery { localStorage.getInt(key) } returns currentVersionCode
+
+            assertFalse(repository.wasAppUpdatedSinceChangelogSeen(currentVersionCode))
+        }
+
+        @Test
+        fun `Given newer stored version when checking if the app was updated then returns false`() = runTest {
+            coEvery { localStorage.getInt(key) } returns currentVersionCode + 1
+
+            assertFalse(repository.wasAppUpdatedSinceChangelogSeen(currentVersionCode))
+        }
+
+        @Test
+        fun `When marking changelog seen then stores current version`() = runTest {
+            coEvery { localStorage.putInt(key, any()) } returns Unit
+
+            repository.markChangelogSeen(currentVersionCode)
+
+            coVerify { localStorage.putInt(key, currentVersionCode) }
+        }
     }
 }

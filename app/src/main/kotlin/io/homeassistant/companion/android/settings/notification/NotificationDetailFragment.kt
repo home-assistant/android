@@ -6,8 +6,9 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.os.BundleCompat
 import androidx.core.view.MenuHost
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -21,31 +22,39 @@ import io.homeassistant.companion.android.settings.notification.views.LoadNotifi
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class NotificationDetailFragment : Fragment() {
 
     companion object {
-        const val ARG_NOTIF = "notification"
+        private const val ARG_NOTIF_ID = "notification_id"
+
+        /** Arguments for displaying the notification stored under [notificationId]. */
+        fun newArgs(notificationId: Int): Bundle = Bundle().apply {
+            putInt(ARG_NOTIF_ID, notificationId)
+        }
     }
 
     @Inject
     lateinit var notificationDao: NotificationDao
 
-    private lateinit var notification: NotificationItem
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        notification = arguments?.let {
-            BundleCompat.getSerializable(it, ARG_NOTIF, NotificationItem::class.java)
-        } ?: return
-        super.onCreate(savedInstanceState)
-    }
+    private val notificationId: Int
+        get() = requireArguments().getInt(ARG_NOTIF_ID)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
+                val notification by produceState<NotificationItem?>(initialValue = null) {
+                    value = notificationDao.get(notificationId)
+                    if (value == null) {
+                        // The row was removed while the detail screen was open, there is nothing to show.
+                        Timber.w("No notification found for id $notificationId, leaving the detail screen")
+                        parentFragmentManager.popBackStack()
+                    }
+                }
                 HomeAssistantAppTheme {
-                    LoadNotification(notification)
+                    notification?.let { LoadNotification(it) }
                 }
             }
         }
@@ -84,7 +93,7 @@ class NotificationDetailFragment : Fragment() {
             commonR.string.confirm_positive,
         ) { dialog, _ ->
             lifecycleScope.launch {
-                notificationDao.delete(notification.id)
+                notificationDao.delete(notificationId)
                 dialog.dismiss()
                 parentFragmentManager.popBackStack()
             }

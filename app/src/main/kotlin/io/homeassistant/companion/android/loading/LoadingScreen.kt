@@ -45,7 +45,6 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -131,7 +130,7 @@ fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
             .splashScreenArea(),
     ) {
         val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-        val brandBottomPadding = max(navigationBarsPadding, HADimens.SPACE12)
+        val brandBottomPadding = navigationBarsPadding + HADimens.SPACE10
         val brandText = stringResource(commonR.string.loading_screen_project_from).uppercase()
         val brandTextStyle = HATextStyle.BodyMedium.copy(
             color = LocalHAColorScheme.current.colorTextDisabled,

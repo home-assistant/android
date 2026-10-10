@@ -1,6 +1,23 @@
 package io.homeassistant.companion.android.common.data.connectivity
 
 /**
+ * Outcome of the manifest request, which backs both the server connection and the Home Assistant
+ * verification checks. Modeled as one result because a single request answers both: a server cannot
+ * be verified as Home Assistant without having answered.
+ */
+internal sealed interface ManifestCheckResult {
+
+    /** The server did not answer the manifest request with a successful response. */
+    data class NotReached(val failure: ConnectivityCheckResult.Failure) : ManifestCheckResult
+
+    /** The server answered, but its manifest could not be read or belongs to another product. */
+    data class NotVerified(val failure: ConnectivityCheckResult.Failure) : ManifestCheckResult
+
+    /** The server answered with the manifest of a Home Assistant instance. */
+    data object Verified : ManifestCheckResult
+}
+
+/**
  * Interface for performing individual connectivity checks.
  */
 internal interface ConnectivityChecker {
@@ -31,18 +48,11 @@ internal interface ConnectivityChecker {
     suspend fun tls(url: String): ConnectivityCheckResult
 
     /**
-     * Checks if the server at the given URL is reachable.
-     *
-     * @param url The server URL to check
-     * @return [ConnectivityCheckResult.Success] if server is reachable, or [ConnectivityCheckResult.Failure]
-     */
-    suspend fun server(url: String): ConnectivityCheckResult
-
-    /**
-     * Verifies if the server is a Home Assistant instance by checking its manifest.json.
+     * Requests the manifest.json of the server to check that it answers HTTP requests and that it is
+     * a Home Assistant instance.
      *
      * @param url The server URL to verify
-     * @return [ConnectivityCheckResult.Success] if it's Home Assistant, or [ConnectivityCheckResult.Failure]
+     * @return Whether the server answered, and whether its answer is the manifest of a Home Assistant instance
      */
-    suspend fun homeAssistant(url: String): ConnectivityCheckResult
+    suspend fun homeAssistant(url: String): ManifestCheckResult
 }

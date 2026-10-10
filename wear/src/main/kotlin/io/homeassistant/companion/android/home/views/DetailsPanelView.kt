@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.home.views
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,8 +25,14 @@ import androidx.wear.compose.material3.SliderDefaults
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.touchTargetAwareSize
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Brightness4
+import io.github.timoptr.mdiicons.generated.Brightness7
+import io.github.timoptr.mdiicons.generated.FanMinus
+import io.github.timoptr.mdiicons.generated.FanPlus
+import io.github.timoptr.mdiicons.generated.ThermometerMinus
+import io.github.timoptr.mdiicons.generated.ThermometerPlus
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.ColorTemperatureControl
 import io.homeassistant.companion.android.common.data.integration.EntityExt
@@ -85,7 +92,7 @@ fun DetailsPanelView(
                         modifier = Modifier.touchTargetAwareSize(IconButtonDefaults.SmallButtonSize),
                     ) {
                         Image(
-                            asset = entity.icon,
+                            imageVector = entity.icon.rememberImageVector(),
                             colorFilter = ColorFilter.tint(
                                 if (isChecked) wearColorScheme.tertiary else wearColorScheme.onSurface,
                             ),
@@ -97,7 +104,8 @@ fun DetailsPanelView(
                     }
                 } else {
                     Image(
-                        asset = entity.icon,
+                        imageVector = entity.icon.rememberImageVector(),
+                        contentDescription = null,
                         colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                     )
                 }
@@ -199,14 +207,16 @@ fun FanSpeedSlider(
             valueRange = position.min..position.max,
             decreaseIcon = {
                 Image(
-                    asset = CommunityMaterial.Icon2.cmd_fan_minus,
+                    imageVector = Mdi.FanMinus.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(Color.White),
                     modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize)),
                 )
             },
             increaseIcon = {
                 Image(
-                    asset = CommunityMaterial.Icon2.cmd_fan_plus,
+                    imageVector = Mdi.FanPlus.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(Color.White),
                     modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize)),
                 )
@@ -251,14 +261,16 @@ fun BrightnessSlider(
             valueRange = position.min..position.max,
             decreaseIcon = {
                 Image(
-                    asset = CommunityMaterial.Icon.cmd_brightness_4,
+                    imageVector = Mdi.Brightness4.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(Color.White),
                     modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize)),
                 )
             },
             increaseIcon = {
                 Image(
-                    asset = CommunityMaterial.Icon.cmd_brightness_7,
+                    imageVector = Mdi.Brightness7.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(Color.White),
                     modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize)),
                 )
@@ -311,14 +323,16 @@ fun ColorTempSlider(
             valueRange = minValue..maxValue,
             decreaseIcon = {
                 Image(
-                    asset = CommunityMaterial.Icon3.cmd_thermometer_minus,
+                    imageVector = Mdi.ThermometerMinus.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(Color.White),
                     modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize)),
                 )
             },
             increaseIcon = {
                 Image(
-                    asset = CommunityMaterial.Icon3.cmd_thermometer_plus,
+                    imageVector = Mdi.ThermometerPlus.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(Color.White),
                     modifier = Modifier.size(IconButtonDefaults.iconSizeFor(IconButtonDefaults.ExtraSmallButtonSize)),
                 )

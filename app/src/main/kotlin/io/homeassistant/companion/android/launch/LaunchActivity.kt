@@ -39,6 +39,7 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
+import io.homeassistant.companion.android.changelog.navigation.ChangelogAutoShowEffect
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.sensors.SensorWorker
@@ -47,7 +48,6 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.applock.HazeLockOverlay
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.CheckLocationDisabledUseCase
 import io.homeassistant.companion.android.util.PLAY_SERVICES_FLAVOR_DOC_URL
 import io.homeassistant.companion.android.util.PlayServicesAvailability
@@ -94,9 +94,6 @@ class LaunchActivity : AppCompatActivity() {
 
     @Inject
     internal lateinit var checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase
-
-    @Inject
-    internal lateinit var changeLog: ChangeLog
 
     /**
      * Represents deep link actions that can be passed to [LaunchActivity] to navigate to specific destinations.
@@ -202,7 +199,7 @@ class LaunchActivity : AppCompatActivity() {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val isFullScreen by viewModel.isFullScreen.collectAsStateWithLifecycle()
                 val isAppLocked by viewModel.isAppLocked.collectAsStateWithLifecycle()
-                val hazeState = rememberHazeState(blurEnabled = isAppLocked)
+                val hazeState = rememberHazeState()
                 val snackbarHostState = remember { SnackbarHostState() }
 
                 FullscreenEffect(isFullScreen = isFullScreen)
@@ -212,6 +209,8 @@ class LaunchActivity : AppCompatActivity() {
                     snackbarHostState = snackbarHostState,
                     navController = navController,
                 )
+
+                ChangelogAutoShowEffect(navController)
 
                 HAApp(
                     navController = navController,
@@ -223,7 +222,9 @@ class LaunchActivity : AppCompatActivity() {
                 )
 
                 // We don't apply the overlay on top of the dialogs
-                HazeLockOverlay(hazeState)
+                if (isAppLocked) {
+                    HazeLockOverlay(hazeState)
+                }
 
                 when (uiState) {
                     LaunchUiState.NetworkUnavailable -> NetworkUnavailableDialog(onBackClick = ::finish)
@@ -251,7 +252,6 @@ class LaunchActivity : AppCompatActivity() {
             WebsocketManager.start(this@LaunchActivity)
             checkLocationDisabled()
             checkLocalNetworkPermission()
-            changeLog.showChangeLog(this@LaunchActivity, forceShow = false)
         }
     }
 

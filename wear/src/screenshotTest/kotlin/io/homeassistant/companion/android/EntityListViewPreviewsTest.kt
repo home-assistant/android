@@ -20,8 +20,8 @@ class EntityListViewPreviewsTest {
         EntityViewList(
             entityLists = mapOf(
                 stringResource(R.string.lights) to listOf(
-                    EntityDisplayWithoutContext(previewEntity1),
-                    EntityDisplayWithoutContext(previewEntity2),
+                    EntityDisplayWithoutContext(previewEntity1, name = "Main"),
+                    EntityDisplayWithoutContext(previewEntity2, name = "Floor secondary"),
                 ),
             ),
             entityListsOrder = listOf(stringResource(R.string.lights)),

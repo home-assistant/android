@@ -5,7 +5,6 @@ import android.net.Uri
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
@@ -93,7 +92,7 @@ class FrontendMessageHandlerTest {
     private val packageManager: PackageManager = mockk()
     private val matterManager: MatterManager = mockk()
     private val threadManager: ThreadManager = mockk()
-    private val appVersionProvider: AppVersionProvider = mockk()
+    private val appVersion = AppVersion("1.0.0", 1)
     private val sessionManager: ServerSessionManager = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private val bluetoothCapabilities: BluetoothCapabilities = BluetoothCapabilities { true }
@@ -107,7 +106,6 @@ class FrontendMessageHandlerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
         every { matterManager.appSupportsCommissioning() } returns false
         every { threadManager.appSupportsThread() } returns false
-        every { appVersionProvider() } returns AppVersion.from("1.0.0", 1)
         every { externalBusRepository.webViewActions() } returns emptyFlow()
 
         handler = FrontendMessageHandler(
@@ -115,7 +113,7 @@ class FrontendMessageHandlerTest {
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = appVersion,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = bluetoothCapabilities,
@@ -193,14 +191,13 @@ class FrontendMessageHandlerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
         every { matterManager.appSupportsCommissioning() } returns true
         every { threadManager.appSupportsThread() } returns true
-        every { appVersionProvider() } returns AppVersion.from("2.0.0", 200)
 
         val testHandler = FrontendMessageHandler(
             externalBusRepository = externalBusRepository,
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = AppVersion("2.0.0", 200),
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = { true },
@@ -241,7 +238,7 @@ class FrontendMessageHandlerTest {
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = appVersion,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = { false },
@@ -513,7 +510,7 @@ class FrontendMessageHandlerTest {
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = appVersion,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = bluetoothCapabilities,
@@ -546,7 +543,7 @@ class FrontendMessageHandlerTest {
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = appVersion,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = bluetoothCapabilities,

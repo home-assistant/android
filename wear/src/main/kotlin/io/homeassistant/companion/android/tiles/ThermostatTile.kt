@@ -110,7 +110,7 @@ class ThermostatTile : TileService() {
                                 .awaitLoadedOrNull()
                                 ?.entity(it)
                         }
-                        check(entity != null)
+                        checkNotNull(entity)
                         val climateControls = entity.climateControls
 
                         val lastId = requestParams.currentState.lastClickableId

@@ -280,7 +280,7 @@ internal class WebSocketCoreImpl(
             is Command.WithAnswer -> {
                 val id = id.getAndIncrement()
                 val outbound = command.request.message.plus("id" to id)
-                Timber.d("Sending message $id: $outbound")
+                Timber.d("Sending message $id: ${sensitive { outbound.toString() }}")
                 activeMessages[id] = command.toActiveMessage()
                 val result = currentConnection.send(
                     kotlinJsonMapper.encodeToString(MapAnySerializer, outbound),
@@ -587,7 +587,7 @@ internal class WebSocketCoreImpl(
 
     private suspend fun sendMessage(command: Command.WithAnswer): RawMessageSocketResponse? {
         if (!connect()) {
-            Timber.w("Unable to send message, not connected: ${command.request}")
+            Timber.w("Unable to send message, not connected: ${sensitive { command.request.toString() }}")
             return null
         }
 
@@ -597,7 +597,7 @@ internal class WebSocketCoreImpl(
         try {
             id = command.sendCompleted.await()
         } catch (e: HAWebSocketException) {
-            Timber.e(e, "Failed to send message ${command.request}")
+            Timber.e(e, "Failed to send message ${sensitive { command.request.toString() }}")
             return null
         }
 
@@ -805,7 +805,7 @@ internal class WebSocketCoreImpl(
                 wsScope.launch {
                     eventSubscriptionMutex.withLock {
                         findSubscription(subscribeMessage)?.let { (subscriptionId, subscription) ->
-                            Timber.d("Unsubscribing from $subscribeMessage")
+                            Timber.d("Unsubscribing from ${sensitive { subscribeMessage.toString() }}")
                             // Unsubscribe must happen before removing from activeMessages to ensure
                             // the server acknowledges before we stop handling events for this subscription
                             unsubscribeEvents(subscriptionId)
@@ -841,7 +841,7 @@ internal class WebSocketCoreImpl(
             ),
         )
         if (response == null || response.success != true) {
-            Timber.e("Unable to subscribe to $subscribeMessage")
+            Timber.e("Unable to subscribe to ${sensitive { subscribeMessage.toString() }}")
             findSubscription(subscribeMessage)?.let { (subscriptionId, _) -> activeMessages.remove(subscriptionId) }
             return null
         } else {
@@ -1219,7 +1219,7 @@ internal class WebSocketCoreImpl(
                     // waiting) so the retry happens on a clean connection where no ambiguous
                     // acceptance can linger.
                     Timber.e(
-                        "No answer re-registering subscription with ${original.request}," +
+                        "No answer re-registering subscription with ${sensitive { original.request.toString() }}," +
                             " restoring on a clean connection",
                     )
                     failed += oldId
@@ -1233,7 +1233,9 @@ internal class WebSocketCoreImpl(
                 response.success != true -> {
                     response.id?.let { activeMessages.remove(it) }
                     failed += oldId
-                    Timber.e("Subscription ${original.request} rejected, retrying with backoff")
+                    Timber.e(
+                        "Subscription ${sensitive { original.request.toString() }} rejected, retrying with backoff",
+                    )
                 }
 
                 else -> {

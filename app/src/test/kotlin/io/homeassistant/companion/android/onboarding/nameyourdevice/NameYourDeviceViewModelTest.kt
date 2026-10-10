@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.database.server.Server
@@ -22,14 +21,20 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkAll
+import java.net.InetAddress
+import java.net.URL
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -50,9 +55,7 @@ class NameYourDeviceViewModelTest {
 
     private val serverRegistrationRepository: ServerRegistrationRepository = mockk()
     private val authenticationRepository: AuthenticationRepository = mockk()
-    private val appVersionProvider: AppVersionProvider = AppVersionProvider {
-        AppVersion.from("test", 42)
-    }
+    private val appVersion = AppVersion("test", 42)
     private val messagingTokenProvider: MessagingTokenProvider = MessagingTokenProvider {
         return@MessagingTokenProvider MessagingToken("test_messaging_token")
     }
@@ -89,10 +92,15 @@ class NameYourDeviceViewModelTest {
             route,
             serverManager,
             serverRegistrationRepository,
-            appVersionProvider,
+            appVersion,
             messagingTokenProvider,
             defaultName = DEFAULT_DEVICE_NAME,
         )
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
@@ -155,7 +163,7 @@ class NameYourDeviceViewModelTest {
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     DEFAULT_DEVICE_NAME,
                     messagingTokenProvider(),
                 ),
@@ -201,7 +209,7 @@ class NameYourDeviceViewModelTest {
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     customDeviceName,
                     messagingTokenProvider(),
                 ),
@@ -224,7 +232,7 @@ class NameYourDeviceViewModelTest {
             coVerify {
                 integrationRepository.registerDevice(
                     DeviceRegistration(
-                        appVersionProvider(),
+                        appVersion,
                         customDeviceName,
                         messagingTokenProvider(),
                     ),
@@ -236,12 +244,22 @@ class NameYourDeviceViewModelTest {
 
     @Test
     fun `Given public secure url when onSaveClick then emits DeviceNameSaved with hasPlainTextAccess to false and isPubliclyAccessible true and enforces secure connection`() = runTest {
-        val secureRoute = NameYourDeviceRoute("https://www.home-assistant.io", "auth_code")
+        val url = URL("https://www.home-assistant.io")
+        mockkStatic(InetAddress::class)
+        every { InetAddress.getAllByName(url.host) } returns arrayOf(
+            mockk<InetAddress>().apply {
+                every { isSiteLocalAddress } returns false
+                every { isLoopbackAddress } returns false
+                every { isLinkLocalAddress } returns false
+                every { isAnyLocalAddress } returns false
+            },
+        )
+        val secureRoute = NameYourDeviceRoute(url.toString(), "auth_code")
         viewModel = NameYourDeviceViewModel(
             secureRoute,
             serverManager,
             serverRegistrationRepository,
-            appVersionProvider,
+            appVersion,
             messagingTokenProvider,
             defaultName = DEFAULT_DEVICE_NAME,
         )
@@ -259,7 +277,7 @@ class NameYourDeviceViewModelTest {
         coEvery {
             integrationRepository.registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     DEFAULT_DEVICE_NAME,
                     messagingTokenProvider(),
                 ),

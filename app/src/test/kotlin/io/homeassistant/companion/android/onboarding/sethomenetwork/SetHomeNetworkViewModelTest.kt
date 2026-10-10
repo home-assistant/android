@@ -26,7 +26,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 private const val MOCK_SERVER_ID = 1
 private const val MOCK_INITIAL_WIFI_SSID = "MyHomeWifi"
-private const val MOCK_INITIAL_WIFI_SSID_QUOTED = "\"MyHomeWifi\""
 
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -39,7 +38,7 @@ class SetHomeNetworkViewModelTest {
 
     @BeforeEach
     fun setup() {
-        every { wifiHelper.getWifiSsid() } returns MOCK_INITIAL_WIFI_SSID_QUOTED
+        every { wifiHelper.getWifiSsid() } returns MOCK_INITIAL_WIFI_SSID
         coEvery { serverManager.updateServer(any()) } just Runs
     }
 

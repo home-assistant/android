@@ -9,7 +9,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AbTesting
 
 class SettingsRowScreenshotTest {
 
@@ -50,7 +51,7 @@ class SettingsRowScreenshotTest {
         SettingsRow(
             primaryText = "Title",
             secondaryText = "Subtitle",
-            mdiIcon = CommunityMaterial.Icon.cmd_ab_testing,
+            mdiIcon = Mdi.AbTesting,
             enabled = true,
             onClicked = {},
         )
@@ -63,7 +64,7 @@ class SettingsRowScreenshotTest {
         SettingsRow(
             primaryText = "Title",
             secondaryText = "Subtitle",
-            mdiIcon = CommunityMaterial.Icon.cmd_ab_testing,
+            mdiIcon = Mdi.AbTesting,
             enabled = false,
             onClicked = {},
         )
