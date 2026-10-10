@@ -8,113 +8,103 @@ import java.security.cert.X509Certificate
 import javax.inject.Inject
 import javax.security.auth.x500.X500Principal
 
-// SAN (Subject Alternative Name) type codes per RFC 5280 section 4.2.1.6
+// SAN (Subject Alternative Name) type codes, see RFC 5280 section 4.2.1.6.
 private const val SAN_TYPE_DNS_NAME = 2
 private const val SAN_TYPE_IP_ADDRESS = 7
 
+private const val COMMON_NAME_PREFIX = "CN="
+private const val WILDCARD_PREFIX = "*."
+
 /**
- * Checks whether the in-memory client certificate chain covers the target host, which indicates
- * the server requires a TLS client certificate.
+ * Determines whether the server a connection is being made to requires a client certificate, by
+ * checking whether the certificate loaded on the device is valid for that server's host.
  *
- * This is needed to handle TLS session resumption: when the WebView reuses a TLS session that was
- * established earlier in the same process, the server does not issue a new `CertificateRequest`,
- * so [android.webkit.WebViewClient.onReceivedClientCertRequest] is never invoked and the
- * WebViewClient's own flag stays false — even if the server requires a client certificate.
- *
- * The check inspects the certificate kept in memory by the [KeyChainRepository] and verifies it
- * against the host via its Subject Alternative Names (SANs), falling back to the Common Name
- * (CN) when no SANs are present. Matching the host avoids a false positive when the user has
- * multiple servers where only one requires mTLS.
- *
- * If the app was force-stopped first (clearing in-memory state) no TLS session can be resumed
- * either, so [android.webkit.WebViewClient.onReceivedClientCertRequest] fires naturally on the
- * fresh handshake and the WebViewClient's flag is set without this check.
- *
- * @param targetHost the hostname of the server being connected to, or `null` if the URL could not
- * be parsed. A `null` (or blank) host never matches, so the result is `false`.
+ * This is needed during onboarding because the WebView can resume a TLS session established
+ * earlier in the same process, in which case the server does not issue a new `CertificateRequest`
+ * and [android.webkit.WebViewClient.onReceivedClientCertRequest] never fires, even though the
+ * server requires a client certificate.
  */
 class CheckTLSClientAuthNeededUseCase @Inject constructor(private val keyChainRepository: KeyChainRepository) {
+
+    /**
+     * Returns `true` when a client certificate is loaded on the device and it is valid for
+     * [targetHost].
+     *
+     * @param targetHost the hostname of the server being connected to, or `null` when the URL
+     * could not be parsed. A `null` or blank host never matches, so the result is `false`.
+     */
     suspend operator fun invoke(targetHost: String?): Boolean {
         if (targetHost.isNullOrEmpty()) return false
-        val cert = keyChainRepository.getClientCertProvider().certificate?.chain?.firstOrNull()
-            ?: return false
-        return certCoversHost(cert, targetHost)
+        val certificate = keyChainRepository.getClientCertProvider().certificate?.chain?.firstOrNull()
+        return certificate != null && certCoversHost(certificate, targetHost)
     }
 
-    /**
-     * Returns `true` if [cert] is valid for [host].
-     *
-     * Checks Subject Alternative Names (SANs) first — both DNS names (with wildcard support)
-     * and IP addresses. Falls back to the Common Name (CN) in the Subject DN if no SANs are
-     * present, matching the behaviour of legacy TLS stacks.
-     */
+    /** Returns whether [cert] is valid for [host], using its SANs or, when there are none, its CN. */
     private fun certCoversHost(cert: X509Certificate, host: String): Boolean {
-        val sans: Collection<List<*>>? = try {
-            cert.subjectAlternativeNames
-        } catch (_: CertificateParsingException) {
-            null
-        }
-
-        return if (!sans.isNullOrEmpty()) {
-            sans.any { san ->
-                if (san.size < 2) return@any false
-                val type = san[0] as? Int ?: return@any false
-                when (type) {
-                    SAN_TYPE_DNS_NAME -> { // dNSName — returned as String
-                        val value = san[1] as? String ?: return@any false
-                        hostMatchesSan(host, value)
-                    }
-                    SAN_TYPE_IP_ADDRESS -> {
-                        // iPAddress — the standard Java X.509 API returns this as a String
-                        // (dotted-quad or colon-hex), but some providers (e.g. BouncyCastle)
-                        // return a ByteArray; handle both defensively.
-                        // Normalize both sides through InetAddress so that different textual
-                        // representations of the same address compare equal (e.g. "::1" vs
-                        // "0:0:0:0:0:0:0:1").
-                        val sanAddress = try {
-                            when (val ipEntry = san[1]) {
-                                is ByteArray -> InetAddress.getByAddress(ipEntry)
-                                is String -> InetAddress.getByName(ipEntry)
-                                else -> return@any false
-                            }
-                        } catch (_: UnknownHostException) {
-                            return@any false
-                        }
-                        val hostAddress = try {
-                            InetAddress.getByName(host)
-                        } catch (_: UnknownHostException) {
-                            return@any false
-                        }
-                        hostAddress == sanAddress
-                    }
-                    else -> false
-                }
-            }
+        val sans = cert.subjectAlternativeNamesOrNull()
+        return if (sans.isNullOrEmpty()) {
+            cert.commonName()?.let { hostMatchesSan(host, it) } == true
         } else {
-            // Fallback: extract CN from the Subject DN.
-            // getName(RFC2253) uses comma as AVA separator; commas inside values are escaped
-            // as \, which we don't need to handle because hostnames never contain commas.
-            val dn = cert.subjectX500Principal.getName(X500Principal.RFC2253)
-            val cn = dn.splitToSequence(",")
-                .map { it.trim() }
-                .firstOrNull { it.startsWith("CN=", ignoreCase = true) }
-                ?.let { it.substring(it.indexOf('=') + 1).trim() }
-                ?.takeIf { it.isNotEmpty() }
-            cn != null && hostMatchesSan(host, cn)
+            sans.any { san -> sanMatchesHost(san, host) }
+        }
+    }
+
+    private fun X509Certificate.subjectAlternativeNamesOrNull(): Collection<List<*>>? = try {
+        subjectAlternativeNames
+    } catch (_: CertificateParsingException) {
+        null
+    }
+
+    /** The Common Name of the Subject DN, or `null` when it is absent or empty. */
+    private fun X509Certificate.commonName(): String? = subjectX500Principal
+        .getName(X500Principal.RFC2253)
+        .splitToSequence(",")
+        .map { it.trim() }
+        .firstOrNull { it.startsWith(COMMON_NAME_PREFIX, ignoreCase = true) }
+        ?.substringAfter('=')
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+
+    /** Returns whether a single SAN entry [san] covers [host]. */
+    private fun sanMatchesHost(san: List<*>, host: String): Boolean {
+        if (san.size < 2) return false
+        return when (san[0]) {
+            SAN_TYPE_DNS_NAME -> (san[1] as? String)?.let { hostMatchesSan(host, it) } == true
+            SAN_TYPE_IP_ADDRESS -> hostMatchesIpAddress(host, san[1])
+            else -> false
         }
     }
 
     /**
-     * Matches [host] against a SAN value that may contain a leading wildcard.
-     *
-     * A wildcard (`*.example.com`) covers any single label: `foo.example.com` matches but
-     * `foo.bar.example.com` and `example.com` do not (per RFC 2818 §3.1).
+     * Matches [host] against a DNS SAN value, supporting a single leading wildcard:
+     * `*.example.com` covers `foo.example.com` but neither `example.com` nor `foo.bar.example.com`
+     * (RFC 2818 section 3.1).
      */
     private fun hostMatchesSan(host: String, san: String): Boolean {
-        if (!san.startsWith("*.")) return host.equals(san, ignoreCase = true)
-        val suffix = san.substring(1) // ".example.com"
-        if (!host.endsWith(suffix, ignoreCase = true)) return false
-        val wildcardLabel = host.substring(0, host.length - suffix.length)
-        return wildcardLabel.isNotEmpty() && !wildcardLabel.contains('.')
+        if (!san.startsWith(WILDCARD_PREFIX)) return host.equals(san, ignoreCase = true)
+        val suffix = san.removePrefix("*") // ".example.com"
+        val wildcardLabel = host.takeIf { it.endsWith(suffix, ignoreCase = true) }?.dropLast(suffix.length)
+        return wildcardLabel != null && wildcardLabel.isNotEmpty() && !wildcardLabel.contains('.')
+    }
+
+    /**
+     * Compares [host] with an iPAddress SAN value, normalizing both sides through [InetAddress] so
+     * that different textual forms of the same address compare equal. The value is a `String` on
+     * the standard Java API and a `ByteArray` on some providers (e.g. BouncyCastle).
+     */
+    private fun hostMatchesIpAddress(host: String, sanValue: Any?): Boolean {
+        val sanAddress = sanValue.toInetAddress()
+        val hostAddress = host.toInetAddress()
+        return sanAddress != null && sanAddress == hostAddress
+    }
+
+    private fun Any?.toInetAddress(): InetAddress? = try {
+        when (this) {
+            is ByteArray -> InetAddress.getByAddress(this)
+            is String -> InetAddress.getByName(this)
+            else -> null
+        }
+    } catch (_: UnknownHostException) {
+        null
     }
 }
