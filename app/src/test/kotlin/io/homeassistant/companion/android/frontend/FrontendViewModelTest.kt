@@ -81,6 +81,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -2105,7 +2106,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
-            val viewModel = createViewModel()
+            val viewModel = createViewModel(fileChooserManager = FileChooserManager(StandardTestDispatcher(testScheduler)))
 
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
             val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
@@ -2122,7 +2123,7 @@ class FrontendViewModelTest {
             assertTrue(handled)
             val pending = viewModel.pendingFileChooser.value
             assertNotNull(pending)
-            assertTrue(pending.fileChooserParams === fileChooserParams)
+            assertTrue(pending.input.params === fileChooserParams)
         }
 
         @Test
@@ -2131,7 +2132,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
-            val viewModel = createViewModel()
+            val viewModel = createViewModel(fileChooserManager = FileChooserManager(StandardTestDispatcher(testScheduler)))
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
@@ -2160,7 +2161,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
-            val viewModel = createViewModel()
+            val viewModel = createViewModel(fileChooserManager = FileChooserManager(StandardTestDispatcher(testScheduler)))
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
