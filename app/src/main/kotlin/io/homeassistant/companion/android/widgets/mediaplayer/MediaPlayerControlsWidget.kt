@@ -38,6 +38,9 @@ import timber.log.Timber
 
 private const val MEDIA_ICON_SIZE_DP = 24
 
+internal fun mediaPlayerPlaybackAction(state: String): String =
+    if (state == "playing") "media_pause" else "media_play"
+
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
 
@@ -570,13 +573,18 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 "entity id: " + entity.entityId + System.lineSeparator(),
         )
 
-        val action = "media_play_pause"
-        val entityId: String = getEntity(
+        val actionEntity = getEntity(
             context,
             entity.serverId,
             entity.entityId.split(","),
             null,
-        )?.entityId.toString()
+        )
+        if (actionEntity == null) {
+            Timber.d("Failed to resolve media player entity for play/pause action")
+            return
+        }
+        val action = mediaPlayerPlaybackAction(actionEntity.state)
+        val entityId = actionEntity.entityId
 
         val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
 
