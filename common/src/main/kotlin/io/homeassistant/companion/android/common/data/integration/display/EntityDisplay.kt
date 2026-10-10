@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.integration.FanControls
 import io.homeassistant.companion.android.common.data.integration.FriendlyState
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains
 import io.homeassistant.companion.android.common.data.integration.LightControls
+import io.homeassistant.companion.android.common.data.integration.MediaPlayback
 import io.homeassistant.companion.android.common.data.integration.MediaPlayerControls
 import io.homeassistant.companion.android.common.data.integration.NumberControls
 import io.homeassistant.companion.android.common.data.integration.VacuumControls
@@ -33,6 +34,7 @@ import io.homeassistant.companion.android.common.data.integration.getFanSteps
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.getLightBrightness
 import io.homeassistant.companion.android.common.data.integration.getLightColor
+import io.homeassistant.companion.android.common.data.integration.getMediaPlayback
 import io.homeassistant.companion.android.common.data.integration.getMediaPlayerControls
 import io.homeassistant.companion.android.common.data.integration.getNumberControls
 import io.homeassistant.companion.android.common.data.integration.getStatelessIcon
@@ -112,8 +114,11 @@ interface EntityDisplay {
     /** Value range of the entity, null when it is not a number one. */
     val numberControls: NumberControls?
 
-    /** Volume control of the entity, null when it is not a media player. */
+    /** Controls of the entity, null when it is not a media player. */
     val mediaPlayerControls: MediaPlayerControls?
+
+    /** What the entity is currently playing, null when it is not a media player. */
+    val mediaPlayback: MediaPlayback?
 
     /** Controls of the entity, null when it is not a cover. */
     val coverControls: CoverControls?
@@ -167,6 +172,7 @@ data class EntityDisplayWithoutContext(
     override val climateControls: ClimateControls? = null,
     override val numberControls: NumberControls? = null,
     override val mediaPlayerControls: MediaPlayerControls? = null,
+    override val mediaPlayback: MediaPlayback? = null,
     override val coverControls: CoverControls? = null,
     override val vacuumControls: VacuumControls? = null,
     override val cameraControls: CameraControls? = null,
@@ -210,6 +216,7 @@ data class EntityDisplayWithoutContext(
         climateControls = entity.getClimateControls(),
         numberControls = entity.getNumberControls(),
         mediaPlayerControls = entity.getMediaPlayerControls(),
+        mediaPlayback = entity.getMediaPlayback(),
         coverControls = entity.getCoverControls(),
         vacuumControls = entity.getVacuumControls(),
         cameraControls = entity.getCameraControls(),
