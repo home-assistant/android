@@ -469,7 +469,6 @@
     <ID>UnusedParameter:LocationSensorManager.kt:LocationSensorManager.Companion$updateInterval: Int</ID>
     <ID>UnusedParameter:QuestSensorManager.kt:QuestSensorManager$applicationContext: Context</ID>
     <ID>UnusedParameter:SettingsWearDetection.kt:SettingsWearDetection$context: Context</ID>
-    <ID>UnusedPrivateProperty:ConnectionViewModel.kt:ConnectionViewModel$private val fileChooserManager: FileChooserManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val nsdManager: NsdManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val wifiManager: WifiManager?</ID>
     <ID>UnusedPrivateProperty:LaunchViewModel.kt:LaunchViewModel$private val prefsRepository: PrefsRepository</ID>

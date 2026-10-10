@@ -537,7 +537,6 @@
     <ID>UnusedParameter:FrontendViewModel.kt:FrontendViewModel$url: String?</ID>
     <ID>UnusedParameter:ImprovPermission.kt:modifier: Modifier = Modifier</ID>
     <ID>UnusedParameter:QuestSensorManager.kt:QuestSensorManager$applicationContext: Context</ID>
-    <ID>UnusedPrivateProperty:ConnectionViewModel.kt:ConnectionViewModel$private val fileChooserManager: FileChooserManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val nsdManager: NsdManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val wifiManager: WifiManager?</ID>
     <ID>UnusedPrivateProperty:LaunchViewModel.kt:LaunchViewModel$private val prefsRepository: PrefsRepository</ID>
