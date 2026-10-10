@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
+import androidx.annotation.GuardedBy
 import androidx.annotation.VisibleForTesting
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -7,6 +8,7 @@ import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.Action
+import io.homeassistant.companion.android.common.data.integration.CloudPushTransport
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
@@ -58,6 +60,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl
@@ -69,6 +73,69 @@ import timber.log.Timber
 private const val PUSH_URL = BuildConfig.PUSH_URL
 private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
 
+/**
+ * Whether both describe the same transport, ignoring which URL an endpoint points at. Renewing the
+ * URL of an already registered endpoint is the same transport, switching to Firebase is not.
+ */
+private fun CloudPushTransport.isSameTransportAs(other: CloudPushTransport): Boolean = when (this) {
+    is CloudPushTransport.Endpoint -> other is CloudPushTransport.Endpoint
+    CloudPushTransport.Firebase -> other is CloudPushTransport.Firebase
+}
+
+/**
+ * A stored push endpoint identifies its own transport, because Firebase never stores one and uses
+ * [PUSH_URL] instead.
+ */
+private fun String?.toCloudPushTransport(): CloudPushTransport = if (isNullOrBlank()) {
+    CloudPushTransport.Firebase
+} else {
+    CloudPushTransport.Endpoint(this)
+}
+
+/**
+ * The cloud push part of a registration, resolved against what is already stored.
+ *
+ * @property pushToken Token to register, `null` when no cloud push is registered.
+ * @property transport Transport to register.
+ * @property replacesStoredToken Whether [pushToken] has to replace the stored token. When it is
+ * `false` the stored token stays untouched, when it is `true` with a `null` [pushToken] the stored
+ * token is dropped.
+ */
+private data class ResolvedCloudPush(
+    val pushToken: MessagingToken?,
+    val transport: CloudPushTransport,
+    val replacesStoredToken: Boolean,
+)
+
+/**
+ * Resolves the cloud push part of this registration against the stored [storedToken] and
+ * [storedTransport].
+ *
+ * A push token belongs to exactly one transport, which gives two rules:
+ * - An update that does not declare a transport may not set the token of a registered
+ *   [CloudPushTransport.Endpoint], so a refreshed messaging token neither reaches nor replaces an
+ *   endpoint owned by another transport.
+ * - A stored token is only carried over while the transport stays the same. Switching between
+ *   Firebase and an endpoint without supplying a matching token therefore unregisters cloud push
+ *   instead of handing the previous transport's token to the new one. A new endpoint URL for an
+ *   already registered endpoint keeps the token, because it is the same registration.
+ */
+private fun DeviceRegistration.resolveCloudPushAgainst(
+    storedToken: MessagingToken?,
+    storedTransport: CloudPushTransport,
+): ResolvedCloudPush {
+    val transport = cloudPush ?: storedTransport
+    val keepsTransport = transport.isSameTransportAs(storedTransport)
+    val updateOwnsToken = cloudPush != null || storedTransport !is CloudPushTransport.Endpoint
+    val updatedToken = pushToken?.takeIf { updateOwnsToken }
+
+    return ResolvedCloudPush(
+        pushToken = updatedToken ?: storedToken?.takeIf { keepsTransport },
+        transport = transport,
+        replacesStoredToken = updatedToken != null || !keepsTransport,
+    )
+}
+
 class IntegrationRepositoryImpl @AssistedInject constructor(
     private val integrationService: IntegrationService,
     private val serverManager: ServerManager,
@@ -78,6 +145,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     @NamedModel private val model: String,
     @NamedOsVersion private val osVersion: String,
     @NamedDeviceId private val deviceId: String,
+    /**
+     * Serializes a whole registration update so that the resolved cloud push state still matches
+     * what is stored once the server has answered. Shared by every server, see
+     * [io.homeassistant.companion.android.common.data.integration.IntegrationRepositoryFactory].
+     */
+    private val cloudPushRegistrationMutex: Mutex,
 ) : IntegrationRepository {
 
     companion object {
@@ -90,6 +163,10 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         // Note: _not_ server-specific
         private const val PREF_PUSH_TOKEN = "push_token"
+
+        // Note: _not_ server-specific. Only set while a transport other than
+        // CloudPushTransport.Firebase owns the push registration.
+        private const val PREF_PUSH_URL = "push_url"
 
         // Note: _not_ server-specific
         private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids"
@@ -119,7 +196,19 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     private var appActive = false
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
-        val request = createUpdateRegistrationRequest(deviceRegistration)
+        cloudPushRegistrationMutex.withLock {
+            registerDeviceUnderLock(deviceRegistration)
+        }
+    }
+
+    /**
+     * Registers the device without taking [cloudPushRegistrationMutex], so that the re-registration
+     * of a broken registration can run while the update that detected it still holds the lock.
+     */
+    @GuardedBy("cloudPushRegistrationMutex")
+    private suspend fun registerDeviceUnderLock(deviceRegistration: DeviceRegistration) {
+        val resolvedCloudPush = resolveCloudPush(deviceRegistration)
+        val request = createUpdateRegistrationRequest(deviceRegistration, resolvedCloudPush)
         request.appId = APP_ID
         request.appName = APP_NAME
         request.osName = OS_NAME
@@ -140,7 +229,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 request,
             )
         try {
-            persistDeviceRegistration(deviceRegistration)
+            persistDeviceRegistration(deviceRegistration, resolvedCloudPush)
             serverManager.updateServer(
                 server().copy(
                     connection = server().connection.copy(
@@ -160,31 +249,37 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
-        val request = RegisterDeviceIntegrationRequest(createUpdateRegistrationRequest(deviceRegistration))
-        callWebhookOnUrls(
-            request,
-            onSuccess = { response ->
-                // The server should return a body with the registration, but might return:
-                // 200 with empty body for broken direct webhook
-                // 404 for broken cloudhook
-                // 410 for missing config entry
-                if (response.code() == 200 && response.body()?.contentLength() == 0L) {
-                    Timber.w("update_registration returned empty body")
-                    maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
-                } else if (response.code() == 404 || response.code() == 410) {
-                    Timber.w("update_registration returned HTTP ${response.code()}")
-                    maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
-                } else {
-                    persistDeviceRegistration(deviceRegistration)
-                }
-            },
-            isValidResponse = { response ->
-                // when registration was successful or encountered an expected error
-                response.isSuccessful || response.code() == 404 || response.code() == 410
-            },
-        )
+        cloudPushRegistrationMutex.withLock {
+            val resolvedCloudPush = resolveCloudPush(deviceRegistration)
+            val request = RegisterDeviceIntegrationRequest(
+                createUpdateRegistrationRequest(deviceRegistration, resolvedCloudPush),
+            )
+            callWebhookOnUrls(
+                request,
+                onSuccess = { response ->
+                    // The server should return a body with the registration, but might return:
+                    // 200 with empty body for broken direct webhook
+                    // 404 for broken cloudhook
+                    // 410 for missing config entry
+                    if (response.code() == 200 && response.body()?.contentLength() == 0L) {
+                        Timber.w("update_registration returned empty body")
+                        maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
+                    } else if (response.code() == 404 || response.code() == 410) {
+                        Timber.w("update_registration returned HTTP ${response.code()}")
+                        maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
+                    } else {
+                        persistDeviceRegistration(deviceRegistration, resolvedCloudPush)
+                    }
+                },
+                isValidResponse = { response ->
+                    // when registration was successful or encountered an expected error
+                    response.isSuccessful || response.code() == 404 || response.code() == 410
+                },
+            )
+        }
     }
 
+    // Runs while updateRegistration holds cloudPushRegistrationMutex.
     private suspend fun maybeReregisterDeviceOnFailedUpdate(
         deviceRegistration: DeviceRegistration,
         allowReregistration: Boolean,
@@ -192,7 +287,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         if (allowReregistration) {
             Timber.w("Device registration broken and reregistration allowed, reregistering")
             try {
-                registerDevice(deviceRegistration)
+                registerDeviceUnderLock(deviceRegistration)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -205,22 +300,54 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun getRegistration(): DeviceRegistration {
         return DeviceRegistration(
-            localStorage.getString(PREF_APP_VERSION)?.let { AppVersion.from(rawVersion = it) },
-            server().deviceName,
-            localStorage.getString(PREF_PUSH_TOKEN)?.let { MessagingToken(it) },
+            appVersion = localStorage.getString(PREF_APP_VERSION)?.let { AppVersion.from(rawVersion = it) },
+            deviceName = server().deviceName,
+            pushToken = localStorage.getString(PREF_PUSH_TOKEN)?.let { MessagingToken(it) },
+            cloudPush = storedCloudPushTransport(),
         )
     }
 
-    private suspend fun persistDeviceRegistration(deviceRegistration: DeviceRegistration) {
+    private suspend fun storedCloudPushTransport(): CloudPushTransport =
+        localStorage.getString(PREF_PUSH_URL).toCloudPushTransport()
+
+    private suspend fun resolveCloudPush(deviceRegistration: DeviceRegistration): ResolvedCloudPush =
+        deviceRegistration.resolveCloudPushAgainst(
+            storedToken = localStorage.getString(PREF_PUSH_TOKEN)?.let { MessagingToken(it) },
+            storedTransport = storedCloudPushTransport(),
+        )
+
+    /**
+     * Stores what [resolvedCloudPush] resolved to, with the token and the endpoint URL in one
+     * transaction: they describe a single registration, so neither a reader nor a process death may
+     * see or keep one without the other.
+     *
+     * Cloud push is stored exactly while there is a token to send, which is what
+     * [createUpdateRegistrationRequest] sends. An endpoint URL therefore never ends up stored
+     * without the token owning it. The token key is left out of the update while the stored token
+     * stays untouched, see [ResolvedCloudPush.replacesStoredToken].
+     */
+    private suspend fun persistDeviceRegistration(
+        deviceRegistration: DeviceRegistration,
+        resolvedCloudPush: ResolvedCloudPush,
+    ) {
         if (deviceRegistration.appVersion != null) {
             localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion.toString())
         }
         if (deviceRegistration.deviceName != null) {
             serverManager.updateServer(server().copy(deviceName = deviceRegistration.deviceName))
         }
-        deviceRegistration.pushToken?.let {
-            localStorage.putString(PREF_PUSH_TOKEN, it.value)
-        }
+        val pushToken = resolvedCloudPush.pushToken?.value?.takeIf { it.isNotBlank() }
+        val endpointUrl = (resolvedCloudPush.transport as? CloudPushTransport.Endpoint)
+            ?.url
+            ?.takeIf { pushToken != null }
+        localStorage.putStrings(
+            buildMap {
+                if (resolvedCloudPush.replacesStoredToken) {
+                    put(PREF_PUSH_TOKEN, pushToken)
+                }
+                put(PREF_PUSH_URL, endpointUrl)
+            },
+        )
     }
 
     override suspend fun deletePreferences() {
@@ -243,7 +370,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
         localStorage.remove("${serverId}_$PREF_THREAD_BORDER_AGENT_IDS")
 
-        // app version and push token are device-specific
+        // app version, push token and push endpoint are device-specific
     }
 
     override suspend fun renderTemplate(template: String, variables: Map<String, String>): String? {
@@ -339,6 +466,12 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     override suspend fun setTrusted(trusted: Boolean) = localStorage.putBoolean("${serverId}_$PREF_TRUSTED", trusted)
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
+        // The rate limits belong to the push proxy built into the app, so they only describe a
+        // registration Firebase owns. While an endpoint is registered the stored token belongs to
+        // that endpoint's transport and must not be sent here, and the limits would be meaningless.
+        if (storedCloudPushTransport() is CloudPushTransport.Endpoint) {
+            throw IntegrationException("No notification rate limits while a push endpoint is registered")
+        }
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
         val requestBody = RateLimitRequest(pushToken)
 
@@ -709,13 +842,19 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     private suspend fun <T> tryOnUrls(requestName: String, action: suspend (HttpUrl) -> T): T =
         tryOnUrls(urls = connectionStateProvider().getApiUrls(), requestName = requestName, action = action)
 
-    private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
+    private suspend fun createUpdateRegistrationRequest(
+        deviceRegistration: DeviceRegistration,
+        resolvedCloudPush: ResolvedCloudPush,
+    ): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
-        val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
+        val pushToken = resolvedCloudPush.pushToken
 
         val appData = mutableMapOf<String, Any>("push_websocket_channel" to deviceRegistration.pushWebsocket)
+        // Home Assistant only accepts push_url and push_token together and rejects a blank URL, so
+        // both are omitted as long as there is no token to send.
         if (!pushToken.isNullOrBlank()) {
-            appData["push_url"] = PUSH_URL
+            appData["push_url"] =
+                (resolvedCloudPush.transport as? CloudPushTransport.Endpoint)?.url ?: PUSH_URL
             appData["push_token"] = pushToken
         }
 

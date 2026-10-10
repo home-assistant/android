@@ -63,4 +63,29 @@ class LocalStorageImplTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun `Given values to store and to drop when putting them together then one editor applies all of them`() = runTest {
+        val editor = mockk<SharedPreferences.Editor>(relaxed = true)
+        every { sharedPreferences.edit() } returns editor
+
+        localStorage.putStrings(mapOf("kept_key" to "value", "dropped_key" to null))
+
+        // A single editor is the whole point: the keys must be committed together.
+        verify(exactly = 1) { sharedPreferences.edit() }
+        verify(exactly = 1) { editor.putString("kept_key", "value") }
+        verify(exactly = 1) { editor.remove("dropped_key") }
+        verify(exactly = 1) { editor.apply() }
+    }
+
+    @Test
+    fun `Given no values when putting them together then nothing is written`() = runTest {
+        val editor = mockk<SharedPreferences.Editor>(relaxed = true)
+        every { sharedPreferences.edit() } returns editor
+
+        localStorage.putStrings(emptyMap())
+
+        verify(exactly = 0) { editor.putString(any(), any()) }
+        verify(exactly = 0) { editor.remove(any()) }
+    }
 }
