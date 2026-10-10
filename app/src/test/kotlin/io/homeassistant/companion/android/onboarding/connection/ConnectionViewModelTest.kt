@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositor
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.homeassistant.companion.android.util.CheckTLSClientAuthNeededUseCase
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.mockk.coEvery
@@ -28,6 +29,7 @@ import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
 import java.net.URL
+import java.security.cert.X509Certificate
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -95,7 +97,7 @@ class ConnectionViewModelTest {
     @ParameterizedTest
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url when buildAuthUrl then urlFlow emits correct auth url and isLoading is false`(baseUrl: String) = runTest {
-        val viewModel = ConnectionViewModel(baseUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(baseUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -126,7 +128,7 @@ class ConnectionViewModelTest {
     @ValueSource(strings = ["http://homeassistant.local:8123", "https://cloud.ui.nabu.casa"])
     fun `Given a valid http url with suffix when buildAuthUrl then urlFlow emits correct auth url with path stripped`(baseUrl: String) = runTest {
         val suffix = "/hello?query=param&isHA=true#segment"
-        val viewModel = ConnectionViewModel("$baseUrl$suffix", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("$baseUrl$suffix", webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
 
         turbineScope {
             val urlFlow = viewModel.urlFlow.testIn(backgroundScope)
@@ -143,7 +145,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given a malformed url when buildAuthUrl then errorFlow emits malformed url error`() = runTest {
         val malformedUrl = "not_a_url"
-        val viewModel = ConnectionViewModel(malformedUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(malformedUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -172,7 +174,7 @@ class ConnectionViewModelTest {
         val authCode = "test_auth_code"
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -207,6 +209,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         turbineScope {
@@ -235,6 +238,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         turbineScope {
@@ -261,6 +265,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         turbineScope {
@@ -287,6 +292,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         turbineScope {
@@ -313,6 +319,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         turbineScope {
@@ -339,6 +346,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         turbineScope {
@@ -362,6 +370,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         turbineScope {
@@ -386,6 +395,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         turbineScope {
@@ -409,7 +419,7 @@ class ConnectionViewModelTest {
     fun `Given auth callback uri without code when shouldRedirect then no event and returns false`() = runTest {
         val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = null)
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -437,7 +447,7 @@ class ConnectionViewModelTest {
             isOpaque = true,
         )
 
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -458,7 +468,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given unmatching uri and webview not null when shouldRedirect is invoked then open in external browser and return true`() = runTest {
-        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
 
         // Used to parse the rawUrl given in the constructor of ConnectionViewModel
         mockUriParse()
@@ -545,7 +555,7 @@ class ConnectionViewModelTest {
         val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>()
         every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
 
-        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
         val webView = mockWebView()
 
         advanceUntilIdle()
@@ -586,7 +596,7 @@ class ConnectionViewModelTest {
 
         every { connectivityCheckRepository.runChecks(rawUrl) } returnsMany listOf(first, second)
 
-        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
 
         // When: first click on "Run checks"
         viewModel.runConnectivityChecks()
@@ -615,7 +625,7 @@ class ConnectionViewModelTest {
         val connectivityFlow = MutableSharedFlow<ConnectivityCheckState>()
         every { connectivityCheckRepository.runChecks(rawUrl) } returns connectivityFlow
 
-        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager)
+        val viewModel = ConnectionViewModel(rawUrl, webViewClientFactory, connectivityCheckRepository, fileChooserManager, CheckTLSClientAuthNeededUseCase(keyChainRepository))
         advanceUntilIdle()
 
         assertNull(viewModel.errorFlow.value)
@@ -642,6 +652,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
@@ -667,6 +678,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
@@ -695,6 +707,7 @@ class ConnectionViewModelTest {
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
         )
 
         val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
@@ -713,5 +726,138 @@ class ConnectionViewModelTest {
 
         verify { filePathCallback.onReceiveValue(null) }
         assertNull(viewModel.pendingFileChooser.value)
+    }
+
+    @Test
+    fun `Given cert in memory covering the target host and client flag false when auth completes then Authenticated emits requiredMTLS true`() = runTest {
+        // Session resumption case: no CertificateRequest fires, so the client flag stays false,
+        // but the loaded certificate chain covers the host the user connected to.
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(2, "homeassistant.local"))
+        }
+        val provider = mockk<ClientCertProvider> {
+            every { certificate } returns ClientCertificate(mockk(), arrayOf(cert))
+        }
+        coEvery { keyChainRepository.getClientCertProvider() } returns provider
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
+
+            assertNull(errorFlow.awaitItem())
+
+            viewModel.getWebViewClient().isTLSClientAuthNeeded = false
+
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
+                null,
+                stringUri,
+            )
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertTrue(event is ConnectionNavigationEvent.Authenticated)
+            assertEquals(authCode, (event as ConnectionNavigationEvent.Authenticated).authCode)
+            assertEquals("http://homeassistant.local:8123", event.url)
+            assertTrue(event.requiredMTLS)
+            errorFlow.expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given cert in memory not covering the target host and client flag false when auth completes then Authenticated emits requiredMTLS false`() = runTest {
+        // Multiple servers where only one requires mTLS: the loaded cert is for another host,
+        // so the check must not mark this connection as requiring a client certificate.
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(2, "other-server.example.com"))
+        }
+        val provider = mockk<ClientCertProvider> {
+            every { certificate } returns ClientCertificate(mockk(), arrayOf(cert))
+        }
+        coEvery { keyChainRepository.getClientCertProvider() } returns provider
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
+
+            assertNull(errorFlow.awaitItem())
+
+            viewModel.getWebViewClient().isTLSClientAuthNeeded = false
+
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
+                null,
+                stringUri,
+            )
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertTrue(event is ConnectionNavigationEvent.Authenticated)
+            assertEquals(authCode, (event as ConnectionNavigationEvent.Authenticated).authCode)
+            assertEquals("http://homeassistant.local:8123", event.url)
+            assertFalse(event.requiredMTLS)
+            errorFlow.expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given cert in memory covering the target host and client flag true when auth completes then Authenticated emits requiredMTLS true`() = runTest {
+        val cert = mockk<X509Certificate> {
+            every { subjectAlternativeNames } returns listOf(listOf(2, "homeassistant.local"))
+        }
+        val provider = mockk<ClientCertProvider> {
+            every { certificate } returns ClientCertificate(mockk(), arrayOf(cert))
+        }
+        coEvery { keyChainRepository.getClientCertProvider() } returns provider
+        val authCode = "test_auth_code"
+        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserManager,
+            CheckTLSClientAuthNeededUseCase(keyChainRepository),
+        )
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
+
+            assertNull(errorFlow.awaitItem())
+
+            viewModel.getWebViewClient().isTLSClientAuthNeeded = true
+
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
+                null,
+                stringUri,
+            )
+
+            assertTrue(result)
+            val event = navigationEventsFlow.awaitItem()
+            assertTrue(event is ConnectionNavigationEvent.Authenticated)
+            assertEquals(authCode, (event as ConnectionNavigationEvent.Authenticated).authCode)
+            assertEquals("http://homeassistant.local:8123", event.url)
+            assertTrue(event.requiredMTLS)
+            errorFlow.expectNoEvents()
+        }
     }
 }
