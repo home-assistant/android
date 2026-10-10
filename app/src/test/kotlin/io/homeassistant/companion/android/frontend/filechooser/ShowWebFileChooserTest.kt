@@ -5,9 +5,11 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.webkit.WebChromeClient.FileChooserParams
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
+import io.homeassistant.companion.android.common.util.SdkVersion
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -84,6 +86,63 @@ class ShowWebFileChooserTest {
     }
 
     @Test
+    fun `Given folder mode when creating intent then a document tree is opened without extras`() = runTest {
+        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*"), mode = FileChooserParams.MODE_OPEN_FOLDER))
+
+        assertEquals(Intent.ACTION_OPEN_DOCUMENT_TREE, intent.action)
+        assertNull(intent.type)
+        assertNull(intent.categories)
+        assertNull(intent.extras)
+    }
+
+    @Test
+    fun `Given save mode when creating intent then a document is created with the first type and suggested name`() = runTest {
+        val intent = createIntent(
+            FakeFileChooserParams(
+                acceptTypes = arrayOf("text/plain", ".csv"),
+                mode = FileChooserParams.MODE_SAVE,
+                filenameHint = "export.txt",
+            ),
+        )
+
+        assertEquals(Intent.ACTION_CREATE_DOCUMENT, intent.action)
+        assertTrue(intent.hasCategory(Intent.CATEGORY_OPENABLE))
+        assertEquals("text/plain", intent.type)
+        assertEquals("export.txt", intent.getStringExtra(Intent.EXTRA_TITLE))
+    }
+
+    @Test
+    fun `Given save mode without accept types or name when creating intent then any type is created`() = runTest {
+        val intent = createIntent(FakeFileChooserParams(mode = FileChooserParams.MODE_SAVE))
+
+        assertEquals(Intent.ACTION_CREATE_DOCUMENT, intent.action)
+        assertEquals("*/*", intent.type)
+        assertFalse(intent.hasExtra(Intent.EXTRA_TITLE))
+    }
+
+    @Test
+    fun `Given read write permission on API 37 when creating intent then the document is opened`() = runTest {
+        SdkVersion.sdkInt = Build.VERSION_CODES.CINNAMON_BUN
+        val intent = createIntent(
+            FakeFileChooserParams(
+                mode = FileChooserParams.MODE_OPEN_MULTIPLE,
+                permissionMode = FileChooserParams.PERMISSION_MODE_READ_WRITE,
+            ),
+        )
+
+        assertEquals(Intent.ACTION_OPEN_DOCUMENT, intent.action)
+        assertTrue(intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false))
+    }
+
+    @Test
+    fun `Given read write permission before API 37 when creating intent then content is picked`() = runTest {
+        SdkVersion.sdkInt = Build.VERSION_CODES.BAKLAVA
+        val intent = createIntent(FakeFileChooserParams(permissionMode = FileChooserParams.PERMISSION_MODE_READ_WRITE))
+
+        assertEquals(Intent.ACTION_GET_CONTENT, intent.action)
+    }
+
+    @Test
     fun `Given several files in clip data when parsing result then all uris are returned`() {
         val first = Uri.parse("content://provider/first")
         val second = Uri.parse("content://provider/second")
@@ -127,11 +186,14 @@ class ShowWebFileChooserTest {
 private class FakeFileChooserParams(
     private val acceptTypes: Array<String> = emptyArray(),
     private val mode: Int = MODE_OPEN,
+    private val filenameHint: String? = null,
+    private val permissionMode: Int = PERMISSION_MODE_READ,
 ) : FileChooserParams() {
     override fun getMode(): Int = mode
     override fun getAcceptTypes(): Array<String> = acceptTypes
     override fun isCaptureEnabled(): Boolean = false
     override fun getTitle(): CharSequence? = null
-    override fun getFilenameHint(): String? = null
+    override fun getFilenameHint(): String? = filenameHint
+    override fun getPermissionMode(): Int = permissionMode
     override fun createIntent(): Intent = error("Not used by ShowWebFileChooser")
 }
