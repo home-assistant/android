@@ -22,6 +22,9 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerPause
+import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerPlay
+import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerStop
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
@@ -38,8 +41,12 @@ import timber.log.Timber
 
 private const val MEDIA_ICON_SIZE_DP = 24
 
-internal fun mediaPlayerPlaybackAction(state: String): String =
-    if (state == "playing") "media_pause" else "media_play"
+internal fun mediaPlayerPlaybackAction(entity: Entity): String = when {
+    entity.state == "playing" && entity.supportsMediaPlayerPause() -> "media_pause"
+    entity.state == "playing" && entity.supportsMediaPlayerStop() -> "media_stop"
+    entity.state != "playing" && entity.supportsMediaPlayerPlay() -> "media_play"
+    else -> "media_play_pause"
+}
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -583,7 +590,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             Timber.d("Failed to resolve media player entity for play/pause action")
             return
         }
-        val action = mediaPlayerPlaybackAction(actionEntity.state)
+        val action = mediaPlayerPlaybackAction(actionEntity)
         val entityId = actionEntity.entityId
 
         val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
