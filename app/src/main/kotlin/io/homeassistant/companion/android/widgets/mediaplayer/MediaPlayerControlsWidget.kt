@@ -48,6 +48,12 @@ internal fun mediaPlayerPlaybackAction(entity: Entity): String = when {
     else -> "media_play_pause"
 }
 
+internal fun mediaPlayerPlaybackIcon(entity: Entity?): Int = when {
+    entity?.state == "playing" && entity.supportsMediaPlayerPause() -> R.drawable.ic_pause
+    entity?.state == "playing" && entity.supportsMediaPlayerStop() -> R.drawable.ic_stop
+    else -> R.drawable.ic_play
+}
+
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
 
@@ -140,17 +146,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val showSource: Boolean = widget.showSource
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
-                if (entity?.state.equals("playing")) {
-                    setImageViewResource(
-                        R.id.widgetPlayPauseButton,
-                        R.drawable.ic_pause,
-                    )
-                } else {
-                    setImageViewResource(
-                        R.id.widgetPlayPauseButton,
-                        R.drawable.ic_play,
-                    )
-                }
+                setImageViewResource(
+                    R.id.widgetPlayPauseButton,
+                    mediaPlayerPlaybackIcon(entity),
+                )
 
                 val artist = (
                     entity?.attributes?.get(
