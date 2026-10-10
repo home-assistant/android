@@ -15,9 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-private const val IMAGE_MIME_TYPE_PREFIX = "image/"
-
-/** Modes where the page opens existing files, the only ones where taking a photo makes sense. */
+/** Modes where the page opens existing files, the only ones where capturing new media makes sense. */
 private val OPEN_MODES = setOf(FileChooserParams.MODE_OPEN, FileChooserParams.MODE_OPEN_MULTIPLE)
 
 /**
@@ -37,9 +35,9 @@ internal data class FileChooserRequest(val input: FileChooserInput, val onResult
  * has responded to the first, so callers can dispatch a request without first checking whether
  * one is already in flight and the previous request's result delivery is never silently dropped.
  *
- * When the page accepts images, the camera is offered next to the file picker, or opened directly
- * when the page also sets the `capture` attribute and only accepts images. Without the camera
- * permission only the file picker is shown.
+ * When the page accepts images or videos, taking a photo or recording a video is offered next to
+ * the file picker, or opened directly when the page also sets the `capture` attribute and only
+ * accepts that one kind of media. Without the camera permission only the file picker is shown.
  */
 @ViewModelScoped
 internal class FrontendFileChooserHandler @VisibleForTesting constructor(
@@ -60,62 +58,67 @@ internal class FrontendFileChooserHandler @VisibleForTesting constructor(
     /**
      * Launches a file chooser for the given [params] and suspends until the user responds.
      *
-     * Returns the selected URIs, or `null` if the user cancelled. The slot is freed and an unused
-     * capture file deleted before returning, including on cancellation of the calling coroutine.
+     * Returns the selected URIs, or `null` if the user cancelled. The slot is freed and unused
+     * capture files deleted before returning, including on cancellation of the calling coroutine.
      */
     suspend fun pickFiles(params: FileChooserParams): Array<Uri>? {
         cameraCaptureRepository.deleteStale()
         val acceptedMimeTypes = params.acceptedMimeTypes(backgroundDispatcher)
-        val cameraCapture = createCameraCaptureIfImagesAccepted(params, acceptedMimeTypes)
+        val cameraCapture = createCameraCaptureIfMediaAccepted(params, acceptedMimeTypes)
+        val outputUris = cameraCapture?.outputs.orEmpty().map { it.uri }
         var uris: Array<Uri>? = null
         try {
             val input = FileChooserInput(params, acceptedMimeTypes.toPickerMimeTypes(), cameraCapture)
             val result = queue.awaitResult { onResult -> FileChooserRequest(input, onResult) }
             uris = when (result) {
                 is FileChooserResult.Selected -> result.uris.toTypedArray()
-                FileChooserResult.Captured -> cameraCapture?.let { arrayOf(it.outputUri) }
+                FileChooserResult.Captured -> outputUris.filter { cameraCaptureRepository.hasContent(it) }
+                    .takeIf { it.isNotEmpty() }
+                    ?.toTypedArray()
                 FileChooserResult.Cancelled -> null
             }
             return uris
         } finally {
-            if (cameraCapture != null && uris?.contains(cameraCapture.outputUri) != true) {
-                // NonCancellable so the deletion also runs when the calling coroutine is cancelled.
-                withContext(NonCancellable) { cameraCaptureRepository.delete(cameraCapture.outputUri) }
-            }
+            val unusedUris = outputUris.filterNot { uris?.contains(it) == true }
+            // NonCancellable so the deletion also runs when the calling coroutine is cancelled.
+            withContext(NonCancellable) { unusedUris.forEach { cameraCaptureRepository.delete(it) } }
         }
     }
 
     /**
-     * Returns the [CameraCapture] to use when the page accepts images and the device can take the
-     * photo, or `null` to only show the file picker.
+     * Returns the [CameraCapture] to use when the page opens files accepting images or videos and the
+     * device can capture them, or `null` to only show the file picker.
      */
-    private suspend fun createCameraCaptureIfImagesAccepted(
+    private suspend fun createCameraCaptureIfMediaAccepted(
         params: FileChooserParams,
         acceptedMimeTypes: List<String>,
     ): CameraCapture? {
-        val toCameraCapture = params.cameraCaptureForAcceptedTypes(acceptedMimeTypes)
-            ?.takeIf { permissionManager.checkCameraPermission() }
+        val kinds = CaptureKind.entries.filter { kind -> acceptedMimeTypes.any(kind::matches) }
+            .takeIf {
+                it.isNotEmpty() &&
+                    params.mode in OPEN_MODES &&
+                    cameraCaptureRepository.hasCamera &&
+                    permissionManager.checkCameraPermission()
+            }
             ?: return null
-        return try {
-            toCameraCapture(cameraCaptureRepository.createImageFile())
-        } catch (e: IOException) {
-            Timber.e(e, "Failed to create camera capture file, only showing the file picker")
-            null
+        return createOutputs(kinds)?.let { outputs ->
+            val directOutput = outputs.singleOrNull()?.takeIf { output ->
+                params.isCaptureEnabled && acceptedMimeTypes.all(output.kind::matches)
+            }
+            if (directOutput != null) CameraCapture.Direct(directOutput) else CameraCapture.Offered(outputs)
         }
     }
 
-    /**
-     * Returns how to involve the camera, as the [CameraCapture] constructor to apply to the output
-     * file, or `null` if [mimeTypes] contain no image, the page doesn't open files (saving or picking a
-     * folder) or the device has no camera.
-     */
-    private fun FileChooserParams.cameraCaptureForAcceptedTypes(mimeTypes: List<String>): ((Uri) -> CameraCapture)? {
-        if (mode !in OPEN_MODES || !cameraCaptureRepository.hasCamera) return null
-        val imageTypeCount = mimeTypes.count { it.startsWith(IMAGE_MIME_TYPE_PREFIX) }
-        return when {
-            imageTypeCount == 0 -> null
-            isCaptureEnabled && imageTypeCount == mimeTypes.size -> CameraCapture::Direct
-            else -> CameraCapture::Offered
+    /** Creates one output per kind, or returns `null` (deleting the ones created) if any fails. */
+    private suspend fun createOutputs(kinds: List<CaptureKind>): List<CaptureOutput>? {
+        val outputs = mutableListOf<CaptureOutput>()
+        return try {
+            kinds.forEach { kind -> outputs += CaptureOutput(kind, cameraCaptureRepository.createFile(kind)) }
+            outputs
+        } catch (e: IOException) {
+            Timber.e(e, "Failed to create camera capture file, only showing the file picker")
+            outputs.forEach { cameraCaptureRepository.delete(it.uri) }
+            null
         }
     }
 }
