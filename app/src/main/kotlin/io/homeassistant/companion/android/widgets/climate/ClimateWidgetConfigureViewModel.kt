@@ -2,14 +2,11 @@ package io.homeassistant.companion.android.widgets.climate
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
-import androidx.glance.appwidget.GlanceAppWidgetManager
+import android.os.Build
+import android.os.RemoteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.color.DynamicColors
@@ -17,260 +14,292 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
 import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
+import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.SharingStarted
+import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
+
+
+/**
+ * Stable request code for the widget-creation broadcast [PendingIntent]. A fixed value (combined with
+ * [PendingIntent.FLAG_UPDATE_CURRENT]) keeps the pending intent deterministic and testable while making
+ * sure a reconfigured request replaces the previously registered extras.
+ */
+private const val PIN_WIDGET_REQUEST_CODE = 0
 
 @HiltViewModel(assistedFactory = ClimateWidgetConfigureViewModel.Factory::class)
 class ClimateWidgetConfigureViewModel @AssistedInject constructor(
     private val climateWidgetDao: ClimateWidgetDao,
     private val serverManager: ServerManager,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
-    @Assisted preSelectedEntityId: String?,
+    @Assisted private val widgetId: Int,
+    @Assisted preselectedEntityId: String?,
 ) : ViewModel() {
-    private var supportedTextColors: List<String> = emptyList()
-    private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
-    val servers = serverManager.serversFlow
-    var selectedServerId by mutableIntStateOf(ServerManager.SERVER_ID_ACTIVE)
-        private set
 
-    /**
-     * Picker state with the server's todo entities, resolved again whenever the selected
-     * server changes and starting as [EntityDisplayState.Loading].
-     */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val displayEntities: StateFlow<EntityDisplayState<EntityDisplayWithContext>> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .flatMapLatest { serverId ->
-            if (serverManager.isRegistered()) {
-                entitiesForDisplayManager.snapshotInContext(serverId = serverId) { it.domain == CLIMATE_DOMAIN }
+    private val _state = MutableStateFlow(
+        ClimateWidgetConfigureState(
+            selectedEntityId = preselectedEntityId ?: "",
+            dynamicColorAvailable = DynamicColors.isDynamicColorAvailable(),
+            selectedBackgroundType = if (DynamicColors.isDynamicColorAvailable()) {
+                WidgetBackgroundType.DYNAMICCOLOR
             } else {
-                Timber.w("No server registered")
-                flowOf(EntityDisplayState.Loaded(emptyList<EntityDisplayWithContext>()))
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), EntityDisplayState.Loading)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val entityRegistry: StateFlow<List<EntityRegistryResponse>?> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (serverManager.isRegistered()) {
-                try {
-                    serverManager.webSocketRepository(serverId).getEntityRegistry()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get entity registry")
-                    null
-                }
-            } else {
-                null
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val deviceRegistry: StateFlow<List<DeviceRegistryResponse>?> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (serverManager.isRegistered()) {
-                try {
-                    serverManager.webSocketRepository(serverId).getDeviceRegistry()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get device registry")
-                    null
-                }
-            } else {
-                null
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val areaRegistry: StateFlow<List<AreaRegistryResponse>?> = snapshotFlow { selectedServerId }
-        .distinctUntilChanged()
-        .mapLatest { serverId ->
-            if (serverManager.isRegistered()) {
-                try {
-                    serverManager.webSocketRepository(serverId).getAreaRegistry()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to get area registry")
-                    null
-                }
-            } else {
-                null
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(500.milliseconds), null)
-
-    // We need a mutex since the update of the entities might happen concurrently with onSetup and the viewModel creation
-    private val selectedEntityMutex = Mutex()
-    var selectedEntityId by mutableStateOf(preSelectedEntityId)
-    var selectedBackgroundType by mutableStateOf(
-        if (DynamicColors.isDynamicColorAvailable()) {
-            WidgetBackgroundType.DYNAMICCOLOR
-        } else {
-            WidgetBackgroundType.DAYNIGHT
-        },
+                WidgetBackgroundType.DAYNIGHT
+            },
+        ),
     )
-    var textColorIndex by mutableIntStateOf(0)
-    var isUpdateWidget by mutableStateOf(false)
+
+    internal val state: StateFlow<ClimateWidgetConfigureState> = _state.asStateFlow()
+
+    private val _errors = MutableSharedFlow<Int>(replay = 1)
+
+    /** Errors to surface to the user, as string resources. */
+    val errors = _errors.asSharedFlow()
+
+    private var loadEntitiesJob: Job? = null
 
     init {
+        viewModelScope.launch { restoreConfiguration() }
+
         viewModelScope.launch {
-            displayEntities.collect { state ->
-                if (state !is EntityDisplayState.Loaded) return@collect
-                selectedEntityMutex.withLock {
-                    if (selectedEntityId == null) {
-                        selectedEntityId = state.entities.firstOrNull()?.entityId
-                    }
+            serverManager.serversFlow.collect { servers ->
+
+                Timber.i("servers climate: $servers")
+                _state.update { current ->
+                    current.copy(
+                        serversDropdownItems = servers.map { server ->
+                            HADropdownItem(key = server.id, label = server.friendlyName)
+                        },
+                    )
                 }
             }
         }
     }
 
-    fun onSetup(widgetId: Int, supportedTextColors: List<String>) {
-        this.supportedTextColors = supportedTextColors
-        maybeLoadPreviousState(widgetId)
-        this.widgetId = widgetId
+    fun onServerSelected(serverId: Int) {
+        if (serverId == _state.value.selectedServerId) return
+        _state.update { it.changeServer(serverId) }
+        loadEntities(serverId)
     }
 
-    private fun maybeLoadPreviousState(widgetId: Int) = viewModelScope.launch {
-        selectedEntityMutex.withLock {
-            if (this@ClimateWidgetConfigureViewModel.widgetId == AppWidgetManager.INVALID_APPWIDGET_ID &&
-                selectedEntityId == null
-            ) {
-                climateWidgetDao.get(widgetId)?.let {
-                    isUpdateWidget = true
-                    selectedServerId = it.serverId
-                    selectedEntityId = it.entityId
-                    selectedBackgroundType = it.backgroundType
-                    val colorIndex = supportedTextColors.indexOf(it.textColor)
-                    textColorIndex = if (colorIndex == -1) 0 else colorIndex
-                }
-            }
+    fun onChangeEntity(entityId: String) {
+        _state.update { current ->
+            current.copy(selectedEntityId = entityId)
         }
     }
 
-    fun setServer(serverId: Int) {
-        if (selectedServerId == serverId) return
-        selectedServerId = serverId
-        viewModelScope.launch { selectedEntityMutex.withLock { selectedEntityId = null } }
+    fun onTextColorChange(textColor: String) {
+        _state.update { it.copy(textColor = textColor) }
     }
 
-    suspend fun isValidSelection(): Boolean {
-        selectedEntityMutex.withLock {
-            return serverManager.getServer(selectedServerId) != null &&
-                selectedEntityId in
-                (displayEntities.value as? EntityDisplayState.Loaded)?.entities.orEmpty().map { it.entityId }
-        }
-    }
-
-    suspend fun updateWidgetConfiguration() {
-        if (!isValidSelection()) {
-            Timber.d("Widget data is invalid")
-            throw IllegalArgumentException("Widget data is invalid")
-        }
-        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
-            Timber.w("Widget ID is invalid")
-            throw IllegalArgumentException("Widget ID is invalid")
-        }
-
-        val entity = getPendingDaoEntity()
-        climateWidgetDao.add(entity)
+    fun onBackgroundTypeSelected(backgroundType: WidgetBackgroundType) {
+        _state.update { it.copy(selectedBackgroundType = backgroundType) }
     }
 
     /**
-     * Return a [ClimateWidgetEntity] with the current selection, but without pushing this to the [ClimateWidgetDao]
+     * Persists the current configuration, reporting through [errors] and returning false when it
+     * cannot be saved.
      */
-    private suspend fun getPendingDaoEntity(): ClimateWidgetEntity {
-        val textColor = if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-            supportedTextColors.getOrNull(textColorIndex) ?: supportedTextColors.first()
-        } else {
-            null
+    suspend fun updateWidgetConfiguration(): Boolean {
+        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            Timber.e("Cannot save the widget configuration, the widget ID is invalid")
+            _errors.emit(commonR.string.widget_update_error)
+            return false
         }
-        selectedEntityMutex.withLock {
-            val listEntityId = selectedEntityId!!
-            val name = (displayEntities.value as? EntityDisplayState.Loaded)?.entity(listEntityId)?.name
+        val widget = getPendingDaoEntity()
+        if (widget == null) {
+            _errors.emit(commonR.string.widget_update_error)
+            return false
+        }
 
-            return ClimateWidgetEntity(
-                id = widgetId,
-                serverId = selectedServerId,
-                entityId = selectedEntityId!!,
-                backgroundType = selectedBackgroundType,
-                textColor = textColor,
-                latestUpdateData = ClimateWidgetEntity.LastUpdateData(entityName = name),
-            )
-        }
+        Timber.d("ClimateConfig add: $widget")
+        climateWidgetDao.add(widget)
+        return true
     }
 
     /**
-     * Requests the widget to be created and waits until it has been saved to the DAO.
+     * Requests the widget to be pinned and waits until it has been saved to the DAO.
      *
      * **WARNING**: This function does not handle user cancellation. If a user cancels the widget creation,
      * this function will not return. If this function is called again and the user does not cancel,
      * both calls to the function will return. While this behavior could be avoided,
      * it does not cause issues in the current implementation as returning multiple times has no adverse effects.
      */
-    suspend fun requestWidgetCreation(context: Context) {
-        // We drop the first value since we only care about knowing when the widget is actually added
+    suspend fun requestWidgetCreation(context: Context): Boolean {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+            Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val pinningSupported = try {
+            appWidgetManager.isRequestPinAppWidgetSupported
+        } catch (e: RemoteException) {
+            Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
+            false
+        }
+
+        if (!pinningSupported) {
+            Timber.e("Cannot pin the widget, the launcher does not support it")
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        val widget = getPendingDaoEntity()
+        if (widget == null) {
+            _errors.emit(commonR.string.widget_creation_error)
+            return false
+        }
+
+        var requestAccepted = false
+
+        // We drop the first value since we only care about knowing when the widget is actually added.
         climateWidgetDao.getWidgetCountFlow().drop(1).onStart {
-            GlanceAppWidgetManager(context)
-                .requestPinGlanceAppWidget(
-                    ClimateWidget::class.java,
-                    successCallback = PendingIntent.getBroadcast(
-                        context,
-                        System.currentTimeMillis().toInt(),
-                        Intent(context, ClimateWidget::class.java).apply {
-                            action = ACTION_APPWIDGET_CREATED
-                            putExtra(EXTRA_WIDGET_ENTITY, getPendingDaoEntity())
-                        },
-                        // We need the PendingIntent to be mutable so the system inject the EXTRA_APPWIDGET_ID of the created widget
-                        PendingIntent.FLAG_MUTABLE,
-                    ),
-                )
+            requestAccepted = appWidgetManager.requestPinAppWidget(
+                ComponentName(context, MediaPlayerControlsWidget::class.java),          // TODO climate: revisar como reemplazar estos intent
+                null,
+                PendingIntent.getBroadcast(
+                    context,
+                    PIN_WIDGET_REQUEST_CODE,
+                    Intent(context, MediaPlayerControlsWidget::class.java).apply {
+                        action = ACTION_APPWIDGET_CREATED
+                        putExtra(EXTRA_WIDGET_ENTITY, widget)
+                    },
+                    // FLAG_MUTABLE: the system injects the created EXTRA_APPWIDGET_ID.
+                    // FLAG_UPDATE_CURRENT: refresh the extras when the screen is reconfigured and re-requested.
+                    PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                ),
+            )
+            // A rejected request never adds a widget, so emit to stop waiting for one
+            if (!requestAccepted) emit(0)
         }.first()
+
+        if (!requestAccepted) {
+            Timber.e("The launcher rejected the widget pin request")
+            _errors.emit(commonR.string.widget_creation_error)
+        }
+        return requestAccepted
     }
 
     fun updateWidget(context: Context) {
-        val appContext = context.applicationContext
-        viewModelScope.launch {
-            val glanceId = GlanceAppWidgetManager(appContext).getGlanceIdBy(widgetId)
-            ClimateGlanceAppWidget().update(appContext, glanceId)
+        context.sendBroadcast(
+            Intent(context, MediaPlayerControlsWidget::class.java).apply {
+                action = BaseWidgetProvider.UPDATE_WIDGETS
+            },
+        )
+    }
+
+    /**
+     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
+     */
+    private suspend fun restoreConfiguration() {
+        val existingWidget = if (
+            widgetId != AppWidgetManager.INVALID_APPWIDGET_ID &&
+            _state.value.selectedEntityId == null
+        ) {
+            climateWidgetDao.get(widgetId)
+        } else {
+            null
+        }
+
+        if (existingWidget != null) {
+            _state.update {
+                it.copy(
+                    selectedServerId = existingWidget.serverId,
+                    // Widgets store one or several comma-separated entities; restore all of them
+                    // (de-duplicated) so the multi-player "show whichever is currently playing"
+                    // behaviour is preserved without rendering or re-saving duplicate rows.
+                    selectedEntityId = existingWidget.entityId,
+                    textColor = existingWidget.textColor.orEmpty(),
+                    selectedBackgroundType = existingWidget.backgroundType,
+                    isUpdateWidget = true,
+                )
+            }
+        } else {
+            _state.update {
+                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
+            }
+        }
+        loadEntities(_state.value.selectedServerId)
+    }
+
+    private suspend fun isValidSelection(): Boolean {
+        val current = _state.value
+//        return current.isActionEnabled && // TODO climate: REVISAR
+        return serverManager.getServer(current.selectedServerId) != null
+    }
+
+    private suspend fun getPendingDaoEntity(): ClimateWidgetEntity? {
+        if (!isValidSelection()) {
+            Timber.e("Cannot build the widget, the current configuration is invalid")
+            return null
+        }
+        val current = _state.value
+
+        // Persist only the entities resolved on the server, so ids that no longer exist (and are
+        // not rendered as selected rows) cannot silently end up in the widget.
+        val entityId = current.selectedEntityId
+
+        if (entityId.isEmpty()) {
+            Timber.e("Cannot build the widget, the selected entities are unknown on the server")
+            return null
+        }
+
+        val name = (current.entityDisplayState as? EntityDisplayState.Loaded)?.entity(entityId)?.name.orEmpty()
+
+        Timber.i("Name de la entidad: $name")
+        return ClimateWidgetEntity(
+            id = widgetId,
+            serverId = current.selectedServerId,
+            entityId = entityId,
+            textColor = current.textColor,
+            backgroundType = current.selectedBackgroundType,
+            latestUpdateData = ClimateWidgetEntity.LastUpdateData(entityName = name)
+        )
+    }
+
+    private fun loadEntities(serverId: Int) {
+        loadEntitiesJob?.cancel()
+        loadEntitiesJob = viewModelScope.launch {
+            if (!serverManager.isRegistered()) {
+                Timber.w("No server registered")
+                _state.update { it.copy(entityDisplayState = EntityDisplayState.Loaded(emptyList())) }
+                return@launch
+            }
+            entitiesForDisplayManager.snapshotInContext(serverId) { it.domain == CLIMATE_DOMAIN }
+                .collect { displayState ->
+                    Timber.i("entities display: ${displayState}")
+                    _state.update { it.copy(entityDisplayState = displayState) }
+                }
         }
     }
 
     @AssistedFactory
     interface Factory {
-        fun create(preSelectedEntityId: String?): ClimateWidgetConfigureViewModel
+        fun create(widgetId: Int, preselectedEntityId: String?): ClimateWidgetConfigureViewModel
     }
 }

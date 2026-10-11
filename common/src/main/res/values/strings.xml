@@ -1067,6 +1067,7 @@
 
     <!--    Climate widget-->
     <string name="widget_climate_label">Climate control</string>
+    <string name="climate_widget_selector_entity_title">Climate</string>
     <string name="climate_widget_select_entity">Select climate</string>
     <string name="widget_climate_plus">Plus temperature</string>
     <string name="widget_climate_minus">Minus temperature</string>
