@@ -22,9 +22,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerPause
-import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerPlay
-import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerStop
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
@@ -41,18 +38,7 @@ import timber.log.Timber
 
 private const val MEDIA_ICON_SIZE_DP = 24
 
-internal fun mediaPlayerPlaybackAction(entity: Entity): String = when {
-    entity.state == "playing" && entity.supportsMediaPlayerPause() -> "media_pause"
-    entity.state == "playing" && entity.supportsMediaPlayerStop() -> "media_stop"
-    entity.state != "playing" && entity.supportsMediaPlayerPlay() -> "media_play"
-    else -> "media_play_pause"
-}
-
-internal fun mediaPlayerPlaybackIcon(entity: Entity?): Int = when {
-    entity?.state == "playing" && entity.supportsMediaPlayerPause() -> R.drawable.ic_pause
-    entity?.state == "playing" && entity.supportsMediaPlayerStop() -> R.drawable.ic_stop
-    else -> R.drawable.ic_play
-}
+internal fun mediaPlayerPlaybackAction(): String = "media_play_pause"
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -146,10 +132,11 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val showSource: Boolean = widget.showSource
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
-                setImageViewResource(
-                    R.id.widgetPlayPauseButton,
-                    mediaPlayerPlaybackIcon(entity),
-                )
+                if (entity?.state.equals("playing")) {
+                    setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_pause)
+                } else {
+                    setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_play)
+                }
 
                 val artist = (
                     entity?.attributes?.get(
@@ -589,7 +576,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             Timber.d("Failed to resolve media player entity for play/pause action")
             return
         }
-        val action = mediaPlayerPlaybackAction(actionEntity)
+        val action = mediaPlayerPlaybackAction()
         val entityId = actionEntity.entityId
 
         val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
