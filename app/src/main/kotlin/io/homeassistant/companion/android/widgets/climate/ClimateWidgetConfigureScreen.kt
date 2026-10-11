@@ -1,42 +1,34 @@
 package io.homeassistant.companion.android.widgets.climate
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Scaffold
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AirConditioner
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
-import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
-import io.homeassistant.companion.android.common.compose.theme.HADimens
-import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState.Loaded
@@ -93,6 +85,7 @@ private fun ClimateWidgetConfigureContent(
                 onCloseClick = onNavigate.takeIf { !canNavigateBack },
             )
         },
+        contentWindowInsets = WindowInsets.safeDrawing
     ) { padding ->
         Column(
             modifier = Modifier
@@ -116,7 +109,6 @@ private fun ClimateWidgetConfigureContent(
                     it?.let { onEntitySelected(it) }
                 }
             )
-
 
             AppearanceSection(
                 selectedBackgroundType = state.selectedBackgroundType,
@@ -203,9 +195,37 @@ private fun Modifier.formControlWidth(): Modifier = this
     .widthIn(max = MaxButtonWidth)
     .fillMaxWidth()
 
-@Preview
+@Preview()
 @Composable
-private fun ClimateWidgetConfigureContentPreview() {
+private fun ClimateWidgetConfigureContentPreviewLight() {
+    HAThemeForPreview {
+        ClimateWidgetConfigureContent(
+            state = ClimateWidgetConfigureState(
+                selectedServerId = previewServer1.id,
+                entityDisplayState = Loaded(previewDisplayEntities),
+                selectedEntityId = previewEntity1.entityId,
+                textColor = "blue",
+                selectedBackgroundType = WidgetBackgroundType.DAYNIGHT,
+                dynamicColorAvailable = true,
+                isUpdateWidget = false,
+                serversDropdownItems = listOf(previewServer1, previewServer2).map {
+                    HADropdownItem(key = it.id, label = it.friendlyName)
+                },
+            ),
+            onServerSelected = {},
+            onEntitySelected = {},
+            onBackgroundTypeSelected = {},
+            onTextColorSelected = {},
+            onActionClick = {},
+            onNavigate = {},
+            canNavigateBack = true,
+        )
+    }
+}
+
+@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun ClimateWidgetConfigureContentPreviewDark() {
     HAThemeForPreview {
         ClimateWidgetConfigureContent(
             state = ClimateWidgetConfigureState(
@@ -236,7 +256,7 @@ private val previewDisplayEntities = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "climate.air1",
             name = "Samsung HVAC",
-            icon = CommunityMaterial.Icon.cmd_air_conditioner,
+            icon = Mdi.AirConditioner
         ),
         areaName = "Kitchen",
     ),
@@ -244,7 +264,7 @@ private val previewDisplayEntities = listOf(
         item = EntityDisplayWithoutContext(
             entityId = "climate.air2",
             name = "BGH HVAC",
-            icon = CommunityMaterial.Icon.cmd_air_conditioner,
+            icon = Mdi.AirConditioner,
         ),
     ),
 )

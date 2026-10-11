@@ -1,15 +1,12 @@
 package io.homeassistant.companion.android.database.widget
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
-import io.homeassistant.companion.android.database.widget.converters.ClimateLastUpdateDataConverter
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames
 
-@TypeConverters(ClimateLastUpdateDataConverter::class)
 @Entity(tableName = "climate_widget")
 data class ClimateWidgetEntity(
     @PrimaryKey

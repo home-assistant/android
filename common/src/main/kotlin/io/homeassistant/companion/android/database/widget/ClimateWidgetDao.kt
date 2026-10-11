@@ -1,15 +1,13 @@
 package io.homeassistant.companion.android.database.widget
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.TypeConverters
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
 import io.homeassistant.companion.android.database.widget.converters.ClimateLastUpdateDataConverter
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-@TypeConverters(ClimateLastUpdateDataConverter::class)
 interface ClimateWidgetDao : WidgetDao<ClimateWidgetEntity> {
 
     @Query("SELECT * FROM climate_widget WHERE id = :id")

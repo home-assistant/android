@@ -356,9 +356,9 @@ open class HomeAssistantApplication : Application() {
             val entityWidget = EntityWidget()
             val mediaPlayerWidget = MediaPlayerControlsWidget()
             val templateWidget = TemplateWidget()
+            val climateWidget = ClimateWidget()
             TodoWidget().register(this@HomeAssistantApplication)
-
-            ClimateWidget().registerReceiver(this)
+            climateWidget.register(this@HomeAssistantApplication)
 
             val screenIntentFilter = IntentFilter()
             screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
@@ -375,6 +375,12 @@ open class HomeAssistantApplication : Application() {
             ContextCompat.registerReceiver(
                 this,
                 templateWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            ContextCompat.registerReceiver(
+                this,
+                climateWidget,
                 screenIntentFilter,
                 ContextCompat.RECEIVER_NOT_EXPORTED,
             )

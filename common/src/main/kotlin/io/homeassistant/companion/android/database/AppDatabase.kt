@@ -54,6 +54,7 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundColumnTypeConverter
 import io.homeassistant.companion.android.database.widget.WidgetTapActionColumnTypeConverter
+import io.homeassistant.companion.android.database.widget.converters.ClimateLastUpdateDataConverter
 import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 
 @VisibleForTesting
@@ -123,6 +124,7 @@ const val DATABASE_VERSION = 54
     WidgetBackgroundColumnTypeConverter::class,
     WidgetTapActionColumnTypeConverter::class,
     TodoLastUpdateDataConverter::class,
+    ClimateLastUpdateDataConverter::class
 )
 internal abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
