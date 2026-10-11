@@ -37,6 +37,9 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 private const val MEDIA_ICON_SIZE_DP = 24
+private const val MEDIA_PLAYER_STATE_PLAYING = "playing"
+private const val MEDIA_PLAYER_ACTION_PLAY = "media_play"
+private const val MEDIA_PLAYER_ACTION_PAUSE = "media_pause"
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -130,7 +133,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val showSource: Boolean = widget.showSource
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
-                if (entity?.state.equals("playing")) {
+                if (entity?.state.equals(MEDIA_PLAYER_STATE_PLAYING)) {
                     setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_pause)
                 } else {
                     setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_play)
@@ -400,7 +403,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val entities: LinkedList<Entity?> = LinkedList()
                 entityIds.forEach {
                     val e = serverManager.integrationRepository(serverId).getEntity(it)
-                    if (e?.state == "playing") return e
+                    if (e?.state == MEDIA_PLAYER_STATE_PLAYING) return e
                     entities.add(e)
                 }
                 return entities[0]
@@ -577,7 +580,13 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         try {
             serverManager.integrationRepository(entity.serverId).callAction(
                 MEDIA_PLAYER_DOMAIN,
-                if (actionEntity.state == "playing") "media_pause" else "media_play",
+                if (actionEntity.state ==
+                    MEDIA_PLAYER_STATE_PLAYING
+                ) {
+                    MEDIA_PLAYER_ACTION_PAUSE
+                } else {
+                    MEDIA_PLAYER_ACTION_PLAY
+                },
                 mapOf("entity_id" to actionEntity.entityId),
             )
         } catch (e: CancellationException) {
