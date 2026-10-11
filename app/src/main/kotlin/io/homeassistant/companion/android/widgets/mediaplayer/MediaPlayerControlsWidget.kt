@@ -21,7 +21,6 @@ import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
@@ -41,17 +40,6 @@ private const val MEDIA_ICON_SIZE_DP = 24
 
 internal fun mediaPlayerPlaybackAction(state: String): String =
     if (state == "playing") "media_pause" else "media_play"
-
-internal suspend fun callMediaPlayerPlaybackAction(
-    integrationRepository: IntegrationRepository,
-    entity: Entity,
-) {
-    integrationRepository.callAction(
-        MEDIA_PLAYER_DOMAIN,
-        mediaPlayerPlaybackAction(entity.state),
-        mapOf("entity_id" to entity.entityId),
-    )
-}
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -590,9 +578,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             return
         }
         try {
-            callMediaPlayerPlaybackAction(
-                serverManager.integrationRepository(entity.serverId),
-                actionEntity,
+            serverManager.integrationRepository(entity.serverId).callAction(
+                MEDIA_PLAYER_DOMAIN,
+                mediaPlayerPlaybackAction(actionEntity.state),
+                mapOf("entity_id" to actionEntity.entityId),
             )
         } catch (e: CancellationException) {
             throw e
