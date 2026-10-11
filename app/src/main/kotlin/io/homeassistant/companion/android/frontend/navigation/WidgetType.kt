@@ -5,10 +5,11 @@ import android.content.Intent
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.todo.TodoWidgetConfigureActivity
 
 /**
- * Widget types that can be configured via the EntityAddTo flow.
+ * Widget types that can be configured.
  *
  * Each variant knows how to build the configuration [Intent] for its underlying widget activity,
  * so callers can launch the right configure screen.
@@ -39,5 +40,10 @@ sealed interface WidgetType {
     data object Todo : WidgetType {
         override fun toConfigureIntent(context: Context, entityId: String?): Intent =
             TodoWidgetConfigureActivity.newInstance(context, entityId)
+    }
+
+    data object Template : WidgetType {
+        override fun toConfigureIntent(context: Context, entityId: String?): Intent =
+            TemplateWidgetConfigureActivity.newInstance(context)
     }
 }

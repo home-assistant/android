@@ -21,8 +21,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -43,6 +41,9 @@ import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ChevronRight
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.changelog.ChangelogAction
 import io.homeassistant.companion.android.changelog.ChangelogEntry
 import io.homeassistant.companion.android.changelog.ChangelogPlatform
@@ -256,7 +257,9 @@ private fun ChangelogEntryContent(
     currentPlatform: ChangelogPlatform,
     onActionClick: (ChangelogAction) -> Unit,
 ) {
-    val action = entry.action
+    val action = entry.action?.takeUnless {
+        entry.actionRequiresPlatform && currentPlatform !in entry.platforms
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -297,7 +300,7 @@ private fun ChangelogEntryContent(
         }
         if (action != null) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                imageVector = Mdi.ChevronRight.rememberImageVector(autoMirror = true),
                 contentDescription = null,
                 tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
             )

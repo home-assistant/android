@@ -13,6 +13,7 @@ import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -72,6 +73,9 @@ class NetworkSensorManager @Inject constructor(
             "mdi:wifi",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+            settings = listOf(
+                Setting.Toggle(SETTING_GET_CURRENT_BSSID, default = false),
+            ),
         )
 
         @ProvidesSensor
@@ -325,14 +329,14 @@ class NetworkSensorManager @Inject constructor(
         val settingName = "network_replace_mac_var1:$bssid:"
         val sensorRepository = sensorRepository
         val sensorSettings = sensorRepository.getSettings(bssidState.id)
-        val getCurrentBSSID = sensorSettings.firstOrNull { it.name == SETTING_GET_CURRENT_BSSID }?.value ?: "false"
+        val getCurrentBSSID = sensorSettings.first { it.name == SETTING_GET_CURRENT_BSSID }.value
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
-                sensorRepository.add(
-                    SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE),
+                sensorRepository.updateSettingValue(bssidState.id, SETTING_GET_CURRENT_BSSID, "false")
+                sensorRepository.addDynamicSetting(
+                    SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING),
                 )
-                sensorRepository.add(SensorSetting(bssidState.id, settingName, bssid, SensorSettingType.STRING))
             }
         } else {
             if (currentSetting != "") {
@@ -340,10 +344,6 @@ class NetworkSensorManager @Inject constructor(
             } else {
                 sensorRepository.removeSetting(bssidState.id, settingName)
             }
-
-            sensorRepository.add(
-                SensorSetting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", SensorSettingType.TOGGLE),
-            )
         }
 
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"

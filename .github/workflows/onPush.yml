@@ -16,7 +16,7 @@ env:
 
 jobs:
   app_build:
-    name: Github, Firebase, and Sentry Release
+    name: GitHub build and (pre)release
     runs-on: ubuntu-latest
     if: github.repository == 'home-assistant/android'
     permissions:
@@ -27,48 +27,48 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
-          ruby-version: "4.0.6"
+          ruby-version: "4.0.7"
           bundler-cache: false
 
-      - uses: ./.github/actions/create-release-number
+      - uses: $/.github/actions/create-release-number
         name: Create Release Number
         id: rel_number
 
-      - uses: ./.github/actions/inflate-secrets
+      - uses: $/.github/actions/inflate-secrets
         name: Inflate Secrets
         with:
           keystore: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
           google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
-      - uses: ./.github/actions/create-release-notes
+      - uses: $/.github/actions/create-release-notes
         name: Create Release Notes
         with:
           tag-name: ${{ steps.rel_number.outputs.version }}
           gh-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: ./.github/actions/download-translations
+      - uses: $/.github/actions/download-translations
         name: Download Translations
         with:
           lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
       - name: Build Release
+        uses: $/.github/actions/monitor-resources
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: |
-          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
+        with:
+          run: ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
       - name: Archive Build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -127,15 +127,6 @@ jobs:
             --draft=false \
             --notes-file ./app/build/outputs/changelogGithub
 
-      - name: Deploy to Firebase
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
-          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: ./gradlew appDistributionUploadFullRelease
-
       - name: Install Fastlane dependencies
         if: github.event.inputs.beta == 'true'
         run: bundle install
@@ -149,7 +140,7 @@ jobs:
           AMAZON_APPSTORE_APP_ID: ${{ secrets.AMAZON_APPSTORE_APP_ID }}
 
       - name: Upload Github Dependencies
-        uses: gradle/actions/dependency-submission@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-provider: basic # Avoid the proprietary 'enhanced' cache; 'basic' uses the MIT-licensed GitHub Actions cache.
 
@@ -170,48 +161,48 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+      - uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8 # v1.327.0
         with:
-          ruby-version: "4.0.6"
+          ruby-version: "4.0.7"
           bundler-cache: false
 
-      - uses: ./.github/actions/create-release-number
+      - uses: $/.github/actions/create-release-number
         name: Create Release Number
         id: rel_number
 
-      - uses: ./.github/actions/inflate-secrets
+      - uses: $/.github/actions/inflate-secrets
         name: Inflate Secrets
         with:
           keystore: ${{ secrets.UPLOAD_KEYSTORE_FILE }}
           google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
-      - uses: ./.github/actions/create-release-notes
+      - uses: $/.github/actions/create-release-notes
         name: Create Release Notes
         with:
           tag-name: ${{ steps.rel_number.outputs.version }}
           gh-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: ./.github/actions/download-translations
+      - uses: $/.github/actions/download-translations
         name: Download Translations
         with:
           lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
           lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
 
       - name: Build Release
+        uses: $/.github/actions/monitor-resources
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-        run: |
-          ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
+        with:
+          run: ./gradlew :common:assemble :app:bundleFullRelease :wear:bundleRelease :automotive:bundleFullRelease
 
       - name: Archive Build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

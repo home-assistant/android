@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.changelog
 
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
+import io.homeassistant.companion.android.sensors.DynamicColorSensorManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 
 /**
@@ -21,6 +22,19 @@ internal val currentChangelog = Changelog(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_assistant_volume_command,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+        ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_gesture_action,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.Gestures),
+        ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_tonal_palette_sensor,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(
+                SettingsActivity.Deeplink.Sensor(DynamicColorSensorManager.tonalPaletteSensor.id),
+            ),
+            actionRequiresPlatform = true,
         ),
     ),
     improved = listOf(
@@ -42,6 +56,16 @@ internal val currentChangelog = Changelog(
             contentRes = commonR.string.changelog_entry_media_player_widgets,
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenWidgetConfig(WidgetType.MediaPlayer),
+        ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_template_widgets,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenWidgetConfig(WidgetType.Template),
+        ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_todo_widgets,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenWidgetConfig(WidgetType.Todo),
         ),
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_tiles,

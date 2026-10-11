@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.di
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import androidx.media3.datasource.DataSource
@@ -44,6 +45,7 @@ import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
 import java.util.UUID
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 
 @Module
@@ -116,7 +118,7 @@ internal abstract class DataModule {
         @NamedLegacyChangelogPref
         @Singleton
         fun provideLegacyChangelogPref(@ApplicationContext appContext: Context): SuspendProvider<Boolean> =
-            SuspendProvider {
+            SuspendProvider(Dispatchers.IO) {
                 appContext.getSharedPreferencesSuspend("changelog").contains("ChangeLog_last_version_code")
             }
 
@@ -158,7 +160,7 @@ internal abstract class DataModule {
 
         @Provides
         @Singleton
-        fun packageManager(@ApplicationContext appContext: Context) = appContext.packageManager
+        fun packageManager(@ApplicationContext appContext: Context): PackageManager = appContext.packageManager
 
         @Provides
         @Singleton

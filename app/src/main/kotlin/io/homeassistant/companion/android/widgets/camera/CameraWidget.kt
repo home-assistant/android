@@ -124,12 +124,9 @@ class CameraWidget : AppWidgetProvider() {
                     val urlState = serverManager.connectionStateProvider(
                         widget.serverId,
                     ).urlFlow().first()
-                    if (urlState is UrlState.HasUrl) {
-                        val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
-                        url = "$baseUrl$entityPictureUrl"
-                    } else {
-                        throw IllegalStateException("No URL available to retrieve picture")
-                    }
+                    check(urlState is UrlState.HasUrl) { "No URL available to retrieve picture" }
+                    val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
+                    url = "$baseUrl$entityPictureUrl"
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

@@ -1,8 +1,11 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
-import com.mikepenz.iconics.typeface.IIcon
+import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.CameraControls
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
 import io.homeassistant.companion.android.common.data.integration.CoverControls
@@ -69,13 +72,13 @@ enum class EntityCategory {
 interface EntityDisplay {
     val entityId: String
     val name: String
-    val icon: IIcon
+    val icon: MdiIcon
 
     /**
      * Icon of the entity ignoring its state, so it stays the same as the entity changes, for
      * callers persisting an icon reference rather than rendering [icon].
      */
-    val statelessIcon: IIcon
+    val statelessIcon: MdiIcon
     val state: FriendlyState
     val rawState: String
 
@@ -150,8 +153,8 @@ interface EntityDisplay {
 data class EntityDisplayWithoutContext(
     override val entityId: String,
     override val name: String,
-    override val icon: IIcon,
-    override val statelessIcon: IIcon = icon,
+    override val icon: MdiIcon,
+    override val statelessIcon: MdiIcon = icon,
     override val state: FriendlyState = FriendlyState.Literal(""),
     override val rawState: String = "",
     override val isExecuting: Boolean = false,
@@ -185,7 +188,7 @@ data class EntityDisplayWithoutContext(
     constructor(
         entity: Entity,
         name: String = entity.friendlyName,
-        customIcon: IIcon? = null,
+        customIcon: MdiIcon? = null,
         isHidden: Boolean = false,
         entityCategory: EntityCategory? = null,
         displayPrecision: Int? = null,
@@ -262,14 +265,41 @@ data class EntityDisplayWithContext(
     val areaName: String? = null,
     val floorName: String? = null,
     val deviceName: String? = null,
+    val parentDeviceName: String? = null,
+    /**
+     * Names of the devices owning the entity that are left out of its naming context, because the
+     * entity or a nearer device has an area of its own. They still identify the entity, for example
+     * in a search.
+     */
+    val omittedOwnerNames: List<String> = emptyList(),
 ) : EntityDisplay by item {
 
     /**
-     * Formatted subtitle combining area and device name, adapting the separator to the
-     * layout direction. Null if the item has neither, or when it would just repeat [name].
+     * Formatted subtitle combining area, parent device and device name, adapting the separator to
+     * the layout direction. The device name is left out when the entity is named after it. Null if
+     * the item has none, or when it would just repeat [name].
      */
-    fun subtitle(layoutDirection: LayoutDirection): String? = listOfNotNull(areaName, deviceName)
-        .takeIf { it.isNotEmpty() }
-        ?.joinToString(if (layoutDirection == LayoutDirection.Ltr) " ▸ " else " ◂ ")
-        ?.takeIf { it != name }
+    fun subtitle(layoutDirection: LayoutDirection): String? =
+        listOfNotNull(areaName, parentDeviceName, deviceName?.takeIf { it != name })
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(entitySubtitleSeparator(layoutDirection))
+            ?.takeIf { it != name }
+
+    /** [subtitle] resolved against the layout direction the composition is in. */
+    @Composable
+    @ReadOnlyComposable
+    fun subtitle(): String? = subtitle(LocalLayoutDirection.current)
 }
+
+/**
+ * Separator between the segments of an entity subtitle, pointing along [layoutDirection]. Callers
+ * prepending their own segment to [EntityDisplayWithContext.subtitle] join it with this, so the
+ * whole line reads as one breadcrumb.
+ */
+fun entitySubtitleSeparator(layoutDirection: LayoutDirection): String =
+    if (layoutDirection == LayoutDirection.Ltr) " ▸ " else " ◂ "
+
+/** The separator resolved against the layout direction of the current composition. */
+@Composable
+@ReadOnlyComposable
+fun entitySubtitleSeparator(): String = entitySubtitleSeparator(LocalLayoutDirection.current)

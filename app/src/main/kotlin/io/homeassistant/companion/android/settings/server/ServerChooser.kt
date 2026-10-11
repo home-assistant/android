@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetState
@@ -39,6 +37,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Check
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HAModalBottomSheet
@@ -196,7 +197,7 @@ private fun ActiveBadge(modifier: Modifier = Modifier) {
             .background(colorScheme.colorFillPrimaryLoudResting),
     ) {
         Icon(
-            imageVector = Icons.Filled.Check,
+            imageVector = Mdi.Check.rememberImageVector(),
             contentDescription = stringResource(commonR.string.server_active),
             tint = colorScheme.colorOnPrimaryLoud,
             modifier = Modifier.size(AVATAR_BADGE_ICON_SIZE),

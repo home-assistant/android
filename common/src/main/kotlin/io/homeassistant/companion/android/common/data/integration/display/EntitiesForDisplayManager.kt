@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -13,8 +13,9 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayEntry
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.FloorRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.NextNamePart
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -282,10 +283,11 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      *   entity id
      * - icon: the custom icon of the registry entry (`ic`), the icon derived from the entity
      *   state attributes or its domain
-     * - device name: the name given by the user to the device of the entity, the name
-     *   provided by its integration
+     * - device and parent device names: the name given by the user to the device, the name
+     *   provided by its integration, only while they are part of the naming context (see
+     *   [namingContext])
      * - area: the area assigned to the entity itself, the area of the device the entity
-     *   belongs to
+     *   belongs to, the area of the parent device of a child device
      * - floor: the floor of the resolved area, so a device-inherited area also resolves its
      *   floor
      * - hidden: the `hb` flag (display), a non null `hidden_by` (classic)
@@ -303,14 +305,50 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         val classicEntry = snapshot.entries.classicEntry(entity.entityId)
 
         val device = (displayEntry?.deviceId ?: classicEntry?.deviceId)?.let { snapshot.devices[it] }
-        val areaId = displayEntry?.areaId ?: classicEntry?.areaId ?: device?.areaId
+        val parentDevice = device?.parentDeviceId?.let { snapshot.devices[it] }
+        val areaId = displayEntry?.areaId ?: classicEntry?.areaId ?: device?.areaId ?: parentDevice?.areaId
         val area = areaId?.let { snapshot.areas[it] }
         val floor = area?.floorId?.let { snapshot.floors[it] }
+        val context = namingContext(
+            entityNextNamePart = displayEntry?.nextNamePart ?: classicEntry?.nextNamePart,
+            device = device,
+            parentDevice = parentDevice,
+        )
         EntityDisplayWithContext(
             item = snapshot.entries.itemFor(entity),
             areaName = area?.name,
             floorName = floor?.name,
-            deviceName = device?.nameByUser ?: device?.name,
+            deviceName = context.deviceName,
+            parentDeviceName = context.parentDeviceName,
+            omittedOwnerNames = context.omittedOwnerNames,
+        )
+    }
+
+    /**
+     * Splits the devices owning an entity between its naming context and the omitted owners: walking
+     * up from the entity, owners are part of the context until the first node with an area of its
+     * own, whose `next_name_part` is then `area`. Servers that don't send `next_name_part` (before
+     * 2026.10) keep every owner in the context.
+     */
+    private fun namingContext(
+        entityNextNamePart: NextNamePart?,
+        device: DeviceRegistryResponse?,
+        parentDevice: DeviceRegistryResponse?,
+    ): NamingContext {
+        // The entity points to its device, unless the entity has an area of its own
+        val deviceInContext = entityNextNamePart.pointsTo(NextNamePart.Device)
+        // The device points to its parent, unless the device has an area of its own. The walk stops at
+        // the first owner out of the context, so the parent is out whenever the device is.
+        val parentInContext = deviceInContext && device?.nextNamePart.pointsTo(NextNamePart.ParentDevice)
+        val deviceName = device?.displayName
+        val parentDeviceName = parentDevice?.displayName
+        return NamingContext(
+            deviceName = deviceName.takeIf { deviceInContext },
+            parentDeviceName = parentDeviceName.takeIf { parentInContext },
+            omittedOwnerNames = listOfNotNull(
+                deviceName.takeUnless { deviceInContext },
+                parentDeviceName.takeUnless { parentInContext },
+            ),
         )
     }
 
@@ -434,9 +472,9 @@ private class EntityRegistryEntries(
         )
     }
 
-    private fun String?.toIcon(): IIcon? = this
+    private fun String?.toIcon(): MdiIcon? = this
         ?.takeIf { it.startsWith(MDI_PREFIX) }
-        ?.let { CommunityMaterial.getIconByMdiName(it) }
+        ?.let { Mdi.fromHaName(it) }
 }
 
 /**
@@ -469,6 +507,26 @@ private suspend fun <T> orNull(name: String, call: suspend () -> T?): T? = try {
     Timber.e(e, "Couldn't get $name")
     null
 }
+
+/** Name of the device to display: the one given by the user, the one provided by its integration. */
+private val DeviceRegistryResponse.displayName: String?
+    get() = nameByUser ?: name
+
+/** Whether this next name part points to [owner], keeping it in the naming context. */
+private fun NextNamePart?.pointsTo(owner: NextNamePart): Boolean = when (this) {
+    // Servers before 2026.10 don't send it, every owner stays in the naming context
+    null -> true
+    // The entry has an area of its own, or a part the app doesn't know: the walk stops here
+    NextNamePart.Area, is NextNamePart.Unknown -> false
+    NextNamePart.Device, NextNamePart.ParentDevice -> this == owner
+}
+
+/** Device names of an entity split between its naming context and the omitted owners. */
+private data class NamingContext(
+    val deviceName: String?,
+    val parentDeviceName: String?,
+    val omittedOwnerNames: List<String>,
+)
 
 /**
  * Registry data fetched once per resolution, indexed by id for the merge.

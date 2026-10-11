@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util
 
+import android.net.Uri
 import android.net.http.SslError
 import android.webkit.HttpAuthHandler
 import android.webkit.WebResourceError
@@ -13,6 +14,8 @@ import android.webkit.WebViewClient.ERROR_PROXY_AUTHENTICATION
 import android.webkit.WebViewClient.ERROR_TIMEOUT
 import android.webkit.WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME
 import androidx.annotation.StringRes
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
 import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
@@ -21,12 +24,17 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlin.reflect.KClass
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.extension.ExtendWith
@@ -447,6 +455,12 @@ class HAWebViewClientTest {
         assertEquals("myrealm", capturedRealm)
     }
 
+    @Test
+    fun `Given no onReceivedHttpAuthRequest callback when auth requested then does not crash`() {
+        webViewClient.onReceivedHttpAuthRequest(mockk(relaxed = true), mockk(relaxed = true), "example.com", "realm")
+        // No exception thrown
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
     fun `Given onCanGoBackChanged callback when doUpdateVisitedHistory then reports webView canGoBack`(
@@ -471,10 +485,92 @@ class HAWebViewClientTest {
         assertEquals(canGoBack, captured)
     }
 
-    @Test
-    fun `Given no onReceivedHttpAuthRequest callback when auth requested then does not crash`() {
-        webViewClient.onReceivedHttpAuthRequest(mockk(relaxed = true), mockk(relaxed = true), "example.com", "realm")
-        // No exception thrown
+    @Nested
+    inner class HistoryChanges {
+        private val listenerSlot = slot<WebViewCompat.WebMessageListener>()
+        private val reported = mutableListOf<Boolean>()
+
+        @AfterEach
+        fun tearDown() {
+            unmockkAll()
+        }
+
+        private fun mockWebViewFeatures(supported: Boolean) {
+            mockkStatic(WebViewFeature::class)
+            every { WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) } returns supported
+            every { WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER) } returns supported
+            mockkStatic(WebViewCompat::class)
+            every { WebViewCompat.addWebMessageListener(any(), any(), any(), capture(listenerSlot)) } returns Unit
+            every { WebViewCompat.addDocumentStartJavaScript(any(), any(), any()) } returns mockk()
+        }
+
+        private fun createClient(onCanGoBackChanged: ((Boolean) -> Unit)? = { reported += it }) = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            clientCertProvider = clientCertProvider,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = null,
+            onReceivedHttpAuthRequest = null,
+            onCanGoBackChanged = onCanGoBackChanged,
+        )
+
+        private fun verifyRegistrations(webView: WebView, times: Int) {
+            verify(exactly = times) {
+                WebViewCompat.addWebMessageListener(webView, HISTORY_CHANGED_LISTENER, setOf("*"), any())
+                WebViewCompat.addDocumentStartJavaScript(webView, any(), setOf("*"))
+            }
+        }
+
+        @Test
+        fun `Given supported WebView when pages start then registers history script once per WebView`() {
+            mockWebViewFeatures(supported = true)
+            val client = createClient()
+            val firstWebView = mockk<WebView>()
+            val recreatedWebView = mockk<WebView>()
+
+            client.onPageStarted(firstWebView, "https://example.com", null)
+            client.onPageStarted(firstWebView, "https://example.com/other", null)
+            client.onPageStarted(recreatedWebView, "https://example.com", null)
+
+            verifyRegistrations(firstWebView, times = 1)
+            verifyRegistrations(recreatedWebView, times = 1)
+        }
+
+        @Test
+        fun `Given registered WebView when a frame posts a message then reports current canGoBack`() {
+            mockWebViewFeatures(supported = true)
+            val webView = mockk<WebView>()
+            createClient().onPageStarted(webView, "https://example.com", null)
+
+            every { webView.canGoBack() } returns true
+            listenerSlot.captured.onPostMessage(webView, mockk(), mockk<Uri>(), false, mockk())
+            every { webView.canGoBack() } returns false
+            listenerSlot.captured.onPostMessage(webView, mockk(), mockk<Uri>(), false, mockk())
+
+            assertEquals(listOf(true, false), reported)
+        }
+
+        @Test
+        fun `Given unsupported WebView when page starts then registers nothing`() {
+            mockWebViewFeatures(supported = false)
+            val webView = mockk<WebView>()
+
+            createClient().onPageStarted(webView, "https://example.com", null)
+
+            verifyRegistrations(webView, times = 0)
+        }
+
+        @Test
+        fun `Given no onCanGoBackChanged callback when page starts then registers nothing`() {
+            mockWebViewFeatures(supported = true)
+            val webView = mockk<WebView>()
+
+            createClient(onCanGoBackChanged = null).onPageStarted(webView, "https://example.com", null)
+
+            verifyRegistrations(webView, times = 0)
+        }
     }
 
     private fun mockRequest(url: String) = mockk<android.webkit.WebResourceRequest> {

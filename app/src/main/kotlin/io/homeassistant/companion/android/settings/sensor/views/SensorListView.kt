@@ -9,12 +9,12 @@ import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.mikepenz.iconics.IconicsDrawable
+import io.github.timoptr.mdiicons.Mdi
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.id
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.settings.sensor.SensorSettingsViewModel
 import io.homeassistant.companion.android.settings.views.SettingsRow
@@ -73,16 +73,11 @@ fun SensorRow(
     onSensorClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
     var iconToUse = basicSensor.statelessIcon
     if (dbSensor?.enabled == true && dbSensor.icon.isNotBlank()) {
         iconToUse = dbSensor.icon
     }
-    val mdiIcon = try {
-        IconicsDrawable(context, "cmd-${iconToUse.split(":")[1]}").icon
-    } catch (e: Exception) {
-        null
-    }
+    val mdiIcon = Mdi.fromHaName(iconToUse)
 
     SettingsRow(
         primaryText = stringResource(basicSensor.name),

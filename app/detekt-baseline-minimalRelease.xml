@@ -10,8 +10,6 @@
     <ID>AbstractClassCanBeInterface:SettingsModule.kt:SettingsModule$SettingsModule</ID>
     <ID>AbstractClassCanBeInterface:ThreadManager.kt:ThreadManager.SyncResult$SyncResult</ID>
     <ID>AbstractClassCanBeInterface:ThreadModule.kt:ThreadModule$ThreadModule</ID>
-    <ID>AvoidReferentialEquality:ImprovSheet.kt:it !== WifiManager.UNKNOWN_SSID</ID>
-    <ID>AvoidReferentialEquality:SsidView.kt:activeSsid !== WifiManager.UNKNOWN_SSID</ID>
     <ID>ComplexCondition:AssistViewModel.kt:AssistViewModel$pipelineId == PIPELINE_LAST_USED &amp;&amp; recorderAutoStart &amp;&amp; hasPermission &amp;&amp; hasMicrophone &amp;&amp; serverManager.getServer(selectedServerId) != null &amp;&amp; serverManager.integrationRepository(selectedServerId).getLastUsedPipelineSttSupport()</ID>
     <ID>ComplexCondition:BackAction.kt:previousUrl != null &amp;&amp; loadedUrl != null &amp;&amp; previousUrl.scheme?.startsWith("http") == true &amp;&amp; previousUrl.hasSameOrigin(loadedUrl)</ID>
     <ID>ComplexCondition:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$SdkVersion.isAtLeast(Build.VERSION_CODES.O) &amp;&amp; selectedServerId != null &amp;&amp; ( widgetConfigAction in actions[selectedServerId].orEmpty().keys || widgetConfigAction.split(".", limit = 2).size == 2 )</ID>
@@ -20,7 +18,6 @@
     <ID>ComplexCondition:ManageWidgetsView.kt:viewModel.buttonWidgetList.value.isEmpty() &amp;&amp; viewModel.staticWidgetList.value.isEmpty() &amp;&amp; viewModel.mediaWidgetList.value.isEmpty() &amp;&amp; viewModel.templateWidgetList.value.isEmpty() &amp;&amp; viewModel.cameraWidgetList.value.isEmpty() &amp;&amp; viewModel.todoWidgetList.value.isEmpty()</ID>
     <ID>ComplexCondition:MessagingManager.kt:MessagingManager$!jsonData[NotificationData.MEDIA_STREAM].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.MEDIA_STREAM] in CHANNEL_VOLUME_STREAM &amp;&amp; !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND]?.toIntOrNull() != null</ID>
     <ID>ComplexCondition:MessagingManager.kt:MessagingManager$( !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND] in DeviceCommandData.ENABLE_COMMANDS ) || ( !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND] in FORCE_COMMANDS ) || ( !jsonData[NotificationData.COMMAND].isNullOrEmpty() &amp;&amp; jsonData[NotificationData.COMMAND] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &amp;&amp; jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null &amp;&amp; jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! &gt;= 5 )</ID>
-    <ID>ComplexCondition:SsidView.kt:activeSsid?.isNotBlank() == true &amp;&amp; wifiSsids.none { it == activeSsid } &amp;&amp; (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || activeSsid !== WifiManager.UNKNOWN_SSID)</ID>
     <ID>ComplexCondition:TileExtensions.kt:TileExtensions$tileData != null &amp;&amp; tileData.isSetup &amp;&amp; tileData.entityId.split('.')[0] in toggleDomainsWithLock &amp;&amp; serverManager.getServer(tileData.serverId) != null</ID>
     <ID>ConstructorParameterNaming:FrontendViewModel.kt:FrontendViewModel.ViewStateManager$private val _state: MutableStateFlow&lt;FrontendViewState&gt; = MutableStateFlow(initialState)</ID>
     <ID>CyclomaticComplexMethod:AssistViewModel.kt:AssistViewModel$fun onCreate</ID>
@@ -53,14 +50,11 @@
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$private suspend fun handleDeviceCommands</ID>
     <ID>CyclomaticComplexMethod:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$private suspend fun mappedBundle: Map&lt;String, Any?&gt;?</ID>
     <ID>CyclomaticComplexMethod:OnSwipeListener.kt:OnSwipeListener$override fun onTouch: Boolean</ID>
-    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@Composable fun SensorDetailSettingDialog</ID>
-    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@Composable fun SensorDetailTopPanel</ID>
-    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@Composable fun SensorDetailView</ID>
+    <ID>CyclomaticComplexMethod:SensorDetailView.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SensorDetailView</ID>
     <ID>CyclomaticComplexMethod:SensorDetailViewModel.kt:SensorDetailViewModel$suspend fun getSettingEntries: List&lt;String&gt;</ID>
     <ID>CyclomaticComplexMethod:ServerSettingsFragment.kt:ServerSettingsFragment$@Deprecated("Deprecated in Java") override fun onCreatePreferences</ID>
     <ID>CyclomaticComplexMethod:SettingsActivity.kt:SettingsActivity$override fun onCreate</ID>
     <ID>CyclomaticComplexMethod:SettingsFragment.kt:SettingsFragment$override fun onCreatePreferences</ID>
-    <ID>CyclomaticComplexMethod:SsidView.kt:@OptIn(ExperimentalMaterialApi::class) @Composable fun SsidView</ID>
     <ID>CyclomaticComplexMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>CyclomaticComplexMethod:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$override fun onBindViewHolder</ID>
     <ID>DoubleMutabilityForCollection:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$private var actions = mutableMapOf&lt;Int, HashMap&lt;String, Action&gt;&gt;()</ID>
@@ -76,7 +70,6 @@
     <ID>EmptyFunctionBlock:LocationSensorManager.kt:LocationSensorManager.Companion${}</ID>
     <ID>EmptyFunctionBlock:LogFragment.kt:LogFragment.&lt;no name provided&gt;${}</ID>
     <ID>EmptyFunctionBlock:ThreadManagerImpl.kt:ThreadManagerImpl${}</ID>
-    <ID>ExplicitItLambdaMultipleParameters:SsidView.kt:{ _, it -&gt; val connected = remember(it, activeSsid, activeBssid, usingWifi) { usingWifi &amp;&amp; ( it == activeSsid || ( it.startsWith(WifiHelper.BSSID_PREFIX) &amp;&amp; it.removePrefix(WifiHelper.BSSID_PREFIX).equals(activeBssid, ignoreCase = true) ) ) } Row( modifier = Modifier .heightIn(min = 48.dp) .padding(horizontal = 16.dp) .animateItem(), verticalAlignment = Alignment.CenterVertically, ) { if (connected) { Image( asset = CommunityMaterial.Icon3.cmd_wifi_check, colorFilter = ColorFilter.tint(colorResource(commonR.color.colorAccent)), ) Spacer(Modifier.width(16.dp)) } Text( text = if (it.startsWith(WifiHelper.BSSID_PREFIX)) { it.removePrefix(WifiHelper.BSSID_PREFIX) } else { it }, fontFamily = if (it.startsWith(WifiHelper.BSSID_PREFIX)) { FontFamily.Monospace } else { null }, modifier = Modifier .padding(end = 16.dp) .weight(1f), ) Icon( imageVector = Icons.Default.Clear, contentDescription = stringResource(commonR.string.remove_ssid), tint = colorResource(commonR.color.colorWarning), modifier = Modifier .clickable { onRemoveWifiSsid(it) } .size(48.dp) .padding(all = 12.dp), ) } }</ID>
     <ID>FunctionOnlyReturningConstant:ApplicationModule.kt:ApplicationModule$@Provides @Singleton @PushWebsocketSupport fun providesPushWebsocketSupport: Boolean</ID>
     <ID>FunctionOnlyReturningConstant:SettingsWearDetection.kt:SettingsWearDetection$@Suppress("RedundantSuspendModifier") suspend fun hasAnyNodes: Boolean</ID>
     <ID>ImplicitDefaultLocale:ContextExtensions.kt:String.format("#%06X", 0xFFFFFF and color)</ID>
@@ -98,19 +91,20 @@
     <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService.&lt;no name provided&gt;$IO</ID>
     <ID>InjectDispatcher:HaShortcutManager.kt:HaShortcutManager$IO</ID>
     <ID>InjectDispatcher:HomeAssistantApplication.kt:HomeAssistantApplication$IO</ID>
-    <ID>InjectDispatcher:IconDialogGrid.kt:IO</ID>
+    <ID>InjectDispatcher:IconDialogGrid.kt:Default</ID>
     <ID>InjectDispatcher:LanguagesManager.kt:LanguagesManager$IO</ID>
     <ID>InjectDispatcher:LogcatReader.kt:LogcatReader$IO</ID>
     <ID>InjectDispatcher:MessagingManager.kt:MessagingManager$IO</ID>
     <ID>InjectDispatcher:MicroWakeWordModelConfig.kt:MicroWakeWordModelConfig.Companion$IO</ID>
     <ID>InjectDispatcher:NotificationActionReceiver.kt:NotificationActionReceiver$IO</ID>
     <ID>InjectDispatcher:NotificationListenerSensorManager.kt:NotificationListenerSensorManager$Default</ID>
+    <ID>InjectDispatcher:SensorDetailSettingSheet.kt:Default</ID>
+    <ID>InjectDispatcher:SensorDetailViewModel.kt:SensorDetailViewModel$Default</ID>
     <ID>InjectDispatcher:SensorSettingsViewModel.kt:SensorSettingsViewModel$IO</ID>
     <ID>InjectDispatcher:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$IO</ID>
     <ID>InjectDispatcher:SettingsPresenterImpl.kt:SettingsPresenterImpl$IO</ID>
     <ID>InjectDispatcher:TLSWebViewClient.kt:SafeKeyChainAliasCallback$IO</ID>
     <ID>InjectDispatcher:TemplateWidget.kt:TemplateWidget.Companion$Default</ID>
-    <ID>InjectDispatcher:TemplateWidgetConfigureActivity.kt:TemplateWidgetConfigureActivity$IO</ID>
     <ID>InjectDispatcher:TileExtensions.kt:TileExtensions$IO</ID>
     <ID>InjectDispatcher:WakeWordListener.kt:IO</ID>
     <ID>InjectDispatcher:WebsocketBroadcastReceiver.kt:WebsocketBroadcastReceiver$Default</ID>
@@ -127,7 +121,6 @@
     <ID>LongMethod:AssistShortcutView.kt:@Composable fun AssistShortcutView</ID>
     <ID>LongMethod:AssistViewModel.kt:AssistViewModel$fun onCreate</ID>
     <ID>LongMethod:ButtonWidget.kt:ButtonWidget$private suspend fun callConfiguredAction</ID>
-    <ID>LongMethod:ButtonWidget.kt:ButtonWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
     <ID>LongMethod:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$public override fun onCreate</ID>
     <ID>LongMethod:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity.&lt;no name provided&gt;$@SuppressLint("NotifyDataSetChanged") override fun afterTextChanged</ID>
     <ID>LongMethod:CameraWidget.kt:CameraWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
@@ -174,9 +167,8 @@
     <ID>LongMethod:OnboardingNavigation.kt:internal fun NavGraphBuilder.onboarding</ID>
     <ID>LongMethod:OnboardingNavigation.kt:private fun NavGraphBuilder.commonScreens</ID>
     <ID>LongMethod:SensorDetailFragment.kt:SensorDetailFragment$@SuppressLint("InlinedApi") override fun onViewCreated</ID>
-    <ID>LongMethod:SensorDetailView.kt:@Composable fun SensorDetailSettingDialog</ID>
     <ID>LongMethod:SensorDetailView.kt:@Composable fun SensorDetailTopPanel</ID>
-    <ID>LongMethod:SensorDetailView.kt:@Composable fun SensorDetailView</ID>
+    <ID>LongMethod:SensorDetailView.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun SensorDetailView</ID>
     <ID>LongMethod:ServerSettingsFragment.kt:ServerSettingsFragment$@Deprecated("Deprecated in Java") override fun onCreatePreferences</ID>
     <ID>LongMethod:SettingsActivity.kt:SettingsActivity$override fun onCreate</ID>
     <ID>LongMethod:SettingsFragment.kt:SettingsFragment$override fun onCreatePreferences</ID>
@@ -184,10 +176,8 @@
     <ID>LongMethod:TagReaderScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun TagReaderScreen</ID>
     <ID>LongMethod:TemplateComponents.kt:@RequiresApi(Build.VERSION_CODES.O) fun getDomainList: ItemList.Builder</ID>
     <ID>LongMethod:TemplateWidget.kt:TemplateWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
-    <ID>LongMethod:TemplateWidgetConfigureActivity.kt:TemplateWidgetConfigureActivity$public override fun onCreate</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun tileClicked</ID>
-    <ID>LongMethod:TodoWidgetConfigureActivity.kt:@Composable private fun TodoWidgetConfigureView</ID>
     <ID>LongMethod:WebsocketManager.kt:WebsocketManager$private suspend fun createNotification: Boolean</ID>
     <ID>LongMethod:WebsocketSettingView.kt:@Composable fun WebsocketSettingView</ID>
     <ID>LongMethod:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$override fun onBindViewHolder</ID>
@@ -237,7 +227,6 @@
     <ID>MagicNumber:FrontendGestureManager.kt:FrontendGestureManager$2026</ID>
     <ID>MagicNumber:FrontendJsBridge.kt:FrontendJsBridge.Companion$2026</ID>
     <ID>MagicNumber:FrontendJsBridge.kt:FrontendJsBridge.Companion$4</ID>
-    <ID>MagicNumber:FrontendScreen.kt:0.5</ID>
     <ID>MagicNumber:FrontendUrlManager.kt:FrontendUrlManager$2025</ID>
     <ID>MagicNumber:FrontendUrlManager.kt:FrontendUrlManager$6</ID>
     <ID>MagicNumber:FrontendViewModel.kt:FrontendViewModel$2026</ID>
@@ -283,7 +272,6 @@
     <ID>MagicNumber:SettingsFragment.kt:SettingsFragment$5_000</ID>
     <ID>MagicNumber:TemplateComponents.kt:64</ID>
     <ID>MagicNumber:TileExtensions.kt:TileExtensions$1000</ID>
-    <ID>MagicNumber:TileExtensions.kt:TileExtensions$48</ID>
     <ID>MagicNumber:TileExtensions.kt:TileExtensions$500</ID>
     <ID>MagicNumber:TodoGlanceAppWidget.kt:250</ID>
     <ID>MagicNumber:TodoGlanceAppWidget.kt:320</ID>
@@ -346,7 +334,6 @@
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$private suspend fun getPendingDaoEntity: StaticWidgetEntity?</ID>
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:FrontendGestureManager.kt:FrontendGestureManager$private suspend fun switchServerBy: GestureResult</ID>
-    <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun buildUrl: UrlLoadResult</ID>
     <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun shouldSetSecurityLevel: Boolean</ID>
     <ID>ReturnCount:GeocodeSensorManager.kt:GeocodeSensorManager$private suspend fun updateGeocodedLocation</ID>
     <ID>ReturnCount:HomeAssistantSearcher.kt:private fun NsdServiceInfo.toHomeAssistantInstance: HomeAssistantInstance?</ID>
@@ -367,7 +354,8 @@
     <ID>ReturnCount:ServerUserAvatarUseCase.kt:ServerUserAvatarUseCase$suspend fun getUserAvatar: Bitmap?</ID>
     <ID>ReturnCount:SsidViewModel.kt:SsidViewModel$fun addHomeWifiSsid: Boolean</ID>
     <ID>ReturnCount:TLSWebViewClient.kt:TLSWebViewClient$private fun getActivity: Activity?</ID>
-    <ID>ReturnCount:TileExtensions.kt:TileExtensions$private fun getTileIcon: Bitmap?</ID>
+    <ID>ReturnCount:TemplateWidgetConfigureViewModel.kt:TemplateWidgetConfigureViewModel$@SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs. suspend fun requestWidgetCreation: Boolean</ID>
+    <ID>ReturnCount:TemplateWidgetConfigureViewModel.kt:TemplateWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:TodoWidgetActions.kt:ToggleTodoAction$override suspend fun onAction</ID>
     <ID>ReturnCount:WebViewAction.kt:WebViewAction.ReadThemeColors.Companion$private fun String.toWebViewColorOrNull: Color?</ID>
     <ID>ReturnCount:WebsocketManager.kt:WebsocketManager$private suspend fun shouldRunForServer: Boolean</ID>
@@ -381,12 +369,9 @@
     <ID>SwallowedException:DeveloperSettingsPresenterImpl.kt:DeveloperSettingsPresenterImpl$e: Exception</ID>
     <ID>SwallowedException:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$e: Exception</ID>
     <ID>SwallowedException:NotificationDetailView.kt:e: Exception</ID>
-    <ID>SwallowedException:SensorDetailView.kt:e: Exception</ID>
     <ID>SwallowedException:SensorDetailViewModel.kt:SensorDetailViewModel$e: NameNotFoundException</ID>
-    <ID>SwallowedException:SensorListView.kt:e: Exception</ID>
     <ID>SwallowedException:TLSWebViewClient.kt:TLSWebViewClient$ex: CertificateException</ID>
     <ID>SwallowedException:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$e: Exception</ID>
-    <ID>ThrowsCount:CameraWidget.kt:CameraWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
     <ID>ThrowsCount:NFCUtil.kt:NFCUtil$@Throws(IllegalArgumentException::class, IOException::class, Exception::class) private fun writeMessageToTag: Boolean</ID>
     <ID>TooManyFunctions:AppSensorModule.kt:AppSensorModule</ID>
     <ID>TooManyFunctions:AssistSheet.kt:io.homeassistant.companion.android.assist.ui.AssistSheet.kt</ID>
@@ -465,7 +450,6 @@
     <ID>UnsafeCallOnNullableType:SensorDetailViewModel.kt:SensorDetailViewModel$state["id"]!!</ID>
     <ID>UnsafeCallOnNullableType:SensorSettingsViewModel.kt:SensorSettingsViewModel$searchQuery!!</ID>
     <ID>UnsafeCallOnNullableType:SettingsFragment.kt:SettingsFragment$serverAuth!!</ID>
-    <ID>UnsafeCallOnNullableType:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$selectedEntityId!!</ID>
     <ID>UnsafeCallOnNullableType:WebsocketManager.kt:WebsocketManager$applicationContext.getSystemService&lt;NotificationManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$actions[actionText]!!</ID>
     <ID>UnsafeCallOnNullableType:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$actions[actionText]!!.actionData.fields.getValue(fieldKey).values!!</ID>
@@ -491,10 +475,6 @@
     <ID>UnusedPrivateProperty:LaunchViewModel.kt:LaunchViewModel$private val prefsRepository: PrefsRepository</ID>
     <ID>UnusedPrivateProperty:SensorDetailViewModel.kt:SensorDetailViewModel$private val managers: Set&lt;@JvmSuppressWildcards SensorManager&gt;</ID>
     <ID>UnusedPrivateProperty:SettingsPresenterImpl.kt:SettingsPresenterImpl$private val settingsDao: SettingsDao</ID>
-    <ID>UnusedPrivateProperty:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$private val entitiesForDisplayManager: EntitiesForDisplayManager</ID>
-    <ID>UseCheckOrError:AssistVoiceInteractionService.kt:AssistVoiceInteractionService$throw IllegalStateException("No wake word models found in assets")</ID>
-    <ID>UseCheckOrError:CameraWidget.kt:CameraWidget$throw IllegalStateException("No URL available to retrieve picture")</ID>
-    <ID>UseCheckOrError:ThreadManagerImpl.kt:ThreadManagerImpl$throw IllegalStateException("Thread is not supported with the minimal flavor")</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$server?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverManager.getServer(selectedServerId)?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverPipelines?.pipelines ?: emptyList()</ID>
@@ -528,7 +508,6 @@
     <ID>UseOrEmpty:ServerSettingsPresenterImpl.kt:ServerSettingsPresenterImpl$serverManager.getServer(serverId)?.connection?.internalUrl ?: ""</ID>
     <ID>UseOrEmpty:ServerSettingsPresenterImpl.kt:ServerSettingsPresenterImpl$serverManager.getServer(serverId)?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:SetHomeNetworkViewModel.kt:SetHomeNetworkViewModel$currentWifiNetwork.takeIf { it.isNotEmpty() } ?.let { listOf(currentWifiNetwork) } ?: emptyList()</ID>
-    <ID>UseOrEmpty:SetHomeNetworkViewModel.kt:SetHomeNetworkViewModel$wifiHelper.getWifiSsid()?.removeSurrounding("\"") ?: ""</ID>
     <ID>UseOrEmpty:TodoWidgetState.kt:TodoItemState.Companion$todoItem.summary ?: ""</ID>
     <ID>UseOrEmpty:TodoWidgetState.kt:TodoStateWithData.Companion$todoEntity.latestUpdateData?.todos?.map(TodoItemState::from) ?: emptyList()</ID>
     <ID>VarCouldBeVal:ButtonWidget.kt:ButtonWidget.Companion$private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())</ID>

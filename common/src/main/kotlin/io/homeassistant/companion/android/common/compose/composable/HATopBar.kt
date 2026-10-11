@@ -2,10 +2,6 @@ package io.homeassistant.companion.android.common.compose.composable
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -16,6 +12,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ArrowLeft
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.HelpCircleOutline
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -47,7 +48,7 @@ fun HATopBar(
             onBackClick?.let {
                 IconButton(onClick = onBackClick) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        imageVector = Mdi.ArrowLeft.rememberImageVector(autoMirror = true),
                         contentDescription = stringResource(commonR.string.navigate_up),
                     )
                 }
@@ -55,7 +56,7 @@ fun HATopBar(
             onCloseClick?.let {
                 IconButton(onClick = onCloseClick) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = Mdi.Close.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.close),
                     )
                 }
@@ -69,7 +70,7 @@ fun HATopBar(
                     },
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
+                        imageVector = Mdi.HelpCircleOutline.rememberImageVector(autoMirror = true),
                         contentDescription = stringResource(commonR.string.get_help),
                     )
                 }

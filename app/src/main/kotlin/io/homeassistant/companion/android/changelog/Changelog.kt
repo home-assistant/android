@@ -35,6 +35,7 @@ enum class ChangelogCategory(@field:StringRes val labelRes: Int, val markerColor
  * as a clickable row with a chevron.
  */
 sealed interface ChangelogAction {
+
     /** Opens [url] in the browser or the matching app. */
     data class OpenUrl(val url: String) : ChangelogAction
 
@@ -55,11 +56,16 @@ sealed interface ChangelogAction {
  * in `:common`. Escaped inline HTML (like `&lt;b&gt;`) is rendered as styling.
  * @property platforms The platforms this change applies to.
  * @property action Optional action performed when the user taps the entry.
+ * @property actionRequiresPlatform When `true`, [action] should only be offered while running on one of
+ * the entry's [platforms]; on any other platform the entry should be shown without its action. Use it for
+ * actions whose target does not exist on every platform, such as a deeplink to a platform-specific
+ * sensor or screen.
  */
 data class ChangelogEntry(
     @param:StringRes val contentRes: Int,
     val platforms: Set<ChangelogPlatform>,
     val action: ChangelogAction? = null,
+    val actionRequiresPlatform: Boolean = false,
 )
 
 /**

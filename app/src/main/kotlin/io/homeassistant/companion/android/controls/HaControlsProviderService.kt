@@ -5,8 +5,9 @@ import android.service.controls.Control
 import android.service.controls.ControlsProviderService
 import android.service.controls.actions.ControlAction
 import androidx.annotation.RequiresApi
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Alert
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
@@ -372,7 +373,7 @@ class HaControlsProviderService : ControlsProviderService() {
         item = EntityDisplayWithoutContext(
             entityId = entityId,
             name = entityId,
-            icon = CommunityMaterial.Icon.cmd_alert,
+            icon = Mdi.Alert,
             rawState = if (notFound) FAILED_STATE_NOT_FOUND else FAILED_STATE_EXCEPTION,
         ),
     )

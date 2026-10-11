@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.2.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.2.1)" variant="all" version="9.2.1">
+<issues format="6" by="lint 9.4.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.4.1)" variant="all" version="9.4.1">
 
     <issue
         id="MissingPermission"
@@ -8,7 +8,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="241"
+            line="242"
             column="13"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="246"
+            line="247"
             column="17"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="258"
+            line="259"
             column="25"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="266"
+            line="267"
             column="25"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="274"
+            line="275"
             column="25"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1120"
+            line="1122"
             column="17"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="341"
+            line="344"
             column="27"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="941"
+            line="950"
             column="27"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="48"
+            line="51"
             column="30"/>
     </issue>
 
@@ -338,7 +338,7 @@
         errorLine2="    ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="160"
+            line="176"
             column="5"/>
     </issue>
 
@@ -349,7 +349,7 @@
         errorLine2="        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="291"
+            line="325"
             column="9"/>
     </issue>
 
@@ -360,7 +360,7 @@
         errorLine2="                                                      ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="405"
+            line="472"
             column="55"/>
     </issue>
 
@@ -371,7 +371,7 @@
         errorLine2="        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="442"
+            line="518"
             column="9"/>
     </issue>
 
@@ -382,7 +382,7 @@
         errorLine2="            ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="78"
+            line="83"
             column="13"/>
     </issue>
 
@@ -393,7 +393,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="253"
+            line="269"
             column="9"/>
     </issue>
 
@@ -404,7 +404,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="254"
+            line="270"
             column="9"/>
     </issue>
 
@@ -415,19 +415,19 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="352"
+            line="375"
             column="9"/>
     </issue>
 
     <issue
         id="ComposeViewModelForwarding"
         message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
-        errorLine1="                SensorDetailSettingDialog("
-        errorLine2="                ^">
+        errorLine1="                    SensorDetailSettingDialog("
+        errorLine2="                    ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="162"
-            column="17"/>
+            line="182"
+            column="21"/>
     </issue>
 
     <issue
@@ -437,7 +437,7 @@
         errorLine2="                ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/settings/wear/views/SettingsWearHomeView.kt"
-            line="46"
+            line="49"
             column="17"/>
     </issue>
 
@@ -459,7 +459,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/media/player/HAMediaPlayer.kt"
-            line="306"
+            line="311"
             column="31"/>
     </issue>
 
@@ -470,7 +470,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/media/player/HAMediaPlayer.kt"
-            line="308"
+            line="313"
             column="31"/>
     </issue>
 
@@ -492,7 +492,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="458"
+            line="467"
             column="13"/>
     </issue>
 
@@ -542,7 +542,7 @@
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                onToolbarTitleChanged(context.getString(R.string.gestures))"
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -553,7 +553,7 @@
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                onToolbarTitleChanged(context.getString(action.gesture.fullDescription))"
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -564,18 +564,7 @@
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
-        errorLine1="                scaffoldState.snackbarHostState.showSnackbar(context.getString(it))"
-        errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/qs/views/ManageTilesView.kt"
-            line="65"
-            column="62"/>
-    </issue>
-
-    <issue
-        id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                    onShowSnackbar(context.getString(it.messageRes), null)"
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -586,56 +575,56 @@
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                scaffoldState.snackbarHostState.showSnackbar(context.getString(it))"
         errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/nfc/views/NfcNavigationView.kt"
-            line="65"
+            line="66"
             column="62"/>
     </issue>
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                                                    context.getString("
         errorLine2="                                                    ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
-            line="99"
+            line="100"
             column="53"/>
     </issue>
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                                                    context.getString(R.string.undo),"
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
-            line="103"
+            line="104"
             column="53"/>
     </issue>
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                context.getString(it.message),"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="123"
+            line="131"
             column="17"/>
     </issue>
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                context.getString(commonR.string.settings),"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="124"
+            line="132"
             column="17"/>
     </issue>
 
@@ -646,30 +635,8 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="385"
+            line="415"
             column="38"/>
-    </issue>
-
-    <issue
-        id="Typos"
-        message="Did you mean &quot;tile_!&quot; instead of &quot;tile_1&quot;?"
-        errorLine1="        &lt;item>tile_1&lt;/item>"
-        errorLine2="              ~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/arrays.xml"
-            line="34"
-            column="15"/>
-    </issue>
-
-    <issue
-        id="Typos"
-        message="Did you mean &quot;tile_!!&quot; instead of &quot;tile_11&quot;?"
-        errorLine1="        &lt;item>tile_11&lt;/item>"
-        errorLine2="              ~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/values/arrays.xml"
-            line="44"
-            column="15"/>
     </issue>
 
     <issue
@@ -712,7 +679,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/vehicle/views/AndroidAutoFavoritesView.kt"
-            line="43"
+            line="42"
             column="1"/>
     </issue>
 
@@ -756,7 +723,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/EntityGridVehicleScreen.kt"
-            line="50"
+            line="45"
             column="1"/>
     </issue>
 
@@ -767,7 +734,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/HaCarAppService.kt"
-            line="33"
+            line="34"
             column="1"/>
     </issue>
 
@@ -844,7 +811,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="201"
+            line="206"
             column="5"/>
     </issue>
 
@@ -855,7 +822,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="218"
+            line="220"
             column="5"/>
     </issue>
 
@@ -866,7 +833,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="235"
+            line="237"
             column="5"/>
     </issue>
 
@@ -877,7 +844,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="252"
+            line="254"
             column="5"/>
     </issue>
 
@@ -888,7 +855,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="268"
+            line="270"
             column="5"/>
     </issue>
 
@@ -899,7 +866,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="291"
+            line="293"
             column="5"/>
     </issue>
 
@@ -910,7 +877,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="317"
+            line="319"
             column="5"/>
     </issue>
 
@@ -921,7 +888,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/InfoNotification.kt"
-            line="23"
+            line="24"
             column="1"/>
     </issue>
 
@@ -932,7 +899,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/MainVehicleScreen.kt"
-            line="45"
+            line="43"
             column="1"/>
     </issue>
 
@@ -954,7 +921,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/vehicle/ManageAndroidAutoViewModel.kt"
-            line="31"
+            line="28"
             column="1"/>
     </issue>
 
@@ -976,7 +943,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/ManageShortcutsSettingsFragment.kt"
-            line="61"
+            line="62"
             column="5"/>
     </issue>
 
@@ -987,7 +954,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="51"
+            line="56"
             column="1"/>
     </issue>
 
@@ -998,7 +965,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="87"
+            line="92"
             column="1"/>
     </issue>
 
@@ -1009,7 +976,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="357"
+            line="380"
             column="1"/>
     </issue>
 
@@ -1020,7 +987,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="369"
+            line="392"
             column="1"/>
     </issue>
 
@@ -1031,7 +998,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/ManageShortcutsViewModel.kt"
-            line="37"
+            line="35"
             column="1"/>
     </issue>
 
@@ -1042,7 +1009,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/MapVehicleScreen.kt"
-            line="36"
+            line="34"
             column="1"/>
     </issue>
 
@@ -1064,7 +1031,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
-            line="38"
+            line="39"
             column="1"/>
     </issue>
 
@@ -1086,7 +1053,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/vehicle/TemplateComponents.kt"
-            line="91"
+            line="89"
             column="1"/>
     </issue>
 
@@ -1097,7 +1064,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/vehicle/TemplateComponents.kt"
-            line="134"
+            line="121"
             column="1"/>
     </issue>
 
@@ -1108,7 +1075,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/vehicle/TemplateComponents.kt"
-            line="220"
+            line="197"
             column="1"/>
     </issue>
 
@@ -1119,7 +1086,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile10Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1130,7 +1097,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile11Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1141,7 +1108,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile12Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1152,7 +1119,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile13Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1163,7 +1130,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile14Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1174,7 +1141,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile15Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1185,7 +1152,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile16Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1196,7 +1163,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile17Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1207,7 +1174,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile18Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1218,7 +1185,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile19Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1229,7 +1196,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile1Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1240,7 +1207,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile20Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1251,7 +1218,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile21Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1262,7 +1229,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile22Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1273,7 +1240,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile23Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1284,7 +1251,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile24Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1295,7 +1262,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile25Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1306,7 +1273,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile26Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1317,7 +1284,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile27Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1328,7 +1295,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile28Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1339,7 +1306,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile29Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1350,7 +1317,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile2Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1361,7 +1328,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile30Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1372,7 +1339,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile31Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1383,7 +1350,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile32Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1394,7 +1361,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile33Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1405,7 +1372,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile34Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1416,7 +1383,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile35Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1427,7 +1394,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile36Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1438,7 +1405,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile37Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1449,7 +1416,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile38Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1460,7 +1427,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile39Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1471,7 +1438,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile3Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1482,7 +1449,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile40Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1493,7 +1460,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile4Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1504,7 +1471,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile5Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1515,7 +1482,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile6Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1526,7 +1493,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile7Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1537,7 +1504,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile8Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1548,7 +1515,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/Tile9Service.kt"
-            line="7"
+            line="8"
             column="1"/>
     </issue>
 
@@ -1559,19 +1526,19 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/qs/TileExtensions.kt"
-            line="52"
+            line="55"
             column="1"/>
     </issue>
 
     <issue
         id="ObsoleteSdkInt"
         message="Unnecessary; `SDK_INT` is always >= 26"
-        errorLine1="    @RequiresApi(Build.VERSION_CODES.O)"
-        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        errorLine1="@RequiresApi(Build.VERSION_CODES.O)"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureActivity.kt"
-            line="134"
-            column="5"/>
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/todo/TodoWidgetConfigureViewModel.kt"
+            line="293"
+            column="1"/>
     </issue>
 
     <issue
@@ -1896,6 +1863,39 @@
     </issue>
 
     <issue
+        id="ComposeNonRestartableComposable"
+        message="This composable&apos;s body only delegates to another composable. Consider marking it @NonRestartableComposable when its own restart and skip boundary is unlikely to be useful. The annotation avoids generating that code, but also prevents the wrapper from being restarted or skipped independently.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-unnecessary-restart-groups for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*9}/io/homeassistant/companion/android/developer/catalog/HAComposeCatalogScreen.kt"
+            line="140"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeNonRestartableComposable"
+        message="This composable&apos;s body only delegates to another composable. Consider marking it @NonRestartableComposable when its own restart and skip boundary is unlikely to be useful. The annotation avoids generating that code, but also prevents the wrapper from being restarted or skipped independently.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-unnecessary-restart-groups for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/nfc/views/NfcWriteView.kt"
+            line="121"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeNonRestartableComposable"
+        message="This composable&apos;s body only delegates to another composable. Consider marking it @NonRestartableComposable when its own restart and skip boundary is unlikely to be useful. The annotation avoids generating that code, but also prevents the wrapper from being restarted or skipped independently.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-unnecessary-restart-groups for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/views/SettingsSubheader.kt"
+            line="50"
+            column="1"/>
+    </issue>
+
+    <issue
         id="DisableBaselineAlignment"
         message="Set `android:baselineAligned=&quot;false&quot;` on this element for better performance"
         errorLine1="    &lt;LinearLayout"
@@ -1915,17 +1915,6 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/preference_suggestion.xml"
             line="8"
             column="5"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.xml.changelog_master` appears to be unused"
-        errorLine1="&lt;changelog xmlns:tools=&quot;http://schemas.android.com/tools&quot;"
-        errorLine2="^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/xml/changelog_master.xml"
-            line="2"
-            column="1"/>
     </issue>
 
     <issue
@@ -2135,7 +2124,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/button/ButtonWidget.kt"
-            line="318"
+            line="300"
             column="21"/>
     </issue>
 
@@ -2146,7 +2135,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="152"
+            line="153"
             column="33"/>
     </issue>
 
@@ -2157,7 +2146,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="420"
+            line="421"
             column="59"/>
     </issue>
 
@@ -2168,7 +2157,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/ManageShortcutsViewModel.kt"
-            line="184"
+            line="142"
             column="13"/>
     </issue>
 
@@ -2190,7 +2179,7 @@
         errorLine2="^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/InfoNotification.kt"
-            line="23"
+            line="24"
             column="1"/>
     </issue>
 
@@ -2201,7 +2190,7 @@
         errorLine2="^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="87"
+            line="92"
             column="1"/>
     </issue>
 
@@ -2239,6 +2228,83 @@
     </issue>
 
     <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
+            line="242"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/GlanceExt.kt"
+            line="21"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/InsetsUtil.kt"
+            line="33"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="        @Composable"
+        errorLine2="        ~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/Theme.kt"
+            line="160"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/todo/TodoGlanceAppWidget.kt"
+            line="125"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/WindowInfoUtils.kt"
+            line="11"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/compose/WindowInfoUtils.kt"
+            line="24"
+            column="1"/>
+    </issue>
+
+    <issue
         id="ContentDescription"
         message="Missing `contentDescription` attribute on image"
         errorLine1="&lt;ImageView xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
@@ -2258,28 +2324,6 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*resDir*1}/layout/widget_media_controls.xml"
             line="55"
             column="14"/>
-    </issue>
-
-    <issue
-        id="SetTextI18n"
-        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
-        errorLine1="                binding.textSize.setText(staticWidget.textSize.toInt().toString())"
-        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/entity/EntityWidgetConfigureActivity.kt"
-            line="133"
-            column="42"/>
-    </issue>
-
-    <issue
-        id="SetTextI18n"
-        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
-        errorLine1="                binding.textSize.setText(templateWidget.textSize.toInt().toString())"
-        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/template/TemplateWidgetConfigureActivity.kt"
-            line="97"
-            column="42"/>
     </issue>
 
 </issues>

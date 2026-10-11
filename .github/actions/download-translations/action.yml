@@ -45,6 +45,8 @@ runs:
           FOLDER="$(basename $(dirname $i))"
           CODE="${FOLDER#*-}" # remove "values-"
           CODE="${CODE/-r/-}" # replace region "-rXX" with "-XX"
+          CODE="${CODE#b+}" # BCP 47 folder "b+xx+Yyyy" becomes "xx-Yyyy"
+          CODE="${CODE//+/-}"
           if [ "$CODE" == "values" ]; then CODE="en"; fi
           XML_LOCALES="$XML_LOCALES    <locale android:name=\"$CODE\"/>\n"
         done

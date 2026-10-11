@@ -18,10 +18,13 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Fan
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.TemperatureCelsius
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -137,7 +140,7 @@ class EntityPickerTest {
             item = EntityDisplayWithoutContext(
                 entityId = "light.living_room",
                 name = "Living Room Light",
-                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                icon = Mdi.Lightbulb,
             ),
             areaName = "Living Room",
             deviceName = "Smart Bulb",
@@ -146,7 +149,7 @@ class EntityPickerTest {
             item = EntityDisplayWithoutContext(
                 entityId = "light.bedroom",
                 name = "Bedroom Light",
-                icon = CommunityMaterial.Icon2.cmd_lightbulb,
+                icon = Mdi.Lightbulb,
             ),
             areaName = "Bedroom",
         ),
@@ -154,7 +157,7 @@ class EntityPickerTest {
             item = EntityDisplayWithoutContext(
                 entityId = "sensor.temperature",
                 name = "Temperature Sensor",
-                icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+                icon = Mdi.TemperatureCelsius,
             ),
             areaName = "Living Room",
         ),
@@ -162,7 +165,7 @@ class EntityPickerTest {
             item = EntityDisplayWithoutContext(
                 entityId = "switch.fan",
                 name = "Ceiling Fan",
-                icon = CommunityMaterial.Icon2.cmd_fan,
+                icon = Mdi.Fan,
             ),
             areaName = "Bedroom",
             deviceName = "Smart Switch",
@@ -173,7 +176,7 @@ class EntityPickerTest {
         EntityDisplayWithoutContext(
             entityId = "light.attic",
             name = "Attic Light",
-            icon = CommunityMaterial.Icon2.cmd_lightbulb,
+            icon = Mdi.Lightbulb,
             isHidden = true,
         ),
     )
@@ -465,6 +468,44 @@ class EntityPickerTest {
         advanceTimeAndWaitForIdle()
 
         composeTestRule.onNodeWithText("Attic Light").assertIsDisplayed()
+    }
+
+    @Test
+    fun `Given a search matching a parent device or an omitted owner when rendered then their entities are listed`() {
+        val childDeviceEntities = listOf(
+            EntityDisplayWithContext(
+                item = EntityDisplayWithoutContext(entityId = "switch.freezer", name = "Freezer", icon = Mdi.Fan),
+                areaName = "Kitchen",
+                deviceName = "Outlet 1",
+                parentDeviceName = "Power strip",
+            ),
+            EntityDisplayWithContext(
+                item = EntityDisplayWithoutContext(entityId = "switch.garden", name = "Garden lamp", icon = Mdi.Fan),
+                areaName = "Garden",
+                omittedOwnerNames = listOf("Outlet 2", "Power strip"),
+            ),
+        )
+        setExpandedEntityPickerContent(
+            displayState = EntityDisplayState.Loaded(createTestEntities() + childDeviceEntities),
+        )
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_add_entity))
+            .assertIsDisplayed()
+            .performClick()
+
+        waitForInitialEntityLoad()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.search))
+            .assertIsDisplayed()
+            .performTextInput("power strip")
+
+        advanceTimeAndWaitForIdle()
+
+        composeTestRule.onNodeWithText("Freezer").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Garden lamp").assertIsDisplayed()
+        composeTestRule.onNode(hasText("Ceiling Fan")).assertDoesNotExist()
     }
 
     @Test

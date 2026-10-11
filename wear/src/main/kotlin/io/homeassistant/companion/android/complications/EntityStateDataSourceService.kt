@@ -11,9 +11,8 @@ import androidx.wear.watchface.complications.data.PlainComplicationText
 import androidx.wear.watchface.complications.data.ShortTextComplicationData
 import androidx.wear.watchface.complications.datasource.ComplicationRequest
 import androidx.wear.watchface.complications.datasource.SuspendingComplicationDataSourceService
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.utils.colorInt
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
@@ -21,6 +20,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import javax.inject.Inject
 import timber.log.Timber
+private const val COMPLICATION_ICON_SIZE_DP = 24
 
 @AndroidEntryPoint
 class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
@@ -51,9 +51,7 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         val displayEntity = loadedState.entity(entityId)
             ?: return getErrorComplication(request, R.string.complication_entity_invalid)
 
-        val iconBitmap = IconicsDrawable(this, displayEntity.icon).apply {
-            colorInt = Color.WHITE
-        }.toBitmap()
+        val iconBitmap = displayEntity.icon.toBitmap(this, COMPLICATION_ICON_SIZE_DP, Color.WHITE)
 
         val title = if (settings.showTitle) {
             PlainComplicationText.Builder(displayEntity.name).build()

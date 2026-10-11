@@ -420,6 +420,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     init {
         viewModelScope.launch {
             _viewState.collect { state ->
+                Timber.d("Frontend state: ${state.logDescription()}")
+                if (state is FrontendViewState.LoadServer) loadServer(state.serverId, state.target)
                 releaseExoPlayerIfLeavingContent(state)
             }
         }
@@ -473,12 +475,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             improvHandler.events.collect { event ->
                 when (event) {
                     is FrontendImprovHandler.Event.ReloadAtPath -> {
-                        _viewState.update {
-                            FrontendViewState.LoadServer(
-                                serverId = event.serverId,
-                                target = FrontendTarget.Path(event.path),
-                            )
-                        }
+                        startLoad(serverId = event.serverId, target = FrontendTarget.Path(event.path))
                     }
                 }
             }
@@ -497,8 +494,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
 
         collectMatterThreadEvents()
-
-        loadServer()
     }
 
     override fun onCleared() {
@@ -560,14 +555,26 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         )
 
     fun onScreenStartedChanged(started: Boolean) {
+        Timber.d("Frontend screen started: $started")
+        val resumed = started && !isScreenStarted.value
         isScreenStarted.value = started
+        if (resumed) restartInterruptedLoad()
+    }
+
+    /**
+     * Restarts the load when the screen resumes while the external-bus handshake is still pending.
+     * A frontend whose connection attempt failed while the app was in the background never retries
+     * on its own, so only a new navigation to the same [FrontendViewState.Loading.target] can
+     * complete the handshake.
+     */
+    private fun restartInterruptedLoad() {
+        val state = _viewState.value
+        if (state !is FrontendViewState.Loading || state.connected) return
+        startLoad(serverId = state.serverId, target = state.target)
     }
 
     fun onRetry() {
-        _viewState.update {
-            FrontendViewState.LoadServer(serverId = it.serverId)
-        }
-        loadServer()
+        startLoad()
     }
 
     /**
@@ -620,10 +627,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     fun switchServer(serverId: Int) {
-        _viewState.update {
-            FrontendViewState.LoadServer(serverId = serverId)
-        }
-        loadServer()
+        startLoad(serverId = serverId)
     }
 
     /**
@@ -633,10 +637,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     fun onSecurityLevelDone() {
         val serverId = _viewState.value.serverId
         urlManager.onSecurityLevelShown(serverId)
-        _viewState.update {
-            FrontendViewState.LoadServer(serverId = serverId)
-        }
-        loadServer()
+        startLoad(serverId = serverId)
     }
 
     /**
@@ -758,7 +759,22 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is GestureResult.PerformWebViewAction -> _webViewActions.emit(result.action)
             is GestureResult.SwitchServer -> switchServer(result.serverId)
             is GestureResult.NavigateToDefaultDashboard -> navigateToDefaultDashboard(_viewState.value.serverId)
+            is GestureResult.OpenInBrowser -> openCurrentPageInBrowser()
             is GestureResult.Forwarded, is GestureResult.Ignored -> { /* no-op */ }
+        }
+    }
+
+    /** Get the webview's current URL, and open it in the device's browser app. */
+    private suspend fun openCurrentPageInBrowser() {
+        val getCurrentUri = WebViewAction.ReadCurrentUriForExternal()
+        _webViewActions.emit(getCurrentUri)
+        val uri = getCurrentUri.await()
+
+        if (uri != null) {
+            val openEvent = FrontendEvent.OpenExternalLink(uri)
+            _events.emit(openEvent)
+        } else {
+            Timber.w("Open in browser requested but current URI couldn't be read")
         }
     }
 
@@ -827,20 +843,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
-    private fun loadServer() {
+    private fun startLoad(serverId: Int = _viewState.value.serverId, target: FrontendTarget = FrontendTarget.Default) {
+        _viewState.update { FrontendViewState.LoadServer(serverId = serverId, target = target) }
+    }
+
+    private fun loadServer(serverId: Int, target: FrontendTarget) {
         urlFlowJob?.cancel()
         urlFlowJob = viewModelScope.launch {
             permissionManager.checkLocalNetworkPermission()
-            val currentState = _viewState.value
-            val target = when (currentState) {
-                is FrontendViewState.LoadServer -> currentState.target
-                is FrontendViewState.Loading -> currentState.target
-                else -> FrontendTarget.Default
-            }
-            urlManager.serverUrlFlow(
-                serverId = currentState.serverId,
-                target = target,
-            ).collect { result ->
+            urlManager.serverUrlFlow(serverId = serverId, target = target).collect { result ->
                 handleUrlResult(result)
             }
         }
@@ -879,6 +890,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is FrontendHandlerEvent.Disconnected -> {
                 // Disconnection handling not yet implemented
+                Timber.d("Frontend external bus disconnected")
             }
             is FrontendHandlerEvent.Loaded -> showContent()
 
@@ -998,15 +1010,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      *
      * @param result The URL load result to handle
      */
-    private fun handleUrlResult(result: UrlLoadResult) {
+    private suspend fun handleUrlResult(result: UrlLoadResult) {
         when (result) {
             is UrlLoadResult.Success -> {
                 pendingMoreInfoEntityId = result.moreInfoEntityId
-                _viewState.update {
+                _viewState.update { currentState ->
                     FrontendViewState.Loading(
                         serverId = result.serverId,
                         url = result.url,
-                        target = FrontendTarget.Default,
+                        target = currentState.pendingTarget,
                     )
                 }
             }
@@ -1053,6 +1065,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         rawErrorType = "NoUrlAvailable",
                     ),
                 )
+            }
+
+            is UrlLoadResult.ExternalUrl -> {
+                // Suspends while the screen is busy with a previous event instead of dropping this one
+                _events.emit(FrontendEvent.OpenExternalLink(result.url.toUri()))
+                // Load the server without the rejected target, so no later restart can reopen it
+                startLoad(serverId = result.serverId)
             }
         }
     }
@@ -1105,7 +1124,29 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         }
     }
 
+    /**
+     * The frontend page the current load was started for, [FrontendTarget.Default] once the
+     * content is shown.
+     */
+    private val FrontendViewState.pendingTarget: FrontendTarget
+        get() = when (this) {
+            is FrontendViewState.LoadServer -> target
+            is FrontendViewState.Loading -> target
+            else -> FrontendTarget.Default
+        }
+
+    /**
+     * Short description of a state for logging. Deliberately omits the URL, which carries the
+     * server address.
+     */
+    private fun FrontendViewState.logDescription(): String = when (this) {
+        is FrontendViewState.Loading -> "Loading(connected=$connected)"
+        is FrontendViewState.Error -> "Error(${error::class.simpleName})"
+        else -> this::class.simpleName.orEmpty()
+    }
+
     private fun onError(error: FrontendConnectionError) {
+        Timber.w("Frontend error: ${error::class.simpleName}")
         // Resolve the connection type so the error screen can label the "Refresh" action, then
         // build the recovery actions for the screen to render.
         viewModelScope.launch {

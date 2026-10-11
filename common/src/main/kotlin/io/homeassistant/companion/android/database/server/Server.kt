@@ -1,16 +1,16 @@
 package io.homeassistant.companion.android.database.server
 
 import android.os.Parcelable
-import androidx.room.ColumnInfo
-import androidx.room.Embedded
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
+import androidx.room3.ColumnInfo
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.Embedded
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import kotlinx.parcelize.Parcelize
 
 @Entity(tableName = "servers")
-@TypeConverters(InternalSsidTypeConverter::class)
+@ColumnTypeConverters(InternalSsidColumnTypeConverter::class)
 data class Server(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

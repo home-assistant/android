@@ -12,12 +12,11 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.instant
-import io.homeassistant.companion.android.database.sensor.SensorSetting
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.location.getLastLocation
 import io.homeassistant.companion.android.sensors.GeocodeSensorManager.Companion.LOCATION_OUTDATED_THRESHOLD
@@ -70,6 +69,10 @@ class GeocodeSensorManager @Inject constructor(
             commonR.string.basic_sensor_name_geolocation,
             commonR.string.sensor_description_geocoded_location,
             "mdi:map",
+            settings = listOf(
+                Setting.Number(SETTING_ACCURACY, DEFAULT_MINIMUM_ACCURACY),
+                Setting.Toggle(SETTINGS_INCLUDE_LOCATION, default = false),
+            ),
         )
     }
 
@@ -113,14 +116,7 @@ class GeocodeSensorManager @Inject constructor(
         }
 
         var address: Address? = null
-        val sensorRepository = sensorRepository
-        val sensorSettings = sensorRepository.getSettings(geocodedLocation.id)
-        val minAccuracy = sensorSettings
-            .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-            ?: DEFAULT_MINIMUM_ACCURACY
-        sensorRepository.add(
-            SensorSetting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), SensorSettingType.NUMBER),
-        )
+        val minAccuracy = getNumberSetting(geocodedLocation, SETTING_ACCURACY)
 
         if (!location.isStillValid()) {
             return

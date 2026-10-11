@@ -251,7 +251,7 @@ internal class FrontendImprovHandler @Inject constructor(
         ImprovUIState.ConfiguringDevice(
             deviceName = deviceName,
             deviceAddress = deviceAddress,
-            activeSsid = wifiHelper.getWifiSsid()?.removeSurrounding("\""),
+            activeSsid = wifiHelper.getWifiSsid(),
         )
 
     /**

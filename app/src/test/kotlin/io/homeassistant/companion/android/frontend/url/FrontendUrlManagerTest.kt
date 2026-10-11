@@ -420,6 +420,66 @@ class FrontendUrlManagerTest {
         }
     }
 
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(
+        "https://example.com/, https://example.com/",
+        "http://home.example.com/dashboard, http://home.example.com/dashboard",
+        "https://home.example.com:8123/dashboard, https://home.example.com:8123/dashboard",
+    )
+    fun `Given absolute target outside the server origin when serverUrlFlow then returns ExternalUrl`(
+        target: String,
+        expectedExternalUrl: String,
+    ) = runTest {
+        givenConnectedServer(baseUrl = URL("https://home.example.com"))
+
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Path(target)).test {
+            assertEquals(UrlLoadResult.ExternalUrl(url = expectedExternalUrl, serverId = 1), awaitItem())
+            awaitComplete()
+        }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(
+        "https://home.example.com/dashboard",
+        "https://HOME.example.com:443/dashboard",
+        "homeassistant://navigate/dashboard",
+    )
+    fun `Given target on the server origin when serverUrlFlow then returns Success`(target: String) = runTest {
+        givenConnectedServer(baseUrl = URL("https://home.example.com"))
+
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Path(target)).test {
+            assertEquals(
+                UrlLoadResult.Success(url = "https://home.example.com/dashboard?external_auth=1", serverId = 1),
+                awaitItem(),
+            )
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `Given no base URL and absolute target when serverUrlFlow then returns ExternalUrl`() = runTest {
+        givenConnectedServer(baseUrl = null)
+
+        urlManager.serverUrlFlow(
+            serverId = 1,
+            target = FrontendTarget.Path("https://example.com/"),
+        ).test {
+            assertEquals(
+                UrlLoadResult.ExternalUrl(url = "https://example.com/", serverId = 1),
+                awaitItem(),
+            )
+            awaitComplete()
+        }
+    }
+
+    private fun givenConnectedServer(baseUrl: URL?) {
+        coEvery { serverManager.getServer(1) } returns createTestServer(id = 1)
+        coEvery { sessionManager.isSessionConnected(1) } returns true
+        coEvery { serverManager.activateServer(1) } just runs
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(UrlState.HasUrl(baseUrl))
+    }
+
     private fun createTestServer(
         id: Int,
         externalUrl: String = "https://home.example.com",
