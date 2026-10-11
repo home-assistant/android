@@ -1072,6 +1072,8 @@
     <string name="widget_todo_preview_item_second">Milk</string>
     <string name="widget_todo_preview_item_third">Bread</string>
     <string name="widget_tap_action_label">Tap action</string>
+    <string name="widget_tap_action_link_label">Link to open on tap (optional)</string>
+    <string name="widget_tap_action_link_supporting_text">A dashboard path, entityId:, URL, app:// or intent: link. Leave empty to refresh the widget on tap.</string>
     <string name="widget_tap_action_open">Open</string>
     <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>

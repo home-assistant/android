@@ -41,6 +41,7 @@ import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
 @HiltViewModel(assistedFactory = TemplateWidgetConfigureViewModel.Factory::class)
+@Suppress("TooManyFunctions")
 class TemplateWidgetConfigureViewModel @AssistedInject constructor(
     private val templateWidgetDao: TemplateWidgetDao,
     private val serverManager: ServerManager,
@@ -112,6 +113,11 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
 
     fun onTextColorSelected(colorHex: String) {
         _state.update { it.copy(textColorHex = colorHex) }
+    }
+
+    /** Updates the link opened when the widget is tapped; blank keeps refreshing the widget on tap. */
+    fun onUrlChanged(url: String) {
+        _state.update { it.copy(url = url) }
     }
 
     /**
@@ -228,6 +234,7 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
                 textSize = widget.textSize.toInt().toString(),
                 selectedBackgroundType = widget.backgroundType,
                 textColorHex = widget.textColor,
+                url = widget.url.orEmpty(),
                 isUpdateWidget = true,
             )
         }
@@ -284,6 +291,7 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
             textColor = current.textColorHex.takeIf {
                 current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
             },
+            url = current.url.takeIf { it.isNotBlank() },
         )
     }
 

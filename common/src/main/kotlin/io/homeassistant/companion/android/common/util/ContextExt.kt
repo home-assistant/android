@@ -169,28 +169,43 @@ suspend fun Context.launchIntentUri(
     intentUri: String,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {
-    val intent = try {
-        parseExternalIntentUri(intentUri)
-    } catch (e: URISyntaxException) {
-        // Don't log e in release to not leak the URI in the log
-        Timber.e(e.takeIf { BuildConfig.DEBUG }, "Unable to parse intent URI")
+    val toLaunch = intentUriOrStoreIntent(intentUri)
+    if (toLaunch == null) {
         onShowSnackbar(getString(R.string.fail_to_navigate_to_uri, intentUri), null)
         return
-    }
-
-    val targetPackage = intent.`package`
-    val isPackageInstalled = targetPackage?.let { packageManager.getLaunchIntentForPackage(it) } != null
-    val toLaunch = if (!isPackageInstalled && !targetPackage.isNullOrEmpty()) {
-        Timber.w("No app found for intent, opening app store")
-        Intent(Intent.ACTION_VIEW, (MARKET_PREFIX + targetPackage).toUri())
-    } else {
-        intent
     }
     startActivityOrShowSnackbar(
         intent = toLaunch,
         target = intentUri,
         onShowSnackbar = onShowSnackbar,
     )
+}
+
+/**
+ * Parses [intentUri] as an Android `intent:` URI coming from an untrusted source into a launchable [Intent].
+ *
+ * When the parsed intent targets a package that is not installed, an intent opening the Play Store listing for
+ * that package is returned instead.
+ *
+ * @return the intent to launch, or `null` when [intentUri] cannot be parsed
+ */
+fun Context.intentUriOrStoreIntent(intentUri: String): Intent? {
+    val intent = try {
+        parseExternalIntentUri(intentUri)
+    } catch (e: URISyntaxException) {
+        // Don't log e in release to not leak the URI in the log
+        Timber.e(e.takeIf { BuildConfig.DEBUG }, "Unable to parse intent URI")
+        return null
+    }
+
+    val targetPackage = intent.`package`
+    val isPackageInstalled = targetPackage?.let { packageManager.getLaunchIntentForPackage(it) } != null
+    return if (!isPackageInstalled && !targetPackage.isNullOrEmpty()) {
+        Timber.w("No app found for intent, opening app store")
+        storeIntent(targetPackage)
+    } else {
+        intent
+    }
 }
 
 /**
@@ -210,15 +225,17 @@ suspend fun Context.openSecuritySettings(onShowSnackbar: suspend (message: Strin
  * Builds an intent that opens [packageName]'s launcher activity when installed, or its Play Store listing
  * otherwise.
  */
-private fun Context.appOrStoreIntent(packageName: String): Intent {
+fun Context.appOrStoreIntent(packageName: String): Intent {
     val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
     return if (launchIntent != null) {
         launchIntent.apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK }
     } else {
         Timber.w("No launch intent for package, opening app store")
-        Intent(Intent.ACTION_VIEW, (MARKET_PREFIX + packageName).toUri())
+        storeIntent(packageName)
     }
 }
+
+private fun storeIntent(packageName: String): Intent = Intent(Intent.ACTION_VIEW, (MARKET_PREFIX + packageName).toUri())
 
 /**
  * Starts [intent], showing "no app available to open [target]" via [onShowSnackbar] when no activity can

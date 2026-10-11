@@ -28,6 +28,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 /** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
 private const val BLACK_HEX = "#3A3A3A"
+private const val TAP_LINK = "/lovelace/energy"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class)
@@ -68,6 +69,7 @@ class TemplateWidgetConfigureViewModelTest {
         assertEquals("21", state.textSize)
         assertEquals(WidgetBackgroundType.TRANSPARENT, state.selectedBackgroundType)
         assertEquals(BLACK_HEX, state.textColorHex)
+        assertEquals(TAP_LINK, state.url)
         assertEquals(TemplatePreview.Rendered("21.5"), state.preview)
         assertTrue(state.isActionEnabled)
     }
@@ -238,6 +240,7 @@ class TemplateWidgetConfigureViewModelTest {
         viewModel.onTextSizeChanged("18")
         viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
         viewModel.onTextColorSelected(BLACK_HEX)
+        viewModel.onUrlChanged(TAP_LINK)
         advanceUntilIdle()
 
         assertTrue(viewModel.updateWidgetConfiguration())
@@ -252,9 +255,24 @@ class TemplateWidgetConfigureViewModelTest {
                     lastUpdate = "Loading",
                     backgroundType = WidgetBackgroundType.TRANSPARENT,
                     textColor = BLACK_HEX,
+                    url = TAP_LINK,
                 ),
             )
         }
+    }
+
+    @Test
+    fun `Given a blank tap link when configuration is saved then no link is persisted`() = runTest {
+        coEvery { integrationRepository.renderTemplate("{{ 1 }}", emptyMap()) } returns "1"
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onTemplateChanged("{{ 1 }}")
+        viewModel.onUrlChanged("  ")
+        advanceUntilIdle()
+
+        assertTrue(viewModel.updateWidgetConfiguration())
+
+        coVerify { dao.add(match { it.url == null }) }
     }
 
     @Test
@@ -293,5 +311,6 @@ class TemplateWidgetConfigureViewModelTest {
         lastUpdate = "on",
         backgroundType = WidgetBackgroundType.TRANSPARENT,
         textColor = BLACK_HEX,
+        url = TAP_LINK,
     )
 }

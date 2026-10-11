@@ -20,6 +20,8 @@ data class TemplateWidgetEntity(
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     @ColumnInfo(name = "text_color")
     override val textColor: String? = null,
+    @ColumnInfo(name = "url")
+    val url: String? = null,
 ) : WidgetEntity<TemplateWidgetEntity>,
     ThemeableWidgetEntity {
     override fun copyWithWidgetId(appWidgetId: Int): TemplateWidgetEntity {

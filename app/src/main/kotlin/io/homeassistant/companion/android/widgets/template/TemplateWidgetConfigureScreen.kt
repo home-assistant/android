@@ -91,6 +91,7 @@ internal fun TemplateWidgetConfigureScreen(
         onTextSizeChanged = viewModel::onTextSizeChanged,
         onBackgroundTypeSelected = viewModel::onBackgroundTypeSelected,
         onTextColorSelected = viewModel::onTextColorSelected,
+        onUrlChanged = viewModel::onUrlChanged,
         onActionClick = onActionClick,
     )
 }
@@ -107,6 +108,7 @@ internal fun TemplateWidgetConfigureContent(
     onTextSizeChanged: (String) -> Unit,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
     onTextColorSelected: (colorHex: String) -> Unit,
+    onUrlChanged: (String) -> Unit,
     onActionClick: () -> Unit,
 ) {
     Scaffold(
@@ -151,6 +153,10 @@ internal fun TemplateWidgetConfigureContent(
                 onTextSizeChanged = onTextSizeChanged,
                 onBackgroundTypeSelected = onBackgroundTypeSelected,
                 onTextColorSelected = onTextColorSelected,
+            )
+            TapActionSection(
+                url = state.url,
+                onUrlChanged = onUrlChanged,
             )
             HAAccentButton(
                 text = stringResource(state.actionButtonLabel),
@@ -281,6 +287,19 @@ private fun ColumnScope.AppearanceSection(
     }
 }
 
+@Composable
+private fun TapActionSection(url: String, onUrlChanged: (String) -> Unit) {
+    HATextField(
+        value = url,
+        onValueChange = onUrlChanged,
+        label = { Text(stringResource(commonR.string.widget_tap_action_link_label)) },
+        supportingText = { Text(stringResource(commonR.string.widget_tap_action_link_supporting_text)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+        maxLines = 1,
+        modifier = Modifier.formControlWidth(),
+    )
+}
+
 private fun Modifier.formControlWidth(): Modifier = this
     .widthIn(max = MaxButtonWidth)
     .fillMaxWidth()
@@ -299,6 +318,7 @@ private fun TemplateWidgetConfigureContentPreview() {
             onTextSizeChanged = {},
             onBackgroundTypeSelected = {},
             onTextColorSelected = {},
+            onUrlChanged = {},
             onActionClick = {},
         )
     }

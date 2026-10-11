@@ -163,6 +163,18 @@ class TemplateWidgetConfigureScreenTest {
     }
 
     @Test
+    fun `Given screen when typing a tap link then onUrlChanged is triggered`() {
+        composeTestRule.apply {
+            testScreen(singleServerState) {
+                onNodeWithText(activity.getString(commonR.string.widget_tap_action_link_label), substring = true)
+                    .performScrollTo()
+                    .performTextReplacement("/lovelace/energy")
+                assertEquals("/lovelace/energy", url)
+            }
+        }
+    }
+
+    @Test
     fun `Given a rendered template when displayed then the preview shows the rendered text`() {
         composeTestRule.apply {
             testScreen(renderedState) {
@@ -258,6 +270,7 @@ class TemplateWidgetConfigureScreenTest {
         var textSize: String? = null
         var backgroundType: WidgetBackgroundType? = null
         var textColor: String? = null
+        var url: String? = null
         var actionClicked = false
         var navigated = false
     }
@@ -280,6 +293,7 @@ class TemplateWidgetConfigureScreenTest {
                         onTextSizeChanged = { textSize = it },
                         onBackgroundTypeSelected = { backgroundType = it },
                         onTextColorSelected = { textColor = it },
+                        onUrlChanged = { url = it },
                         onActionClick = { actionClicked = true },
                     )
                 }

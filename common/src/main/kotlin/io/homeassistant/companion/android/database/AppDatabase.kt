@@ -55,7 +55,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionColumnT
 import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 
 @VisibleForTesting
-const val DATABASE_VERSION = 53
+const val DATABASE_VERSION = 54
 
 @Database(
     entities = [
@@ -109,6 +109,7 @@ const val DATABASE_VERSION = 53
         AutoMigration(from = 50, to = 51),
         AutoMigration(from = 51, to = 52),
         AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
+        AutoMigration(from = 53, to = 54),
     ],
 )
 @ColumnTypeConverters(

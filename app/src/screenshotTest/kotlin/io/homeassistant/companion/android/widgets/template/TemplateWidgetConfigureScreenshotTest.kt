@@ -29,6 +29,7 @@ class TemplateWidgetConfigureScreenshotTest {
                 onTextSizeChanged = {},
                 onBackgroundTypeSelected = {},
                 onTextColorSelected = {},
+                onUrlChanged = {},
                 onActionClick = {},
             )
         }
@@ -55,6 +56,7 @@ class TemplateWidgetConfigureScreenshotTest {
                 onTextSizeChanged = {},
                 onBackgroundTypeSelected = {},
                 onTextColorSelected = {},
+                onUrlChanged = {},
                 onActionClick = {},
             )
         }
@@ -77,6 +79,7 @@ class TemplateWidgetConfigureScreenshotTest {
                 onTextSizeChanged = {},
                 onBackgroundTypeSelected = {},
                 onTextColorSelected = {},
+                onUrlChanged = {},
                 onActionClick = {},
             )
         }

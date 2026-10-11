@@ -52,6 +52,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
+import io.homeassistant.companion.android.util.AppLink
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -90,8 +91,6 @@ import timber.log.Timber
 @VisibleForTesting
 val CONNECTION_TIMEOUT = 10.seconds
 
-private const val APP_PREFIX = "app://"
-private const val INTENT_PREFIX = "intent:"
 private const val SECURITY_ALERT_URL = "https://www.home-assistant.io/latest-security-alert/"
 
 /**
@@ -1103,15 +1102,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * @return `true` when the URL was intercepted (the host will handle it), `false` to let the WebView load it.
      */
     private fun onUrlIntercepted(uri: Uri): Boolean {
-        val rawUrl = uri.toString()
+        val appLink = AppLink.parse(uri.toString())
         return when {
-            rawUrl.startsWith(APP_PREFIX) -> {
-                _events.tryEmit(FrontendEvent.LaunchApp(rawUrl.substringAfter(APP_PREFIX)))
+            appLink is AppLink.App -> {
+                _events.tryEmit(FrontendEvent.LaunchApp(appLink.packageName))
                 true
             }
 
-            rawUrl.startsWith(INTENT_PREFIX) -> {
-                _events.tryEmit(FrontendEvent.LaunchIntent(rawUrl))
+            appLink is AppLink.IntentUri -> {
+                _events.tryEmit(FrontendEvent.LaunchIntent(appLink.uri))
                 true
             }
 

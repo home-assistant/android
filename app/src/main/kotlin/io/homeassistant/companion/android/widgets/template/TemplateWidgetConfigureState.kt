@@ -30,6 +30,7 @@ internal data class TemplateWidgetConfigureState(
     val textSize: String = DEFAULT_TEXT_SIZE,
     val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     val textColorHex: String? = null,
+    val url: String = "",
     val dynamicColorAvailable: Boolean = false,
     val isUpdateWidget: Boolean = false,
 ) {
