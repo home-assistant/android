@@ -21,6 +21,7 @@ import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
@@ -40,6 +41,17 @@ private const val MEDIA_ICON_SIZE_DP = 24
 
 internal fun mediaPlayerPlaybackAction(state: String): String =
     if (state == "playing") "media_pause" else "media_play"
+
+internal suspend fun callMediaPlayerPlaybackAction(
+    integrationRepository: IntegrationRepository,
+    entity: Entity,
+) {
+    integrationRepository.callAction(
+        MEDIA_PLAYER_DOMAIN,
+        mediaPlayerPlaybackAction(entity.state),
+        mapOf("entity_id" to entity.entityId),
+    )
+}
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -577,15 +589,11 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             Timber.d("Failed to resolve media player entity for play/pause action")
             return
         }
-        val action = mediaPlayerPlaybackAction(actionEntity.state)
-        val entityId = actionEntity.entityId
-
-        val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
-
         try {
-            serverManager.integrationRepository(
-                entity.serverId,
-            ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
+            callMediaPlayerPlaybackAction(
+                serverManager.integrationRepository(entity.serverId),
+                actionEntity,
+            )
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
