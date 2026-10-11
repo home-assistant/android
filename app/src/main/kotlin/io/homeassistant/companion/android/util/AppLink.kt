@@ -22,7 +22,7 @@ private const val DEEP_LINK_PREFIX = "deep-link://"
  * Use [parse] to read a raw link and [createAppLinkIntent] to open it, so every entry point supports the same
  * syntax.
  */
-sealed interface AppLink {
+internal sealed interface AppLink {
 
     /** Launch the installed app with [packageName] (`app://<package>`). */
     data class App(val packageName: String) : AppLink
