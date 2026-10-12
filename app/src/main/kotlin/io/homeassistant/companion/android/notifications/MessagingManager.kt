@@ -378,12 +378,13 @@ class MessagingManager @Inject constructor(
                 }
 
                 jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL &&
-                    !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
+                    !jsonData[NotificationData.CHANNEL].isNullOrBlank() &&
+                    allowCommands -> {
                     Timber.d("Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
                     removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
                 }
 
-                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS && allowCommands -> {
                     textToSpeechClient.speakText(jsonData)
                 }
 
@@ -647,7 +648,7 @@ class MessagingManager @Inject constructor(
                 }
 
                 else -> {
-                    Timber.d("Creating notification with following data: $jsonData")
+                    Timber.d("Creating notification with following data: ${sensitive { jsonData.toString() }}")
                     sendNotification(jsonData, notificationId, now)
                 }
             }
