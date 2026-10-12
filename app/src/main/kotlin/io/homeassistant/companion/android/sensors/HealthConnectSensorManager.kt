@@ -1134,7 +1134,7 @@ class HealthConnectSensorManager @Inject constructor(
                     SleepSessionRecord.STAGE_TYPE_DEEP,
                     SleepSessionRecord.STAGE_TYPE_REM,
                     -> true
-                    else -> error("Unsupported sleep stage type: $stageType")
+                    else -> false
                 }
             }
             .values

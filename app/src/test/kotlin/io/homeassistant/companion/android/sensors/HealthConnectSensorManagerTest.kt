@@ -69,7 +69,11 @@ class HealthConnectSensorManagerTest {
             SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
         )
 
-        assertEquals(expectedTypes, SleepSessionRecord.VALID_TYPES.toSet())
+        assertEquals(
+            expectedTypes,
+            SleepSessionRecord.VALID_TYPES.toSet(),
+            "Health Connect sleep stage types have changed. Review analyzeSleepStages() handling.",
+        )
     }
 
     @Test
