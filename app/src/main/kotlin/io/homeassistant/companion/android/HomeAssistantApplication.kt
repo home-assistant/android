@@ -46,6 +46,7 @@ import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
 import io.homeassistant.companion.android.util.vmPolicyIgnoredViolationRules
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
+import io.homeassistant.companion.android.widgets.climate.ClimateWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
@@ -355,7 +356,9 @@ open class HomeAssistantApplication : Application() {
             val entityWidget = EntityWidget()
             val mediaPlayerWidget = MediaPlayerControlsWidget()
             val templateWidget = TemplateWidget()
+            val climateWidget = ClimateWidget()
             TodoWidget().register(this@HomeAssistantApplication)
+            climateWidget.register(this@HomeAssistantApplication)
 
             val screenIntentFilter = IntentFilter()
             screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
@@ -372,6 +375,12 @@ open class HomeAssistantApplication : Application() {
             ContextCompat.registerReceiver(
                 this,
                 templateWidget,
+                screenIntentFilter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            ContextCompat.registerReceiver(
+                this,
+                climateWidget,
                 screenIntentFilter,
                 ContextCompat.RECEIVER_NOT_EXPORTED,
             )

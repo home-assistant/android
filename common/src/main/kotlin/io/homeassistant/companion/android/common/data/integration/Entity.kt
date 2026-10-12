@@ -377,6 +377,26 @@ data class ClimateControls(
     val supportsTargetTemperature: Boolean,
 )
 
+enum class HvacMode(val key: String) {
+    OFF("off"),
+    AUTO("auto"),
+    COOL("cool"),
+    HEAT("heat"),
+    DRY("dry"),
+    FAN("fan_only"),
+    ;
+
+    companion object {
+        fun from(value: String?): HvacMode? {
+            return entries.firstOrNull { it.key == value }
+        }
+
+        fun toHvacModes(attributes: Map<String, Any?>, key: String): List<HvacMode> = (attributes[key] as? List<*>)
+            ?.mapNotNull { from(it as? String) }
+            .orEmpty()
+    }
+}
+
 /** Value range of a number entity, resolved from its state and attributes. */
 @Immutable
 data class NumberControls(val range: EntityPosition, val step: Float)

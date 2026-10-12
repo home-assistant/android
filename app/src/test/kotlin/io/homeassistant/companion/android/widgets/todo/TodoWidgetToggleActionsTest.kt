@@ -38,7 +38,7 @@ class TodoWidgetToggleActionsTest {
 
         override fun serverManager(): ServerManager = serverManager
 
-        override fun dao(): TodoWidgetDao = dao
+        override fun todoDao(): TodoWidgetDao = dao
     }
 
     private data class FakeGlanceId(val id: Int) : GlanceId
@@ -54,7 +54,7 @@ class TodoWidgetToggleActionsTest {
         every { action.getGlanceManager(any()) } returns glanceManager
         every { glanceManager.getAppWidgetId(any()) } returns widgetId
 
-        coEvery { entryPoints.dao().get(widgetId) } returns null
+        coEvery { entryPoints.todoDao().get(widgetId) } returns null
 
         action.onAction(mockk(), FakeGlanceId(widgetId), parameters)
 
@@ -62,7 +62,7 @@ class TodoWidgetToggleActionsTest {
             entryPoints.serverManager() wasNot called
         }
         coVerify(exactly = 1) {
-            entryPoints.dao().get(widgetId)
+            entryPoints.todoDao().get(widgetId)
         }
     }
 
@@ -78,7 +78,7 @@ class TodoWidgetToggleActionsTest {
         every { action.getGlanceManager(any()) } returns glanceManager
         every { glanceManager.getAppWidgetId(any()) } returns widgetId
 
-        coEvery { entryPoints.dao().get(widgetId) } returns todoItem
+        coEvery { entryPoints.todoDao().get(widgetId) } returns todoItem
 
         action.onAction(mockk(), FakeGlanceId(widgetId), parameters)
 
@@ -86,7 +86,7 @@ class TodoWidgetToggleActionsTest {
             entryPoints.serverManager() wasNot called
         }
         coVerify(exactly = 0) {
-            entryPoints.dao().get(widgetId)
+            entryPoints.todoDao().get(widgetId)
         }
     }
 
@@ -106,7 +106,7 @@ class TodoWidgetToggleActionsTest {
         } returns true
         coEvery { entryPoints.serverManager.getServer(42) } returns mockk()
 
-        coEvery { entryPoints.dao().get(widgetId) } returns todoItem
+        coEvery { entryPoints.todoDao().get(widgetId) } returns todoItem
 
         // This is useful to validate that it calls update()
         try {
@@ -117,7 +117,7 @@ class TodoWidgetToggleActionsTest {
         }
 
         coVerify(exactly = 1) {
-            entryPoints.dao().get(widgetId)
+            entryPoints.todoDao().get(widgetId)
             entryPoints.serverManager().webSocketRepository(42)
             entryPoints.webSocketRepository.updateTodo("HA", "42", null, COMPLETED_STATUS)
         }
@@ -136,12 +136,12 @@ class TodoWidgetToggleActionsTest {
         every { glanceManager.getAppWidgetId(any()) } returns widgetId
         coEvery { entryPoints.serverManager.getServer(42) } returns null
 
-        coEvery { entryPoints.dao().get(widgetId) } returns todoItem
+        coEvery { entryPoints.todoDao().get(widgetId) } returns todoItem
 
         action.onAction(mockk(), FakeGlanceId(widgetId), parameters)
 
         coVerify(exactly = 1) {
-            entryPoints.dao().get(widgetId)
+            entryPoints.todoDao().get(widgetId)
             entryPoints.serverManager().getServer(42)
         }
         coVerify(exactly = 0) {

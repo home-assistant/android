@@ -42,6 +42,8 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
+import io.homeassistant.companion.android.database.widget.ClimateWidgetDao
+import io.homeassistant.companion.android.database.widget.ClimateWidgetEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -52,10 +54,11 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundColumnTypeConverter
 import io.homeassistant.companion.android.database.widget.WidgetTapActionColumnTypeConverter
+import io.homeassistant.companion.android.database.widget.converters.ClimateLastUpdateDataConverter
 import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 
 @VisibleForTesting
-const val DATABASE_VERSION = 53
+const val DATABASE_VERSION = 54
 
 @Database(
     entities = [
@@ -68,6 +71,7 @@ const val DATABASE_VERSION = 53
         MediaPlayerControlsWidgetEntity::class,
         StaticWidgetEntity::class,
         TodoWidgetEntity::class,
+        ClimateWidgetEntity::class,
         TemplateWidgetEntity::class,
         NotificationItem::class,
         LocationHistoryItem::class,
@@ -109,6 +113,7 @@ const val DATABASE_VERSION = 53
         AutoMigration(from = 50, to = 51),
         AutoMigration(from = 51, to = 52),
         AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
+        AutoMigration(from = 53, to = 54),
     ],
 )
 @ColumnTypeConverters(
@@ -119,6 +124,7 @@ const val DATABASE_VERSION = 53
     WidgetBackgroundColumnTypeConverter::class,
     WidgetTapActionColumnTypeConverter::class,
     TodoLastUpdateDataConverter::class,
+    ClimateLastUpdateDataConverter::class
 )
 internal abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
@@ -128,6 +134,7 @@ internal abstract class AppDatabase : RoomDatabase() {
     abstract fun mediaPlayCtrlWidgetDao(): MediaPlayerControlsWidgetDao
     abstract fun staticWidgetDao(): StaticWidgetDao
     abstract fun todoWidgetDao(): TodoWidgetDao
+    abstract fun climateWidgetDao(): ClimateWidgetDao
     abstract fun templateWidgetDao(): TemplateWidgetDao
     abstract fun notificationDao(): NotificationDao
     abstract fun locationHistoryDao(): LocationHistoryDao

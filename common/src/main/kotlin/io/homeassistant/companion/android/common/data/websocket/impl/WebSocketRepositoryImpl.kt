@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.integration.ActionData
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -112,6 +113,40 @@ class WebSocketRepositoryImpl internal constructor(
                     "status" to status,
                     "rename" to newName,
                 ).filterValues { it != null },
+            ),
+        )
+        return response?.success == true
+    }
+
+    override suspend fun setClimateTemperature(entityId: String, newTemp: Float): Boolean {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "call_service",
+                "domain" to CLIMATE_DOMAIN,
+                "service" to "set_temperature",
+                "target" to mapOf(
+                    "entity_id" to entityId,
+                ),
+                "service_data" to mapOf(
+                    "temperature" to newTemp,
+                ),
+            ),
+        )
+        return response?.success == true
+    }
+
+    override suspend fun setClimateHvacMode(entityId: String, hvacMode: String): Boolean {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "call_service",
+                "domain" to CLIMATE_DOMAIN,
+                "service" to "set_hvac_mode",
+                "target" to mapOf(
+                    "entity_id" to entityId,
+                ),
+                "service_data" to mapOf(
+                    "hvac_mode" to hvacMode,
+                ),
             ),
         )
         return response?.success == true
