@@ -79,7 +79,7 @@ private const val HTTP_SCHEME_PREFIX = "http"
  */
 private const val MAX_ARTWORK_SIZE = 512
 
-private const val ARTWORK_JPEG_QUALITY = 904
+private const val ARTWORK_JPEG_QUALITY = 90
 
 private const val ACTION_MEDIA_PLAY = "media_play"
 private const val ACTION_MEDIA_PAUSE = "media_pause"
