@@ -1126,12 +1126,14 @@ class HealthConnectSensorManager @Inject constructor(
                 when (stageType) {
                     SleepSessionRecord.STAGE_TYPE_AWAKE,
                     SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
-                    SleepSessionRecord.STAGE_TYPE_OUT_OF_BED -> false
+                    SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+                    -> false
                     SleepSessionRecord.STAGE_TYPE_UNKNOWN,
                     SleepSessionRecord.STAGE_TYPE_SLEEPING,
                     SleepSessionRecord.STAGE_TYPE_LIGHT,
                     SleepSessionRecord.STAGE_TYPE_DEEP,
-                    SleepSessionRecord.STAGE_TYPE_REM -> true
+                    SleepSessionRecord.STAGE_TYPE_REM,
+                    -> true
                     else -> error("Unsupported sleep stage type: $stageType")
                 }
             }
