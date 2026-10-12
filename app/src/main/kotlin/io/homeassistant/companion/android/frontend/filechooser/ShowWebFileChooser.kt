@@ -4,9 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.webkit.MimeTypeMap
 import android.webkit.WebChromeClient.FileChooserParams
 import androidx.activity.result.contract.ActivityResultContract
+import io.homeassistant.companion.android.common.util.SdkVersion
 import java.util.Locale
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -29,8 +31,8 @@ private const val UNKNOWN_MIME_TYPE = "application/octet-stream"
 internal data class FileChooserInput(val params: FileChooserParams, val pickerMimeTypes: List<String>?)
 
 /**
- * Launches the system file picker for an `<input type="file">` and returns the selected URIs,
- * or `null` if the user cancelled.
+ * Launches the system file picker for an `<input type="file">` or a File System Access API call and
+ * returns the selected URIs, or `null` if the user cancelled.
  *
  * [FileChooserParams.createIntent] and [FileChooserParams.parseResult] are not used: the former
  * only applies the first `accept` entry as MIME type (an extension like `.pdf` then matches
@@ -39,15 +41,18 @@ internal data class FileChooserInput(val params: FileChooserParams, val pickerMi
  */
 internal class ShowWebFileChooser : ActivityResultContract<FileChooserInput, Array<Uri>?>() {
 
-    override fun createIntent(context: Context, input: FileChooserInput): Intent {
-        return Intent(Intent.ACTION_GET_CONTENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = ANY_MIME_TYPE
-            input.pickerMimeTypes?.let { putExtra(Intent.EXTRA_MIME_TYPES, it.toTypedArray()) }
-            if (input.params.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
-                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-            }
+    // Mirrors the intent actions of WebView's own implementation:
+    // https://source.chromium.org/chromium/chromium/src/+/main:android_webview/java/src/org/chromium/android_webview/AwContentsClient.java;l=554;drc=b1a4f4802448a816b169dcf03ef43cb8ec849d8e
+    override fun createIntent(context: Context, input: FileChooserInput): Intent = when (input.params.mode) {
+        FileChooserParams.MODE_OPEN_FOLDER -> Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+        FileChooserParams.MODE_SAVE -> input.toDocumentIntent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            // The created document needs a concrete type, the first accepted one like WebView.
+            type = input.pickerMimeTypes?.firstOrNull() ?: ANY_MIME_TYPE
+            input.params.filenameHint?.let { putExtra(Intent.EXTRA_TITLE, it) }
         }
+        else -> input.toDocumentIntent(
+            if (input.params.opensWritable()) Intent.ACTION_OPEN_DOCUMENT else Intent.ACTION_GET_CONTENT,
+        )
     }
 
     override fun parseResult(resultCode: Int, intent: Intent?): Array<Uri>? {
@@ -56,6 +61,19 @@ internal class ShowWebFileChooser : ActivityResultContract<FileChooserInput, Arr
         return if (!clipUris.isNullOrEmpty()) clipUris.toTypedArray() else intent.data?.let { arrayOf(it) }
     }
 }
+
+private fun FileChooserInput.toDocumentIntent(action: String): Intent = Intent(action).apply {
+    addCategory(Intent.CATEGORY_OPENABLE)
+    type = ANY_MIME_TYPE
+    pickerMimeTypes?.let { putExtra(Intent.EXTRA_MIME_TYPES, it.toTypedArray()) }
+    if (params.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
+        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+    }
+}
+
+/** `true` when the page asked to write to the opened file, which WebView only reports since API 37. */
+private fun FileChooserParams.opensWritable(): Boolean = SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN) &&
+    permissionMode == FileChooserParams.PERMISSION_MODE_READ_WRITE
 
 /**
  * Converts the `accept` attribute values (MIME types or file extensions) into MIME types.
