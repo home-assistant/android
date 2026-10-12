@@ -1011,8 +1011,8 @@ class HealthConnectSensorManager @Inject constructor(
         val analysis = analyzeSleepStages(lastSleepRecord.stages)
         val sessionAttributes = buildSleepSessionAttributes(lastSleepRecord, analysis)
         val basicAttributes = mapOf(
-            "endTime" to lastSleepRecord.endTime,
             "startTime" to lastSleepRecord.startTime,
+            "endTime" to lastSleepRecord.endTime,
             "sources" to lastSleepRecord.metadata.dataOrigin.packageName,
         )
 

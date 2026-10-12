@@ -25,7 +25,7 @@ internal val currentChangelog = Changelog(
         ),
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_health_connect_sleep_stages,
-            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+            platforms = setOf(ChangelogPlatform.APP),
         ),
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_gesture_action,
