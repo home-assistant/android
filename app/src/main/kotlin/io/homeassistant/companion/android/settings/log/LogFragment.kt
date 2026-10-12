@@ -191,9 +191,7 @@ class LogFragment : Fragment() {
                         action = Intent.ACTION_SEND
                         putExtra(Intent.EXTRA_STREAM, uriToLog)
                         type = "text/plain"
-                        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
                     }
 
                     val shareIntent = Intent.createChooser(sendIntent, null).apply {

@@ -5,6 +5,7 @@ import android.webkit.WebChromeClient
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -19,7 +20,7 @@ class FileChooserManagerTest {
 
     @Test
     fun `Given pickFiles called when result delivered then suspend returns the uris and slot clears`() = runTest {
-        val manager = FileChooserManager()
+        val manager = FileChooserManager(StandardTestDispatcher(testScheduler))
         val params = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
 
         val outcome = async { manager.pickFiles(params) }
@@ -27,7 +28,7 @@ class FileChooserManagerTest {
 
         val pending = manager.pendingFileChooser.value
         assertNotNull(pending)
-        assertEquals(params, pending.fileChooserParams)
+        assertEquals(params, pending.input.params)
         assertFalse(outcome.isCompleted)
 
         val uris = arrayOf(mockk<Uri>())
@@ -40,8 +41,7 @@ class FileChooserManagerTest {
 
     @Test
     fun `Given pickFiles called when user cancels then suspend returns null and slot clears`() = runTest {
-        val manager = FileChooserManager()
-
+        val manager = FileChooserManager(StandardTestDispatcher(testScheduler))
         val outcome = async { manager.pickFiles(mockk(relaxed = true)) }
         advanceUntilIdle()
         manager.pendingFileChooser.value!!.onResult(null)
@@ -53,8 +53,7 @@ class FileChooserManagerTest {
 
     @Test
     fun `Given chooser already pending when second pickFiles then it suspends until first completes`() = runTest {
-        val manager = FileChooserManager()
-
+        val manager = FileChooserManager(StandardTestDispatcher(testScheduler))
         val first = async { manager.pickFiles(mockk(relaxed = true)) }
         advanceUntilIdle()
         val second = async { manager.pickFiles(mockk(relaxed = true)) }
@@ -78,8 +77,7 @@ class FileChooserManagerTest {
 
     @Test
     fun `Given pickFiles in flight when scope cancels then slot is cleared`() = runTest {
-        val manager = FileChooserManager()
-
+        val manager = FileChooserManager(StandardTestDispatcher(testScheduler))
         val outcome = async { manager.pickFiles(mockk(relaxed = true)) }
         advanceUntilIdle()
         assertNotNull(manager.pendingFileChooser.value)

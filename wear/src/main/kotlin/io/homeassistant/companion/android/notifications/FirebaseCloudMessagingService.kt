@@ -6,6 +6,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.MessagingToken
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        Timber.d("From: ${remoteMessage.from} and data: ${remoteMessage.data}")
+        Timber.d("From: ${remoteMessage.from} and data: ${sensitive { remoteMessage.data.toString() }}")
 
         messagingManager.handleMessage(remoteMessage.data, SOURCE)
     }
@@ -40,7 +41,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
      */
     override fun onNewToken(token: String) {
         mainScope.launch {
-            Timber.d("Refreshed token: $token")
+            Timber.d("Refreshed token: ${sensitive(token)}")
             if (!serverManager.isRegistered()) {
                 Timber.d("Not trying to update registration since we aren't authenticated.")
                 return@launch

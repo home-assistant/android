@@ -9,6 +9,8 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlsConfig
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlsDao
 import io.homeassistant.companion.android.database.migration.Migration27to28
 import io.homeassistant.companion.android.database.migration.Migration36to37
 import io.homeassistant.companion.android.database.migration.Migration52to53
@@ -55,7 +57,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionColumnT
 import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 
 @VisibleForTesting
-const val DATABASE_VERSION = 53
+const val DATABASE_VERSION = 54
 
 @Database(
     entities = [
@@ -79,6 +81,7 @@ const val DATABASE_VERSION = 53
         EntityStateComplications::class,
         Server::class,
         Setting::class,
+        MediaControlsConfig::class,
     ],
     version = DATABASE_VERSION,
     autoMigrations = [
@@ -109,6 +112,7 @@ const val DATABASE_VERSION = 53
         AutoMigration(from = 50, to = 51),
         AutoMigration(from = 51, to = 52),
         AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
+        AutoMigration(from = 53, to = 54),
     ],
 )
 @ColumnTypeConverters(
@@ -139,4 +143,5 @@ internal abstract class AppDatabase : RoomDatabase() {
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao
+    abstract fun mediaControlDao(): MediaControlsDao
 }

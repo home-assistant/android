@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.2.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.2.1)" variant="all" version="9.2.1">
+<issues format="6" by="lint 9.4.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.4.1)" variant="all" version="9.4.1">
 
     <issue
         id="MissingPermission"
@@ -57,28 +57,6 @@
     </issue>
 
     <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="        notify(NOTIFICATION_ID, notification)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/migration/Utils.kt"
-            line="54"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Missing permissions required by NotificationManagerCompat.notify: android.permission.POST_NOTIFICATIONS"
-        errorLine1="        notify(NOTIFICATION_ID, notification)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/database/migration/Utils.kt"
-            line="54"
-            column="9"/>
-    </issue>
-
-    <issue
         id="DefaultLocale"
         message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
         errorLine1="        val sizeWithThousandsSeparator = String.format(&quot;%,d&quot;, sizeLong)"
@@ -118,7 +96,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorUpdater.kt"
-            line="421"
+            line="420"
             column="9"/>
     </issue>
 
@@ -129,8 +107,19 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="385"
+            line="404"
             column="5"/>
+    </issue>
+
+    <issue
+        id="ComposeNonRestartableComposable"
+        message="This composable&apos;s body only delegates to another composable. Consider marking it @NonRestartableComposable when its own restart and skip boundary is unlikely to be useful. The annotation avoids generating that code, but also prevents the wrapper from being restarted or skipped independently.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-unnecessary-restart-groups for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/composable/HADropdownMenu.kt"
+            line="101"
+            column="1"/>
     </issue>
 
     <issue
@@ -151,7 +140,7 @@
         errorLine2="                                                            ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorManager.kt"
-            line="296"
+            line="375"
             column="61"/>
     </issue>
 
@@ -162,7 +151,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="273"
+            line="286"
             column="53"/>
     </issue>
 
@@ -173,8 +162,85 @@
         errorLine2="                ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="549"
+            line="568"
             column="17"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/composable/HACheckbox.kt"
+            line="49"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/composable/HARadioGroup.kt"
+            line="211"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="@Composable"
+        errorLine2="~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/composable/HASwitch.kt"
+            line="46"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="        @Composable"
+        errorLine2="        ~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/theme/HATextStyle.kt"
+            line="33"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="        @Composable"
+        errorLine2="        ~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/theme/HATextStyle.kt"
+            line="44"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="        @Composable"
+        errorLine2="        ~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/theme/HATextStyle.kt"
+            line="55"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ComposeReadOnlyComposable"
+        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        errorLine1="        @Composable"
+        errorLine2="        ~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/theme/HATextStyle.kt"
+            line="93"
+            column="9"/>
     </issue>
 
 </issues>
