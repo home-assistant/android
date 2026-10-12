@@ -1016,14 +1016,11 @@ class HealthConnectSensorManager @Inject constructor(
             "sources" to lastSleepRecord.metadata.dataOrigin.packageName,
         )
 
-        if (isEnabled(sleepDuration)) {
-            onSensorUpdated(
-                sleepDuration,
-                analysis.sleepDuration.inWholeMinutes,
-                sleepDuration.statelessIcon,
-                attributes = sessionAttributes,
-            )
-        }
+        updateSleepStageDurationSensor(
+            sleepDuration,
+            analysis.sleepDuration,
+            sessionAttributes,
+        )
         if (isEnabled(sleepStart)) {
             onSensorUpdated(
                 sleepStart,
@@ -1125,10 +1122,18 @@ class HealthConnectSensorManager @Inject constructor(
                 duration + java.time.Duration.between(stage.startTime, stage.endTime).toKotlinDuration()
             }
         val sleepDuration = durationByStage
-            .filterKeys {
-                it != SleepSessionRecord.STAGE_TYPE_AWAKE &&
-                    it != SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED &&
-                    it != SleepSessionRecord.STAGE_TYPE_OUT_OF_BED
+            .filterKeys { stageType ->
+                when (stageType) {
+                    SleepSessionRecord.STAGE_TYPE_AWAKE,
+                    SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
+                    SleepSessionRecord.STAGE_TYPE_OUT_OF_BED -> false
+                    SleepSessionRecord.STAGE_TYPE_UNKNOWN,
+                    SleepSessionRecord.STAGE_TYPE_SLEEPING,
+                    SleepSessionRecord.STAGE_TYPE_LIGHT,
+                    SleepSessionRecord.STAGE_TYPE_DEEP,
+                    SleepSessionRecord.STAGE_TYPE_REM -> true
+                    else -> error("Unsupported sleep stage type: $stageType")
+                }
             }
             .values
             .fold(Duration.ZERO) { total, duration -> total + duration }
@@ -1142,11 +1147,6 @@ class HealthConnectSensorManager @Inject constructor(
             stageEndTimes = stages.map { stage -> stage.endTime },
         )
     }
-
-    /** @return Sleep duration based on the stages, excluding awake (+ in bed) and out of bed */
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    internal fun calculateSleepDuration(stages: List<SleepSessionRecord.Stage>): Duration =
-        analyzeSleepStages(stages).sleepDuration
 
     private fun getSleepStageType(stageType: Int): String {
         return when (stageType) {

@@ -57,6 +57,22 @@ class HealthConnectSensorManagerTest {
     }
 
     @Test
+    fun `Given Health Connect sleep stage types then all known types are covered`() {
+        val expectedTypes = setOf(
+            SleepSessionRecord.STAGE_TYPE_UNKNOWN,
+            SleepSessionRecord.STAGE_TYPE_AWAKE,
+            SleepSessionRecord.STAGE_TYPE_SLEEPING,
+            SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+            SleepSessionRecord.STAGE_TYPE_LIGHT,
+            SleepSessionRecord.STAGE_TYPE_DEEP,
+            SleepSessionRecord.STAGE_TYPE_REM,
+            SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
+        )
+
+        assertEquals(expectedTypes, SleepSessionRecord.VALID_TYPES.toSet())
+    }
+
+    @Test
     fun `Given sleep with stages when duration calculated then ignores awake (+ in bed) and out of bed stages`() {
         // Mock a sleep session with all possible stage types
         // Total duration: 12:00 AM-8:00 AM = 8 hours / 480 min
@@ -105,7 +121,7 @@ class HealthConnectSensorManagerTest {
             },
         )
 
-        val result = sensorManager.calculateSleepDuration(mockSleepStages)
+        val result = sensorManager.analyzeSleepStages(mockSleepStages).sleepDuration
         assertEquals(300.minutes, result)
     }
 

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.changelog
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
 import io.homeassistant.companion.android.sensors.DynamicColorSensorManager
+import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 
 /**
@@ -26,6 +27,10 @@ internal val currentChangelog = Changelog(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_health_connect_sleep_stages,
             platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(
+                SettingsActivity.Deeplink.Sensor(HealthConnectSensorManager.sleepDuration.id),
+            ),
+            actionRequiresPlatform = true,
         ),
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_gesture_action,

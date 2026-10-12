@@ -1383,7 +1383,7 @@
     <string name="basic_sensor_name_sleep_deep_duration">Deep sleep duration</string>
     <string name="sensor_description_sleep_deep_duration">Duration of deep sleep in the latest sleep session from Health Connect</string>
     <string name="basic_sensor_name_sleep_rem_duration">REM sleep duration</string>
-    <string name="sensor_description_sleep_rem_duration">Duration of REM sleep in the latest sleep session from Health Connect</string>
+    <string name="sensor_description_sleep_rem_duration">Duration of rapid eye movement (REM) sleep in the latest sleep session from Health Connect</string>
     <string name="basic_sensor_name_sleep_awake_duration">Awake duration</string>
     <string name="sensor_description_sleep_awake_duration">Duration reported as awake in the latest sleep session from Health Connect</string>
     <string name="basic_sensor_name_sleep_awake_in_bed_duration">Awake in bed duration</string>
