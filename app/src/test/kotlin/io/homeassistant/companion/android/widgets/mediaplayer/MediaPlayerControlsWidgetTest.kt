@@ -62,6 +62,14 @@ class MediaPlayerControlsWidgetTest {
     }
 
     @Test
+    fun `Given playing entity without capability data when play pause widget action is received then pause is called`() = runTest {
+        runPlaybackActionTest(
+            state = "playing",
+            expectedAction = "media_pause",
+        )
+    }
+
+    @Test
     fun `Given playing entity without pause support when play pause widget action is received then stop is called`() = runTest {
         runPlaybackActionTest(
             state = "playing",
@@ -90,6 +98,15 @@ class MediaPlayerControlsWidgetTest {
         runPlaybackIconTest(
             state = "playing",
             supportedFeatures = MEDIA_PLAYER_SUPPORT_PAUSE,
+            expectedIcon = R.drawable.ic_pause,
+            expectedContentDescription = commonR.string.widget_media_pause_button,
+        )
+    }
+
+    @Test
+    fun `Given playing entity without capability data when rendering widget then pause icon is shown`() = runTest {
+        runPlaybackIconTest(
+            state = "playing",
             expectedIcon = R.drawable.ic_pause,
             expectedContentDescription = commonR.string.widget_media_pause_button,
         )

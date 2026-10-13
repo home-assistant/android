@@ -39,9 +39,30 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 private const val MEDIA_ICON_SIZE_DP = 24
-private const val MEDIA_PLAYER_ACTION_PLAY = "media_play"
-private const val MEDIA_PLAYER_ACTION_PAUSE = "media_pause"
-private const val MEDIA_PLAYER_ACTION_STOP = "media_stop"
+
+private sealed interface PlaybackAction {
+    val serviceAction: String
+    val iconRes: Int
+    val contentDescriptionRes: Int
+
+    data object Play : PlaybackAction {
+        override val serviceAction = "media_play"
+        override val iconRes = R.drawable.ic_play
+        override val contentDescriptionRes = commonR.string.widget_media_play_button
+    }
+
+    data object Pause : PlaybackAction {
+        override val serviceAction = "media_pause"
+        override val iconRes = R.drawable.ic_pause
+        override val contentDescriptionRes = commonR.string.widget_media_pause_button
+    }
+
+    data object Stop : PlaybackAction {
+        override val serviceAction = "media_stop"
+        override val iconRes = R.drawable.ic_stop
+        override val contentDescriptionRes = commonR.string.widget_media_stop_button
+    }
+}
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -136,29 +157,11 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
                 val playbackAction = getPlaybackAction(entity)
-                when (playbackAction) {
-                    MEDIA_PLAYER_ACTION_STOP -> {
-                        setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_stop)
-                        setContentDescription(
-                            R.id.widgetPlayPauseButton,
-                            context.getString(commonR.string.widget_media_stop_button),
-                        )
-                    }
-                    MEDIA_PLAYER_ACTION_PAUSE -> {
-                        setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_pause)
-                        setContentDescription(
-                            R.id.widgetPlayPauseButton,
-                            context.getString(commonR.string.widget_media_pause_button),
-                        )
-                    }
-                    else -> {
-                        setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_play)
-                        setContentDescription(
-                            R.id.widgetPlayPauseButton,
-                            context.getString(commonR.string.widget_media_play_button),
-                        )
-                    }
-                }
+                setImageViewResource(R.id.widgetPlayPauseButton, playbackAction.iconRes)
+                setContentDescription(
+                    R.id.widgetPlayPauseButton,
+                    context.getString(playbackAction.contentDescriptionRes),
+                )
 
                 val artist = (
                     entity?.attributes?.get(
@@ -601,7 +604,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         try {
             serverManager.integrationRepository(entity.serverId).callAction(
                 MEDIA_PLAYER_DOMAIN,
-                getPlaybackAction(actionEntity),
+                getPlaybackAction(actionEntity).serviceAction,
                 mapOf("entity_id" to actionEntity.entityId),
             )
         } catch (e: CancellationException) {
@@ -611,12 +614,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         }
     }
 
-    private fun getPlaybackAction(entity: Entity?): String = when {
-        entity?.state != MEDIA_PLAYER_STATE_PLAYING -> MEDIA_PLAYER_ACTION_PLAY
+    private fun getPlaybackAction(entity: Entity?): PlaybackAction = when {
+        entity?.state != MEDIA_PLAYER_STATE_PLAYING -> PlaybackAction.Play
         entity.getMediaPlayerControls()?.let { controls ->
             !controls.supportsPause && controls.supportsStop
-        } == true -> MEDIA_PLAYER_ACTION_STOP
-        else -> MEDIA_PLAYER_ACTION_PAUSE
+        } == true -> PlaybackAction.Stop
+        else -> PlaybackAction.Pause
     }
 
     private suspend fun callFastForwardAction(context: Context, appWidgetId: Int) {
