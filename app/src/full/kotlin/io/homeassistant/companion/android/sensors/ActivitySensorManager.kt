@@ -117,6 +117,7 @@ class ActivitySensorManager @Inject constructor(
 
     private suspend fun handleActivityUpdate(intent: Intent) {
         Timber.d("Received activity update.")
+        if (!isEnabled(activity)) return
         if (ActivityRecognitionResult.hasResult(intent)) {
             val result = ActivityRecognitionResult.extractResult(intent)
             var probActivity = result?.let { typeToString(it.mostProbableActivity) }
@@ -248,6 +249,11 @@ class ActivitySensorManager @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Unable to register for activity updates")
             }
+        } else if (checkPermission(activity.id)) {
+            Timber.d("Unregistering for activity updates.")
+            ActivityRecognition.getClient(applicationContext)
+                .removeActivityUpdates(getActivityPendingIntent(applicationContext))
+                .addOnFailureListener { Timber.e(it, "Unable to unregister for activity updates") }
         }
         if ((isEnabled(sleepConfidence) || isEnabled(sleepSegment)) && !sleepRegistration) {
             val pendingIntent = getSleepPendingIntent(applicationContext)

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 54,
-    "identityHash": "66d44ad8913fdcbb43b712b2e844dfe7",
+    "identityHash": "245e83868633642c69b23edd17561b6f",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -555,7 +555,7 @@
       },
       {
         "tableName": "template_widgets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `template` TEXT NOT NULL, `text_size` REAL NOT NULL DEFAULT 12.0, `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, `url` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `server_id` INTEGER NOT NULL DEFAULT 0, `template` TEXT NOT NULL, `text_size` REAL NOT NULL DEFAULT 12.0, `last_update` TEXT NOT NULL, `background_type` TEXT NOT NULL DEFAULT 'DAYNIGHT', `text_color` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -599,11 +599,6 @@
           {
             "fieldPath": "textColor",
             "columnName": "text_color",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "url",
-            "columnName": "url",
             "affinity": "TEXT"
           }
         ],
@@ -1153,11 +1148,36 @@
             "id"
           ]
         }
+      },
+      {
+        "tableName": "media_controls_entity_config",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`server_id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, PRIMARY KEY(`server_id`, `entity_id`))",
+        "fields": [
+          {
+            "fieldPath": "serverId",
+            "columnName": "server_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entity_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "server_id",
+            "entity_id"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '66d44ad8913fdcbb43b712b2e844dfe7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '245e83868633642c69b23edd17561b6f')"
     ]
   }
 }

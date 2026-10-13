@@ -37,6 +37,11 @@ internal val currentChangelog = Changelog(
             actionRequiresPlatform = true,
         ),
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_native_media_controls,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.MediaControls),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_template_widget_tap_link,
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenWidgetConfig(WidgetType.Template),
