@@ -1008,8 +1008,13 @@ class HealthConnectSensorManager @Inject constructor(
         }
 
         val lastSleepRecord = sleepRecords.records.last()
-        val analysis = analyzeSleepStages(lastSleepRecord.stages)
-        val sessionAttributes = buildSleepSessionAttributes(lastSleepRecord, analysis)
+        val includeTimeline = isEnabled(sleepDuration)
+        val analysis = analyzeSleepStages(lastSleepRecord.stages, includeTimeline)
+        val sessionAttributes = if (includeTimeline) {
+            buildSleepSessionAttributes(lastSleepRecord, analysis)
+        } else {
+            emptyMap()
+        }
         val basicAttributes = mapOf(
             "startTime" to lastSleepRecord.startTime,
             "endTime" to lastSleepRecord.endTime,
@@ -1099,7 +1104,6 @@ class HealthConnectSensorManager @Inject constructor(
         "endTime" to sleepRecord.endTime,
         "sources" to sleepRecord.metadata.dataOrigin.packageName,
         "stageTypes" to analysis.stageTypes,
-        "stageTypeIds" to analysis.stageTypeIds,
         "stageStartTimes" to analysis.stageStartTimes.map(Instant::toString),
         "stageEndTimes" to analysis.stageEndTimes.map(Instant::toString),
     )
@@ -1109,13 +1113,15 @@ class HealthConnectSensorManager @Inject constructor(
         val sleepDuration: Duration,
         val durationByStage: Map<Int, Duration>,
         val stageTypes: List<String>,
-        val stageTypeIds: List<Int>,
         val stageStartTimes: List<Instant>,
         val stageEndTimes: List<Instant>,
     )
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    internal fun analyzeSleepStages(stages: List<SleepSessionRecord.Stage>): SleepStageAnalysis {
+    internal fun analyzeSleepStages(
+        stages: List<SleepSessionRecord.Stage>,
+        includeTimeline: Boolean = true,
+    ): SleepStageAnalysis {
         val durationByStage = stages
             .groupingBy { it.stage }
             .fold(Duration.ZERO) { duration, stage ->
@@ -1143,10 +1149,9 @@ class HealthConnectSensorManager @Inject constructor(
         return SleepStageAnalysis(
             sleepDuration = sleepDuration,
             durationByStage = durationByStage,
-            stageTypes = stages.map { stage -> getSleepStageType(stage.stage) },
-            stageTypeIds = stages.map { stage -> stage.stage },
-            stageStartTimes = stages.map { stage -> stage.startTime },
-            stageEndTimes = stages.map { stage -> stage.endTime },
+            stageTypes = if (includeTimeline) stages.map { stage -> getSleepStageType(stage.stage) } else emptyList(),
+            stageStartTimes = if (includeTimeline) stages.map { stage -> stage.startTime } else emptyList(),
+            stageEndTimes = if (includeTimeline) stages.map { stage -> stage.endTime } else emptyList(),
         )
     }
 

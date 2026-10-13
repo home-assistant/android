@@ -208,6 +208,32 @@ class HealthConnectSensorManagerTest {
     }
 
     @Test
+    fun `Given timeline disabled when analyzing sleep stages then durations remain available`() {
+        val midnight = Instant.parse("2026-07-01T00:00:00Z")
+        val stages = listOf(
+            SleepSessionRecord.Stage(
+                startTime = midnight,
+                endTime = midnight.plus(30, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_LIGHT,
+            ),
+            SleepSessionRecord.Stage(
+                startTime = midnight.plus(30, ChronoUnit.MINUTES),
+                endTime = midnight.plus(60, ChronoUnit.MINUTES),
+                stage = SleepSessionRecord.STAGE_TYPE_DEEP,
+            ),
+        )
+
+        val result = sensorManager.analyzeSleepStages(stages, includeTimeline = false)
+
+        assertEquals(60.minutes, result.sleepDuration)
+        assertEquals(30.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_LIGHT])
+        assertEquals(30.minutes, result.durationByStage[SleepSessionRecord.STAGE_TYPE_DEEP])
+        assertEquals(emptyList<String>(), result.stageTypes)
+        assertEquals(emptyList<Instant>(), result.stageStartTimes)
+        assertEquals(emptyList<Instant>(), result.stageEndTimes)
+    }
+
+    @Test
     fun `Given sleep stages when analyzed then complete ordered timeline is preserved as primitive lists`() {
         val midnight = Instant.parse("2026-07-01T00:00:00Z")
         val stages = listOf(
@@ -226,10 +252,6 @@ class HealthConnectSensorManagerTest {
         val result = sensorManager.analyzeSleepStages(stages)
 
         assertEquals(listOf("light", "deep"), result.stageTypes)
-        assertEquals(
-            listOf(SleepSessionRecord.STAGE_TYPE_LIGHT, SleepSessionRecord.STAGE_TYPE_DEEP),
-            result.stageTypeIds,
-        )
         assertEquals(
             listOf(
                 midnight,
