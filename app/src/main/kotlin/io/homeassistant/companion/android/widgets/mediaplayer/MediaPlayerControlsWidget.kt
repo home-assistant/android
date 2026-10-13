@@ -21,9 +21,9 @@ import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_PLAYING
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerPause
-import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerStop
+import io.homeassistant.companion.android.common.data.integration.getMediaPlayerControls
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
@@ -39,7 +39,6 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 private const val MEDIA_ICON_SIZE_DP = 24
-private const val MEDIA_PLAYER_STATE_PLAYING = "playing"
 private const val MEDIA_PLAYER_ACTION_PLAY = "media_play"
 private const val MEDIA_PLAYER_ACTION_PAUSE = "media_pause"
 private const val MEDIA_PLAYER_ACTION_STOP = "media_stop"
@@ -601,8 +600,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
 
     private fun getPlaybackAction(entity: Entity?): String = when {
         entity?.state != MEDIA_PLAYER_STATE_PLAYING -> MEDIA_PLAYER_ACTION_PLAY
-        entity.supportsMediaPlayerPause() || !entity.supportsMediaPlayerStop() -> MEDIA_PLAYER_ACTION_PAUSE
-        else -> MEDIA_PLAYER_ACTION_STOP
+        entity.getMediaPlayerControls()?.let { controls ->
+            !controls.supportsPause && controls.supportsStop
+        } == true -> MEDIA_PLAYER_ACTION_STOP
+        else -> MEDIA_PLAYER_ACTION_PAUSE
     }
 
     private suspend fun callFastForwardAction(context: Context, appWidgetId: Int) {
