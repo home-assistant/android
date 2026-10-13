@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.applock
 
+import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -9,6 +10,8 @@ import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -139,6 +142,37 @@ class AppLockStateManagerTest {
             coEvery { serverManager.getServer(any<Int>()) } returns null
 
             assertFalse(manager.isAppLockEnabled(serverId = 99))
+        }
+    }
+
+    @Nested
+    inner class IsAppLockEnabledFlow {
+
+        @Test
+        fun `Given the active server setting changes then the flow re-emits the new value`() = runTest {
+            val settingFlow = MutableStateFlow(false)
+            every { serverManager.serversFlow } returns flowOf(listOf(mockk<Server>(relaxed = true) { every { id } returns 1 }))
+            every { authenticationRepository.lockEnabledRawFlow() } returns settingFlow
+
+            manager.isAppLockEnabledFlow().test {
+                assertFalse(awaitItem())
+
+                settingFlow.value = true
+
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given no active server then the flow emits false`() = runTest {
+            every { serverManager.serversFlow } returns flowOf(emptyList())
+            coEvery { serverManager.getServer(any<Int>()) } returns null
+
+            manager.isAppLockEnabledFlow().test {
+                assertFalse(awaitItem())
+                awaitComplete()
+            }
         }
     }
 }

@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
+import io.homeassistant.companion.android.util.setRecentsScreenshotProtection
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
@@ -169,6 +170,7 @@ class SettingsActivity : BaseActivity() {
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
+            setRecentsScreenshotProtection(isAppLockEnabled())
             blurView.setBlurEnabled(isAppLocked())
         }
     }
@@ -177,6 +179,7 @@ class SettingsActivity : BaseActivity() {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
+                setRecentsScreenshotProtection(isAppLockEnabled())
                 if (isAppLocked()) {
                     authenticating = true
                     authenticator.authenticate(getString(commonR.string.biometric_title))
@@ -225,6 +228,17 @@ class SettingsActivity : BaseActivity() {
             viewModel.isAppLocked((it as ServerSettingsFragment).getServerId())
         } ?: false
         return serverLocked || viewModel.isAppLocked(ServerManager.SERVER_ID_ACTIVE)
+    }
+
+    /**
+     * @return `true` if app lock is enabled for the active server or the currently visible server
+     */
+    private suspend fun isAppLockEnabled(): Boolean {
+        val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
+        val serverEnabled = serverFragment?.let {
+            viewModel.isAppLockEnabled((it as ServerSettingsFragment).getServerId())
+        } ?: false
+        return serverEnabled || viewModel.isAppLockEnabled(ServerManager.SERVER_ID_ACTIVE)
     }
 
     /**

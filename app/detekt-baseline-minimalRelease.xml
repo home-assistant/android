@@ -315,8 +315,6 @@
     <ID>NestedBlockDepth:MessagingManager.kt:MessagingManager$private suspend fun notifyMissingPermission</ID>
     <ID>NestedBlockDepth:OnSwipeListener.kt:OnSwipeListener$override fun onTouch: Boolean</ID>
     <ID>NestedBlockDepth:TilePreferenceActivity.kt:TilePreferenceActivity$override fun onCreate</ID>
-    <ID>NoNameShadowing:EntityPickerFilter.kt:{ add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }</ID>
-    <ID>NoNameShadowing:EntityPickerFilter.kt:{ add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME)) }</ID>
     <ID>NoNameShadowing:FrontendConnectionErrorScreen.kt:url</ID>
     <ID>NoNameShadowing:HAWebView.kt:modifier</ID>
     <ID>NoNameShadowing:ManageTilesViewModel.kt:ManageTilesViewModel$context</ID>

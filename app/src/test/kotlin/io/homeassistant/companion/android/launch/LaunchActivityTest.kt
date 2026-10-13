@@ -35,6 +35,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import io.mockk.verify
+import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -198,9 +199,10 @@ class LaunchActivityTest {
     @Config(sdk = [Build.VERSION_CODES.S])
     fun `Given app lock enabled when launched then the window is marked secure`() {
         val server = mockk<Server>(relaxed = true) { every { id } returns 1 }
+        every { serverManager.serversFlow } returns flowOf(listOf(server))
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { serverManager.authenticationRepository(any()) } returns mockk {
-            coEvery { isLockEnabledRaw() } returns true
+            every { lockEnabledRawFlow() } returns flowOf(true)
         }
 
         ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
@@ -214,7 +216,9 @@ class LaunchActivityTest {
     @Test
     @Config(sdk = [Build.VERSION_CODES.S])
     fun `Given app lock disabled when launched then the window is not marked secure`() {
-        // serverManager.getServer returns null (see field setup), so app lock is disabled.
+        // No server resolves (see field setup), so app lock is disabled.
+        every { serverManager.serversFlow } returns flowOf(emptyList())
+
         ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
             shadowOf(Looper.getMainLooper()).idle()
             scenario.onActivity { activity ->
