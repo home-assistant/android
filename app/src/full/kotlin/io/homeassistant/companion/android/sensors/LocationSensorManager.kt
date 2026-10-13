@@ -45,6 +45,7 @@ import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+import io.homeassistant.companion.android.util.sensitive
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -252,7 +253,7 @@ class LocationSensorManager @Inject constructor(
             when (intent.action) {
                 Intent.ACTION_BOOT_COMPLETED,
                 ACTION_REQUEST_LOCATION_UPDATES,
-                -> setupLocationTracking()
+                -> refreshLocationTrackingSetup()
 
                 ACTION_PROCESS_LOCATION,
                 ACTION_PROCESS_HIGH_ACCURACY_LOCATION,
@@ -303,7 +304,8 @@ class LocationSensorManager @Inject constructor(
             ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
     }
 
-    private suspend fun setupLocationTracking() {
+    /** Starts, stops or restarts background and zone location updates to match the current settings and permissions. */
+    private suspend fun refreshLocationTrackingSetup() {
         if (!checkPermission(backgroundLocation.id)) {
             Timber.w("Not starting location reporting because of permissions.")
             return
@@ -314,11 +316,6 @@ class LocationSensorManager @Inject constructor(
         val zoneServers = getEnabledServers(zoneLocation)
 
         try {
-            if (!backgroundEnabled && !zoneEnabled) {
-                removeAllLocationUpdateRequests()
-                isBackgroundLocationSetup = false
-                isZoneLocationSetup = false
-            }
             if (!zoneEnabled && isZoneLocationSetup) {
                 removeGeofenceUpdateRequests()
                 isZoneLocationSetup = false
@@ -327,6 +324,13 @@ class LocationSensorManager @Inject constructor(
                 removeBackgroundUpdateRequests()
                 stopHighAccuracyService()
                 isBackgroundLocationSetup = false
+            }
+            // Runs last so the branches above can stop the high accuracy service before the flags
+            // are cleared here.
+            if (!backgroundEnabled && !zoneEnabled) {
+                removeAllLocationUpdateRequests()
+                isBackgroundLocationSetup = false
+                isZoneLocationSetup = false
             }
             if (zoneEnabled && !isZoneLocationSetup) {
                 isZoneLocationSetup = true
@@ -742,7 +746,9 @@ class LocationSensorManager @Inject constructor(
                     LocationUpdateTrigger.BACKGROUND_LOCATION
                 }
             if (location.accuracy > minAccuracy) {
-                Timber.w("Location accuracy didn't meet requirements, disregarding: $location")
+                Timber.w(
+                    "Location accuracy didn't meet requirements, disregarding: ${sensitive { location.toString() }}",
+                )
                 logLocationUpdate(location, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             } else {
                 HighAccuracyLocationService.updateNotificationAddress(applicationContext, location)
@@ -871,10 +877,12 @@ class LocationSensorManager @Inject constructor(
 
     private suspend fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
         Timber.d(
-            "Last Location: " +
-                "\nCoords:(${location.latitude}, ${location.longitude})" +
-                "\nAccuracy: ${location.accuracy}" +
-                "\nBearing: ${location.bearing}",
+            """
+                Last Location:
+                Coords:${sensitive { "(${location.latitude}, ${location.longitude})" }}
+                Accuracy: ${location.accuracy}
+                Bearing: ${location.bearing}
+            """.trimIndent(),
         )
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
@@ -1224,8 +1232,9 @@ class LocationSensorManager @Inject constructor(
                         override fun onLocationResult(locationResult: LocationResult) {
                             numberCalls++
                             Timber.d(
-
-                                "Got single accurate location update: ${locationResult.lastLocation}",
+                                "Got single accurate location update: ${sensitive {
+                                    locationResult.lastLocation.toString()
+                                }}",
                             )
                             val location = locationResult.lastLocation
                             if (location == null) {
@@ -1328,9 +1337,7 @@ class LocationSensorManager @Inject constructor(
     }
 
     override suspend fun requestSensorUpdate() {
-        if (isEnabled(zoneLocation) || isEnabled(backgroundLocation)) {
-            setupLocationTracking()
-        }
+        refreshLocationTrackingSetup()
         cleanupLocationHistory()
         if (getToggleSetting(singleAccurateLocation, SETTING_INCLUDE_SENSOR_UPDATE)) {
             if (isEnabled(singleAccurateLocation)) {

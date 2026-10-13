@@ -9,6 +9,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Co
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -333,6 +335,199 @@ class EntityTest {
         @Test
         fun `Given not a media player when getting media player controls then they are null`() {
             assertNull(createEntity().getMediaPlayerControls())
+        }
+
+        @Test
+        fun `Given a media player when getting media player controls then the supported features are resolved`() {
+            val entity = createEntity(
+                entityId = "media_player.tv",
+                attributes = mapOf(
+                    "supported_features" to (
+                        EntityExt.MEDIA_PLAYER_SUPPORT_PLAY or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_STOP or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_SEEK or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_NEXT_TRACK or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_SHUFFLE_SET or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_REPEAT_SET
+                        ),
+                ),
+            )
+
+            val controls = checkNotNull(entity.getMediaPlayerControls())
+            assertTrue(controls.supportsPlay)
+            assertTrue(controls.supportsPause)
+            assertTrue(controls.supportsStop)
+            assertTrue(controls.supportsSeek)
+            assertTrue(controls.supportsPreviousTrack)
+            assertTrue(controls.supportsNextTrack)
+            assertTrue(controls.supportsVolumeMute)
+            assertTrue(controls.supportsShuffleSet)
+            assertTrue(controls.supportsRepeatSet)
+            assertFalse(controls.supportsVolumeSet)
+        }
+
+        @Test
+        fun `Given a media player when getting media player controls then mute and shuffle are resolved`() {
+            val entity = createEntity(
+                entityId = "media_player.tv",
+                attributes = mapOf("is_volume_muted" to true, "shuffle" to true),
+            )
+
+            val controls = checkNotNull(entity.getMediaPlayerControls())
+            assertTrue(controls.isVolumeMuted)
+            assertTrue(controls.shuffle)
+        }
+
+        @ParameterizedTest(name = "repeat={0} -> {1}")
+        @CsvSource("one, One", "all, All", "off, Off", "'', Off")
+        fun `Given a repeat attribute when getting media player controls then it maps to the repeat mode`(
+            repeat: String,
+            expected: String,
+        ) {
+            val entity = createEntity(entityId = "media_player.tv", attributes = mapOf("repeat" to repeat))
+
+            val expectedMode = when (expected) {
+                "One" -> MediaRepeatMode.One
+                "All" -> MediaRepeatMode.All
+                else -> MediaRepeatMode.Off
+            }
+            assertEquals(expectedMode, entity.getMediaPlayerControls()?.repeatMode)
+        }
+
+        @Test
+        fun `Given no repeat attribute when getting media player controls then the repeat mode is off`() {
+            val entity = createEntity(entityId = "media_player.tv", attributes = emptyMap())
+
+            assertEquals(MediaRepeatMode.Off, entity.getMediaPlayerControls()?.repeatMode)
+        }
+    }
+
+    @Nested
+    inner class MediaPlaybackResolution {
+
+        @ParameterizedTest(name = "state={0}")
+        @CsvSource(
+            "playing, Playing",
+            "paused, Paused",
+            "buffering, Buffering",
+            "idle, Idle",
+            "standby, Idle",
+            "off, Off",
+            "unavailable, Off",
+        )
+        fun `Given a media player state when getting the playback then it maps to the playback state`(
+            state: String,
+            expected: String,
+        ) {
+            val entity = createEntity(entityId = "media_player.tv", state = state, attributes = emptyMap())
+
+            val expectedState = when (expected) {
+                "Playing" -> MediaPlaybackState.Playing
+                "Paused" -> MediaPlaybackState.Paused
+                "Buffering" -> MediaPlaybackState.Buffering
+                "Idle" -> MediaPlaybackState.Idle
+                else -> MediaPlaybackState.Off
+            }
+            assertEquals(expectedState, entity.getMediaPlayback()?.state)
+        }
+
+        @Test
+        fun `Given a media player with every metadata attribute when getting the playback then all of it is resolved`() {
+            val entity = createEntity(
+                entityId = "media_player.tv",
+                state = "playing",
+                attributes = mapOf(
+                    "media_title" to "Song",
+                    "media_artist" to "Artist",
+                    "media_album_name" to "Album",
+                    "media_album_artist" to "Various Artists",
+                    "media_series_title" to "Breaking Bad",
+                    "media_channel" to "BBC Radio 4",
+                    "media_track" to 3,
+                    "media_content_type" to "music",
+                    "app_name" to "Netflix",
+                    "entity_picture" to "/api/picture",
+                    "media_duration" to 300.0,
+                    "media_position" to 120.5,
+                ),
+            )
+
+            val playback = checkNotNull(entity.getMediaPlayback())
+            assertEquals("Song", playback.title)
+            assertEquals("Artist", playback.artist)
+            assertEquals("Album", playback.albumName)
+            assertEquals("Various Artists", playback.albumArtist)
+            assertEquals("Breaking Bad", playback.seriesTitle)
+            assertEquals("BBC Radio 4", playback.channel)
+            assertEquals(3, playback.track)
+            assertEquals("music", playback.contentType)
+            assertEquals("Netflix", playback.appName)
+            assertEquals("/api/picture", playback.entityPicturePath)
+            assertEquals(300.0.seconds, playback.duration)
+            assertEquals(120.5.seconds, playback.position)
+        }
+
+        @Test
+        fun `Given a media player with only a title when getting the playback then the other fields are null`() {
+            val entity = createEntity(
+                entityId = "media_player.tv",
+                state = "playing",
+                attributes = mapOf("media_title" to "Only Title"),
+            )
+
+            val playback = checkNotNull(entity.getMediaPlayback())
+            assertEquals("Only Title", playback.title)
+            assertNull(playback.artist)
+            assertNull(playback.albumName)
+            assertNull(playback.albumArtist)
+            assertNull(playback.seriesTitle)
+            assertNull(playback.channel)
+            assertNull(playback.track)
+            assertNull(playback.contentType)
+            assertNull(playback.appName)
+            assertNull(playback.entityPicturePath)
+            assertNull(playback.duration)
+            assertNull(playback.position)
+        }
+
+        @Test
+        fun `Given not a media player when getting the playback then it is null`() {
+            assertNull(createEntity().getMediaPlayback())
+        }
+
+        @Test
+        fun `Given a position timestamp when getting the playback then it is parsed`() {
+            val entity = createEntity(
+                entityId = "media_player.tv",
+                state = "playing",
+                attributes = mapOf("media_position_updated_at" to "2026-09-15T10:23:45.123456+00:00"),
+            )
+
+            assertEquals(
+                Instant.parse("2026-09-15T10:23:45.123456Z"),
+                entity.getMediaPlayback()?.positionUpdatedAt,
+            )
+        }
+
+        @Test
+        fun `Given no position timestamp when getting the playback then it is null`() {
+            val entity = createEntity(entityId = "media_player.tv", state = "playing", attributes = emptyMap())
+
+            assertNull(entity.getMediaPlayback()?.positionUpdatedAt)
+        }
+
+        @Test
+        fun `Given an unparsable position timestamp when getting the playback then it is null`() {
+            val entity = createEntity(
+                entityId = "media_player.tv",
+                state = "playing",
+                attributes = mapOf("media_position_updated_at" to "not a timestamp"),
+            )
+
+            assertNull(entity.getMediaPlayback()?.positionUpdatedAt)
         }
 
         @Test
