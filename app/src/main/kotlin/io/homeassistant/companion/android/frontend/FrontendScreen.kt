@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -603,9 +604,21 @@ private fun SafeHAWebView(
     // Until the frontend theme is read, fall back to the loading surface color so the reserved
     // system bar areas match the screen behind them instead of leaving the WebView to bleed through.
     val fallbackColor = LocalHAColorScheme.current.colorSurfaceDefault
+    val statusBarColor = contentState?.statusBarColor ?: fallbackColor
     val backgroundColor = contentState?.backgroundColor ?: fallbackColor
 
     Column(modifier = Modifier.fillMaxSize()) {
+        // The top status bar guardrail is retained for legacy servers (< 2026.2) where the frontend does not handle safe areas.
+        if (!serverHandleInsets) {
+            statusBarColor.Overlay(
+                modifier = Modifier
+                    .height(insetsPaddingValues.calculateTopPadding())
+                    .fillMaxWidth()
+                    // We don't want the status bar to color the left and right areas
+                    .padding(insets.only(WindowInsetsSides.Horizontal).asPaddingValues()),
+            )
+        }
+
         // Main content row with left/right safe areas
         Row(modifier = Modifier.weight(1f)) {
             // Left safe area
