@@ -5,6 +5,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_STOP
@@ -80,6 +81,7 @@ class MediaPlayerControlsWidgetTest {
             state = "playing",
             supportedFeatures = MEDIA_PLAYER_SUPPORT_STOP,
             expectedIcon = R.drawable.ic_stop,
+            expectedContentDescription = commonR.string.widget_media_stop_button,
         )
     }
 
@@ -89,6 +91,7 @@ class MediaPlayerControlsWidgetTest {
             state = "playing",
             supportedFeatures = MEDIA_PLAYER_SUPPORT_PAUSE,
             expectedIcon = R.drawable.ic_pause,
+            expectedContentDescription = commonR.string.widget_media_pause_button,
         )
     }
 
@@ -97,6 +100,7 @@ class MediaPlayerControlsWidgetTest {
         runPlaybackIconTest(
             state = "paused",
             expectedIcon = R.drawable.ic_play,
+            expectedContentDescription = commonR.string.widget_media_play_button,
         )
     }
 
@@ -104,6 +108,7 @@ class MediaPlayerControlsWidgetTest {
         state: String,
         supportedFeatures: Int? = null,
         expectedIcon: Int,
+        expectedContentDescription: Int,
     ) {
         val widget = createWidget()
         val entity = createEntity(state, supportedFeatures)
@@ -118,6 +123,7 @@ class MediaPlayerControlsWidgetTest {
         val playPauseButton = views.apply(context, parent).findViewById<ImageView>(R.id.widgetPlayPauseButton)
 
         assertEquals(expectedIcon, shadowOf(playPauseButton.drawable).createdFromResId)
+        assertEquals(context.getString(expectedContentDescription), playPauseButton.contentDescription)
     }
 
     private suspend fun runPlaybackActionTest(

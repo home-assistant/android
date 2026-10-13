@@ -135,15 +135,28 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val showSource: Boolean = widget.showSource
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
-                when (getPlaybackAction(entity)) {
+                val playbackAction = getPlaybackAction(entity)
+                when (playbackAction) {
                     MEDIA_PLAYER_ACTION_STOP -> {
                         setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_stop)
+                        setContentDescription(
+                            R.id.widgetPlayPauseButton,
+                            context.getString(commonR.string.widget_media_stop_button),
+                        )
                     }
                     MEDIA_PLAYER_ACTION_PAUSE -> {
                         setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_pause)
+                        setContentDescription(
+                            R.id.widgetPlayPauseButton,
+                            context.getString(commonR.string.widget_media_pause_button),
+                        )
                     }
                     else -> {
                         setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_play)
+                        setContentDescription(
+                            R.id.widgetPlayPauseButton,
+                            context.getString(commonR.string.widget_media_play_button),
+                        )
                     }
                 }
 
