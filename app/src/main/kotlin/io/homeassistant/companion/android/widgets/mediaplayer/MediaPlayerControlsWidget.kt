@@ -22,6 +22,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerPause
+import io.homeassistant.companion.android.common.data.integration.supportsMediaPlayerStop
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
@@ -40,6 +42,7 @@ private const val MEDIA_ICON_SIZE_DP = 24
 private const val MEDIA_PLAYER_STATE_PLAYING = "playing"
 private const val MEDIA_PLAYER_ACTION_PLAY = "media_play"
 private const val MEDIA_PLAYER_ACTION_PAUSE = "media_pause"
+private const val MEDIA_PLAYER_ACTION_STOP = "media_stop"
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -133,10 +136,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val showSource: Boolean = widget.showSource
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
-                if (entity?.state.equals(MEDIA_PLAYER_STATE_PLAYING)) {
-                    setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_pause)
-                } else {
-                    setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_play)
+                when (getPlaybackAction(entity)) {
+                    MEDIA_PLAYER_ACTION_STOP -> {
+                        setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_stop)
+                    }
+                    MEDIA_PLAYER_ACTION_PAUSE -> {
+                        setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_pause)
+                    }
+                    else -> {
+                        setImageViewResource(R.id.widgetPlayPauseButton, R.drawable.ic_play)
+                    }
                 }
 
                 val artist = (
@@ -580,13 +589,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         try {
             serverManager.integrationRepository(entity.serverId).callAction(
                 MEDIA_PLAYER_DOMAIN,
-                if (actionEntity.state ==
-                    MEDIA_PLAYER_STATE_PLAYING
-                ) {
-                    MEDIA_PLAYER_ACTION_PAUSE
-                } else {
-                    MEDIA_PLAYER_ACTION_PLAY
-                },
+                getPlaybackAction(actionEntity),
                 mapOf("entity_id" to actionEntity.entityId),
             )
         } catch (e: CancellationException) {
@@ -594,6 +597,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         } catch (e: Exception) {
             Timber.e(e, "Exception calling play pause action")
         }
+    }
+
+    private fun getPlaybackAction(entity: Entity?): String = when {
+        entity?.state != MEDIA_PLAYER_STATE_PLAYING -> MEDIA_PLAYER_ACTION_PLAY
+        entity.supportsMediaPlayerPause() || !entity.supportsMediaPlayerStop() -> MEDIA_PLAYER_ACTION_PAUSE
+        else -> MEDIA_PLAYER_ACTION_STOP
     }
 
     private suspend fun callFastForwardAction(context: Context, appWidgetId: Int) {

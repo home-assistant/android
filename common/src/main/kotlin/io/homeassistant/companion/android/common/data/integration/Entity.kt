@@ -411,6 +411,8 @@ object EntityExt {
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
     const val LIGHT_SUPPORT_COLOR_TEMP_DEPR = 2
+    const val MEDIA_PLAYER_SUPPORT_PAUSE = 1
+    const val MEDIA_PLAYER_SUPPORT_STOP = 4096
     const val MEDIA_PLAYER_SUPPORT_VOLUME_SET = 4
     const val VACUUM_SUPPORT_TURN_ON = 1
 
@@ -785,6 +787,14 @@ fun Entity.getLightColor(): Int? {
         null
     }
 }
+
+/** Whether this media player supports pausing playback. */
+fun Entity.supportsMediaPlayerPause(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    supportsFeature(EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE)
+
+/** Whether this media player supports stopping playback. */
+fun Entity.supportsMediaPlayerStop(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    supportsFeature(EntityExt.MEDIA_PLAYER_SUPPORT_STOP)
 
 fun Entity.supportsVolumeSet(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
     supportsFeature(EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET)
