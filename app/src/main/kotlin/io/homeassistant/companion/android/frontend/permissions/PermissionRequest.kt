@@ -76,6 +76,10 @@ internal sealed interface PermissionRequest {
         val needsLocation: Boolean = permissions.any { it == Manifest.permission.ACCESS_FINE_LOCATION }
     }
 
+    /** A request for [Manifest.permission.CAMERA]. */
+    class Camera(override val onResult: (Boolean) -> Unit) :
+        SinglePermission(permission = Manifest.permission.CAMERA)
+
     /** A request for [Manifest.permission.WRITE_EXTERNAL_STORAGE]. */
     class ExternalStorage(override val onResult: (Boolean) -> Unit) :
         SinglePermission(permission = Manifest.permission.WRITE_EXTERNAL_STORAGE)

@@ -34,6 +34,7 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.settings.addHelpMenuProvider
 import io.homeassistant.companion.android.util.LogcatReader
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
+import io.homeassistant.companion.android.util.fileProviderAuthority
 import io.homeassistant.companion.android.util.getLatestFatalCrash
 import java.io.File
 import java.util.Calendar
@@ -183,7 +184,7 @@ class LogFragment : Fragment() {
                 if (fLogFile.exists()) {
                     val uriToLog: Uri = FileProvider.getUriForFile(
                         requireContext(),
-                        requireContext().packageName + ".provider",
+                        requireContext().fileProviderAuthority,
                         fLogFile,
                     )
 
