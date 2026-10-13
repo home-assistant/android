@@ -227,8 +227,7 @@ class SensorUpdater @VisibleForTesting internal constructor(
                 val sensor = fullSensor.sensor
                 val sensorCoreEnabled = coreSensorStatus?.get(basicSensor.id)
                 val canBeRegistered = hasSensor &&
-                    basicSensor.type.isNotBlank() &&
-                    basicSensor.statelessIcon.isNotBlank()
+                    basicSensor.type.isNotBlank()
 
                 // Register sensor and/or update the sensor enabled state. Priority is:
                 // 1. There is a new sensor or change in enabled state according to the app

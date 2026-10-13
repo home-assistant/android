@@ -9,9 +9,15 @@ import android.provider.Settings.Global.getInt
 import android.telephony.TelephonyManager
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Signal
+import io.github.timoptr.mdiicons.generated.ToggleSwitch
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.fromHaName
+import io.homeassistant.companion.android.common.util.mdiName
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,7 +35,7 @@ class MobileDataManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_mobile_data,
             commonR.string.sensor_description_mobile_data,
-            "mdi:signal",
+            Mdi.Signal,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -39,7 +45,7 @@ class MobileDataManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_mobile_data_roaming,
             commonR.string.sensor_description_mobile_data_roaming,
-            "mdi:toggle-switch",
+            Mdi.ToggleSwitch,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
@@ -72,7 +78,7 @@ class MobileDataManager @Inject constructor(
         checkState(mobileDataRoaming, Settings.Global.DATA_ROAMING, mobileDataRoaming.statelessIcon)
     }
 
-    private suspend fun checkState(sensor: SensorManager.BasicSensor, settingKey: String, icon: String) {
+    private suspend fun checkState(sensor: SensorManager.BasicSensor, settingKey: String, icon: MdiIcon) {
         if (!isEnabled(sensor)) {
             return
         }
@@ -95,7 +101,7 @@ class MobileDataManager @Inject constructor(
         onSensorUpdated(
             sensor,
             enabled,
-            if (enabled) icon else "$icon-off",
+            if (enabled) icon else Mdi.fromHaName("${icon.mdiName}-off") ?: icon,
             mapOf(),
         )
     }
