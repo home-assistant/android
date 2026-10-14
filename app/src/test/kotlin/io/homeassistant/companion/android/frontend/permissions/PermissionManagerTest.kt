@@ -542,6 +542,43 @@ class PermissionManagerTest {
 
     // endregion
 
+    // region Camera permission for file chooser capture
+
+    @Nested
+    inner class CheckCameraPermission {
+
+        @Test
+        fun `Given camera permission already granted then returns true without request`() = runTest {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns true
+
+            val manager = createManager()
+            assertTrue(manager.checkCameraPermission())
+            assertNull(manager.pendingPermissionRequest.value)
+        }
+
+        @Test
+        fun `Given camera permission not granted when user answers then returns the answer and slot clears`() = runTest {
+            every { permissionChecker.hasPermission(android.Manifest.permission.CAMERA) } returns false
+            val manager = createManager()
+
+            listOf(true, false).forEach { granted ->
+                val result = async { manager.checkCameraPermission() }
+                advanceUntilIdle()
+
+                val pending = manager.pendingPermissionRequest.value
+                assertInstanceOf(PermissionRequest.Camera::class.java, pending)
+                assertEquals(listOf(android.Manifest.permission.CAMERA), pending?.permissions)
+                (pending as PermissionRequest.Camera).onResult(granted)
+                advanceUntilIdle()
+
+                assertEquals(granted, result.await())
+                assertNull(manager.pendingPermissionRequest.value)
+            }
+        }
+    }
+
+    // endregion
+
     // region Local network permission (Android 17+)
 
     @Nested
