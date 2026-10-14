@@ -14,6 +14,9 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.BellRing
+import io.github.timoptr.mdiicons.generated.PlayCircle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -57,7 +60,7 @@ class NotificationListenerSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_last_notification,
             commonR.string.sensor_description_last_notification,
-            "mdi:bell-ring",
+            Mdi.BellRing,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
             settings = notificationSettings,
@@ -69,7 +72,7 @@ class NotificationListenerSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_last_removed_notification,
             commonR.string.sensor_description_last_removed_notification,
-            "mdi:bell-ring",
+            Mdi.BellRing,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
             settings = notificationSettings,
@@ -81,7 +84,7 @@ class NotificationListenerSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_active_notification_count,
             commonR.string.sensor_description_active_notification_count,
-            "mdi:bell-ring",
+            Mdi.BellRing,
             unitOfMeasurement = "notifications",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -97,7 +100,7 @@ class NotificationListenerSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_media_session,
             commonR.string.sensor_description_media_session,
-            "mdi:play-circle",
+            Mdi.PlayCircle,
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#media-session-sensor",
         )

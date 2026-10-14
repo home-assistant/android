@@ -5,6 +5,7 @@ import android.content.Context.AUDIO_SERVICE
 import android.media.AudioManager
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.mockk.coEvery
@@ -41,8 +42,8 @@ class AudioSensorManagerTest {
             enabled = true,
             state = "5",
             lastSentState = "5",
-            lastSentIcon = AudioSensorManager.volMusic.statelessIcon,
-            icon = AudioSensorManager.volMusic.statelessIcon,
+            lastSentIcon = AudioSensorManager.volMusic.statelessIcon.mdiName,
+            icon = AudioSensorManager.volMusic.statelessIcon.mdiName,
             stateType = "int",
         )
 
@@ -286,6 +287,6 @@ class AudioSensorManagerTest {
 
     private fun Sensor.assertNoForceUpdate() {
         assertEquals("Expected lastSentState to be preserved (no force update)", "5", lastSentState)
-        assertEquals("Expected lastSentIcon to be preserved (no force update)", AudioSensorManager.volMusic.statelessIcon, lastSentIcon)
+        assertEquals("Expected lastSentIcon to be preserved (no force update)", AudioSensorManager.volMusic.statelessIcon.mdiName, lastSentIcon)
     }
 }
