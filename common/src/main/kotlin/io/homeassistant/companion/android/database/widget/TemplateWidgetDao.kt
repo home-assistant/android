@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface TemplateWidgetDao : WidgetDao<TemplateWidgetEntity> {
 
     @Query("SELECT * FROM template_widgets WHERE id = :id")
-    suspend fun get(id: Int): TemplateWidgetEntity?
+    override suspend fun get(id: Int): TemplateWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     override suspend fun add(entity: TemplateWidgetEntity)
