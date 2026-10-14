@@ -322,7 +322,7 @@ private fun FullscreenEffect(isFullScreen: Boolean) {
     // fullscreen.
     DisposableEffect(view, isFullScreen) {
         fun applyFullscreen() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
                 window.attributes = window.attributes.apply {
                     layoutInDisplayCutoutMode = if (isFullScreen) {
                         WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
