@@ -348,7 +348,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_start,
             commonR.string.sensor_description_sleep_start,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "timestamp",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -359,7 +359,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_end,
             commonR.string.sensor_description_sleep_end,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "timestamp",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -370,7 +370,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_light_duration,
             commonR.string.sensor_description_sleep_light_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -382,7 +382,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_deep_duration,
             commonR.string.sensor_description_sleep_deep_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -394,7 +394,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_rem_duration,
             commonR.string.sensor_description_sleep_rem_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -406,7 +406,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_awake_duration,
             commonR.string.sensor_description_sleep_awake_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -418,7 +418,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_awake_in_bed_duration,
             commonR.string.sensor_description_sleep_awake_in_bed_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -430,7 +430,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_out_of_bed_duration,
             commonR.string.sensor_description_sleep_out_of_bed_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -442,7 +442,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_unspecified_duration,
             commonR.string.sensor_description_sleep_unspecified_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -454,7 +454,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_unknown_duration,
             commonR.string.sensor_description_sleep_unknown_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -1027,22 +1027,22 @@ class HealthConnectSensorManager @Inject constructor(
         val lastSleepRecord = sleepRecords.records.last()
         val includeTimeline = isEnabled(sleepDuration)
         val analysis = analyzeSleepStages(lastSleepRecord.stages, includeTimeline)
-        val sessionAttributes = if (includeTimeline) {
-            buildSleepSessionAttributes(lastSleepRecord, analysis)
-        } else {
-            emptyMap()
-        }
+
         val basicAttributes = mapOf(
             "startTime" to lastSleepRecord.startTime,
             "endTime" to lastSleepRecord.endTime,
             "sources" to lastSleepRecord.metadata.dataOrigin.packageName,
         )
 
-        updateSleepStageDurationSensor(
-            sleepDuration,
-            analysis.sleepDuration,
-            sessionAttributes,
-        )
+        if (isEnabled(sleepDuration)) {
+            val sessionAttributes = buildSleepSessionAttributes(lastSleepRecord, analysis)
+            onSensorUpdated(
+                sleepDuration,
+                analysis.sleepDuration.inWholeMinutes,
+                sleepDuration.statelessIcon,
+                attributes = sessionAttributes,
+            )
+        }
         if (isEnabled(sleepStart)) {
             onSensorUpdated(
                 sleepStart,
