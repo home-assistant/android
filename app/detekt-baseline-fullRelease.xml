@@ -369,8 +369,6 @@
     <ID>NestedBlockDepth:OnSwipeListener.kt:OnSwipeListener$override fun onTouch: Boolean</ID>
     <ID>NestedBlockDepth:ThreadManagerImpl.kt:ThreadManagerImpl$private suspend fun fullSyncPreferredDataset: ThreadManager.SyncResult</ID>
     <ID>NestedBlockDepth:TilePreferenceActivity.kt:TilePreferenceActivity$override fun onCreate</ID>
-    <ID>NoNameShadowing:EntityPickerFilter.kt:{ add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }</ID>
-    <ID>NoNameShadowing:EntityPickerFilter.kt:{ add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME)) }</ID>
     <ID>NoNameShadowing:FrontendConnectionErrorScreen.kt:url</ID>
     <ID>NoNameShadowing:HAWebView.kt:modifier</ID>
     <ID>NoNameShadowing:ManageTilesViewModel.kt:ManageTilesViewModel$context</ID>
@@ -451,8 +449,7 @@
     <ID>TooManyFunctions:CarSensorManager.kt:CarSensorManager : SensorManagerDefaultLifecycleObserver</ID>
     <ID>TooManyFunctions:DeveloperSettingsPresenterImpl.kt:DeveloperSettingsPresenterImpl : PreferenceDataStoreDeveloperSettingsPresenter</ID>
     <ID>TooManyFunctions:EntityPicker.kt:io.homeassistant.companion.android.util.compose.entity.EntityPicker.kt</ID>
-    <ID>TooManyFunctions:EntityWidgetConfigureScreen.kt:io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureScreen.kt</ID>
-    <ID>TooManyFunctions:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel : ViewModelWidgetConfigureViewModel</ID>
     <ID>TooManyFunctions:FakePlayer.kt:FakePlayer : Player</ID>
     <ID>TooManyFunctions:FrontendScreen.kt:io.homeassistant.companion.android.frontend.FrontendScreen.kt</ID>
     <ID>TooManyFunctions:FrontendViewModel.kt:FrontendViewModel : ViewModelFrontendConnectionErrorStateProvider</ID>
@@ -464,7 +461,7 @@
     <ID>TooManyFunctions:LocationSensorManager.kt:LocationSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:ManageTilesViewModel.kt:ManageTilesViewModel : ViewModel</ID>
     <ID>TooManyFunctions:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget : BaseWidgetProvider</ID>
-    <ID>TooManyFunctions:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel : ViewModelWidgetConfigureViewModel</ID>
     <ID>TooManyFunctions:MessagingManager.kt:MessagingManager</ID>
     <ID>TooManyFunctions:NotificationListenerSensorManager.kt:NotificationListenerSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:SensorDetailViewModel.kt:SensorDetailViewModel : AndroidViewModel</ID>

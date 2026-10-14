@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets
+package io.homeassistant.companion.android.widgets.configure
 
 import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.Assert.assertEquals
