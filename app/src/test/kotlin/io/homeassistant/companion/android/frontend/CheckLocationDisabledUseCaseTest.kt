@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.frontend
 import android.Manifest
 import android.content.Context
 import android.os.Build
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.FlaskEmpty
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor
@@ -79,7 +81,7 @@ class CheckLocationDisabledUseCaseTest {
 
     @Test
     fun `Given location is disabled and sensor requires location when invoked then shows notification`() = runTest {
-        val locationSensor = BasicSensor(id = "test_sensor", type = "sensor")
+        val locationSensor = BasicSensor(id = "test_sensor", type = "sensor", statelessIcon = Mdi.FlaskEmpty)
         val sensorManager: io.homeassistant.companion.android.common.sensors.SensorManager =
             mockk(relaxed = true)
 
@@ -114,7 +116,7 @@ class CheckLocationDisabledUseCaseTest {
 
     @Test
     fun `Given sensor does not require location when invoked then removes warning`() = runTest {
-        val nonLocationSensor = BasicSensor(id = "battery_sensor", type = "sensor")
+        val nonLocationSensor = BasicSensor(id = "battery_sensor", type = "sensor", statelessIcon = Mdi.FlaskEmpty)
         val sensorManager: io.homeassistant.companion.android.common.sensors.SensorManager =
             mockk(relaxed = true)
 
@@ -135,7 +137,7 @@ class CheckLocationDisabledUseCaseTest {
 
     @Test
     fun `Given sensor requires location but is disabled when invoked then removes warning`() = runTest {
-        val locationSensor = BasicSensor(id = "gps_sensor", type = "sensor")
+        val locationSensor = BasicSensor(id = "gps_sensor", type = "sensor", statelessIcon = Mdi.FlaskEmpty)
         val sensorManager: io.homeassistant.companion.android.common.sensors.SensorManager =
             mockk(relaxed = true)
 

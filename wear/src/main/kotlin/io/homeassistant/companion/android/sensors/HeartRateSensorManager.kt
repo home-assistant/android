@@ -16,6 +16,8 @@ import android.health.connect.HealthPermissions
 import android.os.Build
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.HeartPulse
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -54,7 +56,7 @@ class HeartRateSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_heart_rate,
             commonR.string.sensor_description_heart_rate,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             unitOfMeasurement = "bpm",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
         )

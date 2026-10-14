@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.sensors
 
 import app.cash.turbine.test
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.FlaskEmpty
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.sensor.Attribute
@@ -30,13 +32,19 @@ class SensorRepositoryImplTest {
         SensorManager.BasicSensor(
             id = "last_update",
             type = "sensor",
+            statelessIcon = Mdi.FlaskEmpty,
             enabledByDefault = true,
             settings = listOf(
                 Setting.Toggle(name = "add_new_intent", default = false),
                 Setting.Text(name = "intent_1", enabledByDefault = false),
             ),
         ),
-        SensorManager.BasicSensor(id = "app_inactive", type = "sensor", enabledByDefault = false),
+        SensorManager.BasicSensor(
+            id = "app_inactive",
+            type = "sensor",
+            statelessIcon = Mdi.FlaskEmpty,
+            enabledByDefault = false,
+        ),
     )
     private val repository: SensorRepository = SensorRepositoryImpl(dao, serverDao, basicSensors)
 
@@ -377,7 +385,14 @@ class SensorRepositoryImplTest {
         val repository = SensorRepositoryImpl(
             dao,
             serverDao,
-            setOf(SensorManager.BasicSensor("list_sensor", "sensor", settings = listOf(listSetting))),
+            setOf(
+                SensorManager.BasicSensor(
+                    "list_sensor",
+                    "sensor",
+                    statelessIcon = Mdi.FlaskEmpty,
+                    settings = listOf(listSetting),
+                ),
+            ),
         )
         coEvery { dao.getSettings("list_sensor") } returns emptyList()
 

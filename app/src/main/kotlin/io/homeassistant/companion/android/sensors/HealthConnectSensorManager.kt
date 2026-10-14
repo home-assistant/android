@@ -43,6 +43,23 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.response.ReadRecordsResponse
 import androidx.health.connect.client.time.TimeRangeFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AccountVoice
+import io.github.timoptr.mdiicons.generated.Bone
+import io.github.timoptr.mdiicons.generated.CupWater
+import io.github.timoptr.mdiicons.generated.Diabetes
+import io.github.timoptr.mdiicons.generated.ElevationRise
+import io.github.timoptr.mdiicons.generated.Fire
+import io.github.timoptr.mdiicons.generated.Heart
+import io.github.timoptr.mdiicons.generated.HeartPulse
+import io.github.timoptr.mdiicons.generated.HumanMaleHeight
+import io.github.timoptr.mdiicons.generated.MapMarkerDistance
+import io.github.timoptr.mdiicons.generated.ScaleBathroom
+import io.github.timoptr.mdiicons.generated.Sleep
+import io.github.timoptr.mdiicons.generated.Stairs
+import io.github.timoptr.mdiicons.generated.Thermometer
+import io.github.timoptr.mdiicons.generated.Walk
+import io.github.timoptr.mdiicons.generated.Water
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -83,7 +100,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_active_calories_burned,
             commonR.string.sensor_description_active_calories_burned,
-            "mdi:fire",
+            Mdi.Fire,
             "energy",
             unitOfMeasurement = "kcal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -95,7 +112,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_basal_body_temperature,
             commonR.string.sensor_description_basal_body_temperature,
-            "mdi:thermometer",
+            Mdi.Thermometer,
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -107,7 +124,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_basal_metabolic_rate,
             commonR.string.sensor_description_basal_metabolic_rate,
-            "mdi:fire",
+            Mdi.Fire,
             unitOfMeasurement = "kcal/day",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -118,7 +135,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_blood_glucose,
             commonR.string.sensor_description_blood_glucose,
-            "mdi:diabetes",
+            Mdi.Diabetes,
             deviceClass = "blood_glucose_concentration",
             unitOfMeasurement = "mg/dL",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -130,7 +147,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_body_fat,
             commonR.string.sensor_description_body_fat,
-            "mdi:scale-bathroom",
+            Mdi.ScaleBathroom,
             unitOfMeasurement = "%",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -141,7 +158,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_body_water_mass,
             commonR.string.sensor_description_body_water_mass,
-            "mdi:water",
+            Mdi.Water,
             deviceClass = "weight",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -153,7 +170,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_body_temperature,
             commonR.string.sensor_description_body_temperature,
-            "mdi:thermometer",
+            Mdi.Thermometer,
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -165,7 +182,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_bone_mass,
             commonR.string.sensor_description_bone_mass,
-            "mdi:bone",
+            Mdi.Bone,
             deviceClass = "weight",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -177,7 +194,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_diastolic_blood_pressure,
             commonR.string.sensor_description_diastolic_blood_pressure,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -189,7 +206,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.sensor_name_daily_distance,
             commonR.string.sensor_description_distance,
-            "mdi:map-marker-distance",
+            Mdi.MapMarkerDistance,
             deviceClass = "distance",
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -202,7 +219,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_daily_elevation_gained,
             commonR.string.sensor_description_elevation_gained,
-            "mdi:elevation-rise",
+            Mdi.ElevationRise,
             deviceClass = "distance",
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -215,7 +232,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.sensor_name_daily_floors,
             commonR.string.sensor_description_floors_climbed,
-            "mdi:stairs",
+            Mdi.Stairs,
             unitOfMeasurement = "floors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -227,7 +244,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.sensor_name_heart_rate,
             commonR.string.sensor_description_health_connect_heart_rate,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -238,7 +255,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_heart_rate_variability,
             commonR.string.sensor_description_heart_rate_variability,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             deviceClass = "duration",
             unitOfMeasurement = "ms",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -250,7 +267,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_height,
             commonR.string.sensor_description_height,
-            "mdi:human-male-height",
+            Mdi.HumanMaleHeight,
             deviceClass = "distance",
             unitOfMeasurement = "m",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -262,7 +279,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_hydration,
             commonR.string.sensor_description_hydration,
-            "mdi:cup-water",
+            Mdi.CupWater,
             unitOfMeasurement = "mL",
             deviceClass = "volume",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -275,7 +292,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_lean_body_mass,
             commonR.string.sensor_description_lean_body_mass,
-            "mdi:scale-bathroom",
+            Mdi.ScaleBathroom,
             deviceClass = "weight",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -287,7 +304,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_oxygen_saturation,
             commonR.string.sensor_description_oxygen_saturation,
-            "mdi:sleep",
+            Mdi.Sleep,
             unitOfMeasurement = "%",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -298,7 +315,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_respiratory_rate,
             commonR.string.sensor_description_respiratory_rate,
-            "mdi:account-voice",
+            Mdi.AccountVoice,
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -309,7 +326,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_resting_heart_rate,
             commonR.string.sensor_description_resting_heart_rate,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -320,7 +337,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_duration,
             commonR.string.sensor_description_sleep_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -332,7 +349,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.sensor_name_daily_steps,
             commonR.string.sensor_description_steps,
-            "mdi:walk",
+            Mdi.Walk,
             unitOfMeasurement = "steps",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -344,7 +361,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_systolic_blood_pressure,
             commonR.string.sensor_description_systolic_blood_pressure,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -356,7 +373,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_total_calories_burned,
             commonR.string.sensor_description_total_calories_burned,
-            "mdi:fire",
+            Mdi.Fire,
             "energy",
             unitOfMeasurement = "kcal",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -369,7 +386,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_vo2_max,
             commonR.string.sensor_description_vo2_max,
-            "mdi:heart",
+            Mdi.Heart,
             unitOfMeasurement = "mL/kg/min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -380,7 +397,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_weight,
             commonR.string.sensor_description_weight,
-            "mdi:scale-bathroom",
+            Mdi.ScaleBathroom,
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             deviceClass = "weight",
