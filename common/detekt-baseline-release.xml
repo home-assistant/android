@@ -223,6 +223,7 @@
     <ID>TooManyFunctions:AppDatabase.kt:AppDatabase : RoomDatabase</ID>
     <ID>TooManyFunctions:AssistViewModelBase.kt:AssistViewModelBase : AndroidViewModel</ID>
     <ID>TooManyFunctions:AudioSensorManager.kt:AudioSensorManager : SensorManager</ID>
+    <ID>TooManyFunctions:AuthenticationRepository.kt:AuthenticationRepository</ID>
     <ID>TooManyFunctions:AuthenticationRepositoryImpl.kt:AuthenticationRepositoryImpl : AuthenticationRepository</ID>
     <ID>TooManyFunctions:BatterySensorManager.kt:BatterySensorManager : SensorManager</ID>
     <ID>TooManyFunctions:BluetoothSensorManager.kt:BluetoothSensorManager : SensorManager</ID>

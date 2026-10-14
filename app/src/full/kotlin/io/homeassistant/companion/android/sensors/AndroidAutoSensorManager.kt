@@ -5,6 +5,9 @@ import android.os.Build
 import androidx.car.app.connection.CarConnection
 import androidx.lifecycle.Observer
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Car
+import io.github.timoptr.mdiicons.generated.CarOff
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -31,7 +34,7 @@ class AndroidAutoSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_android_auto,
             commonR.string.sensor_description_android_auto,
-            "mdi:car",
+            Mdi.Car,
             deviceClass = "connectivity",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -99,7 +102,7 @@ class AndroidAutoSensorManager @Inject constructor(
             onSensorUpdated(
                 androidAutoConnected,
                 connected,
-                if (connected) androidAutoConnected.statelessIcon else "mdi:car-off",
+                if (connected) androidAutoConnected.statelessIcon else Mdi.CarOff,
                 mapOf(
                     "connection_type" to typeString,
                 ),
