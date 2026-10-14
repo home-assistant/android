@@ -25,8 +25,7 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
-import io.homeassistant.companion.android.util.AppLink
-import io.homeassistant.companion.android.util.createAppLinkIntent
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
@@ -222,10 +221,7 @@ class TemplateWidget : AppWidgetProvider() {
                 PendingIntent.getActivity(
                     context,
                     appWidgetId,
-                    context.createAppLinkIntent(
-                        AppLink.Frontend(FrontendTarget.Path("/$dashboardPath")),
-                        widget.serverId,
-                    ),
+                    context.intentLaunchWithNavigateTo(FrontendTarget.Path("/$dashboardPath"), widget.serverId),
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
             } else {

@@ -71,13 +71,13 @@ import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.common.util.appOrStoreIntent
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
@@ -93,12 +93,12 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager.Companio
 import io.homeassistant.companion.android.sensors.LocationSensorReceiver
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.assist.AssistConfigManager
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
-import io.homeassistant.companion.android.util.createAppLinkIntent
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -140,6 +140,12 @@ class MessagingManager @Inject constructor(
     private val bluetoothSensorManager: BluetoothSensorManager,
 ) {
     companion object {
+        const val APP_PREFIX = "app://"
+        const val DEEP_LINK_PREFIX = "deep-link://"
+        const val INTENT_PREFIX = "intent:"
+        const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
+        const val SETTINGS_PREFIX = "settings://"
+        const val NOTIFICATION_HISTORY = "notification_history"
         const val NO_ACTION = "noAction"
 
         const val SUBJECT = "subject"
@@ -1709,12 +1715,80 @@ class MessagingManager @Inject constructor(
 
     private fun createOpenUriPendingIntent(uri: String, data: Map<String, String>): PendingIntent {
         val serverId = data[THIS_SERVER_ID]!!.toInt()
-        val intent = context.createAppLinkIntent(uri, serverId)
+        val needsPackage = uri.startsWith(APP_PREFIX) || uri.startsWith(INTENT_PREFIX)
+        val otherApp = needsPackage || UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
+        val intent = when {
+            uri.isBlank() -> {
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
+            }
+
+            uri.startsWith(APP_PREFIX) -> {
+                context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
+            }
+
+            uri.startsWith(INTENT_PREFIX) -> {
+                try {
+                    context.parseExternalIntentUri(uri)
+                } catch (e: Exception) {
+                    Timber.e(e, "Unable to parse intent URI")
+                    null
+                }
+            }
+
+            uri.startsWith(SETTINGS_PREFIX) -> {
+                if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
+                    SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NotificationHistory)
+                } else {
+                    context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
+                }
+            }
+
+            UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX) -> {
+                Intent(Intent.ACTION_VIEW).apply {
+                    this.data = if (uri.startsWith(DEEP_LINK_PREFIX)) {
+                        uri.removePrefix(DEEP_LINK_PREFIX)
+                    } else {
+                        uri
+                    }.toUri()
+                }
+            }
+
+            else -> {
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(uri), serverId)
+            }
+        } ?: context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (!otherApp) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+        }
 
         return PendingIntent.getActivity(
             context,
             (uri.hashCode() + System.currentTimeMillis()).toInt(),
-            intent,
+            if (needsPackage) {
+                val intentPackage = intent.`package`?.let {
+                    context.packageManager.getLaunchIntentForPackage(
+                        it,
+                    )
+                }
+                if (intentPackage == null && (!intent.`package`.isNullOrEmpty() || uri.startsWith(APP_PREFIX))) {
+                    val marketIntent = Intent(Intent.ACTION_VIEW)
+                    marketIntent.data = (
+                        MARKET_PREFIX + if (uri.startsWith(INTENT_PREFIX)) {
+                            intent.`package`.toString()
+                        } else {
+                            uri.removePrefix(APP_PREFIX)
+                        }
+                        ).toUri()
+                    marketIntent
+                } else {
+                    intent
+                }
+            } else {
+                intent
+            },
             PendingIntent.FLAG_IMMUTABLE,
         )
     }
@@ -1978,8 +2052,16 @@ class MessagingManager @Inject constructor(
 
     private fun launchApp(data: Map<String, String>) {
         try {
-            val intent = context.appOrStoreIntent(data[PACKAGE_NAME]!!)
-            context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            val launchIntent = context.packageManager.getLaunchIntentForPackage(data[PACKAGE_NAME]!!)
+            if (launchIntent != null) {
+                context.startActivity(launchIntent)
+            } else {
+                Timber.w("No intent to launch app found, opening app store")
+                val marketIntent = Intent(Intent.ACTION_VIEW)
+                marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                marketIntent.data = (MARKET_PREFIX + data[PACKAGE_NAME]).toUri()
+                context.startActivity(marketIntent)
+            }
         } catch (e: Exception) {
             Timber.e(e, "Unable to launch app")
             mainScope.launch { sendNotification(data) }
