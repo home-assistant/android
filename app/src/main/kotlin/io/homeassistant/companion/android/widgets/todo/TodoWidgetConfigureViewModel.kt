@@ -27,7 +27,8 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import io.homeassistant.companion.android.widgets.WidgetTextColor
+import io.homeassistant.companion.android.widgets.configure.WidgetConfigureViewModel
+import io.homeassistant.companion.android.widgets.configure.WidgetTextColor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -43,13 +44,14 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @HiltViewModel(assistedFactory = TodoWidgetConfigureViewModel.Factory::class)
-class TodoWidgetConfigureViewModel @AssistedInject constructor(
+internal class TodoWidgetConfigureViewModel @AssistedInject constructor(
     private val todoWidgetDao: TodoWidgetDao,
     private val serverManager: ServerManager,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
     @Assisted private val widgetId: Int,
     @Assisted preselectedEntityId: String?,
-) : ViewModel() {
+) : ViewModel(),
+    WidgetConfigureViewModel<TodoWidgetConfigureState> {
 
     private val _state = MutableStateFlow(
         TodoWidgetConfigureState(
@@ -62,12 +64,12 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
             },
         ),
     )
-    internal val state: StateFlow<TodoWidgetConfigureState> = _state.asStateFlow()
+    override val state: StateFlow<TodoWidgetConfigureState> = _state.asStateFlow()
 
     private val _errors = Channel<Int>(Channel.BUFFERED)
 
     /** Errors to surface to the user, as string resources. */
-    val errors = _errors.receiveAsFlow()
+    override val errors = _errors.receiveAsFlow()
 
     private var loadEntitiesJob: Job? = null
 

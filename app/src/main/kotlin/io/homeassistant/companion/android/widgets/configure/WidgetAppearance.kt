@@ -1,13 +1,46 @@
-package io.homeassistant.companion.android.widgets
+package io.homeassistant.companion.android.widgets.configure
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+
+/**
+ * Background-type selector shared by the widget configuration screens, followed by the text-color
+ * selector when the background is transparent (the only case where text color applies).
+ */
+@Composable
+internal fun WidgetAppearanceSection(
+    selectedBackgroundType: WidgetBackgroundType,
+    dynamicColorAvailable: Boolean,
+    textColorHex: String?,
+    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+    onTextColorSelected: (colorHex: String) -> Unit,
+) {
+    WidgetBackgroundTypeDropdown(
+        selected = selectedBackgroundType,
+        dynamicColorAvailable = dynamicColorAvailable,
+        onSelected = onBackgroundTypeSelected,
+        modifier = Modifier.formControlWidth(),
+    )
+
+    if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+        // Widgets persist the resolved hex, so the Context needed to convert stays in the UI layer.
+        val context = LocalContext.current
+        val selected = remember(context, textColorHex) { WidgetTextColor.fromHex(context, textColorHex) }
+
+        WidgetTextColorDropdown(
+            selected = selected,
+            onSelected = { onTextColorSelected(it.resolve(context)) },
+            modifier = Modifier.formControlWidth(),
+        )
+    }
+}
 
 /**
  * Dropdown letting the user pick the background of a widget.
@@ -20,7 +53,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
  * @param modifier Optional [Modifier] to be applied to the dropdown.
  */
 @Composable
-fun WidgetBackgroundTypeDropdown(
+internal fun WidgetBackgroundTypeDropdown(
     selected: WidgetBackgroundType,
     dynamicColorAvailable: Boolean,
     onSelected: (WidgetBackgroundType) -> Unit,
@@ -52,14 +85,12 @@ fun WidgetBackgroundTypeDropdown(
  * Dropdown letting the user pick the text color of a widget, which only applies to a transparent
  * background.
  *
- * Shared by the widget configuration screens, which all offer the same choices.
- *
  * @param selected The currently selected text color.
  * @param onSelected Invoked with the text color the user picked.
  * @param modifier Optional [Modifier] to be applied to the dropdown.
  */
 @Composable
-fun WidgetTextColorDropdown(
+private fun WidgetTextColorDropdown(
     selected: WidgetTextColor,
     onSelected: (WidgetTextColor) -> Unit,
     modifier: Modifier = Modifier,
