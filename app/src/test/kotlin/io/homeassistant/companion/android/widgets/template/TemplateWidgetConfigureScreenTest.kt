@@ -20,7 +20,10 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.data.dashboards.Dashboard
+import io.homeassistant.companion.android.common.data.dashboards.DashboardTitle
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -163,13 +166,76 @@ class TemplateWidgetConfigureScreenTest {
     }
 
     @Test
-    fun `Given screen when typing a tap link then onUrlChanged is triggered`() {
+    fun `Given refresh on tap when open a dashboard is picked then onTapActionSelected is triggered`() {
         composeTestRule.apply {
             testScreen(singleServerState) {
-                onNodeWithText(activity.getString(commonR.string.widget_tap_action_link_label), substring = true)
+                onNodeWithText(activity.getString(commonR.string.widget_tap_action_dashboard_label)).assertDoesNotExist()
+                onNodeWithText(activity.getString(commonR.string.widget_tap_action_label), substring = true)
                     .performScrollTo()
-                    .performTextReplacement("/lovelace/energy")
-                assertEquals("/lovelace/energy", url)
+                    .performClick()
+                onNodeWithText(activity.getString(commonR.string.widget_tap_action_open_dashboard))
+                    .performClick()
+                assertEquals(WidgetTapAction.OPEN_DASHBOARD, tapAction)
+            }
+        }
+    }
+
+    @Test
+    fun `Given loaded dashboards when a dashboard is picked then onDashboardSelected is triggered`() {
+        composeTestRule.apply {
+            testScreen(openDashboardState) {
+                onNodeWithText(activity.getString(commonR.string.widget_tap_action_dashboard_label), substring = true)
+                    .performScrollTo()
+                    .performClick()
+                onNodeWithText("Garden").performClick()
+                assertEquals("garden", dashboardUrlPath)
+            }
+        }
+    }
+
+    @Test
+    fun `Given loaded dashboards when the dashboard dropdown is opened then built-in names are translated`() {
+        composeTestRule.apply {
+            testScreen(openDashboardState) {
+                onNodeWithText(activity.getString(commonR.string.widget_tap_action_dashboard_label), substring = true)
+                    .performScrollTo()
+                    .performClick()
+                onNodeWithText(activity.getString(commonR.string.dashboard_energy)).assertIsDisplayed()
+            }
+        }
+    }
+
+    @Test
+    fun `Given the dashboards failed to load when retry is tapped then onRetryLoadDashboards is triggered`() {
+        composeTestRule.apply {
+            testScreen(openDashboardState.copy(dashboards = DashboardsState.Error)) {
+                onNodeWithText(activity.getString(commonR.string.widget_tap_action_dashboards_error))
+                    .performScrollTo()
+                    .assertIsDisplayed()
+                onNodeWithText(activity.getString(commonR.string.retry)).performClick()
+                assertTrue(retryTapped)
+            }
+        }
+    }
+
+    @Test
+    fun `Given loaded dashboards when displayed then no retry is offered`() {
+        composeTestRule.apply {
+            testScreen(openDashboardState) {
+                onNodeWithText(activity.getString(commonR.string.retry)).assertDoesNotExist()
+            }
+        }
+    }
+
+    @Test
+    fun `Given dashboards still loading when displayed then the dashboard dropdown is disabled`() {
+        composeTestRule.apply {
+            testScreen(openDashboardState.copy(dashboards = DashboardsState.Loading)) {
+                onNodeWithText(activity.getString(commonR.string.widget_tap_action_dashboards_loading))
+                    .performScrollTo()
+                    .assertIsDisplayed()
+                onNodeWithText(activity.getString(commonR.string.widget_tap_action_dashboard_label), substring = true)
+                    .assertIsNotEnabled()
             }
         }
     }
@@ -270,7 +336,9 @@ class TemplateWidgetConfigureScreenTest {
         var textSize: String? = null
         var backgroundType: WidgetBackgroundType? = null
         var textColor: String? = null
-        var url: String? = null
+        var tapAction: WidgetTapAction? = null
+        var dashboardUrlPath: String? = null
+        var retryTapped = false
         var actionClicked = false
         var navigated = false
     }
@@ -293,7 +361,9 @@ class TemplateWidgetConfigureScreenTest {
                         onTextSizeChanged = { textSize = it },
                         onBackgroundTypeSelected = { backgroundType = it },
                         onTextColorSelected = { textColor = it },
-                        onUrlChanged = { url = it },
+                        onTapActionSelected = { tapAction = it },
+                        onDashboardSelected = { dashboardUrlPath = it },
+                        onRetryLoadDashboards = { retryTapped = true },
                         onActionClick = { actionClicked = true },
                     )
                 }
@@ -318,4 +388,14 @@ private val multipleServersState = singleServerState.copy(
 private val renderedState = singleServerState.copy(
     template = "{{ states('sensor.example') }}",
     preview = TemplatePreview.Rendered("42"),
+)
+
+private val openDashboardState = singleServerState.copy(
+    selectedTapAction = WidgetTapAction.OPEN_DASHBOARD,
+    dashboards = DashboardsState.Loaded(
+        listOf(
+            Dashboard("energy", DashboardTitle.Resource(commonR.string.dashboard_energy)),
+            Dashboard("garden", DashboardTitle.Text("Garden")),
+        ),
+    ),
 )

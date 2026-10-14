@@ -4,8 +4,21 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Stable
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.dashboards.Dashboard
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
+
+/** The dashboards of the selected server, offered for [WidgetTapAction.OPEN_DASHBOARD]. */
+internal sealed interface DashboardsState {
+    /** Not requested yet, or being loaded. */
+    data object Loading : DashboardsState
+
+    data class Loaded(val dashboards: List<Dashboard>) : DashboardsState
+
+    /** The dashboards could not be retrieved from the server. */
+    data object Error : DashboardsState
+}
 
 /** What the template preview area shows. */
 internal sealed interface TemplatePreview {
@@ -30,7 +43,9 @@ internal data class TemplateWidgetConfigureState(
     val textSize: String = DEFAULT_TEXT_SIZE,
     val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     val textColorHex: String? = null,
-    val url: String = "",
+    val selectedTapAction: WidgetTapAction = WidgetTapAction.REFRESH,
+    val selectedDashboardUrlPath: String? = null,
+    val dashboards: DashboardsState = DashboardsState.Loading,
     val dynamicColorAvailable: Boolean = false,
     val isUpdateWidget: Boolean = false,
 ) {
@@ -43,7 +58,12 @@ internal data class TemplateWidgetConfigureState(
     // Guards against saving a template that hasn't been (re-)validated yet: without
     // `!isRenderingPreview`, editing an already-valid template would keep the action enabled
     // using the *previous* render's result while the new one is still in flight.
-    val isActionEnabled = preview is TemplatePreview.Rendered && !isRenderingPreview && textSizeError == null
+    /** Opening a dashboard needs a dashboard to open. */
+    private val isTapActionComplete =
+        selectedTapAction != WidgetTapAction.OPEN_DASHBOARD || selectedDashboardUrlPath != null
+
+    val isActionEnabled =
+        preview is TemplatePreview.Rendered && !isRenderingPreview && textSizeError == null && isTapActionComplete
 
     @StringRes
     val actionButtonLabel = if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget

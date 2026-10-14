@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.PanelResponse
 import io.homeassistant.companion.android.common.util.VOICE_SAMPLE_RATE
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
@@ -289,6 +290,51 @@ class WebSocketRepositoryImplTest {
             assertEquals("config/floor_registry/list", messageSlot.captured["type"])
             assertEquals("ground", response?.single()?.floorId)
             assertEquals(0, response?.single()?.level)
+        }
+    }
+
+    @Nested
+    inner class Panels {
+
+        @Test
+        fun `Given a panels response When getting panels Then sends get_panels and decodes every panel`() = runTest {
+            val messageSlot = slot<Map<String, Any?>>()
+            coEvery { webSocketCore.sendMessage(capture(messageSlot)) } returns MessageSocketResponse(
+                id = 1,
+                success = true,
+                result = kotlinJsonMapper.parseToJsonElement(
+                    """
+                    {
+                      "energy": {"component_name": "energy", "icon": "mdi:lightning-bolt", "title": "energy",
+                        "config": null, "url_path": "energy", "require_admin": false},
+                      "lovelace": {"component_name": "lovelace", "icon": null, "title": null,
+                        "config": {"mode": "storage"}, "url_path": "lovelace", "require_admin": false}
+                    }
+                    """.trimIndent(),
+                ),
+            )
+
+            val panels = repository.getPanels()
+
+            assertEquals("get_panels", messageSlot.captured["type"])
+            assertEquals(
+                listOf(
+                    PanelResponse(urlPath = "energy", componentName = "energy", title = "energy", icon = "mdi:lightning-bolt"),
+                    PanelResponse(urlPath = "lovelace", componentName = "lovelace", title = null, icon = null),
+                ),
+                panels,
+            )
+        }
+
+        @Test
+        fun `Given a failed response When getting panels Then returns null`() = runTest {
+            coEvery { webSocketCore.sendMessage(any<Map<String, Any?>>()) } returns MessageSocketResponse(
+                id = 1,
+                success = false,
+                result = null,
+            )
+
+            assertNull(repository.getPanels())
         }
     }
 

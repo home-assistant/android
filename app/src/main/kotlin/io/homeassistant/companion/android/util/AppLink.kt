@@ -70,8 +70,12 @@ internal sealed interface AppLink {
  * Apps that are not installed open their Play Store listing, and `intent:` URIs that cannot be parsed open the
  * default dashboard of the server [serverId].
  */
-internal fun Context.createAppLinkIntent(link: String, serverId: Int): Intent {
-    val intent = when (val appLink = AppLink.parse(link)) {
+internal fun Context.createAppLinkIntent(link: String, serverId: Int): Intent =
+    createAppLinkIntent(AppLink.parse(link), serverId)
+
+/** Creates an [Intent] opening [appLink], see [createAppLinkIntent]. */
+internal fun Context.createAppLinkIntent(appLink: AppLink, serverId: Int): Intent {
+    val intent = when (appLink) {
         is AppLink.App -> appOrStoreIntent(appLink.packageName)
         is AppLink.IntentUri -> intentUriOrStoreIntent(appLink.uri)
             ?: intentLaunchWithNavigateTo(FrontendTarget.Default, serverId).asInAppIntent()

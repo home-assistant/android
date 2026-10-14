@@ -17,11 +17,13 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.dashboards.GetDashboardsUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
@@ -45,6 +47,7 @@ import timber.log.Timber
 class TemplateWidgetConfigureViewModel @AssistedInject constructor(
     private val templateWidgetDao: TemplateWidgetDao,
     private val serverManager: ServerManager,
+    private val getDashboards: GetDashboardsUseCase,
     @Assisted private val widgetId: Int,
 ) : ViewModel() {
 
@@ -66,6 +69,7 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
     val errors = _errors.asSharedFlow()
 
     private var renderJob: Job? = null
+    private var dashboardsJob: Job? = null
 
     init {
         viewModelScope.launch { restoreConfiguration() }
@@ -86,9 +90,11 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
     fun onServerSelected(serverId: Int) {
         if (serverId == _state.value.selectedServerId) return
 
-        _state.update { it.copy(selectedServerId = serverId) }
+        // Dashboards differ between servers, so the previous pick no longer applies
+        _state.update { it.copy(selectedServerId = serverId, selectedDashboardUrlPath = null) }
         val template = _state.value.template
         if (template.isNotBlank()) renderTemplate(template, serverId)
+        if (_state.value.selectedTapAction == WidgetTapAction.OPEN_DASHBOARD) loadDashboards(serverId)
     }
 
     fun onTemplateChanged(value: String) {
@@ -115,9 +121,22 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
         _state.update { it.copy(textColorHex = colorHex) }
     }
 
-    /** Updates the link opened when the widget is tapped; blank keeps refreshing the widget on tap. */
-    fun onUrlChanged(url: String) {
-        _state.update { it.copy(url = url) }
+    /** Selects what tapping the widget does, loading the dashboards to pick from when needed. */
+    fun onTapActionSelected(tapAction: WidgetTapAction) {
+        if (tapAction == _state.value.selectedTapAction) return
+
+        _state.update { it.copy(selectedTapAction = tapAction) }
+        if (tapAction == WidgetTapAction.OPEN_DASHBOARD) loadDashboards(_state.value.selectedServerId)
+    }
+
+    /** Loads the dashboards of the selected server again, after they failed to load. */
+    fun onRetryLoadDashboards() {
+        loadDashboards(_state.value.selectedServerId)
+    }
+
+    /** Selects the dashboard opened by [WidgetTapAction.OPEN_DASHBOARD]. */
+    fun onDashboardSelected(urlPath: String) {
+        _state.update { it.copy(selectedDashboardUrlPath = urlPath) }
     }
 
     /**
@@ -234,13 +253,50 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
                 textSize = widget.textSize.toInt().toString(),
                 selectedBackgroundType = widget.backgroundType,
                 textColorHex = widget.textColor,
-                url = widget.url.orEmpty(),
                 isUpdateWidget = true,
             )
         }
+        restoreTapAction(widget)
 
         if (widget.template.isNotBlank()) {
             renderTemplate(widget.template, widget.serverId)
+        }
+    }
+
+    private fun restoreTapAction(widget: TemplateWidgetEntity) {
+        _state.update {
+            it.copy(selectedTapAction = widget.tapAction, selectedDashboardUrlPath = widget.dashboardPath)
+        }
+        if (widget.tapAction == WidgetTapAction.OPEN_DASHBOARD) loadDashboards(widget.serverId)
+    }
+
+    /** Loads the dashboards of [serverId], cancelling any load already in flight. */
+    private fun loadDashboards(serverId: Int) {
+        dashboardsJob?.cancel()
+        _state.update { it.copy(dashboards = DashboardsState.Loading) }
+        dashboardsJob = viewModelScope.launch {
+            val dashboards = try {
+                getDashboards(serverId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to load the dashboards")
+                null
+            }
+            if (dashboards == null) {
+                // Shown next to the dashboard picker with a retry, rather than as a snackbar that goes away
+                _state.update { it.copy(dashboards = DashboardsState.Error) }
+                return@launch
+            }
+            _state.update { current ->
+                current.copy(
+                    dashboards = DashboardsState.Loaded(dashboards),
+                    // A dashboard deleted since the widget was configured can't be opened anymore
+                    selectedDashboardUrlPath = current.selectedDashboardUrlPath?.takeIf { selected ->
+                        dashboards.any { it.urlPath == selected }
+                    },
+                )
+            }
         }
     }
 
@@ -291,7 +347,10 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
             textColor = current.textColorHex.takeIf {
                 current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
             },
-            url = current.url.takeIf { it.isNotBlank() },
+            tapAction = current.selectedTapAction,
+            dashboardPath = current.selectedDashboardUrlPath.takeIf {
+                current.selectedTapAction == WidgetTapAction.OPEN_DASHBOARD
+            },
         )
     }
 

@@ -3,12 +3,16 @@ package io.homeassistant.companion.android.widgets.template
 import android.appwidget.AppWidgetManager
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.dashboards.Dashboard
+import io.homeassistant.companion.android.common.data.dashboards.DashboardTitle
+import io.homeassistant.companion.android.common.data.dashboards.GetDashboardsUseCase
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -16,6 +20,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -28,7 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 /** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
 private const val BLACK_HEX = "#3A3A3A"
-private const val TAP_LINK = "/lovelace/energy"
+private const val ENERGY_URL_PATH = "energy"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class)
@@ -37,6 +42,11 @@ class TemplateWidgetConfigureViewModelTest {
     private val dao = mockk<TemplateWidgetDao>(relaxUnitFun = true)
     private val integrationRepository = mockk<IntegrationRepository>()
     private val serverManager = mockk<ServerManager>()
+    private val getDashboards = mockk<GetDashboardsUseCase>()
+    private val dashboards = listOf(
+        Dashboard("home", DashboardTitle.Resource(commonR.string.dashboard_overview)),
+        Dashboard(ENERGY_URL_PATH, DashboardTitle.Resource(commonR.string.dashboard_energy)),
+    )
 
     private val widgetId = 42
     private val serverId = 1
@@ -52,6 +62,7 @@ class TemplateWidgetConfigureViewModelTest {
         coEvery { serverManager.getServer() } returns server
         coEvery { dao.get(any()) } returns null
         every { dao.getWidgetCountFlow() } returns flowOf(0)
+        coEvery { getDashboards(any()) } returns dashboards
     }
 
     @Test
@@ -69,7 +80,9 @@ class TemplateWidgetConfigureViewModelTest {
         assertEquals("21", state.textSize)
         assertEquals(WidgetBackgroundType.TRANSPARENT, state.selectedBackgroundType)
         assertEquals(BLACK_HEX, state.textColorHex)
-        assertEquals(TAP_LINK, state.url)
+        assertEquals(WidgetTapAction.OPEN_DASHBOARD, state.selectedTapAction)
+        assertEquals(ENERGY_URL_PATH, state.selectedDashboardUrlPath)
+        assertEquals(DashboardsState.Loaded(dashboards), state.dashboards)
         assertEquals(TemplatePreview.Rendered("21.5"), state.preview)
         assertTrue(state.isActionEnabled)
     }
@@ -240,8 +253,9 @@ class TemplateWidgetConfigureViewModelTest {
         viewModel.onTextSizeChanged("18")
         viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
         viewModel.onTextColorSelected(BLACK_HEX)
-        viewModel.onUrlChanged(TAP_LINK)
+        viewModel.onTapActionSelected(WidgetTapAction.OPEN_DASHBOARD)
         advanceUntilIdle()
+        viewModel.onDashboardSelected(ENERGY_URL_PATH)
 
         assertTrue(viewModel.updateWidgetConfiguration())
 
@@ -255,24 +269,89 @@ class TemplateWidgetConfigureViewModelTest {
                     lastUpdate = "Loading",
                     backgroundType = WidgetBackgroundType.TRANSPARENT,
                     textColor = BLACK_HEX,
-                    url = TAP_LINK,
+                    tapAction = WidgetTapAction.OPEN_DASHBOARD,
+                    dashboardPath = ENERGY_URL_PATH,
                 ),
             )
         }
     }
 
     @Test
-    fun `Given a blank tap link when configuration is saved then no link is persisted`() = runTest {
-        coEvery { integrationRepository.renderTemplate("{{ 1 }}", emptyMap()) } returns "1"
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-        viewModel.onTemplateChanged("{{ 1 }}")
-        viewModel.onUrlChanged("  ")
-        advanceUntilIdle()
+    fun `Given the default tap action when configuration is saved then the widget refreshes on tap`() = runTest {
+        val viewModel = createRenderedViewModel()
 
         assertTrue(viewModel.updateWidgetConfiguration())
 
-        coVerify { dao.add(match { it.url == null }) }
+        coVerify { dao.add(match { it.tapAction == WidgetTapAction.REFRESH && it.dashboardPath == null }) }
+        coVerify(exactly = 0) { getDashboards(any()) }
+    }
+
+    @Test
+    fun `Given open a dashboard without a dashboard picked then the action is disabled`() = runTest {
+        val viewModel = createRenderedViewModel()
+
+        viewModel.onTapActionSelected(WidgetTapAction.OPEN_DASHBOARD)
+        advanceUntilIdle()
+
+        assertEquals(DashboardsState.Loaded(dashboards), viewModel.state.value.dashboards)
+        assertFalse(viewModel.state.value.isActionEnabled)
+        assertFalse(viewModel.updateWidgetConfiguration())
+    }
+
+    @Test
+    fun `Given the dashboards cannot be loaded when open a dashboard is picked then the failure is shown`() = runTest {
+        coEvery { getDashboards(serverId) } returns null
+        val viewModel = createRenderedViewModel()
+
+        viewModel.onTapActionSelected(WidgetTapAction.OPEN_DASHBOARD)
+        advanceUntilIdle()
+
+        assertEquals(DashboardsState.Error, viewModel.state.value.dashboards)
+        assertFalse(viewModel.state.value.isActionEnabled)
+    }
+
+    @Test
+    fun `Given the dashboards failed to load when retrying then the dashboards are offered`() = runTest {
+        coEvery { getDashboards(serverId) } returnsMany listOf(null, dashboards)
+        val viewModel = createRenderedViewModel()
+        viewModel.onTapActionSelected(WidgetTapAction.OPEN_DASHBOARD)
+        advanceUntilIdle()
+
+        viewModel.onRetryLoadDashboards()
+        advanceUntilIdle()
+
+        assertEquals(DashboardsState.Loaded(dashboards), viewModel.state.value.dashboards)
+    }
+
+    @Test
+    fun `Given a picked dashboard when another server is selected then the dashboards of that server are offered`() = runTest {
+        val otherServerId = 2
+        val otherDashboards = listOf(Dashboard("garden", DashboardTitle.Text("Garden")))
+        coEvery { getDashboards(otherServerId) } returns otherDashboards
+        val viewModel = createRenderedViewModel()
+        viewModel.onTapActionSelected(WidgetTapAction.OPEN_DASHBOARD)
+        advanceUntilIdle()
+        viewModel.onDashboardSelected(ENERGY_URL_PATH)
+
+        viewModel.onServerSelected(otherServerId)
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.selectedDashboardUrlPath)
+        assertEquals(DashboardsState.Loaded(otherDashboards), viewModel.state.value.dashboards)
+    }
+
+    @Test
+    fun `Given a widget opening a deleted dashboard when created then no dashboard is selected`() = runTest {
+        coEvery { dao.get(widgetId) } returns createWidgetEntity()
+        coEvery { integrationRepository.renderTemplate(any(), emptyMap()) } returns "21.5"
+        coEvery { getDashboards(serverId) } returns dashboards.filterNot { it.urlPath == ENERGY_URL_PATH }
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(WidgetTapAction.OPEN_DASHBOARD, viewModel.state.value.selectedTapAction)
+        assertNull(viewModel.state.value.selectedDashboardUrlPath)
+        assertFalse(viewModel.state.value.isActionEnabled)
     }
 
     @Test
@@ -300,8 +379,19 @@ class TemplateWidgetConfigureViewModelTest {
     private fun createViewModel(widgetId: Int = this.widgetId) = TemplateWidgetConfigureViewModel(
         templateWidgetDao = dao,
         serverManager = serverManager,
+        getDashboards = getDashboards,
         widgetId = widgetId,
     )
+
+    /** Creates the view model of a new widget with a valid, rendered template. */
+    private suspend fun TestScope.createRenderedViewModel(): TemplateWidgetConfigureViewModel {
+        coEvery { integrationRepository.renderTemplate("{{ 1 }}", emptyMap()) } returns "1"
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onTemplateChanged("{{ 1 }}")
+        advanceUntilIdle()
+        return viewModel
+    }
 
     private fun createWidgetEntity(template: String = "{{ states('sensor.temp') }}") = TemplateWidgetEntity(
         id = widgetId,
@@ -311,6 +401,7 @@ class TemplateWidgetConfigureViewModelTest {
         lastUpdate = "on",
         backgroundType = WidgetBackgroundType.TRANSPARENT,
         textColor = BLACK_HEX,
-        url = TAP_LINK,
+        tapAction = WidgetTapAction.OPEN_DASHBOARD,
+        dashboardPath = ENERGY_URL_PATH,
     )
 }

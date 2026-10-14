@@ -49,6 +49,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.compose.parseHtml
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
@@ -91,7 +92,9 @@ internal fun TemplateWidgetConfigureScreen(
         onTextSizeChanged = viewModel::onTextSizeChanged,
         onBackgroundTypeSelected = viewModel::onBackgroundTypeSelected,
         onTextColorSelected = viewModel::onTextColorSelected,
-        onUrlChanged = viewModel::onUrlChanged,
+        onTapActionSelected = viewModel::onTapActionSelected,
+        onDashboardSelected = viewModel::onDashboardSelected,
+        onRetryLoadDashboards = viewModel::onRetryLoadDashboards,
         onActionClick = onActionClick,
     )
 }
@@ -108,7 +111,9 @@ internal fun TemplateWidgetConfigureContent(
     onTextSizeChanged: (String) -> Unit,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
     onTextColorSelected: (colorHex: String) -> Unit,
-    onUrlChanged: (String) -> Unit,
+    onTapActionSelected: (WidgetTapAction) -> Unit,
+    onDashboardSelected: (urlPath: String) -> Unit,
+    onRetryLoadDashboards: () -> Unit,
     onActionClick: () -> Unit,
 ) {
     Scaffold(
@@ -119,9 +124,7 @@ internal fun TemplateWidgetConfigureContent(
                 onCloseClick = onNavigate.takeIf { !canNavigateBack },
             )
         },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         Column(
@@ -155,8 +158,12 @@ internal fun TemplateWidgetConfigureContent(
                 onTextColorSelected = onTextColorSelected,
             )
             TapActionSection(
-                url = state.url,
-                onUrlChanged = onUrlChanged,
+                selectedOption = state.selectedTapAction,
+                dashboards = state.dashboards,
+                selectedDashboardUrlPath = state.selectedDashboardUrlPath,
+                onOptionSelected = onTapActionSelected,
+                onDashboardSelected = onDashboardSelected,
+                onRetryLoadDashboards = onRetryLoadDashboards,
             )
             HAAccentButton(
                 text = stringResource(state.actionButtonLabel),
@@ -287,20 +294,8 @@ private fun ColumnScope.AppearanceSection(
     }
 }
 
-@Composable
-private fun TapActionSection(url: String, onUrlChanged: (String) -> Unit) {
-    HATextField(
-        value = url,
-        onValueChange = onUrlChanged,
-        label = { Text(stringResource(commonR.string.widget_tap_action_link_label)) },
-        supportingText = { Text(stringResource(commonR.string.widget_tap_action_link_supporting_text)) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-        maxLines = 1,
-        modifier = Modifier.formControlWidth(),
-    )
-}
-
-private fun Modifier.formControlWidth(): Modifier = this
+/** Width shared by every control of the configuration screen. */
+internal fun Modifier.formControlWidth(): Modifier = this
     .widthIn(max = MaxButtonWidth)
     .fillMaxWidth()
 
@@ -318,7 +313,9 @@ private fun TemplateWidgetConfigureContentPreview() {
             onTextSizeChanged = {},
             onBackgroundTypeSelected = {},
             onTextColorSelected = {},
-            onUrlChanged = {},
+            onTapActionSelected = {},
+            onDashboardSelected = {},
+            onRetryLoadDashboards = {},
             onActionClick = {},
         )
     }

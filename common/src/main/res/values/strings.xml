@@ -1082,8 +1082,10 @@
     <string name="widget_todo_preview_item_second">Milk</string>
     <string name="widget_todo_preview_item_third">Bread</string>
     <string name="widget_tap_action_label">Tap action</string>
-    <string name="widget_tap_action_link_label">Link to open on tap (optional)</string>
-    <string name="widget_tap_action_link_supporting_text">A dashboard path, entityId:, URL, app:// or intent: link. Leave empty to refresh the widget on tap.</string>
+    <string name="widget_tap_action_open_dashboard">Open a dashboard</string>
+    <string name="widget_tap_action_dashboard_label">Dashboard</string>
+    <string name="widget_tap_action_dashboards_loading">Loading dashboards…</string>
+    <string name="widget_tap_action_dashboards_error">Unable to load the dashboards of this server</string>
     <string name="widget_tap_action_open">Open</string>
     <string name="widget_tap_action_toggle">Toggle</string>
     <string name="widget_template_error">Unable to render the template</string>
@@ -1550,4 +1552,10 @@
     <string name="learn_more">Learn more</string>
     <string name="default_assistant_required">Home Assistant must be your default assistant to perform %s.</string>
     <string name="hidden_entity">Hidden entity</string>
+    <string name="dashboard_overview">Overview</string>
+    <string name="dashboard_lights">Lights</string>
+    <string name="dashboard_security">Security</string>
+    <string name="dashboard_climate">Climate</string>
+    <string name="dashboard_energy">Energy</string>
+    <string name="dashboard_maintenance">Maintenance</string>
 </resources>
