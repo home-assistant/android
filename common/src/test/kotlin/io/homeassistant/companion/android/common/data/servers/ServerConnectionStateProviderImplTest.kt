@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import androidx.core.content.ContextCompat
+import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.network.NetworkChangeObserver
 import io.homeassistant.companion.android.common.data.network.NetworkHelper
 import io.homeassistant.companion.android.common.data.network.WifiHelper
@@ -20,6 +21,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -834,6 +836,37 @@ class ServerConnectionStateProviderImplTest {
 
             assertTrue(result is UrlState.HasUrl)
             assertEquals("https://cloud.example.com/", (result as UrlState.HasUrl).url?.toString())
+        }
+
+        @Test
+        fun `Given internal external switch when collecting urlFlow then emits each distinct URL`() = runTest {
+            val networkChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+            every { networkChangeObserver.observerNetworkChange } returns networkChanges
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                internalUrl = "http://192.168.1.1:8123",
+                allowInsecureConnection = true,
+            )
+            var internal = true
+
+            provider.urlFlow(isInternalOverride = { internal }).test {
+                assertEquals("http://192.168.1.1:8123/", (awaitItem() as UrlState.HasUrl).url?.toString())
+
+                // A network change that keeps the same URL must be de-duplicated, so the next
+                // emitted item is the external URL rather than a redundant internal one.
+                networkChanges.emit(Unit)
+                internal = false
+                networkChanges.emit(Unit)
+                assertEquals("https://external.example.com/", (awaitItem() as UrlState.HasUrl).url?.toString())
+
+                // Switching back to internal must emit again.
+                internal = true
+                networkChanges.emit(Unit)
+                assertEquals("http://192.168.1.1:8123/", (awaitItem() as UrlState.HasUrl).url?.toString())
+
+                cancelAndConsumeRemainingEvents()
+            }
         }
     }
 }

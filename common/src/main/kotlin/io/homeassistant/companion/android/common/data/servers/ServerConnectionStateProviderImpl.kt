@@ -176,7 +176,7 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
                     UrlState.InsecureState
                 }
             }
-        }.distinctUntilChanged()
+        }.distinctUntilChanged { old, new -> old.sameUrlAs(new) }
     }
 
     private fun observeConnectionInfoChanges(): Flow<ServerConnectionInfo> {
@@ -206,6 +206,22 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
         awaitClose {
             context.unregisterReceiver(receiver)
         }
+    }
+}
+
+/**
+ * Compares two [UrlState]s without relying on [java.net.URL.equals].
+ *
+ * [java.net.URL.equals] resolves the host via DNS and treats URLs that resolve to the same address
+ * as equal. Using it in `distinctUntilChanged` would run a blocking network lookup on the collecting
+ * thread (the main thread for the frontend) on every internal/external switch, and could both collapse
+ * genuinely different URLs and, when resolution is flaky during a network change, fail to collapse
+ * identical ones. URLs are instead compared by their textual form.
+ */
+private fun UrlState.sameUrlAs(other: UrlState): Boolean {
+    return when {
+        this is UrlState.HasUrl && other is UrlState.HasUrl -> url?.toString() == other.url?.toString()
+        else -> this == other
     }
 }
 
