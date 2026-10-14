@@ -43,7 +43,8 @@ import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerMa
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
-import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
+import io.homeassistant.companion.android.frontend.filechooser.FileChooserResult
+import io.homeassistant.companion.android.frontend.filechooser.FrontendFileChooserHandler
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
@@ -81,6 +82,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -163,7 +165,10 @@ class FrontendViewModelTest {
         serverId: Int = this.serverId,
         path: String? = null,
         dialogManager: FrontendDialogManager = FrontendDialogManager(),
-        fileChooserManager: FileChooserManager = FileChooserManager(),
+        fileChooserHandler: FrontendFileChooserHandler = FrontendFileChooserHandler(
+            cameraCaptureRepository = mockk(relaxed = true),
+            permissionManager = permissionManager,
+        ),
         httpAuthHandler: FrontendHttpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = mockk(relaxed = true),
             clock = FakeClock(),
@@ -186,7 +191,7 @@ class FrontendViewModelTest {
             gestureManager = gestureManager,
             prefsRepository = prefsRepository,
             dialogManager = dialogManager,
-            fileChooserManager = fileChooserManager,
+            fileChooserHandler = fileChooserHandler,
             httpAuthHandler = httpAuthHandler,
             exoPlayerManager = exoPlayerManager,
             improvHandler = improvHandler,
@@ -392,6 +397,31 @@ class FrontendViewModelTest {
             val state = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
             assertInstanceOf(FrontendConnectionError.Unreachable::class.java, state.error)
             assertEquals(errorActions(state.error, isInternalConnection = false), state.actions)
+        }
+
+        @Test
+        fun `Given external url target when loading then opens it and loads the server without it`() = runTest {
+            val externalUrl = "https://example.com/"
+            val externalTarget = FrontendTarget.Path(externalUrl)
+            val externalUri: Uri = mockk()
+            mockkStatic(Uri::class) {
+                every { Uri.parse(externalUrl) } returns externalUri
+                val externalTargetUrlFlow = MutableSharedFlow<UrlLoadResult>()
+                every { urlManager.serverUrlFlow(serverId, externalTarget) } returns externalTargetUrlFlow
+                every { urlManager.serverUrlFlow(serverId, FrontendTarget.Default) } returns flowOf(
+                    UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+                )
+
+                val viewModel = createViewModel(path = externalUrl)
+                viewModel.events.test {
+                    externalTargetUrlFlow.emit(UrlLoadResult.ExternalUrl(url = externalUrl, serverId = serverId))
+                    advanceTimeBy(1.seconds)
+                    assertEquals(FrontendEvent.OpenExternalLink(externalUri), awaitItem())
+                    val state = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+                    // A restart of the load (e.g. on resume) uses this target, it must not reopen the external URL
+                    assertEquals(FrontendTarget.Default, state.target)
+                }
+            }
         }
     }
 
@@ -2082,7 +2112,13 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
-            val viewModel = createViewModel()
+            val viewModel = createViewModel(
+                fileChooserHandler = FrontendFileChooserHandler(
+                    cameraCaptureRepository = mockk(relaxed = true),
+                    permissionManager = permissionManager,
+                    backgroundDispatcher = StandardTestDispatcher(testScheduler),
+                ),
+            )
 
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
             val fileChooserParams = mockk<WebChromeClient.FileChooserParams>(relaxed = true)
@@ -2099,7 +2135,7 @@ class FrontendViewModelTest {
             assertTrue(handled)
             val pending = viewModel.pendingFileChooser.value
             assertNotNull(pending)
-            assertTrue(pending.fileChooserParams === fileChooserParams)
+            assertTrue(pending.input.params === fileChooserParams)
         }
 
         @Test
@@ -2108,7 +2144,13 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
-            val viewModel = createViewModel()
+            val viewModel = createViewModel(
+                fileChooserHandler = FrontendFileChooserHandler(
+                    cameraCaptureRepository = mockk(relaxed = true),
+                    permissionManager = permissionManager,
+                    backgroundDispatcher = StandardTestDispatcher(testScheduler),
+                ),
+            )
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
@@ -2124,7 +2166,7 @@ class FrontendViewModelTest {
             assertNotNull(pending)
 
             val uris = arrayOf(mockk<Uri>())
-            pending.onResult(uris)
+            pending.onResult(FileChooserResult.Selected(uris.toList()))
             advanceUntilIdle()
 
             verify { filePathCallback.onReceiveValue(uris) }
@@ -2137,7 +2179,13 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
-            val viewModel = createViewModel()
+            val viewModel = createViewModel(
+                fileChooserHandler = FrontendFileChooserHandler(
+                    cameraCaptureRepository = mockk(relaxed = true),
+                    permissionManager = permissionManager,
+                    backgroundDispatcher = StandardTestDispatcher(testScheduler),
+                ),
+            )
             val filePathCallback = mockk<ValueCallback<Array<Uri>>>(relaxed = true)
 
             val client = viewModel.createWebChromeClient(onShowCustomView = {}, onHideCustomView = {})
@@ -2150,7 +2198,7 @@ class FrontendViewModelTest {
             advanceUntilIdle()
             val request = viewModel.pendingFileChooser.value
             assertNotNull(request)
-            request.onResult(null)
+            request.onResult(FileChooserResult.Cancelled)
             advanceUntilIdle()
 
             verify { filePathCallback.onReceiveValue(null) }

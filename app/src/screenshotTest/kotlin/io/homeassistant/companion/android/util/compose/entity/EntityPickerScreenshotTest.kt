@@ -14,6 +14,7 @@ import io.github.timoptr.mdiicons.generated.Fan
 import io.github.timoptr.mdiicons.generated.Garage
 import io.github.timoptr.mdiicons.generated.Lightbulb
 import io.github.timoptr.mdiicons.generated.Lock
+import io.github.timoptr.mdiicons.generated.PowerPlug
 import io.github.timoptr.mdiicons.generated.Radiator
 import io.github.timoptr.mdiicons.generated.TemperatureCelsius
 import io.github.timoptr.mdiicons.generated.Thermostat
@@ -168,6 +169,16 @@ class EntityPickerScreenshotTest {
             ),
             areaName = "Bedroom",
             deviceName = "Device #2",
+        ),
+        EntityDisplayWithContext(
+            item = EntityDisplayWithoutContext(
+                entityId = "switch.freezer_power",
+                name = "Power",
+                icon = Mdi.PowerPlug,
+            ),
+            areaName = "Kitchen",
+            deviceName = "Freezer",
+            parentDeviceName = "Power strip",
         ),
     )
 

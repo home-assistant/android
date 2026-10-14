@@ -36,6 +36,11 @@ internal val currentChangelog = Changelog(
             ),
             actionRequiresPlatform = true,
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_native_media_controls,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.MediaControls),
+        ),
     ),
     improved = listOf(
         ChangelogEntry(
@@ -75,6 +80,10 @@ internal val currentChangelog = Changelog(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_matter_commissioning,
             platforms = setOf(ChangelogPlatform.APP),
+        ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_file_picker,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
     ),
     fixed = listOf(

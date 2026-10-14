@@ -89,6 +89,7 @@
     <ID>InjectDispatcher:FrontendEntityAddToManager.kt:FrontendEntityAddToManager$Default</ID>
     <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService$IO</ID>
     <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService.&lt;no name provided&gt;$IO</ID>
+    <ID>InjectDispatcher:HaMediaSession.kt:HaMediaSession$IO</ID>
     <ID>InjectDispatcher:HaShortcutManager.kt:HaShortcutManager$IO</ID>
     <ID>InjectDispatcher:HomeAssistantApplication.kt:HomeAssistantApplication$IO</ID>
     <ID>InjectDispatcher:IconDialogGrid.kt:Default</ID>
@@ -334,7 +335,6 @@
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$private suspend fun getPendingDaoEntity: StaticWidgetEntity?</ID>
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:FrontendGestureManager.kt:FrontendGestureManager$private suspend fun switchServerBy: GestureResult</ID>
-    <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun buildUrl: UrlLoadResult</ID>
     <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun shouldSetSecurityLevel: Boolean</ID>
     <ID>ReturnCount:GeocodeSensorManager.kt:GeocodeSensorManager$private suspend fun updateGeocodedLocation</ID>
     <ID>ReturnCount:HomeAssistantSearcher.kt:private fun NsdServiceInfo.toHomeAssistantInstance: HomeAssistantInstance?</ID>
@@ -389,6 +389,9 @@
     <ID>TooManyFunctions:FakePlayer.kt:FakePlayer : Player</ID>
     <ID>TooManyFunctions:FrontendScreen.kt:io.homeassistant.companion.android.frontend.FrontendScreen.kt</ID>
     <ID>TooManyFunctions:FrontendViewModel.kt:FrontendViewModel : ViewModelFrontendConnectionErrorStateProvider</ID>
+    <ID>TooManyFunctions:HaMediaSession.kt:HaMediaSession</ID>
+    <ID>TooManyFunctions:HaRemoteMediaPlayer.kt:HaRemoteMediaPlayer : SimpleBasePlayer</ID>
+    <ID>TooManyFunctions:HaRemoteMediaPlayer.kt:HaRemoteMediaPlayer$CommandCallback</ID>
     <ID>TooManyFunctions:HealthConnectSensorManager.kt:HealthConnectSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:LaunchViewModel.kt:LaunchViewModel : ViewModel</ID>
     <ID>TooManyFunctions:ManageTilesViewModel.kt:ManageTilesViewModel : ViewModel</ID>
@@ -470,7 +473,6 @@
     <ID>UnusedParameter:LocationSensorManager.kt:LocationSensorManager.Companion$updateInterval: Int</ID>
     <ID>UnusedParameter:QuestSensorManager.kt:QuestSensorManager$applicationContext: Context</ID>
     <ID>UnusedParameter:SettingsWearDetection.kt:SettingsWearDetection$context: Context</ID>
-    <ID>UnusedPrivateProperty:ConnectionViewModel.kt:ConnectionViewModel$private val fileChooserManager: FileChooserManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val nsdManager: NsdManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val wifiManager: WifiManager?</ID>
     <ID>UnusedPrivateProperty:LaunchViewModel.kt:LaunchViewModel$private val prefsRepository: PrefsRepository</ID>
