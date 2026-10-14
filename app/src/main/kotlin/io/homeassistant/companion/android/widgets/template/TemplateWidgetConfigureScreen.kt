@@ -294,8 +294,7 @@ private fun ColumnScope.AppearanceSection(
     }
 }
 
-/** Width shared by every control of the configuration screen. */
-internal fun Modifier.formControlWidth(): Modifier = this
+private fun Modifier.formControlWidth(): Modifier = this
     .widthIn(max = MaxButtonWidth)
     .fillMaxWidth()
 

@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.widgets.template
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -16,6 +18,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAPlainButto
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.dashboards.DashboardTitle
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 
@@ -108,3 +111,7 @@ private fun DashboardDropdown(
         modifier = Modifier.formControlWidth(),
     )
 }
+
+private fun Modifier.formControlWidth(): Modifier = this
+    .widthIn(max = MaxButtonWidth)
+    .fillMaxWidth()

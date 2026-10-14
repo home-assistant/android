@@ -253,21 +253,16 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
                 textSize = widget.textSize.toInt().toString(),
                 selectedBackgroundType = widget.backgroundType,
                 textColorHex = widget.textColor,
+                selectedTapAction = widget.tapAction,
+                selectedDashboardUrlPath = widget.dashboardPath,
                 isUpdateWidget = true,
             )
         }
-        restoreTapAction(widget)
+        if (widget.tapAction == WidgetTapAction.OPEN_DASHBOARD) loadDashboards(widget.serverId)
 
         if (widget.template.isNotBlank()) {
             renderTemplate(widget.template, widget.serverId)
         }
-    }
-
-    private fun restoreTapAction(widget: TemplateWidgetEntity) {
-        _state.update {
-            it.copy(selectedTapAction = widget.tapAction, selectedDashboardUrlPath = widget.dashboardPath)
-        }
-        if (widget.tapAction == WidgetTapAction.OPEN_DASHBOARD) loadDashboards(widget.serverId)
     }
 
     /** Loads the dashboards of [serverId], cancelling any load already in flight. */
