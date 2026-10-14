@@ -8,6 +8,8 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.configure.WidgetConfigureState
+import io.homeassistant.companion.android.widgets.configure.defaultWidgetBackgroundType
+import io.homeassistant.companion.android.widgets.configure.dynamicColorAvailable
 
 @Stable
 internal data class TodoWidgetConfigureState(
@@ -16,11 +18,11 @@ internal data class TodoWidgetConfigureState(
     val entityDisplayState: EntityDisplayState<EntityDisplayWithContext> = EntityDisplayState.Loading,
     val selectedEntityId: String? = null,
     val showCompleted: Boolean = true,
-    val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
+    val selectedBackgroundType: WidgetBackgroundType = defaultWidgetBackgroundType(),
     val textColorHex: String? = null,
-    val dynamicColorAvailable: Boolean = false,
+    val dynamicColorAvailable: Boolean = dynamicColorAvailable(),
     override val isUpdateWidget: Boolean = false,
-) : WidgetConfigureState {
+) : WidgetConfigureState<TodoWidgetConfigureState> {
     val selectedEntity: EntityDisplay? = selectedEntityId
         ?.let { (entityDisplayState as? EntityDisplayState.Loaded<*>)?.entity(it) }
 
@@ -28,8 +30,15 @@ internal data class TodoWidgetConfigureState(
 
     override val isActionEnabled = selectedEntityId != null
 
+    override fun withServersDropdownItems(items: List<HADropdownItem<Int>>) = copy(serversDropdownItems = items)
+
+    override fun withSelectedServerId(serverId: Int) = copy(selectedServerId = serverId)
+
+    override fun withBackgroundType(backgroundType: WidgetBackgroundType) =
+        copy(selectedBackgroundType = backgroundType)
+
     /** Resets the state that only makes sense for the previously selected server. */
-    fun changeServer(serverId: Int): TodoWidgetConfigureState = copy(
+    override fun changeServer(serverId: Int): TodoWidgetConfigureState = copy(
         selectedServerId = serverId,
         selectedEntityId = null,
         entityDisplayState = EntityDisplayState.Loading,

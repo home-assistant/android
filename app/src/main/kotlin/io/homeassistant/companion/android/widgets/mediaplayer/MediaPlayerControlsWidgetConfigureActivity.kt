@@ -81,7 +81,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
                     finish()
                 }
             } else {
-                if (viewModel.updateWidgetConfiguration()) {
+                if (viewModel.updateWidgetConfiguration(this@MediaPlayerControlsWidgetConfigureActivity)) {
                     viewModel.updateWidget(this@MediaPlayerControlsWidgetConfigureActivity)
                     setResult(
                         RESULT_OK,
