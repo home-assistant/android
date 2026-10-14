@@ -73,11 +73,11 @@ fun SensorRow(
     onSensorClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var iconToUse = basicSensor.statelessIcon
-    if (dbSensor?.enabled == true && dbSensor.icon.isNotBlank()) {
-        iconToUse = dbSensor.icon
+    val mdiIcon = if (dbSensor?.enabled == true && dbSensor.icon.isNotBlank()) {
+        Mdi.fromHaName(dbSensor.icon)
+    } else {
+        basicSensor.statelessIcon
     }
-    val mdiIcon = Mdi.fromHaName(iconToUse)
 
     SettingsRow(
         primaryText = stringResource(basicSensor.name),

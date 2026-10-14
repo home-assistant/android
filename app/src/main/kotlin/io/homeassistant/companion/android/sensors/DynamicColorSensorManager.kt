@@ -7,6 +7,8 @@ import androidx.core.graphics.green
 import androidx.core.graphics.red
 import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Palette
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -49,7 +51,7 @@ class DynamicColorSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_accent_color_sensor,
             commonR.string.sensor_description_accent_color_sensor,
-            "mdi:palette",
+            Mdi.Palette,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -59,7 +61,7 @@ class DynamicColorSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_tonal_palette_sensor,
             commonR.string.sensor_description_tonal_palette_sensor,
-            "mdi:palette",
+            Mdi.Palette,
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )

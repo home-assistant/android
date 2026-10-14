@@ -6,6 +6,8 @@ import android.net.NetworkCapabilities
 import android.net.TrafficStats
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.RadioTower
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.math.RoundingMode
@@ -29,7 +31,7 @@ class TrafficStatsManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_mobile_rx_gb,
             commonR.string.sensor_description_mobile_rx_gb,
-            "mdi:radio-tower",
+            Mdi.RadioTower,
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -41,7 +43,7 @@ class TrafficStatsManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_mobile_tx_gb,
             commonR.string.sensor_description_mobile_tx_gb,
-            "mdi:radio-tower",
+            Mdi.RadioTower,
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -53,7 +55,7 @@ class TrafficStatsManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_total_rx_gb,
             commonR.string.sensor_description_total_rx_gb,
-            "mdi:radio-tower",
+            Mdi.RadioTower,
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -65,7 +67,7 @@ class TrafficStatsManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_total_tx_gb,
             commonR.string.sensor_description_total_tx_gb,
-            "mdi:radio-tower",
+            Mdi.RadioTower,
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
