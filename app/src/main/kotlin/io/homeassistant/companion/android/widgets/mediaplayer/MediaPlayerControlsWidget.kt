@@ -9,6 +9,8 @@ import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
@@ -42,8 +44,10 @@ private const val MEDIA_ICON_SIZE_DP = 24
 
 private sealed interface PlaybackAction {
     val serviceAction: String
-    val iconRes: Int
-    val contentDescriptionRes: Int
+
+    @get:DrawableRes val iconRes: Int
+
+    @get:StringRes val contentDescriptionRes: Int
 
     data object Play : PlaybackAction {
         override val serviceAction = "media_play"
@@ -614,12 +618,14 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         }
     }
 
-    private fun getPlaybackAction(entity: Entity?): PlaybackAction = when {
-        entity?.state != MEDIA_PLAYER_STATE_PLAYING -> PlaybackAction.Play
-        entity.getMediaPlayerControls()?.let { controls ->
-            !controls.supportsPause && controls.supportsStop
-        } == true -> PlaybackAction.Stop
-        else -> PlaybackAction.Pause
+    private fun getPlaybackAction(entity: Entity?): PlaybackAction {
+        val controls = entity?.getMediaPlayerControls()
+        return when {
+            entity?.state != MEDIA_PLAYER_STATE_PLAYING -> PlaybackAction.Play
+            controls?.supportsPause == true -> PlaybackAction.Pause
+            controls?.supportsStop == true -> PlaybackAction.Stop
+            else -> PlaybackAction.Pause
+        }
     }
 
     private suspend fun callFastForwardAction(context: Context, appWidgetId: Int) {
