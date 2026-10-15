@@ -400,11 +400,11 @@ fun SensorDetailTopPanel(
                             .fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        var iconToUse = basicSensor.statelessIcon
-                        if (sensor?.enabled == true && sensor.icon.isNotBlank()) {
-                            iconToUse = sensor.icon
+                        val mdiIcon = if (sensor?.enabled == true && sensor.icon.isNotBlank()) {
+                            Mdi.fromHaName(sensor.icon)
+                        } else {
+                            basicSensor.statelessIcon
                         }
-                        val mdiIcon = Mdi.fromHaName(iconToUse)
 
                         if (mdiIcon != null) {
                             Image(

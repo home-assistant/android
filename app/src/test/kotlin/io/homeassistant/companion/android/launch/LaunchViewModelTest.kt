@@ -51,7 +51,10 @@ class LaunchViewModelTest {
     }
 
     private val workManager: WorkManager = mockk()
-    private val appLockStateManager: AppLockStateManager = mockk(relaxed = true)
+    private val appLockEnabledFlow = MutableStateFlow(false)
+    private val appLockStateManager: AppLockStateManager = mockk(relaxed = true) {
+        every { isAppLockEnabledFlow() } returns appLockEnabledFlow
+    }
 
     private lateinit var viewModel: LaunchViewModel
 
@@ -621,6 +624,18 @@ class LaunchViewModelTest {
         advanceUntilIdle()
 
         assertEquals(locked, viewModel.isAppLocked.value)
+    }
+
+    @Test
+    fun `Given app lock enabled flow emits then isAppLockEnabled reflects the change without a refresh`() = runTest {
+        createViewModel()
+        advanceUntilIdle()
+        assertFalse(viewModel.isAppLockEnabled.value)
+
+        appLockEnabledFlow.value = true
+        advanceUntilIdle()
+
+        assertTrue(viewModel.isAppLockEnabled.value)
     }
 
     @Test
