@@ -49,7 +49,7 @@ internal enum class CaptureKind(private val mimeTypePrefix: String, val captureA
     ;
 
     /** `true` when [mimeType] is of this kind of media, like `image/png` for [Photo]. */
-    fun matches(mimeType: String): Boolean = mimeType.startsWith(mimeTypePrefix)
+    fun accepts(mimeType: String): Boolean = mimeType.startsWith(mimeTypePrefix)
 }
 
 /**

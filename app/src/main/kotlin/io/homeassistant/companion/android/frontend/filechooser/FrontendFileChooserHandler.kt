@@ -93,7 +93,7 @@ internal class FrontendFileChooserHandler @VisibleForTesting constructor(
         params: FileChooserParams,
         acceptedMimeTypes: List<String>,
     ): CameraCapture? {
-        val kinds = CaptureKind.entries.filter { kind -> acceptedMimeTypes.any(kind::matches) }
+        val kinds = CaptureKind.entries.filter { kind -> acceptedMimeTypes.any(kind::accepts) }
             .takeIf {
                 it.isNotEmpty() &&
                     params.mode in OPEN_MODES &&
@@ -103,13 +103,13 @@ internal class FrontendFileChooserHandler @VisibleForTesting constructor(
             ?: return null
         return createOutputs(kinds)?.let { outputs ->
             val directOutput = outputs.singleOrNull()?.takeIf { output ->
-                params.isCaptureEnabled && acceptedMimeTypes.all(output.kind::matches)
+                params.isCaptureEnabled && acceptedMimeTypes.all(output.kind::accepts)
             }
             if (directOutput != null) CameraCapture.Direct(directOutput) else CameraCapture.Offered(outputs)
         }
     }
 
-    /** Creates one output per kind, or returns `null` (deleting the ones created) if any fails. */
+    /** Creates one capture file per kind, or returns `null` if any fails, deleting the files already created. */
     private suspend fun createOutputs(kinds: List<CaptureKind>): List<CaptureOutput>? {
         val outputs = mutableListOf<CaptureOutput>()
         return try {
