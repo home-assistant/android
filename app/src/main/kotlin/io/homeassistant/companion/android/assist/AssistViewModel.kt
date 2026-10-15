@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.assist.ui.AssistMessage
 import io.homeassistant.companion.android.assist.ui.AssistUiPipeline
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
+import io.homeassistant.companion.android.common.assist.AssistChimeManager
 import io.homeassistant.companion.android.common.assist.AssistEvent
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -32,11 +33,32 @@ import timber.log.Timber
 @VisibleForTesting
 internal val CLOSE_INACTIVE = 30.seconds
 
+/**
+ * What started the Assist interaction.
+ */
+sealed interface AssistTrigger {
+    /** A screen interaction: the Assist button, a shortcut, a widget, the microphone button, or a pipeline change. */
+    data object ScreenUi : AssistTrigger
+
+    /**
+     * Android launched the app as the device assistant: a gesture, power or home long-press, headset
+     * button. These are Android's triggers, not the app's [WakeWord].
+     */
+    data object SystemAssistant : AssistTrigger
+
+    /** The app's on-device wake word engine heard [phrase]. */
+    data class WakeWord(val phrase: String) : AssistTrigger
+
+    /** The assistant reopened the microphone to continue the conversation, without a new user action. */
+    data object ContinueConversation : AssistTrigger
+}
+
 @HiltViewModel(assistedFactory = AssistViewModel.Factory::class)
-class AssistViewModel @AssistedInject constructor(
+class AssistViewModel @AssistedInject internal constructor(
     serverManager: ServerManager,
     @Assisted initialAudioStrategy: AssistAudioStrategy,
     audioUrlPlayer: AudioUrlPlayer,
+    private val chimeManager: AssistChimeManager,
     application: Application,
 ) : AssistViewModelBase(serverManager, initialAudioStrategy, audioUrlPlayer, application) {
 
@@ -50,7 +72,7 @@ class AssistViewModel @AssistedInject constructor(
             audioStrategy.wakeWordDetected.collect { detectedPhrase ->
                 if (inputMode != AssistInputMode.VOICE_ACTIVE) {
                     wakeWordPhrase = detectedPhrase
-                    onMicrophoneInput()
+                    onMicrophoneInput(trigger = AssistTrigger.WakeWord(detectedPhrase))
                 }
             }
         }
@@ -64,6 +86,9 @@ class AssistViewModel @AssistedInject constructor(
     private var recorderAutoStart = true
     private var requestPermission: (() -> Unit)? = null
     private var requestSilently = true
+
+    /** Trigger of the microphone request that is waiting on a permission prompt, used once granted. */
+    private var pendingPermissionTrigger: AssistTrigger? = null
 
     private val startMessage =
         AssistMessage(application.getString(commonR.string.assist_how_can_i_assist), isInput = false)
@@ -96,7 +121,8 @@ class AssistViewModel @AssistedInject constructor(
     var pendingWakeWordConfirmation by mutableStateOf(false)
         private set
 
-    private var startedFromWakeWord = false
+    /** What opened this session, reused when listening restarts on its own (continued conversation). */
+    private var sessionTrigger: AssistTrigger = AssistTrigger.ScreenUi
     private var inactivityTimerJob: Job? = null
 
     fun onCreate(
@@ -104,12 +130,13 @@ class AssistViewModel @AssistedInject constructor(
         serverId: Int?,
         pipelineId: String?,
         startListening: Boolean?,
-        wakeWordPhrase: String?,
+        launchTrigger: AssistTrigger,
     ) {
         viewModelScope.launch {
+            val wakeWordPhrase = (launchTrigger as? AssistTrigger.WakeWord)?.phrase
             this@AssistViewModel.hasPermission = hasPermission
             this@AssistViewModel.wakeWordPhrase = wakeWordPhrase
-            this@AssistViewModel.startedFromWakeWord = wakeWordPhrase != null
+            this@AssistViewModel.sessionTrigger = launchTrigger
             serverId?.let {
                 filteredServerId = serverId
                 selectedServerId = serverId
@@ -135,7 +162,7 @@ class AssistViewModel @AssistedInject constructor(
             ) {
                 // Start microphone recording to prevent missing voice input while doing network checks
                 pendingWakeWordConfirmation = wakeWordPhrase != null
-                onMicrophoneInput(proactive = true)
+                onMicrophoneInput(proactive = true, trigger = sessionTrigger)
             }
 
             val supported = checkSupport()
@@ -170,6 +197,7 @@ class AssistViewModel @AssistedInject constructor(
                         pipelineId?.isNotBlank() == true -> pipelineId
                         else -> null
                     },
+                    trigger = sessionTrigger,
                 )
             }
 
@@ -184,19 +212,19 @@ class AssistViewModel @AssistedInject constructor(
      * Update the state of the Assist dialog for a new 'assistant triggered' action
      * @param intent the updated intent
      * @param lockedMatches whether the locked state changed and contents should be cleared
+     * @param launchTrigger what triggered the new action, resolved by the activity the same way as
+     * the initial launch so a reused session keeps its real trigger (e.g. a wake word)
      */
-    fun onNewIntent(intent: Intent, lockedMatches: Boolean) {
-        if (
-            (intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0) ||
-            intent.action in
-            listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
-        ) {
+    fun onNewIntent(intent: Intent, lockedMatches: Boolean, launchTrigger: AssistTrigger) {
+        val broughtToFront = intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT != 0
+        if (broughtToFront || launchTrigger != AssistTrigger.ScreenUi) {
             if (!lockedMatches && inputMode != AssistInputMode.BLOCKED) {
                 _conversation.clear()
                 _conversation.add(startMessage)
             }
             if (inputMode == AssistInputMode.VOICE_ACTIVE || inputMode == AssistInputMode.VOICE_INACTIVE) {
-                onMicrophoneInput()
+                sessionTrigger = launchTrigger
+                onMicrophoneInput(trigger = sessionTrigger)
             }
         }
     }
@@ -220,7 +248,7 @@ class AssistViewModel @AssistedInject constructor(
      */
     private fun restartInactivityTimer() {
         inactivityTimerJob?.cancel()
-        if (!startedFromWakeWord) return
+        if (sessionTrigger !is AssistTrigger.WakeWord) return
         fun isInactive(): Boolean {
             val shouldRun = when (inputMode) {
                 AssistInputMode.VOICE_INACTIVE -> true
@@ -302,10 +330,10 @@ class AssistViewModel @AssistedInject constructor(
         stopPlayback()
 
         selectedServerId = serverId
-        setPipeline(id)
+        setPipeline(id, trigger = AssistTrigger.ScreenUi)
     }
 
-    private suspend fun setPipeline(id: String?) {
+    private suspend fun setPipeline(id: String?, trigger: AssistTrigger) {
         selectedPipeline =
             allPipelines[selectedServerId]?.firstOrNull { it.id == id }
                 ?: try {
@@ -337,7 +365,7 @@ class AssistViewModel @AssistedInject constructor(
             if (hasMicrophone && it.sttEngine != null) {
                 if (recorderAutoStart && (hasPermission || requestSilently)) {
                     inputMode = AssistInputMode.VOICE_INACTIVE
-                    onMicrophoneInput(proactive = null)
+                    onMicrophoneInput(proactive = null, trigger = trigger)
                 } else { // already requested permission once and was denied
                     inputMode = AssistInputMode.TEXT
                 }
@@ -347,7 +375,7 @@ class AssistViewModel @AssistedInject constructor(
             restartInactivityTimer()
         } ?: run {
             if (!id.isNullOrBlank()) {
-                setPipeline(null) // Try falling back to default pipeline
+                setPipeline(null, trigger) // Try falling back to default pipeline
             } else {
                 Timber.w("Server $selectedServerId does not have any pipelines")
                 inputMode = AssistInputMode.BLOCKED
@@ -366,7 +394,7 @@ class AssistViewModel @AssistedInject constructor(
             AssistInputMode.TEXT -> {
                 inputMode = AssistInputMode.VOICE_INACTIVE
                 if (hasPermission || requestSilently) {
-                    onMicrophoneInput()
+                    onMicrophoneInput(trigger = AssistTrigger.ScreenUi)
                 }
             }
 
@@ -390,10 +418,13 @@ class AssistViewModel @AssistedInject constructor(
 
     /**
      * Start/stop microphone input for Assist, depending on the current state.
+     * @param trigger what started listening; anything but [AssistTrigger.ScreenUi] plays the listening
+     * chime before capturing audio
      * @param proactive true if proactive, null if not important, false if not
      */
-    fun onMicrophoneInput(proactive: Boolean? = false) {
+    fun onMicrophoneInput(trigger: AssistTrigger, proactive: Boolean? = false) {
         if (!hasPermission) {
+            pendingPermissionTrigger = trigger
             requestPermission?.let { it() }
             return
         }
@@ -413,6 +444,9 @@ class AssistViewModel @AssistedInject constructor(
                     _conversation.add(
                         AssistMessage(app.getString(commonR.string.assist_error), isInput = false, isError = true),
                     )
+                },
+                beforeRecording = {
+                    if (trigger != AssistTrigger.ScreenUi) chimeManager.playListeningChimeIfEnabled()
                 },
             )
         }
@@ -483,7 +517,7 @@ class AssistViewModel @AssistedInject constructor(
                 is AssistEvent.PlaybackFinished,
                 -> restartInactivityTimer()
 
-                is AssistEvent.ContinueConversation -> onMicrophoneInput()
+                is AssistEvent.ContinueConversation -> onMicrophoneInput(trigger = AssistTrigger.ContinueConversation)
                 is AssistEvent.Dismiss -> shouldFinish = true
             }
             if (!shouldFinish && pendingWakeWordConfirmation) {
@@ -502,9 +536,13 @@ class AssistViewModel @AssistedInject constructor(
     fun onPermissionResult(granted: Boolean) {
         hasPermission = granted
         val proactive = currentPipeline == null
+        // Keep the trigger that requested the microphone (e.g. a screen tap) rather than the session
+        // trigger, so the chime only plays for hands-free triggers.
+        val trigger = pendingPermissionTrigger ?: sessionTrigger
+        pendingPermissionTrigger = null
         if (granted) {
             inputMode = AssistInputMode.VOICE_INACTIVE
-            onMicrophoneInput(proactive = proactive)
+            onMicrophoneInput(proactive = proactive, trigger = trigger)
         } else if (requestSilently && !proactive) { // Don't notify the user if they haven't explicitly requested
             inputMode = AssistInputMode.TEXT
         } else if (!requestSilently) {

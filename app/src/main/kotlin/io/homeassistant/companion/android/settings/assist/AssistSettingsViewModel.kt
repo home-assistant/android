@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 data class AssistSettingsUiState(
     val isLoading: Boolean = true,
     val isDefaultAssistant: Boolean = false,
+    val isListeningChimeEnabled: Boolean = true,
     val isWakeWordEnabled: Boolean = false,
     val selectedWakeWordModel: MicroWakeWordModelConfig? = null,
     val availableModels: List<MicroWakeWordModelConfig> = emptyList(),
@@ -54,6 +55,7 @@ class AssistSettingsViewModel @Inject internal constructor(
             var isEnabled = assistConfigManager.isWakeWordEnabled()
             val selectedModel = assistConfigManager.getSelectedWakeWordModel() ?: models.firstOrNull()
             val isDefaultAssistant = defaultAssistantManager.isDefaultAssistant()
+            val isListeningChimeEnabled = assistConfigManager.isListeningChimeEnabled()
 
             if (!isDefaultAssistant && isEnabled) {
                 assistConfigManager.setWakeWordEnabled(false)
@@ -64,6 +66,7 @@ class AssistSettingsViewModel @Inject internal constructor(
                 it.copy(
                     isLoading = false,
                     isDefaultAssistant = isDefaultAssistant,
+                    isListeningChimeEnabled = isListeningChimeEnabled,
                     isWakeWordEnabled = isEnabled,
                     selectedWakeWordModel = selectedModel,
                     availableModels = models,
@@ -101,6 +104,16 @@ class AssistSettingsViewModel @Inject internal constructor(
             _uiState.update {
                 it.copy(isWakeWordEnabled = enabled, selectedWakeWordModel = model)
             }
+        }
+    }
+
+    /**
+     * Toggle the chime played when Assist starts listening without a tap on the screen.
+     */
+    fun onToggleListeningChime(enabled: Boolean) {
+        viewModelScope.launch {
+            assistConfigManager.setListeningChimeEnabled(enabled)
+            _uiState.update { it.copy(isListeningChimeEnabled = enabled) }
         }
     }
 

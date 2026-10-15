@@ -45,6 +45,7 @@ private const val PREF_LAST_SEEN_CHANGELOG_VERSION = "last_seen_changelog_versio
 private const val PREF_SHOW_PRIVACY_HINT = "show_privacy_hint"
 private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
+private const val PREF_ASSIST_LISTENING_CHIME_ENABLED = "assist_listening_chime_enabled"
 private const val PREF_ALLOWED_TAGS = "allowed_tags"
 
 /**
@@ -442,6 +443,14 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setSelectedWakeWord(wakeWord: String) {
         localStorage().putString(PREF_SELECTED_WAKE_WORD, wakeWord)
+    }
+
+    override suspend fun isAssistListeningChimeEnabled(): Boolean {
+        return localStorage().getBooleanOrNull(PREF_ASSIST_LISTENING_CHIME_ENABLED) ?: true
+    }
+
+    override suspend fun setAssistListeningChimeEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_ASSIST_LISTENING_CHIME_ENABLED, enabled)
     }
 
     override suspend fun addAllowedTag(tag: String) {

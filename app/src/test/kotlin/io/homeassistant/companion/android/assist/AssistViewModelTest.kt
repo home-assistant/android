@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.assist
 import android.app.Application
 import android.content.pm.PackageManager
 import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
+import io.homeassistant.companion.android.common.assist.AssistChimeManager
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -39,12 +40,16 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+
+private const val CHIME = "chime"
+private const val CAPTURE = "capture"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class)
@@ -55,6 +60,7 @@ class AssistViewModelTest {
     private val application: Application = mockk(relaxed = true)
     private val webSocketRepository: WebSocketRepository = mockk(relaxed = true)
     private val integrationRepository: IntegrationRepository = mockk(relaxed = true)
+    private val chimeManager: AssistChimeManager = mockk(relaxed = true)
 
     private lateinit var viewModel: AssistViewModel
 
@@ -101,35 +107,47 @@ class AssistViewModelTest {
         coEvery { serverManager.servers() } returns listOf()
     }
 
-    private fun createViewModel(): AssistViewModel {
+    private fun createViewModel(
+        audioStrategy: AssistAudioStrategy = object : AssistAudioStrategy {
+            override suspend fun audioData(): Flow<ShortArray> = emptyFlow()
+
+            override val wakeWordDetected: Flow<String> = emptyFlow()
+
+            override fun requestFocus() {
+                // No-op for testing
+            }
+
+            override fun abandonFocus() {
+                // No-op for testing
+            }
+        },
+    ): AssistViewModel {
         return AssistViewModel(
             serverManager = serverManager,
             audioUrlPlayer = audioUrlPlayer,
+            chimeManager = chimeManager,
             application = application,
-            initialAudioStrategy = object : AssistAudioStrategy {
-                override suspend fun audioData(): Flow<ShortArray> = emptyFlow()
-
-                override val wakeWordDetected: Flow<String> = emptyFlow()
-
-                override fun requestFocus() {
-                    // No-op for testing
-                }
-
-                override fun abandonFocus() {
-                    // No-op for testing
-                }
-            },
+            initialAudioStrategy = audioStrategy,
         )
     }
 
-    private fun createAndInitialize(hasPermission: Boolean = false, startedWithWakeWord: Boolean = false): AssistViewModel {
-        val vm = createViewModel()
+    private fun createAndInitialize(
+        hasPermission: Boolean = false,
+        startedWithWakeWord: Boolean = false,
+        fromSystemAssistant: Boolean = false,
+        audioStrategy: AssistAudioStrategy? = null,
+    ): AssistViewModel {
+        val vm = audioStrategy?.let { createViewModel(it) } ?: createViewModel()
         vm.onCreate(
             hasPermission = hasPermission,
             serverId = null,
             pipelineId = null,
             startListening = null,
-            wakeWordPhrase = if (startedWithWakeWord) "Okay Nabu" else null,
+            launchTrigger = when {
+                startedWithWakeWord -> AssistTrigger.WakeWord("Okay Nabu")
+                fromSystemAssistant -> AssistTrigger.SystemAssistant
+                else -> AssistTrigger.ScreenUi
+            },
         )
         return vm
     }
@@ -362,7 +380,7 @@ class AssistViewModelTest {
             runCurrent()
 
             // VM is now VOICE_ACTIVE. Stop recording to transition to VOICE_INACTIVE.
-            viewModel.onMicrophoneInput()
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi)
             runCurrent()
 
             // Last message is still a placeholder, so the timer should not start yet.
@@ -386,6 +404,38 @@ class AssistViewModelTest {
         }
 
         @Test
+        fun `Given screen UI session reused with a wake word intent when recording stops and response arrives then timer fires`() = runTest {
+            setupVoicePipeline()
+
+            // The session starts from the screen, so the inactivity timer is disabled.
+            viewModel = createAndInitialize(hasPermission = true)
+            runCurrent()
+
+            // A new wake-word intent reaches the running (singleTask) activity, reclassifying the session.
+            viewModel.onNewIntent(
+                intent = mockk(relaxed = true),
+                lockedMatches = true,
+                launchTrigger = AssistTrigger.WakeWord("Okay Nabu"),
+            )
+            runCurrent()
+
+            // Reusing the active session stops recording and moves to VOICE_INACTIVE, but the last
+            // message is still a placeholder so the timer does not start yet.
+            advanceTimeBy(CLOSE_INACTIVE + 1.seconds)
+            runCurrent()
+            assertFalse(viewModel.shouldFinish)
+
+            // Pipeline emits a response, replacing the placeholder with a real message.
+            emitIntentEnd()
+            runCurrent()
+
+            // The wake-word classification survived the reuse, so the timer now closes the dialog.
+            advanceTimeBy(CLOSE_INACTIVE)
+            runCurrent()
+            assertTrue(viewModel.shouldFinish)
+        }
+
+        @Test
         fun `Given voice inactive mode with placeholder message when CLOSE_INACTIVE elapses then shouldFinish is false`() = runTest {
             setupVoicePipeline()
             coEvery {
@@ -396,7 +446,7 @@ class AssistViewModelTest {
             runCurrent()
 
             // Stop recording: transitions to VOICE_INACTIVE while last message is still a placeholder
-            viewModel.onMicrophoneInput()
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi)
             runCurrent()
 
             advanceTimeBy(CLOSE_INACTIVE + 1.seconds)
@@ -414,7 +464,7 @@ class AssistViewModelTest {
             runCurrent()
 
             // Stop recording to transition to VOICE_INACTIVE
-            viewModel.onMicrophoneInput()
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi)
             runCurrent()
 
             // Emit INTENT_END to replace placeholder with a real message
@@ -444,7 +494,7 @@ class AssistViewModelTest {
             runCurrent()
 
             // Stop recording to transition to VOICE_INACTIVE
-            viewModel.onMicrophoneInput()
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi)
             runCurrent()
 
             // Emit INTENT_END to replace placeholder with a real message
@@ -536,7 +586,7 @@ class AssistViewModelTest {
                 serverId = null,
                 pipelineId = null,
                 startListening = null,
-                wakeWordPhrase = null,
+                launchTrigger = AssistTrigger.ScreenUi,
             )
             runCurrent()
 
@@ -544,6 +594,182 @@ class AssistViewModelTest {
             runCurrent()
 
             assertFalse(viewModel.shouldFinish)
+        }
+    }
+
+    @Nested
+    inner class ListeningChimeTest {
+
+        /** Records the order of chimes and audio captures. */
+        private val events = mutableListOf<String>()
+        private val wakeWordDetected = MutableSharedFlow<String>()
+
+        private val audioStrategy = object : AssistAudioStrategy {
+            override suspend fun audioData(): Flow<ShortArray> = flow {
+                events += CAPTURE
+                awaitCancellation()
+            }
+
+            override val wakeWordDetected: Flow<String> = this@ListeningChimeTest.wakeWordDetected
+
+            override fun requestFocus() {
+                // No-op for testing
+            }
+
+            override fun abandonFocus() {
+                // No-op for testing
+            }
+        }
+
+        @BeforeEach
+        fun setUpChime() {
+            coEvery { chimeManager.playListeningChimeIfEnabled() } coAnswers { events += CHIME }
+            coEvery {
+                webSocketRepository.runAssistPipelineForVoice(any(), any(), anyNullable(), anyNullable(), anyNullable())
+            } returns MutableSharedFlow()
+        }
+
+        @Test
+        fun `Given system assistant launch when listening starts then play the chime before capturing audio`() = runTest {
+            viewModel = createAndInitialize(hasPermission = true, fromSystemAssistant = true, audioStrategy = audioStrategy)
+            runCurrent()
+
+            assertEquals(listOf(CHIME, CAPTURE), events)
+        }
+
+        @Test
+        fun `Given screen UI launch when listening starts then do not play the chime`() = runTest {
+            viewModel = createAndInitialize(hasPermission = true, fromSystemAssistant = false, audioStrategy = audioStrategy)
+            runCurrent()
+
+            assertEquals(listOf(CAPTURE), events)
+        }
+
+        @Test
+        fun `Given system assistant session when the user taps the microphone to listen again then do not play the chime`() = runTest {
+            viewModel = createAndInitialize(hasPermission = true, fromSystemAssistant = true, audioStrategy = audioStrategy)
+            runCurrent()
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi) // Stops listening
+            runCurrent()
+            events.clear()
+
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi) // Listens again
+            runCurrent()
+
+            assertEquals(listOf(CAPTURE), events)
+        }
+
+        @Test
+        fun `Given screen UI session when the wake word is detected then play the chime before capturing audio`() = runTest {
+            viewModel = createAndInitialize(hasPermission = true, fromSystemAssistant = false, audioStrategy = audioStrategy)
+            runCurrent()
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi) // Stops listening
+            runCurrent()
+            events.clear()
+
+            wakeWordDetected.emit("Okay Nabu")
+            runCurrent()
+
+            assertEquals(listOf(CHIME, CAPTURE), events)
+        }
+
+        @Test
+        fun `Given chime playing when listening stops then do not capture audio`() = runTest {
+            coEvery { chimeManager.playListeningChimeIfEnabled() } coAnswers {
+                events += CHIME
+                awaitCancellation()
+            }
+            viewModel = createAndInitialize(hasPermission = true, fromSystemAssistant = true, audioStrategy = audioStrategy)
+            runCurrent()
+
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi) // Stops listening while the chime is playing
+            runCurrent()
+
+            assertEquals(listOf(CHIME), events)
+        }
+
+        @Test
+        fun `Given hands-free launch without permission when permission is granted then play the chime before capturing audio`() = runTest {
+            viewModel = createAndInitialize(hasPermission = false, fromSystemAssistant = true, audioStrategy = audioStrategy)
+            runCurrent()
+            // Listening cannot start until the microphone permission is granted.
+            assertTrue(events.isEmpty())
+
+            viewModel.onPermissionResult(granted = true)
+            runCurrent()
+
+            assertEquals(listOf(CHIME, CAPTURE), events)
+        }
+
+        @Test
+        fun `Given hands-free launch without permission when the user taps the microphone and grants permission then do not play the chime`() = runTest {
+            viewModel = createAndInitialize(hasPermission = false, fromSystemAssistant = true, audioStrategy = audioStrategy)
+            runCurrent()
+            // The hands-free request is still waiting on the permission prompt.
+            assertTrue(events.isEmpty())
+
+            viewModel.onMicrophoneInput(AssistTrigger.ScreenUi) // User taps the microphone, re-requesting permission.
+            runCurrent()
+            viewModel.onPermissionResult(granted = true)
+            runCurrent()
+
+            // The grant resumes the screen tap, not the hands-free launch, so no chime plays.
+            assertEquals(listOf(CAPTURE), events)
+        }
+
+        @Test
+        fun `Given screen UI session when the conversation continues then play the chime before capturing audio`() = runTest {
+            val pipelineEvents = MutableSharedFlow<AssistPipelineEvent>()
+            coEvery {
+                webSocketRepository.runAssistPipelineForVoice(any(), any(), anyNullable(), anyNullable(), anyNullable())
+            } returns pipelineEvents
+            val connectionStateProvider = mockk<ServerConnectionStateProvider>()
+            coEvery { serverManager.connectionStateProvider(any()) } returns connectionStateProvider
+            every { connectionStateProvider.urlFlow(anyNullable()) } returns flowOf(
+                UrlState.HasUrl(URL("http://test-ha.local")),
+            )
+            val playbackStates = MutableSharedFlow<PlaybackState>()
+            every { audioUrlPlayer.playAudio(any(), any()) } returns playbackStates
+
+            viewModel = createAndInitialize(hasPermission = true, fromSystemAssistant = false, audioStrategy = audioStrategy)
+            runCurrent()
+            // Screen UI launch captures audio without a chime.
+            assertEquals(listOf(CAPTURE), events)
+            events.clear()
+
+            // The turn finishes asking to continue the conversation, which reopens the microphone hands-free.
+            pipelineEvents.emit(AssistPipelineEvent(AssistPipelineEventType.STT_END, null))
+            runCurrent()
+            pipelineEvents.emit(
+                AssistPipelineEvent(
+                    type = AssistPipelineEventType.INTENT_END,
+                    data = AssistPipelineIntentEnd(
+                        intentOutput = ConversationResponse(
+                            response = ConversationSpeechResponse(
+                                speech = ConversationSpeechPlainResponse(plain = mapOf("speech" to "Anything else?")),
+                            ),
+                            conversationId = "test-conv",
+                            continueConversation = true,
+                        ),
+                    ),
+                ),
+            )
+            runCurrent()
+            pipelineEvents.emit(
+                AssistPipelineEvent(
+                    type = AssistPipelineEventType.TTS_END,
+                    data = AssistPipelineTtsEnd(
+                        ttsOutput = TtsOutputResponse(mimeType = "audio/mpeg", url = "/api/tts_proxy/test.mp3"),
+                    ),
+                ),
+            )
+            runCurrent()
+            playbackStates.emit(PlaybackState.PLAYING)
+            playbackStates.emit(PlaybackState.STOP_PLAYING)
+            runCurrent()
+
+            // The continued turn is hands-free, so it chimes even though the session started from the screen.
+            assertEquals(listOf(CHIME, CAPTURE), events)
         }
     }
 }
