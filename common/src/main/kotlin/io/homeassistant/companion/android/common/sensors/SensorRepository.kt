@@ -44,6 +44,9 @@ interface SensorRepository {
     /** Update [sensor]'s state. */
     suspend fun update(sensor: Sensor)
 
+    /** Marks an enabled sensor unregistered after a failed server update without replacing its current state. */
+    suspend fun markRegistrationFailed(sensorId: String, serverId: Int)
+
     /** Enables or disables sensor [sensorId] on each of [serverIds]. */
     suspend fun setSensorEnabled(sensorId: String, serverIds: List<Int>, enabled: Boolean)
 

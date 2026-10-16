@@ -3,7 +3,21 @@ package io.homeassistant.companion.android.sensors
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import javax.inject.Inject
+
+
+private const val RECORDER_SAFE_ATTRIBUTE_BYTES = 14 * 1024
+private const val MAX_ACTIVE_NOTIFICATION_ATTRIBUTE_STRING_LENGTH = 512
+private const val MAX_ACTIVE_NOTIFICATION_ATTRIBUTE_LIST_SIZE = 10
+private const val ACTIVE_NOTIFICATION_TOTAL = "total"
+private const val ACTIVE_NOTIFICATION_PART = "part"
+private const val ACTIVE_NOTIFICATION_PARTS = "parts"
+private const val ACTIVE_NOTIFICATION_LAST = "last"
+private const val ACTIVE_NOTIFICATION_SNAPSHOT = "snapshot"
+private const val ACTIVE_NOTIFICATION_CUT = "cut"
+private const val ACTIVE_NOTIFICATION_CUT_COUNT = "cut_count"
 
 /**
  * Thin [NotificationListenerService] that forwards the framework's notification callbacks to
@@ -202,15 +216,21 @@ internal fun Map<String, Any?>.serializedAttributeBytes(): Int {
     ).encodeToByteArray().size
 }
 
-private fun Any?.toRecorderBudgetValue(): Any? = when (this) {
-    null,
+internal fun Any?.toRecorderBudgetValue(): Any? = when (this) {
+    null -> "null"
     is Boolean,
     is Number,
     is String,
     -> this
     is CharSequence -> toString()
-    is List<*> -> map { it.toRecorderBudgetValue() }
-    is Array<*> -> map { it.toRecorderBudgetValue() }
-    is Map<*, *> -> entries.associate { it.key.toString() to it.value.toRecorderBudgetValue() }
+    is List<*> -> when {
+        all { it is Boolean } -> this
+        all { it is Int } -> this
+        all { it is Long } -> this
+        all { it is Number } -> this
+        else -> map { it.toString() }
+    }
+    is Array<*> -> toString()
+    is Map<*, *> -> toString()
     else -> toString()
 }

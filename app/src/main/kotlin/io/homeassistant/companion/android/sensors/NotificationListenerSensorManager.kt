@@ -23,18 +23,23 @@ import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.sensors.SensorRepository
-import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.mdiName
+import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
 import io.homeassistant.companion.android.database.sensor.toSensorsWithAttributes
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -111,6 +116,19 @@ class NotificationListenerSensorManager @Inject constructor(
 
     /** Whether the notification listener service is currently connected, set by the service. */
     private var listenerConnected = AtomicBoolean(false)
+    private data class PendingActiveNotificationBucket(
+        val totalCount: Int,
+        val attributes: Map<String, Any?>,
+    )
+
+    private val activeNotificationFlushScheduled = AtomicBoolean(false)
+    private val pendingActiveNotificationGeneration = AtomicLong(0)
+    private val activeNotificationSyncGeneration = AtomicLong(0)
+    private val activeNotificationCountMutex = Mutex()
+    private val activeNotificationDeliveryMutex = Mutex()
+    private val pendingActiveNotificationBuckets = mutableMapOf<Int, List<PendingActiveNotificationBucket>>()
+    private val latestActiveNotificationBuckets = mutableMapOf<Int, List<PendingActiveNotificationBucket>>()
+    private val activeNotificationManagedServerIds = ConcurrentHashMap.newKeySet<Int>()
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
@@ -142,8 +160,51 @@ class NotificationListenerSensorManager @Inject constructor(
             .contains(applicationContext.packageName)
     }
 
+    override fun managesSensorStateUpdates(sensorId: String, serverId: Int): Boolean =
+        sensorId == activeNotificationCount.id && serverId in activeNotificationManagedServerIds
+
+    override suspend fun onSensorSyncComplete() {
+        val snapshotChangedDuringSync =
+            activeNotificationSyncGeneration.get() != pendingActiveNotificationGeneration.get()
+
+        if (snapshotChangedDuringSync) {
+            activeNotificationCountMutex.withLock {
+                val fullSensors = sensorRepository.getFull(activeNotificationCount.id)
+                    .toSensorsWithAttributes()
+                    .filter { it.sensor.enabled }
+                val enabledServerIds = fullSensors.map { it.sensor.serverId }.toSet()
+                activeNotificationManagedServerIds.retainAll(enabledServerIds)
+                latestActiveNotificationBuckets.keys.retainAll(enabledServerIds)
+                fullSensors.forEach { fullSensor ->
+                    latestActiveNotificationBuckets[fullSensor.sensor.serverId]?.let { latestBuckets ->
+                        pendingActiveNotificationBuckets[fullSensor.sensor.serverId] = latestBuckets
+                    }
+                }
+            }
+        }
+
+        flushPendingActiveNotificationBuckets()
+    }
+
     override suspend fun requestSensorUpdate() {
         updateMediaSession()
+        activeNotificationSyncGeneration.set(pendingActiveNotificationGeneration.get())
+    }
+
+    private fun schedulePendingActiveNotificationBucketFlush() {
+        if (!activeNotificationFlushScheduled.compareAndSet(false, true)) return
+
+        sensorWorkerScope.launch {
+            val generation = pendingActiveNotificationGeneration.get()
+            try {
+                flushPendingActiveNotificationBuckets()
+            } finally {
+                activeNotificationFlushScheduled.set(false)
+                if (pendingActiveNotificationGeneration.get() != generation) {
+                    schedulePendingActiveNotificationBucketFlush()
+                }
+            }
+        }
     }
 
     /** Called by [NotificationSensorManager] when the listener connects or disconnects. */
@@ -239,78 +300,138 @@ class NotificationListenerSensorManager @Inject constructor(
                 return@launch
             }
 
-            try {
-                val activeNotificationSnapshot = activeNotifications.toList()
-                val activeNotificationTotal = activeNotificationSnapshot.size
-                val includeContentsAsAttrsSetting =
-                    getToggleSetting(
-                        activeNotificationCount,
-                        SETTING_INCLUDE_CONTENTS_AS_ATTRS,
-                    )
-                if (includeContentsAsAttrsSetting) {
-                    val notificationRecords = activeNotificationSnapshot.sortedBy { it.postTime }.map { item ->
-                        ActiveNotificationRecord(
-                            item.postTime,
-                            buildMap {
-                                put("${item.packageName}_${item.id}_post_time", item.postTime)
-                                put("${item.packageName}_${item.id}_is_ongoing", item.isOngoing)
-                                put("${item.packageName}_${item.id}_is_clearable", item.isClearable)
-                                put("${item.packageName}_${item.id}_group_id", item.notification.group)
-                                put("${item.packageName}_${item.id}_category", item.notification.category)
-
-                                if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-                                    put("${item.packageName}_${item.id}_channel_id", item.notification.channelId)
-                                }
-                                putAll(
-                                    mappedBundle(
-                                        item.notification.extras,
-                                        "_${item.packageName}_${item.id}",
-                                    ).orEmpty(),
-                                )
-                            },
+            activeNotificationCountMutex.withLock {
+                try {
+                    val activeNotificationSnapshot = activeNotifications.toList()
+                    val activeNotificationTotal = activeNotificationSnapshot.size
+                    val includeContentsAsAttrsSetting =
+                        getToggleSetting(
+                            activeNotificationCount,
+                            SETTING_INCLUDE_CONTENTS_AS_ATTRS,
                         )
+                    if (includeContentsAsAttrsSetting) {
+                        val notificationRecords = activeNotificationSnapshot.sortedBy { it.postTime }.map { item ->
+                            ActiveNotificationRecord(
+                                item.postTime,
+                                buildMap {
+                                    put("${item.packageName}_${item.id}_post_time", item.postTime)
+                                    put("${item.packageName}_${item.id}_is_ongoing", item.isOngoing)
+                                    put("${item.packageName}_${item.id}_is_clearable", item.isClearable)
+                                    put("${item.packageName}_${item.id}_group_id", item.notification.group)
+                                    put("${item.packageName}_${item.id}_category", item.notification.category)
+
+                                    if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+                                        put("${item.packageName}_${item.id}_channel_id", item.notification.channelId)
+                                    }
+                                    putAll(
+                                        mappedBundle(
+                                            item.notification.extras,
+                                            "_${item.packageName}_${item.id}",
+                                        ).orEmpty(),
+                                    )
+                                },
+                            )
+                        }
+                        val buckets = buildActiveNotificationBuckets(notificationRecords, activeNotificationTotal)
+                        sendActiveNotificationCountBuckets(activeNotificationTotal, buckets)
+                    } else {
+                        sendActiveNotificationCountBuckets(activeNotificationTotal, listOf(emptyMap()))
                     }
-                    buildActiveNotificationBuckets(notificationRecords, activeNotificationTotal).forEach { attrs ->
-                        sendActiveNotificationCountBucket(activeNotificationTotal, attrs)
-                    }
-                } else {
-                    sendActiveNotificationCountBucket(activeNotificationTotal, emptyMap())
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Unable to update active notifications")
                 }
-            } catch (e: Exception) {
-                Timber.e(e, "Unable to update active notifications")
             }
         }
     }
 
-    private suspend fun sendActiveNotificationCountBucket(totalCount: Int, attrs: Map<String, Any?>) {
+    private suspend fun sendActiveNotificationCountBuckets(
+        totalCount: Int,
+        buckets: List<Map<String, Any?>>,
+    ) {
         onSensorUpdated(
             activeNotificationCount,
             totalCount,
             activeNotificationCount.statelessIcon,
-            attrs,
+            buckets.lastOrNull().orEmpty(),
             forceUpdate = true,
         )
 
-        withContext(Dispatchers.IO) {
-            val fullSensors = sensorRepository.getFull(activeNotificationCount.id).toSensorsWithAttributes()
-            fullSensors.filter {
-                it.sensor.enabled && it.sensor.registered == true
-            }.forEach { fullSensor ->
+        val fullSensors = sensorRepository.getFull(activeNotificationCount.id)
+            .toSensorsWithAttributes()
+            .filter { it.sensor.enabled }
+        val eligibleServerIds = fullSensors.map { it.sensor.serverId }.toSet()
+        pendingActiveNotificationBuckets.keys.retainAll(eligibleServerIds)
+        val pendingBuckets = buckets.map { PendingActiveNotificationBucket(totalCount, it) }
+        fullSensors.forEach { fullSensor ->
+            val serverId = fullSensor.sensor.serverId
+            pendingActiveNotificationBuckets[serverId] = pendingBuckets
+            latestActiveNotificationBuckets[serverId] = pendingBuckets
+            activeNotificationManagedServerIds.add(serverId)
+        }
+        pendingActiveNotificationGeneration.incrementAndGet()
+
+        schedulePendingActiveNotificationBucketFlush()
+    }
+
+    private suspend fun flushPendingActiveNotificationBuckets() = activeNotificationDeliveryMutex.withLock {
+        val fullSensors = sensorRepository.getFull(activeNotificationCount.id)
+            .toSensorsWithAttributes()
+            .filter { it.sensor.enabled }
+        val pendingByServer = activeNotificationCountMutex.withLock {
+            val eligibleServerIds = fullSensors.map { it.sensor.serverId }.toSet()
+            activeNotificationManagedServerIds.retainAll(eligibleServerIds)
+            latestActiveNotificationBuckets.keys.retainAll(eligibleServerIds)
+            pendingActiveNotificationBuckets.keys.retainAll(eligibleServerIds)
+            fullSensors.mapNotNull { fullSensor ->
+                val pendingBuckets = pendingActiveNotificationBuckets[fullSensor.sensor.serverId]
+                    ?: return@mapNotNull null
+                if (fullSensor.sensor.registered != true) return@mapNotNull null
+                fullSensor to pendingBuckets
+            }
+        }
+
+        pendingByServer.forEach { (fullSensor, pendingBuckets) ->
+            val serverId = fullSensor.sensor.serverId
+            var snapshotDelivered = true
+            for (pendingBucket in pendingBuckets) {
                 try {
-                    val registration = fullSensor.toSensorRegistration(activeNotificationCount)
-                    val success = serverManager.integrationRepository(fullSensor.sensor.serverId)
-                        .updateSensors(listOf(registration))
-                    if (success) {
-                        sensorRepository.updateLastSentStateAndIcon(
-                            activeNotificationCount.id,
-                            fullSensor.sensor.serverId,
-                            fullSensor.sensor.state,
-                            fullSensor.sensor.icon,
-                        )
+                    val registration = fullSensor.toSensorRegistration(activeNotificationCount).copy(
+                        state = pendingBucket.totalCount,
+                        attributes = pendingBucket.attributes.mapValues { (_, value) ->
+                            value.toRecorderBudgetValue() ?: "null"
+                        },
+                    )
+                    val delivered = withContext(Dispatchers.IO) {
+                        serverManager.integrationRepository(serverId).updateSensors(listOf(registration))
                     }
+                    if (!delivered) {
+                        sensorRepository.markRegistrationFailed(activeNotificationCount.id, serverId)
+                        snapshotDelivered = false
+                        break
+                    }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while updating active notification count bucket.")
+                    snapshotDelivered = false
+                    break
                 }
+            }
+
+            if (snapshotDelivered) {
+                activeNotificationCountMutex.withLock {
+                    if (pendingActiveNotificationBuckets[serverId] === pendingBuckets) {
+                        pendingActiveNotificationBuckets.remove(serverId)
+                    }
+                }
+                sensorRepository.updateLastSentStateAndIcon(
+                    activeNotificationCount.id,
+                    serverId,
+                    pendingBuckets.lastOrNull()?.totalCount?.toString() ?: fullSensor.sensor.state,
+                    activeNotificationCount.statelessIcon.mdiName,
+                )
             }
         }
     }
@@ -443,187 +564,4 @@ class NotificationListenerSensorManager @Inject constructor(
         }
     }
 
-private const val RECORDER_SAFE_ATTRIBUTE_BYTES = 14 * 1024
-private const val MAX_ACTIVE_NOTIFICATION_ATTRIBUTE_STRING_LENGTH = 512
-private const val MAX_ACTIVE_NOTIFICATION_ATTRIBUTE_LIST_SIZE = 10
-private const val ACTIVE_NOTIFICATION_TOTAL = "total"
-private const val ACTIVE_NOTIFICATION_PART = "part"
-private const val ACTIVE_NOTIFICATION_PARTS = "parts"
-private const val ACTIVE_NOTIFICATION_LAST = "last"
-private const val ACTIVE_NOTIFICATION_SNAPSHOT = "snapshot"
-private const val ACTIVE_NOTIFICATION_CUT = "cut"
-private const val ACTIVE_NOTIFICATION_CUT_COUNT = "cut_count"
-
-internal data class ActiveNotificationRecord(
-    val postTime: Long,
-    val attributes: Map<String, Any?>,
-    val cutCount: Int = 0,
-)
-
-internal fun buildActiveNotificationBuckets(
-    records: List<ActiveNotificationRecord>,
-    totalCount: Int,
-    maxSerializedBytes: Int = RECORDER_SAFE_ATTRIBUTE_BYTES,
-): List<Map<String, Any?>> {
-    val sortedRecords = records.sortedBy { it.postTime }
-    val snapshot = activeNotificationSnapshot(sortedRecords, totalCount)
-    if (sortedRecords.isEmpty()) {
-        return listOf(activeNotificationBucketAttributes(emptyList(), totalCount, 1, 1, true, snapshot))
-    }
-
-    val reverseBuckets = mutableListOf<List<ActiveNotificationRecord>>()
-    var currentBucket = mutableListOf<ActiveNotificationRecord>()
-    sortedRecords.asReversed().forEach { record ->
-        val fittingRecord = record.trimToFitInActiveNotificationBucket(totalCount, snapshot, maxSerializedBytes)
-        val candidateBucket = mutableListOf(fittingRecord).apply {
-            addAll(currentBucket)
-        }
-        if (
-            currentBucket.isEmpty() ||
-            activeNotificationBucketAttributes(
-                candidateBucket,
-                totalCount,
-                999,
-                999,
-                true,
-                snapshot,
-            ).serializedAttributeBytes() <= maxSerializedBytes
-        ) {
-            currentBucket = candidateBucket
-        } else {
-            reverseBuckets.add(currentBucket)
-            currentBucket = mutableListOf(fittingRecord)
-        }
-    }
-    reverseBuckets.add(currentBucket)
-
-    val buckets = reverseBuckets.asReversed()
-    return buckets.mapIndexed { index, bucket ->
-        activeNotificationBucketAttributes(
-            bucket,
-            totalCount,
-            index + 1,
-            buckets.size,
-            index == buckets.lastIndex,
-            snapshot,
-        )
-    }
-}
-
-private fun ActiveNotificationRecord.trimToFitInActiveNotificationBucket(
-    totalCount: Int,
-    snapshot: String,
-    maxSerializedBytes: Int,
-): ActiveNotificationRecord {
-    if (
-        activeNotificationBucketAttributes(
-            listOf(this),
-            totalCount,
-            999,
-            999,
-            true,
-            snapshot,
-        ).serializedAttributeBytes() <= maxSerializedBytes
-    ) {
-        return this
-    }
-
-    val trimmedAttributes = linkedMapOf<String, Any?>()
-    var currentCutCount = cutCount
-    attributes.forEach { (key, value) ->
-        val trimmedValue = value.trimActiveNotificationAttributeValue()
-        trimmedAttributes[key] = trimmedValue
-        if (trimmedValue != value) {
-            currentCutCount++
-        }
-    }
-
-    var trimmedRecord = copy(attributes = trimmedAttributes, cutCount = currentCutCount)
-    while (
-        activeNotificationBucketAttributes(
-            listOf(trimmedRecord),
-            totalCount,
-            999,
-            999,
-            true,
-            snapshot,
-        ).serializedAttributeBytes() > maxSerializedBytes &&
-        trimmedAttributes.isNotEmpty()
-    ) {
-        trimmedAttributes.remove(trimmedAttributes.keys.last())
-        currentCutCount++
-        trimmedRecord = copy(attributes = trimmedAttributes.toMap(), cutCount = currentCutCount)
-    }
-    return trimmedRecord
-}
-
-private fun activeNotificationBucketAttributes(
-    records: List<ActiveNotificationRecord>,
-    totalCount: Int,
-    part: Int,
-    parts: Int,
-    last: Boolean,
-    snapshot: String,
-): Map<String, Any?> = buildMap {
-    put(ACTIVE_NOTIFICATION_TOTAL, totalCount)
-    put(ACTIVE_NOTIFICATION_PART, part)
-    put(ACTIVE_NOTIFICATION_PARTS, parts)
-    put(ACTIVE_NOTIFICATION_LAST, last)
-    put(ACTIVE_NOTIFICATION_SNAPSHOT, snapshot)
-
-    val cutCount = records.sumOf { it.cutCount }
-    if (cutCount > 0) {
-        put(ACTIVE_NOTIFICATION_CUT, true)
-        put(ACTIVE_NOTIFICATION_CUT_COUNT, cutCount)
-    }
-
-    records.forEach { record ->
-        putAll(record.attributes)
-    }
-}
-
-private fun Any?.trimActiveNotificationAttributeValue(): Any? = when (this) {
-    is CharSequence -> toString().limitNotificationAttributeString()
-    is List<*> -> take(MAX_ACTIVE_NOTIFICATION_ATTRIBUTE_LIST_SIZE).map {
-        when (it) {
-            is CharSequence -> it.toString().limitNotificationAttributeString()
-            else -> it
-        }
-    }
-    else -> this
-}
-
-private fun String.limitNotificationAttributeString(): String =
-    if (length <= MAX_ACTIVE_NOTIFICATION_ATTRIBUTE_STRING_LENGTH) {
-        this
-    } else {
-        take(MAX_ACTIVE_NOTIFICATION_ATTRIBUTE_STRING_LENGTH) + "..."
-    }
-
-private fun activeNotificationSnapshot(records: List<ActiveNotificationRecord>, totalCount: Int): String {
-    val source = records.joinToString("|", prefix = "$totalCount|") { record ->
-        "${record.postTime}:${record.attributes.keys.joinToString(",")}"
-    }
-    return Integer.toUnsignedString(source.hashCode(), 36)
-}
-
-internal fun Map<String, Any?>.serializedAttributeBytes(): Int {
-    return kotlinJsonMapper.encodeToString(
-        MapAnySerializer,
-        mapValues { it.value.toRecorderBudgetValue() },
-    ).encodeToByteArray().size
-}
-
-private fun Any?.toRecorderBudgetValue(): Any? = when (this) {
-    null,
-    is Boolean,
-    is Number,
-    is String,
-    -> this
-    is CharSequence -> toString()
-    is List<*> -> map { it.toRecorderBudgetValue() }
-    is Array<*> -> map { it.toRecorderBudgetValue() }
-    is Map<*, *> -> entries.associate { it.key.toString() to it.value.toRecorderBudgetValue() }
-    else -> toString()
-}
 }
