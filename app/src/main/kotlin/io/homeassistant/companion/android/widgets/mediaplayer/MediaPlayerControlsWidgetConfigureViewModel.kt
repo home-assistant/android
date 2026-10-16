@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
+import io.homeassistant.companion.android.widgets.configure.WidgetConfigureViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,13 +49,14 @@ import timber.log.Timber
 private const val PIN_WIDGET_REQUEST_CODE = 0
 
 @HiltViewModel(assistedFactory = MediaPlayerControlsWidgetConfigureViewModel.Factory::class)
-class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
+internal class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
     private val mediaPlayerControlsWidgetDao: MediaPlayerControlsWidgetDao,
     private val serverManager: ServerManager,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
     @Assisted private val widgetId: Int,
     @Assisted preselectedEntityId: String?,
-) : ViewModel() {
+) : ViewModel(),
+    WidgetConfigureViewModel<MediaPlayerControlsWidgetConfigureState> {
 
     private val _state = MutableStateFlow(
         MediaPlayerControlsWidgetConfigureState(
@@ -68,12 +70,12 @@ class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
         ),
     )
 
-    internal val state: StateFlow<MediaPlayerControlsWidgetConfigureState> = _state.asStateFlow()
+    override val state: StateFlow<MediaPlayerControlsWidgetConfigureState> = _state.asStateFlow()
 
     private val _errors = Channel<Int>(Channel.BUFFERED)
 
     /** Errors to surface to the user, as string resources. */
-    val errors = _errors.receiveAsFlow()
+    override val errors = _errors.receiveAsFlow()
 
     private var loadEntitiesJob: Job? = null
 

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets
+package io.homeassistant.companion.android.widgets.configure
 
 import android.content.Context
 import android.content.res.Configuration
