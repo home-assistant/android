@@ -340,6 +340,7 @@
     <string name="show_password">Show password</string>
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
+    <string name="single_accurate_location_notification_title">Getting current location</string>
     <string name="hold_to_reorder">Hold to reorder</string>
     <string name="icon">Icon</string>
     <string name="input_booleans">Input booleans</string>
