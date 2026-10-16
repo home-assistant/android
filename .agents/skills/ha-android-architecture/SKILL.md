@@ -73,7 +73,7 @@ Prefer landing changes incrementally in small mergeable steps that keep the app 
 
 ## Platform Integration Points
 
-- `frontend/` hosts the frontend screen — the WebView rendering the Home Assistant frontend — and the external bus (`frontend/externalbus/`) communicating with it (see https://contributors.home-assistant.io/companion/android/frontend-screen/). `webview/` is the legacy implementation being removed; don't build on it.
+- `frontend/` hosts the frontend screen — the WebView rendering the Home Assistant frontend — and the external bus (`frontend/externalbus/`) communicating with it (see https://contributors.home-assistant.io/companion/android/frontend-screen/). `webview/` was previously used and now only holds a minimal activity for backwards compatibility; don't build on it.
 - Server commands reach the app through `io.homeassistant.companion.android.notifications.MessagingManager`; always validate command inputs.
 - Deep links use `homeassistant://` URLs (https://companion.home-assistant.io/docs/integrations/url-handler/).
 - The Wear OS app retrieves credentials from the mobile app via the Messaging API (`full` flavor only), then talks to Home Assistant directly.
