@@ -7,10 +7,11 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ma
 interface MatterManager {
 
     /**
-     * Terminal result of [MatterManager.prepareMatterDeviceCommissioning].
+     * Terminal result of [MatterManager.prepareMatterDeviceCommissioning] and
+     * [MatterManager.prepareDeviceSharing].
      *
-     * Callers launch [Ready.intentSender] to continue the Matter commissioning
-     * flow, or display an error message derived from [Error.cause].
+     * Callers launch [Ready.intentSender] to continue the flow, or report an error derived from
+     * [Error.cause].
      */
     sealed interface CommissioningResult {
 
@@ -43,6 +44,18 @@ interface MatterManager {
 
         /** The request was cancelled by the user or failed before the device was commissioned. */
         data object Failed : CommissioningRequestResult
+    }
+
+    /** Outcome of the share sheet, derived from its `ActivityResult` by [parseSharingIntentResult]. */
+    sealed interface SharingRequestResult {
+        /** The sheet finished; Play Services does not say whether a device was added. */
+        data object Shared : SharingRequestResult
+
+        /** The user backed out of the platform sheet. */
+        data object Cancelled : SharingRequestResult
+
+        /** The sheet could not be launched, or Play Services reported an error. */
+        data object Failed : SharingRequestResult
     }
 
     /**
@@ -88,4 +101,16 @@ interface MatterManager {
      * [CommissioningResult.Ready.intentSender].
      */
     fun parseCommissioningIntentResult(result: ActivityResult): CommissioningRequestResult
+
+    /**
+     * Indicates if the app on this device can share a commissioned Matter device with another app.
+     * Best effort, like [appSupportsCommissioning]: Play Services can still refuse the share.
+     */
+    fun appSupportsSharing(): Boolean
+
+    /** Returns the share sheet's `IntentSender`, to be launched from an Activity. */
+    suspend fun prepareDeviceSharing(request: MatterShareRequest): CommissioningResult
+
+    /** Interpret the `ActivityResult` of the share sheet launched from [prepareDeviceSharing]. */
+    fun parseSharingIntentResult(result: ActivityResult): SharingRequestResult
 }

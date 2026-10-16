@@ -1,10 +1,17 @@
 package io.homeassistant.companion.android.matter
 
+import android.app.Activity
 import android.content.ComponentName
+import android.content.Intent
 import android.content.IntentSender
 import android.os.Build
+import android.os.SystemClock
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult
 import com.google.android.gms.home.matter.commissioning.CommissioningClient
 import com.google.android.gms.home.matter.commissioning.CommissioningRequest
+import com.google.android.gms.home.matter.commissioning.ShareDeviceRequest
+import com.google.android.gms.home.matter.common.Discriminator
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
@@ -16,7 +23,13 @@ import io.homeassistant.companion.android.database.server.Server
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.slot
+import io.mockk.unmockkStatic
 import io.mockk.verify
+import java.util.concurrent.Executor
+import java.util.concurrent.TimeoutException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -26,6 +39,15 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+
+private val SHARE_REQUEST = MatterShareRequest(
+    passcode = 20202021,
+    discriminator = 3840,
+    vendorId = 0xFFF1,
+    productId = 0x8001,
+    deviceName = "Kitchen light",
+    remainingSeconds = 250,
+)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MatterManagerImplTest {
@@ -38,6 +60,12 @@ class MatterManagerImplTest {
     @AfterEach
     fun tearDown() {
         SdkVersion.resetSdkInt()
+        unmockkStatic(SystemClock::class)
+    }
+
+    private fun givenElapsedRealtime(millis: Long) {
+        mockkStatic(SystemClock::class)
+        every { SystemClock.elapsedRealtime() } returns millis
     }
 
     private fun createManager(
@@ -230,11 +258,136 @@ class MatterManagerImplTest {
         }
     }
 
+    @Test
+    fun `Given Play Services succeeds when prepareDeviceSharing then emits Ready with a request built from the payload`() = runTest {
+        val intentSender: IntentSender = mockk()
+        val request = slot<ShareDeviceRequest>()
+        every { commissioningClient.shareDevice(capture(request)) } returns successTask(intentSender)
+        givenElapsedRealtime(1_000L)
+        val manager = createManager()
+
+        val event = assertInstanceOf(
+            MatterManager.CommissioningResult.Ready::class.java,
+            manager.prepareDeviceSharing(SHARE_REQUEST),
+        )
+
+        assertEquals(intentSender, event.intentSender)
+        assertEquals("Kitchen light", request.captured.deviceName)
+        assertEquals(SHARE_REQUEST.passcode, request.captured.commissioningWindow.passcode)
+        // Compared whole: 3840 reads the same in the short form; only the object carries the mask.
+        assertEquals(
+            Discriminator.forLongValue(SHARE_REQUEST.discriminator),
+            request.captured.commissioningWindow.discriminator,
+        )
+        assertEquals(1_000L, request.captured.commissioningWindow.windowOpenMillis)
+        assertEquals(250L, request.captured.commissioningWindow.durationSeconds)
+        assertEquals(SHARE_REQUEST.vendorId, request.captured.deviceDescriptor.vendorId)
+        assertEquals(SHARE_REQUEST.productId, request.captured.deviceDescriptor.productId)
+    }
+
+    @Test
+    fun `Given Play Services fails when prepareDeviceSharing then emits Error with cause`() = runTest {
+        val cause = IllegalStateException("play services unavailable")
+        every { commissioningClient.shareDevice(any()) } returns failureTask(cause)
+        givenElapsedRealtime(1_000L)
+        val manager = createManager()
+
+        val event = assertInstanceOf(
+            MatterManager.CommissioningResult.Error::class.java,
+            manager.prepareDeviceSharing(SHARE_REQUEST.copy(deviceName = null)),
+        )
+        assertEquals(cause, event.cause)
+    }
+
+    /** The builders run for real: Play Services, not the app, rejects an out-of-spec value. */
+    @Test
+    fun `Given a discriminator Play Services rejects when prepareDeviceSharing then emits Error`() = runTest {
+        every { commissioningClient.shareDevice(any()) } returns successTask(mockk<IntentSender>())
+        givenElapsedRealtime(1_000L)
+
+        val event = createManager().prepareDeviceSharing(SHARE_REQUEST.copy(discriminator = 4096))
+
+        assertInstanceOf(MatterManager.CommissioningResult.Error::class.java, event)
+    }
+
+    @Test
+    fun `Given Play Services cancels the task when prepareDeviceSharing then emits Error`() = runTest {
+        every { commissioningClient.shareDevice(any()) } returns cancelledTask()
+        givenElapsedRealtime(1_000L)
+
+        val event = createManager().prepareDeviceSharing(SHARE_REQUEST)
+
+        assertInstanceOf(
+            CancellationException::class.java,
+            assertInstanceOf(MatterManager.CommissioningResult.Error::class.java, event).cause,
+        )
+    }
+
+    @Test
+    fun `Given Play Services never answers when prepareDeviceSharing then emits Error after the timeout`() = runTest {
+        every { commissioningClient.shareDevice(any()) } returns pendingTask()
+        givenElapsedRealtime(1_000L)
+
+        val event = createManager().prepareDeviceSharing(SHARE_REQUEST)
+
+        assertInstanceOf(
+            TimeoutException::class.java,
+            assertInstanceOf(MatterManager.CommissioningResult.Error::class.java, event).cause,
+        )
+    }
+
+    @Test
+    fun `Given automotive device when prepareDeviceSharing then emits Error without calling Play Services`() = runTest {
+        val manager = createManager(isAutomotive = true)
+
+        assertFalse(manager.appSupportsSharing())
+        assertInstanceOf(
+            MatterManager.CommissioningResult.Error::class.java,
+            manager.prepareDeviceSharing(SHARE_REQUEST.copy(deviceName = null)),
+        )
+        verify(exactly = 0) { commissioningClient.shareDevice(any()) }
+    }
+
+    @Test
+    fun `Given a launch failure when parseSharingIntentResult then maps to Failed`() {
+        // Intent is an unmocked framework stub here, so the extra is stated rather than put.
+        val data = mockk<Intent> {
+            every { hasExtra(StartIntentSenderForResult.EXTRA_SEND_INTENT_EXCEPTION) } returns true
+        }
+
+        assertEquals(
+            MatterManager.SharingRequestResult.Failed,
+            createManager().parseSharingIntentResult(ActivityResult(Activity.RESULT_CANCELED, data)),
+        )
+    }
+
+    @Test
+    fun `Given share activity results when parseSharingIntentResult then maps OK, cancel and other codes`() {
+        val manager = createManager()
+
+        assertEquals(
+            MatterManager.SharingRequestResult.Shared,
+            manager.parseSharingIntentResult(ActivityResult(Activity.RESULT_OK, null)),
+        )
+        assertEquals(
+            MatterManager.SharingRequestResult.Cancelled,
+            manager.parseSharingIntentResult(ActivityResult(Activity.RESULT_CANCELED, null)),
+        )
+        assertEquals(
+            MatterManager.SharingRequestResult.Failed,
+            manager.parseSharingIntentResult(ActivityResult(Activity.RESULT_FIRST_USER, null)),
+        )
+    }
+
     /**
-     * Builds a Play Services [Task] mock that invokes its success listener synchronously when
-     * registered, mirroring how the real Task fires when the result is already available.
+     * Builds a completed Play Services [Task] mock. It invokes its success listener synchronously, and
+     * kotlinx `await()` reads its state directly.
      */
     private fun <T> successTask(result: T): Task<T> = mockk {
+        every { isComplete } returns true
+        every { isCanceled } returns false
+        every { exception } returns null
+        every { this@mockk.result } returns result
         every { addOnSuccessListener(any()) } answers {
             firstArg<OnSuccessListener<T>>().onSuccess(result)
             this@mockk
@@ -242,7 +395,25 @@ class MatterManagerImplTest {
         every { addOnFailureListener(any()) } returns this@mockk
     }
 
+    private fun <T> pendingTask(): Task<T> = mockk {
+        every { isComplete } returns false
+        every { addOnCompleteListener(any<Executor>(), any()) } returns this@mockk
+        every { addOnSuccessListener(any()) } returns this@mockk
+        every { addOnFailureListener(any()) } returns this@mockk
+    }
+
+    private fun <T> cancelledTask(): Task<T> = mockk {
+        every { isComplete } returns true
+        every { isCanceled } returns true
+        every { exception } returns null
+        every { addOnSuccessListener(any()) } returns this@mockk
+        every { addOnFailureListener(any()) } returns this@mockk
+    }
+
     private fun <T> failureTask(cause: Exception): Task<T> = mockk {
+        every { isComplete } returns true
+        every { isCanceled } returns false
+        every { exception } returns cause
         every { addOnSuccessListener(any()) } returns this@mockk
         every { addOnFailureListener(any()) } answers {
             firstArg<OnFailureListener>().onFailure(cause)

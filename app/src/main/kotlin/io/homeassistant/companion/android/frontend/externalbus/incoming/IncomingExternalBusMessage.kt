@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.util.UnknownJsonContentDeserial
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.modules.SerializersModule
 
 /**
@@ -295,6 +296,18 @@ data class EntityAddToPayload(
 @Serializable
 @SerialName("matter/commission")
 data class MatterCommissionMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to share a device already commissioned to Home Assistant through the
+ * platform share sheet. Answered with a success result, or an error coded `canceled` or `failed`.
+ */
+@Serializable
+@SerialName("matter/share_device")
+data class MatterShareDeviceMessage(
+    override val id: Int? = null,
+    // Parsed by the handler, so missing or mistyped fields still get an error result instead of no reply.
+    val payload: JsonObject = JsonObject(emptyMap()),
+) : IncomingExternalBusMessage
 
 /**
  * Message requesting the app to share its locally-stored Thread credentials with the Home Assistant
