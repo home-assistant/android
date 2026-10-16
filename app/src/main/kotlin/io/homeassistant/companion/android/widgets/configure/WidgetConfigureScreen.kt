@@ -13,8 +13,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
  * screen.
  */
 @Composable
-internal fun <S : WidgetConfigureState> WidgetConfigureScreen(
-    viewModel: WidgetConfigureViewModel<S>,
+internal fun <S : WidgetConfigureState<S>> WidgetConfigureScreen(
+    viewModel: WidgetConfigureStateProvider<S>,
     content: @Composable (state: S, snackbarHostState: SnackbarHostState) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()

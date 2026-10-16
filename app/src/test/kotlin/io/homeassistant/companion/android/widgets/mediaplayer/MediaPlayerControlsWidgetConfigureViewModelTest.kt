@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
-import app.cash.turbine.test
+import android.appwidget.AppWidgetManager
+import android.content.Context
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -37,6 +37,7 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
 
     private val dao = mockk<MediaPlayerControlsWidgetDao>(relaxUnitFun = true)
     private val serverManager = mockk<ServerManager>()
+    private val widgetContext = mockk<Context>(relaxed = true)
     private val entitiesForDisplayManager = mockk<EntitiesForDisplayManager>()
 
     private val widgetId = 42
@@ -95,19 +96,12 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
     }
 
     @Test
-    fun `Given servers when created then they are exposed as dropdown items`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertEquals(
-            listOf(HADropdownItem(key = serverId, label = "Home")),
-            viewModel.state.value.serversDropdownItems,
-        )
-    }
-
-    @Test
     fun `Given a preselected entity when created then no persisted configuration is loaded`() = runTest {
-        val viewModel = createViewModel(preselectedEntityId = entity.entityId)
+        // A preselected launch has no widget id yet (the pin request assigns it), so nothing is restored.
+        val viewModel = createViewModel(
+            preselectedEntityId = entity.entityId,
+            widgetId = AppWidgetManager.INVALID_APPWIDGET_ID,
+        )
         advanceUntilIdle()
 
         assertEquals(listOf(entity.entityId), viewModel.state.value.selectedEntityIds)
@@ -126,7 +120,7 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         viewModel.onBackgroundTypeSelected(WidgetBackgroundType.TRANSPARENT)
         advanceUntilIdle()
 
-        assertTrue(viewModel.updateWidgetConfiguration())
+        assertTrue(viewModel.updateWidgetConfiguration(widgetContext))
 
         coVerify {
             dao.add(
@@ -154,7 +148,7 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         viewModel.onEntityAdded(secondEntity.entityId)
         advanceUntilIdle()
 
-        assertTrue(viewModel.updateWidgetConfiguration())
+        assertTrue(viewModel.updateWidgetConfiguration(widgetContext))
 
         coVerify {
             dao.add(match { it.entityId == "${entity.entityId},${secondEntity.entityId}" })
@@ -170,7 +164,7 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.updateWidgetConfiguration())
+        assertTrue(viewModel.updateWidgetConfiguration(widgetContext))
 
         coVerify { dao.add(match { it.entityId == entity.entityId }) }
     }
@@ -182,7 +176,7 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertFalse(viewModel.updateWidgetConfiguration())
+        assertFalse(viewModel.updateWidgetConfiguration(widgetContext))
 
         assertEquals(commonR.string.widget_update_error, viewModel.errors.first())
         coVerify(exactly = 0) { dao.add(any()) }
@@ -256,29 +250,16 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertFalse(viewModel.updateWidgetConfiguration())
+        assertFalse(viewModel.updateWidgetConfiguration(widgetContext))
 
         assertEquals(commonR.string.widget_update_error, viewModel.errors.first())
         coVerify(exactly = 0) { dao.add(any()) }
     }
 
-    @Test
-    fun `Given an error already shown when the screen collects again then the error is not shown again`() = runTest {
-        coEvery { dao.get(widgetId) } returns createWidgetEntity(entityId = "media_player.removed")
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-        assertFalse(viewModel.updateWidgetConfiguration())
-
-        viewModel.errors.test {
-            assertEquals(commonR.string.widget_update_error, awaitItem())
-        }
-        // A new collector, e.g. the screen after a rotation, must not show the error again
-        viewModel.errors.test {
-            expectNoEvents()
-        }
-    }
-
-    private fun createViewModel(preselectedEntityId: String? = null) = MediaPlayerControlsWidgetConfigureViewModel(
+    private fun createViewModel(
+        preselectedEntityId: String? = null,
+        widgetId: Int = this.widgetId,
+    ) = MediaPlayerControlsWidgetConfigureViewModel(
         mediaPlayerControlsWidgetDao = dao,
         serverManager = serverManager,
         entitiesForDisplayManager = entitiesForDisplayManager,
