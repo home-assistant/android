@@ -128,6 +128,7 @@ class SensorUpdater @VisibleForTesting internal constructor(
         } catch (e: Exception) {
             Timber.e(e, "Exception while awaiting sensor updates.")
         }
+        managers.forEach { it.onSensorSyncComplete() }
     }
 
     /**
@@ -151,6 +152,7 @@ class SensorUpdater @VisibleForTesting internal constructor(
             fullSensors.filter {
                 it.sensor.enabled &&
                     it.sensor.registered == true &&
+                    !sensorManager.managesSensorStateUpdates(basicSensor.id, it.sensor.serverId) &&
                     (it.sensor.state != it.sensor.lastSentState || it.sensor.icon != it.sensor.lastSentIcon)
             }.forEach { fullSensor ->
                 launch {
@@ -172,6 +174,7 @@ class SensorUpdater @VisibleForTesting internal constructor(
                 }
             }
         }
+        sensorManager.onSensorSyncComplete()
     }
 
     private suspend fun syncSensorsWithServer(
@@ -338,7 +341,9 @@ class SensorUpdater @VisibleForTesting internal constructor(
                 // Read from the (possibly re-registered) fullSensor so a sensor registered/enabled above
                 // has its fresh state sent in this same pass rather than being deferred to the next one.
                 val reconciledSensor = fullSensor.sensor
-                if (canBeRegistered &&
+                if (
+                    canBeRegistered &&
+                    !manager.managesSensorStateUpdates(basicSensor.id, server.id) &&
                     reconciledSensor.enabled &&
                     reconciledSensor.registered != null &&
                     (

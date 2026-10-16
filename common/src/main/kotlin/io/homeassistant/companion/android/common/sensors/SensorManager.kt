@@ -45,6 +45,12 @@ interface SensorManager {
 
     val serverManager: ServerManager
 
+    /** Whether this manager sends state updates for a sensor and server through its own coordinated path. */
+    fun managesSensorStateUpdates(sensorId: String, serverId: Int): Boolean = false
+
+    /** Called after the shared sensor synchronization pass completes. */
+    suspend fun onSensorSyncComplete() {}
+
     data class BasicSensor(
         val id: String,
         val type: String,
