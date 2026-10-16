@@ -20,6 +20,11 @@ data class TemplateWidgetEntity(
     override val backgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     @ColumnInfo(name = "text_color")
     override val textColor: String? = null,
+    @ColumnInfo(name = "tap_action", defaultValue = "REFRESH")
+    val tapAction: WidgetTapAction = WidgetTapAction.REFRESH,
+    /** URL path of the dashboard opened by [WidgetTapAction.OPEN_DASHBOARD], without the leading `/`. */
+    @ColumnInfo(name = "dashboard_path")
+    val dashboardPath: String? = null,
 ) : WidgetEntity<TemplateWidgetEntity>,
     ThemeableWidgetEntity {
     override fun copyWithWidgetId(appWidgetId: Int): TemplateWidgetEntity {

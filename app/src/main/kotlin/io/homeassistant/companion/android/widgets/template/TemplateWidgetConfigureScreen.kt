@@ -49,6 +49,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.compose.parseHtml
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
@@ -91,6 +92,9 @@ internal fun TemplateWidgetConfigureScreen(
         onTextSizeChanged = viewModel::onTextSizeChanged,
         onBackgroundTypeSelected = viewModel::onBackgroundTypeSelected,
         onTextColorSelected = viewModel::onTextColorSelected,
+        onTapActionSelected = viewModel::onTapActionSelected,
+        onDashboardSelected = viewModel::onDashboardSelected,
+        onRetryLoadDashboards = viewModel::onRetryLoadDashboards,
         onActionClick = onActionClick,
     )
 }
@@ -107,6 +111,9 @@ internal fun TemplateWidgetConfigureContent(
     onTextSizeChanged: (String) -> Unit,
     onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
     onTextColorSelected: (colorHex: String) -> Unit,
+    onTapActionSelected: (WidgetTapAction) -> Unit,
+    onDashboardSelected: (urlPath: String) -> Unit,
+    onRetryLoadDashboards: () -> Unit,
     onActionClick: () -> Unit,
 ) {
     Scaffold(
@@ -117,9 +124,7 @@ internal fun TemplateWidgetConfigureContent(
                 onCloseClick = onNavigate.takeIf { !canNavigateBack },
             )
         },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         Column(
@@ -151,6 +156,14 @@ internal fun TemplateWidgetConfigureContent(
                 onTextSizeChanged = onTextSizeChanged,
                 onBackgroundTypeSelected = onBackgroundTypeSelected,
                 onTextColorSelected = onTextColorSelected,
+            )
+            TapActionSection(
+                selectedOption = state.selectedTapAction,
+                dashboards = state.dashboards,
+                selectedDashboardUrlPath = state.selectedDashboardUrlPath,
+                onOptionSelected = onTapActionSelected,
+                onDashboardSelected = onDashboardSelected,
+                onRetryLoadDashboards = onRetryLoadDashboards,
             )
             HAAccentButton(
                 text = stringResource(state.actionButtonLabel),
@@ -299,6 +312,9 @@ private fun TemplateWidgetConfigureContentPreview() {
             onTextSizeChanged = {},
             onBackgroundTypeSelected = {},
             onTextColorSelected = {},
+            onTapActionSelected = {},
+            onDashboardSelected = {},
+            onRetryLoadDashboards = {},
             onActionClick = {},
         )
     }

@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Fl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.PanelResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
@@ -40,6 +41,11 @@ interface WebSocketRepository {
     suspend fun getAreaRegistry(): List<AreaRegistryResponse>?
     suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>?
     suspend fun getEntityRegistry(): List<EntityRegistryResponse>?
+
+    /**
+     * Returns the frontend panels the current user can access, or `null` when they could not be retrieved.
+     */
+    suspend fun getPanels(): List<PanelResponse>?
 
     /**
      * Return [EntityRegistryDisplayResponse], a bandwidth-efficient version of the

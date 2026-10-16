@@ -7,7 +7,10 @@ import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.data.dashboards.Dashboard
+import io.homeassistant.companion.android.common.data.dashboards.DashboardTitle
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
@@ -29,6 +32,9 @@ class TemplateWidgetConfigureScreenshotTest {
                 onTextSizeChanged = {},
                 onBackgroundTypeSelected = {},
                 onTextColorSelected = {},
+                onTapActionSelected = {},
+                onDashboardSelected = {},
+                onRetryLoadDashboards = {},
                 onActionClick = {},
             )
         }
@@ -55,6 +61,9 @@ class TemplateWidgetConfigureScreenshotTest {
                 onTextSizeChanged = {},
                 onBackgroundTypeSelected = {},
                 onTextColorSelected = {},
+                onTapActionSelected = {},
+                onDashboardSelected = {},
+                onRetryLoadDashboards = {},
                 onActionClick = {},
             )
         }
@@ -77,6 +86,68 @@ class TemplateWidgetConfigureScreenshotTest {
                 onTextSizeChanged = {},
                 onBackgroundTypeSelected = {},
                 onTextColorSelected = {},
+                onTapActionSelected = {},
+                onDashboardSelected = {},
+                onRetryLoadDashboards = {},
+                onActionClick = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `TemplateWidgetConfigureContent open a dashboard`() {
+        HAThemeForPreview {
+            TemplateWidgetConfigureContent(
+                state = previewTemplateWidgetConfigureState.copy(
+                    selectedTapAction = WidgetTapAction.OPEN_DASHBOARD,
+                    selectedDashboardUrlPath = "energy",
+                    dashboards = DashboardsState.Loaded(
+                        listOf(
+                            Dashboard("home", DashboardTitle.Resource(commonR.string.dashboard_overview)),
+                            Dashboard("energy", DashboardTitle.Resource(commonR.string.dashboard_energy)),
+                            Dashboard("garden", DashboardTitle.Text("Garden")),
+                        ),
+                    ),
+                ),
+                snackbarHostState = remember { SnackbarHostState() },
+                canNavigateBack = false,
+                onNavigate = {},
+                onServerSelected = {},
+                onTemplateChanged = {},
+                onTextSizeChanged = {},
+                onBackgroundTypeSelected = {},
+                onTextColorSelected = {},
+                onTapActionSelected = {},
+                onDashboardSelected = {},
+                onRetryLoadDashboards = {},
+                onActionClick = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `TemplateWidgetConfigureContent dashboards error`() {
+        HAThemeForPreview {
+            TemplateWidgetConfigureContent(
+                state = previewTemplateWidgetConfigureState.copy(
+                    selectedTapAction = WidgetTapAction.OPEN_DASHBOARD,
+                    dashboards = DashboardsState.Error,
+                ),
+                snackbarHostState = remember { SnackbarHostState() },
+                canNavigateBack = false,
+                onNavigate = {},
+                onServerSelected = {},
+                onTemplateChanged = {},
+                onTextSizeChanged = {},
+                onBackgroundTypeSelected = {},
+                onTextColorSelected = {},
+                onTapActionSelected = {},
+                onDashboardSelected = {},
+                onRetryLoadDashboards = {},
                 onActionClick = {},
             )
         }
