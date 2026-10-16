@@ -15,7 +15,9 @@ import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import javax.inject.Inject
 import javax.inject.Provider
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.sync.Mutex
 
 interface IntegrationRepository {
 
@@ -96,6 +98,7 @@ interface IntegrationRepository {
     suspend fun setAskNotificationPermission(shouldAsk: Boolean)
 }
 
+@Singleton
 internal class IntegrationRepositoryFactory @Inject constructor(
     private val integrationServiceProvider: SuspendProvider<IntegrationService>,
     // Use a Provider to avoid a dependency circle since serverManager needs the factory
@@ -106,6 +109,12 @@ internal class IntegrationRepositoryFactory @Inject constructor(
     @NamedOsVersion private val osVersion: String,
     @NamedDeviceId private val deviceId: String,
 ) {
+    /**
+     * Shared by every server because the cloud push registration it guards is stored per device,
+     * not per server. The factory is a singleton so all repositories get the same lock.
+     */
+    private val cloudPushRegistrationMutex = Mutex()
+
     suspend fun create(serverId: Int): IntegrationRepositoryImpl {
         return IntegrationRepositoryImpl(
             integrationService = integrationServiceProvider(),
@@ -116,6 +125,7 @@ internal class IntegrationRepositoryFactory @Inject constructor(
             model = model,
             osVersion = osVersion,
             deviceId = deviceId,
+            cloudPushRegistrationMutex = cloudPushRegistrationMutex,
         )
     }
 }
