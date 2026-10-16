@@ -658,11 +658,7 @@
       },
       {
         "tableName": "location_history",
-<<<<<<< HEAD
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `created` INTEGER NOT NULL, `trigger` TEXT NOT NULL, `result` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `location_name` TEXT, `in_zones` TEXT NOT NULL DEFAULT '[]', `accuracy` INTEGER, `data` TEXT, `server_id` INTEGER)",
-=======
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `created` INTEGER NOT NULL, `trigger` TEXT NOT NULL, `result` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `location_name` TEXT, `accuracy` INTEGER, `data` TEXT, `server_id` INTEGER)",
->>>>>>> d6f6e19a0 (fix: keep active notification contents out of attributes by default)
         "fields": [
           {
             "fieldPath": "id",
@@ -704,7 +700,6 @@
             "affinity": "TEXT"
           },
           {
-<<<<<<< HEAD
             "fieldPath": "inZones",
             "columnName": "in_zones",
             "affinity": "TEXT",
@@ -712,8 +707,6 @@
             "defaultValue": "'[]'"
           },
           {
-=======
->>>>>>> d6f6e19a0 (fix: keep active notification contents out of attributes by default)
             "fieldPath": "accuracy",
             "columnName": "accuracy",
             "affinity": "INTEGER"
@@ -1159,11 +1152,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-<<<<<<< HEAD
       "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c6c1ea610cb50bc14cffeac69ce49216')"
-=======
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '59989e3ba55778cfbca4ec36159df3f4')"
->>>>>>> d6f6e19a0 (fix: keep active notification contents out of attributes by default)
     ]
   }
 }
