@@ -23,6 +23,7 @@ import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_BUFFERING
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_PLAYING
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.MediaPlayerControls
@@ -333,7 +334,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     )
                 }
 
-                if (showVolume && mediaPlayerControls?.supportsVolumeSet == true) {
+                if (
+                    showVolume &&
+                    mediaPlayerControls?.let { it.supportsVolumeSet || it.supportsVolumeStep } == true
+                ) {
                     setOnClickPendingIntent(
                         R.id.widgetVolumeDownButton,
                         PendingIntent.getBroadcast(
@@ -503,9 +507,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
 
     private suspend fun callPreviousTrackAction(context: Context, appWidgetId: Int) {
         Timber.d("Retrieving media player entity for app widget $appWidgetId")
-        val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
-
-        if (entity == null) {
+        val entity = dao.get(appWidgetId) ?: run {
             Timber.d("Failed to retrieve media player entity")
             return
         }
@@ -617,25 +619,23 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             entity.entityId.split(","),
             null,
         )
+        val playbackAction = actionEntity?.let { getPlaybackAction(it) }
         if (actionEntity == null) {
             Timber.d("Failed to resolve media player entity for play/pause action")
-            return
-        }
-        val playbackAction = getPlaybackAction(actionEntity)
-        if (playbackAction == null) {
+        } else if (playbackAction == null) {
             Timber.d("Media player entity does not support a playback action")
-            return
-        }
-        try {
-            serverManager.integrationRepository(entity.serverId).callAction(
-                MEDIA_PLAYER_DOMAIN,
-                playbackAction.serviceAction,
-                mapOf("entity_id" to actionEntity.entityId),
-            )
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.e(e, "Exception calling play pause action")
+        } else {
+            try {
+                serverManager.integrationRepository(entity.serverId).callAction(
+                    MEDIA_PLAYER_DOMAIN,
+                    playbackAction.serviceAction,
+                    mapOf("entity_id" to actionEntity.entityId),
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Exception calling play pause action")
+            }
         }
     }
 
@@ -643,10 +643,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         entity: Entity?,
         controls: MediaPlayerControls? = entity?.getMediaPlayerControls(),
     ): PlaybackAction? {
+        val isActive = entity?.state == MEDIA_PLAYER_STATE_PLAYING ||
+            entity?.state == MEDIA_PLAYER_STATE_BUFFERING
         return when {
-            entity?.state != MEDIA_PLAYER_STATE_PLAYING && controls?.supportsPlay == true -> PlaybackAction.Play
-            entity?.state == MEDIA_PLAYER_STATE_PLAYING && controls?.supportsPause == true -> PlaybackAction.Pause
-            entity?.state == MEDIA_PLAYER_STATE_PLAYING && controls?.supportsStop == true -> PlaybackAction.Stop
+            !isActive && controls?.supportsPlay == true -> PlaybackAction.Play
+            isActive && controls?.supportsPause == true -> PlaybackAction.Pause
+            isActive && controls?.supportsStop == true -> PlaybackAction.Stop
             else -> null
         }
     }

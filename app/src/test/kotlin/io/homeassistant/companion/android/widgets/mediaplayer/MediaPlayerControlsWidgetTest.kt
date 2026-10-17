@@ -8,12 +8,14 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_BUFFERING
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_PLAY
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_SEEK
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_STOP
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_STEP
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
@@ -76,6 +78,15 @@ class MediaPlayerControlsWidgetTest {
     }
 
     @Test
+    fun `Given buffering entity with pause support when play pause widget action is received then pause is called`() = runTest {
+        runPlaybackActionTest(
+            state = MEDIA_PLAYER_STATE_BUFFERING,
+            supportedFeatures = MEDIA_PLAYER_SUPPORT_PAUSE,
+            expectedAction = "media_pause",
+        )
+    }
+
+    @Test
     fun `Given non-playing entity when play pause widget action is received then play is called`() = runTest {
         runPlaybackActionTest(
             state = "paused",
@@ -101,6 +112,16 @@ class MediaPlayerControlsWidgetTest {
             supportedFeatures = MEDIA_PLAYER_SUPPORT_PAUSE,
             expectedIcon = R.drawable.ic_pause,
             expectedContentDescription = commonR.string.widget_media_pause_button,
+        )
+    }
+
+    @Test
+    fun `Given buffering entity with stop support when rendering widget then stop icon is shown`() = runTest {
+        runPlaybackIconTest(
+            state = MEDIA_PLAYER_STATE_BUFFERING,
+            supportedFeatures = MEDIA_PLAYER_SUPPORT_STOP,
+            expectedIcon = R.drawable.ic_stop,
+            expectedContentDescription = commonR.string.widget_media_stop_button,
         )
     }
 
@@ -143,6 +164,19 @@ class MediaPlayerControlsWidgetTest {
         assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetRewindButton).visibility)
         assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetFastForwardButton).visibility)
         assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetPlayPauseButton).visibility)
+    }
+
+    @Test
+    fun `Given step volume support when rendering widget then volume controls are shown`() = runTest {
+        val widget = createWidget(showSkip = false, showSeek = false, showVolume = true)
+        val entity = createEntity(
+            state = "paused",
+            supportedFeatures = MEDIA_PLAYER_SUPPORT_PLAY or MEDIA_PLAYER_SUPPORT_VOLUME_STEP,
+        )
+        val root = renderWidget(widget, entity).apply(context, FrameLayout(context))
+
+        assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetVolumeDownButton).visibility)
+        assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetVolumeUpButton).visibility)
     }
 
     @Test
