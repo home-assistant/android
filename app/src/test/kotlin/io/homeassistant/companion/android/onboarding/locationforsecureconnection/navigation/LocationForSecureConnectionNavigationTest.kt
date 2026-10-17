@@ -68,6 +68,27 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
     }
 
     @Test
+    fun `Given SetHomeNetwork reached from LocationForSecureConnection when going back then show LocationForSecureConnection`() {
+        testNavigation {
+            navController.navigateToLocationForSecureConnection(42)
+
+            onNodeWithText(stringResource(commonR.string.connection_security_most_secure))
+                .performScrollTo()
+                .performClick()
+            onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
+                .performScrollTo()
+                .performClick()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
+
+            assertTrue(
+                navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
+            )
+        }
+    }
+
+    @Test
     fun `Given LocationForSecureConnection when choosing less secure option then onboarding completes`() {
         testNavigation {
             navController.navigateToLocationForSecureConnection(42)

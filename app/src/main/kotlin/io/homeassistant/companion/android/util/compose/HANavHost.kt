@@ -145,6 +145,7 @@ internal fun HANavHost(
                 onHelpClick = {
                     navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
                 },
+                onBackClick = navController::popBackStack,
             )
 
             if (isAutomotive) {
