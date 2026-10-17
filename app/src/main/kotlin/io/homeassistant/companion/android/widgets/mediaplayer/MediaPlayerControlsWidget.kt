@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_PLAYING
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.MediaPlayerControls
 import io.homeassistant.companion.android.common.data.integration.getMediaPlayerControls
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
@@ -160,12 +161,18 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val showSource: Boolean = widget.showSource
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
-                val playbackAction = getPlaybackAction(entity)
-                setImageViewResource(R.id.widgetPlayPauseButton, playbackAction.iconRes)
-                setContentDescription(
-                    R.id.widgetPlayPauseButton,
-                    context.getString(playbackAction.contentDescriptionRes),
-                )
+                val mediaPlayerControls = entity?.getMediaPlayerControls()
+                val playbackAction = getPlaybackAction(entity, mediaPlayerControls)
+                if (playbackAction != null) {
+                    setImageViewResource(R.id.widgetPlayPauseButton, playbackAction.iconRes)
+                    setContentDescription(
+                        R.id.widgetPlayPauseButton,
+                        context.getString(playbackAction.contentDescriptionRes),
+                    )
+                    setViewVisibility(R.id.widgetPlayPauseButton, View.VISIBLE)
+                } else {
+                    setViewVisibility(R.id.widgetPlayPauseButton, View.GONE)
+                }
 
                 val artist = (
                     entity?.attributes?.get(
@@ -314,17 +321,19 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
-                setOnClickPendingIntent(
-                    R.id.widgetPlayPauseButton,
-                    PendingIntent.getBroadcast(
-                        context,
-                        appWidgetId,
-                        playPauseIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                    ),
-                )
+                if (playbackAction != null) {
+                    setOnClickPendingIntent(
+                        R.id.widgetPlayPauseButton,
+                        PendingIntent.getBroadcast(
+                            context,
+                            appWidgetId,
+                            playPauseIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                        ),
+                    )
+                }
 
-                if (showVolume) {
+                if (showVolume && mediaPlayerControls?.supportsVolumeSet == true) {
                     setOnClickPendingIntent(
                         R.id.widgetVolumeDownButton,
                         PendingIntent.getBroadcast(
@@ -350,7 +359,17 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     setViewVisibility(R.id.widgetVolumeUpButton, View.GONE)
                 }
 
-                if (showSkip) {
+                val showPreviousTrack = showSkip && mediaPlayerControls?.supportsPreviousTrack == true
+                val showNextTrack = showSkip && mediaPlayerControls?.supportsNextTrack == true
+                setViewVisibility(
+                    R.id.widgetPrevTrackButton,
+                    if (showPreviousTrack) View.VISIBLE else View.GONE,
+                )
+                setViewVisibility(
+                    R.id.widgetNextTrackButton,
+                    if (showNextTrack) View.VISIBLE else View.GONE,
+                )
+                if (showPreviousTrack) {
                     setOnClickPendingIntent(
                         R.id.widgetPrevTrackButton,
                         PendingIntent.getBroadcast(
@@ -360,6 +379,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                         ),
                     )
+                }
+                if (showNextTrack) {
                     setOnClickPendingIntent(
                         R.id.widgetNextTrackButton,
                         PendingIntent.getBroadcast(
@@ -369,14 +390,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                         ),
                     )
-                    setViewVisibility(R.id.widgetPrevTrackButton, View.VISIBLE)
-                    setViewVisibility(R.id.widgetNextTrackButton, View.VISIBLE)
-                } else {
-                    setViewVisibility(R.id.widgetPrevTrackButton, View.GONE)
-                    setViewVisibility(R.id.widgetNextTrackButton, View.GONE)
                 }
 
-                if (showSeek) {
+                if (showSeek && mediaPlayerControls?.supportsSeek == true) {
                     setOnClickPendingIntent(
                         R.id.widgetRewindButton,
                         PendingIntent.getBroadcast(
@@ -605,10 +621,15 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
             Timber.d("Failed to resolve media player entity for play/pause action")
             return
         }
+        val playbackAction = getPlaybackAction(actionEntity)
+        if (playbackAction == null) {
+            Timber.d("Media player entity does not support a playback action")
+            return
+        }
         try {
             serverManager.integrationRepository(entity.serverId).callAction(
                 MEDIA_PLAYER_DOMAIN,
-                getPlaybackAction(actionEntity).serviceAction,
+                playbackAction.serviceAction,
                 mapOf("entity_id" to actionEntity.entityId),
             )
         } catch (e: CancellationException) {
@@ -618,13 +639,15 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         }
     }
 
-    private fun getPlaybackAction(entity: Entity?): PlaybackAction {
-        val controls = entity?.getMediaPlayerControls()
+    private fun getPlaybackAction(
+        entity: Entity?,
+        controls: MediaPlayerControls? = entity?.getMediaPlayerControls(),
+    ): PlaybackAction? {
         return when {
-            entity?.state != MEDIA_PLAYER_STATE_PLAYING -> PlaybackAction.Play
-            controls?.supportsPause == true -> PlaybackAction.Pause
-            controls?.supportsStop == true -> PlaybackAction.Stop
-            else -> PlaybackAction.Pause
+            entity?.state != MEDIA_PLAYER_STATE_PLAYING && controls?.supportsPlay == true -> PlaybackAction.Play
+            entity?.state == MEDIA_PLAYER_STATE_PLAYING && controls?.supportsPause == true -> PlaybackAction.Pause
+            entity?.state == MEDIA_PLAYER_STATE_PLAYING && controls?.supportsStop == true -> PlaybackAction.Stop
+            else -> null
         }
     }
 

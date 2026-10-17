@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
 import android.content.Intent
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import dagger.hilt.android.testing.HiltTestApplication
@@ -8,7 +9,11 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_PAUSE
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_PLAY
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_SEEK
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_STOP
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
@@ -62,14 +67,6 @@ class MediaPlayerControlsWidgetTest {
     }
 
     @Test
-    fun `Given playing entity without capability data when play pause widget action is received then pause is called`() = runTest {
-        runPlaybackActionTest(
-            state = "playing",
-            expectedAction = "media_pause",
-        )
-    }
-
-    @Test
     fun `Given playing entity without pause support when play pause widget action is received then stop is called`() = runTest {
         runPlaybackActionTest(
             state = "playing",
@@ -80,7 +77,11 @@ class MediaPlayerControlsWidgetTest {
 
     @Test
     fun `Given non-playing entity when play pause widget action is received then play is called`() = runTest {
-        runPlaybackActionTest(state = "paused", expectedAction = "media_play")
+        runPlaybackActionTest(
+            state = "paused",
+            supportedFeatures = MEDIA_PLAYER_SUPPORT_PLAY,
+            expectedAction = "media_play",
+        )
     }
 
     @Test
@@ -104,11 +105,11 @@ class MediaPlayerControlsWidgetTest {
     }
 
     @Test
-    fun `Given playing entity without capability data when rendering widget then pause icon is shown`() = runTest {
+    fun `Given playing entity without playback actions when rendering widget then playback button is hidden`() = runTest {
         runPlaybackIconTest(
             state = "playing",
-            expectedIcon = R.drawable.ic_pause,
-            expectedContentDescription = commonR.string.widget_media_pause_button,
+            supportedFeatures = 0,
+            expectedVisibility = View.GONE,
         )
     }
 
@@ -116,31 +117,69 @@ class MediaPlayerControlsWidgetTest {
     fun `Given non-playing entity when rendering widget then play icon is shown`() = runTest {
         runPlaybackIconTest(
             state = "paused",
+            supportedFeatures = MEDIA_PLAYER_SUPPORT_PLAY,
             expectedIcon = R.drawable.ic_play,
             expectedContentDescription = commonR.string.widget_media_play_button,
         )
     }
 
+    @Test
+    fun `Given configured controls when rendering widget then only supported controls are shown`() = runTest {
+        val widget = createWidget(showSkip = true, showSeek = true, showVolume = true)
+        val entity = createEntity(
+            state = "paused",
+            supportedFeatures = MEDIA_PLAYER_SUPPORT_PLAY or
+                MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK or
+                MEDIA_PLAYER_SUPPORT_SEEK or
+                MEDIA_PLAYER_SUPPORT_VOLUME_SET,
+        )
+        val views = renderWidget(widget, entity)
+        val root = views.apply(context, FrameLayout(context))
+
+        assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetVolumeDownButton).visibility)
+        assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetVolumeUpButton).visibility)
+        assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetPrevTrackButton).visibility)
+        assertEquals(View.GONE, root.findViewById<View>(R.id.widgetNextTrackButton).visibility)
+        assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetRewindButton).visibility)
+        assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetFastForwardButton).visibility)
+        assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetPlayPauseButton).visibility)
+    }
+
+    @Test
+    fun `Given configured controls without optional capabilities when rendering widget then optional controls are hidden`() = runTest {
+        val widget = createWidget(showSkip = true, showSeek = true, showVolume = true)
+        val entity = createEntity(
+            state = "paused",
+            supportedFeatures = MEDIA_PLAYER_SUPPORT_PLAY,
+        )
+        val root = renderWidget(widget, entity).apply(context, FrameLayout(context))
+
+        assertEquals(View.GONE, root.findViewById<View>(R.id.widgetVolumeDownButton).visibility)
+        assertEquals(View.GONE, root.findViewById<View>(R.id.widgetVolumeUpButton).visibility)
+        assertEquals(View.GONE, root.findViewById<View>(R.id.widgetPrevTrackButton).visibility)
+        assertEquals(View.GONE, root.findViewById<View>(R.id.widgetNextTrackButton).visibility)
+        assertEquals(View.GONE, root.findViewById<View>(R.id.widgetRewindButton).visibility)
+        assertEquals(View.GONE, root.findViewById<View>(R.id.widgetFastForwardButton).visibility)
+        assertEquals(View.VISIBLE, root.findViewById<View>(R.id.widgetPlayPauseButton).visibility)
+    }
+
     private suspend fun runPlaybackIconTest(
         state: String,
         supportedFeatures: Int? = null,
-        expectedIcon: Int,
-        expectedContentDescription: Int,
+        expectedVisibility: Int = View.VISIBLE,
+        expectedIcon: Int? = null,
+        expectedContentDescription: Int? = null,
     ) {
         val widget = createWidget()
         val entity = createEntity(state, supportedFeatures)
-        val receiver = createReceiver()
-        val parent = FrameLayout(context)
+        val root = renderWidget(widget, entity).apply(context, FrameLayout(context))
+        val playPauseButton = root.findViewById<ImageView>(R.id.widgetPlayPauseButton)
 
-        coEvery { dao.get(appWidgetId) } returns widget
-        coEvery { serverManager.connectionStateProvider(serverId) } returns connectionStateProvider
-        every { connectionStateProvider.urlFlow() } returns flowOf(UrlState.HasUrl(null))
-
-        val views = receiver.getWidgetRemoteViews(context, appWidgetId, entity)
-        val playPauseButton = views.apply(context, parent).findViewById<ImageView>(R.id.widgetPlayPauseButton)
-
-        assertEquals(expectedIcon, shadowOf(playPauseButton.drawable).createdFromResId)
-        assertEquals(context.getString(expectedContentDescription), playPauseButton.contentDescription)
+        assertEquals(expectedVisibility, playPauseButton.visibility)
+        if (expectedVisibility == View.VISIBLE) {
+            assertEquals(expectedIcon, shadowOf(playPauseButton.drawable).createdFromResId)
+            assertEquals(context.getString(expectedContentDescription!!), playPauseButton.contentDescription)
+        }
     }
 
     private suspend fun runPlaybackActionTest(
@@ -188,6 +227,32 @@ class MediaPlayerControlsWidgetTest {
         showVolume = false,
         showSource = false,
     )
+
+    private fun createWidget(
+        showSkip: Boolean,
+        showSeek: Boolean,
+        showVolume: Boolean,
+    ) = MediaPlayerControlsWidgetEntity(
+        id = appWidgetId,
+        serverId = serverId,
+        entityId = entityId,
+        label = null,
+        showSkip = showSkip,
+        showSeek = showSeek,
+        showVolume = showVolume,
+        showSource = false,
+    )
+
+    private suspend fun renderWidget(
+        widget: MediaPlayerControlsWidgetEntity,
+        entity: Entity,
+    ) = MediaPlayerControlsWidget().also {
+        it.dao = dao
+        it.serverManager = serverManager
+        coEvery { dao.get(appWidgetId) } returns widget
+        coEvery { serverManager.connectionStateProvider(serverId) } returns connectionStateProvider
+        every { connectionStateProvider.urlFlow() } returns flowOf(UrlState.HasUrl(null))
+    }.getWidgetRemoteViews(context, appWidgetId, entity)
 
     private fun createEntity(state: String, supportedFeatures: Int? = null) = Entity(
         entityId = entityId,
