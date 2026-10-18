@@ -1060,17 +1060,40 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         return true
     }
 
+    /**
+     * The URL to load for [result]. A server with a plain-http home URL always loads on it, away from home
+     * through [ServerUrlPipe], so the page never has to change origin later. Other pages load the URL in
+     * use, without the pipe.
+     */
+    private suspend fun pageUrlFor(result: UrlLoadResult.Success): String {
+        val pipe = serverUrlPipe
+        val next = result.url.toHttpUrlOrNull()
+        val home = serverManager.getServer(result.serverId)?.connection?.internalUrl?.toHttpUrlOrNull()
+        val viaHome = pipe != null &&
+            pipe.isSupported &&
+            next != null &&
+            home != null &&
+            !home.isHttps &&
+            !home.hasSameOrigin(next) &&
+            keyChainRepository.getClientCertProvider().certificate == null
+        if (!viaHome) {
+            serverUrlPipe?.clear()
+            return result.url
+        }
+        pipe.route(home, next)
+        return next.newBuilder().scheme(home.scheme).host(home.host).port(home.port).build().toString()
+    }
+
     private suspend fun handleUrlResult(result: UrlLoadResult) {
         when (result) {
             is UrlLoadResult.Success -> {
                 if (keepPageOnServerUrlChange(result)) return
-                // A page loaded again starts on the URL in use, without the pipe
-                serverUrlPipe?.clear()
+                val url = pageUrlFor(result)
                 pendingMoreInfoEntityId = result.moreInfoEntityId
                 _viewState.update { currentState ->
                     FrontendViewState.Loading(
                         serverId = result.serverId,
-                        url = result.url,
+                        url = url,
                         target = currentState.pendingTarget,
                     )
                 }

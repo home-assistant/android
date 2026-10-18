@@ -3519,6 +3519,22 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given a server with a home URL when it starts away from home then the page loads on the home URL through the pipe`() = runTest {
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://example.ui.nabu.casa",
+                name = "Home",
+                internalUrl = "http://192.168.1.2:8123",
+                serverId = serverId,
+            )
+
+            val viewModel = showContent(remoteUrl)
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertEquals(homeUrl, state.url)
+            coVerify { pipe.route("http://192.168.1.2:8123/".toHttpUrl(), remoteUrl.toHttpUrl()) }
+        }
+
+        @Test
         fun `Given a page on an https URL when another URL is used then it is loaded again`() = runTest {
             val viewModel = showContent(remoteUrl)
 
