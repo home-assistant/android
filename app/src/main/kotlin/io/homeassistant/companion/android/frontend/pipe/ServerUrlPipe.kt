@@ -6,6 +6,7 @@ import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
 import androidx.webkit.WebViewFeature
 import java.io.BufferedInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -32,16 +33,15 @@ private const val CONNECT_TIMEOUT_MS = 10_000
 private const val COPY_BUFFER_BYTES = 16 * 1024
 
 /** Requests for the [page] origin go to the [target] origin. */
-internal class Route(val page: HttpUrl, val target: HttpUrl) {
+internal class Route(page: HttpUrl, val target: HttpUrl) {
     val pageOrigin = page.toString().removeSuffix("/")
     val targetOrigin = target.toString().removeSuffix("/")
-    val targetHost = if (target.port ==
-        HttpUrl.defaultPort(target.scheme)
-    ) {
-        target.host
-    } else {
-        "${target.host}:${target.port}"
-    }
+
+    /** What WebView names in a CONNECT for the page origin. */
+    val pageAuthority = "${page.host}:${page.port}"
+
+    /** The Host header of the target: its host, and its port when it is not the default one. */
+    val targetHost = targetOrigin.substringAfter("://")
 }
 
 /**
@@ -68,21 +68,13 @@ class ServerUrlPipe @Inject constructor() {
         get() = WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE) &&
             WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE_REVERSE_BYPASS)
 
-    /**
-     * Sends the page's requests for [page]'s origin to [target]'s origin from now on, or directly to
-     * [page] again when [target] is null. Returns once WebView uses the new setting.
-     */
+    /** Whether the page's requests currently go through the pipe. */
+    val isActive: Boolean
+        get() = route != null
+
+    /** Sends the page's requests for [page]'s origin to [target]'s origin. Returns once WebView uses it. */
     @MainThread
-    suspend fun route(page: HttpUrl, target: HttpUrl?) {
-        val executor = Executor { it.run() }
-        if (target == null) {
-            route = null
-            suspendCancellableCoroutine { done ->
-                ProxyController.getInstance().clearProxyOverride(executor) { done.resume(Unit) }
-            }
-            Timber.i("Frontend requests go directly to the page's server URL again")
-            return
-        }
+    suspend fun route(page: HttpUrl, target: HttpUrl) {
         val port = start(page, target)
         val config = ProxyConfig.Builder()
             .addProxyRule("$LOCALHOST:$port")
@@ -90,10 +82,21 @@ class ServerUrlPipe @Inject constructor() {
             .addBypassRule("${page.host}:${page.port}")
             .setReverseBypassEnabled(true)
             .build()
-        suspendCancellableCoroutine { done ->
-            ProxyController.getInstance().setProxyOverride(config, executor) { done.resume(Unit) }
-        }
+        awaitProxy { executor, done -> ProxyController.getInstance().setProxyOverride(config, executor, done) }
         Timber.i("Frontend requests of the page now go through the pipe to the server URL in use")
+    }
+
+    /** Sends the page's requests directly again. Returns once WebView uses it. */
+    @MainThread
+    suspend fun clear() {
+        if (route == null) return
+        route = null
+        awaitProxy { executor, done -> ProxyController.getInstance().clearProxyOverride(executor, done) }
+        Timber.i("Frontend requests go directly to the page's server URL again")
+    }
+
+    private suspend fun awaitProxy(change: (Executor, Runnable) -> Unit) = suspendCancellableCoroutine { done ->
+        change(Executor { it.run() }) { done.resume(Unit) }
     }
 
     /** Makes the pipe send [page]'s requests to [target] and returns the local port it listens on. */
@@ -115,15 +118,17 @@ class ServerUrlPipe @Inject constructor() {
                     Timber.w(e, "Pipe stopped accepting")
                     break
                 }
+                // An exception escaping a pool thread would crash the app; serve catches all of them
                 threads.execute { serve(client) }
             }
         }
         return socket.localPort
     }
 
+    @Suppress("TooGenericExceptionCaught") // see ensureServer
     private fun serve(client: Socket) = try {
         client.use { pipe(it) }
-    } catch (e: IOException) {
+    } catch (e: Exception) {
         Timber.d("Pipe connection ended: ${e.javaClass.simpleName}")
     }
 
@@ -131,25 +136,41 @@ class ServerUrlPipe @Inject constructor() {
         val fromPage = BufferedInputStream(client.getInputStream())
         val toPage = client.getOutputStream()
         val route = route ?: return toPage.answer("503 Service Unavailable")
-        var head = Head.read(fromPage) ?: return
+        request(route, fromPage, toPage)?.let { (head, tunnel) -> forward(route, head, tunnel, fromPage, toPage) }
+    }
+
+    /** The page's request to forward and whether it came through a tunnel, or null after refusing it. */
+    private fun request(route: Route, fromPage: InputStream, toPage: OutputStream): Pair<Head, Boolean>? {
+        val head = Head.read(fromPage)
         // WebView tunnels WebSockets through a proxy; the request inside the tunnel is plain http
-        val tunnel = head.method == "CONNECT"
-        if (tunnel) {
-            if (head.target != "${route.page.host}:${route.page.port}") return toPage.answer("403 Forbidden")
-            toPage.answer("200 Connection Established")
-            head = Head.read(fromPage) ?: return
-        } else if (!head.target.startsWith(route.pageOrigin)) {
-            return toPage.answer("403 Forbidden")
+        val tunnel = head?.method == "CONNECT"
+        val allowed = when {
+            head == null -> false
+            tunnel -> head.target == route.pageAuthority
+            else -> head.target == route.pageOrigin || head.target.startsWith(route.pageOrigin + "/")
         }
+        return when {
+            head == null -> null
+            !allowed -> null.also { toPage.answer("403 Forbidden") }
+            !tunnel -> head to false
+            else -> {
+                toPage.answer("200 Connection Established")
+                Head.read(fromPage)?.let { it to true }
+            }
+        }
+    }
+
+    private fun forward(route: Route, head: Head, tunnel: Boolean, fromPage: InputStream, toPage: OutputStream) {
         connect(route.target).use { upstream ->
             val toServer = upstream.getOutputStream()
             toServer.write(head.forServer(route, keepAlive = tunnel).bytes())
             toServer.flush()
             // The rest of the page's side (a body, WebSocket frames) goes as it is
             threads.execute {
+                @Suppress("TooGenericExceptionCaught") // see ensureServer
                 try {
                     fromPage.copyTo(toServer)
-                } catch (e: IOException) {
+                } catch (e: Exception) {
                     Timber.d("Pipe upload ended: ${e.javaClass.simpleName}")
                 } finally {
                     runCatching { upstream.shutdownOutput() }
@@ -163,10 +184,8 @@ class ServerUrlPipe @Inject constructor() {
     }
 
     private fun connect(target: HttpUrl): Socket {
-        if (!target.isHttps) {
-            return Socket().apply { connect(InetSocketAddress(target.host, target.port), CONNECT_TIMEOUT_MS) }
-        }
         val plain = Socket().apply { connect(InetSocketAddress(target.host, target.port), CONNECT_TIMEOUT_MS) }
+        if (!target.isHttps) return plain
         val tls = (SSLSocketFactory.getDefault() as SSLSocketFactory)
             .createSocket(plain, target.host, target.port, true) as SSLSocket
         tls.sslParameters = tls.sslParameters.apply { serverNames = listOf(SNIHostName(target.host)) }
@@ -206,7 +225,6 @@ internal class Head(val start: String, val headers: MutableList<Pair<String, Str
         val result = Head("$method $path ${start.substringAfterLast(' ')}", headers.toMutableList())
         result.set("Host", route.targetHost)
         result.set("Proxy-Connection", null)
-        result.set("Proxy-Authorization", null)
         header("Origin")?.let { result.set("Origin", if (it == page) target else it) }
         header("Referer")?.let {
             result.set("Referer", if (it.startsWith(page)) target + it.removePrefix(page) else it)
@@ -217,27 +235,20 @@ internal class Head(val start: String, val headers: MutableList<Pair<String, Str
 
     /** The response as the page expects it on its own origin. */
     fun forPage(route: Route, keepAlive: Boolean): Head {
-        val result = Head(start, headers.toMutableList())
-        header("Location")?.let {
-            if (it.startsWith(route.targetOrigin)) {
-                result.set(
-                    "Location",
-                    route.pageOrigin + it.removePrefix(route.targetOrigin),
-                )
-            }
-        }
-        // The page origin is plain http: WebView drops Secure cookies there
-        val cookies = headers.filter { it.first.equals("Set-Cookie", ignoreCase = true) }.map { it.second }
-        result.set("Set-Cookie", null)
-        cookies.forEach {
-            result.headers += "Set-Cookie" to it.replace(SECURE, "").replace(SAME_SITE_NONE, "; SameSite=Lax")
-        }
-        result.set("Strict-Transport-Security", null)
-        result.set("Alt-Svc", null)
-        if (!keepAlive) {
-            result.set("Connection", "close")
-            result.set("Keep-Alive", null)
-        }
+        val result = Head(
+            start,
+            headers.mapTo(mutableListOf()) { (name, value) ->
+                when {
+                    name.equals("Location", ignoreCase = true) && value.startsWith(route.targetOrigin) ->
+                        name to route.pageOrigin + value.removePrefix(route.targetOrigin)
+                    // The page origin is plain http: WebView drops Secure cookies there
+                    name.equals("Set-Cookie", ignoreCase = true) ->
+                        name to value.replace(SECURE, "").replace(SAME_SITE_NONE, "; SameSite=Lax")
+                    else -> name to value
+                }
+            },
+        )
+        if (!keepAlive) result.set("Connection", "close")
         return result
     }
 
@@ -245,28 +256,26 @@ internal class Head(val start: String, val headers: MutableList<Pair<String, Str
         private val SECURE = Regex(";\\s*Secure(?=;|$)", RegexOption.IGNORE_CASE)
         private val SAME_SITE_NONE = Regex(";\\s*SameSite=None", RegexOption.IGNORE_CASE)
 
+        /** "\r\n\r\n" as the last 4 bytes read. */
+        private const val END_OF_HEAD = 0x0D0A0D0A
+
         /** Reads up to the empty line that ends a head, or null when the stream ended first. */
         fun read(input: InputStream): Head? {
-            val bytes = java.io.ByteArrayOutputStream()
-            var matched = 0
-            while (matched < 4) {
+            val bytes = ByteArrayOutputStream()
+            var last4 = 0
+            while (last4 != END_OF_HEAD) {
                 val b = input.read()
                 if (b < 0) return null
                 bytes.write(b)
                 if (bytes.size() > MAX_HEAD_BYTES) throw IOException("Head too large")
-                matched = when {
-                    b == '\r'.code && (matched == 0 || matched == 2) -> matched + 1
-                    b == '\n'.code && (matched == 1 || matched == 3) -> matched + 1
-                    b == '\r'.code -> 1
-                    else -> 0
-                }
+                last4 = (last4 shl Byte.SIZE_BITS) or b
             }
             val lines = bytes.toString(Charsets.ISO_8859_1.name()).split("\r\n").filter { it.isNotEmpty() }
             val headers = lines.drop(1).mapNotNull { line ->
                 val colon = line.indexOf(':')
                 if (colon <= 0) null else line.substring(0, colon).trim() to line.substring(colon + 1).trim()
             }
-            return Head(lines.firstOrNull() ?: return null, headers.toMutableList())
+            return lines.firstOrNull()?.let { Head(it, headers.toMutableList()) }
         }
     }
 }

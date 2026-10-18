@@ -55,14 +55,14 @@ class ServerUrlPipeTest {
         val response = head(
             "HTTP/1.1 302 Found\r\nLocation: https://example.ui.nabu.casa/auth/login\r\n" +
                 "Set-Cookie: ingress_session=abc; Path=/api/hassio_ingress/; Secure; SameSite=None\r\n" +
-                "Strict-Transport-Security: max-age=31536000\r\n\r\n",
+                "Content-Type: text/plain\r\n\r\n",
         )
 
         val received = response.forPage(route, keepAlive = false)
 
         assertEquals("http://192.168.1.2:8123/auth/login", received.header("Location"))
         assertEquals("ingress_session=abc; Path=/api/hassio_ingress/; SameSite=Lax", received.header("Set-Cookie"))
-        assertNull(received.header("Strict-Transport-Security"))
+        assertEquals("text/plain", received.header("Content-Type"))
         assertEquals("close", received.header("Connection"))
     }
 
@@ -99,6 +99,19 @@ class ServerUrlPipeTest {
             assertTrue(answer.startsWith("HTTP/1.1 200 OK"), answer)
             assertTrue(answer.endsWith("\r\n\r\nok"), answer)
         }
+    }
+
+    @Test
+    fun `Given a request whose address only starts like the page origin when it reaches the pipe then it is refused`() {
+        val pipe = ServerUrlPipe()
+        val port = pipe.start("http://192.168.1.2:8123/".toHttpUrl(), "http://127.0.0.1:9/".toHttpUrl())
+
+        val answer = Socket(InetAddress.getLoopbackAddress(), port).use { page ->
+            page.getOutputStream().write("GET http://192.168.1.2:8123@evil.example/ HTTP/1.1\r\nHost: x\r\n\r\n".toByteArray())
+            page.getInputStream().readBytes().decodeToString()
+        }
+
+        assertTrue(answer.startsWith("HTTP/1.1 403"), answer)
     }
 
     @Test

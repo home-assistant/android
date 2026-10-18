@@ -3479,6 +3479,9 @@ class FrontendViewModelTest {
         }
 
         private suspend fun TestScope.showContent(url: String): FrontendViewModel {
+            coEvery { keyChainRepository.getClientCertProvider() } returns object : ClientCertProvider {
+                override val certificate: ClientCertificate? = null
+            }
             every { frontendBusObserver.messageResults() } returns messages
             every { urlManager.serverUrlFlow(any(), any()) } returns urls
             val viewModel = createViewModel(serverUrlPipe = pipe)
@@ -3512,7 +3515,7 @@ class FrontendViewModelTest {
             runCurrent()
 
             assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
-            coVerify { pipe.route(homeUrl.toHttpUrl(), null) }
+            coVerify { pipe.clear() }
         }
 
         @Test

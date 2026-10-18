@@ -1036,10 +1036,13 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             current.serverId == result.serverId &&
             page != null &&
             next != null &&
-            // An https page can only be piped by breaking its encryption
-            (page.hasSameOrigin(next) || !page.isHttps)
+            // An https page can only be piped by breaking its encryption; the pipe has no client certificate
+            (
+                page.hasSameOrigin(next) ||
+                    (!page.isHttps && keyChainRepository.getClientCertProvider().certificate == null)
+                )
         if (!keep) return false
-        pipe.route(page, target = next.takeUnless { page.hasSameOrigin(it) })
+        if (page.hasSameOrigin(next)) pipe.clear() else pipe.route(page, next)
         val toInternal = serverManager.getServer(result.serverId)?.connection?.internalUrl
             ?.toHttpUrlOrNull()?.hasSameOrigin(next) == true
         viewModelScope.launch {
@@ -1047,11 +1050,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             isScreenStarted.first { it }
             _webViewActions.subscriptionCount.first { it > 0 }
             _webViewActions.emit(WebViewAction.EvaluateScript(RECONNECT_SCRIPT))
-            _events.emit(
-                FrontendEvent.ShowSnackbar(
-                    if (toInternal) commonR.string.frontend_switched_to_internal_url else commonR.string.frontend_switched_to_external_url,
-                ),
-            )
+            val message = if (toInternal) {
+                commonR.string.frontend_switched_to_internal_url
+            } else {
+                commonR.string.frontend_switched_to_external_url
+            }
+            _events.emit(FrontendEvent.ShowSnackbar(message))
         }
         return true
     }
@@ -1060,6 +1064,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         when (result) {
             is UrlLoadResult.Success -> {
                 if (keepPageOnServerUrlChange(result)) return
+                // A page loaded again starts on the URL in use, without the pipe
+                serverUrlPipe?.clear()
                 pendingMoreInfoEntityId = result.moreInfoEntityId
                 _viewState.update { currentState ->
                     FrontendViewState.Loading(
