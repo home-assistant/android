@@ -1,9 +1,14 @@
 package io.homeassistant.companion.android.common.data
 
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.keychain.ClientCertificateManager
+import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
+import io.homeassistant.companion.android.common.data.keychain.ServerTrustAnchorProvider
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import java.io.IOException
@@ -25,10 +30,14 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 
 /**
- * Helper to configure an [OkHttpClient] for server-certificate validation (with a
- * user-installed CA fallback) and the client certificate for mutual TLS (mTLS).
+ * Helper to configure an [OkHttpClient] for server-certificate validation (with a user-installed CA
+ * fallback, and a server trust anchor fallback on Wear OS) and the client certificate for mutual TLS (mTLS).
  */
-class TLSHelper @Inject constructor(private val clientCertificateManager: ClientCertificateManager) {
+class TLSHelper @Inject constructor(
+    private val clientCertificateManager: ClientCertificateManager,
+    private val keyStoreRepository: KeyStoreRepository,
+    @ApplicationContext private val context: Context,
+) {
 
     /**
      * Configures [builder] to validate server certificates.
@@ -43,16 +52,25 @@ class TLSHelper @Inject constructor(private val clientCertificateManager: Client
      * whenever the default rejects a certificate (see [withUserInstalledCaFallback]). This relies on
      * the app opting into user CAs via `<certificates src="user"/>` in `network_security_config.xml`.
      *
+     * On Wear OS only, where the phone pushes it since there is no UI to install user CAs, the handshake
+     * then falls back to the server trust anchor of [KeyStoreRepository] (see [withServerTrustAnchorFallback]),
+     * following its changes so an anchor stored after this client was built is honored.
+     *
      * Runs on [Dispatchers.IO] because it may read keystores from disk, and awaits the mTLS client
-     * certificate load (see [ClientCertificateManager.getClientCertProvider]) so it is available
-     * before the first handshake.
+     * certificate and server trust anchor loads (see [ClientCertificateManager.getClientCertProvider])
+     * so they are available before the first handshake.
      */
     suspend fun setupOkHttpClientSSLSocketFactory(builder: OkHttpClient.Builder) = withContext(Dispatchers.IO) {
         val platformTrustManager = defaultX509TrustManager() ?: run {
             FailFast.fail { "No default X509 trust manager available" }
             return@withContext
         }
-        val handshakeTrustManager = withUserInstalledCaFallback(platformTrustManager)
+        val userCaTrustManager = withUserInstalledCaFallback(platformTrustManager)
+        val handshakeTrustManager = if (isWear()) {
+            withServerTrustAnchorFallback(userCaTrustManager, keyStoreRepository.getServerTrustAnchorProvider())
+        } else {
+            userCaTrustManager
+        }
 
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(arrayOf(getMTLSKeyManagerForOKHTTP()), arrayOf(handshakeTrustManager), null)
@@ -77,10 +95,26 @@ class TLSHelper @Inject constructor(private val clientCertificateManager: Client
         return CompositeX509ExtendedTrustManager(primary = extended, fallback = userCaTrustManager)
     }
 
-    private fun defaultX509TrustManager(keyStore: KeyStore? = null): X509TrustManager? {
-        val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        factory.init(keyStore)
-        return factory.trustManagers.filterIsInstance<X509TrustManager>().firstOrNull()
+    private fun isWear(): Boolean = context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+
+    /**
+     * Wraps [trustManager] so the anchor of [serverTrustAnchorProvider] is honored as a fallback (see
+     * [ServerTrustAnchorTrustManager]).
+     *
+     * Returns [trustManager] unchanged before Android N or when it is not an [X509ExtendedTrustManager]
+     * (the composite needs the hostname-aware overloads).
+     */
+    private fun withServerTrustAnchorFallback(
+        trustManager: X509TrustManager,
+        serverTrustAnchorProvider: ServerTrustAnchorProvider,
+    ): X509TrustManager {
+        val extended = trustManager as? X509ExtendedTrustManager
+        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.N) && extended != null) {
+            val anchorTrustManager = ServerTrustAnchorTrustManager(serverTrustAnchorProvider)
+            CompositeX509ExtendedTrustManager(primary = extended, fallback = anchorTrustManager)
+        } else {
+            trustManager
+        }
     }
 
     /**
@@ -128,6 +162,16 @@ class TLSHelper @Inject constructor(private val clientCertificateManager: Client
             }
         }
     }
+}
+
+/**
+ * Returns the first [X509TrustManager] of the default factory initialized with [keyStore], or the
+ * platform trust store when [keyStore] is `null`.
+ */
+internal fun defaultX509TrustManager(keyStore: KeyStore? = null): X509TrustManager? {
+    val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+    factory.init(keyStore)
+    return factory.trustManagers.filterIsInstance<X509TrustManager>().firstOrNull()
 }
 
 /**

@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.common.data
 
+import android.content.Context
+import android.content.pm.PackageManager
 import io.homeassistant.companion.android.common.data.TestCertificates.PRIVATE_CA
 import io.homeassistant.companion.android.common.data.TestCertificates.SYSTEM_CA
 import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
@@ -8,16 +10,22 @@ import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
 import io.homeassistant.companion.android.common.data.keychain.ServerTrustAnchorProvider
+import io.homeassistant.companion.android.common.util.SdkVersion
+import io.mockk.every
 import io.mockk.mockk
 import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import kotlinx.coroutines.test.runTest
+import okhttp3.OkHttpClient
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
+
+/** Android N, the first version with the user-installed CA and server trust anchor fallbacks. */
+private const val ANDROID_7_SDK = 24
 
 class TLSHelperTest {
 
@@ -58,6 +66,28 @@ class TLSHelperTest {
 
         assertEquals(certificate.privateKey, keyManager.getPrivateKey(null))
         assertArrayEquals(certificate.chain, keyManager.getCertificateChain(null))
+    }
+
+    @Test
+    fun `Given a phone when setting up the client then the server trust anchor is not loaded`() = runTest {
+        SdkVersion.sdkInt = ANDROID_7_SDK
+        val keyStore = FakeKeyStoreRepository()
+        val tlsHelper = tlsHelperOf(keyStore = keyStore, isWear = false)
+
+        tlsHelper.setupOkHttpClientSSLSocketFactory(OkHttpClient.Builder())
+
+        assertEquals(0, keyStore.serverTrustAnchorProviderRequests)
+    }
+
+    @Test
+    fun `Given a watch when setting up the client then the server trust anchor is loaded`() = runTest {
+        SdkVersion.sdkInt = ANDROID_7_SDK
+        val keyStore = FakeKeyStoreRepository()
+        val tlsHelper = tlsHelperOf(keyStore = keyStore, isWear = true)
+
+        tlsHelper.setupOkHttpClientSSLSocketFactory(OkHttpClient.Builder())
+
+        assertEquals(1, keyStore.serverTrustAnchorProviderRequests)
     }
 
     @Test
@@ -104,7 +134,13 @@ class TLSHelperTest {
     private fun tlsHelperOf(
         keyChain: KeyChainRepository = FakeKeyChainRepository(),
         keyStore: KeyStoreRepository = FakeKeyStoreRepository(),
-    ): TLSHelper = TLSHelper(ClientCertificateManager(keyChain, keyStore))
+        isWear: Boolean = false,
+    ): TLSHelper {
+        val context = mockk<Context> {
+            every { packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH) } returns isWear
+        }
+        return TLSHelper(ClientCertificateManager(keyChain, keyStore), keyStore, context)
+    }
 
     private fun keyStoreOf(vararg entries: Pair<String, X509Certificate>): KeyStore {
         return loadKeyStore().apply {
@@ -154,8 +190,14 @@ private class FakeKeyStoreRepository(private val toLoad: ClientCertificate? = nu
 
     override suspend fun storeClientCertificate(privateKey: PrivateKey, chain: Array<X509Certificate>): ClientCertificate = ClientCertificate(privateKey, chain).also { certificate = it }
 
-    override suspend fun getServerTrustAnchorProvider(): ServerTrustAnchorProvider = object : ServerTrustAnchorProvider {
-        override val certificate: X509Certificate? = null
+    var serverTrustAnchorProviderRequests = 0
+        private set
+
+    override suspend fun getServerTrustAnchorProvider(): ServerTrustAnchorProvider {
+        serverTrustAnchorProviderRequests++
+        return object : ServerTrustAnchorProvider {
+            override val certificate: X509Certificate? = null
+        }
     }
 
     override suspend fun storeServerTrustAnchor(certificate: X509Certificate?) = Unit
