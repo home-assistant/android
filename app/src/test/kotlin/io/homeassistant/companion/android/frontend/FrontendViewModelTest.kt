@@ -394,7 +394,7 @@ class FrontendViewModelTest {
 
             val state = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
             assertInstanceOf(FrontendConnectionError.Unreachable::class.java, state.error)
-            assertEquals(errorActions(state.error, isInternalConnection = false), state.actions)
+            assertEquals(errorActions(state.error, isInternalConnection = false, canSwitchServer = false), state.actions)
         }
 
         @Test
@@ -2311,6 +2311,37 @@ class FrontendViewModelTest {
 
             val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
             assertEquals(testUrlWithAuth, state.url)
+        }
+
+        @Test
+        fun `Given two servers when loading then server name is exposed and timeout offers SwitchServer`() = runTest {
+            val servers = listOf(mockServer(url = null, name = "Home", serverId = serverId), mockServer(url = null, name = "Cabin", serverId = 2))
+            every { serverManager.serversFlow } returns flowOf(servers)
+            coEvery { serverManager.servers() } returns servers
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            runCurrent()
+            assertEquals("Home", viewModel.connectingServerName.value)
+
+            advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+            val state = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+            assertTrue(state.actions.any { it.intent == ErrorActionIntent.SwitchServer })
+        }
+
+        @Test
+        fun `Given one server when loading then no server name is exposed`() = runTest {
+            every { serverManager.serversFlow } returns flowOf(listOf(mockServer(url = null, name = "Home", serverId = serverId)))
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            runCurrent()
+
+            assertNull(viewModel.connectingServerName.value)
         }
 
         @Test

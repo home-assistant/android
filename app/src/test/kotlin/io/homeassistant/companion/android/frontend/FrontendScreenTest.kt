@@ -116,7 +116,7 @@ class FrontendScreenTest {
                     serverId = 1,
                     url = "https://example.com",
                     error = error,
-                    actions = errorActions(error, isInternalConnection = false),
+                    actions = errorActions(error, isInternalConnection = false, canSwitchServer = false),
                 ),
                 errorStateProvider = FakeConnectionErrorStateProvider(url = "https://example.com", error = error),
                 onErrorAction = { action = it },
@@ -687,7 +687,7 @@ class FrontendScreenTest {
                         serverId = 1,
                         url = "https://example.com",
                         error = error,
-                        actions = errorActions(error, isInternalConnection = false),
+                        actions = errorActions(error, isInternalConnection = false, canSwitchServer = false),
                     ),
                     errorStateProvider = FakeConnectionErrorStateProvider(
                         url = "https://example.com",

@@ -227,6 +227,17 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val _connectivityCheckState = MutableStateFlow(ConnectivityCheckState())
     override val connectivityCheckState: StateFlow<ConnectivityCheckState> = _connectivityCheckState.asStateFlow()
 
+    /** Name of the server being connected to while loading, when there is another server to switch to. */
+    val connectingServerName: StateFlow<String?> = combine(_viewState, serverManager.serversFlow) { state, servers ->
+        if (state is FrontendViewState.Loading &&
+            servers.size > 1
+        ) {
+            servers.find { it.id == state.serverId }?.friendlyName
+        } else {
+            null
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+
     private val _events = MutableSharedFlow<FrontendEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<FrontendEvent> = _events.asSharedFlow()
 
@@ -599,6 +610,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             ErrorActionIntent.UpdateWebView -> _events.tryEmit(FrontendEvent.UpdateWebView)
 
             ErrorActionIntent.Refresh -> onRetry()
+
+            ErrorActionIntent.SwitchServer -> _events.tryEmit(FrontendEvent.ShowServerSwitcher)
 
             ErrorActionIntent.Wait -> _viewState.update { state ->
                 if (state is FrontendViewState.Error) {
@@ -1152,7 +1165,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         viewModelScope.launch {
             val serverId = _viewState.value.serverId
             val isInternal = resolveIsInternalConnection(serverId)
-            val actions = errorActions(error, isInternalConnection = isInternal)
+            val actions = errorActions(
+                error,
+                isInternalConnection = isInternal,
+                canSwitchServer = serverManager.servers().size > 1,
+            )
             _viewState.update { currentState ->
                 FrontendViewState.Error(
                     serverId = currentState.serverId,

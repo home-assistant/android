@@ -258,7 +258,7 @@ class FrontendConnectionErrorScreenTest {
                     connectivityCheckState = ConnectivityCheckState(),
                     actions = {
                         ErrorActions(
-                            actions = errorActions(error, isInternalConnection = true),
+                            actions = errorActions(error, isInternalConnection = true, canSwitchServer = false),
                             onAction = { dispatched = it },
                         )
                     },

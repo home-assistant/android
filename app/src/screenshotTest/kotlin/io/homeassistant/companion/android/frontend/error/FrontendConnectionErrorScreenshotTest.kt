@@ -239,7 +239,7 @@ class FrontendConnectionErrorScreenshotTest {
                 connectivityCheckState = ConnectivityCheckState(),
                 actions = {
                     ErrorActions(
-                        actions = errorActions(error, isInternalConnection = false),
+                        actions = errorActions(error, isInternalConnection = false, canSwitchServer = false),
                         onAction = {},
                     )
                 },

@@ -14,6 +14,7 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -34,9 +35,11 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -52,6 +56,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.util.TypedValueCompat.pxToDp
@@ -66,7 +71,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.zxing.BarcodeFormat
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.util.isLight
@@ -152,6 +159,7 @@ internal fun FrontendScreen(
     val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
     val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val improvScanRequested by viewModel.improvScanRequested.collectAsStateWithLifecycle()
+    val connectingServerName by viewModel.connectingServerName.collectAsStateWithLifecycle()
 
     // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
     // state so it does not leak across configuration changes via the ViewModel.
@@ -175,6 +183,7 @@ internal fun FrontendScreen(
 
     FrontendScreenContent(
         viewState = viewState,
+        connectingServerName = connectingServerName,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         getWebViewClient = viewModel::getWebViewClient,
         prepareUrlLoad = viewModel::prepareUrlLoad,
@@ -237,6 +246,7 @@ internal fun FrontendScreenContent(
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
     onErrorAction: (ErrorActionIntent) -> Unit = {},
+    connectingServerName: String? = null,
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
@@ -337,6 +347,12 @@ internal fun FrontendScreenContent(
             onOpenExternalLink = onOpenExternalLink,
             onShowSnackbar = onShowSnackbar,
             onErrorAction = onErrorAction,
+        )
+
+        ServerSwitchHint(
+            serverName = connectingServerName,
+            onSwitchServer = { onErrorAction(ErrorActionIntent.SwitchServer) },
+            modifier = Modifier.align(Alignment.TopCenter),
         )
 
         FrontendBarcodeOverlay(
@@ -1074,5 +1090,26 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
             onShowSnackbar = { _, _ -> true },
             onWebViewCreationFailed = {},
         )
+    }
+}
+
+/** Names the server being connected to and offers to switch; hidden while [serverName] is null. */
+@Composable
+private fun ServerSwitchHint(serverName: String?, onSwitchServer: () -> Unit, modifier: Modifier = Modifier) {
+    AnimatedVisibility(
+        visible = serverName != null,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = modifier.statusBarsPadding().padding(HADimens.SPACE4),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(commonR.string.loading_screen_connecting_to_server, serverName.orEmpty()),
+                style = HATextStyle.BodyMedium,
+                color = LocalHAColorScheme.current.colorTextSecondary,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            HAPlainButton(text = stringResource(commonR.string.error_action_switch_server), onClick = onSwitchServer)
+        }
     }
 }

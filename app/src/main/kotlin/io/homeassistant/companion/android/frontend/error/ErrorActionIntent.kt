@@ -18,6 +18,9 @@ sealed interface ErrorActionIntent {
     /** Dismiss the error and keep waiting for the frontend's external-bus handshake. */
     data object Wait : ErrorActionIntent
 
+    /** Open the server chooser to switch to another server. */
+    data object SwitchServer : ErrorActionIntent
+
     /** Open the app settings. */
     data object GoToSettings : ErrorActionIntent
 
