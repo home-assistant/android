@@ -665,10 +665,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             if (!permissionManager.checkStoragePermissionForDownload()) return@launch
 
             val result = downloadManager.downloadFile(
-                url = url,
+                // The download manager does not use WebView's proxy, so it needs the server URL in use
+                url = serverUrlPipe?.toTarget(url) ?: url,
                 contentDisposition = contentDisposition,
                 mimetype = mimetype,
                 serverId = viewState.value.serverId,
+                cookieUrl = url,
             )
             handleDownloadResult(result)
         }
@@ -940,7 +942,19 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.ExoPlayerAction -> {
-                exoPlayerManager.handle(result)
+                // The native player does not use WebView's proxy, so it needs the server URL in use
+                val pageUrl = (result as? FrontendHandlerEvent.ExoPlayerAction.PlayHls)?.url?.toString()
+                val targetUrl = pageUrl?.let { serverUrlPipe?.toTarget(it) }
+                exoPlayerManager.handle(
+                    if (result is FrontendHandlerEvent.ExoPlayerAction.PlayHls &&
+                        targetUrl != null &&
+                        targetUrl != pageUrl
+                    ) {
+                        result.copy(url = targetUrl.toUri())
+                    } else {
+                        result
+                    },
+                )
             }
 
             is FrontendHandlerEvent.StartImprovScan -> improvHandler.onStartImprovScan()

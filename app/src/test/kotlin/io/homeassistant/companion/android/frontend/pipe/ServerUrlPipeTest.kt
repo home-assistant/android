@@ -84,7 +84,7 @@ class ServerUrlPipeTest {
                     socket.getOutputStream().write("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok".toByteArray())
                 }
             }.start()
-            val pipe = ServerUrlPipe()
+            val pipe = ServerUrlPipe(headTimeoutMs = 5_000)
             val port = pipe.start("http://192.168.1.2:8123/".toHttpUrl(), "http://127.0.0.1:${server.localPort}/".toHttpUrl())
 
             val answer = Socket(InetAddress.getLoopbackAddress(), port).use { page ->
@@ -103,7 +103,7 @@ class ServerUrlPipeTest {
 
     @Test
     fun `Given a request whose address only starts like the page origin when it reaches the pipe then it is refused`() {
-        val pipe = ServerUrlPipe()
+        val pipe = ServerUrlPipe(headTimeoutMs = 5_000)
         val port = pipe.start("http://192.168.1.2:8123/".toHttpUrl(), "http://127.0.0.1:9/".toHttpUrl())
 
         val answer = Socket(InetAddress.getLoopbackAddress(), port).use { page ->
@@ -116,7 +116,7 @@ class ServerUrlPipeTest {
 
     @Test
     fun `Given a request for another site when it reaches the pipe then it is refused`() {
-        val pipe = ServerUrlPipe()
+        val pipe = ServerUrlPipe(headTimeoutMs = 5_000)
         val port = pipe.start("http://192.168.1.2:8123/".toHttpUrl(), "http://127.0.0.1:9/".toHttpUrl())
 
         val answer = Socket(InetAddress.getLoopbackAddress(), port).use { page ->
@@ -125,5 +125,39 @@ class ServerUrlPipeTest {
         }
 
         assertTrue(answer.startsWith("HTTP/1.1 403"), answer)
+    }
+
+    @Test
+    fun `Given an IPv6 home URL when WebView tunnels to it then the authority has brackets`() {
+        val ipv6 = Route("http://[fd00::1]:8123/".toHttpUrl(), "https://example.ui.nabu.casa/".toHttpUrl())
+
+        assertEquals("[fd00::1]:8123", ipv6.pageAuthority)
+    }
+
+    @Test
+    fun `Given redirects when rewriting them for the page then only the target origin moves`() {
+        assertEquals("http://192.168.1.2:8123/auth/login", route.toPage("https://example.ui.nabu.casa/auth/login"))
+        assertEquals("https://example.ui.nabu.casa:8443/x", route.toPage("https://example.ui.nabu.casa:8443/x"))
+        assertEquals("https://example.ui.nabu.casa.evil.example/x", route.toPage("https://example.ui.nabu.casa.evil.example/x"))
+        assertEquals("/auth/login", route.toPage("/auth/login"))
+    }
+
+    @Test
+    fun `Given a URL of the page when the app loads it itself then it goes to the server URL in use`() {
+        assertEquals("https://example.ui.nabu.casa/api/hls/x/master.m3u8", route.toTarget("http://192.168.1.2:8123/api/hls/x/master.m3u8"))
+        assertEquals("https://www.home-assistant.io/", route.toTarget("https://www.home-assistant.io/"))
+    }
+
+    @Test
+    fun `Given a client that never sends its request when it connects then the pipe drops it`() {
+        val pipe = ServerUrlPipe(headTimeoutMs = 200)
+        val port = pipe.start("http://192.168.1.2:8123/".toHttpUrl(), "http://127.0.0.1:9/".toHttpUrl())
+
+        val ended = Socket(InetAddress.getLoopbackAddress(), port).use { idle ->
+            idle.soTimeout = 5_000
+            idle.getInputStream().read()
+        }
+
+        assertEquals(-1, ended)
     }
 }

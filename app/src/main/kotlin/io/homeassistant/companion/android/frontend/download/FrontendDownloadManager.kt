@@ -50,9 +50,16 @@ class FrontendDownloadManager @Inject constructor(
      * @param contentDisposition The Content-Disposition header value
      * @param mimetype The MIME type of the file
      * @param serverId The current server ID for attaching auth credentials
+     * @param cookieUrl The URL the WebView asked for, whose cookies are sent
      * @return The result of the download operation for the ViewModel to act on
      */
-    suspend fun downloadFile(url: String, contentDisposition: String, mimetype: String, serverId: Int): DownloadResult {
+    suspend fun downloadFile(
+        url: String,
+        contentDisposition: String,
+        mimetype: String,
+        serverId: Int,
+        cookieUrl: String = url,
+    ): DownloadResult {
         Timber.d("WebView requested download of ${sensitive(url)}")
         val uri = url.toUri()
         return when (uri.scheme?.lowercase()) {
@@ -62,6 +69,7 @@ class FrontendDownloadManager @Inject constructor(
                 contentDisposition = contentDisposition,
                 mimetype = mimetype,
                 serverId = serverId,
+                cookieUrl = cookieUrl,
             )
 
             "data" -> {
@@ -98,6 +106,7 @@ class FrontendDownloadManager @Inject constructor(
         contentDisposition: String,
         mimetype: String,
         serverId: Int,
+        cookieUrl: String,
     ): DownloadResult {
         if (systemDownloadManager == null) {
             Timber.e("Unable to start download, cannot get DownloadManager")
@@ -126,7 +135,7 @@ class FrontendDownloadManager @Inject constructor(
             }
 
             try {
-                CookieManager.getInstance().getCookie(url)?.let { cookie ->
+                CookieManager.getInstance().getCookie(cookieUrl)?.let { cookie ->
                     request.addRequestHeader("Cookie", cookie)
                 }
             } catch (e: CancellationException) {

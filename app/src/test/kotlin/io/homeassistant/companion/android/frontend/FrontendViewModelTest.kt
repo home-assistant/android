@@ -2345,7 +2345,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
-                downloadManager.downloadFile(any(), any(), any(), any())
+                downloadManager.downloadFile(any(), any(), any(), any(), any())
             } returns DownloadResult.Error(messageResId = commonR.string.downloads_failed)
 
             val viewModel = createViewModel()
@@ -2374,7 +2374,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
-                downloadManager.downloadFile(any(), any(), any(), any())
+                downloadManager.downloadFile(any(), any(), any(), any(), any())
             } returns DownloadResult.OpenWithSystem(uri = testUri)
 
             val viewModel = createViewModel()
@@ -2400,7 +2400,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
-                downloadManager.downloadFile(any(), any(), any(), any())
+                downloadManager.downloadFile(any(), any(), any(), any(), any())
             } returns DownloadResult.Forwarded
 
             val viewModel = createViewModel()
@@ -2425,7 +2425,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery {
-                downloadManager.downloadFile(any(), any(), any(), any())
+                downloadManager.downloadFile(any(), any(), any(), any(), any())
             } returns DownloadResult.Forwarded
 
             val viewModel = createViewModel()
@@ -2444,6 +2444,7 @@ class FrontendViewModelTest {
                     contentDisposition = "attachment",
                     mimetype = "application/pdf",
                     serverId = serverId,
+                    cookieUrl = "https://example.com/file.pdf",
                 )
             }
         }
@@ -2465,7 +2466,7 @@ class FrontendViewModelTest {
             )
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { downloadManager.downloadFile(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { downloadManager.downloadFile(any(), any(), any(), any(), any()) }
         }
 
         @Test
@@ -2474,7 +2475,7 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
             coEvery { permissionManager.checkStoragePermissionForDownload() } returns true
-            coEvery { downloadManager.downloadFile(any(), any(), any(), any()) } returns DownloadResult.Forwarded
+            coEvery { downloadManager.downloadFile(any(), any(), any(), any(), any()) } returns DownloadResult.Forwarded
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
@@ -2492,6 +2493,7 @@ class FrontendViewModelTest {
                     contentDisposition = "attachment",
                     mimetype = "application/pdf",
                     serverId = serverId,
+                    cookieUrl = "https://example.com/file.pdf",
                 )
             }
         }
@@ -3533,6 +3535,27 @@ class FrontendViewModelTest {
             val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
             assertEquals(homeUrl, state.url)
             coVerify { pipe.route("http://192.168.1.2:8123/".toHttpUrl(), remoteUrl.toHttpUrl()) }
+        }
+
+        @Test
+        fun `Given a piped page when a download starts then it goes to the server URL in use with the page's cookies`() = runTest {
+            val viewModel = showContent(homeUrl)
+            every { pipe.toTarget("http://192.168.1.2:8123/api/file.pdf") } returns "https://example.ui.nabu.casa/api/file.pdf"
+            coEvery { permissionManager.checkStoragePermissionForDownload() } returns true
+            coEvery { downloadManager.downloadFile(any(), any(), any(), any(), any()) } returns DownloadResult.Forwarded
+
+            viewModel.onDownloadRequested(url = "http://192.168.1.2:8123/api/file.pdf", contentDisposition = "", mimetype = "application/pdf")
+            runCurrent()
+
+            coVerify {
+                downloadManager.downloadFile(
+                    url = "https://example.ui.nabu.casa/api/file.pdf",
+                    contentDisposition = "",
+                    mimetype = "application/pdf",
+                    serverId = serverId,
+                    cookieUrl = "http://192.168.1.2:8123/api/file.pdf",
+                )
+            }
         }
 
         @Test
