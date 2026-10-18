@@ -50,6 +50,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
+import io.homeassistant.companion.android.frontend.pipe.ServerUrlPipe
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.util.HAWebChromeClient
@@ -92,6 +93,9 @@ val CONNECTION_TIMEOUT = 10.seconds
 
 private const val APP_PREFIX = "app://"
 private const val INTENT_PREFIX = "intent:"
+
+/** Makes the frontend reconnect its WebSocket, which then goes to the server URL in use. */
+private const val RECONNECT_SCRIPT = "document.querySelector('home-assistant')?.hass?.connection?.reconnect(true)"
 private const val SECURITY_ALERT_URL = "https://www.home-assistant.io/latest-security-alert/"
 
 /**
@@ -134,6 +138,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
     private val keyChainRepository: KeyChainRepository,
+    private val serverUrlPipe: ServerUrlPipe? = null,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -159,6 +164,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
         matterThreadHandler: FrontendMatterThreadHandler,
         keyChainRepository: KeyChainRepository,
+        serverUrlPipe: ServerUrlPipe,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialTarget = savedStateHandle.toRoute<FrontendRoute>().target,
@@ -181,6 +187,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         barcodeScannerHandler = barcodeScannerHandler,
         matterThreadHandler = matterThreadHandler,
         keyChainRepository = keyChainRepository,
+        serverUrlPipe = serverUrlPipe,
     )
 
     /**
@@ -1010,9 +1017,49 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      *
      * @param result The URL load result to handle
      */
+    /**
+     * Keeps the shown page when the URL of its server changes (home network and remote): the page stays
+     * on the origin it was loaded from, [ServerUrlPipe] sends its requests to the new URL, and the
+     * frontend only reconnects its WebSocket.
+     *
+     * @return `true` when [result] needs no reload
+     */
+    @OptIn(EvaluateJavascriptUsage::class)
+    private suspend fun keepPageOnServerUrlChange(result: UrlLoadResult.Success): Boolean {
+        val pipe = serverUrlPipe
+        val current = _viewState.value
+        val page = current.url.toHttpUrlOrNull()
+        val next = result.url.toHttpUrlOrNull()
+        val keep = pipe != null &&
+            pipe.isSupported &&
+            current is FrontendViewState.Content &&
+            current.serverId == result.serverId &&
+            page != null &&
+            next != null &&
+            // An https page can only be piped by breaking its encryption
+            (page.hasSameOrigin(next) || !page.isHttps)
+        if (!keep) return false
+        pipe.route(page, target = next.takeUnless { page.hasSameOrigin(it) })
+        val toInternal = serverManager.getServer(result.serverId)?.connection?.internalUrl
+            ?.toHttpUrlOrNull()?.hasSameOrigin(next) == true
+        viewModelScope.launch {
+            // A page behind another screen is frozen: it reconnects once it shows again
+            isScreenStarted.first { it }
+            _webViewActions.subscriptionCount.first { it > 0 }
+            _webViewActions.emit(WebViewAction.EvaluateScript(RECONNECT_SCRIPT))
+            _events.emit(
+                FrontendEvent.ShowSnackbar(
+                    if (toInternal) commonR.string.frontend_switched_to_internal_url else commonR.string.frontend_switched_to_external_url,
+                ),
+            )
+        }
+        return true
+    }
+
     private suspend fun handleUrlResult(result: UrlLoadResult) {
         when (result) {
             is UrlLoadResult.Success -> {
+                if (keepPageOnServerUrlChange(result)) return
                 pendingMoreInfoEntityId = result.moreInfoEntityId
                 _viewState.update { currentState ->
                     FrontendViewState.Loading(
