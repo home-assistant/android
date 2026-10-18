@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend.gesture
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.HAGesture
@@ -144,7 +145,8 @@ class FrontendGestureManager @Inject constructor(
     private suspend fun switchServerBy(currentServerId: Int, offset: Int): GestureResult {
         val servers = serverManager.servers()
         if (servers.size < 2) return GestureResult.Ignored
-        val currentIndex = servers.indexOfFirst { it.id == currentServerId }
+        val currentId = if (currentServerId == SERVER_ID_ACTIVE) serverManager.getServer()?.id else currentServerId
+        val currentIndex = servers.indexOfFirst { it.id == currentId }
         if (currentIndex == -1) return GestureResult.Ignored
         val nextIndex = (currentIndex + offset).mod(servers.size)
         return GestureResult.SwitchServer(servers[nextIndex].id)
