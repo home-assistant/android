@@ -4,8 +4,8 @@ import java.security.PrivateKey
 import java.security.cert.X509Certificate
 
 /**
- * Client certificate stored in the app's own Android KeyStore, used on Wear OS where the
- * certificate is pushed from the phone instead of being picked by the user.
+ * Client certificate and server trust anchor stored in the app's own Android KeyStore, used on Wear OS
+ * where they are pushed from the phone instead of being picked by the user.
  */
 interface KeyStoreRepository {
 
@@ -18,4 +18,13 @@ interface KeyStoreRepository {
      * @return the loaded certificate, or `null` when storing failed.
      */
     suspend fun storeClientCertificate(privateKey: PrivateKey, chain: Array<X509Certificate>): ClientCertificate?
+
+    /** Returns the live view of the server trust anchor, loading it from the KeyStore when it is not loaded yet. */
+    suspend fun getServerTrustAnchorProvider(): ServerTrustAnchorProvider
+
+    /**
+     * Stores [certificate] as the server trust anchor, or deletes it when `null`, replacing any previously
+     * loaded one.
+     */
+    suspend fun storeServerTrustAnchor(certificate: X509Certificate?)
 }

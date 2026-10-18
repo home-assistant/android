@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.ClientCertificateManager
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
+import io.homeassistant.companion.android.common.data.keychain.ServerTrustAnchorProvider
 import io.mockk.mockk
 import java.security.KeyStore
 import java.security.PrivateKey
@@ -152,4 +153,10 @@ private class FakeKeyStoreRepository(private val toLoad: ClientCertificate? = nu
     }
 
     override suspend fun storeClientCertificate(privateKey: PrivateKey, chain: Array<X509Certificate>): ClientCertificate = ClientCertificate(privateKey, chain).also { certificate = it }
+
+    override suspend fun getServerTrustAnchorProvider(): ServerTrustAnchorProvider = object : ServerTrustAnchorProvider {
+        override val certificate: X509Certificate? = null
+    }
+
+    override suspend fun storeServerTrustAnchor(certificate: X509Certificate?) = Unit
 }

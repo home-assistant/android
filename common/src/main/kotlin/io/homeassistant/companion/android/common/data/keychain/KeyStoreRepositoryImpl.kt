@@ -17,6 +17,7 @@ internal class KeyStoreRepositoryImpl @Inject constructor() : KeyStoreRepository
     private companion object {
         /** Static alias because there is no way to ask the user for one on the watch. */
         private const val CLIENT_CERTIFICATE_ALIAS = "TLSClientCertificate"
+        private const val SERVER_TRUST_ANCHOR_ALIAS = "TLSServerTrustAnchor"
     }
 
     private val mutex = Mutex()
@@ -31,6 +32,15 @@ internal class KeyStoreRepositoryImpl @Inject constructor() : KeyStoreRepository
     private val clientCertProvider = object : ClientCertProvider {
         override val certificate: ClientCertificate?
             get() = clientCertificate
+    }
+
+    /** Written under [mutex]; read lock-free through [serverTrustAnchorProvider] from TLS handshakes. */
+    @Volatile
+    private var serverTrustAnchor: X509Certificate? = null
+
+    private val serverTrustAnchorProvider = object : ServerTrustAnchorProvider {
+        override val certificate: X509Certificate?
+            get() = serverTrustAnchor
     }
 
     override suspend fun getClientCertProvider(): ClientCertProvider {
@@ -50,6 +60,53 @@ internal class KeyStoreRepositoryImpl @Inject constructor() : KeyStoreRepository
     ): ClientCertificate? = mutex.withLock {
         storeClientCertificateEntry(privateKey, chain)
         loadClientCertificate().also { clientCertificate = it }
+    }
+
+    override suspend fun getServerTrustAnchorProvider(): ServerTrustAnchorProvider {
+        if (serverTrustAnchor == null) {
+            mutex.withLock {
+                if (serverTrustAnchor == null) {
+                    serverTrustAnchor = loadServerTrustAnchor()
+                }
+            }
+        }
+        return serverTrustAnchorProvider
+    }
+
+    override suspend fun storeServerTrustAnchor(certificate: X509Certificate?) {
+        mutex.withLock {
+            storeServerTrustAnchorEntry(certificate)
+            serverTrustAnchor = loadServerTrustAnchor()
+        }
+    }
+
+    /** Must be called while holding [mutex]; runs the blocking [KeyStore] calls on [Dispatchers.IO]. */
+    private suspend fun storeServerTrustAnchorEntry(certificate: X509Certificate?) {
+        withContext(Dispatchers.IO) {
+            try {
+                val aks = keyStore().apply { load(null) }
+                when {
+                    certificate != null -> aks.setCertificateEntry(SERVER_TRUST_ANCHOR_ALIAS, certificate)
+                    aks.containsAlias(SERVER_TRUST_ANCHOR_ALIAS) -> aks.deleteEntry(SERVER_TRUST_ANCHOR_ALIAS)
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Exception storing the server trust anchor")
+            }
+        }
+    }
+
+    /**
+     * Must be called while holding [mutex]; runs the blocking [KeyStore] calls on [Dispatchers.IO].
+     *
+     * Never throws: a KeyStore failure is logged and returns `null`, as if no anchor was stored.
+     */
+    private suspend fun loadServerTrustAnchor(): X509Certificate? = withContext(Dispatchers.IO) {
+        try {
+            keyStore().apply { load(null) }.getCertificate(SERVER_TRUST_ANCHOR_ALIAS) as? X509Certificate
+        } catch (e: Exception) {
+            Timber.e(e, "Exception getting the server trust anchor")
+            null
+        }
     }
 
     /** Must be called while holding [mutex]; runs the blocking [KeyStore] calls on [Dispatchers.IO]. */
