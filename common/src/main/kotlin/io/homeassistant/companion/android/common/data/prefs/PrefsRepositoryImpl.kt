@@ -32,6 +32,7 @@ private const val PREF_PAGE_ZOOM_LEVEL = "page_zoom_level"
 private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
 private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
 private const val PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START = "always_show_first_view_on_app_start"
+private const val PREF_SEAMLESS_SWITCHING_SUFFIX = "_seamless_switching"
 private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
 private const val PREF_KEY_ALIAS = "key-alias"
 private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
@@ -279,6 +280,13 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
     }
 
+    override suspend fun isSeamlessSwitchingEnabled(serverId: Int): Boolean =
+        localStorage().getBooleanOrNull("$serverId$PREF_SEAMLESS_SWITCHING_SUFFIX") ?: true
+
+    override suspend fun setSeamlessSwitchingEnabled(serverId: Int, enabled: Boolean) {
+        localStorage().putBoolean("$serverId$PREF_SEAMLESS_SWITCHING_SUFFIX", enabled)
+    }
+
     override suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean {
         return localStorage().getBoolean(PREF_ALWAYS_SHOW_FIRST_VIEW_ON_APP_START)
     }
@@ -418,6 +426,7 @@ internal class PrefsRepositoryImpl @Inject constructor(
             localStorage().remove(CONTROLS_PANEL_SERVER)
             setControlsPanelPath(null)
         }
+        localStorage().remove("$serverId$PREF_SEAMLESS_SWITCHING_SUFFIX")
     }
 
     override suspend fun showPrivacyHint(): Boolean {

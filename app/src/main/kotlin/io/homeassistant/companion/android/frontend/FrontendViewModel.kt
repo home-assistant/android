@@ -1032,6 +1032,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         val next = result.url.toHttpUrlOrNull()
         val keep = pipe != null &&
             pipe.isSupported &&
+            prefsRepository.isSeamlessSwitchingEnabled(result.serverId) &&
             current is FrontendViewState.Content &&
             current.serverId == result.serverId &&
             page != null &&
@@ -1071,6 +1072,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         val home = serverManager.getServer(result.serverId)?.connection?.internalUrl?.toHttpUrlOrNull()
         val viaHome = pipe != null &&
             pipe.isSupported &&
+            prefsRepository.isSeamlessSwitchingEnabled(result.serverId) &&
             next != null &&
             home != null &&
             !home.isHttps &&

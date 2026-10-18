@@ -150,8 +150,13 @@ class ServerSettingsFragment :
             it.setOnBindEditTextListener { edit ->
                 edit.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             }
-            it.onPreferenceChangeListener = onChangeUrlValidator
+            it.onPreferenceChangeListener = OnPreferenceChangeListener { preference, newValue ->
+                onChangeUrlValidator.onPreferenceChange(preference, newValue).also { valid ->
+                    if (valid) showSeamlessSwitching(newValue.toString())
+                }
+            }
             it.isVisible = presenter.hasWifi()
+            showSeamlessSwitching(it.text.orEmpty())
         }
 
         findPreference<Preference>("connection_external")?.setOnPreferenceClickListener {
@@ -290,6 +295,11 @@ class ServerSettingsFragment :
         findPreference<EditTextPreference>("server_name")?.let {
             it.summary = name
         }
+    }
+
+    /** Seamless switching needs a home URL to switch to. */
+    private fun showSeamlessSwitching(internalUrl: String) {
+        findPreference<SwitchPreference>("seamless_switching")?.isVisible = internalUrl.isNotBlank()
     }
 
     override fun enableInternalConnection(isEnabled: Boolean) {

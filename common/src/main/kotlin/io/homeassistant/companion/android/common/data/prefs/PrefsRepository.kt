@@ -137,6 +137,11 @@ interface PrefsRepository {
 
     suspend fun isAlwaysShowFirstViewOnAppStartEnabled(): Boolean
 
+    /** Whether the frontend of [serverId] keeps its page when the app switches between its home and remote URL. */
+    suspend fun isSeamlessSwitchingEnabled(serverId: Int): Boolean
+
+    suspend fun setSeamlessSwitchingEnabled(serverId: Int, enabled: Boolean)
+
     suspend fun setAlwaysShowFirstViewOnAppStart(enabled: Boolean)
 
     suspend fun isWebViewDebugEnabled(): Boolean

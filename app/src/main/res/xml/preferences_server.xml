@@ -36,6 +36,12 @@
             android:key="connection_internal"
             android:title="@string/pref_connection_internal"
             app:useSimpleSummaryProvider="true"/>
+        <SwitchPreference
+            android:key="seamless_switching"
+            android:icon="@drawable/ic_wifi"
+            android:title="@string/pref_seamless_switching"
+            android:summary="@string/pref_seamless_switching_summary"
+            android:defaultValue="true"/>
         <Preference
             android:key="connection_security_level"
             android:icon="@drawable/ic_lock"

@@ -573,6 +573,8 @@
     <string name="persistent_notification">Persistent notification</string>
     <string name="person">Person</string>
     <string name="pref_connection_internal">Internal connection URL</string>
+    <string name="pref_seamless_switching">Seamless switching</string>
+    <string name="pref_seamless_switching_summary">Keep the dashboard open when the app switches between the home network and the remote connection</string>
     <string name="pref_connection_title">Connection information</string>
     <string name="pref_connection_url">Home Assistant URL</string>
     <string name="pref_connection_homenetwork">Home network</string>

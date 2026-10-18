@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.server
 
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.network.WifiHelper
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +16,7 @@ import timber.log.Timber
 class ServerSettingsPresenterImpl @Inject constructor(
     private val serverManager: ServerManager,
     private val wifiHelper: WifiHelper,
+    private val prefsRepository: PrefsRepository,
 ) : PreferenceDataStore(),
     ServerSettingsPresenter {
 
@@ -34,6 +36,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
             "trust_server" -> serverManager.integrationRepository(serverId).isTrusted()
             "app_lock" -> serverManager.authenticationRepository(serverId).isLockEnabledRaw()
             "app_lock_home_bypass" -> serverManager.authenticationRepository(serverId).isLockHomeBypassEnabled()
+            "seamless_switching" -> prefsRepository.isSeamlessSwitchingEnabled(serverId)
             else -> throw IllegalArgumentException("No boolean found by this key: $key")
         }
     }
@@ -46,6 +49,7 @@ class ServerSettingsPresenterImpl @Inject constructor(
                 "app_lock_home_bypass" -> serverManager.authenticationRepository(
                     serverId,
                 ).setLockHomeBypassEnabled(value)
+                "seamless_switching" -> prefsRepository.setSeamlessSwitchingEnabled(serverId, value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }

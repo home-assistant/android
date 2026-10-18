@@ -3479,6 +3479,7 @@ class FrontendViewModelTest {
         }
 
         private suspend fun TestScope.showContent(url: String): FrontendViewModel {
+            coEvery { prefsRepository.isSeamlessSwitchingEnabled(any()) } returns true
             coEvery { keyChainRepository.getClientCertProvider() } returns object : ClientCertProvider {
                 override val certificate: ClientCertificate? = null
             }
@@ -3532,6 +3533,17 @@ class FrontendViewModelTest {
             val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
             assertEquals(homeUrl, state.url)
             coVerify { pipe.route("http://192.168.1.2:8123/".toHttpUrl(), remoteUrl.toHttpUrl()) }
+        }
+
+        @Test
+        fun `Given seamless switching turned off when the remote URL is used then the page is loaded again`() = runTest {
+            showContent(homeUrl)
+            coEvery { prefsRepository.isSeamlessSwitchingEnabled(any()) } returns false
+
+            urls.emit(UrlLoadResult.Success(url = remoteUrl, serverId = serverId))
+            runCurrent()
+
+            coVerify(exactly = 0) { pipe.route(any(), any()) }
         }
 
         @Test
