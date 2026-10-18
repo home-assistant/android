@@ -122,7 +122,7 @@ class TLSHelper @Inject constructor(
      * when there are none or AndroidCAStore can't be read.
      */
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun userInstalledCaTrustManager(): X509ExtendedTrustManager? = try {
+    fun userInstalledCaTrustManager(): X509ExtendedTrustManager? = try {
         val androidCaStore = loadKeyStore("AndroidCAStore")
         userInstalledCaKeyStore(androidCaStore)?.let { defaultX509TrustManager(it) as? X509ExtendedTrustManager }
     } catch (e: GeneralSecurityException) {
