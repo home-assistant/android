@@ -54,6 +54,12 @@ internal class Route(page: HttpUrl, val target: HttpUrl) {
  * they are.
  *
  * Only plain-http page origins can be piped: a request to an https origin is end-to-end encrypted.
+ *
+ * Other apps on the device can connect to the pipe's local port too. That gives them nothing they do not
+ * have already: the pipe only forwards requests for the page origin, only to the server's own remote URL,
+ * which is reachable from anywhere, and adds no credentials (the WebView sends the page's own cookies and
+ * tokens). The one thing the app could add, a TLS client certificate, is never used: servers that need one
+ * are not piped.
  */
 @Singleton
 class ServerUrlPipe @Inject constructor() {
