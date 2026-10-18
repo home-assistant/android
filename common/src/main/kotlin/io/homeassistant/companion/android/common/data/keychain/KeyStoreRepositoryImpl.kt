@@ -16,44 +16,49 @@ internal class KeyStoreRepositoryImpl @Inject constructor() : KeyStoreRepository
 
     private companion object {
         /** Static alias because there is no way to ask the user for one on the watch. */
-        private const val ALIAS = "TLSClientCertificate"
+        private const val CLIENT_CERTIFICATE_ALIAS = "TLSClientCertificate"
     }
 
     private val mutex = Mutex()
 
-    /** Written under [mutex]; read lock-free through [provider] from non-suspending contexts like TLS handshakes. */
+    /**
+     * Written under [mutex]; read lock-free through [clientCertProvider] from non-suspending contexts like TLS
+     * handshakes.
+     */
     @Volatile
-    private var certificate: ClientCertificate? = null
+    private var clientCertificate: ClientCertificate? = null
 
-    private val provider = object : ClientCertProvider {
+    private val clientCertProvider = object : ClientCertProvider {
         override val certificate: ClientCertificate?
-            get() = this@KeyStoreRepositoryImpl.certificate
+            get() = clientCertificate
     }
 
     override suspend fun getClientCertProvider(): ClientCertProvider {
-        if (certificate == null) {
+        if (clientCertificate == null) {
             mutex.withLock {
-                if (certificate == null) {
-                    certificate = loadCertificate()
+                if (clientCertificate == null) {
+                    clientCertificate = loadClientCertificate()
                 }
             }
         }
-        return provider
+        return clientCertProvider
     }
 
-    override suspend fun store(privateKey: PrivateKey, chain: Array<X509Certificate>): ClientCertificate? =
-        mutex.withLock {
-            storeCertificate(privateKey, chain)
-            loadCertificate().also { certificate = it }
-        }
+    override suspend fun storeClientCertificate(
+        privateKey: PrivateKey,
+        chain: Array<X509Certificate>,
+    ): ClientCertificate? = mutex.withLock {
+        storeClientCertificateEntry(privateKey, chain)
+        loadClientCertificate().also { clientCertificate = it }
+    }
 
     /** Must be called while holding [mutex]; runs the blocking [KeyStore] calls on [Dispatchers.IO]. */
-    private suspend fun loadCertificate(): ClientCertificate? = withContext(Dispatchers.IO) {
+    private suspend fun loadClientCertificate(): ClientCertificate? = withContext(Dispatchers.IO) {
         val aks = keyStore().apply { load(null) }
-        if (!aks.containsAlias(ALIAS)) return@withContext null
+        if (!aks.containsAlias(CLIENT_CERTIFICATE_ALIAS)) return@withContext null
 
         val entry = try {
-            aks.getEntry(ALIAS, null) as PrivateKeyEntry
+            aks.getEntry(CLIENT_CERTIFICATE_ALIAS, null) as PrivateKeyEntry
         } catch (e: Exception) {
             Timber.e(e, "Exception getting KeyStore.Entry")
             null
@@ -80,12 +85,12 @@ internal class KeyStoreRepositoryImpl @Inject constructor() : KeyStoreRepository
     }
 
     /** Must be called while holding [mutex]; runs the blocking [KeyStore] calls on [Dispatchers.IO]. */
-    private suspend fun storeCertificate(key: PrivateKey, chain: Array<X509Certificate>) {
+    private suspend fun storeClientCertificateEntry(key: PrivateKey, chain: Array<X509Certificate>) {
         withContext(Dispatchers.IO) {
             try {
                 keyStore().apply {
                     load(null)
-                    setEntry(ALIAS, PrivateKeyEntry(key, chain), null)
+                    setEntry(CLIENT_CERTIFICATE_ALIAS, PrivateKeyEntry(key, chain), null)
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Exception storing KeyStore.Entry")

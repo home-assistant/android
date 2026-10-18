@@ -151,5 +151,5 @@ private class FakeKeyStoreRepository(private val toLoad: ClientCertificate? = nu
         return this
     }
 
-    override suspend fun store(privateKey: PrivateKey, chain: Array<X509Certificate>): ClientCertificate = ClientCertificate(privateKey, chain).also { certificate = it }
+    override suspend fun storeClientCertificate(privateKey: PrivateKey, chain: Array<X509Certificate>): ClientCertificate = ClientCertificate(privateKey, chain).also { certificate = it }
 }

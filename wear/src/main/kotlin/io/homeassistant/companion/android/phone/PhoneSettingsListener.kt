@@ -182,7 +182,7 @@ class PhoneSettingsListener :
                     val certificateChain = getCertificateChain(alias).filterIsInstance<X509Certificate>().toTypedArray()
                     val privateKey = getKey(alias, tlsClientCertificatePassword) as PrivateKey
 
-                    keyStoreRepository.store(privateKey, certificateChain)
+                    keyStoreRepository.storeClientCertificate(privateKey, certificateChain)
                 }
             }
 
