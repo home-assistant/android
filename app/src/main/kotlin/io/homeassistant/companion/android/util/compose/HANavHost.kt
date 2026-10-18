@@ -139,13 +139,13 @@ internal fun HANavHost(
                 onOpenUrl = { url -> navController.navigateToUri(url, onShowSnackbar) },
             )
             setHomeNetworkScreen(
+                onBackClick = navController::popBackStack,
                 onGotoNextScreen = {
                     navController.popBackStack<FrontendRoute>(inclusive = false)
                 },
                 onHelpClick = {
                     navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
                 },
-                onBackClick = navController::popBackStack,
             )
 
             if (isAutomotive) {

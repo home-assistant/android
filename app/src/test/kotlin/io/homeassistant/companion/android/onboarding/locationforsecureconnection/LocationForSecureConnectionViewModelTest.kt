@@ -103,6 +103,25 @@ class LocationForSecureConnectionViewModelTest {
     }
 
     @Test
+    fun `Given server updated after creation When allowInsecureConnection is collected again Then emits the stored value`() = runTest {
+        coEvery { serverManager.getServer(serverId) } returnsMany listOf(
+            createServer(allowInsecureConnection = null),
+            createServer(allowInsecureConnection = false),
+        )
+
+        val viewModel = createViewModel()
+
+        viewModel.allowInsecureConnection.test {
+            assertNull(awaitItem())
+            awaitComplete()
+        }
+        viewModel.allowInsecureConnection.test {
+            assertEquals(false, awaitItem())
+            awaitComplete()
+        }
+    }
+
+    @Test
     fun `Given server throws exception When allowInsecureConnection is collected Then emits null`() = runTest {
         val exception = RuntimeException("Failed to get allow insecure connection")
         coEvery { serverManager.getServer(serverId) } throws exception

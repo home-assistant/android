@@ -237,13 +237,13 @@ internal fun NavGraphBuilder.onboarding(
         )
 
         setHomeNetworkScreen(
+            onBackClick = navController::popBackStack,
             onHelpClick = {
                 navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
             },
             onGotoNextScreen = {
                 onOnboardingDone()
             },
-            onBackClick = navController::popBackStack,
         )
     }
 }

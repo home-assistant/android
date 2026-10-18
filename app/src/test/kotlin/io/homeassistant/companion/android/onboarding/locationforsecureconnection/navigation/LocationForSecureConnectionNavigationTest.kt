@@ -72,16 +72,25 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
         testNavigation {
             navController.navigateToLocationForSecureConnection(42)
 
-            onNodeWithText(stringResource(commonR.string.connection_security_most_secure))
-                .performScrollTo()
-                .performClick()
-            onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
-                .performScrollTo()
-                .performClick()
-            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+            suspend fun goToSetHomeNetwork() {
+                onNodeWithText(stringResource(commonR.string.connection_security_most_secure))
+                    .performScrollTo()
+                    .performClick()
+                onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
+                    .performScrollTo()
+                    .performClick()
+                assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+            }
 
+            goToSetHomeNetwork()
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
+            assertTrue(
+                navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
+            )
 
+            goToSetHomeNetwork()
+            activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
             assertTrue(
                 navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
             )
