@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.pipe
 
 import androidx.annotation.MainThread
+import androidx.annotation.VisibleForTesting
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
 import androidx.webkit.WebViewFeature
@@ -31,7 +32,7 @@ private const val CONNECT_TIMEOUT_MS = 10_000
 private const val COPY_BUFFER_BYTES = 16 * 1024
 
 /** Requests for the [page] origin go to the [target] origin. */
-private class Route(val page: HttpUrl, val target: HttpUrl) {
+internal class Route(val page: HttpUrl, val target: HttpUrl) {
     val pageOrigin = page.toString().removeSuffix("/")
     val targetOrigin = target.toString().removeSuffix("/")
     val targetHost = if (target.port ==
@@ -82,8 +83,7 @@ class ServerUrlPipe @Inject constructor() {
             Timber.i("Frontend requests go directly to the page's server URL again")
             return
         }
-        route = Route(page.origin(), target.origin())
-        val port = ensureServer()
+        val port = start(page, target)
         val config = ProxyConfig.Builder()
             .addProxyRule("$LOCALHOST:$port")
             // With reverse bypass, only the page origin uses the pipe; everything else stays direct
@@ -94,6 +94,13 @@ class ServerUrlPipe @Inject constructor() {
             ProxyController.getInstance().setProxyOverride(config, executor) { done.resume(Unit) }
         }
         Timber.i("Frontend requests of the page now go through the pipe to the server URL in use")
+    }
+
+    /** Makes the pipe send [page]'s requests to [target] and returns the local port it listens on. */
+    @VisibleForTesting
+    internal fun start(page: HttpUrl, target: HttpUrl): Int {
+        route = Route(page.origin(), target.origin())
+        return ensureServer()
     }
 
     private fun ensureServer(): Int {
@@ -173,7 +180,8 @@ class ServerUrlPipe @Inject constructor() {
 }
 
 /** The start line and headers of a request or response, the only part the pipe reads. */
-private class Head(val start: String, val headers: MutableList<Pair<String, String>>) {
+@VisibleForTesting
+internal class Head(val start: String, val headers: MutableList<Pair<String, String>>) {
     val method get() = start.substringBefore(' ')
     val target get() = start.split(' ').getOrElse(1) { "" }
 

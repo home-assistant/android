@@ -56,6 +56,7 @@ import io.homeassistant.companion.android.frontend.matterthread.FrontendMatterTh
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
+import io.homeassistant.companion.android.frontend.pipe.ServerUrlPipe
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.FakeClock
@@ -89,6 +90,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -173,6 +175,7 @@ class FrontendViewModelTest {
             dialogManager = dialogManager,
         ),
         improvHandler: FrontendImprovHandler = this.improvHandler,
+        serverUrlPipe: ServerUrlPipe? = null,
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
@@ -196,6 +199,7 @@ class FrontendViewModelTest {
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
             matterThreadHandler = matterThreadHandler,
             keyChainRepository = keyChainRepository,
+            serverUrlPipe = serverUrlPipe,
         )
     }
 
@@ -3461,6 +3465,66 @@ class FrontendViewModelTest {
 
             webViewJob.cancel()
             viewModelJob.cancel()
+        }
+    }
+
+    @Nested
+    inner class ServerUrlChange {
+        private val homeUrl = "http://192.168.1.2:8123/?external_auth=1"
+        private val remoteUrl = "https://example.ui.nabu.casa/?external_auth=1"
+        private val urls = MutableSharedFlow<UrlLoadResult>()
+        private val messages = MutableSharedFlow<FrontendHandlerEvent>()
+        private val pipe: ServerUrlPipe = mockk(relaxed = true) {
+            every { isSupported } returns true
+        }
+
+        private suspend fun TestScope.showContent(url: String): FrontendViewModel {
+            every { frontendBusObserver.messageResults() } returns messages
+            every { urlManager.serverUrlFlow(any(), any()) } returns urls
+            val viewModel = createViewModel(serverUrlPipe = pipe)
+            runCurrent()
+            urls.emit(UrlLoadResult.Success(url = url, serverId = serverId))
+            runCurrent()
+            messages.emit(FrontendHandlerEvent.Connected)
+            runCurrent()
+            return viewModel
+        }
+
+        @Test
+        fun `Given a page on the home URL when the remote URL is used then the page stays and goes through the pipe`() = runTest {
+            val viewModel = showContent(homeUrl)
+
+            urls.emit(UrlLoadResult.Success(url = remoteUrl, serverId = serverId))
+            runCurrent()
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertEquals(homeUrl, state.url)
+            coVerify { pipe.route(homeUrl.toHttpUrl(), remoteUrl.toHttpUrl()) }
+        }
+
+        @Test
+        fun `Given a piped page when the home URL is used again then its requests go directly`() = runTest {
+            val viewModel = showContent(homeUrl)
+            urls.emit(UrlLoadResult.Success(url = remoteUrl, serverId = serverId))
+            runCurrent()
+
+            urls.emit(UrlLoadResult.Success(url = homeUrl, serverId = serverId))
+            runCurrent()
+
+            assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            coVerify { pipe.route(homeUrl.toHttpUrl(), null) }
+        }
+
+        @Test
+        fun `Given a page on an https URL when another URL is used then it is loaded again`() = runTest {
+            val viewModel = showContent(remoteUrl)
+
+            urls.emit(UrlLoadResult.Success(url = homeUrl, serverId = serverId))
+            runCurrent()
+
+            val state = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+            assertEquals(homeUrl, state.url)
+            coVerify(exactly = 0) { pipe.route(any(), any()) }
         }
     }
 }
