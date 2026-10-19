@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.sethomenetwork.navigation
 
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -24,7 +25,8 @@ internal fun NavGraphBuilder.setHomeNetworkScreen(
         SetHomeNetworkScreen(
             onGotoNextScreen = onGotoNextScreen,
             onHelpClick = onHelpClick,
-            onBackClick = onBackClick,
+            // A second tap while the screen is leaving would pop the screen below as well.
+            onBackClick = dropUnlessResumed(block = onBackClick),
             viewModel = hiltViewModel(),
         )
     }

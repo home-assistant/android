@@ -1,9 +1,14 @@
 package io.homeassistant.companion.android.onboarding.locationforsecureconnection.navigation
 
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import dagger.hilt.android.testing.BindValue
@@ -12,6 +17,10 @@ import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
+import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.homeassistant.companion.android.di.ServerManagerModule
 import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTest
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
@@ -68,28 +77,40 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
     }
 
     @Test
-    fun `Given SetHomeNetwork reached from LocationForSecureConnection when going back then show LocationForSecureConnection`() {
+    fun `Given most secure chosen When going back from SetHomeNetwork Then show LocationForSecureConnection with the choice selected`() {
+        storeAllowInsecureConnection()
         testNavigation {
             navController.navigateToLocationForSecureConnection(42)
-
-            suspend fun goToSetHomeNetwork() {
-                onNodeWithText(stringResource(commonR.string.connection_security_most_secure))
-                    .performScrollTo()
-                    .performClick()
-                onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
-                    .performScrollTo()
-                    .performClick()
-                assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
-            }
 
             goToSetHomeNetwork()
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
             assertTrue(
                 navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
             )
+            onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).assertIsSelected()
+            onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
+                .performScrollTo()
+                .assertIsEnabled()
 
             goToSetHomeNetwork()
             activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
+            assertTrue(
+                navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
+            )
+        }
+    }
+
+    @Test
+    fun `Given SetHomeNetwork When tapping back twice quickly Then show LocationForSecureConnection`() {
+        testNavigation {
+            navController.navigateToLocationForSecureConnection(42)
+
+            goToSetHomeNetwork()
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performTouchInput {
+                click()
+                click()
+            }
             waitForIdle()
             assertTrue(
                 navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
@@ -117,5 +138,34 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
 
             assertTrue(onboardingDone)
         }
+    }
+
+    private fun storeAllowInsecureConnection() {
+        var allowInsecureConnection: Boolean? = null
+        coEvery { serverManager.getServer(42) } answers {
+            Server(
+                id = 42,
+                _name = "Test Server",
+                connection = ServerConnectionInfo(
+                    externalUrl = "https://example.com",
+                    allowInsecureConnection = allowInsecureConnection,
+                ),
+                session = ServerSessionInfo(),
+                user = ServerUserInfo(),
+            )
+        }
+        coEvery { serverManager.updateServer(any()) } answers {
+            allowInsecureConnection = firstArg<Server>().connection.allowInsecureConnection
+        }
+    }
+
+    private fun AndroidComposeTestRule<*, *>.goToSetHomeNetwork() {
+        onNodeWithText(stringResource(commonR.string.connection_security_most_secure))
+            .performScrollTo()
+            .performClick()
+        onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
+            .performScrollTo()
+            .performClick()
+        assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
     }
 }
