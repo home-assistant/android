@@ -77,32 +77,32 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
     }
 
     @Test
-    fun `Given most secure chosen When going back from SetHomeNetwork Then show LocationForSecureConnection with the choice selected`() {
+    fun `Given most secure chosen when going back from SetHomeNetwork then show LocationForSecureConnection with the choice selected`() {
         storeAllowInsecureConnection()
         testNavigation {
             navController.navigateToLocationForSecureConnection(42)
 
             goToSetHomeNetwork()
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
-            assertTrue(
-                navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
-            )
-            onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).assertIsSelected()
-            onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
-                .performScrollTo()
-                .assertIsEnabled()
-
-            goToSetHomeNetwork()
-            activity.onBackPressedDispatcher.onBackPressed()
-            waitForIdle()
-            assertTrue(
-                navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
-            )
+            assertLocationForSecureConnectionWithMostSecureSelected()
         }
     }
 
     @Test
-    fun `Given SetHomeNetwork When tapping back twice quickly Then show LocationForSecureConnection`() {
+    fun `Given most secure chosen when pressing system back on SetHomeNetwork then show LocationForSecureConnection with the choice selected`() {
+        storeAllowInsecureConnection()
+        testNavigation {
+            navController.navigateToLocationForSecureConnection(42)
+
+            goToSetHomeNetwork()
+            activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
+            assertLocationForSecureConnectionWithMostSecureSelected()
+        }
+    }
+
+    @Test
+    fun `Given SetHomeNetwork when tapping back twice quickly then show LocationForSecureConnection`() {
         testNavigation {
             navController.navigateToLocationForSecureConnection(42)
 
@@ -167,5 +167,15 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
             .performScrollTo()
             .performClick()
         assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+    }
+
+    private fun AndroidComposeTestRule<*, *>.assertLocationForSecureConnectionWithMostSecureSelected() {
+        assertTrue(
+            navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
+        )
+        onNodeWithText(stringResource(commonR.string.connection_security_most_secure)).assertIsSelected()
+        onNodeWithText(stringResource(commonR.string.location_secure_connection_next))
+            .performScrollTo()
+            .assertIsEnabled()
     }
 }
