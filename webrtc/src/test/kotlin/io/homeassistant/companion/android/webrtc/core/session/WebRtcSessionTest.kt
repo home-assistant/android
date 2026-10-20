@@ -287,15 +287,33 @@ class WebRtcSessionTest {
     }
 
     @Test
-    fun `Given a server closed subscription When streaming Then the session renegotiates`() = runTest {
+    fun `Given a connected session Then the signaling subscription is closed and a later close does not renegotiate`() = runTest {
         val session = createSession()
         startConnectedSession(session)
+
+        // Once connected, the signaling subscription is released; the media flows on its own transport,
+        // so a WebSocket reconnect cannot resubscribe it and re-offer onto the already-negotiated peer.
+        assertEquals(0, signaling.activeSessionCount)
 
         signaling.currentSession.close()
         advanceUntilIdle()
 
+        assertEquals(ConnectionState.Connected, session.state.value)
+        assertEquals(1, signaling.openSessionCount)
+    }
+
+    @Test
+    fun `Given the signaling subscription closes before connecting Then the session renegotiates`() = runTest {
+        val session = createSession()
+        session.start()
+        advanceUntilIdle()
+        assertEquals(ConnectionState.Connecting, session.state.value)
+
+        // A close before the connection is established is a real server drop: the session renegotiates.
+        signaling.currentSession.close()
+        advanceUntilIdle()
+
         assertEquals(2, signaling.openSessionCount)
-        assertEquals(ConnectionState.Reconnecting, session.state.value)
     }
 
     @Test
