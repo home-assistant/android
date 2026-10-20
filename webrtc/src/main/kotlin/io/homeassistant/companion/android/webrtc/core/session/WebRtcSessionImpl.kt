@@ -32,10 +32,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -96,18 +96,29 @@ private class WebRtcNegotiation(
      */
     suspend fun run(offerSdp: String): NegotiationOutcome = coroutineScope {
         val ended = CompletableDeferred<NegotiationOutcome>()
-        val signalingEvents = signalingClient.openSession(offerSdp)
-            .map<SignalingEvent, NegotiationEvent> { NegotiationEvent.Signaling(it) }
-            // Carry a normal close through the merged stream so the single collector handles it in
-            // order, after any terminal error the flow emitted just before closing. Completing [ended]
-            // from this side channel could otherwise win that race and turn a server rejection into a
-            // silent retry.
-            .onCompletion { cause -> if (cause == null) emit(NegotiationEvent.SignalingClosed) }
+        // Completed once the peer connection is established. After that the signaling subscription is
+        // no longer needed (media flows on its own transport), so it is closed.
+        val connected = CompletableDeferred<Unit>()
+        val signalingEvents = channelFlow {
+            val collection = launch {
+                signalingClient.openSession(offerSdp).collect { send(NegotiationEvent.Signaling(it)) }
+                // The subscription closed on its own before the connection was established (the server
+                // ended it): surface it so the session renegotiates. A terminal error emitted just
+                // before this is handled first by the single collector, so it wins.
+                send(NegotiationEvent.SignalingClosed)
+            }
+            // Once connected, stop collecting so the subscription is unsubscribed and therefore not
+            // resubscribed on a WebSocket reconnect (which would re-offer onto the already-negotiated
+            // peer). Cancelling skips the SignalingClosed above, so this planned close is not mistaken
+            // for a server drop that would trigger a renegotiation.
+            connected.await()
+            collection.cancel()
+        }
         val events = merge(controller.events.map(NegotiationEvent::Peer), signalingEvents)
         val job = launch {
             events.collect { event ->
                 when (event) {
-                    is NegotiationEvent.Peer -> handlePeerEvent(event.event, this, ended)
+                    is NegotiationEvent.Peer -> handlePeerEvent(event.event, this, ended, connected)
                     is NegotiationEvent.Signaling -> handleSignalingEvent(event.event, ended)
                     NegotiationEvent.SignalingClosed -> ended.complete(NegotiationOutcome.Ended)
                 }
@@ -122,6 +133,7 @@ private class WebRtcNegotiation(
         event: PeerConnectionEvent,
         scope: CoroutineScope,
         ended: CompletableDeferred<NegotiationOutcome>,
+        connected: CompletableDeferred<Unit>,
     ) {
         when (event) {
             is PeerConnectionEvent.LocalCandidate -> {
@@ -138,6 +150,8 @@ private class WebRtcNegotiation(
                 RtcConnectionState.CONNECTED -> {
                     disconnectedJob?.cancel()
                     disconnectedJob = null
+                    // Negotiation is done; release the signaling subscription.
+                    connected.complete(Unit)
                     onState(ConnectionState.Connected)
                     onConnected()
                 }

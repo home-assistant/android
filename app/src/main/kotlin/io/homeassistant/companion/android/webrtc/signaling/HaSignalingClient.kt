@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.transformWhile
 import timber.log.Timber
 
 /**
@@ -51,7 +52,15 @@ internal class HaSignalingClient(private val webSocketRepository: WebSocketRepos
             emit(SignalingEvent.Error(code = null, message = "The WebRTC session could not be started"))
             return@flow
         }
-        emitAll(events.mapNotNull { it.toSignalingEvent() })
+        // Error is terminal per the SignalingClient contract, so stop collecting the repository's
+        // non-completing subscription flow once one is forwarded, instead of staying subscribed.
+        emitAll(
+            events.mapNotNull { it.toSignalingEvent() }
+                .transformWhile { event ->
+                    emit(event)
+                    event !is SignalingEvent.Error
+                },
+        )
     }
 
     override suspend fun sendCandidate(sessionId: WebRtcSessionId, candidate: IceCandidateInit): Boolean =
