@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 
 @OptIn(EvaluateJavascriptUsage::class)
 class FrontendGestureManagerTest {
@@ -368,12 +370,77 @@ class FrontendGestureManagerTest {
         assertEquals(GestureResult.Ignored, result)
     }
 
+    @ParameterizedTest
+    @EnumSource(HAGesture::class, names = ["SWIPE_LEFT_ONE_EDGE", "SWIPE_RIGHT_ONE_EDGE"])
+    fun `Given edge gesture with custom sidebar action when handled then sends sidebar message`(gesture: HAGesture) = runTest {
+        coEvery { prefsRepository.getGestureAction(gesture) } returns GestureAction.SHOW_SIDEBAR
+
+        val result = manager.handleGesture(
+            serverId = 1,
+            direction = gesture.direction,
+            pointerCount = 1,
+        )
+
+        assertEquals(GestureResult.Forwarded, result)
+        coVerify(exactly = 1) { prefsRepository.getGestureAction(gesture) }
+        coVerify(exactly = 1) { externalBusRepository.send(ShowSidebarMessage) }
+    }
+
+    @ParameterizedTest
+    @EnumSource(HAGesture::class, names = ["SWIPE_LEFT_ONE_EDGE", "SWIPE_RIGHT_ONE_EDGE"])
+    fun `Given edge gesture with custom navigation action when handled then returns configured navigation`(gesture: HAGesture) = runTest {
+        coEvery { prefsRepository.getGestureAction(gesture) } returns GestureAction.NAVIGATE_DASHBOARD
+
+        val result = manager.handleGesture(
+            serverId = 1,
+            direction = gesture.direction,
+            pointerCount = 1,
+        )
+
+        assertEquals(GestureResult.NavigateToDefaultDashboard, result)
+        coVerify(exactly = 1) { prefsRepository.getGestureAction(gesture) }
+        coVerify(exactly = 0) { externalBusRepository.send(any()) }
+        coVerify(exactly = 0) { externalBusRepository.evaluateScript(any()) }
+    }
+
+    @ParameterizedTest
+    @EnumSource(HAGesture::class, names = ["SWIPE_LEFT_ONE_EDGE", "SWIPE_RIGHT_ONE_EDGE"])
+    fun `Given edge gesture with NONE action when handled then no action is dispatched`(gesture: HAGesture) = runTest {
+        coEvery { prefsRepository.getGestureAction(gesture) } returns GestureAction.NONE
+
+        val result = manager.handleGesture(
+            serverId = 1,
+            direction = gesture.direction,
+            pointerCount = 1,
+        )
+
+        assertEquals(GestureResult.Ignored, result)
+        coVerify(exactly = 1) { prefsRepository.getGestureAction(gesture) }
+        coVerify(exactly = 0) { externalBusRepository.send(any()) }
+        coVerify(exactly = 0) { externalBusRepository.evaluateScript(any()) }
+    }
+
+    @ParameterizedTest
+    @EnumSource(GestureDirection::class, names = ["UP", "DOWN"])
+    fun `Given vertical one pointer swipe when handled then no preference is read or action dispatched`(direction: GestureDirection) = runTest {
+        val result = manager.handleGesture(
+            serverId = 1,
+            direction = direction,
+            pointerCount = 1,
+        )
+
+        assertEquals(GestureResult.Ignored, result)
+        coVerify(exactly = 0) { prefsRepository.getGestureAction(any()) }
+        coVerify(exactly = 0) { externalBusRepository.send(any()) }
+        coVerify(exactly = 0) { externalBusRepository.evaluateScript(any()) }
+    }
+
     @Test
     fun `Given unsupported pointer count when handleGesture then returns Ignored`() = runTest {
         val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
-            pointerCount = 1,
+            pointerCount = 4,
         )
 
         assertEquals(GestureResult.Ignored, result)
