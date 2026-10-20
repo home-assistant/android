@@ -13,6 +13,8 @@ import io.homeassistant.companion.android.webrtc.core.signaling.SignalingResult
 import io.homeassistant.companion.android.webrtc.core.signaling.WebRtcSessionId
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -523,5 +525,69 @@ class WebRtcSessionTest {
             assertTrue((awaitItem().inboundVideo?.kbps ?: 0) > 0)
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `Given a terminal error then a closed subscription When negotiating Then the session fails without retrying`() = runTest {
+        val session = createSession()
+        session.start()
+        advanceUntilIdle()
+
+        // The error and the normal close arrive in the same batch: the terminal error must win over
+        // the completion, otherwise the session would treat the rejection as a clean end and retry.
+        signaling.currentSession.trySend(SignalingEvent.Error(code = "webrtc_offer_failed", message = "boom"))
+        signaling.currentSession.close()
+        advanceUntilIdle()
+
+        assertEquals(
+            ConnectionState.Failed(SessionFailure.Signaling("webrtc_offer_failed", "boom")),
+            session.state.value,
+        )
+        assertEquals(1, signaling.openSessionCount)
+    }
+
+    @Test
+    fun `Given a connected peer that fails When backing off before reconnecting Then the state is Reconnecting`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+        assertEquals(ConnectionState.Connected, session.state.value)
+
+        factory.lastController.emit(PeerConnectionEvent.ConnectionStateChanged(RtcConnectionState.FAILED))
+        // Process the failure and the pre-backoff state change, but do not advance past the backoff.
+        runCurrent()
+
+        // During the backoff the peer connection is already disposed, so the state must not read Connected.
+        assertEquals(ConnectionState.Reconnecting, session.state.value)
+
+        advanceUntilIdle()
+        assertEquals(2, signaling.openSessionCount)
+    }
+
+    @Test
+    fun `Given a slow disposal When stopping Then stop suspends until the controller is disposed`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+        val controller = factory.lastController
+        val disposeGate = CompletableDeferred<Unit>()
+        controller.disposeGate = disposeGate
+
+        var stopReturned = false
+        val stopping = launch {
+            session.stop()
+            stopReturned = true
+        }
+        advanceUntilIdle()
+
+        // stop() must not return while the controller is still disposing: a later start() relies on
+        // this to never run a new session over a not-yet-disposed one.
+        assertFalse(stopReturned)
+        assertFalse(controller.disposed)
+
+        disposeGate.complete(Unit)
+        advanceUntilIdle()
+        stopping.join()
+
+        assertTrue(stopReturned)
+        assertTrue(controller.disposed)
     }
 }
