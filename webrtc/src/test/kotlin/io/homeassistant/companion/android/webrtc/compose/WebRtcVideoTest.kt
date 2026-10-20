@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,6 +15,10 @@ import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import io.homeassistant.companion.android.webrtc.core.ConnectionState
 import io.homeassistant.companion.android.webrtc.core.SessionFailure
 import io.homeassistant.companion.android.webrtc.core.VideoReceiver
@@ -21,6 +26,7 @@ import livekit.org.webrtc.EglBase
 import livekit.org.webrtc.VideoFrame
 import livekit.org.webrtc.VideoSink
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -195,5 +201,51 @@ class WebRtcVideoTest {
         val secondRenderer = harness.renderer!!
         assertNotSame(firstRenderer, secondRenderer)
         assertEquals(listOf<VideoSink>(secondRenderer), second.attachedSinks)
+    }
+
+    @Test
+    fun `Given a mounted composition When the lifecycle moves below and back to STARTED Then the renderer detaches and reattaches without being recreated`() {
+        val harness = TestHarness()
+        val lifecycleOwner = TestLifecycleOwner()
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalLifecycleOwner provides lifecycleOwner) {
+                WebRtcVideoContent(
+                    video = harness.video,
+                    state = ConnectionState.Connecting,
+                    createRenderer = harness::createRenderer,
+                    updateRenderer = {},
+                    releaseRenderer = harness::releaseRenderer,
+                )
+            }
+        }
+
+        // Below STARTED: the renderer exists but is not attached.
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.CREATED }
+        composeTestRule.waitForIdle()
+        val renderer = harness.renderer!!
+        assertTrue(harness.video.attachedSinks.isEmpty())
+
+        // STARTED: attached exactly once.
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.STARTED }
+        composeTestRule.waitForIdle()
+        assertEquals(listOf<VideoSink>(renderer), harness.video.attachedSinks)
+        assertTrue(harness.video.detachedSinks.isEmpty())
+
+        // Back below STARTED: detached, but the composition stays mounted so the renderer is not released.
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.CREATED }
+        composeTestRule.waitForIdle()
+        assertEquals(listOf<VideoSink>(renderer), harness.video.detachedSinks)
+        assertFalse(renderer.released)
+
+        // STARTED again: the same renderer is reattached exactly once more.
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.STARTED }
+        composeTestRule.waitForIdle()
+        assertEquals(listOf<VideoSink>(renderer, renderer), harness.video.attachedSinks)
+        assertSame(renderer, harness.renderer)
+    }
+
+    private class TestLifecycleOwner : LifecycleOwner {
+        val registry = LifecycleRegistry.createUnsafe(this)
+        override val lifecycle: Lifecycle get() = registry
     }
 }
