@@ -435,19 +435,22 @@ internal class WebRtcSessionImpl(
             is SignalingResult.Failure ->
                 return NegotiationOutcome.Failed(SessionFailure.Signaling(result.code, result.message))
         }
-        val controller = controllerFactory.create(config, mediaOptions)
-        // Publish the controller and replay the cached media settings atomically against concurrent
-        // capability mutations, so a toggle the user made meanwhile is not undone (and does not undo
-        // this replay). Enable the microphone before creating the offer so its capture is already
-        // running when the connection is established, instead of starting a beat late and missing the
-        // first moments of audio on a cold session.
-        controlLock.withLock {
-            this.controller = controller
-            videoSinks.forEach { controller.addVideoSink(it) }
-            controller.setRemoteAudioEnabled(audioEnabled)
-            if (micEnabled) {
-                controller.setMicrophoneEnabled(true)
-                micStateFlow.value = MicState.Live
+        // Create, publish and replay the cached media settings in one locked step. Creating inside
+        // the lock and assigning this.controller with no suspension in between means a cancellation
+        // (stop/release) can never strand a created-but-unpublished controller that the teardown
+        // finally would fail to dispose. It is also serialized against concurrent capability
+        // mutations, so a toggle the user made meanwhile is not undone (and does not undo this
+        // replay). The microphone is enabled before the offer is created so its capture is already
+        // running when the connection is established, instead of starting a beat late.
+        val controller = controlLock.withLock {
+            controllerFactory.create(config, mediaOptions).also { created ->
+                this.controller = created
+                videoSinks.forEach { created.addVideoSink(it) }
+                created.setRemoteAudioEnabled(audioEnabled)
+                if (micEnabled) {
+                    created.setMicrophoneEnabled(true)
+                    micStateFlow.value = MicState.Live
+                }
             }
         }
         val offerSdp = controller.createOffer()
