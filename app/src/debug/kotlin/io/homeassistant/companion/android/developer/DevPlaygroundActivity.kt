@@ -134,6 +134,12 @@ private fun DevPlayGroundScreen(context: Context? = null) {
                     },
                 )
                 HAFilledButton(
+                    text = "Start WebRTC debug",
+                    onClick = {
+                        context?.run { startActivity(Intent(this, WebRtcDebugActivity::class.java)) }
+                    },
+                )
+                HAFilledButton(
                     text = "Check VoiceInteractionService",
                     onClick = {
                         context?.let { ctx ->
