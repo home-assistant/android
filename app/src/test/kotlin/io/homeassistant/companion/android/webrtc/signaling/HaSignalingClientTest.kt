@@ -17,7 +17,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonNull
 import org.junit.jupiter.api.AfterEach
@@ -108,6 +110,20 @@ class HaSignalingClientTest {
         client.openSession("v=0 offer").test {
             val event = awaitItem()
             assertTrue(event is SignalingEvent.Error)
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `Given an error on a still-open subscription When opening a session Then the flow completes after the error`() = runTest {
+        // A real subscription flow does not complete on its own; only the terminal error must end it.
+        val upstream = Channel<WebRtcEvent>(Channel.UNLIMITED)
+        coEvery { webSocketRepository.startCameraWebRtcSession(ENTITY_ID, "v=0 offer") } returns upstream.receiveAsFlow()
+
+        client.openSession("v=0 offer").test {
+            upstream.send(WebRtcEvent.Error(code = "webrtc_offer_failed", message = "boom"))
+            assertEquals(SignalingEvent.Error(code = "webrtc_offer_failed", message = "boom"), awaitItem())
+            // Completes even though the upstream channel is still open (never closed).
             awaitComplete()
         }
     }
