@@ -40,6 +40,10 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation"
             tools:ignore="UnusedAttribute" />
 
+        <activity android:name=".developer.WebRtcDebugActivity"
+            android:label="WebRTC camera player"
+            android:exported="false" />
+
         <!--
         Use a no-action-bar theme to prevent overlapping with the action bar during tests.
         -->
