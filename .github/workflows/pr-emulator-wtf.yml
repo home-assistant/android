@@ -216,10 +216,10 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     permissions:
-      checks: write
-      pull-requests: write
-      actions: read
-      contents: read
+      checks: write  # Needed to publish the test results as a check run
+      pull-requests: write  # Needed to comment the test failures on the PR
+      actions: read  # Needed for retrieving artifacts of the triggering run
+      contents: read  # Needed by publish-unit-test-result-action to resolve the PR from the commit
     steps:
       # Exclude emulator-wtf-inputs (APKs, no test XML): it is the only artifact
       # here with a short retention, and download-artifact errors on an expired

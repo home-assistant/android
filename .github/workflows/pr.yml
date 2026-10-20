@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   validate_localize_setup:
+    name: "Validate Localize Setup"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -62,6 +63,7 @@ jobs:
           path: strings.zip
 
   yamllint:
+    name: "YAML Lint"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -76,6 +78,7 @@ jobs:
         run: yamllint --strict --format github .
 
   lockfiles:
+    name: "Check Lockfiles"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -106,6 +109,7 @@ jobs:
           fi
 
   license_check:
+    name: "License Check"
     needs: [lockfiles]
     runs-on: ubuntu-latest
     steps:
@@ -136,10 +140,11 @@ jobs:
             wear/build/generated/aboutLibraries/debug/res/raw/aboutlibraries.json wearDebug
 
   ktlint:
+    name: "Ktlint"
     needs: [license_check, yamllint, validate_localize_setup]
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      security-events: write # To upload the SARIF report to GitHub code scanning
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -160,10 +165,11 @@ jobs:
           category: "KTlint"
 
   detekt:
+    name: "Detekt"
     needs: [lockfiles, yamllint]
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      security-events: write # To upload the SARIF report to GitHub code scanning
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -187,10 +193,11 @@ jobs:
           category: "Detekt"
 
   lint:
+    name: "Android Lint"
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      security-events: write # To upload the SARIF report to GitHub code scanning
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -252,6 +259,7 @@ jobs:
           job-status: ${{ job.status }}
 
   pr_build:
+    name: "Build Debug"
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
@@ -298,6 +306,7 @@ jobs:
           path: ./**/*.apk
 
   pr_build_release:
+    name: "Build Release"
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:

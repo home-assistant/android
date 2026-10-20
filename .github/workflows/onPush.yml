@@ -14,13 +14,19 @@ on: # yamllint disable-line rule:truthy
 env:
   SUPPLY_UPLOAD_MAX_RETRIES: 5
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # Never cancel a release or Play Store upload in flight
+
+permissions: {}
+
 jobs:
   app_build:
     name: GitHub build and (pre)release
     runs-on: ubuntu-latest
     if: github.repository == 'home-assistant/android'
     permissions:
-      contents: write
+      contents: write # To generate the release notes and create, upload assets to and publish the GitHub pre-release
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -154,7 +160,7 @@ jobs:
     concurrency:
       group: playstore_deploy
     permissions:
-      contents: write
+      contents: write # To generate the release notes through the GitHub API
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
