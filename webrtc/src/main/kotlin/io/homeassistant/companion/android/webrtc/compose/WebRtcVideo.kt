@@ -6,7 +6,6 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -117,7 +116,10 @@ internal fun <R> WebRtcVideoContent(
                         renderer = null
                         releaseRenderer(view)
                     },
-                    modifier = Modifier.fillMaxSize(),
+                    // Center within loose constraints so SurfaceViewRenderer.onMeasure can size itself
+                    // to the frame aspect per the scaling type. fillMaxSize would force exact
+                    // constraints and defeat that (FIT/BALANCED would crop in a mismatched box).
+                    modifier = Modifier.align(Alignment.Center),
                 )
             }
 
