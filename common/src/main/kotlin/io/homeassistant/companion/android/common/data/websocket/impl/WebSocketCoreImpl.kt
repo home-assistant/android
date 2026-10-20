@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCo
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_ENTITY_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_STATE_CHANGED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_RENDER_TEMPLATE
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER
@@ -47,6 +48,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.St
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.UnknownTypeSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.webRtcJsonMapper
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -1007,6 +1010,13 @@ internal class WebSocketCoreImpl(
                     AssistPipelineEvent(eventType.jsonPrimitive.content, eventData)
                 } else {
                     Timber.w("Received Assist pipeline event without type, skipping")
+                    return
+                }
+            } else if (subscriptionType == SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER) {
+                if (response.event != null) {
+                    webRtcJsonMapper.decodeFromJsonElement<WebRtcEvent>(response.event)
+                } else {
+                    Timber.w("Received no event for WebRTC subscription, skipping")
                     return
                 }
             } else if (eventResponseType != null && (eventResponseType as? JsonPrimitive)?.isString == true) {
