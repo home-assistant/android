@@ -6,18 +6,24 @@ import io.homeassistant.companion.android.webrtc.core.session.PeerConnectionCont
 import io.homeassistant.companion.android.webrtc.core.session.PeerConnectionEvent
 import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
 import io.homeassistant.companion.android.webrtc.core.signaling.RtcClientConfig
-import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import livekit.org.webrtc.AudioTrack
 import livekit.org.webrtc.DataChannel
 import livekit.org.webrtc.IceCandidate
@@ -63,46 +69,47 @@ internal class LibWebRtcPeerConnectionController(
     factory: PeerConnectionFactory,
     config: RtcClientConfig,
     mediaOptions: MediaOptions,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : PeerConnectionController {
 
     private val eventsChannel = Channel<PeerConnectionEvent>(Channel.UNLIMITED)
     override val events: Flow<PeerConnectionEvent> = eventsChannel.receiveAsFlow()
 
-    // Sinks the consumer attached, retained so onTrack can bind them once the remote track arrives.
-    // Writers (add/removeVideoSink, dispose) hold [mutex], but onTrack iterates this on libwebrtc's
-    // signaling thread without the lock. CopyOnWriteArraySet is what lets that happen safely: onTrack
-    // iterates a stable snapshot while a sink is concurrently added or removed, with no lock (and no
-    // ConcurrentModificationException) on the callback path. A plain set would need onTrack to lock.
-    private val attachedSinks = CopyOnWriteArraySet<VideoSink>()
+    // Sinks the consumer attached, retained so syncRemoteTracks can bind them once the remote track
+    // arrives. Every access (add/removeVideoSink, syncRemoteTracks, dispose) holds [mutex], so a plain
+    // set is enough: onTrack no longer iterates it off the lock, it only hands the track over.
+    private val attachedSinks = mutableSetOf<VideoSink>()
 
     // Flipped once under [mutex] by dispose() and read under the lock by every guarded operation, but
-    // also read lock-free by getStats(), which runs off [mutex]. Atomic so that off-lock read always
-    // observes the flip rather than a stale value.
+    // also read lock-free by getStats() before it takes [mutex]. Atomic so that the off-lock read
+    // always observes the flip rather than a stale value.
     private val disposed = AtomicBoolean(false)
 
-    // Serializes the native-touching operations (add/removeVideoSink, set*Enabled, addRemoteCandidate)
-    // against dispose(), so none of them touches the peer connection while it is being torn down. The
-    // libwebrtc callbacks (onTrack) and getStats() deliberately stay off this lock and rely on the
-    // volatile fields and the atomics instead, so a native callback never blocks on app code.
+    // Serializes every native-touching operation (add/removeVideoSink, syncRemoteTracks, set*Enabled,
+    // addRemoteCandidate, getStats submission) against dispose(), so none of them touches the peer
+    // connection while it is being torn down. The libwebrtc callbacks (onTrack, the stats callback)
+    // stay off this lock so a native callback never blocks on app code: onTrack only publishes the
+    // arrived track and signals, and the stats callback only completes a deferred.
     private val mutex = Mutex()
 
-    // Hand-off for the in-flight getStats continuation between getStats() (off [mutex]), dispose(),
-    // and the libwebrtc stats callback. The CAS on this reference guarantees exactly one resume, so a
-    // dispose() racing a stats request completes it with EMPTY instead of leaving the flow stalled.
-    private val statsContinuation = AtomicReference<CancellableContinuation<RtcStatsSnapshot>?>()
+    // Runs the track binding triggered by onTrack off the native callback thread and under [mutex],
+    // so it is serialized with add/removeVideoSink and dispose() without the signaling thread ever
+    // blocking on app code. Owned by this controller and cancelled in dispose().
+    private val bindingScope = CoroutineScope(SupervisorJob() + dispatcher)
 
-    // Remote tracks assigned on libwebrtc's signaling thread in onTrack (off [mutex]) and cleared by
-    // dispose() (under [mutex]); read from both sides. @Volatile publishes those cross-thread writes
-    // without forcing the onTrack callback to take [mutex].
-    @Volatile
+    // In-flight getStats requests, each with its own deferred so concurrent collectors never clobber
+    // one another. Added and drained under [mutex]; dispose() completes any outstanding ones with
+    // EMPTY so a stats poll racing teardown never stalls.
+    private val pendingStats = mutableSetOf<CompletableDeferred<RtcStatsSnapshot>>()
+
+    // The remote tracks, bound to the attached sinks / playback state once they arrive. Written and
+    // read only under [mutex] (bindRemoteTrack, the sink operations, setRemoteAudioEnabled, dispose),
+    // so they need no further synchronization.
     private var remoteVideoTrack: VideoTrack? = null
-
-    @Volatile
     private var remoteAudioTrack: AudioTrack? = null
 
-    // Desired remote-audio playback state. Written by setRemoteAudioEnabled under [mutex]; read by
-    // onTrack (off [mutex]) to apply it to an audio track that arrives later. @Volatile for that read.
-    @Volatile
+    // Desired remote-audio playback state, written and read under [mutex] and applied to the audio
+    // track by setRemoteAudioEnabled or, for a track that arrives later, by bindRemoteTrack.
     private var remoteAudioEnabled = true
 
     // libwebrtc's PeerConnection.Observer is a fat SDK interface: only three callbacks carry
@@ -128,19 +135,11 @@ internal class LibWebRtcPeerConnectionController(
         }
 
         override fun onTrack(transceiver: RtpTransceiver?) {
-            when (val track = transceiver?.receiver?.track()) {
-                is VideoTrack -> {
-                    remoteVideoTrack = track
-                    attachedSinks.forEach(track::addSink)
-                }
-
-                is AudioTrack -> {
-                    remoteAudioTrack = track
-                    track.setEnabled(remoteAudioEnabled)
-                }
-
-                else -> Unit
-            }
+            // Runs on libwebrtc's signaling thread: capture the track and defer the binding to
+            // [bindingScope] so it runs under [mutex], serialized with the sink operations and
+            // dispose(), without the signaling thread ever blocking on app code.
+            val track = transceiver?.receiver?.track() ?: return
+            bindingScope.launch { bindRemoteTrack(track) }
         }
 
         override fun onSignalingChange(newState: PeerConnection.SignalingState?) = Unit
@@ -271,26 +270,48 @@ internal class LibWebRtcPeerConnectionController(
         remoteVideoTrack?.removeSink(sink)
     }
 
-    override suspend fun getStats(): RtcStatsSnapshot = suspendCancellableCoroutine { continuation ->
-        statsContinuation.set(continuation)
-        continuation.invokeOnCancellation { statsContinuation.compareAndSet(continuation, null) }
-        // Re-check after publishing the continuation so a dispose() that raced the entry either
-        // resumes it (via statsContinuation) or is observed here; either way the disposed peer
-        // connection is never queried.
-        if (disposed.get()) {
-            if (statsContinuation.compareAndSet(continuation, null)) continuation.resume(RtcStatsSnapshot.EMPTY)
-        } else {
-            peerConnection.getStats { report ->
-                if (statsContinuation.compareAndSet(continuation, null)) {
-                    continuation.resume(report.toStatsSnapshot())
-                }
+    private suspend fun bindRemoteTrack(track: MediaStreamTrack): Unit = mutex.withLock {
+        if (disposed.get()) return@withLock
+        when (track) {
+            is VideoTrack -> {
+                remoteVideoTrack = track
+                attachedSinks.forEach(track::addSink)
             }
+
+            is AudioTrack -> {
+                remoteAudioTrack = track
+                track.setEnabled(remoteAudioEnabled)
+            }
+
+            else -> Unit
+        }
+    }
+
+    override suspend fun getStats(): RtcStatsSnapshot {
+        val result = CompletableDeferred<RtcStatsSnapshot>()
+        mutex.withLock {
+            // The disposed check and the native submission share [mutex] with dispose(), so the peer
+            // connection can never be released between the two. The callback fires off the lock.
+            if (disposed.get()) return RtcStatsSnapshot.EMPTY
+            pendingStats.add(result)
+            peerConnection.getStats { report -> result.complete(report.toStatsSnapshot()) }
+        }
+        return try {
+            result.await()
+        } finally {
+            // Stop tracking the request once it completed or the collector was cancelled.
+            withContext(NonCancellable) { mutex.withLock { pendingStats.remove(result) } }
         }
     }
 
     override suspend fun dispose(): Unit = mutex.withLock {
         if (disposed.getAndSet(true)) return@withLock
-        statsContinuation.getAndSet(null)?.resume(RtcStatsSnapshot.EMPTY)
+        // Stop any pending/ongoing track binding; a sync already waiting on [mutex] will observe
+        // the disposed flag and no-op.
+        bindingScope.cancel()
+        // Complete any in-flight stats poll so its collector resumes instead of awaiting forever.
+        pendingStats.forEach { it.complete(RtcStatsSnapshot.EMPTY) }
+        pendingStats.clear()
         remoteVideoTrack?.let { track ->
             attachedSinks.forEach { sink ->
                 runCatching { track.removeSink(sink) }

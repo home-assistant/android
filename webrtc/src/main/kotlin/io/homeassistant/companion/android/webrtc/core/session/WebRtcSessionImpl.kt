@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.webrtc.core.signaling.SignalingClient
 import io.homeassistant.companion.android.webrtc.core.signaling.SignalingEvent
 import io.homeassistant.companion.android.webrtc.core.signaling.SignalingResult
 import io.homeassistant.companion.android.webrtc.core.signaling.WebRtcSessionId
-import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -26,6 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -96,16 +96,20 @@ private class WebRtcNegotiation(
      */
     suspend fun run(offerSdp: String): NegotiationOutcome = coroutineScope {
         val ended = CompletableDeferred<NegotiationOutcome>()
-        val events = merge(
-            controller.events.map(NegotiationEvent::Peer),
-            signalingClient.openSession(offerSdp).map(NegotiationEvent::Signaling)
-                .onCompletion { cause -> if (cause == null) ended.complete(NegotiationOutcome.Ended) },
-        )
+        val signalingEvents = signalingClient.openSession(offerSdp)
+            .map<SignalingEvent, NegotiationEvent> { NegotiationEvent.Signaling(it) }
+            // Carry a normal close through the merged stream so the single collector handles it in
+            // order, after any terminal error the flow emitted just before closing. Completing [ended]
+            // from this side channel could otherwise win that race and turn a server rejection into a
+            // silent retry.
+            .onCompletion { cause -> if (cause == null) emit(NegotiationEvent.SignalingClosed) }
+        val events = merge(controller.events.map(NegotiationEvent::Peer), signalingEvents)
         val job = launch {
             events.collect { event ->
                 when (event) {
                     is NegotiationEvent.Peer -> handlePeerEvent(event.event, this, ended)
                     is NegotiationEvent.Signaling -> handleSignalingEvent(event.event, ended)
+                    NegotiationEvent.SignalingClosed -> ended.complete(NegotiationOutcome.Ended)
                 }
             }
         }
@@ -206,6 +210,9 @@ private class WebRtcNegotiation(
 private sealed interface NegotiationEvent {
     data class Peer(val event: PeerConnectionEvent) : NegotiationEvent
     data class Signaling(val event: SignalingEvent) : NegotiationEvent
+
+    /** The signaling subscription closed normally (the server ended it or the connection dropped). */
+    data object SignalingClosed : NegotiationEvent
 }
 
 /**
@@ -223,9 +230,6 @@ private sealed interface NegotiationEvent {
  * @param controllerFactory creates one peer connection per negotiation
  * @param mediaOptions the media directions to negotiate, fixed for the lifetime of the session
  * @param dispatcher the dispatcher the session's coroutines run on; defaults to [Dispatchers.Default].
- * It need not be single-threaded: shared state is made safe explicitly (the `@Volatile` fields, the
- * concurrent sink set, the [lifecycleLock], the mutex-guarded controller, and the single-collector
- * negotiation), not by serializing the dispatcher.
  * @param eglContext the shared EGL context exposed to renderers
  */
 @Suppress("TooManyFunctions")
@@ -271,8 +275,9 @@ internal class WebRtcSessionImpl(
 
     // Attached sinks are kept here so they can be (re)applied to the controller: a sink can be
     // attached before negotiation has produced a controller, and must also be re-attached to the
-    // fresh controller created on every reconnect.
-    private val videoSinks = CopyOnWriteArraySet<VideoSink>()
+    // fresh controller created on every reconnect. Guarded by [controlLock], like the replay that
+    // reads it.
+    private val videoSinks = mutableSetOf<VideoSink>()
 
     @Volatile
     private var controller: PeerConnectionController? = null
@@ -284,6 +289,11 @@ internal class WebRtcSessionImpl(
 
     @Volatile
     private var audioEnabled = true
+
+    // Serializes publishing the freshly negotiated controller and replaying the cached media settings
+    // (sinks, playback, mic) against the capability mutations below, so a user action completed right
+    // after the controller is published is never undone by the replay, and vice versa.
+    private val controlLock = Mutex()
 
     // Serializes start/stop/release so [sessionJob] and [released] are only read or written by one
     // of them at a time (they are touched nowhere else). It does not guard the state flows or the
@@ -303,12 +313,19 @@ internal class WebRtcSessionImpl(
         }
     }
 
-    override suspend fun stop() = lifecycleLock.withLock { sessionJob?.cancel() ?: Unit }
+    override suspend fun stop() = lifecycleLock.withLock {
+        val job = sessionJob ?: return@withLock
+        // Await teardown under the lock (NonCancellable so a cancelled caller still waits) so the
+        // controller is disposed and the state reset before a later start() can run. Cancelling
+        // without joining let a cancelled stop/start chain start a new session over a not-yet-disposed
+        // one, whose cleanup then cleared the new controller.
+        withContext(NonCancellable) { job.cancelAndJoin() }
+    }
 
     override suspend fun release() = lifecycleLock.withLock {
         if (released) return@withLock
         released = true
-        sessionJob?.cancel()
+        withContext(NonCancellable) { sessionJob?.cancelAndJoin() }
         scope.cancel()
     }
     override fun observeStats(interval: Duration): Flow<RtcStatsSnapshot> = flow {
@@ -321,24 +338,25 @@ internal class WebRtcSessionImpl(
         }
     }
 
-    private suspend fun attachVideoSink(sink: VideoSink) {
+    private suspend fun attachVideoSink(sink: VideoSink) = controlLock.withLock {
         if (videoSinks.add(sink)) {
             controller?.addVideoSink(sink)
         }
     }
 
-    private suspend fun detachVideoSink(sink: VideoSink) {
+    private suspend fun detachVideoSink(sink: VideoSink) = controlLock.withLock {
         if (videoSinks.remove(sink)) {
             controller?.removeVideoSink(sink)
         }
     }
 
-    private suspend fun setPlaybackEnabled(enabled: Boolean) {
+    private suspend fun setPlaybackEnabled(enabled: Boolean) = controlLock.withLock {
         audioEnabled = enabled
         controller?.setRemoteAudioEnabled(enabled)
+        Unit
     }
 
-    private suspend fun setMicEnabled(enabled: Boolean) {
+    private suspend fun setMicEnabled(enabled: Boolean) = controlLock.withLock {
         micEnabled = enabled
         val activeController = controller
         if (!enabled) {
@@ -399,6 +417,10 @@ internal class WebRtcSessionImpl(
 
             attempt++
             if (attempt <= MAX_RECONNECT_ATTEMPTS) {
+                // Publish Reconnecting before the backoff: a FAILED peer or a closed subscription does
+                // not change the state on its own, so without this observers would keep seeing
+                // Connected during the delay while the peer connection is already disposed.
+                _state.value = ConnectionState.Reconnecting
                 Timber.d("WebRTC connection lost, reconnecting (attempt $attempt)")
                 delay(RECONNECT_BASE_DELAY * (1 shl (attempt - 1)))
             }
@@ -414,15 +436,19 @@ internal class WebRtcSessionImpl(
                 return NegotiationOutcome.Failed(SessionFailure.Signaling(result.code, result.message))
         }
         val controller = controllerFactory.create(config, mediaOptions)
-        this.controller = controller
-        videoSinks.forEach { controller.addVideoSink(it) }
-        controller.setRemoteAudioEnabled(audioEnabled)
-        // Enable the microphone before creating the offer so its capture is already running when
-        // the connection is established, instead of starting a beat late and missing the first
-        // moments of audio on a cold session.
-        if (micEnabled) {
-            controller.setMicrophoneEnabled(true)
-            micStateFlow.value = MicState.Live
+        // Publish the controller and replay the cached media settings atomically against concurrent
+        // capability mutations, so a toggle the user made meanwhile is not undone (and does not undo
+        // this replay). Enable the microphone before creating the offer so its capture is already
+        // running when the connection is established, instead of starting a beat late and missing the
+        // first moments of audio on a cold session.
+        controlLock.withLock {
+            this.controller = controller
+            videoSinks.forEach { controller.addVideoSink(it) }
+            controller.setRemoteAudioEnabled(audioEnabled)
+            if (micEnabled) {
+                controller.setMicrophoneEnabled(true)
+                micStateFlow.value = MicState.Live
+            }
         }
         val offerSdp = controller.createOffer()
         return WebRtcNegotiation(

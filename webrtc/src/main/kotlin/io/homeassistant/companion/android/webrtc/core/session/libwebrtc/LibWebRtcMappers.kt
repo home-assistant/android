@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.webrtc.core.session.libwebrtc
 
-import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.webrtc.core.MediaOptions
 import io.homeassistant.companion.android.webrtc.core.session.RtcConnectionState
 import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
@@ -52,7 +51,6 @@ internal fun PeerConnection.PeerConnectionState.toRtcConnectionState(): RtcConne
  * omits it the m-line index resolves the section, and when neither is provided the first m-section
  * is targeted, matching the iOS and frontend clients.
  */
-@VisibleForTesting
 internal fun IceCandidateInit.toIceCandidate(): IceCandidate = IceCandidate(
     sdpMid ?: if (sdpMLineIndex == null) FIRST_MEDIA_SECTION_MID else "",
     sdpMLineIndex ?: 0,

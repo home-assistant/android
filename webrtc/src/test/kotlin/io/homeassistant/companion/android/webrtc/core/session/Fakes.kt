@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.webrtc.core.signaling.SignalingClient
 import io.homeassistant.companion.android.webrtc.core.signaling.SignalingEvent
 import io.homeassistant.companion.android.webrtc.core.signaling.SignalingResult
 import io.homeassistant.companion.android.webrtc.core.signaling.WebRtcSessionId
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -70,6 +71,9 @@ internal class FakePeerConnectionController(
     var disposed = false
     var createOfferException: Exception? = null
 
+    /** When set, [dispose] suspends on it, so a test can observe teardown in progress. */
+    var disposeGate: CompletableDeferred<Unit>? = null
+
     /** Supplies the snapshot returned by each [getStats] call; override to script a sequence. */
     var statsProvider: () -> RtcStatsSnapshot = { RtcStatsSnapshot.EMPTY }
 
@@ -110,6 +114,7 @@ internal class FakePeerConnectionController(
     override suspend fun getStats(): RtcStatsSnapshot = statsProvider()
 
     override suspend fun dispose() {
+        disposeGate?.await()
         disposed = true
         eventsChannel.close()
     }
