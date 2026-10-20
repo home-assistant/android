@@ -21,11 +21,7 @@ class SuspendLazy<T>(private val initializer: suspend () -> T) {
 
     @Volatile private var value: T? = null
 
-    suspend fun get(): T {
-        value?.let { return it }
-        return mutex.withLock {
-            value?.let { return it }
-            initializer().also { value = it }
-        }
+    suspend fun get(): T = value ?: mutex.withLock {
+        value ?: initializer().also { value = it }
     }
 }
