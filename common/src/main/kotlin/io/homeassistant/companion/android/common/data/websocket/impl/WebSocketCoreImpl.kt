@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authorizati
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.data.websocket.HAWebSocketException
+import io.homeassistant.companion.android.common.data.websocket.SubscriptionReconnectPolicy
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -72,7 +73,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -121,6 +121,7 @@ private val MAX_DELAY_BEFORE_RECONNECT = 2.minutes
  * #### Reconnection and re-subscription:
  * - On failure or when the socket is closing, if there are active subscriptions created with [subscribeTo], the implementation will automatically retry to open the connection until it succeeds.
  * - Upon reconnection, the implementation resubscribes to all active subscriptions to ensure continuity. Each attempt is tracked as an [ActiveMessage.Reconnecting] entry until the server acknowledges it.
+ * - A subscription created with [SubscriptionReconnectPolicy.Complete] is not restored: its Flow completes when the connection is lost, and it does not keep the connection alive for reconnection.
  * - A subscription the server actively rejects is retried indefinitely with capped backoff — it is never abandoned while its collector is still listening. An attempt that receives no answer cancels the socket so restoration resumes on a clean connection where no ambiguous acceptance can linger.
  * - Restoration always starts when a connection is established, whoever established it: any subscription still tracked from a previous connection is restored (for example after the reconnection loop gave up on an authentication failure and a later [sendMessage] reconnects).
  *
@@ -664,7 +665,8 @@ internal class WebSocketCoreImpl(
     override suspend fun <T : Any> subscribeTo(
         type: String,
         data: Map<String, Any?>,
-        timeout: kotlin.time.Duration,
+        timeout: Duration,
+        reconnectPolicy: SubscriptionReconnectPolicy,
     ): Flow<T>? {
         val subscribeMessage = buildMap {
             put("type", type)
@@ -674,7 +676,7 @@ internal class WebSocketCoreImpl(
         return eventSubscriptionMutex.withLock<Flow<T>?> {
             ( // Check for existing subscription before creating a new one
                 findSubscription(subscribeMessage)?.second?.eventFlow
-                    ?: createSubscriptionFlow<T>(subscribeMessage, timeout)
+                    ?: createSubscriptionFlow<T>(subscribeMessage, timeout, reconnectPolicy)
                 ) as? Flow<T>
         }
     }
@@ -797,10 +799,19 @@ internal class WebSocketCoreImpl(
         handleClosingSocket()
     }
 
-    private suspend fun <T> createSubscriptionFlow(subscribeMessage: Map<String, Any?>, timeout: Duration): Flow<T>? {
+    private suspend fun <T> createSubscriptionFlow(
+        subscribeMessage: Map<String, Any?>,
+        timeout: Duration,
+        reconnectPolicy: SubscriptionReconnectPolicy,
+    ): Flow<T>? {
         val channel = Channel<T>(capacity = Channel.BUFFERED)
         val flow = callbackFlow<T> {
-            launch { channel.consumeAsFlow().collect(::send) }
+            launch {
+                channel.consumeAsFlow().collect(::send)
+                // Only reached for a completing subscription, once cleanupClosingSocket closed its
+                // channel; a shared one is cancelled with its last collector before the channel closes
+                close()
+            }
             awaitClose {
                 wsScope.launch {
                     eventSubscriptionMutex.withLock {
@@ -831,13 +842,19 @@ internal class WebSocketCoreImpl(
                     }
                 }
             }
-        }.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
+        }
+        val eventFlow: Flow<T> = when (reconnectPolicy) {
+            SubscriptionReconnectPolicy.Resubscribe ->
+                flow.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
+            SubscriptionReconnectPolicy.Complete -> flow
+        }
 
         val response = sendMessage(
             Command.WithAnswer.Subscription(
                 request = WebSocketRequest(message = subscribeMessage),
-                eventFlow = flow as SharedFlow<Any>,
+                eventFlow = eventFlow as Flow<Any>,
                 onEvent = channel as Channel<Any>,
+                reconnectPolicy = reconnectPolicy,
             ),
         )
         if (response == null || response.success != true) {
@@ -845,7 +862,7 @@ internal class WebSocketCoreImpl(
             findSubscription(subscribeMessage)?.let { (subscriptionId, _) -> activeMessages.remove(subscriptionId) }
             return null
         } else {
-            return flow
+            return eventFlow
         }
     }
 
@@ -1057,6 +1074,8 @@ internal class WebSocketCoreImpl(
         authCompleted.completeExceptionally(IOException("Connection closed"))
         authCompleted = CompletableDeferred()
 
+        completeNonReplayableSubscriptions()
+
         // Complete all pending simple messages and in-flight resubscription attempts with an
         // error; the original subscriptions the attempts point to stay tracked and are restored
         // once a connection is established again
@@ -1069,6 +1088,26 @@ internal class WebSocketCoreImpl(
                     Timber.w("Response deferred was already completed, skipping IOException")
                 }
                 activeMessages.remove(key)
+            }
+    }
+
+    /**
+     * Ends every subscription created with [SubscriptionReconnectPolicy.Complete]: closing its
+     * channel completes its Flow, and dropping it from [activeMessages] keeps it out of the
+     * restoration that follows a reconnection.
+     */
+    @GuardedBy("connectedMutex")
+    private fun completeNonReplayableSubscriptions() {
+        activeMessages
+            .mapNotNull { (key, activeMessage) ->
+                (activeMessage as? ActiveMessage.Subscription)
+                    ?.takeIf { it.reconnectPolicy is SubscriptionReconnectPolicy.Complete }
+                    ?.let { key to it }
+            }
+            .forEach { (key, subscription) ->
+                activeMessages.remove(key)
+                subscription.responseDeferred.completeExceptionally(IOException("Connection closed"))
+                subscription.onEvent.close()
             }
     }
 
@@ -1304,15 +1343,17 @@ internal sealed interface ActiveMessage {
      * A subscription that receive multiple events over time.
      *
      * @param responseDeferred Completes with the initial subscription confirmation response
-     * @param eventFlow The shared flow that emits events to external subscribers
+     * @param eventFlow The flow that emits events to external subscribers
      * @param onEvent The channel used to send events into the flow
      * @param request The original request, retained for resubscription after reconnection
+     * @param reconnectPolicy Whether the subscription is restored or ended when the connection is lost
      */
     class Subscription(
         override val responseDeferred: CompletableDeferred<RawMessageSocketResponse>,
-        val eventFlow: SharedFlow<Any>,
+        val eventFlow: Flow<Any>,
         val onEvent: Channel<Any>,
         val request: WebSocketRequest,
+        val reconnectPolicy: SubscriptionReconnectPolicy,
     ) : ActiveMessage
 
     /**
@@ -1361,11 +1402,16 @@ private sealed interface Command<T> {
         /**
          * A subscription message that receives multiple events over time.
          *
-         * @param eventFlow The shared flow that emits events to subscribers
+         * @param eventFlow The flow that emits events to subscribers
          * @param onEvent The channel used internally to send events to the flow
+         * @param reconnectPolicy Whether the subscription is restored or ended when the connection is lost
          */
-        class Subscription(request: WebSocketRequest, val eventFlow: SharedFlow<Any>, val onEvent: Channel<Any>) :
-            WithAnswer(request) {
+        class Subscription(
+            request: WebSocketRequest,
+            val eventFlow: Flow<Any>,
+            val onEvent: Channel<Any>,
+            val reconnectPolicy: SubscriptionReconnectPolicy,
+        ) : WithAnswer(request) {
 
             override fun toActiveMessage(): ActiveMessage {
                 return ActiveMessage.Subscription(
@@ -1373,6 +1419,7 @@ private sealed interface Command<T> {
                     eventFlow,
                     onEvent,
                     request,
+                    reconnectPolicy,
                 )
             }
         }
