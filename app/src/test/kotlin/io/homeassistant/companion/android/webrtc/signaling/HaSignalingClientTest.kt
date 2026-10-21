@@ -129,6 +129,20 @@ class HaSignalingClientTest {
     }
 
     @Test
+    fun `Given a subscription that completes When opening a session Then the flow completes`() = runTest {
+        // The repository flow completes when the connection is lost (the server closed the session with it).
+        val upstream = Channel<WebRtcEvent>(Channel.UNLIMITED)
+        coEvery { webSocketRepository.startCameraWebRtcSession(ENTITY_ID, "v=0 offer") } returns upstream.receiveAsFlow()
+
+        client.openSession("v=0 offer").test {
+            upstream.send(WebRtcEvent.Session(sessionId = SESSION_ID))
+            assertEquals(SignalingEvent.Session(sessionId = WebRtcSessionId(SESSION_ID)), awaitItem())
+            upstream.close()
+            awaitComplete()
+        }
+    }
+
+    @Test
     fun `Given a candidate When sending it Then it is mapped and the result returned`() = runTest {
         coEvery {
             webSocketRepository.sendCameraWebRtcCandidate(ENTITY_ID, SESSION_ID, any())
