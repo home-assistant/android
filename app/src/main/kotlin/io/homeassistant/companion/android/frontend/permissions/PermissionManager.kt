@@ -159,6 +159,22 @@ internal class PermissionManager @Inject constructor(
     }
 
     /**
+     * Ensures the app has the microphone permission to stream it to a camera (WebRTC talk-back).
+     *
+     * @return `true` immediately when it has permission, otherwise enqueues a
+     *          [PermissionRequest.Microphone], suspends until the user responds, and returns whether
+     *          they granted it.
+     */
+    suspend fun checkMicrophonePermission(): Boolean {
+        if (permissionChecker.hasPermission(Manifest.permission.RECORD_AUDIO)) return true
+
+        Timber.d("Microphone permission required, awaiting user response")
+        return queue.awaitResult { onResult ->
+            PermissionRequest.Microphone(onResult = onResult)
+        }
+    }
+
+    /**
      * Drives the full permission flow for the Improv Wi-Fi onboarding session.
      *
      * Returns `true` immediately when every permission in [requiredPermissions] is already

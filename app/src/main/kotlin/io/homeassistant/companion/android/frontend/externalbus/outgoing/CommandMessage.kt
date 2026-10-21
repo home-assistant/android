@@ -174,3 +174,27 @@ object BarcodeScanAbortedMessage {
     @Serializable
     private data class ScanAbortedPayload(val reason: String)
 }
+
+/**
+ * Notifies the frontend that an app-provided camera microphone stream ended without the frontend
+ * stopping it (the WebRTC session failed, or the app stopped it for a lifecycle reason). Carries the
+ * reason [code] (from the WebRTC stream error codes) and a fallback [message]. One-way command.
+ *
+ * @see CommandMessage
+ */
+object WebRtcStreamStoppedMessage {
+    operator fun invoke(sessionId: String, code: WebRtcStreamErrorCode, message: String): OutgoingExternalBusMessage =
+        CommandMessage(
+            command = "webrtc/stream/stopped",
+            payload = frontendExternalBusJson.encodeToJsonElement(
+                StoppedPayload(sessionId = sessionId, code = code.value, message = message),
+            ),
+        )
+
+    @Serializable
+    private data class StoppedPayload(
+        @SerialName("session_id") val sessionId: String,
+        val code: String,
+        val message: String,
+    )
+}

@@ -245,11 +245,16 @@ class WebRtcDebugViewModel @VisibleForTesting internal constructor(
             previousAudioMode = manager.mode
         }
         manager.mode = AudioManager.MODE_IN_COMMUNICATION
+        Timber.d(
+            "enterCommunicationAudio: mode is now ${manager.mode}, " +
+                "micMuted=${manager.isMicrophoneMute}, speakerOn=${manager.isSpeakerphoneOn}",
+        )
     }
 
     private fun exitCommunicationAudio() {
         val manager = audioManager ?: return
         previousAudioMode?.let { manager.mode = it }
+        Timber.d("exitCommunicationAudio: restored mode ${manager.mode}")
         previousAudioMode = null
     }
 

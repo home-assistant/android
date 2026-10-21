@@ -52,6 +52,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
+import io.homeassistant.companion.android.frontend.webrtc.WebRtcHandler
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -60,9 +61,12 @@ import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -75,6 +79,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -133,6 +138,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
+    private val webRtcHandler: WebRtcHandler,
     private val keyChainRepository: KeyChainRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
@@ -158,6 +164,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
         matterThreadHandler: FrontendMatterThreadHandler,
+        webRtcHandler: WebRtcHandler,
         keyChainRepository: KeyChainRepository,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
@@ -180,6 +187,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler = improvHandler,
         barcodeScannerHandler = barcodeScannerHandler,
         matterThreadHandler = matterThreadHandler,
+        webRtcHandler = webRtcHandler,
         keyChainRepository = keyChainRepository,
     )
 
@@ -493,11 +501,22 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
 
+        // A navigation or reload replaces the frontend that owns a mic session, so stop it rather
+        // than leaving the microphone open against a page that no longer knows about it.
+        viewModelScope.launch {
+            urlFlow.drop(1).collect { webRtcHandler.stopAll() }
+        }
+
         collectMatterThreadEvents()
     }
 
     override fun onCleared() {
         exoPlayerManager.close()
+        // viewModelScope is already cancelling, which stops the session collectors but does not
+        // release their native peer connections; run the release on a short-lived scope that
+        // outlives it.
+        val cleanupScope = CoroutineScope(Dispatchers.Main.immediate)
+        cleanupScope.launch { webRtcHandler.stopAll() }.invokeOnCompletion { cleanupScope.cancel() }
     }
 
     /**
@@ -738,8 +757,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onLeavingApp(currentUrl: String?) {
         viewModelScope.launch {
-            if (!prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()) return@launch
             if (!LifecycleHandler.isAppInBackground()) return@launch
+            // Backgrounding ends any mic talk-back session: release it and tell the frontend its
+            // microphone is gone (it did not ask for the stop).
+            webRtcHandler.stopAll(notifyFrontend = true)
+
+            if (!prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()) return@launch
             if (!shouldShowFirstView(currentUrl)) return@launch
             navigateToDefaultDashboard(_viewState.value.serverId)
         }
@@ -889,9 +912,24 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is FrontendHandlerEvent.Connected -> onConnected()
 
             is FrontendHandlerEvent.Disconnected -> {
-                // Disconnection handling not yet implemented
                 Timber.d("Frontend external bus disconnected")
+                // The frontend that owns any mic session is gone, so release it.
+                webRtcHandler.stopAll()
             }
+
+            is FrontendHandlerEvent.StartCameraMicrophoneStream -> viewModelScope.launch {
+                webRtcHandler.start(
+                    scope = viewModelScope,
+                    serverId = viewState.value.serverId,
+                    messageId = result.messageId,
+                    streamType = result.streamType,
+                    entityId = result.entityId,
+                )
+            }
+
+            is FrontendHandlerEvent.StopCameraMicrophoneStream ->
+                viewModelScope.launch { webRtcHandler.stop(result.sessionId) }
+
             is FrontendHandlerEvent.Loaded -> showContent()
 
             is FrontendHandlerEvent.ThemeUpdated -> {
