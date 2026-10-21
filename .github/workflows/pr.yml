@@ -12,6 +12,8 @@ concurrency:
 permissions:
   contents: read
 
+# ktlint, lint, yamllint, license_check, pr_build and pr_build_release are
+# required status checks in the main branch ruleset. Keep their names as they are.
 jobs:
   validate_localize_setup:
     name: "Validate Localize Setup"
@@ -63,7 +65,7 @@ jobs:
           path: strings.zip
 
   yamllint:
-    name: "YAML Lint"
+    name: yamllint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -109,7 +111,7 @@ jobs:
           fi
 
   license_check:
-    name: "License Check"
+    name: license_check
     needs: [lockfiles]
     runs-on: ubuntu-latest
     steps:
@@ -140,7 +142,7 @@ jobs:
             wear/build/generated/aboutLibraries/debug/res/raw/aboutlibraries.json wearDebug
 
   ktlint:
-    name: "Ktlint"
+    name: ktlint
     needs: [license_check, yamllint, validate_localize_setup]
     runs-on: ubuntu-latest
     permissions:
@@ -193,7 +195,7 @@ jobs:
           category: "Detekt"
 
   lint:
-    name: "Android Lint"
+    name: lint
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     permissions:
@@ -259,7 +261,7 @@ jobs:
           job-status: ${{ job.status }}
 
   pr_build:
-    name: "Build Debug"
+    name: pr_build
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
@@ -306,7 +308,7 @@ jobs:
           path: ./**/*.apk
 
   pr_build_release:
-    name: "Build Release"
+    name: pr_build_release
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
