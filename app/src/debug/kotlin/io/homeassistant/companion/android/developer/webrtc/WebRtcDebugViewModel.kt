@@ -76,15 +76,16 @@ data class WebRtcDebugState(
     val selectedEntityId: String? = null,
     val mediaOptions: MediaOptions = MediaOptions(),
     val streamTypes: StreamTypesState = StreamTypesState.None,
+    val sessionActive: Boolean = false,
 ) {
     val showServerSelector: Boolean get() = serversDropdownItems.size > 1
 
     /**
-     * A session can start once a camera is selected, a stream is requested, and the camera is not
-     * known to lack WebRTC support.
+     * A session can start once a camera is selected, a stream is requested, the camera is not known
+     * to lack WebRTC support, and no session is already starting or running.
      */
     val canStart: Boolean
-        get() = selectedEntityId != null && mediaOptions.hasAnyStream && streamTypes.allowsWebRtc
+        get() = !sessionActive && selectedEntityId != null && mediaOptions.hasAnyStream && streamTypes.allowsWebRtc
 }
 
 /** Owns the WebRTC session of the developer debug screen. */
@@ -169,6 +170,9 @@ class WebRtcDebugViewModel @VisibleForTesting internal constructor(
     }
 
     fun selectServerId(serverId: Int) {
+        // The session is bound to its signaling target, so the target cannot change while one is
+        // starting or running, otherwise the microphone would keep streaming to the previous camera.
+        if (_state.value.sessionActive) return
         if (serverId == _state.value.selectedServerId) return
         loadStreamTypesJob?.cancel()
         _state.update {
@@ -183,19 +187,27 @@ class WebRtcDebugViewModel @VisibleForTesting internal constructor(
     }
 
     fun selectEntityId(entityId: String?) {
+        if (_state.value.sessionActive) return
         if (entityId == _state.value.selectedEntityId) return
         _state.update { it.copy(selectedEntityId = entityId) }
         loadStreamTypes(entityId)
     }
 
     fun updateMediaOptions(mediaOptions: MediaOptions) {
+        // Media directions are fixed for the lifetime of a session, so they cannot change once one
+        // is starting or running, otherwise the negotiated directions and the UI would disagree.
+        if (_state.value.sessionActive) return
         _state.update { it.copy(mediaOptions = mediaOptions) }
     }
 
     fun startSession() {
         val current = _state.value
         val entityId = current.selectedEntityId?.trim()?.takeIf { it.isNotEmpty() } ?: return
-        if (!current.mediaOptions.hasAnyStream) return
+        if (!current.canStart) return
+        // Mark the session active before suspending to create it: creation is asynchronous and the
+        // session is only published once ready, so the UI gates starts, media edits, and target
+        // changes on this flag rather than on the not-yet-published session.
+        _state.update { it.copy(sessionActive = true) }
         viewModelScope.launch {
             sessionLock.withLock {
                 // A start that waited on another one finds its session published and leaves it alone
@@ -223,6 +235,7 @@ class WebRtcDebugViewModel @VisibleForTesting internal constructor(
     private suspend fun releaseSession() {
         _session.value?.release()
         _session.value = null
+        _state.update { it.copy(sessionActive = false) }
         exitCommunicationAudio()
     }
 

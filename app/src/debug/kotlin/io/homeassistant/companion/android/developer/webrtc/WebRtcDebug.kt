@@ -56,8 +56,10 @@ fun WebRtcDebug(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    // Media directions are fixed for a session, so they can only be changed while idle
-    val isIdle = session == null
+    // Media directions are fixed for a session, so they can only be changed while no session is
+    // starting or running. The session is published only once created, so gate on the state's
+    // active flag rather than on [session], which stays null during asynchronous creation.
+    val isIdle = !state.sessionActive
 
     val currentState by rememberUpdatedState(state)
     val onStartUpdated by rememberUpdatedState(onStart)
@@ -107,8 +109,8 @@ fun WebRtcDebug(
         }
         MediaOptionsSwitches(options = state.mediaOptions, enabled = isIdle, onChange = onMediaOptionsChange)
         SessionControls(
-            canStart = isIdle && state.canStart,
-            canStop = session != null,
+            canStart = state.canStart,
+            canStop = state.sessionActive,
             onStart = ::start,
             onStop = onStop,
         )
