@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.SubscriptionReconnectPolicy
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER
@@ -380,13 +381,14 @@ class WebSocketRepositoryImplTest {
         }
 
         @Test
-        fun `Given a camera When starting a WebRTC session Then offer subscription is started`() = runTest {
+        fun `Given a camera When starting a WebRTC session Then offer subscription is started without replay`() = runTest {
             val dataSlot = slot<Map<String, Any?>>()
             coEvery {
                 webSocketCore.subscribeTo<WebRtcEvent>(
                     type = SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER,
                     data = capture(dataSlot),
                     timeout = any(),
+                    reconnectPolicy = SubscriptionReconnectPolicy.Complete,
                 )
             } returns emptyFlow()
 
