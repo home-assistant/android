@@ -1,7 +1,7 @@
 name: PR Emulator.wtf
 
 on: # yamllint disable-line rule:truthy
-  workflow_run:
+  workflow_run: # zizmor: ignore[dangerous-triggers] inputs are artifacts only, no PR code runs here
     workflows: ['Pull Request']
     types: [completed]
 
