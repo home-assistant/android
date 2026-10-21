@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.integration.ActionData
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.SubscriptionReconnectPolicy
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
@@ -480,6 +481,9 @@ class WebSocketRepositoryImpl internal constructor(
                 "entity_id" to entityId,
                 "offer" to offerSdp,
             ),
+            // The server closes the session with the connection; replaying the offer would open a
+            // new one for a peer connection that is already negotiated
+            reconnectPolicy = SubscriptionReconnectPolicy.Complete,
         )
 
     override suspend fun sendCameraWebRtcCandidate(

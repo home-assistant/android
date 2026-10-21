@@ -32,10 +32,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -82,6 +82,7 @@ private class WebRtcNegotiation(
     // never crosses coroutines and needs no synchronization regardless of the dispatcher.
     private var sessionId: WebRtcSessionId? = null
     private var answerApplied = false
+    private var connected = false
     private var disconnectedJob: Job? = null
     private val pendingLocalCandidates = mutableListOf<IceCandidateInit>()
     private val pendingRemoteCandidates = mutableListOf<IceCandidateInit>()
@@ -96,31 +97,22 @@ private class WebRtcNegotiation(
      */
     suspend fun run(offerSdp: String): NegotiationOutcome = coroutineScope {
         val ended = CompletableDeferred<NegotiationOutcome>()
-        // Completed once the peer connection is established. After that the signaling subscription is
-        // no longer needed (media flows on its own transport), so it is closed.
-        val connected = CompletableDeferred<Unit>()
-        val signalingEvents = channelFlow {
-            val collection = launch {
-                signalingClient.openSession(offerSdp).collect { send(NegotiationEvent.Signaling(it)) }
-                // The subscription closed on its own before the connection was established (the server
-                // ended it): surface it so the session renegotiates. A terminal error emitted just
-                // before this is handled first by the single collector, so it wins.
-                send(NegotiationEvent.SignalingClosed)
-            }
-            // Once connected, stop collecting so the subscription is unsubscribed and therefore not
-            // resubscribed on a WebSocket reconnect (which would re-offer onto the already-negotiated
-            // peer). Cancelling skips the SignalingClosed above, so this planned close is not mistaken
-            // for a server drop that would trigger a renegotiation.
-            connected.await()
-            collection.cancel()
-        }
+        // The signaling session stays open for the whole negotiation: closing it closes the session
+        // on the server, which for some cameras stops the stream.
+        val signalingEvents = signalingClient.openSession(offerSdp)
+            .map<SignalingEvent, NegotiationEvent> { NegotiationEvent.Signaling(it) }
+            // Carry a normal close through the merged stream so the single collector handles it in
+            // order, after any terminal error the flow emitted just before closing. Completing [ended]
+            // from this side channel could otherwise win that race and turn a server rejection into a
+            // silent retry.
+            .onCompletion { cause -> if (cause == null) emit(NegotiationEvent.SignalingClosed) }
         val events = merge(controller.events.map(NegotiationEvent::Peer), signalingEvents)
         val job = launch {
             events.collect { event ->
                 when (event) {
-                    is NegotiationEvent.Peer -> handlePeerEvent(event.event, this, ended, connected)
+                    is NegotiationEvent.Peer -> handlePeerEvent(event.event, this, ended)
                     is NegotiationEvent.Signaling -> handleSignalingEvent(event.event, ended)
-                    NegotiationEvent.SignalingClosed -> ended.complete(NegotiationOutcome.Ended)
+                    NegotiationEvent.SignalingClosed -> handleSignalingClosed(ended)
                 }
             }
         }
@@ -129,11 +121,21 @@ private class WebRtcNegotiation(
         outcome
     }
 
+    private fun handleSignalingClosed(ended: CompletableDeferred<NegotiationOutcome>) {
+        if (connected) {
+            // Media flows on its own transport and may well outlive the signaling session (go2rtc
+            // keeps the peer connection). If it does not, the peer connection reports it and drives
+            // the reconnection from there.
+            Timber.d("Signaling closed after the connection was established, keeping the stream")
+        } else {
+            ended.complete(NegotiationOutcome.Ended)
+        }
+    }
+
     private suspend fun handlePeerEvent(
         event: PeerConnectionEvent,
         scope: CoroutineScope,
         ended: CompletableDeferred<NegotiationOutcome>,
-        connected: CompletableDeferred<Unit>,
     ) {
         when (event) {
             is PeerConnectionEvent.LocalCandidate -> {
@@ -150,8 +152,7 @@ private class WebRtcNegotiation(
                 RtcConnectionState.CONNECTED -> {
                     disconnectedJob?.cancel()
                     disconnectedJob = null
-                    // Negotiation is done; release the signaling subscription.
-                    connected.complete(Unit)
+                    connected = true
                     onState(ConnectionState.Connected)
                     onConnected()
                 }
@@ -182,7 +183,11 @@ private class WebRtcNegotiation(
                 pendingLocalCandidates.clear()
             }
 
-            is SignalingEvent.Answer -> {
+            is SignalingEvent.Answer -> if (answerApplied) {
+                // The signaling API has no renegotiation, so a second answer can only come from a
+                // replayed offer; the stable peer connection would reject it.
+                Timber.w("Ignoring a second answer for an already negotiated session")
+            } else {
                 controller.setAnswer(event.sdp)
                 answerApplied = true
                 // The connection state stays Connecting/Reconnecting (set per attempt in
