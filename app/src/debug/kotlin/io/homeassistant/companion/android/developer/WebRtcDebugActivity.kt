@@ -55,4 +55,11 @@ class WebRtcDebugActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        // Leaving the screen must not keep the camera, speaker and microphone running in the
+        // background. The ViewModel keeps the session across a configuration change.
+        if (!isChangingConfigurations) viewModel.stopSession()
+    }
 }

@@ -38,6 +38,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 private val STATE_SHARING_TIMEOUT = 5.seconds
@@ -116,6 +118,10 @@ class WebRtcDebugViewModel @VisibleForTesting internal constructor(
     private val _session = MutableStateFlow<WebRtcSession?>(null)
     val session: StateFlow<WebRtcSession?> = _session.asStateFlow()
 
+    // Serializes start and stop: creating a session suspends before it is published, so without
+    // this a second start could create another one and a stop could miss the one being created.
+    private val sessionLock = Mutex()
+
     private var loadEntitiesJob: Job? = null
     private var loadStreamTypesJob: Job? = null
 
@@ -191,22 +197,27 @@ class WebRtcDebugViewModel @VisibleForTesting internal constructor(
         val entityId = current.selectedEntityId?.trim()?.takeIf { it.isNotEmpty() } ?: return
         if (!current.mediaOptions.hasAnyStream) return
         viewModelScope.launch {
-            releaseSession()
-            // Two-way audio needs the audio stack in communication mode (before the peer
-            // connection's recorder is created) so the microphone is captured with the hardware
-            // echo canceller engaged, like a voice call.
-            if (current.mediaOptions.audioOut) enterCommunicationAudio()
-            val signalingClient =
-                HaSignalingClient(serverManager.webSocketRepository(current.selectedServerId), entityId)
-            _session.value = webRtcSessionFactory.create(
-                signalingClient = signalingClient,
-                mediaOptions = current.mediaOptions,
-            ).also { it.start() }
+            sessionLock.withLock {
+                // A start that waited on another one finds its session published and leaves it alone
+                if (_session.value != null) return@withLock
+                // Two-way audio needs the audio stack in communication mode (before the peer
+                // connection's recorder is created) so the microphone is captured with the hardware
+                // echo canceller engaged, like a voice call.
+                if (current.mediaOptions.audioOut) enterCommunicationAudio()
+                val signalingClient =
+                    HaSignalingClient(serverManager.webSocketRepository(current.selectedServerId), entityId)
+                val session = webRtcSessionFactory.create(
+                    signalingClient = signalingClient,
+                    mediaOptions = current.mediaOptions,
+                )
+                _session.value = session
+                session.start()
+            }
         }
     }
 
     fun stopSession() {
-        viewModelScope.launch { releaseSession() }
+        viewModelScope.launch { sessionLock.withLock { releaseSession() } }
     }
 
     private suspend fun releaseSession() {
