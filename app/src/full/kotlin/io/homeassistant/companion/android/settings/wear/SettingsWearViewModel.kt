@@ -43,6 +43,7 @@ import timber.log.Timber
 @HiltViewModel
 class SettingsWearViewModel @Inject constructor(
     private val settingsWearRepository: SettingsWearRepository,
+    private val userTrustedChainResolver: UserTrustedChainResolver,
     application: Application,
 ) : AndroidViewModel(application),
     DataClient.OnDataChangedListener {
@@ -271,8 +272,9 @@ class SettingsWearViewModel @Inject constructor(
         notificationsEnabled: Boolean,
         tlsClientCertificateUri: String?,
         tlsClientCertificatePassword: String?,
-    ) {
+    ) = viewModelScope.launch {
         _hasData.value = false // Show loading indicator
+        val trustedCertificate = userTrustedChainResolver.resolve(url)
         val putDataRequest = PutDataMapRequest.create("/authenticate").run {
             authenticateId = UUID.randomUUID().toString()
             dataMap.putString("AuthId", authenticateId!!)
@@ -283,6 +285,10 @@ class SettingsWearViewModel @Inject constructor(
             dataMap.putBoolean("Notifications", notificationsEnabled)
             dataMap.putByteArray("TLSClientCertificateData", readUriData(tlsClientCertificateUri))
             dataMap.putString("TLSClientCertificatePassword", tlsClientCertificatePassword.orEmpty())
+            dataMap.putByteArray(
+                WearDataMessages.KEY_TLS_SERVER_TRUST_ANCHOR,
+                trustedCertificate?.encoded ?: ByteArray(0),
+            )
             setUrgent()
             asPutDataRequest()
         }

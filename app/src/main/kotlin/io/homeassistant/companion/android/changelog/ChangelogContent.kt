@@ -94,6 +94,10 @@ internal val currentChangelog = Changelog(
             contentRes = commonR.string.changelog_entry_file_picker,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_wear_user_certificates,
+            platforms = setOf(ChangelogPlatform.WEAR),
+        ),
     ),
     fixed = listOf(
         ChangelogEntry(

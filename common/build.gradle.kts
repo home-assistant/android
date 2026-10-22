@@ -56,6 +56,7 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.android)
     implementation(libs.okhttp.logging.interceptor)
+    testImplementation(libs.okhttp.tls)
     implementation(libs.android.beacon.library)
 
     implementation(libs.emojiJava) {
