@@ -188,6 +188,8 @@ class NameYourDeviceViewModelTest {
             }
             // HTTP URL means allowInsecureConnection is null (not enforced)
             assertEquals(null, tempServerSlot.captured.allowInsecureConnection)
+            // No internal URL was announced
+            assertEquals(null, tempServerSlot.captured.internalUrl)
         }
     }
 
@@ -254,7 +256,7 @@ class NameYourDeviceViewModelTest {
                 every { isAnyLocalAddress } returns false
             },
         )
-        val secureRoute = NameYourDeviceRoute(url.toString(), "auth_code")
+        val secureRoute = NameYourDeviceRoute(url.toString(), "auth_code", internalUrl = "http://192.168.1.2:8123")
         viewModel = NameYourDeviceViewModel(
             secureRoute,
             serverManager,
@@ -301,6 +303,8 @@ class NameYourDeviceViewModelTest {
             }
             // Secure connection is enforced during server creation
             assertEquals(false, tempServerSlot.captured.allowInsecureConnection)
+            // The internal URL the server announced is saved
+            assertEquals("http://192.168.1.2:8123", tempServerSlot.captured.internalUrl)
         }
     }
 

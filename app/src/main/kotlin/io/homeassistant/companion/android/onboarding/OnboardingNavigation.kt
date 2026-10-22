@@ -266,8 +266,8 @@ private fun NavGraphBuilder.commonScreens(
     wearNameToOnboard: String? = null,
 ) {
     serverDiscoveryScreen(
-        onConnectClick = {
-            navController.navigateToConnection(it.toString())
+        onConnectClick = { server ->
+            navController.navigateToConnection(server.url.toString(), internalUrl = server.internalUrl?.toString())
         },
         onBackClick = {
             if (navController.canGoBack()) {
@@ -313,7 +313,7 @@ private fun NavGraphBuilder.commonScreens(
         },
     )
     connectionScreen(
-        onAuthenticated = { url, authCode, requiredMTLS ->
+        onAuthenticated = { url, authCode, requiredMTLS, internalUrl ->
             val navOptions = navOptions {
                 // We don't want to come back to the connection screen if we navigate to the name your device screen
                 popUpTo<ConnectionRoute> {
@@ -332,6 +332,7 @@ private fun NavGraphBuilder.commonScreens(
                 navController.navigateToNameYourDevice(
                     url = url,
                     authCode = authCode,
+                    internalUrl = internalUrl,
                     navOptions = navOptions,
                 )
             }
