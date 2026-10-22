@@ -147,6 +147,12 @@ internal interface SensorDao {
     )
     suspend fun updateLastSentStateAndIcon(sensorId: String, serverId: Int, state: String?, icon: String?)
 
+    @Query(
+        "UPDATE sensors SET registered = NULL, last_sent_state = NULL, last_sent_icon = NULL " +
+            "WHERE id = :sensorId AND server_id = :serverId AND enabled = 1",
+    )
+    suspend fun markRegistrationFailed(sensorId: String, serverId: Int)
+
     @Query("UPDATE sensors SET last_sent_state = :state, last_sent_icon = :icon WHERE id = :sensorId")
     suspend fun updateLastSentStatesAndIcons(sensorId: String, state: String?, icon: String?)
 
