@@ -51,9 +51,11 @@ import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
 import io.homeassistant.companion.android.util.sensitive
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -193,12 +195,14 @@ class LocationSensorManager @Inject constructor(
         private var isBackgroundLocationSetup = false
         private var isZoneLocationSetup = false
 
-        private var lastLocationSend = mutableMapOf<Int, Long>()
+        // Sends run concurrently across servers (one at a time per server), so these maps are written from several threads
+        private val lastLocationSend = ConcurrentHashMap<Int, Long>()
         private var lastLocationReceived = mutableMapOf<Int, Long>()
-        private var lastUpdateLocation = mutableMapOf<Int, String?>()
+        private val lastSentLocationTime = ConcurrentHashMap<Int, Long>()
+        private val lastUpdateLocation = ConcurrentHashMap<Int, String>()
 
-        private var zones = mutableMapOf<Int, List<Entity>>()
-        private var zonesLastReceived = mutableMapOf<Int, Long>()
+        private val zones = ConcurrentHashMap<Int, List<Entity>>()
+        private val zonesLastReceived = ConcurrentHashMap<Int, Long>()
 
         private var geofenceRegistered = mutableSetOf<Int>()
 
@@ -213,15 +217,6 @@ class LocationSensorManager @Inject constructor(
 
         private var lastHighAccuracyTriggerRange: Int = 0
         private var lastHighAccuracyZones: List<String> = ArrayList()
-
-        enum class LocationUpdateTrigger(val isGeofence: Boolean = false) {
-            HIGH_ACCURACY_LOCATION,
-            BACKGROUND_LOCATION,
-            GEOFENCE_ENTER(isGeofence = true),
-            GEOFENCE_EXIT(isGeofence = true),
-            GEOFENCE_DWELL(isGeofence = true),
-            SINGLE_ACCURATE_LOCATION,
-        }
 
         /**
          * Builds an explicit-component [Intent] addressed to [LocationSensorReceiver] that triggers a
@@ -251,7 +246,32 @@ class LocationSensorManager @Inject constructor(
         }
     }
 
+    enum class LocationUpdateTrigger(val isGeofence: Boolean = false) {
+        HIGH_ACCURACY_LOCATION,
+        BACKGROUND_LOCATION,
+        GEOFENCE_ENTER(isGeofence = true),
+        GEOFENCE_EXIT(isGeofence = true),
+        GEOFENCE_DWELL(isGeofence = true),
+        SINGLE_ACCURATE_LOCATION,
+    }
+
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+
+    private val locationSendQueue = LocationSendQueue(
+        send = { serverId, queued ->
+            sendLocationUpdate(queued.location, serverId, queued.trigger, queued.bypassDebounce)
+        },
+        onSuperseded = { serverId, queued ->
+            Timber.d("Dropping location update superseded by a newer one waiting to be sent")
+            logLocationUpdate(
+                queued.location,
+                null,
+                serverId,
+                queued.trigger,
+                LocationHistoryItemResult.SKIPPED_NOT_LATEST,
+            )
+        },
+    )
 
     fun onReceive(intent: Intent) {
         sensorWorkerScope.launch {
@@ -759,7 +779,7 @@ class LocationSensorManager @Inject constructor(
                 HighAccuracyLocationService.updateNotificationAddress(applicationContext, location)
                 // Send new location to Home Assistant
                 serverIds.forEach {
-                    ioScope.launch { sendLocationUpdate(location, it, trigger) }
+                    ioScope.launch { locationSendQueue.submit(it, QueuedLocation(location, trigger)) }
                 }
             }
         }
@@ -873,14 +893,27 @@ class LocationSensorManager @Inject constructor(
             requestSingleAccurateLocation()
         } else {
             getEnabledServers(zoneLocation).forEach {
-                ioScope.launch { sendLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger) }
+                ioScope.launch {
+                    locationSendQueue.submit(it, QueuedLocation(geofencingEvent.triggeringLocation!!, trigger))
+                }
             }
         }
 
         setupBackgroundLocation()
     }
 
-    private suspend fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
+    /**
+     * Builds the payload for [location], evaluates the skip rules against the last send to [serverId] and sends it.
+     * Must not run concurrently for the same server: [locationSendQueue] guarantees that.
+     *
+     * @param bypassDebounce skips the minimum interval between sends, used for geofence transitions
+     */
+    private suspend fun sendLocationUpdate(
+        location: Location,
+        serverId: Int,
+        trigger: LocationUpdateTrigger?,
+        bypassDebounce: Boolean,
+    ) {
         Timber.d(
             """
                 Last Location:
@@ -966,9 +999,10 @@ class LocationSensorManager @Inject constructor(
             return
         }
 
-        if (location.time < (lastLocationSend[serverId] ?: 0)) {
+        val lastSentTime = lastSentLocationTime[serverId] ?: 0
+        if (location.time < lastSentTime) {
             Timber.d(
-                "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastLocationSend",
+                "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastSentTime",
             )
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_NOT_LATEST)
             return
@@ -992,7 +1026,7 @@ class LocationSensorManager @Inject constructor(
                 }
             } else {
                 if (now < (lastLocationSend[serverId] ?: 0) + 5000 &&
-                    trigger?.isGeofence != true &&
+                    !bypassDebounce &&
                     !highAccuracyModeEnabled
                 ) {
                     Timber.d(
@@ -1019,28 +1053,29 @@ class LocationSensorManager @Inject constructor(
             GeocodeSensorManager.SETTINGS_INCLUDE_LOCATION,
         )
 
-        ioScope.launch {
-            try {
-                serverManager.integrationRepository(serverId).updateLocation(updateLocation)
-                Timber.d("Location update sent successfully for $serverId as $updateLocationAs")
-                lastLocationSend[serverId] = now
-                lastUpdateLocation[serverId] = updateLocationString
-                logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
+        try {
+            serverManager.integrationRepository(serverId).updateLocation(updateLocation)
+            Timber.d("Location update sent successfully for $serverId as $updateLocationAs")
+            lastLocationSend[serverId] = now
+            lastSentLocationTime[serverId] = location.time
+            lastUpdateLocation[serverId] = updateLocationString
+            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
 
-                // Update Geocoded Location Sensor
-                if (geocodeIncludeLocation) {
-                    val intent = Intent(applicationContext, SensorReceiver::class.java)
-                    intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
-                    intent.putExtra(
-                        SensorReceiverBase.EXTRA_SENSOR_ID,
-                        GeocodeSensorManager.geocodedLocation.id,
-                    )
-                    applicationContext.sendBroadcast(intent)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Could not update location for $serverId.")
-                logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.FAILED_SEND)
+            // Update Geocoded Location Sensor
+            if (geocodeIncludeLocation) {
+                val intent = Intent(applicationContext, SensorReceiver::class.java)
+                intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
+                intent.putExtra(
+                    SensorReceiverBase.EXTRA_SENSOR_ID,
+                    GeocodeSensorManager.geocodedLocation.id,
+                )
+                applicationContext.sendBroadcast(intent)
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Could not update location for $serverId.")
+            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.FAILED_SEND)
         }
     }
 
@@ -1252,17 +1287,7 @@ class LocationSensorManager @Inject constructor(
                                     Timber.d(
                                         "Location accurate enough, all done with high accuracy.",
                                     )
-                                    ioScope.launch {
-                                        getEnabledServers(
-                                            singleAccurateLocation,
-                                        ).forEach { serverId ->
-                                            sendLocationUpdate(
-                                                location,
-                                                serverId,
-                                                LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION,
-                                            )
-                                        }
-                                    }
+                                    queueSingleAccurateLocation(location)
                                     if (wakeLock?.isHeld == true) wakeLock.release()
                                 }
 
@@ -1271,17 +1296,7 @@ class LocationSensorManager @Inject constructor(
                                         "No location was accurate enough, sending our last location anyway",
                                     )
                                     if (location.accuracy <= minAccuracy * 2) {
-                                        ioScope.launch {
-                                            getEnabledServers(
-                                                singleAccurateLocation,
-                                            ).forEach { serverId ->
-                                                sendLocationUpdate(
-                                                    location,
-                                                    serverId,
-                                                    LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION,
-                                                )
-                                            }
-                                        }
+                                        queueSingleAccurateLocation(location)
                                     }
                                     if (wakeLock?.isHeld == true) wakeLock.release()
                                 }
@@ -1298,6 +1313,17 @@ class LocationSensorManager @Inject constructor(
                 )
         } catch (e: Exception) {
             Timber.e(e, "Failed to get location data for single accurate sensor")
+        }
+    }
+
+    private fun queueSingleAccurateLocation(location: Location) = ioScope.launch {
+        getEnabledServers(singleAccurateLocation).forEach { serverId ->
+            launch {
+                locationSendQueue.submit(
+                    serverId,
+                    QueuedLocation(location, LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION),
+                )
+            }
         }
     }
 
