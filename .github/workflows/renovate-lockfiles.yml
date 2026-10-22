@@ -8,8 +8,11 @@ on: # yamllint disable-line rule:truthy
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
+permissions: {}
+
 jobs:
   update-lockfiles:
+    name: Update lockfiles
     runs-on: ubuntu-latest
     if: github.repository == 'home-assistant/android'
     permissions:
