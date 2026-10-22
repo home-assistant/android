@@ -265,7 +265,7 @@ class LocationSensorManager @Inject constructor(
             Timber.d("Dropping location update superseded by a newer one waiting to be sent")
             logLocationUpdate(
                 queued.location,
-                null,
+                buildLocationPayload(queued.location, serverId).updateLocation,
                 serverId,
                 queued.trigger,
                 LocationHistoryItemResult.SKIPPED_NOT_LATEST,
@@ -779,7 +779,7 @@ class LocationSensorManager @Inject constructor(
                 HighAccuracyLocationService.updateNotificationAddress(applicationContext, location)
                 // Send new location to Home Assistant
                 serverIds.forEach {
-                    ioScope.launch { locationSendQueue.submit(it, QueuedLocation(location, trigger)) }
+                    ioScope.launch { queueLocationUpdate(location, it, trigger) }
                 }
             }
         }
@@ -893,9 +893,7 @@ class LocationSensorManager @Inject constructor(
             requestSingleAccurateLocation()
         } else {
             getEnabledServers(zoneLocation).forEach {
-                ioScope.launch {
-                    locationSendQueue.submit(it, QueuedLocation(geofencingEvent.triggeringLocation!!, trigger))
-                }
+                ioScope.launch { queueLocationUpdate(geofencingEvent.triggeringLocation!!, it, trigger) }
             }
         }
 
@@ -922,87 +920,15 @@ class LocationSensorManager @Inject constructor(
                 Bearing: ${location.bearing}
             """.trimIndent(),
         )
-        var accuracy = 0
-        if (location.accuracy.toInt() >= 0) {
-            accuracy = location.accuracy.toInt()
-        }
-        val updateLocation: UpdateLocation
-        val updateLocationString: String
-        val updateLocationAs: String = getSendLocationAsSetting(serverId)
-        if (updateLocationAs == SEND_LOCATION_AS_ZONE_ONLY) {
-            val zones = getZones(serverId)
-            val inZones = zones
-                .filter {
-                    val radius = it.attributes["radius"] as? Number
-                    return@filter radius != null && it.containsWithAccuracy(location)
-                }.sortedWith(
-                    // Smallest zone (radius) first; when two zones share the same radius, prefer the one
-                    // whose center is closest to the current location to break the tie deterministically.
-                    compareBy<Entity> { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
-                        .thenBy { distanceToZoneCenter(location, it) },
-                )
-            val locationZone = inZones.firstOrNull { it.attributes["passive"] as? Boolean == false }
-
-            val locationName = locationZone?.entityId?.split(".")?.getOrNull(1) ?: ZONE_NAME_NOT_HOME
-            // Send both `location_name` (deprecated) and `in_zones` (its replacement, per
-            // https://github.com/home-assistant/architecture/discussions/1387) so the payload works
-            // against both pre- and post-deprecation Core servers during the rollout window.
-            updateLocation = UpdateLocation(
-                gps = null,
-                gpsAccuracy = null,
-                locationName = locationName,
-                inZones = if (serverManager.getServer(serverId)?.version?.isAtLeast(
-                        2026,
-                        6,
-                        0,
-                    ) == true
-                ) {
-                    inZones.map { it.entityId }
-                } else {
-                    null
-                },
-                speed = null,
-                altitude = null,
-                course = null,
-                verticalAccuracy = null,
-            )
-            updateLocationString = locationName
-        } else {
-            updateLocation = UpdateLocation(
-                gps = listOf(location.latitude, location.longitude),
-                gpsAccuracy = accuracy,
-                locationName = null,
-                inZones = null,
-                speed = location.speed.toInt(),
-                altitude = location.altitude.toInt(),
-                course = location.bearing.toInt(),
-                verticalAccuracy = if (SdkVersion.isAtLeast(
-                        Build.VERSION_CODES.O,
-                    )
-                ) {
-                    location.verticalAccuracyMeters.toInt()
-                } else {
-                    0
-                },
-            )
-            updateLocationString = updateLocation.gps.toString()
-        }
+        val (updateLocation, updateLocationString, updateLocationAs) = buildLocationPayload(location, serverId)
 
         val now = System.currentTimeMillis()
 
         Timber.d("Begin evaluating if location update should be skipped")
-        if (now + 5000 < location.time && !highAccuracyModeEnabled) {
-            Timber.d(
-                "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}",
-            )
-            logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_FUTURE)
-            return
-        }
-
         val lastSentTime = lastSentLocationTime[serverId] ?: 0
         if (location.time < lastSentTime) {
             Timber.d(
-                "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastSentTime",
+                "Skipping old location update since time is before the last one we tried to send, received: ${location.time} last sent: $lastSentTime",
             )
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SKIPPED_NOT_LATEST)
             return
@@ -1053,11 +979,13 @@ class LocationSensorManager @Inject constructor(
             GeocodeSensorManager.SETTINGS_INCLUDE_LOCATION,
         )
 
+        // Recorded before the call: if the server applies the update but the response is lost, an older fix queued
+        // behind this one must still be skipped instead of rolling the position back
+        lastSentLocationTime[serverId] = location.time
         try {
             serverManager.integrationRepository(serverId).updateLocation(updateLocation)
             Timber.d("Location update sent successfully for $serverId as $updateLocationAs")
             lastLocationSend[serverId] = now
-            lastSentLocationTime[serverId] = location.time
             lastUpdateLocation[serverId] = updateLocationString
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.SENT)
 
@@ -1077,6 +1005,91 @@ class LocationSensorManager @Inject constructor(
             Timber.e(e, "Could not update location for $serverId.")
             logLocationUpdate(location, updateLocation, serverId, trigger, LocationHistoryItemResult.FAILED_SEND)
         }
+    }
+
+    private data class LocationPayload(val updateLocation: UpdateLocation, val dedupeKey: String, val sendAs: String)
+
+    /** Builds the payload to send for [location], honoring the "send location as" setting of [serverId]. */
+    private suspend fun buildLocationPayload(location: Location, serverId: Int): LocationPayload {
+        val sendAs = getSendLocationAsSetting(serverId)
+        return if (sendAs == SEND_LOCATION_AS_ZONE_ONLY) {
+            zoneOnlyPayload(location, serverId, sendAs)
+        } else {
+            exactPayload(location, sendAs)
+        }
+    }
+
+    private suspend fun zoneOnlyPayload(location: Location, serverId: Int, sendAs: String): LocationPayload {
+        val inZones = getZones(serverId)
+            .filter {
+                val radius = it.attributes["radius"] as? Number
+                return@filter radius != null && it.containsWithAccuracy(location)
+            }.sortedWith(
+                // Smallest zone (radius) first; when two zones share the same radius, prefer the one
+                // whose center is closest to the current location to break the tie deterministically.
+                compareBy<Entity> { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
+                    .thenBy { distanceToZoneCenter(location, it) },
+            )
+        val locationZone = inZones.firstOrNull { it.attributes["passive"] as? Boolean == false }
+        val locationName = locationZone?.entityId?.split(".")?.getOrNull(1) ?: ZONE_NAME_NOT_HOME
+        // Send both `location_name` (deprecated) and `in_zones` (its replacement, per
+        // https://github.com/home-assistant/architecture/discussions/1387) so the payload works
+        // against both pre- and post-deprecation Core servers during the rollout window.
+        val updateLocation = UpdateLocation(
+            gps = null,
+            gpsAccuracy = null,
+            locationName = locationName,
+            inZones = if (serverManager.getServer(serverId)?.version?.isAtLeast(2026, 6, 0) == true) {
+                inZones.map { it.entityId }
+            } else {
+                null
+            },
+            speed = null,
+            altitude = null,
+            course = null,
+            verticalAccuracy = null,
+        )
+        return LocationPayload(updateLocation, dedupeKey = locationName, sendAs = sendAs)
+    }
+
+    private fun exactPayload(location: Location, sendAs: String): LocationPayload {
+        val updateLocation = UpdateLocation(
+            gps = listOf(location.latitude, location.longitude),
+            gpsAccuracy = location.accuracy.toInt().coerceAtLeast(0),
+            locationName = null,
+            inZones = null,
+            speed = location.speed.toInt(),
+            altitude = location.altitude.toInt(),
+            course = location.bearing.toInt(),
+            verticalAccuracy = if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+                location.verticalAccuracyMeters.toInt()
+            } else {
+                0
+            },
+        )
+        return LocationPayload(updateLocation, dedupeKey = updateLocation.gps.toString(), sendAs = sendAs)
+    }
+
+    /**
+     * Queues [location] for [serverId] unless its timestamp is in the future, so that such a fix can never displace
+     * a valid one waiting in the queue.
+     */
+    private suspend fun queueLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
+        val now = System.currentTimeMillis()
+        if (now + 5000 < location.time && !highAccuracyModeEnabled) {
+            Timber.d(
+                "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}",
+            )
+            logLocationUpdate(
+                location,
+                buildLocationPayload(location, serverId).updateLocation,
+                serverId,
+                trigger,
+                LocationHistoryItemResult.SKIPPED_FUTURE,
+            )
+            return
+        }
+        locationSendQueue.submit(serverId, QueuedLocation(location, trigger))
     }
 
     private fun getLocationUpdateIntent(isGeofence: Boolean): PendingIntent {
@@ -1318,12 +1331,7 @@ class LocationSensorManager @Inject constructor(
 
     private fun queueSingleAccurateLocation(location: Location) = ioScope.launch {
         getEnabledServers(singleAccurateLocation).forEach { serverId ->
-            launch {
-                locationSendQueue.submit(
-                    serverId,
-                    QueuedLocation(location, LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION),
-                )
-            }
+            launch { queueLocationUpdate(location, serverId, LocationUpdateTrigger.SINGLE_ACCURATE_LOCATION) }
         }
     }
 
