@@ -107,6 +107,7 @@ class FrontendExternalBusRepositoryTest {
             id = 1,
             hasNfc = true,
             canCommissionMatter = false,
+            canShareMatterDevice = false,
             canExportThread = true,
             hasBarCodeScanner = 2,
             canSetupImprov = false,

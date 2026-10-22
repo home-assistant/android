@@ -6,8 +6,11 @@ import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.ErrorResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.MatterCommissionFinishMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.matter.MatterManager
+import io.homeassistant.companion.android.matter.MatterShareRequest
 import io.homeassistant.companion.android.thread.ThreadManager
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
@@ -17,12 +20,17 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.serialization.json.JsonObject
 import timber.log.Timber
 
+private const val SHARE_ERROR_CANCELED = "canceled"
+private const val SHARE_ERROR_FAILED = "failed"
+
 /**
- * Coordinates the Matter commissioning and Thread credential export flows.
+ * Coordinates the Matter commissioning, Matter sharing and Thread credential export flows.
  * Sits between the external-bus handler events
  * ([io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent.StartMatterCommissioning],
+ * [io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent.StartMatterSharing],
  * [io.homeassistant.companion.android.frontend.handler.FrontendHandlerEvent.ImportThreadCredentials])
  * and the screen.
  *
@@ -30,7 +38,8 @@ import timber.log.Timber
  * Play-Services-intent → result round-trip. Method calls are not independent: callers must
  * invoke them in the natural sequence (start → result, or start → terminal). Calling
  * [onMatterThreadIntentResult] without a preceding start is a no-op (the handler logs and
- * ignores); calling a second start while a flow is in-flight is also a no-op. This is why the
+ * ignores); a second start while a flow is in-flight is refused, which for commissioning and Thread
+ * means it is ignored and for sharing means the frontend gets a `failed` result. This is why the
  * scope is `@ViewModelScoped`.
  *
  * **User-facing dialogs** go through [FrontendDialogManager] just like all other dialogs on the
@@ -43,9 +52,9 @@ import timber.log.Timber
  *    [onMatterThreadIntentResult].
  *  - [Event.ShowSnackbar] for transient feedback.
  *
- * The only external-bus message the handler sends is [MatterCommissionFinishMessage], reporting
- * the outcome of the Matter commissioning flow on every outcome so the frontend's add-device
- * dialog can hide its spinner.
+ * On the external bus the handler sends [MatterCommissionFinishMessage], reporting the outcome of
+ * the Matter commissioning flow on every outcome so the frontend's add-device dialog can hide its
+ * spinner, and the result of a `matter/share_device` request.
  */
 @ViewModelScoped
 internal class FrontendMatterThreadHandler @Inject constructor(
@@ -100,6 +109,51 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         } finally {
             // Keep inFlight set across the intent round-trip — onMatterThreadIntentResult clears
             // it after dispatching. Clear here only on the no-intent paths (error, cancellation).
+            if (!awaitingIntentResult) inFlight.set(null)
+        }
+    }
+
+    /**
+     * Emits [Event.LaunchIntent] for the share sheet, or answers [messageId] with `failed`. The frontend
+     * has no timeout, so a path that never answers (cancelled scope, uncollected event, lost intent
+     * result) leaves its dialog waiting until the user closes it.
+     */
+    suspend fun onStartMatterSharing(messageId: Int?, payload: JsonObject) {
+        if (messageId == null) {
+            Timber.w("matter/share_device ignored: no message id")
+            return
+        }
+        val request = MatterShareRequest.fromPayload(payload)
+        // Short-circuits, so nothing is claimed for a payload that cannot be used.
+        if (request == null || !inFlight.compareAndSet(null, InFlight.MatterShare(messageId))) {
+            val reason = if (request == null) {
+                "Invalid matter/share_device payload"
+            } else {
+                "Another Matter flow is in progress"
+            }
+            Timber.w("matter/share_device refused: $reason")
+            sendShareError(messageId, SHARE_ERROR_FAILED, reason)
+            return
+        }
+        var awaitingIntentResult = false
+        try {
+            when (val result = matterManager.prepareDeviceSharing(request)) {
+                is MatterManager.CommissioningResult.Ready -> {
+                    awaitingIntentResult = true
+                    _events.emit(Event.LaunchIntent(result.intentSender))
+                }
+
+                is MatterManager.CommissioningResult.Error -> {
+                    Timber.e(result.cause, "Failed to prepare Matter sharing")
+                    sendShareError(messageId, SHARE_ERROR_FAILED, "Sharing could not be prepared")
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to prepare Matter sharing")
+            sendShareError(messageId, SHARE_ERROR_FAILED, "Sharing could not be prepared")
+        } finally {
             if (!awaitingIntentResult) inFlight.set(null)
         }
     }
@@ -175,8 +229,9 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     /**
      * Process the result of the Play Services intent launched in response to [Event.LaunchIntent].
      * Dispatches based on what's [inFlight] — Matter reports the outcome (and the user-entered
-     * device name) to the frontend via [MatterCommissionFinishMessage], Thread forwards the
-     * dataset to the server and reports success / no-dataset.
+     * device name) to the frontend via [MatterCommissionFinishMessage], sharing answers the
+     * frontend's `matter/share_device` request, Thread forwards the dataset to the server and
+     * reports success / no-dataset.
      *
      * Silently ignores stale results when nothing is in-flight (shouldn't happen in practice
      * since only one launcher exists, but guards against bugs).
@@ -189,6 +244,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         try {
             when (current) {
                 is InFlight.Matter -> handleMatterIntentResult(result)
+                is InFlight.MatterShare -> handleMatterShareIntentResult(result, current.messageId)
                 is InFlight.Thread -> handleThreadIntentResult(result, current.serverId)
             }
         } finally {
@@ -213,6 +269,29 @@ internal class FrontendMatterThreadHandler @Inject constructor(
                 }
             }
         }
+    }
+
+    private suspend fun handleMatterShareIntentResult(result: ActivityResult, messageId: Int) {
+        when (matterManager.parseSharingIntentResult(result)) {
+            is MatterManager.SharingRequestResult.Shared -> {
+                Timber.d("Matter sharing returned success")
+                externalBusRepository.send(SuccessResultMessage(messageId))
+            }
+
+            is MatterManager.SharingRequestResult.Cancelled -> {
+                Timber.d("Matter sharing was cancelled")
+                sendShareError(messageId, SHARE_ERROR_CANCELED, "Cancelled by the user")
+            }
+
+            is MatterManager.SharingRequestResult.Failed -> {
+                Timber.d("Matter sharing failed")
+                sendShareError(messageId, SHARE_ERROR_FAILED, "Sharing failed")
+            }
+        }
+    }
+
+    private suspend fun sendShareError(messageId: Int, code: String, message: String) {
+        externalBusRepository.send(ErrorResultMessage(id = messageId, code = code, message = message))
     }
 
     private suspend fun handleThreadIntentResult(result: ActivityResult, serverId: Int) {
@@ -263,9 +342,13 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         data class ShowSnackbar(val snackbar: MatterThreadTerminal.Snackbar) : Event
     }
 
-    /** Tracks which flow is awaiting completion. Carries the [Thread.serverId] needed by the result handler. */
+    /**
+     * Tracks which flow is awaiting completion. Carries the [Thread.serverId] or [MatterShare.messageId]
+     * needed by the result handler.
+     */
     private sealed interface InFlight {
         data object Matter : InFlight
+        data class MatterShare(val messageId: Int) : InFlight
         data class Thread(val serverId: Int) : InFlight
     }
 }

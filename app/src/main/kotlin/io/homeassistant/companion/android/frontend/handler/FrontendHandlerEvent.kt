@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Events emitted by [FrontendMessageHandler].
@@ -115,6 +116,9 @@ sealed interface FrontendHandlerEvent {
      * by [messageId].
      */
     data object StartMatterCommissioning : FrontendHandlerEvent
+
+    /** Frontend requested to share a commissioned Matter device; the reply goes to [messageId]. */
+    data class StartMatterSharing(val messageId: Int?, val payload: JsonObject) : FrontendHandlerEvent
 
     /**
      * Frontend requested the app to share its locally-stored Thread credentials with the server.

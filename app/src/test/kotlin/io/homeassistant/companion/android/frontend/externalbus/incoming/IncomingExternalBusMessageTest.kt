@@ -248,6 +248,23 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
+    fun `Given Matter share_device JSON then parses to MatterShareDeviceMessage with raw payload`() {
+        val json = """{"type":"matter/share_device","id":62,"payload":{"setup_pin_code":20202021,"discriminator":3840}}"""
+
+        val message = assertInstanceOf(MatterShareDeviceMessage::class.java, frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json))
+        assertEquals(62, message.id)
+        assertEquals("20202021", message.payload["setup_pin_code"].toString())
+    }
+
+    @Test
+    fun `Given Matter share_device JSON without payload then parses with empty payload`() {
+        val json = """{"type":"matter/share_device","id":63}"""
+
+        val message = assertInstanceOf(MatterShareDeviceMessage::class.java, frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json))
+        assertTrue(message.payload.isEmpty())
+    }
+
+    @Test
     fun `Given Thread import_credentials JSON then parses to ThreadImportCredentialsMessage`() {
         val json = """{"type":"thread/import_credentials","id":61}"""
 
