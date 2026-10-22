@@ -102,7 +102,7 @@ private val MaxContentWidth = MaxButtonWidth
 @Composable
 internal fun ServerDiscoveryScreen(
     onBackClick: () -> Unit,
-    onConnectClick: (server: URL) -> Unit,
+    onConnectClick: (server: ServerDiscovered) -> Unit,
     onHelpClick: suspend () -> Unit,
     onManualSetupClick: () -> Unit,
     onLocalNetworkPermissionDenied: () -> Unit,
@@ -161,7 +161,7 @@ private fun rememberLocalNetworkPermissionGranted(onDenied: () -> Unit): Boolean
 internal fun ServerDiscoveryScreen(
     discoveryState: DiscoveryState,
     onBackClick: () -> Unit,
-    onConnectClick: (server: URL) -> Unit,
+    onConnectClick: (server: ServerDiscovered) -> Unit,
     onDismissOneServerFound: () -> Unit,
     onHelpClick: suspend () -> Unit,
     onManualSetupClick: () -> Unit,
@@ -193,7 +193,7 @@ internal const val ONE_SERVER_FOUND_MODAL_TAG = "OneServerFoundModal"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OneServerFound(
-    onConnectClick: (serverUrl: URL) -> Unit,
+    onConnectClick: (server: ServerDiscovered) -> Unit,
     onDismiss: () -> Unit,
     discoveryState: DiscoveryState,
 ) {
@@ -248,7 +248,7 @@ private fun OneServerFound(
                     onClick = {
                         coroutineScope.launch {
                             bottomSheetState.hide()
-                            onConnectClick(serverDiscovered.url)
+                            onConnectClick(serverDiscovered)
                         }
                     },
                     modifier = Modifier.padding(bottom = HADimens.SPACE6).fillMaxWidth(),
@@ -262,7 +262,7 @@ private fun OneServerFound(
 private fun ScreenContent(
     contentPadding: PaddingValues,
     discoveryState: DiscoveryState,
-    onConnectClick: (URL) -> Unit,
+    onConnectClick: (ServerDiscovered) -> Unit,
     onManualSetupClick: () -> Unit,
 ) {
     Column(
@@ -293,7 +293,7 @@ private fun ScreenContent(
 }
 
 @Composable
-private fun ColumnScope.ServersDiscoveredContent(state: ServersDiscovered, onConnectClick: (URL) -> Unit) {
+private fun ColumnScope.ServersDiscoveredContent(state: ServersDiscovered, onConnectClick: (ServerDiscovered) -> Unit) {
     Spacer(modifier = Modifier.height(HADimens.SPACE8))
     // We are not using a LazyColumn here to avoid dealing with nested scroll, it is not an issue since
     // `servers` should remains quite small.
@@ -312,7 +312,11 @@ private fun ColumnScope.ServersDiscoveredContent(state: ServersDiscovered, onCon
 }
 
 @Composable
-private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) -> Unit, modifier: Modifier = Modifier) {
+private fun ServerItemContent(
+    server: ServerDiscovered,
+    onConnectClick: (ServerDiscovered) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val rowShape = RoundedCornerShape(size = HARadius.XL)
     Row(
         modifier = modifier
@@ -328,7 +332,7 @@ private fun ServerItemContent(server: ServerDiscovered, onConnectClick: (URL) ->
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(color = LocalHAColorScheme.current.colorFillPrimaryLoudHover),
                 onClick = {
-                    onConnectClick(server.url)
+                    onConnectClick(server)
                 },
                 role = Role.Button,
             ),
