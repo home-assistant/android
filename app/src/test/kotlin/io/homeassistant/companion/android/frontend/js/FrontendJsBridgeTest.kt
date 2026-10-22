@@ -199,6 +199,80 @@ class FrontendJsBridgeTest {
 
             verify { webView.addJavascriptInterface(any(), FrontendJsBridge.EXTERNAL_APP_V1) }
         }
+
+        @Test
+        fun `Given V2 already attached when attaching same WebView again then does not re-register`() = runTest {
+            mockGetServer(version = "2026.4.2")
+            mockWebViewFeatureSupported(supported = true)
+            mockWebViewCompat()
+            val webView: WebView = mockk(relaxed = true)
+            val bridge = createBridge(scope = this)
+
+            bridge.attachToWebView(webView)
+            bridge.attachToWebView(webView)
+
+            verify(exactly = 1) { WebViewCompat.removeWebMessageListener(webView, FrontendJsBridge.EXTERNAL_APP_V2_LISTENER) }
+            verify(exactly = 1) { WebViewCompat.addWebMessageListener(webView, FrontendJsBridge.EXTERNAL_APP_V2_LISTENER, any(), any()) }
+        }
+
+        @Test
+        fun `Given V1 already attached when attaching same WebView again then does not re-register`() = runTest {
+            mockGetServer(version = "2025.12.0")
+            mockWebViewFeatureSupported(supported = false)
+            val webView: WebView = mockk(relaxed = true)
+            val bridge = createBridge(scope = this)
+
+            bridge.attachToWebView(webView)
+            bridge.attachToWebView(webView)
+
+            verify(exactly = 1) { webView.addJavascriptInterface(any(), FrontendJsBridge.EXTERNAL_APP_V1) }
+        }
+
+        @Test
+        fun `Given V1 attached when server now supports V2 then switches to V2`() = runTest {
+            mockGetServer(version = "2025.12.0")
+            mockWebViewFeatureSupported(supported = true)
+            mockWebViewCompat()
+            val webView: WebView = mockk(relaxed = true)
+            val bridge = createBridge(scope = this)
+
+            bridge.attachToWebView(webView)
+            mockGetServer(version = "2026.4.2")
+            bridge.attachToWebView(webView)
+
+            verify(exactly = 1) { webView.addJavascriptInterface(any(), FrontendJsBridge.EXTERNAL_APP_V1) }
+            verify(exactly = 1) { WebViewCompat.addWebMessageListener(webView, FrontendJsBridge.EXTERNAL_APP_V2_LISTENER, any(), any()) }
+        }
+
+        @Test
+        fun `Given bridge attached when attaching a different WebView then registers on the new WebView`() = runTest {
+            mockGetServer(version = "2026.4.2")
+            mockWebViewFeatureSupported(supported = true)
+            mockWebViewCompat()
+            val firstWebView: WebView = mockk(relaxed = true)
+            val secondWebView: WebView = mockk(relaxed = true)
+            val bridge = createBridge(scope = this)
+
+            bridge.attachToWebView(firstWebView)
+            bridge.attachToWebView(secondWebView)
+
+            verify(exactly = 1) { WebViewCompat.addWebMessageListener(secondWebView, FrontendJsBridge.EXTERNAL_APP_V2_LISTENER, any(), any()) }
+        }
+
+        @Test
+        fun `Given bridge detached when attaching same WebView again then registers again`() = runTest {
+            mockGetServer(version = "2026.4.2")
+            mockWebViewFeatureSupported(supported = true)
+            mockWebViewCompat()
+            val webView: WebView = mockk(relaxed = true)
+            val bridge = createBridge(scope = this)
+
+            bridge.attachToWebView(webView)
+            bridge.detachFromWebView(webView)
+            bridge.attachToWebView(webView)
+
+            verify(exactly = 2) { WebViewCompat.addWebMessageListener(webView, FrontendJsBridge.EXTERNAL_APP_V2_LISTENER, any(), any()) }
+        }
     }
 
     @Nested
