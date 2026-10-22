@@ -5,6 +5,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.util.UrlUtil
 import io.mockk.coEvery
@@ -247,6 +248,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with server_id param when invoking handleLink then returns Webview with that server`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithId(2)
 
         val uri = "homeassistant://navigate/lovelace/dashboard?server_id=2".toUri()
         val result = handler.handleLink(uri)
@@ -257,6 +259,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with root more-info-entity-id when invoking handleLink then returns the entity target`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithId(2)
 
         val uri = "homeassistant://navigate/?more-info-entity-id=light.kitchen&server_id=2".toUri()
         val result = handler.handleLink(uri)
@@ -267,6 +270,7 @@ class LinkHandlerTest {
     @Test
     fun `Given a navigate deep link built for an entity when invoking handleLink then it round-trips to the entity target`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithId(2)
 
         val uri = navigateDeepLinkUri(FrontendTarget.EntityMoreInfo("light.kitchen"), serverId = 2)
         val result = handler.handleLink(uri)
@@ -284,6 +288,7 @@ class LinkHandlerTest {
     @Test
     fun `Given a navigate deep link built for a path with a query when invoking handleLink then it round-trips to the same path`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithId(2)
 
         val uri = navigateDeepLinkUri(FrontendTarget.Path("dashboard-smartphone/0?kiosk"), serverId = 2)
         val result = handler.handleLink(uri)
@@ -302,6 +307,7 @@ class LinkHandlerTest {
     @Test
     fun `Given a hand-typed path with spaces when building the navigate deep link then illegal characters are percent-encoded`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithId(2)
 
         val uri = navigateDeepLinkUri(FrontendTarget.Path("lovelace/my room?tab=my tab#my view"), serverId = 2)
 
@@ -322,6 +328,7 @@ class LinkHandlerTest {
     @Test
     fun `Given a path with a question mark in the fragment when building the navigate deep link then it round-trips without inventing a query`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithId(2)
 
         val uri = navigateDeepLinkUri(FrontendTarget.Path("lovelace/0#view?x=1"), serverId = 2)
 
@@ -330,18 +337,102 @@ class LinkHandlerTest {
     }
 
     @Test
-    fun `Given a navigate deep link built for an absolute URL path when invoking handleLink then it round-trips to the same URL`() = runTest {
+    fun `Given navigate deep link with a relative path and no server param when invoking handleLink then opens it on the active server`() = runTest {
+        var failFastCount = 0
+        FailFast.setHandler { _, _ -> failFastCount++ }
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer() } returns serverWithId(1)
+
+        val result = handler.handleLink("homeassistant://navigate/energy".toUri())
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("energy"), 1), result)
+        assertEquals(0, failFastCount)
+    }
+
+    @Test
+    fun `Given a navigate deep link built for an absolute URL path when invoking handleLink then it round-trips to the same URL`() = runTest {
+        var failFastCount = 0
+        FailFast.setHandler { _, _ -> failFastCount++ }
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithUrl(id = 2, externalUrl = "http://192.168.1.5:8123")
 
         val uri = navigateDeepLinkUri(FrontendTarget.Path("http://192.168.1.5:8123/lovelace/0?kiosk"), serverId = 2)
         val result = handler.handleLink(uri)
 
         assertEquals(LinkDestination.Webview(FrontendTarget.Path("http://192.168.1.5:8123/lovelace/0?kiosk"), 2), result)
+        assertEquals(0, failFastCount)
+    }
+
+    @Test
+    fun `Given navigate deep link to an absolute URL outside the server when invoking handleLink then opens the server default page`() = runTest {
+        var failFastCount = 0
+        FailFast.setHandler { _, _ -> failFastCount++ }
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithUrl(id = 2, externalUrl = "http://192.168.1.5:8123")
+
+        listOf(
+            "homeassistant://navigate/https://example.com/?server_id=2",
+            "homeassistant://navigate/http://192.168.1.5:8124/lovelace/0?server_id=2",
+            "homeassistant://navigate/https://192.168.1.5:8123/lovelace/0?server_id=2",
+        ).forEach { link ->
+            assertEquals(LinkDestination.Webview(FrontendTarget.Default, 2), handler.handleLink(link.toUri()), link)
+        }
+        assertEquals(3, failFastCount)
+    }
+
+    @Test
+    fun `Given navigate deep link to a cloudhook-only origin when invoking handleLink then opens the server default page`() = runTest {
+        var failFastCount = 0
+        FailFast.setHandler { _, _ -> failFastCount++ }
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithUrl(
+            id = 2,
+            externalUrl = "https://home.example.com",
+            cloudhookUrl = "https://hooks.nabu.casa/abc",
+        )
+
+        val result = handler.handleLink("homeassistant://navigate/https://hooks.nabu.casa/abc/lovelace/0?server_id=2".toUri())
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Default, 2), result)
+        assertEquals(1, failFastCount)
+    }
+
+    @Test
+    fun `Given navigate deep link to an absolute URL without server param when invoking handleLink then checks the active server`() = runTest {
+        var failFastCount = 0
+        FailFast.setHandler { _, _ -> failFastCount++ }
+        val server = serverWithUrl(id = 1, externalUrl = "https://home.example.com")
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer() } returns server
+        coEvery { serverManager.getServer(1) } returns server
+
+        assertEquals(
+            LinkDestination.Webview(FrontendTarget.Default, 1),
+            handler.handleLink("homeassistant://navigate/https://example.com/".toUri()),
+        )
+        assertEquals(1, failFastCount)
+        assertEquals(
+            LinkDestination.Webview(FrontendTarget.Path("https://home.example.com/lovelace/0"), 1),
+            handler.handleLink("homeassistant://navigate/https://home.example.com/lovelace/0".toUri()),
+        )
+        assertEquals(1, failFastCount)
+    }
+
+    @Test
+    fun `Given navigate deep link with a server_id of an unknown server when invoking handleLink then falls back to the active server`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(3) } returns null
+        coEvery { serverManager.servers() } returns listOf(serverWithId(1))
+
+        val result = handler.handleLink("homeassistant://navigate/lovelace/dashboard?server_id=3".toUri())
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/dashboard"), ServerManager.SERVER_ID_ACTIVE), result)
     }
 
     @Test
     fun `Given navigate deep link with a percent-encoded query in the path when invoking handleLink then it is kept encoded`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithId(2)
 
         val uri = "homeassistant://navigate/dashboard-smartphone/0%3Fkiosk?server_id=2".toUri()
         val result = handler.handleLink(uri)
@@ -352,6 +443,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with a percent-encoded space in the path when invoking handleLink then the encoding is preserved and resolves`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithId(2)
 
         val uri = "homeassistant://navigate/lovelace/my%20dashboard?server_id=2".toUri()
         val result = handler.handleLink(uri)
@@ -368,6 +460,7 @@ class LinkHandlerTest {
     @Test
     fun `Given navigate deep link with query and fragment when invoking handleLink then both are kept without server params`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer(2) } returns serverWithId(2)
 
         val uri = "homeassistant://navigate/lovelace/dashboard?kiosk&server_id=2&edit=1#section".toUri()
         val result = handler.handleLink(uri)
@@ -487,5 +580,38 @@ class LinkHandlerTest {
         val result = handler.handleLink(uri)
 
         assertEquals(LinkDestination.ServerPicker(FrontendTarget.Path("lovelace/dashboard"), servers), result)
+    }
+
+    @Test
+    fun `Given navigate deep link to an absolute URL of one server with multiple servers and no default when invoking handleLink then returns ServerPicker without the path`() = runTest {
+        var failFastCount = 0
+        FailFast.setHandler { _, _ -> failFastCount++ }
+        coEvery { serverManager.isRegistered() } returns true
+        coEvery { serverManager.getServer() } returns null
+        val servers = listOf(
+            serverWithUrl(id = 1, externalUrl = "https://home-one.example.com"),
+            serverWithUrl(id = 2, externalUrl = "https://home-two.example.com"),
+        )
+        coEvery { serverManager.servers() } returns servers
+
+        // The URL only matches server 1, but the user could pick server 2 in the picker, so the path
+        // must be dropped to avoid opening it externally on the non-matching server.
+        val result = handler.handleLink("homeassistant://navigate/https://home-one.example.com/energy".toUri())
+
+        assertEquals(LinkDestination.ServerPicker(FrontendTarget.Default, servers), result)
+        assertEquals(1, failFastCount)
+    }
+
+    private fun serverWithUrl(
+        id: Int,
+        externalUrl: String,
+        cloudhookUrl: String? = null,
+    ): Server = mockk {
+        coEvery { this@mockk.id } returns id
+        coEvery { connection } returns ServerConnectionInfo(externalUrl = externalUrl, cloudhookUrl = cloudhookUrl)
+    }
+
+    private fun serverWithId(id: Int): Server = mockk {
+        coEvery { this@mockk.id } returns id
     }
 }

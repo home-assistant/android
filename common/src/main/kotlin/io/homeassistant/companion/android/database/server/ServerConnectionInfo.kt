@@ -86,6 +86,15 @@ data class ServerConnectionInfo(
         )
     }
 
+    @get:Ignore
+    internal val frontendHttpUrls: List<HttpUrl> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        listOfNotNull(
+            externalHttpUrl,
+            internalHttpUrl,
+            cloudHttpUrl,
+        )
+    }
+
     /**
      * Indicates whether at least one URL is configured and parsable.
      */
@@ -152,6 +161,17 @@ data class ServerConnectionInfo(
     fun isKnownUrl(url: String): Boolean {
         val httpUrl = url.toHttpUrlOrNull() ?: return false
         return httpUrls.any { httpUrl.hasSameOrigin(it) }
+    }
+
+    /**
+     * Checks if the given URL belongs to a frontend origin of this server..
+     *
+     * @param url the URL to check (must be a valid URL string)
+     * @return `true` if the URL belongs to one of this server's frontend origins
+     */
+    fun isFrontendUrl(url: String): Boolean {
+        val httpUrl = url.toHttpUrlOrNull() ?: return false
+        return frontendHttpUrls.any { httpUrl.hasSameOrigin(it) }
     }
 }
 
