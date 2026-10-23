@@ -16,9 +16,9 @@ import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import kotlinx.serialization.Serializable
 
-@Serializable private data object GesturesRoute
+@Serializable internal data object GesturesRoute
 
-@Serializable private data class ActionsRoute(val gesture: HAGesture)
+@Serializable internal data class ActionsRoute(val gesture: HAGesture)
 
 /**
  * Main Composable for gesture settings, allowing navigation to:
@@ -26,6 +26,7 @@ import kotlinx.serialization.Serializable
  *  - Gesture actions (when a gesture is selected, to change the action for it)
  *
  *  @param gestureActions User settings (gestures and the current action)
+ *  @param availableGestures Gestures supported by the current system navigation configuration
  *  @param onSetAction Called when the action for a gesture should be changed
  *  @param onToolbarTitleChanged Called when the screen changes, to update the
  *         Activity's Toolbar title
@@ -33,6 +34,7 @@ import kotlinx.serialization.Serializable
 @Composable
 fun GesturesScreen(
     gestureActions: Map<HAGesture, GestureAction>,
+    availableGestures: List<HAGesture>,
     onSetAction: (HAGesture, GestureAction) -> Unit,
     onToolbarTitleChanged: (String) -> Unit,
 ) {
@@ -51,6 +53,7 @@ fun GesturesScreen(
         composable<GesturesRoute> {
             GesturesListView(
                 gestureActions = gestureActions,
+                availableGestures = availableGestures,
                 onGestureClicked = { gesture ->
                     navController.navigate(ActionsRoute(gesture))
                 },
@@ -58,13 +61,19 @@ fun GesturesScreen(
         }
         composable<ActionsRoute> { backStackEntry ->
             val action: ActionsRoute = backStackEntry.toRoute()
-            GestureActionsView(
-                selectedAction = gestureActions.getOrDefault(action.gesture, GestureAction.NONE),
-                onActionClicked = { newAction ->
-                    onSetAction(action.gesture, newAction)
+            if (action.gesture !in availableGestures) {
+                LaunchedEffect(action.gesture) {
                     navController.popBackStack(route = GesturesRoute, inclusive = false)
-                },
-            )
+                }
+            } else {
+                GestureActionsView(
+                    selectedAction = gestureActions.getOrDefault(action.gesture, GestureAction.NONE),
+                    onActionClicked = { newAction ->
+                        onSetAction(action.gesture, newAction)
+                        navController.popBackStack(route = GesturesRoute, inclusive = false)
+                    },
+                )
+            }
         }
     }
     LaunchedEffect(Unit) {

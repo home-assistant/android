@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.frontend.gesture
 import android.annotation.SuppressLint
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.util.OnSwipeListener
 import kotlin.math.abs
@@ -60,9 +62,22 @@ internal class FrontendSwipeListener(private val view: View, private val onGestu
         }
 
         val edgeWidth = EDGE_WIDTH_DP * density
+        return !isEdgeReserved(direction) &&
+            when (direction) {
+                GestureDirection.RIGHT -> start.x <= edgeWidth && distanceX > 0
+                GestureDirection.LEFT ->
+                    start.x >= view.width - edgeWidth && distanceX < 0
+                GestureDirection.UP, GestureDirection.DOWN -> false
+            }
+    }
+
+    private fun isEdgeReserved(direction: GestureDirection): Boolean {
+        val windowInsets = ViewCompat.getRootWindowInsets(view) ?: return false
+        val systemGestures = windowInsets.getInsets(WindowInsetsCompat.Type.systemGestures())
+        val tappableElements = windowInsets.getInsets(WindowInsetsCompat.Type.tappableElement())
         return when (direction) {
-            GestureDirection.RIGHT -> start.x <= edgeWidth && distanceX > 0
-            GestureDirection.LEFT -> start.x >= view.width - edgeWidth && distanceX < 0
+            GestureDirection.RIGHT -> systemGestures.left > tappableElements.left
+            GestureDirection.LEFT -> systemGestures.right > tappableElements.right
             GestureDirection.UP, GestureDirection.DOWN -> false
         }
     }

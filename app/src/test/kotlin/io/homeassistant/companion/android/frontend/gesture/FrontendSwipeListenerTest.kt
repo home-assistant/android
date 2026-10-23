@@ -4,9 +4,15 @@ import android.os.Looper
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,6 +52,113 @@ class FrontendSwipeListenerTest {
             listOf(DetectedGesture(GestureDirection.RIGHT, 1), DetectedGesture(GestureDirection.LEFT, 1)),
             gestures,
         )
+    }
+
+    @Test
+    fun `Given both edges reserved for system gestures when swiping then no edge action is reported`() {
+        withRootInsets({ systemGestureInsets(left = 24, right = 24) }) {
+            swipe(startX = 8f, endX = 200f)
+            swipe(startX = 992f, endX = 800f)
+
+            assertTrue(gestures.isEmpty())
+        }
+    }
+
+    @Test
+    @Config(sdk = [28])
+    @Suppress("DEPRECATION")
+    fun `Given legacy landscape navigation bar when swiping then both edge actions remain available`() {
+        val insets = WindowInsetsCompat.Builder()
+            .setSystemWindowInsets(Insets.of(0, 0, 48, 0))
+            .build()
+        assertEquals(48, insets.getInsets(WindowInsetsCompat.Type.systemGestures()).right)
+        assertEquals(48, insets.getInsets(WindowInsetsCompat.Type.tappableElement()).right)
+
+        withRootInsets({ insets }) {
+            swipe(startX = 8f, endX = 200f)
+            swipe(startX = 992f, endX = 800f)
+
+            assertEquals(
+                listOf(DetectedGesture(GestureDirection.RIGHT, 1), DetectedGesture(GestureDirection.LEFT, 1)),
+                gestures,
+            )
+        }
+    }
+
+    @Test
+    fun `Given modern landscape button navigation bar when swiping then both edge actions remain available`() {
+        val navigationBar = Insets.of(0, 0, 48, 0)
+        val insets = WindowInsetsCompat.Builder()
+            .setInsets(WindowInsetsCompat.Type.systemGestures(), navigationBar)
+            .setInsets(WindowInsetsCompat.Type.tappableElement(), navigationBar)
+            .build()
+
+        withRootInsets({ insets }) {
+            swipe(startX = 8f, endX = 200f)
+            swipe(startX = 992f, endX = 800f)
+
+            assertEquals(
+                listOf(DetectedGesture(GestureDirection.RIGHT, 1), DetectedGesture(GestureDirection.LEFT, 1)),
+                gestures,
+            )
+        }
+    }
+
+    @Test
+    fun `Given only left edge reserved when swiping then only right edge action is reported`() {
+        withRootInsets({ systemGestureInsets(left = 24, right = 0) }) {
+            swipe(startX = 8f, endX = 200f)
+            swipe(startX = 992f, endX = 800f)
+
+            assertEquals(listOf(DetectedGesture(GestureDirection.LEFT, 1)), gestures)
+        }
+    }
+
+    @Test
+    fun `Given only right edge reserved when swiping then only left edge action is reported`() {
+        withRootInsets({ systemGestureInsets(left = 0, right = 24) }) {
+            swipe(startX = 8f, endX = 200f)
+            swipe(startX = 992f, endX = 800f)
+
+            assertEquals(listOf(DetectedGesture(GestureDirection.RIGHT, 1)), gestures)
+        }
+    }
+
+    @Test
+    fun `Given system gesture insets change when swiping again then use current reserved edges`() {
+        var insets = systemGestureInsets(left = 24, right = 24)
+        withRootInsets({ insets }) {
+            swipe(startX = 8f, endX = 200f)
+            swipe(startX = 992f, endX = 800f)
+            assertTrue(gestures.isEmpty())
+
+            insets = systemGestureInsets(left = 0, right = 0)
+            swipe(startX = 8f, endX = 200f)
+            swipe(startX = 992f, endX = 800f)
+            val recognized = listOf(
+                DetectedGesture(GestureDirection.RIGHT, 1),
+                DetectedGesture(GestureDirection.LEFT, 1),
+            )
+            assertEquals(recognized, gestures)
+
+            insets = systemGestureInsets(left = 24, right = 24)
+            swipe(startX = 8f, endX = 200f)
+            swipe(startX = 992f, endX = 800f)
+            assertEquals(recognized, gestures)
+        }
+    }
+
+    @Test
+    fun `Given system gestures reserve both edges when using multiple fingers then gestures remain available`() {
+        withRootInsets({ systemGestureInsets(left = 24, right = 24) }) {
+            multiFingerSwipe(pointerCount = 2)
+            multiFingerSwipe(pointerCount = 3)
+
+            assertEquals(
+                listOf(DetectedGesture(GestureDirection.RIGHT, 2), DetectedGesture(GestureDirection.RIGHT, 3)),
+                gestures,
+            )
+        }
     }
 
     @Test
@@ -162,6 +275,44 @@ class FrontendSwipeListenerTest {
                 y = 400f + (endY - 400f) * fraction,
                 timeMillis = durationMillis * step / 4,
             )
+        }
+    }
+
+    private fun multiFingerSwipe(pointerCount: Int) {
+        touch(MotionEvent.ACTION_DOWN, x = 400f, timeMillis = 0)
+        for (index in 1 until pointerCount) {
+            touch(
+                MotionEvent.ACTION_POINTER_DOWN or (index shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                x = 400f,
+                timeMillis = index * 10L,
+                pointerCount = index + 1,
+            )
+        }
+        touch(MotionEvent.ACTION_MOVE, x = 460f, timeMillis = 40, pointerCount = pointerCount)
+        touch(MotionEvent.ACTION_MOVE, x = 520f, timeMillis = 70, pointerCount = pointerCount)
+        touch(MotionEvent.ACTION_MOVE, x = 580f, timeMillis = 100, pointerCount = pointerCount)
+        for (index in pointerCount - 1 downTo 1) {
+            touch(
+                MotionEvent.ACTION_POINTER_UP or (index shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                x = 600f,
+                timeMillis = 110L + (pointerCount - index) * 5L,
+                pointerCount = index + 1,
+            )
+        }
+        touch(MotionEvent.ACTION_UP, x = 640f, timeMillis = 130)
+    }
+
+    private fun systemGestureInsets(left: Int, right: Int): WindowInsetsCompat = WindowInsetsCompat.Builder()
+        .setInsets(WindowInsetsCompat.Type.systemGestures(), Insets.of(left, 0, right, 0))
+        .build()
+
+    private fun withRootInsets(insets: () -> WindowInsetsCompat, block: () -> Unit) {
+        mockkStatic(ViewCompat::class)
+        try {
+            every { ViewCompat.getRootWindowInsets(view) } answers { insets() }
+            block()
+        } finally {
+            unmockkStatic(ViewCompat::class)
         }
     }
 
