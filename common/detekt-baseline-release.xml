@@ -192,7 +192,6 @@
     <ID>ReturnCount:SensorUpdater.kt:SensorUpdater$private suspend fun loadSensorReconcilingPermission: SensorWithAttributes?</ID>
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun canSafelySendCredentials: Boolean</ID>
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun isInternal: Boolean</ID>
-    <ID>ReturnCount:SuspendLazy.kt:SuspendLazy$suspend fun get: T</ID>
     <ID>ReturnCount:TLSHelper.kt:TLSHelper$private fun withUserInstalledCaFallback: X509TrustManager</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun attemptWebSocketConnection: ConnectionAttemptResult</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>

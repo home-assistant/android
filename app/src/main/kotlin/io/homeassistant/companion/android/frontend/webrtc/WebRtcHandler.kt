@@ -8,6 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.webSocketRepositoryOrNull
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamType
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.WebRtcStreamErrorCode
@@ -51,9 +52,12 @@ private const val MESSAGE_CONNECTION_ENDED = "The stream ended"
  *
  * A `webrtc/stream/stopped` notification is only sent when a stream ends *without* the frontend
  * stopping it: a session that dies after connecting (with the failure's code), or a stream the app
- * tears down itself while still connected ([ERROR_INTERRUPTED], e.g. the app is backgrounded). A
- * frontend-requested [stop] is silent. Scoped to the frontend: sessions do not survive it (no
- * background).
+ * tears down itself while still connected ([WebRtcStreamErrorCode.Interrupted], e.g. the app is
+ * backgrounded). A frontend-requested [stop] is silent. Scoped to the frontend: sessions do not
+ * survive it (no background).
+ *
+ * Not thread safe: the session and audio state are plain fields, so every call, including the
+ * collectors launched on the scope given to [start], must run on the ViewModel's main-thread scope.
  */
 @ViewModelScoped
 class WebRtcHandler @VisibleForTesting internal constructor(
@@ -79,13 +83,30 @@ class WebRtcHandler @VisibleForTesting internal constructor(
         context.getSystemService<AudioManager>(),
     )
 
-    private class ActiveSession(val player: WebRtcSession, val collector: Job)
+    /** A session the handler owns, by how far its start request got. */
+    private sealed interface ActiveSession {
+        val player: WebRtcSession
+        val collector: Job
+
+        /** Not connected yet: the frontend still awaits the reply to its start request [messageId]. */
+        class Connecting(override val player: WebRtcSession, override val collector: Job, val messageId: Int?) :
+            ActiveSession
+
+        /** The start was replied to with the session id, so the frontend tracks the session itself. */
+        class Connected(override val player: WebRtcSession, override val collector: Job) : ActiveSession
+    }
 
     /** The reason a stream ended, for the `webrtc/stream/stopped` notification (code + message). */
     private class StopReason(val code: WebRtcStreamErrorCode, val message: String)
 
     private val sessions = mutableMapOf<String, ActiveSession>()
     private var previousAudioMode: Int? = null
+
+    // Bumped by [stopAll]. A start suspended in the permission request or session creation is not yet
+    // in [sessions], so [stopAll] cannot reach it; comparing this before and after the suspensions
+    // lets such a start notice that its frontend went away and abandon itself instead of opening the
+    // microphone for a departed page.
+    private var stopGeneration = 0
 
     /**
      * Starts a microphone stream to [entityId] on [serverId].
@@ -101,6 +122,8 @@ class WebRtcHandler @VisibleForTesting internal constructor(
         streamType: WebRtcStreamType,
         entityId: String,
     ) {
+        // Captured before the suspensions below so a stopAll during them can be detected.
+        val generation = stopGeneration
         val rejection = when {
             streamType != WebRtcStreamType.MICROPHONE ->
                 WebRtcStreamResultMessage.error(
@@ -110,6 +133,10 @@ class WebRtcHandler @VisibleForTesting internal constructor(
                 )
             !permissionManager.checkMicrophonePermission() ->
                 WebRtcStreamResultMessage.error(messageId, WebRtcStreamErrorCode.MicrophoneDenied, null)
+            // A stopAll ran while the permission request was pending: the frontend that asked is gone
+            // or disconnected, so resolve the request as interrupted instead of opening the microphone
+            generation != stopGeneration ->
+                WebRtcStreamResultMessage.error(messageId, WebRtcStreamErrorCode.Interrupted, MESSAGE_INTERRUPTED)
             else -> null
         }
         if (rejection != null) {
@@ -127,7 +154,16 @@ class WebRtcHandler @VisibleForTesting internal constructor(
             )
             return
         }
+        openSession(scope, webSocketRepository, entityId, messageId, generation)
+    }
 
+    private suspend fun openSession(
+        scope: CoroutineScope,
+        webSocketRepository: WebSocketRepository,
+        entityId: String,
+        messageId: Int?,
+        generation: Int,
+    ) {
         if (sessions.isEmpty()) enterCommunicationAudio()
 
         val sessionId = UUID.randomUUID().toString()
@@ -140,11 +176,23 @@ class WebRtcHandler @VisibleForTesting internal constructor(
         )
         player.audioIn?.setPlaybackEnabled(false)
 
+        if (generation != stopGeneration) {
+            // A stopAll ran during the session creation: abandon the half-built session, restoring
+            // the audio mode, and resolve the still-open request as interrupted.
+            withContext(NonCancellable) {
+                player.release()
+                if (sessions.isEmpty()) exitCommunicationAudio()
+                externalBusRepository.send(
+                    WebRtcStreamResultMessage.error(messageId, WebRtcStreamErrorCode.Interrupted, MESSAGE_INTERRUPTED),
+                )
+            }
+            return
+        }
         val collector = scope.launch { awaitConnectionAndReply(player, sessionId, messageId) }
         // If [scope] was cancelled while this was suspended (e.g. a teardown-time stopAll already
         // ran), do not register a session nothing would release.
         scope.ensureActive()
-        sessions[sessionId] = ActiveSession(player, collector)
+        sessions[sessionId] = ActiveSession.Connecting(player, collector, messageId)
         player.start()
     }
 
@@ -161,7 +209,15 @@ class WebRtcHandler @VisibleForTesting internal constructor(
         }
         when (terminal) {
             is ConnectionState.Connected -> {
-                externalBusRepository.send(WebRtcStreamResultMessage(messageId, sessionId))
+                // Already released: its reply (if any was due) went out with the release
+                val session = sessions[sessionId] ?: return
+                // The reply hands the session over to the frontend, so the state change and the send
+                // are one non-cancellable step: an interrupt racing it either fails the start request
+                // or sends a stopped notification, never a stopped for an id the frontend never got.
+                withContext(NonCancellable) {
+                    sessions[sessionId] = ActiveSession.Connected(session.player, session.collector)
+                    externalBusRepository.send(WebRtcStreamResultMessage(messageId, sessionId))
+                }
                 notifyWhenEnded(player, sessionId)
             }
 
@@ -211,9 +267,11 @@ class WebRtcHandler @VisibleForTesting internal constructor(
      * connections are released (cancelling the owning scope only stops the collectors, not the
      * sessions). Set [notifyFrontend] when the frontend is still connected and did not ask for the
      * stop itself (e.g. the app is backgrounded), so its UI reflects that the microphone is gone;
-     * each stream is then reported as [ERROR_INTERRUPTED].
+     * each stream is then reported as [WebRtcStreamErrorCode.Interrupted].
      */
     suspend fun stopAll(notifyFrontend: Boolean = false) {
+        // Invalidate any start still suspended before it registered its session (see [stopGeneration]).
+        stopGeneration++
         val reason = if (notifyFrontend) StopReason(WebRtcStreamErrorCode.Interrupted, MESSAGE_INTERRUPTED) else null
         sessions.keys.toList().forEach { release(it, reason) }
     }
@@ -227,7 +285,16 @@ class WebRtcHandler @VisibleForTesting internal constructor(
             session.collector.cancel()
             session.player.release()
             if (reason != null) {
-                externalBusRepository.send(WebRtcStreamStoppedMessage(sessionId, reason.code, reason.message))
+                when (session) {
+                    is ActiveSession.Connected ->
+                        externalBusRepository.send(WebRtcStreamStoppedMessage(sessionId, reason.code, reason.message))
+
+                    // The frontend still awaits the reply to its start request and does not track the
+                    // session yet, so fail the request itself, otherwise it would stay unresolved
+                    is ActiveSession.Connecting -> externalBusRepository.send(
+                        WebRtcStreamResultMessage.error(session.messageId, reason.code, reason.message),
+                    )
+                }
             }
             if (sessions.isEmpty()) exitCommunicationAudio()
         }
@@ -254,7 +321,7 @@ class WebRtcHandler @VisibleForTesting internal constructor(
 private fun SessionFailure.code(): WebRtcStreamErrorCode = when (this) {
     is SessionFailure.Signaling -> WebRtcStreamErrorCode.SignalingFailed
     SessionFailure.ConnectionLost -> WebRtcStreamErrorCode.ConnectionFailed
-    is SessionFailure.Internal -> WebRtcStreamErrorCode.Unknown()
+    is SessionFailure.Internal -> WebRtcStreamErrorCode.Unknown
 }
 
 /** A human-readable message for the failure, when the session provides one. */

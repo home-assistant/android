@@ -23,11 +23,13 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -73,7 +75,11 @@ private class FakeWebRtcSessionFactory : WebRtcSessionFactory {
     var lastSignalingClient: SignalingClient? = null
     var lastMediaOptions: MediaOptions? = null
 
+    /** When set, [create] suspends on it so a test can act while a session is being created. */
+    var createGate: CompletableDeferred<Unit>? = null
+
     override suspend fun create(signalingClient: SignalingClient, mediaOptions: MediaOptions): WebRtcSession {
+        createGate?.await()
         lastSignalingClient = signalingClient
         lastMediaOptions = mediaOptions
         return FakeWebRtcSession().also { created += it }
@@ -314,6 +320,72 @@ class WebRtcHandlerTest {
         runCurrent()
 
         assertTrue(sent.isEmpty())
+        assertTrue(factory.created.single().released)
+    }
+
+    @Test
+    fun `Given a start awaiting the permission When stopAll runs Then the request is replied interrupted and nothing is opened`() = runTest {
+        val permissionGate = CompletableDeferred<Boolean>()
+        coEvery { permissionManager.checkMicrophonePermission() } coAnswers { permissionGate.await() }
+        val modes = mutableListOf<Int>()
+        every { audioManager.mode = capture(modes) } returns Unit
+        val handler = createHandler()
+        // The start suspends in the permission request, so it runs in the background
+        backgroundScope.launch {
+            handler.start(scope = backgroundScope, serverId = SERVER_ID, messageId = 5, streamType = WebRtcStreamType.MICROPHONE, entityId = "camera.front_door")
+        }
+        runCurrent()
+
+        // The frontend went away while the permission dialog was up
+        handler.stopAll()
+        permissionGate.complete(true)
+        runCurrent()
+
+        assertEquals(0, factory.created.size)
+        assertTrue(modes.isEmpty(), "The audio mode must not be touched for an abandoned start")
+        assertEquals("interrupted", sent.single().errorCode())
+    }
+
+    @Test
+    fun `Given a start creating its session When stopAll runs Then the session is released and the request replied interrupted`() = runTest {
+        coEvery { permissionManager.checkMicrophonePermission() } returns true
+        coEvery { audioManager.mode } returns AudioManager.MODE_NORMAL
+        val modes = mutableListOf<Int>()
+        every { audioManager.mode = capture(modes) } returns Unit
+        factory.createGate = CompletableDeferred()
+        val handler = createHandler()
+        // The start suspends in the session creation, so it runs in the background
+        backgroundScope.launch {
+            handler.start(scope = backgroundScope, serverId = SERVER_ID, messageId = 5, streamType = WebRtcStreamType.MICROPHONE, entityId = "camera.front_door")
+        }
+        runCurrent()
+
+        handler.stopAll()
+        factory.createGate?.complete(Unit)
+        runCurrent()
+
+        val session = factory.created.single()
+        assertFalse(session.started)
+        assertTrue(session.released)
+        assertEquals(listOf(AudioManager.MODE_IN_COMMUNICATION, AudioManager.MODE_NORMAL), modes)
+        assertEquals("interrupted", sent.single().errorCode())
+    }
+
+    @Test
+    fun `Given a session still connecting When stopAll notifies the frontend Then the start request fails instead of a stopped notification`() = runTest {
+        coEvery { permissionManager.checkMicrophonePermission() } returns true
+        val handler = createHandler()
+        handler.start(scope = backgroundScope, serverId = SERVER_ID, messageId = 5, streamType = WebRtcStreamType.MICROPHONE, entityId = "camera.front_door")
+        runCurrent()
+        assertTrue(sent.isEmpty())
+
+        handler.stopAll(notifyFrontend = true)
+        runCurrent()
+
+        // The frontend still awaits the reply to its start, so that is where the interruption goes
+        val reply = sent.single().asJson()
+        assertEquals("result", reply.getValue("type").jsonPrimitive.content)
+        assertEquals("interrupted", sent.single().errorCode())
         assertTrue(factory.created.single().released)
     }
 

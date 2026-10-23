@@ -108,8 +108,10 @@ object ConfigResultMessage {
         /** The app's WebRTC capabilities, mirroring the frontend's `ExternalConfig.webrtc`. */
         @Serializable
         data class WebRtc(
-            // The app can stream the microphone to a camera itself (webrtc/stream/start), used when
-            // the frontend has no secure context. Gated on the device having a microphone.
+            /**
+             * The app can stream the microphone to a camera itself (`webrtc/stream/start`), used when
+             * the frontend has no secure context. Gated on the device having a microphone.
+             */
             val hasCameraMicrophoneStream: Boolean,
         )
 

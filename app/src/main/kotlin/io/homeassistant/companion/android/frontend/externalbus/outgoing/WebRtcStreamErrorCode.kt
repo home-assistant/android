@@ -5,8 +5,7 @@ package io.homeassistant.companion.android.frontend.externalbus.outgoing
  * mirroring the frontend's `WEBRTC_STREAM_ERROR_CODES` union in `external_messaging.ts`.
  *
  * The frontend understands a fixed set of codes, so the app sends one of the known subtypes; an
- * unexpected failure uses [Unknown], which defaults to the frontend's generic `unknown` code but can
- * carry another [value] if a newer frontend adds a code this app does not yet model.
+ * unexpected failure uses [Unknown], the frontend's generic code.
  */
 sealed interface WebRtcStreamErrorCode {
 

@@ -79,7 +79,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -501,12 +500,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
         }
 
-        // A navigation or reload replaces the frontend that owns a mic session, so stop it rather
-        // than leaving the microphone open against a page that no longer knows about it.
-        viewModelScope.launch {
-            urlFlow.drop(1).collect { webRtcHandler.stopAll() }
-        }
-
         collectMatterThreadEvents()
     }
 
@@ -750,13 +743,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * "always show first view on app start", resets the frontend to its default dashboard so the
      * next launch starts there — unless the user is in the Home Assistant settings or add-ons area.
      *
-     * The preference is read first on purpose: it suspends, which lets the pending stop dispatch
-     * complete so [LifecycleHandler.isAppInBackground] reads an up-to-date value (the activity stop
-     * is not yet reflected at the instant the stop event fires). The background check then excludes
-     * the case where one of our own activities (e.g. NFC write) came to the foreground.
+     * Dispatched on the non-immediate Main dispatcher on purpose: this is called during the host
+     * activity's `ON_STOP`, before [LifecycleHandler.onActivityStopped] has decremented its activity
+     * count, so posting the work lets those stop callbacks finish first and
+     * [LifecycleHandler.isAppInBackground] reads an up-to-date value. The background check then
+     * excludes the case where one of our own activities (e.g. NFC write) came to the foreground.
      */
     fun onLeavingApp(currentUrl: String?) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Main) {
             if (!LifecycleHandler.isAppInBackground()) return@launch
             // Backgrounding ends any mic talk-back session: release it and tell the frontend its
             // microphone is gone (it did not ask for the stop).
@@ -913,8 +907,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is FrontendHandlerEvent.Disconnected -> {
                 Timber.d("Frontend external bus disconnected")
-                // The frontend that owns any mic session is gone, so release it.
-                webRtcHandler.stopAll()
+                // This is the frontend's Home Assistant WebSocket status, not the page going away, so
+                // the page survives a temporary disconnect: release any mic session but notify the
+                // frontend it was interrupted, otherwise its UI keeps showing talk-back as active with
+                // a session id the app no longer has.
+                webRtcHandler.stopAll(notifyFrontend = true)
             }
 
             is FrontendHandlerEvent.StartCameraMicrophoneStream -> viewModelScope.launch {
@@ -1256,6 +1253,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     private fun onPageFinished(url: String?) {
         viewModelScope.launch { applySafeAreaInsetsIfHandled() }
+
+        // A main-frame (re)load, including a same-URL reload the view-state URL never reflects,
+        // replaces the frontend that owns a mic session: stop it rather than leaving the microphone
+        // open against a page that no longer knows about it. The new page has no session id to stop.
+        viewModelScope.launch { webRtcHandler.stopAll() }
 
         // Open the more-info dialog for an older-server deep link now that the frontend has loaded.
         pendingMoreInfoEntityId?.let { entityId ->

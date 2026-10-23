@@ -49,6 +49,7 @@ internal const val IMPROV_RATIONALE_MAX_SHOWS = 2
  * Concurrent triggers are waiting in FIFO order: a second method call suspends until the
  * current request is resolved.
  */
+@Suppress("TooManyFunctions")
 @ViewModelScoped
 internal class PermissionManager @Inject constructor(
     private val serverManager: ServerManager,
