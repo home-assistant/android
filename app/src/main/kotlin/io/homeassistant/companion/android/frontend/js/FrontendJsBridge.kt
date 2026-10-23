@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.frontend.externalbus.frontendExternalB
 import io.homeassistant.companion.android.frontend.session.AuthPayload
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.sensitive
-import java.lang.ref.WeakReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
@@ -124,10 +123,8 @@ class FrontendJsBridge @AssistedInject constructor(
         data object V2 : BridgeVersion
     }
 
-    /** The bridge currently registered and the WebView it is registered on. */
-    private class AttachedBridge(val webView: WeakReference<WebView>, val version: BridgeVersion)
-
-    private var attachedBridge: AttachedBridge? = null
+    /** The bridge version currently registered, or null when nothing is attached. */
+    private var attachedVersion: BridgeVersion? = null
 
     /**
      * Registers the appropriate native bridge for the current server.
@@ -136,22 +133,22 @@ class FrontendJsBridge @AssistedInject constructor(
      * V2 bridge or the legacy V1 bridge. V2 also requires
      * [WebViewFeature.WEB_MESSAGE_LISTENER] support; falls back to V1 if unavailable.
      *
-     * Safe to call multiple times. When the same bridge is already registered on the same
-     * [webView] this is a no-op: removing and re-adding the listener on a WebView that still
-     * hosts a live document, right before a navigation, crashes WebView natively (SIGSEGV in
-     * libwebviewchromium when switching between the internal and external URL).
+     * Safe to call multiple times. When the same bridge version is already attached this is a
+     * no-op until [detachFromWebView] is called: removing and re-adding the listener on a
+     * WebView that still hosts a live document, right before a navigation, crashes WebView
+     * natively (SIGSEGV in libwebviewchromium when switching between the internal and
+     * external URL).
      */
     @SuppressLint("RequiresFeature")
     override suspend fun attachToWebView(webView: WebView) {
         val useV2 = serverManager.getServer(stateProvider().serverId).isServerSupportingExternalAppV2()
         val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
         val bridge = if (useV2 && webMessageListenerSupported) BridgeVersion.V2 else BridgeVersion.V1
-        val attached = attachedBridge
-        if (attached != null && attached.webView.get() === webView && attached.version == bridge) {
+        if (attachedVersion == bridge) {
             Timber.d("JS bridge $bridge already attached, skipping re-registration")
             return
         }
-        attachedBridge = AttachedBridge(WeakReference(webView), bridge)
+        attachedVersion = bridge
         if (bridge == BridgeVersion.V2) {
             webView.removeJavascriptInterface(EXTERNAL_APP_V1)
             registerV2(webView)
@@ -168,9 +165,7 @@ class FrontendJsBridge @AssistedInject constructor(
      */
     @SuppressLint("RequiresFeature")
     override fun detachFromWebView(webView: WebView) {
-        if (attachedBridge?.webView?.get() === webView) {
-            attachedBridge = null
-        }
+        attachedVersion = null
         val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
         webView.removeJavascriptInterface(EXTERNAL_APP_V1)
         if (webMessageListenerSupported) {
