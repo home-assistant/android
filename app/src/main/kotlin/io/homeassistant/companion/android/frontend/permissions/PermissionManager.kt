@@ -49,6 +49,7 @@ internal const val IMPROV_RATIONALE_MAX_SHOWS = 2
  * Concurrent triggers are waiting in FIFO order: a second method call suspends until the
  * current request is resolved.
  */
+@Suppress("TooManyFunctions")
 @ViewModelScoped
 internal class PermissionManager @Inject constructor(
     private val serverManager: ServerManager,
@@ -155,6 +156,22 @@ internal class PermissionManager @Inject constructor(
 
         return queue.awaitResult { onResult ->
             PermissionRequest.Camera(onResult = onResult)
+        }
+    }
+
+    /**
+     * Ensures the app has the microphone permission to stream it to a camera (WebRTC talk-back).
+     *
+     * @return `true` immediately when it has permission, otherwise enqueues a
+     *          [PermissionRequest.Microphone], suspends until the user responds, and returns whether
+     *          they granted it.
+     */
+    suspend fun checkMicrophonePermission(): Boolean {
+        if (permissionChecker.hasPermission(Manifest.permission.RECORD_AUDIO)) return true
+
+        Timber.d("Microphone permission required, awaiting user response")
+        return queue.awaitResult { onResult ->
+            PermissionRequest.Microphone(onResult = onResult)
         }
     }
 

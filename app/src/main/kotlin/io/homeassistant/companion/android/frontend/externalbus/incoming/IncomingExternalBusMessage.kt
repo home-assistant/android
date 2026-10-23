@@ -3,10 +3,17 @@ package io.homeassistant.companion.android.frontend.externalbus.incoming
 import io.homeassistant.companion.android.common.util.UnknownJsonContent
 import io.homeassistant.companion.android.common.util.UnknownJsonContentBuilder
 import io.homeassistant.companion.android.common.util.UnknownJsonContentDeserializer
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.modules.SerializersModule
+import timber.log.Timber
 
 /**
  * Base sealed interface for messages received from the Home Assistant frontend via the external bus.
@@ -350,3 +357,65 @@ data class BarcodeNotifyPayload(val message: String)
 @Serializable
 @SerialName("bar_code/close")
 data class BarcodeCloseMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message asking the app to stream the microphone to a camera in its own WebRTC session, used when
+ * the frontend has no secure context and cannot capture the microphone itself.
+ *
+ * The app opens a mic-only session to [WebRtcStreamStartPayload.entityId] and replies, correlated
+ * by [id], with a result carrying a `session_id` once connected.
+ */
+@Serializable
+@SerialName("webrtc/stream/start")
+data class WebRtcStreamStartMessage(override val id: Int? = null, val payload: WebRtcStreamStartPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class WebRtcStreamStartPayload(
+    @SerialName("stream_type") val streamType: WebRtcStreamType,
+    @SerialName("entity_id") val entityId: String,
+)
+
+/** Stream types the app can open for a `webrtc/stream/start` message. */
+@Serializable(with = WebRtcStreamTypeSerializer::class)
+enum class WebRtcStreamType {
+    /** A microphone talk-back session (the only type the app currently supports). */
+    MICROPHONE,
+
+    /** A value the app does not recognise; the request is rejected. */
+    UNKNOWN,
+}
+
+private const val STREAM_TYPE_MICROPHONE = "microphone"
+
+/** Maps the frontend's `stream_type` string, decoding an unrecognised value as [WebRtcStreamType.UNKNOWN]. */
+private object WebRtcStreamTypeSerializer : KSerializer<WebRtcStreamType> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("WebRtcStreamType", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: WebRtcStreamType) = encoder.encodeString(
+        when (value) {
+            WebRtcStreamType.MICROPHONE -> STREAM_TYPE_MICROPHONE
+            WebRtcStreamType.UNKNOWN -> throw IllegalArgumentException("Forbidden usage of UNKNOWN stream type")
+        },
+    )
+
+    override fun deserialize(decoder: Decoder): WebRtcStreamType = when (val value = decoder.decodeString()) {
+        STREAM_TYPE_MICROPHONE -> WebRtcStreamType.MICROPHONE
+        else -> {
+            Timber.w("Unknown WebRTC stream type '$value'")
+            WebRtcStreamType.UNKNOWN
+        }
+    }
+}
+
+/**
+ * Message asking the app to stop a microphone stream previously started with a
+ * [WebRtcStreamStartMessage]. No response is expected for this message.
+ */
+@Serializable
+@SerialName("webrtc/stream/stop")
+data class WebRtcStreamStopMessage(override val id: Int? = null, val payload: WebRtcStreamStopPayload) :
+    IncomingExternalBusMessage
+
+@Serializable
+data class WebRtcStreamStopPayload(@SerialName("session_id") val sessionId: String)

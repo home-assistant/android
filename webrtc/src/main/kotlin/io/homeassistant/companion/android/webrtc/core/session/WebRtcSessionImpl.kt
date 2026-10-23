@@ -207,7 +207,7 @@ private class WebRtcNegotiation(
             }
 
             is SignalingEvent.Error ->
-                ended.complete(NegotiationOutcome.Failed(SessionFailure.Signaling(event.code, event.message)))
+                ended.complete(NegotiationOutcome.Failed(signalingFailure(event.code, event.message)))
         }
     }
 
@@ -429,7 +429,7 @@ internal class WebRtcSessionImpl(
 
             if (outcome is NegotiationOutcome.Failed) {
                 val failure = outcome.failure
-                if (failure is SessionFailure.Signaling) Timber.w("WebRTC signaling failed (${failure.code})")
+                if (failure is SessionFailure.Signaling) Timber.w("WebRTC signaling failed: ${failure.message}")
                 failWith(failure)
                 return
             }
@@ -452,7 +452,7 @@ internal class WebRtcSessionImpl(
         val config = when (val result = signalingClient.getClientConfig()) {
             is SignalingResult.Success -> result.value
             is SignalingResult.Failure ->
-                return NegotiationOutcome.Failed(SessionFailure.Signaling(result.code, result.message))
+                return NegotiationOutcome.Failed(signalingFailure(result.code, result.message))
         }
         // Create, publish and replay the cached media settings in one locked step. Creating inside
         // the lock and assigning this.controller with no suspension in between means a cancellation
@@ -486,3 +486,10 @@ internal class WebRtcSessionImpl(
         micStateFlow.value = MicState.Off
     }
 }
+
+/**
+ * Builds a [SessionFailure.Signaling] from the server's optional error [code] and [message], folding
+ * them into the single message so no field is carried that callers would only ever re-join.
+ */
+private fun signalingFailure(code: String?, message: String?): SessionFailure.Signaling =
+    SessionFailure.Signaling(listOfNotNull(code, message).joinToString(": ").ifEmpty { null })

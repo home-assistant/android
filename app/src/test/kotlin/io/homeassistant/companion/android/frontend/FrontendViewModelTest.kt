@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamType
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserResult
 import io.homeassistant.companion.android.frontend.filechooser.FrontendFileChooserHandler
@@ -58,6 +59,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
+import io.homeassistant.companion.android.frontend.webrtc.WebRtcHandler
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -150,6 +152,8 @@ class FrontendViewModelTest {
         every { events } returns MutableSharedFlow()
     }
 
+    private val webRtcHandler: WebRtcHandler = mockk(relaxed = true)
+
     private val improvUiStateFlow = MutableStateFlow<ImprovUIState?>(null)
     private val improvEventsFlow = MutableSharedFlow<FrontendImprovHandler.Event>(extraBufferCapacity = 1)
     private val improvScanRequestedFlow = MutableStateFlow(false)
@@ -195,6 +199,7 @@ class FrontendViewModelTest {
             improvHandler = improvHandler,
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
             matterThreadHandler = matterThreadHandler,
+            webRtcHandler = webRtcHandler,
             keyChainRepository = keyChainRepository,
         )
     }
@@ -219,6 +224,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -1387,6 +1393,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -1525,6 +1532,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -1629,6 +1637,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -1691,6 +1700,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -3122,6 +3132,114 @@ class FrontendViewModelTest {
                 LifecycleHandler.onActivityStopped(activity) // reset global counter for other tests
             }
             job.cancel()
+        }
+    }
+
+    @Nested
+    inner class CameraMicrophoneStream {
+
+        private suspend fun TestScope.createConnectedViewModel(
+            messageFlow: MutableSharedFlow<FrontendHandlerEvent>,
+        ): FrontendViewModel {
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+            messageFlow.emit(FrontendHandlerEvent.Connected)
+            advanceUntilIdle()
+            return viewModel
+        }
+
+        @Test
+        fun `Given a start stream event when handled then the handler starts it on the current server`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            createConnectedViewModel(messageFlow)
+
+            messageFlow.emit(
+                FrontendHandlerEvent.StartCameraMicrophoneStream(
+                    messageId = 7,
+                    streamType = WebRtcStreamType.MICROPHONE,
+                    entityId = "camera.front_door",
+                ),
+            )
+            advanceUntilIdle()
+
+            coVerify {
+                webRtcHandler.start(
+                    scope = any(),
+                    serverId = serverId,
+                    messageId = 7,
+                    streamType = WebRtcStreamType.MICROPHONE,
+                    entityId = "camera.front_door",
+                )
+            }
+        }
+
+        @Test
+        fun `Given a stop stream event when handled then the handler stops that session`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            createConnectedViewModel(messageFlow)
+
+            messageFlow.emit(FrontendHandlerEvent.StopCameraMicrophoneStream(sessionId = "session-1"))
+            advanceUntilIdle()
+
+            coVerify { webRtcHandler.stop("session-1") }
+        }
+
+        @Test
+        fun `Given the frontend disconnects when handled then streams stop and the frontend is notified`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            createConnectedViewModel(messageFlow)
+
+            messageFlow.emit(FrontendHandlerEvent.Disconnected)
+            advanceUntilIdle()
+
+            coVerify { webRtcHandler.stopAll(notifyFrontend = true) }
+        }
+
+        @Test
+        fun `Given the app goes to background when onLeavingApp then streams stop and the frontend is notified`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            val viewModel = createConnectedViewModel(messageFlow)
+
+            viewModel.onLeavingApp("https://ha.test/lovelace/0")
+            advanceUntilIdle()
+
+            coVerify { webRtcHandler.stopAll(notifyFrontend = true) }
+        }
+
+        @Test
+        fun `Given a page starts loading when handled then streams stop silently`() = runTest {
+            var capturedPageStarted: ((String?) -> Unit)? = null
+            coEvery {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                    onPageStarted = any(),
+                    onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
+                )
+            } answers {
+                // onPageStarted is at parameter index 8 in HAWebViewClientFactory.create
+                capturedPageStarted = arg(8)
+                mockk(relaxed = true)
+            }
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            viewModel.getWebViewClient()
+
+            checkNotNull(capturedPageStarted).invoke(null)
+            advanceUntilIdle()
+
+            coVerify { webRtcHandler.stopAll(notifyFrontend = false) }
         }
     }
 

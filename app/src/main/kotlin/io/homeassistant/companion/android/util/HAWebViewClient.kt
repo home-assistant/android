@@ -70,6 +70,8 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
      * @param onSubresourceSslError Optional callback when an SSL error occurs on a resource other than
      *        the main URL being loaded. Receives the URL of the failing resource. The frontend itself
      *        is unaffected, so this is a notice rather than a connection error.
+     * @param onPageStarted Optional callback when a main-frame load starts (including a reload of the
+     *        same URL), with the URL being loaded.
      */
     suspend fun create(
         currentUrlFlow: StateFlow<String?>,
@@ -87,6 +89,7 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
         )? = null,
         onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
         onSubresourceSslError: ((url: String?) -> Unit)? = null,
+        onPageStarted: ((url: String?) -> Unit)? = null,
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
@@ -96,6 +99,7 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
             onCrash = onCrash,
             onUrlIntercepted = onUrlIntercepted,
             onPageFinished = onPageFinished,
+            onPageStarted = onPageStarted,
             onReceivedHttpAuthRequest = onReceivedHttpAuthRequest,
             onCanGoBackChanged = onCanGoBackChanged,
             onSubresourceSslError = onSubresourceSslError,
@@ -117,6 +121,7 @@ class HAWebViewClient internal constructor(
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
     private val onPageFinished: ((url: String?) -> Unit)?,
+    private val onPageStarted: ((url: String?) -> Unit)? = null,
     private val onReceivedHttpAuthRequest: (
         (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
     )?,
@@ -135,6 +140,7 @@ class HAWebViewClient internal constructor(
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
+        onPageStarted?.invoke(url)
         val onCanGoBackChanged = onCanGoBackChanged
         if (view != null && onCanGoBackChanged != null && historyObservedWebView?.get() !== view) {
             historyObservedWebView = WeakReference(view)

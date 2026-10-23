@@ -20,10 +20,11 @@ class OutgoingExternalBusMessageTest {
                 hasBarCodeScanner = 0,
                 canSetupImprov = true,
                 appVersion = AppVersion.from("1.0.0 (1)"),
+                hasCameraMicrophoneStream = true,
             ),
         )
         assertEquals(
-            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true,"hasSplashscreen":true,"hasMatterStatusReport":true},"error":null}""",
+            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true,"hasSplashscreen":true,"hasMatterStatusReport":true,"webrtc":{"hasCameraMicrophoneStream":true}},"error":null}""",
             json,
         )
     }
@@ -39,9 +40,11 @@ class OutgoingExternalBusMessageTest {
                 hasBarCodeScanner = 0,
                 canSetupImprov = false,
                 appVersion = AppVersion.from("1.0.0 (1)"),
+                hasCameraMicrophoneStream = false,
             ),
         )
         assertTrue(json.contains(""""canSetupImprov":false"""))
+        assertTrue(json.contains(""""webrtc":{"hasCameraMicrophoneStream":false}"""))
     }
 
     @Test
@@ -53,6 +56,7 @@ class OutgoingExternalBusMessageTest {
             hasBarCodeScanner = 0,
             canSetupImprov = true,
             appVersion = AppVersion.from("1.0.0 (1)"),
+            hasCameraMicrophoneStream = true,
         )
 
         assertTrue(config.hasSettingsScreen)

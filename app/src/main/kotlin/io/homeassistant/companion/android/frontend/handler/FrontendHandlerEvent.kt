@@ -4,6 +4,7 @@ import android.net.Uri
 import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamType
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 
 /**
@@ -188,4 +189,24 @@ sealed interface FrontendHandlerEvent {
      * When null, the action is unimplemented and should be ignored.
      */
     data class EntityAddToExecuted(val event: FrontendEvent?) : FrontendHandlerEvent
+
+    /**
+     * Frontend requested a WebRTC talk-back session for a camera entity (`webrtc/stream/start`).
+     *
+     * The ViewModel owns the session: it supplies the frontend's current server and scope, and the
+     * (deferred) reply correlated by [messageId] is sent once the session connects or fails. An
+     * unsupported [streamType] is rejected with an error reply.
+     *
+     * @param messageId correlation id from the incoming message, carried into the reply
+     * @param streamType the requested stream type
+     * @param entityId the camera entity to stream to
+     */
+    data class StartCameraMicrophoneStream(
+        val messageId: Int?,
+        val streamType: WebRtcStreamType,
+        val entityId: String,
+    ) : FrontendHandlerEvent
+
+    /** Frontend asked to stop a microphone talk-back session (`webrtc/stream/stop`). */
+    data class StopCameraMicrophoneStream(val sessionId: String) : FrontendHandlerEvent
 }
