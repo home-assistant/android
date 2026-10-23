@@ -186,6 +186,9 @@ class MainViewModel @Inject constructor(
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
+    /** Domains of the entities the camera and thermostat tiles can show. */
+    private val tileDomains = listOf(CAMERA_DOMAIN, CLIMATE_DOMAIN)
+
     fun stringForDomain(domain: String): String? =
         HomePresenterImpl.domainsWithNames[domain]?.let { getApplication<Application>().getString(it) }
 
@@ -263,8 +266,9 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Observes the entities of the supported domains with their display information. Emissions are
-     * complete snapshots, so each one replaces the state of the screen.
+     * Observes the entities of the supported domains, and of the camera and thermostat tile domains,
+     * with their display information. Emissions are complete snapshots, so each one replaces the
+     * state of the screen.
      *
      * Collected on [Dispatchers.Default]: an emission walks every entity of the server, and
      * regroups them when [groupingKey] changed, which is too much work for the main thread the
@@ -272,16 +276,20 @@ class MainViewModel @Inject constructor(
      */
     suspend fun observeEntities() = withContext(Dispatchers.Default) {
         entitiesForDisplayManager
-            .observeInContext(ServerManager.SERVER_ID_ACTIVE) { it.domain in supportedDomains() }
+            .observeInContext(ServerManager.SERVER_ID_ACTIVE) {
+                it.domain in supportedDomains() || it.domain in tileDomains
+            }
             .collect { state ->
                 if (state !is EntityDisplayState.Loaded) return@collect
 
-                updateDisplayItems(state.entitiesById)
+                // Camera and climate entities are only for the tiles, not for the home screen
+                val items = state.entitiesById.filterValues { it.domain in supportedDomains() }
+                updateDisplayItems(items, tileItems = state.entities.filter { it.domain in tileDomains })
 
                 if (mainViewUiState.value.isFavoritesOnly) return@collect
 
                 // States change far more often than what the groupings are made of
-                val groupingKey = groupingKey(state.entitiesById)
+                val groupingKey = groupingKey(items)
                 if (groupingKey != lastGroupingKey) {
                     lastGroupingKey = groupingKey
                     updateEntityDomains()
@@ -298,13 +306,16 @@ class MainViewModel @Inject constructor(
     }
 
     /** Applies a snapshot of the entities to the UI state and caches the favorites of the user. */
-    private fun updateDisplayItems(items: Map<String, EntityDisplayWithContext>) {
+    private fun updateDisplayItems(
+        items: Map<String, EntityDisplayWithContext>,
+        tileItems: List<EntityDisplayWithContext>,
+    ) {
         updateUiState { uiState ->
             val itemsByDomain = items.values.groupBy { it.domain }
             uiState.copy(
                 displayItems = items,
-                cameraItems = itemsByDomain[CAMERA_DOMAIN].orEmpty(),
-                climateItems = itemsByDomain[CLIMATE_DOMAIN].orEmpty(),
+                cameraItems = tileItems.filter { it.domain == CAMERA_DOMAIN },
+                climateItems = tileItems.filter { it.domain == CLIMATE_DOMAIN },
                 allDisplayItemsByDomain = itemsByDomain,
                 entityListNavigation = uiState.entityListNavigation.copy(
                     entityLists = uiState.entityListNavigation.entityListIds.resolveEntities(items),
