@@ -48,5 +48,7 @@ sealed interface WebRtcStreamErrorCode {
     }
 
     /** An unexpected error; the accompanying message holds the detail. */
-    data class Unknown(override val value: String = "unknown") : WebRtcStreamErrorCode
+    data object Unknown : WebRtcStreamErrorCode {
+        override val value = "unknown"
+    }
 }

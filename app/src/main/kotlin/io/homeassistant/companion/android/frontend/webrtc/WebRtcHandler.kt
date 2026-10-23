@@ -165,35 +165,52 @@ class WebRtcHandler @VisibleForTesting internal constructor(
         generation: Int,
     ) {
         if (sessions.isEmpty()) enterCommunicationAudio()
+        var player: WebRtcSession? = null
+        var registered = false
+        try {
+            val created = webRtcSessionFactory.create(
+                signalingClient = HaSignalingClient(webSocketRepository, entityId),
+                // go2rtc rejects an offer that carries no receive media ("codecs not matched"), so the
+                // microphone leg is negotiated as send+receive audio. The received camera audio is
+                // muted right after, since the frontend's own player already handles playback.
+                mediaOptions = MediaOptions(videoIn = false, audioIn = true, audioOut = true),
+            )
+            player = created
+            created.audioIn?.setPlaybackEnabled(false)
 
-        val sessionId = UUID.randomUUID().toString()
-        val player = webRtcSessionFactory.create(
-            signalingClient = HaSignalingClient(webSocketRepository, entityId),
-            // go2rtc rejects an offer that carries no receive media ("codecs not matched"), so the
-            // microphone leg is negotiated as send+receive audio. The received camera audio is muted
-            // right after, since the frontend's own player already handles playback.
-            mediaOptions = MediaOptions(videoIn = false, audioIn = true, audioOut = true),
-        )
-        player.audioIn?.setPlaybackEnabled(false)
-
-        if (generation != stopGeneration) {
-            // A stopAll ran during the session creation: abandon the half-built session, restoring
-            // the audio mode, and resolve the still-open request as interrupted.
-            withContext(NonCancellable) {
-                player.release()
-                if (sessions.isEmpty()) exitCommunicationAudio()
-                externalBusRepository.send(
-                    WebRtcStreamResultMessage.error(messageId, WebRtcStreamErrorCode.Interrupted, MESSAGE_INTERRUPTED),
-                )
+            if (generation != stopGeneration) {
+                // A stopAll ran during the session creation: resolve the still-open request as
+                // interrupted, the half-built session is released below
+                withContext(NonCancellable) {
+                    externalBusRepository.send(
+                        WebRtcStreamResultMessage.error(
+                            messageId,
+                            WebRtcStreamErrorCode.Interrupted,
+                            MESSAGE_INTERRUPTED,
+                        ),
+                    )
+                }
+                return
             }
-            return
+            val sessionId = UUID.randomUUID().toString()
+            val collector = scope.launch { awaitConnectionAndReply(created, sessionId, messageId) }
+            // If [scope] was cancelled while this was suspended (e.g. a teardown-time stopAll already
+            // ran), do not register a session nothing would release.
+            scope.ensureActive()
+            sessions[sessionId] = ActiveSession.Connecting(created, collector, messageId)
+            registered = true
+            created.start()
+        } finally {
+            // Abandoned, cancelled (the ViewModel cleared during the factory's setup) or failed before
+            // the session was registered: nothing else releases the player or restores the audio
+            // mode, since stopAll only sees registered sessions
+            if (!registered) {
+                withContext(NonCancellable) {
+                    player?.release()
+                    if (sessions.isEmpty()) exitCommunicationAudio()
+                }
+            }
         }
-        val collector = scope.launch { awaitConnectionAndReply(player, sessionId, messageId) }
-        // If [scope] was cancelled while this was suspended (e.g. a teardown-time stopAll already
-        // ran), do not register a session nothing would release.
-        scope.ensureActive()
-        sessions[sessionId] = ActiveSession.Connecting(player, collector, messageId)
-        player.start()
     }
 
     /**

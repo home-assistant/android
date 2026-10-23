@@ -372,6 +372,29 @@ class WebRtcHandlerTest {
     }
 
     @Test
+    fun `Given a start creating its session When its scope is cancelled Then the audio mode is restored`() = runTest {
+        coEvery { permissionManager.checkMicrophonePermission() } returns true
+        coEvery { audioManager.mode } returns AudioManager.MODE_NORMAL
+        val modes = mutableListOf<Int>()
+        every { audioManager.mode = capture(modes) } returns Unit
+        factory.createGate = CompletableDeferred()
+        val handler = createHandler()
+        val startJob = backgroundScope.launch {
+            handler.start(scope = backgroundScope, serverId = SERVER_ID, messageId = 5, streamType = WebRtcStreamType.MICROPHONE, entityId = "camera.front_door")
+        }
+        runCurrent()
+        assertEquals(listOf(AudioManager.MODE_IN_COMMUNICATION), modes)
+
+        // The ViewModel is cleared while the session factory is still initialising
+        startJob.cancel()
+        runCurrent()
+
+        assertEquals(listOf(AudioManager.MODE_IN_COMMUNICATION, AudioManager.MODE_NORMAL), modes)
+        assertTrue(factory.created.isEmpty())
+        assertTrue(sent.isEmpty())
+    }
+
+    @Test
     fun `Given a session still connecting When stopAll notifies the frontend Then the start request fails instead of a stopped notification`() = runTest {
         coEvery { permissionManager.checkMicrophonePermission() } returns true
         val handler = createHandler()

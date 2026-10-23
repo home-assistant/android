@@ -277,6 +277,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             onFrontendError = ::onError,
             onCrash = ::onRetry,
             onPageFinished = ::onPageFinished,
+            onPageStarted = { onPageStarted() },
             onUrlIntercepted = { uri, _ -> onUrlIntercepted(uri) },
             onReceivedHttpAuthRequest = { handler, host, resource, realm ->
                 viewModelScope.launch {
@@ -1251,13 +1252,17 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * navigations can reset the viewport meta tag). The collection then stays active
      * to react to settings changes until the next page load restarts it.
      */
+    /**
+     * A main-frame load begins, including a same-URL reload the view-state URL never reflects: the
+     * page that owns any mic session is being replaced and the new one has no session id to stop it,
+     * so the sessions are released now rather than once the load finishes, which can take a while.
+     */
+    private fun onPageStarted() {
+        viewModelScope.launch { webRtcHandler.stopAll() }
+    }
+
     private fun onPageFinished(url: String?) {
         viewModelScope.launch { applySafeAreaInsetsIfHandled() }
-
-        // A main-frame (re)load, including a same-URL reload the view-state URL never reflects,
-        // replaces the frontend that owns a mic session: stop it rather than leaving the microphone
-        // open against a page that no longer knows about it. The new page has no session id to stop.
-        viewModelScope.launch { webRtcHandler.stopAll() }
 
         // Open the more-info dialog for an older-server deep link now that the frontend has loaded.
         pendingMoreInfoEntityId?.let { entityId ->

@@ -224,6 +224,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -1392,6 +1393,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -1530,6 +1532,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -1634,6 +1637,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -1696,6 +1700,7 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
@@ -3206,8 +3211,8 @@ class FrontendViewModelTest {
         }
 
         @Test
-        fun `Given a page finishes loading when handled then streams stop silently`() = runTest {
-            var capturedPageFinished: ((String?) -> Unit)? = null
+        fun `Given a page starts loading when handled then streams stop silently`() = runTest {
+            var capturedPageStarted: ((String?) -> Unit)? = null
             coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
@@ -3215,13 +3220,14 @@ class FrontendViewModelTest {
                     onCrash = any(),
                     onUrlIntercepted = any(),
                     onPageFinished = any(),
+                    onPageStarted = any(),
                     onReceivedHttpAuthRequest = any(),
                     onCanGoBackChanged = any(),
                     onSubresourceSslError = any(),
                 )
             } answers {
-                // onPageFinished is at parameter index 4 in HAWebViewClientFactory.create
-                capturedPageFinished = arg(4)
+                // onPageStarted is at parameter index 8 in HAWebViewClientFactory.create
+                capturedPageStarted = arg(8)
                 mockk(relaxed = true)
             }
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
@@ -3230,7 +3236,7 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             viewModel.getWebViewClient()
 
-            checkNotNull(capturedPageFinished).invoke(null)
+            checkNotNull(capturedPageStarted).invoke(null)
             advanceUntilIdle()
 
             coVerify { webRtcHandler.stopAll(notifyFrontend = false) }
