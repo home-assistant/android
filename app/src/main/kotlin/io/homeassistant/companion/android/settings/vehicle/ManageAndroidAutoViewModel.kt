@@ -12,8 +12,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -28,17 +29,17 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ManageAndroidAutoViewModel @Inject constructor(
     private val serverManager: ServerManager,
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     private val prefsRepository: PrefsRepository,
     application: Application,
 ) : AndroidViewModel(application) {
 
     val favoritesList = mutableStateListOf<AutoFavorite>()
 
-    var displayEntities by mutableStateOf<EntityDisplayState>(EntityDisplayState.Loading)
+    var displayEntities by mutableStateOf<EntityDisplayState<EntityDisplayWithContext>>(EntityDisplayState.Loading)
         private set
 
-    private val displayEntitiesByServer = mutableMapOf<Int, EntityDisplayState>()
+    private val displayEntitiesByServer = mutableMapOf<Int, EntityDisplayState<EntityDisplayWithContext>>()
 
     var servers by mutableStateOf(emptyList<Server>())
         private set
@@ -56,7 +57,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
             servers.map { server ->
                 val serverId = server.id
                 async {
-                    getEntitiesForDisplay.snapshot(serverId) { isVehicleDomain(it) }.collect { state ->
+                    entitiesForDisplayManager.snapshotInContext(serverId) { isVehicleDomain(it) }.collect { state ->
                         displayEntitiesByServer[serverId] = state
                     }
                 }

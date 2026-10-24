@@ -5,10 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.InformationOutline
+import io.github.timoptr.mdiicons.generated.MenuDown
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.composable.HATextField
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -107,7 +108,7 @@ class HATextFieldScreenshotTest {
             },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Outlined.Info,
+                    imageVector = Mdi.InformationOutline.rememberImageVector(),
                     contentDescription = null,
                 )
             },
@@ -119,11 +120,11 @@ class HATextFieldScreenshotTest {
                     ),
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = Mdi.Close.rememberImageVector(),
                         contentDescription = null,
                     )
                     Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
+                        imageVector = Mdi.MenuDown.rememberImageVector(),
                         contentDescription = null,
                     )
                 }

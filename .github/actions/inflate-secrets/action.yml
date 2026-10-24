@@ -7,9 +7,6 @@ inputs:
   google-services:
     description: "The google-services.json to inflate"
     required: true
-  firebase-creds:
-    description: "The firebase credentials to inflate"
-    required: true
   playstore-creds:
     description: "The playstore credentials to inflate"
     required: true
@@ -39,13 +36,6 @@ runs:
         echo $GOOGLE_SERVICES > app/google-services.json
         echo $GOOGLE_SERVICES > wear/google-services.json
         echo $GOOGLE_SERVICES > automotive/google-services.json
-
-    - name: Inflate firebaseAppDistributionServiceCredentialsFile.json
-      shell: bash
-      env:
-        CREDS: ${{ inputs.firebase-creds }}
-      run: |
-        echo $CREDS > firebaseAppDistributionServiceCredentialsFile.json
 
     - name: Inflate playStorePublishServiceCredentialsFile.json
       shell: bash

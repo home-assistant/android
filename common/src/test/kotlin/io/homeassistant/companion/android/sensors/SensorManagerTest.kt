@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.FlaskEmpty
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
@@ -33,27 +35,27 @@ class SensorManagerTest {
         coJustRun { sensorRepository.replaceAllAttributes(any(), capture(slot)) }
 
         sensorManager.onSensorUpdated(
-            SensorManager.BasicSensor("test", "test"),
+            SensorManager.BasicSensor("test", "test", statelessIcon = Mdi.FlaskEmpty),
             "test",
-            "test",
+            Mdi.FlaskEmpty,
             mapOf("test" to listOf("test", "hello")),
         )
 
         assertEquals("""["test","hello"]""", slot.captured.first().value)
 
         sensorManager.onSensorUpdated(
-            SensorManager.BasicSensor("test", "test"),
+            SensorManager.BasicSensor("test", "test", statelessIcon = Mdi.FlaskEmpty),
             "test",
-            "test",
+            Mdi.FlaskEmpty,
             mapOf("test" to listOf(true, false)),
         )
 
         assertEquals("""[true,false]""", slot.captured.first().value)
 
         sensorManager.onSensorUpdated(
-            SensorManager.BasicSensor("test", "test"),
+            SensorManager.BasicSensor("test", "test", statelessIcon = Mdi.FlaskEmpty),
             "test",
-            "test",
+            Mdi.FlaskEmpty,
             mapOf("test" to true),
         )
 

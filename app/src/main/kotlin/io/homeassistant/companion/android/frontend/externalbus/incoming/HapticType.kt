@@ -15,7 +15,7 @@ import kotlinx.serialization.modules.SerializersModule
  * Unknown haptic types from newer frontend versions are deserialized as [Unknown]
  * instead of failing, allowing graceful forward compatibility.
  *
- * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus/#trigger-haptic-haptic">Haptic feedback documentation</a>
+ * @see <a href="https://contributors.home-assistant.io/frontend/reference/external-bus/#messages-without-an-answer">Haptic feedback documentation</a>
  */
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable

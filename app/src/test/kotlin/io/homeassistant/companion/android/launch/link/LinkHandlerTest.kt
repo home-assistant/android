@@ -6,11 +6,15 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.util.UrlUtil
 import io.mockk.coEvery
 import io.mockk.mockk
+import java.net.URL
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertNotNull
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -191,7 +195,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard"), 1), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/dashboard"), 1), result)
     }
 
     @Test
@@ -204,7 +208,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=default".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=default"), 1), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/dashboard"), 1), result)
     }
 
     @Test
@@ -217,7 +221,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server="), 1), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/dashboard"), 1), result)
     }
 
     @Test
@@ -237,7 +241,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=Office".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=Office"), 2), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/dashboard"), 2), result)
     }
 
     @Test
@@ -247,7 +251,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server_id=2".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server_id=2"), 2), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/dashboard"), 2), result)
     }
 
     @Test
@@ -271,6 +275,107 @@ class LinkHandlerTest {
     }
 
     @Test
+    fun `Given a path with a query when building the navigate deep link then the query stays a query`() = runTest {
+        val uri = navigateDeepLinkUri(FrontendTarget.Path("dashboard-smartphone/0?kiosk"), serverId = 2)
+
+        assertEquals("homeassistant://navigate/dashboard-smartphone/0?kiosk&server_id=2", uri.toString())
+    }
+
+    @Test
+    fun `Given a navigate deep link built for a path with a query when invoking handleLink then it round-trips to the same path`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = navigateDeepLinkUri(FrontendTarget.Path("dashboard-smartphone/0?kiosk"), serverId = 2)
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("dashboard-smartphone/0?kiosk"), 2), result)
+    }
+
+    @Test
+    fun `Given compliant and non-compliant raw paths when validating then only compliant ones pass`() {
+        assertTrue(isValidFrontendRawPath("lovelace/dashboard-1?kiosk&edit=1#section"))
+        assertTrue(isValidFrontendRawPath("dashboard/my%20room"))
+        assertFalse(isValidFrontendRawPath("lovelace/my room"))
+        assertFalse(isValidFrontendRawPath("lovelace/café"))
+    }
+
+    @Test
+    fun `Given a hand-typed path with spaces when building the navigate deep link then illegal characters are percent-encoded`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = navigateDeepLinkUri(FrontendTarget.Path("lovelace/my room?tab=my tab#my view"), serverId = 2)
+
+        assertEquals("homeassistant://navigate/lovelace/my%20room?tab=my%20tab&server_id=2#my%20view", uri.toString())
+        assertEquals(
+            LinkDestination.Webview(FrontendTarget.Path("lovelace/my%20room?tab=my%20tab#my%20view"), 2),
+            handler.handleLink(uri),
+        )
+    }
+
+    @Test
+    fun `Given a path with existing escapes when building the navigate deep link then escapes are not double-encoded`() = runTest {
+        val uri = navigateDeepLinkUri(FrontendTarget.Path("dashboard/my%20room?kiosk"), serverId = 2)
+
+        assertEquals("homeassistant://navigate/dashboard/my%20room?kiosk&server_id=2", uri.toString())
+    }
+
+    @Test
+    fun `Given a path with a question mark in the fragment when building the navigate deep link then it round-trips without inventing a query`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = navigateDeepLinkUri(FrontendTarget.Path("lovelace/0#view?x=1"), serverId = 2)
+
+        assertEquals("homeassistant://navigate/lovelace/0?server_id=2#view?x=1", uri.toString())
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/0#view?x=1"), 2), handler.handleLink(uri))
+    }
+
+    @Test
+    fun `Given a navigate deep link built for an absolute URL path when invoking handleLink then it round-trips to the same URL`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = navigateDeepLinkUri(FrontendTarget.Path("http://192.168.1.5:8123/lovelace/0?kiosk"), serverId = 2)
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("http://192.168.1.5:8123/lovelace/0?kiosk"), 2), result)
+    }
+
+    @Test
+    fun `Given navigate deep link with a percent-encoded query in the path when invoking handleLink then it is kept encoded`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = "homeassistant://navigate/dashboard-smartphone/0%3Fkiosk?server_id=2".toUri()
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("dashboard-smartphone/0%3Fkiosk"), 2), result)
+    }
+
+    @Test
+    fun `Given navigate deep link with a percent-encoded space in the path when invoking handleLink then the encoding is preserved and resolves`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = "homeassistant://navigate/lovelace/my%20dashboard?server_id=2".toUri()
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/my%20dashboard"), 2), result)
+
+        val base = URL("http://homeassistant.local:8123/")
+        assertEquals(
+            "http://homeassistant.local:8123/lovelace/my%20dashboard",
+            UrlUtil.handle(base, "lovelace/my%20dashboard").toString(),
+        )
+    }
+
+    @Test
+    fun `Given navigate deep link with query and fragment when invoking handleLink then both are kept without server params`() = runTest {
+        coEvery { serverManager.isRegistered() } returns true
+
+        val uri = "homeassistant://navigate/lovelace/dashboard?kiosk&server_id=2&edit=1#section".toUri()
+        val result = handler.handleLink(uri)
+
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/dashboard?kiosk&edit=1#section"), 2), result)
+    }
+
+    @Test
     fun `Given navigate deep link with registered server and case-insensitive server name when invoking handleLink then returns Webview with matching server`() = runTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.servers() } returns listOf(
@@ -287,7 +392,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=office".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=office"), 2), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/dashboard"), 2), result)
     }
 
     @Test
@@ -303,7 +408,7 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard?server=NonExisting".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.Webview(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=NonExisting"), ServerManager.SERVER_ID_ACTIVE), result)
+        assertEquals(LinkDestination.Webview(FrontendTarget.Path("lovelace/dashboard"), ServerManager.SERVER_ID_ACTIVE), result)
     }
 
     /*
@@ -357,7 +462,7 @@ class LinkHandlerTest {
         val result = handler.handleLink(uri)
 
         assertEquals(
-            LinkDestination.ServerPicker(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard?server=NonExisting"), servers),
+            LinkDestination.ServerPicker(FrontendTarget.Path("lovelace/dashboard"), servers),
             result,
         )
     }
@@ -381,6 +486,6 @@ class LinkHandlerTest {
         val uri = "homeassistant://navigate/lovelace/dashboard".toUri()
         val result = handler.handleLink(uri)
 
-        assertEquals(LinkDestination.ServerPicker(FrontendTarget.Path("homeassistant://navigate/lovelace/dashboard"), servers), result)
+        assertEquals(LinkDestination.ServerPicker(FrontendTarget.Path("lovelace/dashboard"), servers), result)
     }
 }

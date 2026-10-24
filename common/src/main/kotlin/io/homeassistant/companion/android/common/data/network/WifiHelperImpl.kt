@@ -22,11 +22,10 @@ class WifiHelperImpl @Inject constructor(
 
     override fun isUsingSpecificWifi(networks: List<String>): Boolean {
         if (networks.isEmpty()) return false
-        val formattedSsid = getWifiSsid()?.removeSurrounding("\"")
+        val formattedSsid = getWifiSsid()
         val formattedBssid = getWifiBssid()
         return (
             formattedSsid != null &&
-                (!SdkVersion.isAtLeast(Build.VERSION_CODES.R) || formattedSsid !== WifiManager.UNKNOWN_SSID) &&
                 formattedSsid in networks
             ) ||
             (
@@ -39,8 +38,14 @@ class WifiHelperImpl @Inject constructor(
                 )
     }
 
-    override fun getWifiSsid(): String? =
-        wifiManager?.connectionInfo?.ssid // Deprecated but callback doesn't provide SSID info instantly
+    override fun getWifiSsid(): String? {
+        val rawSsid = wifiManager?.connectionInfo?.ssid ?: return null // Deprecated but callbacks aren't instant
+        return rawSsid
+            .takeUnless {
+                SdkVersion.isAtLeast(Build.VERSION_CODES.R) && it == WifiManager.UNKNOWN_SSID
+            }
+            ?.removeSurrounding("\"")
+    }
 
     override fun getWifiBssid(): String? =
         wifiManager?.connectionInfo?.bssid // Deprecated but callback doesn't provide BSSID info instantly

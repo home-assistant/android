@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.util.icondialog
 
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.ITypeface
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
 import java.text.Normalizer
 import java.util.Locale
 
@@ -23,7 +23,7 @@ interface IconFilter {
     /**
      * Get a list of all matching icons for a search [query], in no specific order.
      */
-    fun queryIcons(pack: ITypeface, query: String? = null): List<IIcon>
+    fun queryIcons(query: String? = null): List<MdiIcon>
 }
 
 class DefaultIconFilter(
@@ -37,6 +37,7 @@ class DefaultIconFilter(
      */
     private val queryNormalized: Boolean = true,
 ) : IconFilter {
+    val icons by lazy { Mdi.icons.sortedBy(MdiIcon::name) }
 
     /**
      * Get a list of all matching icons for a search [query].
@@ -44,12 +45,10 @@ class DefaultIconFilter(
      * sorted by ID. Subclasses take care of actual searching and must always ensure
      * that the returned list is sorted by ID.
      */
-    override fun queryIcons(pack: ITypeface, query: String?): List<IIcon> {
-        val icons = pack.icons
-
+    override fun queryIcons(query: String?): List<MdiIcon> {
         if (query.isNullOrBlank()) {
             // No search query, return all icons.
-            return icons.map { key -> pack.getIcon(key) }
+            return icons
         }
 
         // Split query into terms.
@@ -64,9 +63,7 @@ class DefaultIconFilter(
             }.filter { it.isNotBlank() }
 
         // Remove all icons that don't match any of the search terms.
-        return icons
-            .filter { icon -> matchesSearch(icon, terms) }
-            .map { key -> pack.getIcon(key) }
+        return icons.filter { icon -> matchesSearch(icon.name, terms) }
     }
 
     /**

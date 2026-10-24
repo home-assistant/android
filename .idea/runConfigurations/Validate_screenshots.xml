@@ -11,6 +11,7 @@
       <option name="taskNames">
         <list>
           <option value="validateDebugScreenshotTest" />
+          <option value="validateFullDebugScreenshotTest" />
         </list>
       </option>
       <option name="vmOptions" />

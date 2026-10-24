@@ -13,8 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.toColorInt
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.glance.ColorFilter
@@ -39,7 +37,6 @@ import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
-import androidx.glance.color.ColorProviders
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
@@ -55,17 +52,15 @@ import androidx.glance.semantics.semantics
 import androidx.glance.semantics.testTag
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.IconicsSize
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.padding
-import com.mikepenz.iconics.utils.size
 import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Flash
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
@@ -114,106 +109,162 @@ class ButtonGlanceAppWidget : GlanceAppWidget() {
             val flow = remember(widgetId) { updater.getButtonEntityFlow(widgetId) }
             val state by flow.collectAsState(Loading)
 
-            HomeAssistantGlanceTheme(colors = getWidgetColors(state?.backgroundType, state?.textColor)) {
+            HomeAssistantGlanceTheme(colors = getWidgetColors(state?.backgroundType, state?.textColor) ?: HomeAssistantGlanceTheme.colors) {
                 ScreenForState(
                     id = id,
                     context = context,
                     state = state,
-                    maxIconSize = DEFAULT_MAX_ICON_SIZE,
+                    isActionRunning = isActionRunning,
+                    isActionSuccess = isActionSuccess,
+                    wasActionSentSuccessful = wasActionSentSuccessful,
                 )
             }
         }
     }
+
+    private fun getWidgetColors(backgroundType: WidgetBackgroundType?, textColorString: String?): ColorProviders? {
+        if (backgroundType != WidgetBackgroundType.TRANSPARENT || textColorString == null) return null
+        val textColor = Color(textColorString.toColorInt())
+        val haColors = glanceHaLightColors
+        return ColorProviders(
+            light = haColors.copy(
+                surface = Color.Transparent,
+                onSurface = textColor,
+            ),
+            dark = haColors.copy(
+                surface = Color.Transparent,
+                onSurface = textColor,
+            ),
+        )
+    }
+}
+
+class TapAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters,
+    ) {
+        val auth = parameters[authKey] == true
+        val appWidgetId = parameters[widgetIdKey] ?: return
+
+        updateAppWidgetState(context = context, glanceId = glanceId) {
+            it[booleanPreferencesKey(IS_LOADING_KEY)] = true
+        }
+
+        ButtonGlanceAppWidget().update(context, glanceId)
+
+        val intent = Intent(context, ButtonWidget::class.java).apply {
+            action = if (auth) CALL_SERVICE_AUTH else CALL_SERVICE
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+
+        context.sendBroadcast(intent)
+    }
 }
 
 @Composable
-fun ScreenForState(
+private fun ScreenForState(
     id: GlanceId,
     context: Context,
     state: ButtonWidgetState?,
-    maxIconSize: Int,
+    isActionRunning: Boolean,
+    isActionSuccess: Boolean,
+    wasActionSentSuccessful: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    when (state) {
-        Loading -> LoadingScreen()
-        is ButtonStateWithData -> ButtonScreen(
+    val maxIconSize = DEFAULT_MAX_ICON_SIZE
+
+    when {
+        isActionRunning -> ActionRunningScreen()
+        !wasActionSentSuccessful -> ActionFailureScreen(state = state as? ButtonStateWithData)
+        isActionSuccess -> ActionSuccessScreen(state = state as? ButtonStateWithData)
+        state is ButtonStateWithData -> ButtonScreen(
             context = context,
             state = state,
             maxIconSize = maxIconSize,
         )
 
-        Error -> ErrorScreen(context, id)
-        Success -> SuccessScreen(context, id)
-
-        else -> {}
+        else -> DefaultButtonScreen()
     }
 }
 
 @Composable
-private fun SuccessScreen(context: Context, widgetId: GlanceId, modifier: Modifier = Modifier) {
-    LaunchedEffect(Unit) {
-        delay(1.seconds)
-        updateAppWidgetState(context, widgetId) {
-            it[booleanPreferencesKey(ButtonWidget.IS_SUCCESS_KEY)] = false
-        }
-        ButtonGlanceAppWidget().update(context, widgetId)
-    }
+private fun ActionRunningScreen(modifier: Modifier = Modifier) {
     Column(
-        verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = GlanceModifier.background(Color.Green).fillMaxSize(),
-    ) {
-        Image(
-            provider = ImageProvider(R.drawable.ic_check_black_24dp),
-            contentDescription = null,
-            modifier = GlanceModifier.fillMaxSize(),
-        )
-    }
-}
-
-@Composable
-private fun ErrorScreen(context: Context, widgetId: GlanceId, modifier: Modifier = Modifier) {
-    LaunchedEffect(Unit) {
-        delay(1.seconds)
-        updateAppWidgetState(context, widgetId) {
-            it[booleanPreferencesKey(IS_LOADING_KEY)] = false
-        }
-        ButtonGlanceAppWidget().update(context, widgetId)
-    }
-    Column(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = GlanceModifier.background(Color.Red).fillMaxSize(),
-    ) {
-        Image(
-            provider = ImageProvider(R.drawable.ic_clear_black),
-            contentDescription = null,
-            modifier = GlanceModifier.fillMaxSize(),
-        )
-    }
-}
-
-@Composable
-fun LoadingScreen(modifier: Modifier = Modifier) {
-    Column(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = GlanceModifier.buttonWidgetBackground().semantics { testTag = "LoadingScreen" },
+        modifier = GlanceModifier.fillMaxSize().buttonWidgetBackground().padding(8.dp),
     ) {
         CircularProgressIndicator(
-            color = GlanceTheme.colors.primary,
-            modifier = GlanceModifier.size(HomeAssistantGlanceTheme.dimensions.iconSize),
+            color = GlanceTheme.colors.onSurface,
+            modifier = GlanceModifier.size(24.dp),
         )
     }
 }
 
-@SuppressLint("ComposeRedundantComposable")
 @Composable
-private fun GlanceModifier.buttonWidgetBackground(): GlanceModifier {
-    return this.appWidgetBackground().fillMaxSize().background(
-        GlanceTheme
-            .colors.widgetBackground,
-    )
+private fun ActionFailureScreen(state: ButtonStateWithData?, modifier: Modifier = Modifier) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = GlanceModifier.fillMaxSize().buttonWidgetBackground().padding(8.dp),
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_close),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(GlanceTheme.colors.error),
+            modifier = GlanceModifier.size(24.dp),
+        )
+
+        state?.label?.let {
+            Text(
+                text = it,
+                style = HomeAssistantGlanceTypography.bodySmall,
+                modifier = GlanceModifier.fillMaxWidth().padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionSuccessScreen(state: ButtonStateWithData?, modifier: Modifier = Modifier) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = GlanceModifier.fillMaxSize().buttonWidgetBackground().padding(8.dp),
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_check),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurface),
+            modifier = GlanceModifier.size(24.dp),
+        )
+
+        state?.label?.let {
+            Text(
+                text = it,
+                style = HomeAssistantGlanceTypography.bodySmall,
+                modifier = GlanceModifier.fillMaxWidth().padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DefaultButtonScreen(modifier: Modifier = Modifier) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = GlanceModifier.fillMaxSize().buttonWidgetBackground().padding(8.dp),
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_hand_pointer),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurface),
+            modifier = GlanceModifier.size(24.dp),
+        )
+    }
 }
 
 @Composable
@@ -223,36 +274,8 @@ private fun ButtonScreen(
     maxIconSize: Int,
     modifier: Modifier = Modifier,
 ) {
-    val iconData = state?.icon?.let { CommunityMaterial.getIconByMdiName(it) }
-        ?: CommunityMaterial.Icon2.cmd_flash // Lightning Bolt
-    val iconDrawable = IconicsDrawable(context, iconData).apply {
-        padding = IconicsSize.dp(2)
-        size = IconicsSize.dp(24)
-    }
-
-    val size = LocalSize.current
-    // Determine reasonable dimensions for drawing vector icon as a bitmap
-    val aspectRatio = iconDrawable.intrinsicWidth / iconDrawable.intrinsicHeight.toDouble()
-    val awo = if (state != null) AppWidgetManager.getInstance(context).getAppWidgetOptions(state.id) else null
-    val maxWidth = (
-        awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, maxIconSize)
-            ?: maxIconSize
-        ).coerceAtLeast(16)
-    val maxHeight = (
-        awo?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, maxIconSize)
-            ?: maxIconSize
-        ).coerceAtLeast(16)
-    val width: Int
-    val height: Int
-    if (maxWidth > maxHeight) {
-        width = maxWidth
-        height = (maxWidth * (1 / aspectRatio)).toInt()
-    } else {
-        width = (maxHeight * aspectRatio).toInt()
-        height = maxHeight
-    }
-
-    val icon = DrawableCompat.wrap(iconDrawable).toBitmap(width = width, height = height)
+    val iconData = state?.icon?.let { Mdi.fromHaName(it) } ?: Mdi.Flash
+    val iconBitmap = iconData.toBitmap(context, 48, android.graphics.Color.WHITE)
 
     val requiresAuth = state?.requiresAuthentication
 
@@ -271,7 +294,7 @@ private fun ButtonScreen(
             .padding(8.dp),
     ) {
         Image(
-            provider = ImageProvider(icon),
+            provider = ImageProvider(iconBitmap),
             contentDescription = null,
             modifier = GlanceModifier.defaultWeight().fillMaxWidth(),
             contentScale = ContentScale.Fit,
@@ -289,45 +312,29 @@ private fun ButtonScreen(
 }
 
 @Composable
-fun getWidgetColors(backgroundType: WidgetBackgroundType?, textColor: String?): ColorProviders {
-    return when (backgroundType) {
-        WidgetBackgroundType.DYNAMICCOLOR -> GlanceTheme.colors
-        WidgetBackgroundType.DAYNIGHT -> HomeAssistantGlanceTheme.colors
-        WidgetBackgroundType.TRANSPARENT -> ColorProviders(
-            glanceHaLightColors
-                .copy(
-                    background = Color.Transparent,
-                    onSurface = Color(
-                        textColor?.toColorInt() ?: glanceHaLightColors.onSurface.toArgb(),
-                    ),
-                ),
-        )
-
-        else -> HomeAssistantGlanceTheme.colors
-    }
-}
-
-class TapAction : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        updateAppWidgetState(context, glanceId) {
-            it[booleanPreferencesKey(IS_LOADING_KEY)] = true
-        }
-        ButtonGlanceAppWidget().update(context, glanceId)
-        val auth = parameters[authKey] ?: false
-        val widgetId = parameters[widgetIdKey]
-        val intent = Intent(context, ButtonWidget::class.java).apply {
-            action = if (auth) CALL_SERVICE_AUTH else CALL_SERVICE
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
-        }
-        context.sendBroadcast(intent)
-    }
+private fun GlanceModifier.buttonWidgetBackground(): GlanceModifier {
+    return this
+        .appWidgetBackground()
+        .background(GlanceTheme.colors.surface)
+        .semantics { testTag = "button_widget_background" }
 }
 
 @OptIn(ExperimentalGlancePreviewApi::class)
 @Preview
 @Composable
-private fun ErrorScreenPreview() {
+private fun ButtonWidgetPreview() {
     HomeAssistantGlanceTheme {
-        ErrorScreen(LocalContext.current, LocalGlanceId.current)
+        ButtonScreen(
+            context = LocalContext.current,
+            state = ButtonStateWithData(
+                id = 1,
+                icon = "mdi:flash",
+                label = "Button Widget",
+                backgroundType = WidgetBackgroundType.DAYNIGHT,
+                textColor = null,
+                requiresAuthentication = false,
+            ),
+            maxIconSize = 24,
+        )
     }
 }

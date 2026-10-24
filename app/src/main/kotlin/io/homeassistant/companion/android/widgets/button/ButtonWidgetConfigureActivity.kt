@@ -10,6 +10,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,9 +45,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Flash
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -72,7 +75,6 @@ import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-// TODO Migrate to compose https://github.com/home-assistant/android/issues/6305
 @AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseActivity() {
     private val viewModel: ButtonWidgetViewModel by viewModels()
@@ -117,9 +119,7 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
     private fun onAddWidgetClicked() {
         lifecycleScope.launch {
             if (intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true) {
-                if (
-                    SdkVersion.isAtLeast(Build.VERSION_CODES.O)
-                ) {
+                if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                     requestPinWidget()
                 } else {
                     showAddWidgetError()
@@ -200,8 +200,8 @@ private fun ButtonWidgetConfigureView(
     dynamicFields: List<ActionFieldBinder>,
     onDynamicFieldUpdated: (Int, String) -> Unit,
     domainEntities: List<String>,
-    icon: IIcon,
-    onIconSelected: (IIcon) -> Unit,
+    icon: MdiIcon,
+    onIconSelected: (MdiIcon) -> Unit,
     onAddFieldDialogOkClicked: (Int, ActionFieldBinder) -> Unit,
     label: String,
     onLabelUpdated: (String) -> Unit,
@@ -290,8 +290,8 @@ private fun ButtonWidgetConfigureView(
             )
 
             IconSelector(
-                icon,
-                {
+                icon = icon,
+                onIconSelectorClicked = {
                     showIconDialog = true
                 },
             )
@@ -422,19 +422,19 @@ fun DynamicFieldInput(
 }
 
 @Composable
-fun IconSelector(icon: IIcon, onIconSelectorClicked: () -> Unit, modifier: Modifier = Modifier) {
+fun IconSelector(icon: MdiIcon, onIconSelectorClicked: () -> Unit, modifier: Modifier = Modifier) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Text(text = stringResource(commonR.string.label_icon))
         IconButton(
             onClick = onIconSelectorClicked,
             modifier = Modifier.size(24.dp),
         ) {
-            com.mikepenz.iconics.compose.Image(
-                asset = icon,
+            Image(
+                imageVector = icon.rememberImageVector(),
                 contentDescription = null,
                 colorFilter = ColorFilter.tint(colorResource(commonR.color.colorIcon)),
             )
@@ -570,7 +570,7 @@ private fun ButtonWidgetConfigureScreenPreview() {
             dynamicFields = listOf(ActionFieldBinder("Test Action", "Test", 1)),
             onDynamicFieldUpdated = { i: Int, value: String -> },
             domainEntities = emptyList(),
-            icon = CommunityMaterial.Icon2.cmd_flash,
+            icon = Mdi.Flash,
             onIconSelected = {},
             label = "",
             onLabelUpdated = {},

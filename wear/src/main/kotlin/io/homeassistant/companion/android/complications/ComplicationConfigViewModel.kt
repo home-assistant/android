@@ -4,10 +4,12 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.friendlyName
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.wear.EntityStateComplications
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
@@ -24,6 +26,7 @@ import timber.log.Timber
 class ComplicationConfigViewModel @Inject constructor(
     application: Application,
     favoritesDao: FavoritesDao,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     private val serverManager: ServerManager,
     private val entityStateComplicationsDao: EntityStateComplicationsDao,
 ) : AndroidViewModel(application) {
@@ -40,7 +43,7 @@ class ComplicationConfigViewModel @Inject constructor(
         val entityShowTitle: Boolean = true,
         val entityShowUnit: Boolean = true,
         val entitiesByDomainOrder: List<String> = emptyList(),
-        val entitiesByDomain: Map<String, List<Entity>> = emptyMap(),
+        val entitiesByDomain: Map<String, List<EntityDisplay>> = emptyMap(),
         val favoriteEntityIds: List<String> = emptyList(),
     )
 
@@ -82,7 +85,10 @@ class ComplicationConfigViewModel @Inject constructor(
             try {
                 _viewState.update { it.copy(loadingState = LoadingState.LOADING) }
 
-                val entitiesList = serverManager.integrationRepository().getEntities()
+                val entitiesList = entitiesForDisplayManager
+                    .snapshotInContext(ServerManager.SERVER_ID_ACTIVE)
+                    .awaitLoadedOrNull()
+                    ?.entities
                     ?.sortedBy { it.entityId }
                     .orEmpty()
                 val domainsList = entitiesList.map { it.domain }.distinct()
@@ -120,13 +126,13 @@ class ComplicationConfigViewModel @Inject constructor(
      */
     private fun resolveEntity(
         entityId: String,
-        entitiesList: List<Entity> = _viewState.value.entitiesByDomain.values.flatten(),
+        entitiesList: List<EntityDisplay> = _viewState.value.entitiesByDomain.values.flatten(),
     ): SimplifiedEntity? {
-        val fullEntity = entitiesList.firstOrNull { it.entityId == entityId } ?: return null
+        val item = entitiesList.firstOrNull { it.entityId == entityId } ?: return null
         return SimplifiedEntity(
-            entityId = fullEntity.entityId,
-            friendlyName = fullEntity.friendlyName,
-            icon = fullEntity.attributes["icon"] as? String ?: "",
+            entityId = item.entityId,
+            name = item.name,
+            icon = item.statelessIcon.mdiName,
         )
     }
 

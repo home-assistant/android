@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Briefcase
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -24,7 +26,7 @@ class DevicePolicyManager @Inject constructor(
             "binary_sensor",
             R.string.sensor_name_work_profile,
             R.string.sensor_description_work_profile,
-            "mdi:briefcase",
+            Mdi.Briefcase,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
     }

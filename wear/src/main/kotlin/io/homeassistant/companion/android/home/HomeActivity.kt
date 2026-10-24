@@ -27,10 +27,8 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.tiles.OpenTileSettingsActivity
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @AndroidEntryPoint
 class HomeActivity :
@@ -149,17 +147,7 @@ class HomeActivity :
 
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                launch {
-                    mainViewModel.supportedEntities.collect {
-                        if (entityUpdateJob?.isActive == true) entityUpdateJob?.cancel()
-                        entityUpdateJob = launch { mainViewModel.entityUpdates() }
-                    }
-                }
-                launch { mainViewModel.entityRegistryUpdates() }
-                if (!mainViewModel.mainViewUiState.value.isFavoritesOnly) {
-                    launch { mainViewModel.areaUpdates() }
-                    launch { mainViewModel.deviceUpdates() }
-                }
+                launch { mainViewModel.observeEntities() }
             }
         }
     }
@@ -170,17 +158,6 @@ class HomeActivity :
 
         mainViewModel.initAllSensors()
 
-        lifecycleScope.launch {
-            if (mainViewModel.mainViewUiState.value.loadingState == MainViewModel.LoadingState.READY) {
-                try {
-                    mainViewModel.updateUI()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to update UI")
-                }
-            }
-        }
         if (
             intent.getBooleanExtra(EXTRA_FROM_ONBOARDING, false) &&
             SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU) &&

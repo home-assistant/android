@@ -26,7 +26,7 @@ import okhttp3.OkHttpClient
  *
  * All the method are thread safe.
  *
- * For reference check [Websocket core documentation](https://developers.home-assistant.io/docs/api/websocket/)
+ * For reference check [Websocket core documentation](https://contributors.home-assistant.io/core/internals/websocket-api/)
  */
 internal interface WebSocketCore {
     /**
@@ -50,6 +50,17 @@ internal interface WebSocketCore {
      * @return `true` if the data was sent successfully, `false` otherwise.
      */
     suspend fun sendBytes(data: ByteArray): Boolean
+
+    /**
+     * Sends an application-level ping and verifies that the connection is alive.
+     *
+     * If no pong is received while the connection is believed to be established, this indicates a
+     * silently dropped connection. The function will properly handle this as a closed connection
+     * and try restoring any active subscriptions.
+     *
+     * @return `true` if a pong was received, `false` otherwise.
+     */
+    suspend fun ping(): Boolean
 
     /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to

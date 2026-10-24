@@ -1,5 +1,9 @@
 package io.homeassistant.companion.android.widgets.todo
 
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Bookmark
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.COMPLETED_STATUS
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
@@ -63,14 +67,14 @@ class TodoWidgetStateTest {
             serverId = 1,
             entityId = "41",
         )
-        val entity = fakeServerEntity("41", friendlyName = "home")
+        val displayEntity = fakeEntityDisplay("41", "home")
 
         val todos = listOf(
             TodoWidgetEntity.TodoItem(uid = "1", summary = "Task 1", status = COMPLETED_STATUS),
             TodoWidgetEntity.TodoItem(uid = "2", summary = "Task 2", status = "hello"),
         )
 
-        val result = TodoStateWithData.from(todoEntity, entity, todos)
+        val result = TodoStateWithData.from(todoEntity, displayEntity, todos)
 
         assertEquals(WidgetBackgroundType.DAYNIGHT, result.backgroundType)
         assertEquals("#FFFFFF", result.textColor)
@@ -166,5 +170,9 @@ class TodoWidgetStateTest {
         )
 
         assertFalse(todoState.hasDisplayableItems())
+    }
+
+    private fun fakeEntityDisplay(entityId: String, name: String, icon: MdiIcon? = null): EntityDisplayWithoutContext {
+        return EntityDisplayWithoutContext(entityId, name, icon ?: Mdi.Bookmark)
     }
 }

@@ -20,7 +20,7 @@ object CoroutineDaoFunctionsIssue {
     val ISSUE = Issue.Companion.create(
         id = "CoroutineDaoFunction",
         briefDescription = "DAO functions should suspend, return a Flow, or return a PagingSource",
-        explanation = """All functions in a DAO should suspend, return a Flow, or return a PagingSource 
+        explanation = """All functions in a DAO should suspend, return a Flow, or return a PagingSource
             |to ensure they can be executed properly in coroutines
         """.trimMargin(),
         category = Category.Companion.CORRECTNESS,
@@ -63,7 +63,7 @@ object CoroutineDaoFunctionsIssue {
 }
 
 private fun UClass.isDao(): Boolean {
-    return hasAnnotation("androidx.room.Dao")
+    return hasAnnotation("androidx.room3.Dao")
 }
 
 private fun UMethod.isSuspend(): Boolean {

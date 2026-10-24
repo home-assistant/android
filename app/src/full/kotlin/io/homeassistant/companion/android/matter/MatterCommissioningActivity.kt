@@ -14,10 +14,9 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.home.matter.Matter
 import com.google.android.gms.home.matter.commissioning.SharedDeviceData
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.startLaunchWithNavigateTo
-import io.homeassistant.companion.android.matter.views.MatterCommissioningView
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -39,11 +38,11 @@ class MatterCommissioningActivity : AppCompatActivity() {
         enableEdgeToEdgeCompat()
 
         setContent {
-            HomeAssistantAppTheme {
-                MatterCommissioningView(
+            HATheme {
+                MatterCommissioningScreen(
                     step = viewModel.step,
                     deviceName = deviceName,
-                    servers = viewModel.servers,
+                    serverChooserItems = viewModel.serverChooserItems,
                     onSelectServer = viewModel::checkSupport,
                     onConfirmCommissioning = { startCommissioning() },
                     onClose = { finish() },

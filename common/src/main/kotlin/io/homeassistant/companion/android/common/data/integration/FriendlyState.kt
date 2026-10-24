@@ -19,22 +19,25 @@ import java.util.Locale
  */
 @Immutable
 sealed interface FriendlyState {
-    /** Resolves the display text, localizing with [context]. */
-    fun resolve(context: Context): String
+    /**
+     * Resolves the display text, appending the unit of measurement when [withUnit] is true and
+     * the state carries one ([WithUnit]).
+     */
+    fun resolve(context: Context, withUnit: Boolean = false): String = resolve(context)
 
     /** A translated state, see the `state_*` string resources. */
     data class Resource(@StringRes val resId: Int) : FriendlyState {
-        override fun resolve(context: Context): String = context.getString(resId)
+        override fun resolve(context: Context, withUnit: Boolean): String = context.getString(resId)
     }
 
     /** Text needing no localization, like a precision-formatted number. */
     data class Literal(val value: String) : FriendlyState {
-        override fun resolve(context: Context): String = value
+        override fun resolve(context: Context, withUnit: Boolean): String = value
     }
 
     /** A timestamp state shown relative to now, resolved at render time so it stays current. */
     data class RelativeTime(val epochMillis: Long) : FriendlyState {
-        override fun resolve(context: Context): String = DateUtils.getRelativeTimeSpanString(
+        override fun resolve(context: Context, withUnit: Boolean): String = DateUtils.getRelativeTimeSpanString(
             epochMillis,
             System.currentTimeMillis(),
             0,
@@ -42,9 +45,13 @@ sealed interface FriendlyState {
         ).toString()
     }
 
-    /** A state with its unit of measurement appended. */
+    /**
+     * A state carrying its unit of measurement. Rendering the unit is opt-in: the default [resolve]
+     * leaves it out, `resolve(context, withUnit = true)` appends it.
+     */
     data class WithUnit(val state: FriendlyState, val unit: String) : FriendlyState {
-        override fun resolve(context: Context): String = "${state.resolve(context)} $unit"
+        override fun resolve(context: Context, withUnit: Boolean): String =
+            if (withUnit) "${state.resolve(context)} $unit" else state.resolve(context)
     }
 }
 
@@ -52,7 +59,7 @@ sealed interface FriendlyState {
  * Core [friendlyState] resolution, exposed to display consumers through `EntityDisplayItem.state`.
  * Context-free: the returned [FriendlyState] localizes at render time.
  */
-internal fun Entity.friendlyState(displayPrecision: Int?, appendUnitOfMeasurement: Boolean = false): FriendlyState {
+internal fun Entity.friendlyState(displayPrecision: Int?): FriendlyState {
     val resource = stateResource()
     val friendlyState = when {
         resource != null -> FriendlyState.Resource(resource)
@@ -61,13 +68,8 @@ internal fun Entity.friendlyState(displayPrecision: Int?, appendUnitOfMeasuremen
             ?: FriendlyState.Literal(titleCasedState())
     }
 
-    if (appendUnitOfMeasurement) {
-        val unit = attributes["unit_of_measurement"]?.toString()
-        if (unit?.isNotBlank() == true) {
-            return FriendlyState.WithUnit(friendlyState, unit)
-        }
-    }
-    return friendlyState
+    // The unit is always stored, whether it is displayed is decided when resolving the state
+    return unitOfMeasurement()?.let { FriendlyState.WithUnit(friendlyState, it) } ?: friendlyState
 }
 
 /** The `state_*` string resource translating the state, or null when there is none. */

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util.icondialog
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -20,10 +21,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.ITypeface
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -35,10 +35,10 @@ import kotlinx.coroutines.withContext
  */
 @Composable
 fun IconDialogGrid(
-    icons: List<IIcon>,
+    icons: List<MdiIcon>,
     modifier: Modifier = Modifier,
     tint: Color = MaterialTheme.colors.onSurface,
-    onClick: (IIcon) -> Unit,
+    onClick: (MdiIcon) -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 48.dp),
@@ -47,7 +47,8 @@ fun IconDialogGrid(
         items(icons) { icon ->
             IconButton(onClick = { onClick(icon) }) {
                 Image(
-                    asset = icon,
+                    imageVector = icon.rememberImageVector(),
+                    contentDescription = null,
                     colorFilter = ColorFilter.tint(tint),
                     // https://material.io/design/iconography/system-icons.html#color
                     alpha = 0.54f,
@@ -58,24 +59,22 @@ fun IconDialogGrid(
 }
 
 /**
- * Display a grid of icons, letting the user select one.
- * @param typeface Icon typeface that includes all possible icons.
- * @param searchQuery Search term used to filter icons from the [typeface].
+ * Display a grid of icons from the MDI catalog, letting the user select one.
+ * @param searchQuery Search term used to filter the icons.
  * @param iconFilter Adjust filtering logic for the search process.
  * @param onClick Invoked when the user clicks on the given icon
  */
 @Composable
 fun IconDialogGrid(
-    typeface: ITypeface,
     searchQuery: String,
     modifier: Modifier = Modifier,
     iconFilter: IconFilter = DefaultIconFilter(),
     tint: Color = MaterialTheme.colors.onSurface,
-    onClick: (IIcon) -> Unit,
+    onClick: (MdiIcon) -> Unit,
 ) {
-    var icons by remember { mutableStateOf<List<IIcon>>(emptyList()) }
-    LaunchedEffect(typeface, searchQuery) {
-        icons = withContext(Dispatchers.IO) { iconFilter.queryIcons(typeface, searchQuery) }
+    var icons by remember { mutableStateOf<List<MdiIcon>>(emptyList()) }
+    LaunchedEffect(iconFilter, searchQuery) {
+        icons = withContext(Dispatchers.Default) { iconFilter.queryIcons(searchQuery) }
     }
 
     IconDialogGrid(
@@ -97,7 +96,7 @@ private fun IconDialogGridPreview() {
             shape = MaterialTheme.shapes.medium,
         ) {
             IconDialogGrid(
-                icons = CommunityMaterial.icons.map { name -> CommunityMaterial.getIcon(name) },
+                icons = Mdi.icons.toList(),
                 onClick = {},
             )
         }

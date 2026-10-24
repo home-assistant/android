@@ -2,84 +2,94 @@ package io.homeassistant.companion.android.common.data.keychain
 
 import android.content.Context
 import android.security.KeyChain
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import java.security.PrivateKey
-import java.security.cert.X509Certificate
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-internal class KeyChainRepositoryImpl @Inject constructor(private val prefsRepository: PrefsRepository) :
-    KeyChainRepository {
+internal class KeyChainRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val prefsRepository: PrefsRepository,
+) : KeyChainRepository {
 
+    private val mutex = Mutex()
+
+    /** Written under [mutex]; read lock-free through [provider] from non-suspending contexts like TLS handshakes. */
+    @Volatile
+    private var certificate: ClientCertificate? = null
+
+    /** Only accessed while holding [mutex]. */
     private var alias: String? = null
-    private var key: PrivateKey? = null
-    private var chain: Array<X509Certificate>? = null
+
+    private val provider = object : ClientCertProvider {
+        override val certificate: ClientCertificate?
+            get() = this@KeyChainRepositoryImpl.certificate
+    }
 
     override suspend fun clear() {
-        prefsRepository.saveKeyAlias("")
+        mutex.withLock {
+            prefsRepository.saveKeyAlias("")
+            alias = null
+            certificate = null
+        }
     }
 
-    override suspend fun load(context: Context, alias: String) {
-        this.alias = alias
+    override suspend fun getClientCertProvider(): ClientCertProvider {
+        if (certificate == null) {
+            mutex.withLock {
+                if (certificate == null) {
+                    if (alias == null) {
+                        alias = prefsRepository.getKeyAlias()
+                    }
+                    certificate = loadCertificate()
+                }
+            }
+        }
+        return provider
+    }
+
+    override suspend fun select(alias: String): ClientCertificate? = mutex.withLock {
         prefsRepository.saveKeyAlias(alias)
-        load(context)
+        this.alias = alias
+        loadCertificate().also { certificate = it }
     }
 
-    override suspend fun load(context: Context) = withContext(Dispatchers.IO) {
-        if (alias == null) {
-            alias = prefsRepository.getKeyAlias()
-        }
+    /** Must be called while holding [mutex]; runs the blocking [KeyChain] calls on [Dispatchers.IO]. */
+    private suspend fun loadCertificate(): ClientCertificate? {
+        val alias = alias
+        if (alias.isNullOrEmpty()) return null
 
-        doLoad(context)
-    }
-
-    override suspend fun setData(alias: String, privateKey: PrivateKey, certificateChain: Array<X509Certificate>) {
-        throw UnsupportedOperationException("setData not supported for KeyChainRepositoryImpl")
-    }
-
-    override fun getAlias(): String? {
-        return alias
-    }
-
-    override fun getPrivateKey(): PrivateKey? {
-        return key
-    }
-
-    override fun getCertificateChain(): Array<X509Certificate>? {
-        return chain
-    }
-
-    @Synchronized
-    private fun doLoad(context: Context) {
-        if (alias != null && alias?.isNotEmpty() == true) {
-            if (chain == null) {
-                chain = try {
-                    KeyChain.getCertificateChain(context, alias!!)
-                } catch (t: Throwable) {
-                    when (t) {
-                        is AssertionError,
-                        is Exception,
-                        -> Timber.e(t, "Issue getting certificate chain")
-                        else -> throw t
-                    }
-                    null
-                }
+        return withContext(Dispatchers.IO) {
+            val chain = getOrLogFailure("Issue getting certificate chain") {
+                KeyChain.getCertificateChain(context, alias)
             }
-            if (key == null) {
-                key = try {
-                    KeyChain.getPrivateKey(context, alias!!)
-                } catch (t: Throwable) {
-                    when (t) {
-                        is AssertionError,
-                        is Exception,
-                        -> Timber.e(t, "Issue getting private key")
-                        else -> throw t
-                    }
-                    null
-                }
+            val key = getOrLogFailure("Issue getting private key") {
+                KeyChain.getPrivateKey(context, alias)
+            }
+            if (key != null && !chain.isNullOrEmpty()) {
+                ClientCertificate(key, chain)
+            } else {
+                null
             }
         }
+    }
+
+    /**
+     * [KeyChain] can throw [AssertionError] on some devices, so it is handled like an exception.
+     */
+    private fun <T> getOrLogFailure(message: String, block: () -> T): T? = try {
+        block()
+    } catch (t: Throwable) {
+        when (t) {
+            is AssertionError,
+            is Exception,
+            -> Timber.e(t, message)
+            else -> throw t
+        }
+        null
     }
 }

@@ -8,14 +8,15 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.color.DynamicColors
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Flash
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.MapAnySerializer
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.server.Server
@@ -52,7 +53,7 @@ class ButtonWidgetViewModel @Inject constructor(
         val serverActions: List<Action> = emptyList(),
         val dynamicFields: List<ActionFieldBinder> = emptyList(),
         val domainEntities: List<String> = emptyList(),
-        val selectedIcon: IIcon = CommunityMaterial.Icon2.cmd_flash,
+        val selectedIcon: MdiIcon = Mdi.Flash,
         val selectedIconId: String? = null,
         val label: String = "",
         val selectedBackgroundType: WidgetBackgroundType = if (DynamicColors.isDynamicColorAvailable()) {
@@ -134,7 +135,7 @@ class ButtonWidgetViewModel @Inject constructor(
 
     private suspend fun maybeLoadPreviousState(widgetId: Int) {
         buttonWidgetDao.get(widgetId)?.let { widget ->
-            val icon = CommunityMaterial.getIconByMdiName(widget.iconName)
+            val icon = widget.iconName?.let { Mdi.fromHaName(it) } ?: Mdi.Flash
             val colorIndex = supportedTextColors.indexOf(widget.textColor)
             val action = "${widget.domain}.${widget.service}"
             updateActionText(action)
@@ -155,7 +156,7 @@ class ButtonWidgetViewModel @Inject constructor(
         serverActions: List<Action>? = null,
         dynamicFields: List<ActionFieldBinder>? = null,
         domainEntities: List<String>? = null,
-        selectedIcon: IIcon? = null,
+        selectedIcon: MdiIcon? = null,
         selectedIconId: String? = null,
         label: String? = null,
         selectedBackgroundType: WidgetBackgroundType? = null,
@@ -249,8 +250,8 @@ class ButtonWidgetViewModel @Inject constructor(
         updateUiState(dynamicFields = updatedFields)
     }
 
-    fun selectIcon(icon: IIcon?) {
-        updateUiState(selectedIcon = icon, selectedIconId = icon?.mdiName)
+    fun selectIcon(icon: MdiIcon?) {
+        updateUiState(selectedIcon = icon ?: Mdi.Flash, selectedIconId = icon?.mdiName)
     }
 
     fun updateSelectedBackgroundType(backgroundType: WidgetBackgroundType) {

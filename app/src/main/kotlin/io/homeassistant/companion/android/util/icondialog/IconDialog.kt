@@ -14,21 +14,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @Composable
 fun IconDialogContent(
     modifier: Modifier = Modifier,
     iconFilter: IconFilter = DefaultIconFilter(),
-    onSelect: (IIcon) -> Unit,
+    onSelect: (MdiIcon) -> Unit,
 ) {
     var searchQuery by remember { mutableStateOf("") }
     Column(modifier = modifier) {
         IconDialogSearch(value = searchQuery, onValueChange = { searchQuery = it })
         IconDialogGrid(
-            typeface = CommunityMaterial,
             searchQuery = searchQuery,
             iconFilter = iconFilter,
             onClick = onSelect,
@@ -38,7 +36,7 @@ fun IconDialogContent(
 
 @Composable
 fun IconDialog(
-    onSelect: (IIcon) -> Unit,
+    onSelect: (MdiIcon) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     iconFilter: IconFilter = DefaultIconFilter(),

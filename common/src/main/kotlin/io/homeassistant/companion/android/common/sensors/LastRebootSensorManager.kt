@@ -4,11 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Restart
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
-import io.homeassistant.companion.android.database.sensor.SensorSetting
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -37,10 +38,14 @@ class LastRebootSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_last_reboot,
             commonR.string.sensor_description_last_reboot,
-            "mdi:restart",
+            Mdi.Restart,
             deviceClass = "timestamp",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+            settings = listOf(
+                Setting.Number(SETTING_DEADBAND, DEFAULT_DEADBAND),
+            ),
         )
+        private const val DEFAULT_DEADBAND = 60000
     }
 
     override fun docsLink(): String {
@@ -73,13 +78,9 @@ class LastRebootSensorManager @Inject constructor(
 
         val sensorRepository = sensorRepository
         val fullSensor = sensorRepository.getFull(lastRebootSensor.id).toSensorWithAttributes()
-        val sensorSetting = sensorRepository.getSettings(lastRebootSensor.id)
         val lastTimeMillis =
             fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
-        val settingDeadband = sensorSetting.firstOrNull { it.name == SETTING_DEADBAND }?.value?.toIntOrNull() ?: 60000
-        sensorRepository.add(
-            SensorSetting(lastRebootSensor.id, SETTING_DEADBAND, settingDeadband.toString(), SensorSettingType.NUMBER),
-        )
+        val settingDeadband = getNumberSetting(lastRebootSensor, SETTING_DEADBAND)
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()
             val diffMillis = (timeInMillis - lastTimeMillis).absoluteValue

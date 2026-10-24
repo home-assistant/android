@@ -15,9 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -37,6 +34,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -47,8 +48,10 @@ import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState.Loaded
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -253,13 +256,12 @@ private fun ServerSelector(
         label = stringResource(commonR.string.server_select),
         placeholder = stringResource(commonR.string.server_select),
         modifier = Modifier.formControlWidth(),
-        enabled = items.isNotEmpty(),
     )
 }
 
 @Composable
 private fun EntityPickerSection(
-    displayEntities: EntityDisplayState,
+    displayEntities: EntityDisplayState<EntityDisplayWithContext>,
     selectedEntityId: String?,
     onEntitySelected: (String?) -> Unit,
 ) {
@@ -430,7 +432,7 @@ private fun AttributeSelector(
                     enabled = customAttribute.isNotBlank(),
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        imageVector = Mdi.Plus.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.widget_attribute_add),
                     )
                 }
@@ -466,7 +468,7 @@ private fun AttributeChips(attributeIds: List<String>, selected: Boolean, onClic
                 text = attributeId,
                 onClick = { onClick(attributeId) },
                 selected = selected,
-                trailingIcon = if (selected) Icons.Default.Close else Icons.Default.Add,
+                trailingIcon = if (selected) Mdi.Close.rememberImageVector() else Mdi.Plus.rememberImageVector(),
                 trailingIconContentDescription = stringResource(
                     if (selected) commonR.string.search_clear_selection else commonR.string.widget_attribute_add,
                 ),
@@ -507,9 +509,9 @@ private val previewEntityWidgetConfigureState = EntityWidgetConfigureState(
     serversDropdownItems = listOf(previewServer1, previewServer2).map {
         HADropdownItem(key = it.id, label = it.friendlyName)
     },
-    entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem.from(previewEntity1))),
+    entityDisplayState = Loaded(listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(previewEntity1)))),
     selectedEntityId = previewEntity1.entityId,
-    availableAttributes = listOf("brightness", "friendly_name"),
+    availableAttributes = listOf("brightness", "power"),
     selectedAttributeIds = listOf("brightness"),
     label = "Office light",
     textSize = "30",

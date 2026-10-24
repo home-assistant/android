@@ -11,6 +11,10 @@ import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -42,7 +46,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -51,7 +54,6 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.graphics.ColorUtils
 import androidx.core.util.TypedValueCompat.pxToDp
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -67,6 +69,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.compose.util.isLight
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
@@ -104,6 +107,9 @@ import timber.log.Timber
 
 /** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
 private const val MINIMUM_GESTURE_VELOCITY = 75f
+
+/** Duration of the loading overlay fade-out once the frontend is ready. */
+private const val LOADING_OVERLAY_FADE_OUT_MILLIS = 350
 
 /** Test tag applied to the WebView custom view fullscreen overlay. */
 @VisibleForTesting
@@ -170,7 +176,8 @@ internal fun FrontendScreen(
     FrontendScreenContent(
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
-        webViewClient = viewModel.webViewClient,
+        getWebViewClient = viewModel::getWebViewClient,
+        prepareUrlLoad = viewModel::prepareUrlLoad,
         webChromeClient = webChromeClient,
         customView = customView,
         frontendJsCallback = viewModel.frontendJsCallback,
@@ -215,7 +222,7 @@ internal fun FrontendScreen(
 @Composable
 internal fun FrontendScreenContent(
     viewState: FrontendViewState,
-    webViewClient: WebViewClient,
+    getWebViewClient: suspend () -> WebViewClient,
     webChromeClient: WebChromeClient,
     frontendJsCallback: FrontendJsCallback,
     onBlockInsecureRetry: () -> Unit,
@@ -255,6 +262,7 @@ internal fun FrontendScreenContent(
     onImprovDismiss: () -> Unit = {},
     improvScanRequested: Boolean = false,
     processImprovScanRequests: suspend () -> Unit = {},
+    prepareUrlLoad: suspend (String) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
     val content = (viewState as? FrontendViewState.Content)
@@ -269,6 +277,8 @@ internal fun FrontendScreenContent(
     FrontendScreenEffects(
         webView = webView,
         url = viewState.url,
+        getWebViewClient = getWebViewClient,
+        prepareUrlLoad = prepareUrlLoad,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
         pendingFileChooser = pendingFileChooser,
@@ -290,7 +300,6 @@ internal fun FrontendScreenContent(
         // Always render WebView at base layer
         SafeHAWebView(
             onWebViewCreated = { webView = it },
-            webViewClient = webViewClient,
             webChromeClient = webChromeClient,
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
@@ -353,6 +362,8 @@ private fun FrontendScreenHandlers(pendingPermissionRequest: PermissionRequest?,
 private fun FrontendScreenEffects(
     webView: WebView?,
     url: String,
+    getWebViewClient: suspend () -> WebViewClient,
+    prepareUrlLoad: suspend (String) -> Unit,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
     pendingFileChooser: FileChooserRequest?,
@@ -384,6 +395,8 @@ private fun FrontendScreenEffects(
     WebViewEffects(
         webView = webView,
         url = url,
+        getWebViewClient = getWebViewClient,
+        prepareUrlLoad = prepareUrlLoad,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
@@ -448,7 +461,9 @@ private fun StateOverlay(
     when (viewState) {
         is FrontendViewState.LoadServer,
         is FrontendViewState.Loading,
-        -> LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
+        -> {
+            // Loading overlay rendered below so it can fade out when leaving these states
+        }
 
         is FrontendViewState.Content -> {
             // No overlay for content state to show the underlying WebView
@@ -477,6 +492,16 @@ private fun StateOverlay(
             onErrorAction = onErrorAction,
             onOpenExternalLink = onOpenExternalLink,
         )
+    }
+
+    // The loading overlay is rendered on top of the `when` so that on leaving the loading states it
+    // fades out over.
+    AnimatedVisibility(
+        visible = viewState is FrontendViewState.LoadServer || viewState is FrontendViewState.Loading,
+        enter = EnterTransition.None,
+        exit = fadeOut(animationSpec = tween(durationMillis = LOADING_OVERLAY_FADE_OUT_MILLIS)),
+    ) {
+        LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault), showBrand = true)
     }
 }
 
@@ -565,7 +590,6 @@ private fun ErrorOverlay(
 @Composable
 private fun SafeHAWebView(
     onWebViewCreated: (WebView) -> Unit,
-    webViewClient: WebViewClient,
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
     autoPlayVideoEnabled: Boolean,
@@ -613,7 +637,6 @@ private fun SafeHAWebView(
                     .background(Color.Transparent),
                 configure = {
                     configureForFrontend(
-                        webViewClient = webViewClient,
                         webChromeClient = webChromeClient,
                         onWebViewCreated = onWebViewCreated,
                         onDownloadRequested = onDownloadRequested,
@@ -660,7 +683,6 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
  */
 @SuppressLint("ClickableViewAccessibility")
 private fun WebView.configureForFrontend(
-    webViewClient: WebViewClient,
     webChromeClient: WebChromeClient?,
     onWebViewCreated: (WebView) -> Unit,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit,
@@ -668,8 +690,6 @@ private fun WebView.configureForFrontend(
     autoPlayVideoEnabled: Boolean,
 ) {
     onWebViewCreated(this)
-
-    this.webViewClient = webViewClient
 
     webChromeClient?.let { this.webChromeClient = it }
 
@@ -715,13 +735,19 @@ private fun WebView.configureForFrontend(
 private fun WebViewEffects(
     webView: WebView?,
     url: String,
+    getWebViewClient: suspend () -> WebViewClient,
+    prepareUrlLoad: suspend (String) -> Unit,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
     autoPlayVideoEnabled: Boolean,
 ) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
+            webView.webViewClient = getWebViewClient()
             frontendJsCallback.attachToWebView(webView)
+            // Must run after the WebViewClient is set and before loadUrl, see
+            // FrontendViewModel.prepareUrlLoad.
+            prepareUrlLoad(url)
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
         }
@@ -819,9 +845,6 @@ private fun SystemBarsAppearanceEffect(statusBarColor: Color?, navigationBarColo
         }
     }
 }
-
-/** Whether this color is light enough that dark foreground icons are needed for contrast. */
-private fun Color.isLight(): Boolean = ColorUtils.calculateLuminance(toArgb()) >= 0.5
 
 /**
  * Reports the device safe-area insets (system bars and display cutouts, in dp) to
@@ -954,7 +977,7 @@ private fun FrontendScreenLoadingPreview() {
                 serverId = 1,
                 url = "https://example.com",
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},
@@ -985,7 +1008,7 @@ private fun FrontendScreenErrorPreview() {
                     rawErrorType = "HostLookupError",
                 ),
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},
@@ -1012,7 +1035,7 @@ private fun FrontendScreenInsecurePreview() {
                 missingHomeSetup = true,
                 missingLocation = true,
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},
@@ -1037,7 +1060,7 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
             viewState = FrontendViewState.SecurityLevelRequired(
                 serverId = 1,
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},

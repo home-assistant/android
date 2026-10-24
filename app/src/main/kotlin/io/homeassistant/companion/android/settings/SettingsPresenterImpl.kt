@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
-import io.homeassistant.companion.android.util.ChangeLog
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +38,6 @@ class SettingsPresenterImpl @Inject constructor(
     private val prefsRepository: PrefsRepository,
     private val nightModeManager: NightModeManager,
     private val langsManager: LanguagesManager,
-    private val changeLog: ChangeLog,
     private val settingsDao: SettingsDao,
     private val defaultAssistantManager: DefaultAssistantManager,
 ) : PreferenceDataStore(),
@@ -158,10 +156,6 @@ class SettingsPresenterImpl @Inject constructor(
             Timber.d(e, "Unable to get rate limits")
             return@withContext null
         }
-    }
-
-    override suspend fun showChangeLog(context: Context) {
-        changeLog.showChangeLog(context, true)
     }
 
     override suspend fun isChangeLogPopupEnabled(): Boolean {

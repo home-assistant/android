@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ChevronDown
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.theme.HABorderWidth
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
@@ -89,7 +90,7 @@ private fun ExpandableSectionTitle(isExpanded: Boolean, title: String, modifier:
         horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE3),
     ) {
         Icon(
-            imageVector = Icons.Rounded.KeyboardArrowDown,
+            imageVector = Mdi.ChevronDown.rememberImageVector(),
             tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
             contentDescription = null, // The whole section is already clickable
             modifier = Modifier.graphicsLayer { rotationZ = rotationAngle },

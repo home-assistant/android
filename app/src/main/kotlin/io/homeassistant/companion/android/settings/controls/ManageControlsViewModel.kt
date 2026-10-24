@@ -16,9 +16,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -39,7 +39,7 @@ import kotlinx.coroutines.withContext
 class ManageControlsViewModel @VisibleForTesting constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     private val application: Application,
     private val backgroundDispatcher: CoroutineDispatcher,
 ) : AndroidViewModel(application) {
@@ -48,9 +48,9 @@ class ManageControlsViewModel @VisibleForTesting constructor(
     constructor(
         serverManager: ServerManager,
         prefsRepository: PrefsRepository,
-        getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+        entitiesForDisplayManager: EntitiesForDisplayManager,
         application: Application,
-    ) : this(serverManager, prefsRepository, getEntitiesForDisplay, application, Dispatchers.Default)
+    ) : this(serverManager, prefsRepository, entitiesForDisplayManager, application, Dispatchers.Default)
 
     var panelEnabled by mutableStateOf(false)
         private set
@@ -63,7 +63,7 @@ class ManageControlsViewModel @VisibleForTesting constructor(
     var entitiesLoaded by mutableStateOf(false)
         private set
 
-    val entitiesList = mutableStateMapOf<Int, List<EntityDisplayItem>>()
+    val entitiesList = mutableStateMapOf<Int, List<EntityDisplayWithContext>>()
 
     var panelSetting by mutableStateOf<Pair<String?, Int>?>(null)
         private set
@@ -106,7 +106,7 @@ class ManageControlsViewModel @VisibleForTesting constructor(
                 async {
                     // The flow completes with a terminal state after Loading, failures surface as Error
                     // and leave the server out of the list to not block configuration of other server's entities
-                    val displayState = getEntitiesForDisplay.snapshot(server.id) {
+                    val displayState = entitiesForDisplayManager.snapshotInContext(server.id) {
                         it.domain in supportedDomains
                     }.last()
                     if (displayState is EntityDisplayState.Loaded) {

@@ -5,17 +5,20 @@ import androidx.compose.runtime.Stable
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.EntityExt
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
+
+private const val DEFAULT_TEXT_SIZE = "30"
 
 @Stable
 internal data class EntityWidgetConfigureState(
     val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
     val serversDropdownItems: List<HADropdownItem<Int>> = emptyList(),
-    val entityDisplayState: EntityDisplayState = EntityDisplayState.Loading,
+    val entityDisplayState: EntityDisplayState<EntityDisplayWithContext> = EntityDisplayState.Loading,
     val selectedEntityId: String? = null,
     val availableAttributes: List<String> = emptyList(),
     val selectedAttributeIds: List<String> = emptyList(),
@@ -41,8 +44,8 @@ internal data class EntityWidgetConfigureState(
 
     val unselectedAttributes = availableAttributes.filterNot(selectedAttributeIds::contains)
 
-    val selectedEntity: EntityDisplayItem? = selectedEntityId
-        ?.let { (entityDisplayState as? EntityDisplayState.Loaded)?.entity(it) }
+    val selectedEntity: EntityDisplay? = selectedEntityId
+        ?.let { (entityDisplayState as? EntityDisplayState.Loaded<*>)?.entity(it) }
 
     val showConfiguration = selectedEntityId != null
 
@@ -64,5 +67,3 @@ internal data class EntityWidgetConfigureState(
         entityDisplayState = EntityDisplayState.Loading,
     )
 }
-
-internal const val DEFAULT_TEXT_SIZE = "30"

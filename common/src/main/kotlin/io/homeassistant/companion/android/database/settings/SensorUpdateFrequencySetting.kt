@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.database.settings
 
-import androidx.room.TypeConverter
+import androidx.room3.ColumnTypeConverter
 
 enum class SensorUpdateFrequencySetting {
     NORMAL,
@@ -8,11 +8,11 @@ enum class SensorUpdateFrequencySetting {
     FAST_ALWAYS,
 }
 
-class LocalSensorSettingConverter {
-    @TypeConverter
+class LocalSensorSettingColumnTypeConverter {
+    @ColumnTypeConverter
     fun toLocalSensorSetting(setting: String): SensorUpdateFrequencySetting =
         SensorUpdateFrequencySetting.valueOf(setting)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromLocalSensorSetting(setting: SensorUpdateFrequencySetting): String = setting.name
 }

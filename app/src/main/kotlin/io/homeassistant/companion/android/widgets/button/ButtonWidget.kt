@@ -59,6 +59,7 @@ class ButtonWidget : BaseGlanceEntityWidgetReceiver<ButtonWidgetEntity, ButtonWi
         val intent = Intent(context, WidgetAuthenticationActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        context.startActivity(intent)
     }
 
     private suspend fun callConfiguredAction(context: Context, appWidgetId: Int) {

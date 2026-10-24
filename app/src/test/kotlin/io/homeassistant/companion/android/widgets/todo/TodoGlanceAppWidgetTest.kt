@@ -44,6 +44,23 @@ class TodoGlanceAppWidgetTest {
     }
 
     @Test
+    fun `Given preview state when ScreenForState then it displays the sample list`() = runGlanceAppWidgetUnitTest {
+        setContext(context)
+
+        val state = previewTodoState(context)
+
+        provideComposable {
+            ScreenForState(state)
+        }
+
+        onNode(hasTestTag("Screen")).assertExists()
+        onNode(hasTextEqualTo(context.getString(R.string.widget_todo_preview_list_name))).assertExists()
+        state.todoItems.forEach { item ->
+            onNode(hasTextEqualTo(item.name)).assertExists()
+        }
+    }
+
+    @Test
     fun `Given EmptyState when ScreenForState then it displays EmptyScreen`() = runGlanceAppWidgetUnitTest {
         setContext(context)
 

@@ -10,7 +10,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import javax.inject.Singleton
@@ -24,10 +23,7 @@ import timber.log.Timber
 object ApplicationModule {
     @Provides
     @Singleton
-    fun providesAppVersionProviders(): AppVersionProvider {
-        // Unfortunately hilt doesn't support value class yet so we need a provider
-        return AppVersionProvider { AppVersion.from(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE) }
-    }
+    fun providesAppVersion(): AppVersion = AppVersion(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
 
     @Provides
     @Singleton

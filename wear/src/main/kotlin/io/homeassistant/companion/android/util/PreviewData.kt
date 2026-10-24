@@ -6,12 +6,10 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import java.time.LocalDateTime
 
 val attributes: Map<String, Any> = mapOf(
-    "friendly_name" to "Testing",
     "icon" to "mdi:cellphone",
 )
 
 val lightAttributes: Map<String, Any> = mapOf(
-    "friendly_name" to "Light",
     "icon" to "mdi:light-bulb",
     "supported_color_modes" to listOf("color_temp", "hs"),
     "supported_features" to 36,
@@ -24,7 +22,6 @@ val lightAttributes: Map<String, Any> = mapOf(
 )
 
 val fanAttributes: Map<String, Any> = mapOf(
-    "friendly_name" to "Fan",
     "icon" to "mdi:fan",
     "supported_features" to 1,
     "percentage" to 20,
@@ -45,10 +42,10 @@ val previewEntityList = mapOf(
 val previewFavoritesList = listOf("light.first", "scene.first")
 
 val simplifiedEntity =
-    SimplifiedEntity(previewEntity1.entityId, attributes["friendly_name"].toString(), attributes["icon"].toString())
+    SimplifiedEntity(previewEntity1.entityId, previewEntity1.entityId, attributes["icon"].toString())
 
-val playPreviewEntityScene1 = Entity("scene.first", "on", mapOf("friendly_name" to "Cleaning mode"), dateTime, dateTime)
-val playPreviewEntityScene2 = Entity("scene.second", "on", mapOf("friendly_name" to "Colorful"), dateTime, dateTime)
-val playPreviewEntityScene3 = Entity("scene.third", "on", mapOf("friendly_name" to "Goodbye"), dateTime, dateTime)
+val playPreviewEntityScene1 = Entity("scene.first", "on", emptyMap(), dateTime, dateTime)
+val playPreviewEntityScene2 = Entity("scene.second", "on", emptyMap(), dateTime, dateTime)
+val playPreviewEntityScene3 = Entity("scene.third", "on", emptyMap(), dateTime, dateTime)
 
 val sensorList = listOf(BatterySensorManager.isChargingState)

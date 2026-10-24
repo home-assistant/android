@@ -42,7 +42,7 @@ val frontendExternalBusJson = Json(kotlinJsonMapper) {
  * Messages are serialized/deserialized using kotlinx.serialization with polymorphic support,
  * allowing graceful handling of unknown message types from newer Home Assistant versions.
  *
- * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus">External bus documentation</a>
+ * @see <a href="https://contributors.home-assistant.io/frontend/reference/external-bus/">External bus documentation</a>
  */
 @ViewModelScoped
 class FrontendExternalBusRepository @Inject constructor() {
@@ -101,7 +101,7 @@ class FrontendExternalBusRepository @Inject constructor() {
     suspend fun evaluateScript(script: String): String? {
         val action = WebViewAction.EvaluateScript(script)
         actionsFlow.emit(action)
-        return action.result.await()
+        return action.await()
     }
 
     /**

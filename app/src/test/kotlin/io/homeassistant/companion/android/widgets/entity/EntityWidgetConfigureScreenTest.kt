@@ -21,8 +21,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import java.time.LocalDateTime
@@ -245,8 +246,8 @@ class EntityWidgetConfigureScreenTest {
     fun `Given an unselected attribute when its chip is clicked then onAttributeAdded is triggered`() {
         composeTestRule.apply {
             testScreen(configuredState) {
-                onNodeWithText("friendly_name").performScrollTo().performClick()
-                assertEquals("friendly_name", attributeAdded)
+                onNodeWithText("power").performScrollTo().performClick()
+                assertEquals("power", attributeAdded)
             }
         }
     }
@@ -317,7 +318,7 @@ class EntityWidgetConfigureScreenTest {
         val ENTITY = Entity(
             entityId = "light.office",
             state = "on",
-            attributes = mapOf("friendly_name" to "Office light"),
+            attributes = mapOf("power" to "50W"),
             lastChanged = LocalDateTime.MIN,
             lastUpdated = LocalDateTime.MIN,
         )
@@ -325,12 +326,12 @@ class EntityWidgetConfigureScreenTest {
         val newWidgetState = EntityWidgetConfigureState(
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
-            entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem.from(ENTITY))),
+            entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayWithContext(EntityDisplayWithoutContext(ENTITY)))),
         )
 
         val configuredState = newWidgetState.copy(
             selectedEntityId = ENTITY.entityId,
-            availableAttributes = listOf("brightness", "friendly_name"),
+            availableAttributes = listOf("brightness", "power"),
             selectedAttributeIds = listOf("brightness"),
             label = "Office light",
             stateSeparator = " - ",

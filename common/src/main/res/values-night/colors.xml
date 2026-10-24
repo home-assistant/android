@@ -18,7 +18,8 @@
     <color name="colorWidgetButtonBackground">#1c1c1c</color>
     <color name="colorWidgetButtonLabel">@color/colorWidgetButtonLabelWhite</color>
     <color name="colorActionBarPopupBackground">#2B2B2B</color>
-    <color name="colorLaunchScreenBackground">#111111</color>
+    <!-- Must match the design system colorSurfaceDefault (HAColors.Neutral10) -->
+    <color name="colorLaunchScreenBackground">#202020</color>
     <color name="colorCodeBackground">#282828</color>
     <color name="colorAlertInfo">#182b35</color>
     <color name="colorAlertWarning">#382d18</color>

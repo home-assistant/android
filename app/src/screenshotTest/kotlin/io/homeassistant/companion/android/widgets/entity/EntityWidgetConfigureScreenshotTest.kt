@@ -6,8 +6,9 @@ import androidx.compose.runtime.remember
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.util.compose.HAPreviews
@@ -23,7 +24,7 @@ class EntityWidgetConfigureScreenshotTest {
     fun `EntityWidgetConfigureContent selected entity`() {
         HAThemeForPreview {
             EntityWidgetConfigureContent(
-                state = previewEntityWidgetConfigureState,
+                state = previewConfigureState,
                 snackbarHostState = remember { SnackbarHostState() },
                 canNavigateBack = false,
                 onNavigate = {},
@@ -51,7 +52,10 @@ class EntityWidgetConfigureScreenshotTest {
     fun `EntityWidgetConfigureContent no selected entity`() {
         HAThemeForPreview {
             EntityWidgetConfigureContent(
-                state = previewEntityWidgetConfigureState.copy(selectedEntityId = null),
+                state = previewConfigureState.copy(
+                    serversDropdownItems = previewConfigureState.serversDropdownItems.take(1),
+                    selectedEntityId = null,
+                ),
                 snackbarHostState = remember { SnackbarHostState() },
                 canNavigateBack = false,
                 onNavigate = {},
@@ -74,14 +78,23 @@ class EntityWidgetConfigureScreenshotTest {
     }
 }
 
-private val previewEntityWidgetConfigureState = EntityWidgetConfigureState(
+private val previewConfigureState = EntityWidgetConfigureState(
     selectedServerId = previewServer1.id,
     serversDropdownItems = listOf(previewServer1, previewServer2).map {
         HADropdownItem(key = it.id, label = it.friendlyName)
     },
-    entityDisplayState = EntityDisplayState.Loaded(listOf(EntityDisplayItem.from(previewEntity1))),
+    entityDisplayState = EntityDisplayState.Loaded(
+        listOf(
+            EntityDisplayWithContext(
+                EntityDisplayWithoutContext(
+                    previewEntity1,
+                    name = "Preview Entity 1",
+                ),
+            ),
+        ),
+    ),
     selectedEntityId = previewEntity1.entityId,
-    availableAttributes = listOf("brightness", "friendly_name"),
+    availableAttributes = listOf("brightness", "power"),
     selectedAttributeIds = listOf("brightness"),
     label = "Office light",
     textSize = "30",

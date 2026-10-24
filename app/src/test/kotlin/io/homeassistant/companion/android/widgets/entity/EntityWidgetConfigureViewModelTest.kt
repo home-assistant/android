@@ -4,9 +4,10 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -31,6 +32,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 
+/** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
+private const val BLACK_HEX = "#3A3A3A"
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class EntityWidgetConfigureViewModelTest {
@@ -38,7 +42,7 @@ class EntityWidgetConfigureViewModelTest {
     private val dao = mockk<StaticWidgetDao>(relaxUnitFun = true)
     private val integrationRepository = mockk<IntegrationRepository>()
     private val serverManager = mockk<ServerManager>()
-    private val getEntitiesForDisplay = mockk<GetEntitiesForDisplayUseCase>()
+    private val entitiesForDisplayManager = mockk<EntitiesForDisplayManager>()
 
     private val widgetId = 42
     private val serverId = 1
@@ -60,7 +64,7 @@ class EntityWidgetConfigureViewModelTest {
         coEvery { serverManager.getServer() } returns server
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { dao.get(any()) } returns null
-        every { getEntitiesForDisplay(any(), any<(Entity) -> Boolean>()) } returns flowOf(displayStateOf(entity.toDisplayItem("Office light")))
+        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns flowOf(displayStateOf(entity.toDisplayItem("Office light")))
     }
 
     @Test
@@ -74,7 +78,7 @@ class EntityWidgetConfigureViewModelTest {
         assertTrue(state.isUpdateWidget)
         assertEquals(serverId, state.selectedServerId)
         assertEquals(entity.entityId, state.selectedEntityId)
-        assertEquals(listOf("brightness", "friendly_name"), state.selectedAttributeIds)
+        assertEquals(listOf("brightness", "power"), state.selectedAttributeIds)
         assertEquals("Office light", state.label)
         assertEquals("28", state.textSize)
         assertEquals(" - ", state.stateSeparator)
@@ -145,7 +149,7 @@ class EntityWidgetConfigureViewModelTest {
     fun `Given a generated label when entity changes then label follows the selected entity`() = runTest {
         val secondEntity = createEntity(entityId = "switch.fan", attributes = emptyMap())
         coEvery { integrationRepository.getEntity(secondEntity.entityId) } returns secondEntity
-        every { getEntitiesForDisplay(any(), any<(Entity) -> Boolean>()) } returns
+        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns
             flowOf(displayStateOf(entity.toDisplayItem("Office light"), secondEntity.toDisplayItem("Fan")))
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -192,12 +196,12 @@ class EntityWidgetConfigureViewModelTest {
     fun `Given custom attributes when attributes are added then input is parsed and cleared`() = runTest {
         val viewModel = createViewModel(entity.entityId)
         viewModel.onAttributeAdded("brightness")
-        viewModel.onCustomAttributeChanged("friendly_name, unit_of_measurement, brightness")
+        viewModel.onCustomAttributeChanged("power, unit_of_measurement, brightness")
 
         viewModel.onCustomAttributesAdded()
 
         val state = viewModel.state.value
-        assertEquals(listOf("brightness", "friendly_name", "unit_of_measurement"), state.selectedAttributeIds)
+        assertEquals(listOf("brightness", "power", "unit_of_measurement"), state.selectedAttributeIds)
         assertEquals("", state.customAttribute)
     }
 
@@ -224,7 +228,7 @@ class EntityWidgetConfigureViewModelTest {
     private fun createViewModel(preselectedEntityId: String? = null) = EntityWidgetConfigureViewModel(
         staticWidgetDao = dao,
         serverManager = serverManager,
-        getEntitiesForDisplay = getEntitiesForDisplay,
+        entitiesForDisplayManager = entitiesForDisplayManager,
         widgetId = widgetId,
         preselectedEntityId = preselectedEntityId,
     )
@@ -233,7 +237,7 @@ class EntityWidgetConfigureViewModelTest {
         id = widgetId,
         serverId = serverId,
         entityId = entity.entityId,
-        attributeIds = "brightness,friendly_name",
+        attributeIds = "brightness,power",
         label = "Office light",
         textSize = 28F,
         stateSeparator = " - ",
@@ -244,21 +248,16 @@ class EntityWidgetConfigureViewModelTest {
         textColor = BLACK_HEX,
     )
 
-    companion object {
-        /** Hex of `colorWidgetButtonLabelBlack`, which is what the widget persists. */
-        private const val BLACK_HEX = "#3A3A3A"
+    private fun createEntity(entityId: String, attributes: Map<String, Any?>) = Entity(
+        entityId = entityId,
+        state = "on",
+        attributes = attributes,
+        lastChanged = LocalDateTime.MIN,
+        lastUpdated = LocalDateTime.MIN,
+    )
 
-        private fun displayStateOf(vararg items: EntityDisplayItem) = EntityDisplayState.Loaded(items.toList())
+    private fun displayStateOf(vararg items: EntityDisplayWithContext) = EntityDisplayState.Loaded(items.toList())
 
-        /** Display name comes from the entity registry in production, so it is set explicitly here. */
-        private fun Entity.toDisplayItem(name: String) = EntityDisplayItem.from(this).copy(name = name)
-
-        private fun createEntity(entityId: String, attributes: Map<String, Any?>) = Entity(
-            entityId = entityId,
-            state = "on",
-            attributes = attributes,
-            lastChanged = LocalDateTime.MIN,
-            lastUpdated = LocalDateTime.MIN,
-        )
-    }
+    /** Display name comes from the entity registry in production, so it is set explicitly here. */
+    private fun Entity.toDisplayItem(name: String) = EntityDisplayWithContext(EntityDisplayWithoutContext(this, name = name))
 }

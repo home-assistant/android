@@ -191,9 +191,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
         // Fall back to first available model if none selected
         val availableModels = assistConfigManager.getAvailableModels()
-        if (availableModels.isEmpty()) {
-            throw IllegalStateException("No wake word models found in assets")
-        }
+        check(availableModels.isNotEmpty()) { "No wake word models found in assets" }
 
         val fallbackModel = availableModels.first()
         Timber.d("No model selected, using fallback: ${fallbackModel.wakeWord}")

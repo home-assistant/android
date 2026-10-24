@@ -15,7 +15,7 @@ import kotlinx.serialization.modules.SerializersModule
  * and the Android app, allowing the frontend to request native functionality like
  * NFC tag writing, Matter commissioning, haptic feedback, etc.
  *
- * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus">External bus documentation</a>
+ * @see <a href="https://contributors.home-assistant.io/frontend/reference/external-bus/">External bus documentation</a>
  * @see <a href="https://github.com/home-assistant/frontend/blob/dev/src/external_app/external_messaging.ts">Frontend implementation</a>
  */
 @Serializable
@@ -76,6 +76,15 @@ data class ConnectionStatusPayload(val event: String) {
     val isConnected: Boolean
         get() = event == "connected"
 }
+
+/**
+ * Message indicating the frontend has fully rendered and can be displayed.
+ *
+ * Sent once the frontend removes its launch screen. No response is expected for this message.
+ */
+@Serializable
+@SerialName("frontend/loaded")
+data class FrontendLoaded(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
  * Message requesting the app's configuration and capabilities.
@@ -281,7 +290,7 @@ data class EntityAddToPayload(
  * The app is expected to run the commissioning flow.
  *
  * Will not be sent by the frontend when the device reports
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canCommissionMatter] = `false`.
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canCommissionMatter] = `false`.
  */
 @Serializable
 @SerialName("matter/commission")
@@ -296,7 +305,7 @@ data class MatterCommissionMessage(override val id: Int? = null) : IncomingExter
  * [id] (success or failure).
  *
  * Will not be sent by the frontend when the device reports
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canImportThreadCredentials] = `false`.
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canImportThreadCredentials] = `false`.
  */
 @Serializable
 @SerialName("thread/import_credentials")

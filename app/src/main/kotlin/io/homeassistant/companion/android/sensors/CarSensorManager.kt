@@ -12,6 +12,15 @@ import androidx.car.app.hardware.info.Speed
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Barrel
+import io.github.timoptr.mdiicons.generated.CarBattery
+import io.github.timoptr.mdiicons.generated.CarElectric
+import io.github.timoptr.mdiicons.generated.CarInfo
+import io.github.timoptr.mdiicons.generated.EvStation
+import io.github.timoptr.mdiicons.generated.GasStation
+import io.github.timoptr.mdiicons.generated.MapMarkerDistance
+import io.github.timoptr.mdiicons.generated.Speedometer
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -58,7 +67,7 @@ class CarSensorManager @Inject constructor(
             "sensor",
             R.string.basic_sensor_name_car_fuel,
             R.string.sensor_description_car_fuel,
-            "mdi:barrel",
+            Mdi.Barrel,
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             deviceClass = "battery",
@@ -79,7 +88,7 @@ class CarSensorManager @Inject constructor(
             "sensor",
             R.string.basic_sensor_name_car_battery,
             R.string.sensor_description_car_battery,
-            "mdi:car-battery",
+            Mdi.CarBattery,
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             deviceClass = "battery",
@@ -101,7 +110,7 @@ class CarSensorManager @Inject constructor(
             "sensor",
             R.string.basic_sensor_name_car_range_remaining,
             R.string.sensor_description_car_range_remaining,
-            "mdi:map-marker-distance",
+            Mdi.MapMarkerDistance,
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             deviceClass = "distance",
@@ -123,7 +132,7 @@ class CarSensorManager @Inject constructor(
             "sensor",
             R.string.basic_sensor_name_car_name,
             R.string.sensor_description_car_name,
-            "mdi:car-info",
+            Mdi.CarInfo,
         )
         private val carName = CarSensor(
             carNameSensor,
@@ -136,7 +145,7 @@ class CarSensorManager @Inject constructor(
             "sensor",
             R.string.basic_sensor_name_car_charging_status,
             R.string.sensor_description_car_charging_status,
-            "mdi:ev-station",
+            Mdi.EvStation,
             deviceClass = "plug",
         )
         private val carChargingStatus = CarSensor(
@@ -150,7 +159,7 @@ class CarSensorManager @Inject constructor(
             "sensor",
             R.string.basic_sensor_name_car_odometer,
             R.string.sensor_description_car_odometer,
-            "mdi:map-marker-distance",
+            Mdi.MapMarkerDistance,
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             deviceClass = "distance",
@@ -167,7 +176,7 @@ class CarSensorManager @Inject constructor(
             "sensor",
             R.string.basic_sensor_name_car_fuel_type,
             R.string.sensor_description_car_fuel_type,
-            "mdi:gas-station",
+            Mdi.GasStation,
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -183,7 +192,7 @@ class CarSensorManager @Inject constructor(
             "sensor",
             R.string.basic_sensor_name_car_ev_connector_type,
             R.string.sensor_description_car_ev_connector_type,
-            "mdi:car-electric",
+            Mdi.CarElectric,
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -199,7 +208,7 @@ class CarSensorManager @Inject constructor(
             "sensor",
             R.string.basic_sensor_name_car_speed,
             R.string.sensor_description_car_speed,
-            "mdi:speedometer",
+            Mdi.Speedometer,
             unitOfMeasurement = "m/s",
             deviceClass = "speed",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,

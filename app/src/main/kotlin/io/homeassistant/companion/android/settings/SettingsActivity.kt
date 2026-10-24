@@ -26,6 +26,8 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
 import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFragment
+import io.homeassistant.companion.android.settings.gestures.GesturesFragment
+import io.homeassistant.companion.android.settings.mediacontrols.MediaControlsSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
@@ -33,6 +35,7 @@ import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
+import io.homeassistant.companion.android.util.setRecentsScreenshotProtection
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
@@ -69,10 +72,14 @@ class SettingsActivity : BaseActivity() {
         data object Developer : Deeplink
         data class HomeNetwork(val serverId: Int) : Deeplink
         data object NotificationHistory : Deeplink
-        data class QSTile(val tileId: String) : Deeplink
+
+        /** Opens the tile settings, preselecting [tileId] when one is given. */
+        data class QSTile(val tileId: String? = null) : Deeplink
         data class Sensor(val sensorId: String) : Deeplink
         data object Websocket : Deeplink
         data object AssistSettings : Deeplink
+        data object Gestures : Deeplink
+        data object MediaControls : Deeplink
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,7 +120,9 @@ class SettingsActivity : BaseActivity() {
                             is Deeplink.Sensor -> SensorDetailFragment::class.java
                             is Deeplink.QSTile -> ManageTilesFragment::class.java
                             Deeplink.AssistSettings -> AssistSettingsFragment::class.java
-                            else -> SettingsFragment::class.java
+                            Deeplink.Gestures -> GesturesFragment::class.java
+                            Deeplink.MediaControls -> MediaControlsSettingsFragment::class.java
+                            null -> SettingsFragment::class.java
                         },
                         when (settingsNavigation) {
                             is Deeplink.HomeNetwork -> {
@@ -161,6 +170,7 @@ class SettingsActivity : BaseActivity() {
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
+            setRecentsScreenshotProtection(isAppLockEnabled())
             blurView.setBlurEnabled(isAppLocked())
         }
     }
@@ -169,6 +179,7 @@ class SettingsActivity : BaseActivity() {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
+                setRecentsScreenshotProtection(isAppLockEnabled())
                 if (isAppLocked()) {
                     authenticating = true
                     authenticator.authenticate(getString(commonR.string.biometric_title))
@@ -217,6 +228,17 @@ class SettingsActivity : BaseActivity() {
             viewModel.isAppLocked((it as ServerSettingsFragment).getServerId())
         } ?: false
         return serverLocked || viewModel.isAppLocked(ServerManager.SERVER_ID_ACTIVE)
+    }
+
+    /**
+     * @return `true` if app lock is enabled for the active server or the currently visible server
+     */
+    private suspend fun isAppLockEnabled(): Boolean {
+        val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
+        val serverEnabled = serverFragment?.let {
+            viewModel.isAppLockEnabled((it as ServerSettingsFragment).getServerId())
+        } ?: false
+        return serverEnabled || viewModel.isAppLockEnabled(ServerManager.SERVER_ID_ACTIVE)
     }
 
     /**

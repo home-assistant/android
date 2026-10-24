@@ -16,7 +16,7 @@ class RegisterDeviceRequestTest {
                 RegisterDeviceRequest(
                     appId = "1",
                     appName = "2",
-                    appVersion = AppVersion.from("3", 3),
+                    appVersion = AppVersion("3", 3),
                     deviceName = "4",
                     manufacturer = "5",
                     model = "6",
@@ -42,7 +42,7 @@ class RegisterDeviceRequestTest {
             RegisterDeviceRequest(
                 appId = "1",
                 appName = "2",
-                appVersion = AppVersion.from("3", 3),
+                appVersion = AppVersion("3", 3),
                 deviceName = "4",
                 manufacturer = "5",
                 model = "6",

@@ -7,7 +7,7 @@ description: Home Assistant Android Kotlin style. Use when declaring constants, 
 
 Use this skill when writing or reviewing Kotlin code style: constants, types, immutability, time, visibility, and documentation.
 
-KTLint enforces formatting via `.editorconfig`; format with `./gradlew :build-logic:convention:ktlintFormat ktlintFormat`. Style rationale lives at https://developers.home-assistant.io/docs/android/codestyle and https://developers.home-assistant.io/docs/android/best_practices.
+KTLint enforces formatting via `.editorconfig`; format with `./gradlew :build-logic:convention:ktlintFormat ktlintFormat`. Style rationale lives at https://contributors.home-assistant.io/companion/android/code-style/ and https://contributors.home-assistant.io/companion/android/best-practices/.
 
 ## Constants
 

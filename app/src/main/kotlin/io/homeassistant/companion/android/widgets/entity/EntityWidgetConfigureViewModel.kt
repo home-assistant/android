@@ -17,8 +17,8 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
-import io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -46,7 +46,7 @@ import timber.log.Timber
 class EntityWidgetConfigureViewModel @AssistedInject constructor(
     private val staticWidgetDao: StaticWidgetDao,
     private val serverManager: ServerManager,
-    private val getEntitiesForDisplay: GetEntitiesForDisplayUseCase,
+    private val entitiesForDisplayManager: EntitiesForDisplayManager,
     @Assisted private val widgetId: Int,
     @Assisted preselectedEntityId: String?,
 ) : ViewModel() {
@@ -87,42 +87,6 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
                 }
             }
         }
-    }
-
-    /**
-     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
-     */
-    private suspend fun restoreConfiguration() {
-        val widget = if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID && _state.value.selectedEntityId == null) {
-            staticWidgetDao.get(widgetId)
-        } else {
-            null
-        }
-
-        if (widget != null) {
-            _state.update {
-                it.copy(
-                    selectedServerId = widget.serverId,
-                    selectedEntityId = widget.entityId,
-                    selectedAttributeIds = widget.attributeIds.toAttributeIdsList(),
-                    label = widget.label.orEmpty(),
-                    textSize = widget.textSize.toInt().toString(),
-                    stateSeparator = widget.stateSeparator,
-                    attributeSeparator = widget.attributeSeparator,
-                    selectedTapAction = widget.tapAction,
-                    selectedBackgroundType = widget.backgroundType,
-                    textColorHex = widget.textColor,
-                    isUpdateWidget = true,
-                )
-            }
-        } else {
-            _state.update {
-                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
-            }
-        }
-
-        loadEntities(_state.value.selectedServerId)
-        loadAttributes(_state.value.selectedEntityId)
     }
 
     fun onServerSelected(serverId: Int) {
@@ -207,73 +171,8 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
         _state.update { it.copy(selectedBackgroundType = backgroundType) }
     }
 
-    internal fun onTextColorSelected(colorHex: String) {
+    fun onTextColorSelected(colorHex: String) {
         _state.update { it.copy(textColorHex = colorHex) }
-    }
-
-    private fun loadEntities(serverId: Int) {
-        loadEntitiesJob?.cancel()
-        loadEntitiesJob = viewModelScope.launch {
-            if (!serverManager.isRegistered()) {
-                Timber.w("No server registered")
-                _state.update { it.copy(entityDisplayState = EntityDisplayState.Loaded(emptyList())) }
-                return@launch
-            }
-            getEntitiesForDisplay(serverId).collect { displayState ->
-                _state.update { it.copy(entityDisplayState = displayState) }
-                // The selection can be set before the entities resolve (preselected entity or
-                // restored widget), so the generated label is refreshed once they are available.
-                syncLabelWithSelectedEntity()
-            }
-        }
-    }
-
-    /**
-     * Loads the attributes the selected entity exposes, offered as suggestions when the user
-     * appends attributes to the widget.
-     */
-    private fun loadAttributes(entityId: String?) {
-        loadAttributesJob?.cancel()
-        loadAttributesJob = viewModelScope.launch {
-            val attributes = entityId?.let { readAttributes(it) }.orEmpty()
-            _state.update { it.copy(availableAttributes = attributes) }
-        }
-    }
-
-    private suspend fun readAttributes(entityId: String): List<String> = try {
-        serverManager.integrationRepository(_state.value.selectedServerId).getEntity(entityId)
-            ?.attributes
-            ?.keys
-            .orEmpty()
-            .sorted()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Timber.e(e, "Failed to load the attributes of the selected entity")
-        emptyList()
-    }
-
-    /**
-     * Aligns the label with the display name of the selected entity, unless the user typed their own.
-     */
-    private fun syncLabelWithSelectedEntity() {
-        val current = _state.value
-        val entity = current.selectedEntity ?: return
-        val name = entity.name.takeIf { it != entity.entityId }.orEmpty()
-
-        if (current.label == name) {
-            labelFromEntity = name.isNotEmpty()
-        } else if (current.label.isBlank() || labelFromEntity) {
-            _state.update { it.copy(label = name) }
-            labelFromEntity = name.isNotEmpty()
-        }
-    }
-
-    private suspend fun isValidSelection(): Boolean {
-        val current = _state.value
-        return current.isActionEnabled &&
-            serverManager.getServer(current.selectedServerId) != null &&
-            current.selectedEntity != null
     }
 
     /**
@@ -301,41 +200,6 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
         context.sendBroadcast(
             Intent(context, EntityWidget::class.java).apply {
                 action = BaseWidgetProvider.UPDATE_WIDGETS
-            },
-        )
-    }
-
-    /**
-     * Builds the widget to persist from the current configuration, or null when it is incomplete.
-     */
-    internal suspend fun getPendingDaoEntity(): StaticWidgetEntity? {
-        if (!isValidSelection()) {
-            Timber.e("Cannot build the widget, the current configuration is invalid")
-            return null
-        }
-        val current = _state.value
-        val entity = current.selectedEntity
-        if (entity == null) {
-            Timber.e("Cannot build the widget, the selected entity is unknown on the server")
-            return null
-        }
-
-        return StaticWidgetEntity(
-            id = widgetId,
-            serverId = current.selectedServerId,
-            entityId = entity.entityId,
-            attributeIds = current.selectedAttributeIds.takeIf { it.isNotEmpty() }?.joinToString(","),
-            label = current.label,
-            textSize = current.textSizeOrDefault,
-            stateSeparator = current.stateSeparator,
-            attributeSeparator = current.attributeSeparator
-                .takeIf { current.selectedAttributeIds.isNotEmpty() }
-                .orEmpty(),
-            tapAction = if (current.isToggleable) current.selectedTapAction else WidgetTapAction.REFRESH,
-            lastUpdate = staticWidgetDao.get(widgetId)?.lastUpdate.orEmpty(),
-            backgroundType = current.selectedBackgroundType,
-            textColor = current.textColorHex.takeIf {
-                current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
             },
         )
     }
@@ -398,6 +262,142 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
             _errors.emit(commonR.string.widget_creation_error)
         }
         return requestAccepted
+    }
+
+    /**
+     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
+     */
+    private suspend fun restoreConfiguration() {
+        val widget = if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID && _state.value.selectedEntityId == null) {
+            staticWidgetDao.get(widgetId)
+        } else {
+            null
+        }
+
+        if (widget != null) {
+            _state.update {
+                it.copy(
+                    selectedServerId = widget.serverId,
+                    selectedEntityId = widget.entityId,
+                    selectedAttributeIds = widget.attributeIds.toAttributeIdsList(),
+                    label = widget.label.orEmpty(),
+                    textSize = widget.textSize.toInt().toString(),
+                    stateSeparator = widget.stateSeparator,
+                    attributeSeparator = widget.attributeSeparator,
+                    selectedTapAction = widget.tapAction,
+                    selectedBackgroundType = widget.backgroundType,
+                    textColorHex = widget.textColor,
+                    isUpdateWidget = true,
+                )
+            }
+        } else {
+            _state.update {
+                it.copy(selectedServerId = serverManager.getServer()?.id ?: ServerManager.SERVER_ID_ACTIVE)
+            }
+        }
+
+        loadEntities(_state.value.selectedServerId)
+        loadAttributes(_state.value.selectedEntityId)
+    }
+
+    private fun loadEntities(serverId: Int) {
+        loadEntitiesJob?.cancel()
+        loadEntitiesJob = viewModelScope.launch {
+            if (!serverManager.isRegistered()) {
+                Timber.w("No server registered")
+                _state.update { it.copy(entityDisplayState = EntityDisplayState.Loaded(emptyList())) }
+                return@launch
+            }
+            entitiesForDisplayManager.snapshotInContext(serverId).collect { displayState ->
+                _state.update { it.copy(entityDisplayState = displayState) }
+                // The selection can be set before the entities resolve (preselected entity or
+                // restored widget), so the generated label is refreshed once they are available.
+                syncLabelWithSelectedEntity()
+            }
+        }
+    }
+
+    /**
+     * Loads the attributes the selected entity exposes, offered as suggestions when the user
+     * appends attributes to the widget.
+     */
+    private fun loadAttributes(entityId: String?) {
+        loadAttributesJob?.cancel()
+        loadAttributesJob = viewModelScope.launch {
+            val attributes = entityId?.let { readAttributes(it) }.orEmpty()
+            _state.update { it.copy(availableAttributes = attributes) }
+        }
+    }
+
+    private suspend fun readAttributes(entityId: String): List<String> = try {
+        serverManager.integrationRepository(_state.value.selectedServerId).getEntity(entityId)
+            ?.attributes
+            ?.keys
+            .orEmpty()
+            .sorted()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Failed to load the attributes of the selected entity")
+        emptyList()
+    }
+
+    /**
+     * Aligns the label with the display name of the selected entity, unless the user typed their own.
+     */
+    private fun syncLabelWithSelectedEntity() {
+        val current = _state.value
+        val entity = current.selectedEntity ?: return
+        val name = entity.name.takeIf { it != entity.entityId }.orEmpty()
+
+        if (current.label == name) {
+            labelFromEntity = name.isNotEmpty()
+        } else if (current.label.isBlank() || labelFromEntity) {
+            _state.update { it.copy(label = name) }
+            labelFromEntity = name.isNotEmpty()
+        }
+    }
+
+    private suspend fun isValidSelection(): Boolean {
+        val current = _state.value
+        return current.isActionEnabled &&
+            serverManager.getServer(current.selectedServerId) != null &&
+            current.selectedEntity != null
+    }
+
+    /**
+     * Builds the widget to persist from the current configuration, or null when it is incomplete.
+     */
+    private suspend fun getPendingDaoEntity(): StaticWidgetEntity? {
+        if (!isValidSelection()) {
+            Timber.e("Cannot build the widget, the current configuration is invalid")
+            return null
+        }
+        val current = _state.value
+        val entity = current.selectedEntity
+        if (entity == null) {
+            Timber.e("Cannot build the widget, the selected entity is unknown on the server")
+            return null
+        }
+
+        return StaticWidgetEntity(
+            id = widgetId,
+            serverId = current.selectedServerId,
+            entityId = entity.entityId,
+            attributeIds = current.selectedAttributeIds.takeIf { it.isNotEmpty() }?.joinToString(","),
+            label = current.label,
+            textSize = current.textSizeOrDefault,
+            stateSeparator = current.stateSeparator,
+            attributeSeparator = current.attributeSeparator
+                .takeIf { current.selectedAttributeIds.isNotEmpty() }
+                .orEmpty(),
+            tapAction = if (current.isToggleable) current.selectedTapAction else WidgetTapAction.REFRESH,
+            lastUpdate = staticWidgetDao.get(widgetId)?.lastUpdate.orEmpty(),
+            backgroundType = current.selectedBackgroundType,
+            textColor = current.textColorHex.takeIf {
+                current.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT
+            },
+        )
     }
 
     @AssistedFactory

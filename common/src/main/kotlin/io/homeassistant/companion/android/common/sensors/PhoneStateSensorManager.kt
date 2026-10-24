@@ -12,6 +12,11 @@ import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Phone
+import io.github.timoptr.mdiicons.generated.PhoneInTalk
+import io.github.timoptr.mdiicons.generated.Signal
+import io.github.timoptr.mdiicons.generated.Sim
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
@@ -35,7 +40,7 @@ class PhoneStateSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_phone,
             commonR.string.sensor_description_phone_state,
-            "mdi:phone",
+            Mdi.Phone,
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -47,7 +52,7 @@ class PhoneStateSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_sim1,
             commonR.string.sensor_description_sim_1,
-            "mdi:sim",
+            Mdi.Sim,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -58,7 +63,7 @@ class PhoneStateSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_sim2,
             commonR.string.sensor_description_sim_2,
-            "mdi:sim",
+            Mdi.Sim,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -69,7 +74,7 @@ class PhoneStateSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_sim_1_signal_strength,
             commonR.string.sensor_description_signal_strength,
-            "mdi:signal",
+            Mdi.Signal,
             unitOfMeasurement = "dBm",
             deviceClass = "signal_strength",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -81,7 +86,7 @@ class PhoneStateSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_sim_2_signal_strength,
             commonR.string.sensor_description_signal_strength,
-            "mdi:signal",
+            Mdi.Signal,
             unitOfMeasurement = "dBm",
             deviceClass = "signal_strength",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -93,7 +98,7 @@ class PhoneStateSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_sim_1_data_network_type,
             commonR.string.sensor_description_data_network_type,
-            "mdi:signal",
+            Mdi.Signal,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -103,7 +108,7 @@ class PhoneStateSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_sim_2_data_network_type,
             commonR.string.sensor_description_data_network_type,
-            "mdi:signal",
+            Mdi.Signal,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
@@ -211,10 +216,7 @@ class PhoneStateSensorManager @Inject constructor(
     }
 
     private suspend fun updatePhoneStateSensor(state: String) {
-        var phoneIcon = "mdi:phone"
-        if (state == "ringing" || state == "offhook") {
-            phoneIcon += "-in-talk"
-        }
+        val phoneIcon = if (state == "ringing" || state == "offhook") Mdi.PhoneInTalk else Mdi.Phone
 
         onSensorUpdated(
             phoneState,

@@ -1,10 +1,14 @@
 package io.homeassistant.companion.android.util.compose.entity
 
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 
 /**
@@ -21,18 +25,24 @@ class EntityPickerFilterTest {
         name: String,
         areaName: String? = null,
         deviceName: String? = null,
+        parentDeviceName: String? = null,
+        omittedOwnerNames: List<String> = emptyList(),
         isHidden: Boolean = false,
-    ) = EntityDisplayItem(
-        entityId = entityId,
-        name = name,
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    ) = EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = entityId,
+            name = name,
+            icon = Mdi.Lightbulb,
+            isHidden = isHidden,
+        ),
         areaName = areaName,
         deviceName = deviceName,
-        isHidden = isHidden,
+        parentDeviceName = parentDeviceName,
+        omittedOwnerNames = omittedOwnerNames,
     )
 
-    // Test helper to create EntityWithSearchFields
-    private fun createEntityWithSearchFields(entity: EntityDisplayItem): EntityWithSearchFields {
+    // Test helper to create EntityWithSearchFields, mirroring the weights used in production.
+    private fun createEntityWithSearchFields(entity: EntityDisplayWithContext): EntityWithSearchFields {
         val sortingKey = entity.name.lowercase()
         return EntityWithSearchFields(
             entity = entity,
@@ -40,6 +50,9 @@ class EntityPickerFilterTest {
             searchableFields = buildList {
                 add(SearchField(sortingKey, 8))
                 entity.deviceName?.let { add(SearchField(it.lowercase(), 7)) }
+                listOfNotNull(entity.parentDeviceName)
+                    .plus(entity.omittedOwnerNames)
+                    .forEach { add(SearchField(it.lowercase(), 6)) }
                 entity.areaName?.let { add(SearchField(it.lowercase(), 6)) }
                 add(SearchField(entity.domain.lowercase(), 6))
                 add(SearchField(entity.entityId.lowercase(), 3))
@@ -404,7 +417,7 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "light")
 
         assertEquals(2, result.size)
-        assertTrue(result.all { it.domain == "light" })
+        assertTrue(result.all { it.domain == LIGHT_DOMAIN })
         assertEquals("Bedroom", result[0].name)
         assertEquals("Kitchen", result[1].name)
     }
@@ -431,7 +444,8 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "bedroom")
 
         assertEquals(1, result.size)
-        assertEquals("Bedroom", result[0].areaName)
+        val entity = assertInstanceOf(EntityDisplayWithContext::class.java, result[0])
+        assertEquals("Bedroom", entity.areaName)
     }
 
     @Test
@@ -456,7 +470,51 @@ class EntityPickerFilterTest {
         val result = filterAndSortEntitiesOptimized(entities, "smart")
 
         assertEquals(1, result.size)
-        assertEquals("Smart Bulb Pro", result[0].deviceName)
+        val entity = assertInstanceOf(EntityDisplayWithContext::class.java, result[0])
+        assertEquals("Smart Bulb Pro", entity.deviceName)
+    }
+
+    @Test
+    fun `Given a query matching a parent device or an omitted owner when filtering then returns those entities`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(
+                createTestEntity(
+                    "switch.freezer",
+                    name = "Freezer",
+                    deviceName = "Outlet 1",
+                    parentDeviceName = "Power strip",
+                ),
+            ),
+            createEntityWithSearchFields(
+                createTestEntity(
+                    "switch.garden",
+                    name = "Garden lamp",
+                    omittedOwnerNames = listOf("Outlet 2", "Power strip"),
+                ),
+            ),
+            createEntityWithSearchFields(createTestEntity("fan.ceiling", name = "Ceiling Fan")),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "power strip")
+
+        assertEquals(setOf("Freezer", "Garden lamp"), result.map { it.name }.toSet())
+    }
+
+    @Test
+    fun `Given a query matching one entity's device and another's parent device when filtering then the own device ranks first`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(
+                createTestEntity("switch.lamp", name = "Lamp", parentDeviceName = "Power outlet"),
+            ),
+            createEntityWithSearchFields(
+                createTestEntity("switch.freezer", name = "Freezer", deviceName = "Smart outlet"),
+            ),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "outlet")
+
+        // The entity's own device name outweighs a parent device name, matching the frontend.
+        assertEquals(listOf("Freezer", "Lamp"), result.map { it.name })
     }
 
     @Test

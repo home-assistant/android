@@ -96,7 +96,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 )
             }
             composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
-                val entity = uiState.entities[it.arguments?.getString("entityId")]
+                val entity = uiState.displayItems[it.arguments?.getString("entityId")]
                 if (entity != null) {
                     DetailsPanelView(
                         entity = entity,
@@ -198,7 +198,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
             }
             composable(SCREEN_SET_FAVORITES) {
                 SetFavoritesView(
-                    entitiesByDomain = uiState.allEntitiesByDomain,
+                    entitiesByDomain = uiState.allDisplayItemsByDomain,
                     domainNames = uiState.domainNames,
                     favoriteEntityIds = uiState.favoriteEntityIds,
                     onFavoriteSelected = { entityId, isSelected ->
@@ -230,9 +230,10 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
+                val cameraTile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId }
                 SetCameraTileView(
-                    tile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId },
-                    entities = uiState.cameraEntities,
+                    tile = cameraTile,
+                    entityItem = cameraTile?.entityId?.let { uiState.displayItems[it] },
                     onSelectEntity = {
                         swipeDismissableNavController.navigate(
                             "$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY",
@@ -256,7 +257,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_CAMERA_TILE_ID)
                 ChooseEntityView(
                     entitiesByDomainOrder = listOf(CAMERA_DOMAIN),
-                    entitiesByDomain = mapOf(CAMERA_DOMAIN to uiState.cameraEntities),
+                    entitiesByDomain = mapOf(CAMERA_DOMAIN to uiState.cameraItems),
                     favoriteEntityIds = emptyList(),
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
@@ -315,9 +316,10 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 ),
             ) { backStackEntry ->
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
+                val thermostatTile = mainViewModel.thermostatTiles.value.firstOrNull { it.id == tileId }
                 SetThermostatTileView(
-                    tile = mainViewModel.thermostatTiles.value.firstOrNull { it.id == tileId },
-                    entities = uiState.climateEntities,
+                    tile = thermostatTile,
+                    entityItem = thermostatTile?.entityId?.let { uiState.displayItems[it] },
                     onSelectEntity = {
                         swipeDismissableNavController.navigate(
                             "$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE_ENTITY",
@@ -344,7 +346,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_THERMOSTAT_TILE_ID)
                 ChooseEntityView(
                     entitiesByDomainOrder = listOf(CLIMATE_DOMAIN),
-                    entitiesByDomain = mapOf(CLIMATE_DOMAIN to uiState.climateEntities),
+                    entitiesByDomain = mapOf(CLIMATE_DOMAIN to uiState.climateItems),
                     favoriteEntityIds = emptyList(),
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
@@ -433,8 +435,8 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val entityIndex = backStackEntry.arguments!!.getInt(ARG_SCREEN_SHORTCUTS_TILE_ENTITY_INDEX)
                 val tileId = backStackEntry.arguments!!.getString(ARG_SCREEN_SHORTCUTS_TILE_ID)!!.toIntOrNull()
                 ChooseEntityView(
-                    entitiesByDomainOrder = uiState.allEntitiesByDomain.keys.toList(),
-                    entitiesByDomain = uiState.allEntitiesByDomain,
+                    entitiesByDomainOrder = uiState.allDisplayItemsByDomain.keys.toList(),
+                    entitiesByDomain = uiState.allDisplayItemsByDomain,
                     favoriteEntityIds = uiState.favoriteEntityIds,
                     onNoneClicked = {
                         mainViewModel.clearTileShortcut(tileId, entityIndex)

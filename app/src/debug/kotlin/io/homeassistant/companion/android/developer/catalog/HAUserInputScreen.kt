@@ -4,10 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -21,7 +17,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Fan
+import io.github.timoptr.mdiicons.generated.Garage
+import io.github.timoptr.mdiicons.generated.InformationOutline
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.MotionSensor
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.generated.Thermometer
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
@@ -36,8 +41,9 @@ import io.homeassistant.companion.android.common.compose.composable.rememberSele
 import io.homeassistant.companion.android.common.compose.composable.rememberSelectedOption
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import java.time.LocalDateTime
 
@@ -71,7 +77,7 @@ private fun LazyListScope.input() {
                         if (value1.isNotBlank()) {
                             IconButton(onClick = { value1 = "" }) {
                                 Icon(
-                                    imageVector = Icons.Default.Close,
+                                    imageVector = Mdi.Close.rememberImageVector(),
                                     contentDescription = null,
                                 )
                             }
@@ -119,7 +125,7 @@ private fun LazyListScope.input() {
                     onValueChange = { value5 = it },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Outlined.Info,
+                            imageVector = Mdi.InformationOutline.rememberImageVector(),
                             contentDescription = null,
                         )
                     },
@@ -193,7 +199,7 @@ private fun LazyListScope.inputChips() {
                 text = "toggle me",
                 onClick = { selected = !selected },
                 selected = selected,
-                trailingIcon = if (selected) Icons.Default.Close else Icons.Default.Add,
+                trailingIcon = if (selected) Mdi.Close.rememberImageVector() else Mdi.Plus.rememberImageVector(),
                 trailingIconContentDescription = null,
             )
             HAInputChip(text = "without icon", onClick = {})
@@ -201,7 +207,7 @@ private fun LazyListScope.inputChips() {
                 text = "disabled",
                 onClick = {},
                 enabled = false,
-                trailingIcon = Icons.Default.Add,
+                trailingIcon = Mdi.Plus.rememberImageVector(),
                 trailingIconContentDescription = null,
             )
         }
@@ -346,38 +352,50 @@ private val sampleDropdownItems = (1..30).map { index ->
 }
 
 private val sampleDisplayEntities = listOf(
-    EntityDisplayItem(
-        entityId = "light.living_room",
-        name = "Living Room Light",
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.living_room",
+            name = "Living Room Light",
+            icon = Mdi.Lightbulb,
+        ),
         areaName = "Living Room",
         deviceName = "Smart Bulb Pro",
     ),
-    EntityDisplayItem(
-        entityId = "light.bedroom",
-        name = "Bedroom Light",
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.bedroom",
+            name = "Bedroom Light",
+            icon = Mdi.Lightbulb,
+        ),
         areaName = "Bedroom",
     ),
-    EntityDisplayItem(
-        entityId = "sensor.temperature",
-        name = "Temperature Sensor",
-        icon = CommunityMaterial.Icon3.cmd_thermometer,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "sensor.temperature",
+            name = "Temperature Sensor",
+            icon = Mdi.Thermometer,
+        ),
     ),
-    EntityDisplayItem(
-        entityId = "switch.fan",
-        name = "Ceiling Fan",
-        icon = CommunityMaterial.Icon2.cmd_fan,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "switch.fan",
+            name = "Ceiling Fan",
+            icon = Mdi.Fan,
+        ),
     ),
-    EntityDisplayItem(
-        entityId = "binary_sensor.motion",
-        name = "Motion Sensor",
-        icon = CommunityMaterial.Icon3.cmd_motion_sensor,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "binary_sensor.motion",
+            name = "Motion Sensor",
+            icon = Mdi.MotionSensor,
+        ),
     ),
-    EntityDisplayItem(
-        entityId = "cover.garage_door",
-        name = "Garage Door",
-        icon = CommunityMaterial.Icon2.cmd_garage,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "cover.garage_door",
+            name = "Garage Door",
+            icon = Mdi.Garage,
+        ),
     ),
 )
 

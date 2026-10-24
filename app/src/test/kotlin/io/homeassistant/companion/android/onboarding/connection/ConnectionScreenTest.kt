@@ -41,7 +41,7 @@ class ConnectionScreenTest {
                     isLoading = false,
                     isError = false,
                     url = null,
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )
@@ -59,7 +59,7 @@ class ConnectionScreenTest {
                     isLoading = true,
                     isError = false,
                     url = "",
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )
@@ -78,7 +78,7 @@ class ConnectionScreenTest {
                     isLoading = false,
                     isError = false,
                     url = "",
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )
@@ -97,7 +97,7 @@ class ConnectionScreenTest {
                     isLoading = false,
                     isError = true,
                     url = "",
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )
@@ -120,7 +120,7 @@ class ConnectionScreenTest {
                     isLoading = false,
                     isError = false,
                     url = "",
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
                 )

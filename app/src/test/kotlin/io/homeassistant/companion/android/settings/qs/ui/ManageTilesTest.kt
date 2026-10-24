@@ -12,14 +12,14 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Home
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.common.util.getIconByMdiName
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.TileId
 import org.junit.Rule
@@ -192,7 +192,7 @@ class ManageTilesTest {
                 HADropdownItem(key = 2, label = "Vacation home"),
             ),
             selectedServerId = 1,
-            customIcon = CommunityMaterial.getIconByMdiName("mdi:home"),
+            customIcon = Mdi.Home,
             tileLabel = "Living room",
             selectedEntityId = "light.living_room",
             submitButtonLabel = commonR.string.tile_save,

@@ -81,6 +81,20 @@ class FrontendGestureManagerTest {
     }
 
     @Test
+    fun `Given NAVIGATE_OPEN_IN_BROWSER action when handleGesture then sends OpenInBrowser`() = runTest {
+        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_RIGHT_TWO) } returns GestureAction.NAVIGATE_OPEN_IN_BROWSER
+
+        val result = manager.handleGesture(
+            serverId = 1,
+            direction = GestureDirection.RIGHT,
+            pointerCount = 2,
+        )
+
+        assertEquals(GestureResult.OpenInBrowser, result)
+        coVerify(exactly = 0) { externalBusRepository.send(any()) }
+    }
+
+    @Test
     fun `Given QUICKBAR_DEFAULT and server 2026_2 when handleGesture then dispatches Ctrl+K`() = runTest {
         coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_DOWN_TWO) } returns GestureAction.QUICKBAR_DEFAULT
         val server = mockServer(

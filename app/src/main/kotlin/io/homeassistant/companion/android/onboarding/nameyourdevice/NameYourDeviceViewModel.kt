@@ -12,7 +12,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.ServerRegistrationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import io.homeassistant.companion.android.onboarding.nameyourdevice.navigation.NameYourDeviceRoute
 import io.homeassistant.companion.android.util.isPubliclyAccessible
@@ -57,7 +57,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
     private val route: NameYourDeviceRoute,
     private val serverManager: ServerManager,
     private val serverRegistrationRepository: ServerRegistrationRepository,
-    private val appVersionProvider: AppVersionProvider,
+    private val appVersion: AppVersion,
     private val messagingTokenProvider: MessagingTokenProvider,
     defaultName: String = Build.MODEL,
 ) : ViewModel() {
@@ -67,13 +67,13 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
         savedStateHandle: SavedStateHandle,
         serverManager: ServerManager,
         serverRegistrationRepository: ServerRegistrationRepository,
-        appVersionProvider: AppVersionProvider,
+        appVersion: AppVersion,
         messagingTokenProvider: MessagingTokenProvider,
     ) : this(
         savedStateHandle.toRoute<NameYourDeviceRoute>(),
         serverManager,
         serverRegistrationRepository,
-        appVersionProvider,
+        appVersion,
         messagingTokenProvider,
     )
 
@@ -148,7 +148,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
             serverId = serverManager.addServer(temporaryServer)
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
-                    appVersionProvider(),
+                    appVersion,
                     deviceNameFlow.value,
                     messagingTokenProvider(),
                 ),

@@ -9,4 +9,7 @@ object IntegrationDomains {
     const val PERSON_DOMAIN = "person"
     const val ALARM_CONTROL_PANEL_DOMAIN = "alarm_control_panel"
     const val DEVICE_TRACKER_DOMAIN = "device_tracker"
+    const val COVER_DOMAIN = "cover"
+    const val FAN_DOMAIN = "fan"
+    const val LIGHT_DOMAIN = "light"
 }

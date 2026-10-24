@@ -1,9 +1,11 @@
 package io.homeassistant.companion.android.util.compose.entity
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,11 +26,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,15 +46,22 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Alert
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.EyeOff
+import io.github.timoptr.mdiicons.generated.Fan
+import io.github.timoptr.mdiicons.generated.Lightbulb
+import io.github.timoptr.mdiicons.generated.Magnify
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.generated.TemperatureCelsius
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
@@ -78,8 +82,10 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayItem
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.util.compose.safeScreenHeight
 import io.homeassistant.companion.android.util.compose.screenWidth
 import kotlin.coroutines.CoroutineContext
@@ -115,7 +121,7 @@ private const val PLACEHOLDER_HEIGHT_FRACTION = 0.5f
  *
  * The picker supports fuzzy search with weighted field scoring and displays the entity
  * metadata (area and device names) resolved by
- * [io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase].
+ * [io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager].
  * Callers without websocket access can build the display state with [rememberEntityDisplayState].
  *
  * While the display state is [EntityDisplayState.Loading] the picker shows a loading indicator in
@@ -132,7 +138,7 @@ private const val PLACEHOLDER_HEIGHT_FRACTION = 0.5f
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntityPicker(
-    displayState: EntityDisplayState,
+    displayState: EntityDisplayState<EntityDisplay>,
     selectedEntityId: String?,
     onSelectionChanged: (String?) -> Unit,
     modifier: Modifier = Modifier,
@@ -168,7 +174,7 @@ fun EntityPicker(
                 size = ButtonSize.SMALL,
                 prefix = {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        imageVector = Mdi.Plus.rememberImageVector(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -212,21 +218,23 @@ fun EntityPicker(
 }
 
 /**
- * Builds an [EntityDisplayState] with metadata-free [EntityDisplayItem]s (no area/floor/device
+ * Builds an [EntityDisplayState<EntityDisplay>] with metadata-free [EntityDisplay]s (no area/floor/device
  * names) from raw entities on a background thread, starting as [EntityDisplayState.Loading]
  * until the conversion completes.
  *
  * Only meant for callers that cannot reach the websocket API; everyone else should resolve
  * items with
- * [io.homeassistant.companion.android.common.data.integration.display.GetEntitiesForDisplayUseCase].
+ * [io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager].
  */
 @Composable
-fun rememberEntityDisplayState(entities: List<Entity>): EntityDisplayState {
-    var displayState by remember { mutableStateOf<EntityDisplayState>(EntityDisplayState.Loading) }
+fun rememberEntityDisplayState(entities: List<Entity>): EntityDisplayState<EntityDisplay> {
+    var displayState by remember {
+        mutableStateOf<EntityDisplayState<EntityDisplay>>(EntityDisplayState.Loading)
+    }
     // Conversion runs on a background dispatcher to avoid ANRs on large entity lists
     LaunchedEffect(entities) {
         displayState = withContext(Dispatchers.Default) {
-            EntityDisplayState.Loaded(entities.map(::EntityDisplayItem))
+            EntityDisplayState.Loaded(entities.map { EntityDisplayWithoutContext(it) })
         }
     }
     return displayState
@@ -242,7 +250,7 @@ private fun defaultAddText(): String = stringResource(commonR.string.entity_pick
  */
 @Composable
 private fun SelectedEntityChip(
-    entity: EntityDisplayItem?,
+    entity: EntityDisplay?,
     entityId: String,
     isError: Boolean,
     onClearClick: () -> Unit,
@@ -267,7 +275,7 @@ private fun RowScope.UnresolvedEntityContent(entityId: String, isError: Boolean)
     val colorScheme = LocalHAColorScheme.current
     if (isError) {
         Icon(
-            imageVector = Icons.Default.Warning,
+            imageVector = Mdi.Alert.rememberImageVector(),
             contentDescription = stringResource(commonR.string.entity_picker_loading_failed),
             tint = colorScheme.colorOnNeutralNormal,
             modifier = Modifier.size(HADimens.SPACE6),
@@ -315,7 +323,7 @@ private fun SelectedEntityChipContainer(
             modifier = Modifier.size(HADimens.SPACE8),
         ) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = Mdi.Close.rememberImageVector(),
                 contentDescription = stringResource(commonR.string.search_clear_selection),
                 tint = colorScheme.colorOnNeutralNormal,
                 modifier = Modifier.size(HADimens.SPACE6),
@@ -325,12 +333,12 @@ private fun SelectedEntityChipContainer(
 }
 
 @Composable
-private fun RowScope.EntityContent(entity: EntityDisplayItem, showHiddenIndicator: Boolean) {
+private fun RowScope.EntityContent(entity: EntityDisplay, showHiddenIndicator: Boolean) {
     val colorScheme = LocalHAColorScheme.current
     Image(
-        asset = entity.icon,
-        colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
+        imageVector = entity.icon.rememberImageVector(),
         contentDescription = null,
+        colorFilter = ColorFilter.tint(colorScheme.colorTextSecondary),
         modifier = Modifier.size(HADimens.SPACE6),
     )
     Column(modifier = Modifier.weight(1f)) {
@@ -341,7 +349,8 @@ private fun RowScope.EntityContent(entity: EntityDisplayItem, showHiddenIndicato
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        entity.subtitle(LocalLayoutDirection.current)?.let { subtitle ->
+
+        (entity as? EntityDisplayWithContext)?.subtitle()?.let { subtitle ->
             Text(
                 text = subtitle,
                 style = HATextStyle.BodyMedium,
@@ -354,7 +363,7 @@ private fun RowScope.EntityContent(entity: EntityDisplayItem, showHiddenIndicato
     }
     if (showHiddenIndicator && entity.isHidden) {
         Image(
-            asset = CommunityMaterial.Icon.cmd_eye_off,
+            imageVector = Mdi.EyeOff.rememberImageVector(),
             colorFilter = ColorFilter.tint(colorScheme.colorOnNeutralQuiet),
             contentDescription = stringResource(commonR.string.hidden_entity),
             modifier = Modifier
@@ -379,9 +388,9 @@ private fun Modifier.enclosureBorder(colorScheme: HAColorScheme): Modifier {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EntityPickerBottomSheet(
-    displayState: EntityDisplayState,
+    displayState: EntityDisplayState<EntityDisplay>,
     searchState: SearchFieldState,
-    onEntitySelected: (EntityDisplayItem) -> Unit,
+    onEntitySelected: (EntityDisplay) -> Unit,
     onDismissRequest: () -> Unit,
     bottomSheetState: SheetState,
     dispatcher: CoroutineContext,
@@ -410,9 +419,9 @@ private fun EntityPickerBottomSheet(
 
 @Composable
 private fun EntityPickerDropdown(
-    displayState: EntityDisplayState,
+    displayState: EntityDisplayState<EntityDisplay>,
     searchState: SearchFieldState,
-    onEntitySelected: (EntityDisplayItem) -> Unit,
+    onEntitySelected: (EntityDisplay) -> Unit,
     dispatcher: CoroutineContext,
     modifier: Modifier = Modifier,
 ) {
@@ -435,9 +444,9 @@ private fun EntityPickerDropdown(
 
 @Composable
 private fun EntityPickerContent(
-    displayState: EntityDisplayState,
+    displayState: EntityDisplayState<EntityDisplay>,
     searchState: SearchFieldState,
-    onEntitySelected: (EntityDisplayItem) -> Unit,
+    onEntitySelected: (EntityDisplay) -> Unit,
     dispatcher: CoroutineContext,
     modifier: Modifier = Modifier,
     // Height behaviour of the loading/error/empty placeholders. The bottom sheet has a fixed
@@ -493,11 +502,14 @@ private fun LoadingPlaceholder(modifier: Modifier = Modifier) {
     }
 }
 
+// Suppressing ComposeModifierReused: modifier/placeholderModifier are intentionally different,
+// and should not be passed to every branch
+@SuppressLint("ComposeModifierReused")
 @Composable
 private fun LoadedEntityList(
-    entities: Collection<EntityDisplayItem>,
+    entities: Collection<EntityDisplay>,
     searchQuery: String,
-    onEntitySelected: (EntityDisplayItem) -> Unit,
+    onEntitySelected: (EntityDisplay) -> Unit,
     dispatcher: CoroutineContext,
     modifier: Modifier = Modifier,
     placeholderModifier: Modifier = Modifier,
@@ -538,7 +550,7 @@ private fun ErrorPlaceholder(modifier: Modifier = Modifier) {
     PlaceholderContainer(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.Warning,
+                imageVector = Mdi.Alert.rememberImageVector(),
                 contentDescription = null,
                 tint = LocalHAColorScheme.current.colorOnNeutralNormal,
             )
@@ -556,7 +568,7 @@ private fun EmptyResultPlaceholder(searchQuery: String, modifier: Modifier = Mod
     PlaceholderContainer(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.Search,
+                imageVector = Mdi.Magnify.rememberImageVector(),
                 contentDescription = null,
                 tint = LocalHAColorScheme.current.colorOnNeutralNormal,
             )
@@ -578,7 +590,7 @@ private fun EmptyResultPlaceholder(searchQuery: String, modifier: Modifier = Mod
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun EntityListItem(entity: EntityDisplayItem, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun EntityListItem(entity: EntityDisplay, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Row(
         modifier = modifier
@@ -614,25 +626,27 @@ private fun EntityPickerCollapsedPreview() {
 }
 
 private fun previewEntities() = listOf(
-    EntityDisplayItem(
-        entityId = "light.bed",
-        name = "Bed Light",
-        icon = CommunityMaterial.Icon2.cmd_lightbulb,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "light.bed",
+            name = "Bed Light",
+            icon = Mdi.Lightbulb,
+        ),
         areaName = "Bedroom",
         deviceName = "Device #1",
     ),
-    EntityDisplayItem(
-        entityId = "sensor.temperature",
-        name = "Temperature",
-        icon = CommunityMaterial.Icon3.cmd_temperature_celsius,
+    EntityDisplayWithContext(
+        item = EntityDisplayWithoutContext(
+            entityId = "sensor.temperature",
+            name = "Temperature",
+            icon = Mdi.TemperatureCelsius,
+        ),
         areaName = "Living Room",
     ),
-    EntityDisplayItem(
+    EntityDisplayWithoutContext(
         entityId = "switch.fan",
         name = "Fan",
-        icon = CommunityMaterial.Icon2.cmd_fan,
-        areaName = "Bedroom",
-        deviceName = "Device #2",
+        icon = Mdi.Fan,
     ),
 )
 
