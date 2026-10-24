@@ -30,7 +30,7 @@ jobs:
         with:
           persist-credentials: true # Needed to be able to push the new lockfiles
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         if: steps.check-skip.outputs.skip != 'true'
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}

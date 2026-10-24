@@ -1,8 +1,10 @@
+import dev.detekt.gradle.Detekt
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
     `kotlin-dsl`
+    alias(libs.plugins.detekt)
     alias(libs.plugins.ktlint)
 }
 
@@ -25,6 +27,23 @@ allprojects {
         }
     }
 }
+
+detekt {
+    config.setFrom(rootProject.file("../.detekt/detekt.yml"))
+    buildUponDefaultConfig = true
+}
+
+tasks.withType<Detekt>().configureEach {
+    reports {
+        html.required.set(true)
+        sarif.required.set(true)
+    }
+}
+
+// Only the type-resolved detektMain task is enforced and baselined. The plain detekt task
+// (which `check` depends on) has no baseline, so it would re-report every baselined finding.
+tasks.named("detekt") { enabled = false }
+tasks.named("detektBaseline") { enabled = false }
 
 // Configure the build-logic plugins to target JDK 17 and is not related to what is running on device.
 java {

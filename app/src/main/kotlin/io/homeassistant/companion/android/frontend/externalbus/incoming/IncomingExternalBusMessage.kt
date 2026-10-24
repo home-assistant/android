@@ -15,7 +15,7 @@ import kotlinx.serialization.modules.SerializersModule
  * and the Android app, allowing the frontend to request native functionality like
  * NFC tag writing, Matter commissioning, haptic feedback, etc.
  *
- * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus">External bus documentation</a>
+ * @see <a href="https://contributors.home-assistant.io/frontend/reference/external-bus/">External bus documentation</a>
  * @see <a href="https://github.com/home-assistant/frontend/blob/dev/src/external_app/external_messaging.ts">Frontend implementation</a>
  */
 @Serializable

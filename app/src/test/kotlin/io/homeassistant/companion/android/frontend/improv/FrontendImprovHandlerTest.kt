@@ -61,7 +61,7 @@ class FrontendImprovHandlerTest {
     }
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val wifiHelper: WifiHelper = mockk(relaxed = true) {
-        every { getWifiSsid() } returns "\"My SSID\""
+        every { getWifiSsid() } returns "My SSID"
     }
 
     private fun createHandler() = FrontendImprovHandler(
@@ -239,6 +239,7 @@ class FrontendImprovHandlerTest {
         val configuring = state as ImprovUIState.ConfiguringDevice
         assertEquals("Smart Plug", configuring.deviceName)
         assertEquals("AA:BB", configuring.deviceAddress)
+        assertEquals("My SSID", configuring.activeSsid)
         job.cancel()
     }
 

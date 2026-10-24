@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -12,8 +13,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.TimerCog
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
@@ -35,7 +37,8 @@ fun TemplateTileSettingsView(templateContent: String, refreshInterval: Int, onCl
                         .fillMaxWidth(),
                     icon = {
                         Image(
-                            asset = CommunityMaterial.Icon3.cmd_timer_cog,
+                            imageVector = Mdi.TimerCog.rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },

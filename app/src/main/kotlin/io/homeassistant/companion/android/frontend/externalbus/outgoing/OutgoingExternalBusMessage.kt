@@ -17,7 +17,7 @@ import kotlinx.serialization.json.encodeToJsonElement
  * These messages are serialized to JSON and evaluated in the WebView to communicate
  * with the Home Assistant frontend.
  *
- * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus">External bus documentation</a>
+ * @see <a href="https://contributors.home-assistant.io/frontend/reference/external-bus/">External bus documentation</a>
  */
 @Serializable
 sealed interface OutgoingExternalBusMessage {
@@ -116,7 +116,7 @@ object ConfigResultMessage {
                 canImportThreadCredentials = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
                 canSetupImprov = canSetupImprov,
-                appVersion = appVersion.value,
+                appVersion = appVersion.toString(),
             )
         }
     }

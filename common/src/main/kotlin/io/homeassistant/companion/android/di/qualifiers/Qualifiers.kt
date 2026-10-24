@@ -31,6 +31,14 @@ annotation class NamedThemesStorage
 annotation class NamedWearStorage
 
 /**
+ * Qualifier for a [SuspendProvider<Boolean>] telling whether the pref of the changelog library
+ * previously used by the app is present.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NamedLegacyChangelogPref
+
+/**
  * Qualifier for a [String] dependency providing device manufacturer information.
  */
 @Qualifier

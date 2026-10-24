@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "auth",
+  "data": {
+    "users": [
+      {
+        "id": "3868e2025b4848798437a23f1351ed69",
+        "group_ids": [
+          "system-read-only"
+        ],
+        "is_owner": false,
+        "is_active": true,
+        "name": "Home Assistant Content",
+        "system_generated": true,
+        "local_only": false
+      },
+      {
+        "id": "a58de4cb9c774113b12ba7e0f2612b75",
+        "group_ids": [
+          "system-admin"
+        ],
+        "is_owner": true,
+        "is_active": true,
+        "name": "CITest",
+        "system_generated": false,
+        "local_only": false
+      }
+    ],
+    "groups": [
+      {
+        "id": "system-admin",
+        "name": "Administrators"
+      },
+      {
+        "id": "system-users",
+        "name": "Users"
+      },
+      {
+        "id": "system-read-only",
+        "name": "Read Only"
+      }
+    ],
+    "credentials": [
+      {
+        "id": "5e0e3b3d894d452c8c88e54bca84621e",
+        "user_id": "a58de4cb9c774113b12ba7e0f2612b75",
+        "auth_provider_type": "homeassistant",
+        "auth_provider_id": null,
+        "data": {
+          "username": "citest"
+        }
+      }
+    ],
+    "refresh_tokens": [
+      {
+        "id": "54fc0bf8817244289cc53e0e21094646",
+        "user_id": "3868e2025b4848798437a23f1351ed69",
+        "client_id": null,
+        "client_name": null,
+        "client_icon": null,
+        "token_type": "system",
+        "created_at": "2026-06-01T12:30:05.449209+00:00",
+        "access_token_expiration": 1800.0,
+        "token": "488d1ed74a11db6dd5452fb2fdae38b7ec1d763e867004fb9898971acf63857bd49be576da547fa0b15c28c7104aede1790eaf3515a9a3664d4c503fde7c0a43",
+        "jwt_key": "9214f7d17d557c5bf83455636bb39d0e97602e99fd869fb36037b058ea49a82ebb5c9aeba2d6d702e3164b6b7027bfa2ef68435f1d184ed1d538fe14d5645169",
+        "last_used_at": null,
+        "last_used_ip": null,
+        "expire_at": null,
+        "credential_id": null,
+        "version": "2026.5.4"
+      }
+    ]
+  }
+}

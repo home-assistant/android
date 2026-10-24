@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -21,6 +19,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HABrandColors
 import io.homeassistant.companion.android.common.compose.theme.HADimens
@@ -90,7 +91,7 @@ fun HAHint(text: String, modifier: Modifier = Modifier, onClose: (() -> Unit)? =
                 modifier = Modifier.align(Alignment.Top),
             ) {
                 Icon(
-                    imageVector = Icons.Default.Close,
+                    imageVector = Mdi.Close.rememberImageVector(),
                     contentDescription = stringResource(R.string.cancel),
                     tint = LocalHAColorScheme.current.colorOnNeutralQuiet,
                 )

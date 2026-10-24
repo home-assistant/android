@@ -1,0 +1,8 @@
+.HA_VERSION
+.cloud/
+.ha_run.lock
+blueprints/
+home-assistant.log
+home-assistant.log.*
+home-assistant_v2.db*
+tts/

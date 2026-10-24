@@ -6,27 +6,28 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.RingtoneManager
 import android.os.Build
 import android.text.Spanned
+import android.util.TypedValue
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.text.HtmlCompat
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.utils.colorFilter
-import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.util.CHANNEL_GENERAL
+import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancel
+import io.homeassistant.companion.android.common.util.fromHaName
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -196,23 +197,18 @@ fun parseColor(context: Context, colorString: String?, default: Int): Int {
     return ContextCompat.getColor(context, default)
 }
 
+private const val SMALL_ICON_SIZE_DP = 24f
+
 fun handleSmallIcon(context: Context, builder: NotificationCompat.Builder, data: Map<String, String>) {
     val notificationIcon = data[NotificationData.NOTIFICATION_ICON] ?: ""
-    if (notificationIcon.startsWith("mdi:") &&
-        notificationIcon.substringAfter("mdi:").isNotBlank()
-    ) {
-        val iconName = notificationIcon.split(":")[1]
-        val iconDrawable =
-            IconicsDrawable(context, "cmd-$iconName")
-        if (iconDrawable.icon != null) {
-            builder.setSmallIcon(
-                iconDrawable.colorFilter {
-                    PorterDuffColorFilter(Color.WHITE, PorterDuff.Mode.SRC_IN)
-                }.toAndroidIconCompat(),
-            )
-        } else {
-            builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
-        }
+    val icon = if (notificationIcon.startsWith(MDI_PREFIX)) Mdi.fromHaName(notificationIcon) else null
+    if (icon != null) {
+        val sizePx = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            SMALL_ICON_SIZE_DP,
+            context.resources.displayMetrics,
+        ).toInt()
+        builder.setSmallIcon(IconCompat.createWithBitmap(icon.toBitmap(sizePx, Color.WHITE)))
     } else {
         builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
     }

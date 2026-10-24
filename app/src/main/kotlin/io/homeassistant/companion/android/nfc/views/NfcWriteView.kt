@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.nfc.views
 
 import android.content.Intent
 import android.provider.Settings
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -29,8 +30,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.NfcTap
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 
@@ -62,7 +64,8 @@ fun NfcWriteView(
         verticalArrangement = Arrangement.Center,
     ) {
         Image(
-            asset = CommunityMaterial.Icon3.cmd_nfc_tap,
+            imageVector = Mdi.NfcTap.rememberImageVector(),
+            contentDescription = null,
             colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
         )
         Text(

@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
+import io.homeassistant.companion.android.changelog.ChangelogFragment
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
@@ -45,6 +46,7 @@ import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFr
 import io.homeassistant.companion.android.settings.gestures.GesturesFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.license.LicensesFragment
+import io.homeassistant.companion.android.settings.mediacontrols.MediaControlsSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -242,6 +244,21 @@ class SettingsFragment(
                 }
             }
 
+            findPreference<PreferenceCategory>("media_controls")?.let {
+                it.isVisible = !isAutomotive && !QuestUtil.isQuest
+            }
+            findPreference<Preference>("manage_media_controls")?.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(
+                        R.id.content,
+                        MediaControlsSettingsFragment::class.java,
+                        null,
+                    )
+                    addToBackStack(getString(commonR.string.media_controls))
+                }
+                return@setOnPreferenceClickListener true
+            }
+
             if (!isAutomotive && SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 findPreference<PreferenceCategory>("device_controls")?.let {
                     it.isVisible = true
@@ -340,22 +357,10 @@ class SettingsFragment(
             }
         }
 
-        findPreference<Preference>("changelog_github")?.let {
-            val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL")) {
-                "https://github.com/home-assistant/android/releases"
-            } else {
-                "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace(
-                    "-full",
-                    "",
-                ).replace("-minimal", "")}"
-            }
-            it.summary = link
-            it.intent = Intent(Intent.ACTION_VIEW, link.toUri())
-        }
-
         findPreference<Preference>("changelog_prompt")?.setOnPreferenceClickListener {
-            lifecycleScope.launch {
-                presenter.showChangeLog(requireContext())
+            parentFragmentManager.commit {
+                replace(R.id.content, ChangelogFragment::class.java, null)
+                addToBackStack(getString(commonR.string.changelog_screen_title))
             }
             true
         }

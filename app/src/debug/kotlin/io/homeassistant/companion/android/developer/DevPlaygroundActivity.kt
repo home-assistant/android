@@ -37,6 +37,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.developer.catalog.HAComposeCatalogActivity
+import io.homeassistant.companion.android.developer.nfc.DebugNfcTagEmulatorActivity
 import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -119,6 +120,12 @@ private fun DevPlayGroundScreen(context: Context? = null) {
                         }
                     },
                     variant = ButtonVariant.DANGER,
+                )
+                HAFilledButton(
+                    text = "Start NFC tag emulator",
+                    onClick = {
+                        context?.run { startActivity(Intent(this, DebugNfcTagEmulatorActivity::class.java)) }
+                    },
                 )
                 HAFilledButton(
                     text = "Start HA Compose Catalog",

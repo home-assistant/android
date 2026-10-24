@@ -53,7 +53,7 @@ class FriendlyStateTest {
     private fun createEntity(
         entityId: String = "light.living_room",
         state: String = "on",
-        attributes: Map<String, Any?> = mapOf("friendly_name" to "Living Room Light"),
+        attributes: Map<String, Any?> = emptyMap(),
     ) = Entity(
         entityId = entityId,
         state = state,

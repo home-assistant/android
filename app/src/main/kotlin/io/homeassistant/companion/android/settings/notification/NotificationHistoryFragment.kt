@@ -178,10 +178,12 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
             pref.isIconSpaceReserved = false
 
             pref.setOnPreferenceClickListener {
-                val args = Bundle()
-                args.putSerializable(NotificationDetailFragment.ARG_NOTIF, item)
                 parentFragmentManager.commit {
-                    replace(R.id.content, NotificationDetailFragment::class.java, args)
+                    replace(
+                        R.id.content,
+                        NotificationDetailFragment::class.java,
+                        NotificationDetailFragment.newArgs(item.id),
+                    )
                     addToBackStack("Notification Detail")
                 }
                 return@setOnPreferenceClickListener true

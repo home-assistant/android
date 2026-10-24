@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 class CoroutineDaoFunctionsIssueTest {
     private val roomAnnotation = kotlin(
         """
-        package androidx.room
+        package androidx.room3
 
         @Target(AnnotationTarget.CLASS) @Retention(AnnotationRetention.BINARY) annotation class Dao
 
@@ -17,7 +17,7 @@ class CoroutineDaoFunctionsIssueTest {
     private val flow = kotlin(
         """
         package kotlinx.coroutines.flow
-        
+
         interface Flow<T>
         """,
     ).indented()
@@ -25,7 +25,7 @@ class CoroutineDaoFunctionsIssueTest {
     private val pagingSource = kotlin(
         """
         package androidx.paging
-        
+
         interface PagingSource<K, V>
         """,
     ).indented()
@@ -39,9 +39,9 @@ class CoroutineDaoFunctionsIssueTest {
                 kotlin(
                     """
               package io.homeassistan.companion.android
-                
-              import androidx.room.Dao
-               
+
+              import androidx.room3.Dao
+
               @Dao
               interface TestDao {
                   fun test()
@@ -67,9 +67,9 @@ class CoroutineDaoFunctionsIssueTest {
                 kotlin(
                     """
               package io.homeassistan.companion.android
-                
-              import androidx.room.Dao
-               
+
+              import androidx.room3.Dao
+
               @Dao
               interface TestDao {
                   suspend fun test()
@@ -91,10 +91,10 @@ class CoroutineDaoFunctionsIssueTest {
                 kotlin(
                     """
               package io.homeassistan.companion.android
-                
-              import androidx.room.Dao
+
+              import androidx.room3.Dao
               import kotlinx.coroutines.flow.Flow
-               
+
               @Dao
               interface TestDao {
                   fun test(): Flow<Int>
@@ -116,10 +116,10 @@ class CoroutineDaoFunctionsIssueTest {
                 kotlin(
                     """
               package io.homeassistan.companion.android
-                
+
               import androidx.paging.PagingSource
               import kotlinx.coroutines.flow.Flow
-               
+
               @Dao
               interface TestDao {
                   fun test(): PagingSource<Int, String>

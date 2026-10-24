@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.vehicle
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
@@ -12,13 +13,12 @@ import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.utils.sizeDp
-import com.mikepenz.iconics.utils.toAndroidIconCompat
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.util.vehicle.getDomainList
 import io.homeassistant.companion.android.util.vehicle.getDomainsGridItem
 import io.homeassistant.companion.android.util.vehicle.getHeaderBuilder
 import io.homeassistant.companion.android.util.vehicle.getNavigationGridItem
+import io.homeassistant.companion.android.util.vehicle.tryFireNavigationEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -164,6 +165,9 @@ class EntityGridVehicleScreen(
                             when (displayed.domain) {
                                 in MAP_DOMAINS -> {
                                     displayed.coordinates?.let { coordinates ->
+                                        lifecycleScope.launch {
+                                            displayed.tryFireNavigationEvent(integrationRepositoryProvider())
+                                        }
                                         val intent = Intent(
                                             CarContext.ACTION_NAVIGATE,
                                             "geo:${coordinates.latitude},${coordinates.longitude}".toUri(),
@@ -194,9 +198,7 @@ class EntityGridVehicleScreen(
                 gridItem
                     .setImage(
                         CarIcon.Builder(
-                            IconicsDrawable(carContext, displayed.icon).apply {
-                                sizeDp = 64
-                            }.toAndroidIconCompat(),
+                            IconCompat.createWithBitmap(displayed.icon.toBitmap(carContext, 64, Color.WHITE)),
                         )
                             .setTint(
                                 if (displayed.isActive && displayed.domain in EntityExt.STATE_COLORED_DOMAINS) {

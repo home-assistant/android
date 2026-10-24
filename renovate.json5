@@ -34,6 +34,17 @@
             maxRequestsPerSecond: 8,
         },
     ],
+    customManagers: [
+        {
+            customType: 'regex',
+            description: 'Maestro CLI used by the e2e workflow, released on GitHub with a cli- tag prefix',
+            managerFilePatterns: ['/^\\.github/workflows/e2e\\.yml$/'],
+            matchStrings: ['MAESTRO_VERSION: (?<currentValue>\\S+)'],
+            depNameTemplate: 'mobile-dev-inc/Maestro',
+            datasourceTemplate: 'github-releases',
+            extractVersionTemplate: '^cli-(?<version>.+)$',
+        },
+    ],
     packageRules: [
         {
             matchManagers: ['bundler'],

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,8 +13,10 @@ import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
 import androidx.wear.tooling.preview.devices.WearDevices
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Alphabetical
+import io.github.timoptr.mdiicons.generated.AlphabeticalOff
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
@@ -42,12 +45,9 @@ fun SelectShortcutsTileView(
                     label = { Text(stringResource(commonR.string.shortcuts_tile_text_setting)) },
                     icon = {
                         Image(
-                            asset =
-                            if (isShowShortcutTextEnabled) {
-                                CommunityMaterial.Icon.cmd_alphabetical
-                            } else {
-                                CommunityMaterial.Icon.cmd_alphabetical_off
-                            },
+                            imageVector = (if (isShowShortcutTextEnabled) Mdi.Alphabetical else Mdi.AlphabeticalOff)
+                                .rememberImageVector(),
+                            contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )
                     },

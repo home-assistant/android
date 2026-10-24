@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "core.analytics",
+  "data": {
+    "onboarded": true,
+    "preferences": {},
+    "uuid": null,
+    "submission_identifier": null,
+    "snapshot_submission_time": null
+  }
+}

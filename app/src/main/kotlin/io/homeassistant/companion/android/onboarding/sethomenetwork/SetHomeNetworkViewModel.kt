@@ -42,7 +42,7 @@ class SetHomeNetworkViewModel @VisibleForTesting constructor(
      * something more advance like using BSSID should do it later from the settings.
      */
     private val _currentWifiNetwork =
-        MutableStateFlow(wifiHelper.getWifiSsid()?.removeSurrounding("\"") ?: "")
+        MutableStateFlow(wifiHelper.getWifiSsid().orEmpty())
     val currentWifiNetwork = _currentWifiNetwork.asStateFlow()
 
     val hasEthernetConnection: Boolean = networkHelper.isUsingEthernet()

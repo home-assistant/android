@@ -69,4 +69,14 @@ sealed interface UrlLoadResult {
      * @property serverId The server ID with no available URL
      */
     data class NoUrlAvailable(val serverId: Int) : UrlLoadResult
+
+    /**
+     * The target resolved to a URL outside the server origin.
+     *
+     * It must not be loaded in the WebView.
+     *
+     * @property url The URL to open externally
+     * @property serverId The server ID the target was requested for
+     */
+    data class ExternalUrl(val url: String, val serverId: Int) : UrlLoadResult
 }

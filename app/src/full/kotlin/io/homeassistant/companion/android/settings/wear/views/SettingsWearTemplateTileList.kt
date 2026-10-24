@@ -16,7 +16,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.TextBox
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.settings.views.SettingsRow
@@ -75,7 +76,7 @@ fun SettingsWearTemplateTileList(
                             template.length <= 100 -> template
                             else -> "${template.take(100)}…"
                         },
-                        mdiIcon = CommunityMaterial.Icon3.cmd_text_box,
+                        mdiIcon = Mdi.TextBox,
                         enabled = true,
                         onClicked = { onTemplateTileClicked(templateTileEntry.key) },
                     )

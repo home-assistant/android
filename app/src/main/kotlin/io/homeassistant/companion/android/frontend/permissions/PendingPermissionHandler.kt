@@ -18,7 +18,10 @@ import androidx.compose.runtime.Composable
 internal fun PendingPermissionHandler(pendingRequest: PermissionRequest?) {
     when (pendingRequest) {
         is PermissionRequest.Notification -> {
-            @SuppressLint("InlinedApi")
+            // Notification is @RequiresApi(TIRAMISU) and PermissionManager only enqueues it above
+            // that level, so this branch is unreachable below it. Lint cannot infer that from the
+            // type check.
+            @SuppressLint("NewApi")
             NotificationPermissionPrompt(
                 onPermissionResult = pendingRequest.onResult,
                 onDismiss = pendingRequest.onDismiss,

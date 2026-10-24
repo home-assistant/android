@@ -34,6 +34,8 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
+import io.homeassistant.companion.android.frontend.permissions.PendingPermissionHandler
+import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
@@ -53,6 +55,7 @@ internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionView
     val isLoading by viewModel.isLoadingFlow.collectAsState()
     val error by viewModel.errorFlow.collectAsState()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsState()
+    val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsState()
     val isError = error != null
 
     ConnectionScreen(
@@ -62,6 +65,7 @@ internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionView
         getWebViewClient = viewModel::getWebViewClient,
         webChromeClient = viewModel.webChromeClient,
         pendingFileChooser = pendingFileChooser,
+        pendingPermissionRequest = pendingPermissionRequest,
         onBackClick = onBackClick,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
         modifier = modifier,
@@ -79,8 +83,10 @@ internal fun ConnectionScreen(
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
     pendingFileChooser: FileChooserRequest? = null,
+    pendingPermissionRequest: PermissionRequest? = null,
 ) {
     FileChooserEffect(pendingRequest = pendingFileChooser)
+    PendingPermissionHandler(pendingRequest = pendingPermissionRequest)
 
     Box(modifier = modifier.testTag(CONNECTION_SCREEN_TAG)) {
         Spacer(

@@ -3,6 +3,9 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.Context
 import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Android
+import io.github.timoptr.mdiicons.generated.Security
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -23,7 +26,7 @@ class AndroidOsSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_android_os_version,
             commonR.string.sensor_description_android_os_version,
-            "mdi:android",
+            Mdi.Android,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -33,7 +36,7 @@ class AndroidOsSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_android_os_security_patch,
             commonR.string.sensor_description_android_os_security_patch,
-            "mdi:security",
+            Mdi.Security,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }

@@ -38,6 +38,9 @@ private val webViewTimersManager = WebViewTimersManager()
 
 const val BLANK_URL = "about:blank"
 
+/** `external_auth` query parameter to signal to the frontend authentication uses app external authentication. */
+const val EXTERNAL_AUTH_QUERY_PARAM = "external_auth"
+
 @VisibleForTesting const val HA_WEBVIEW_TAG = "ha_web_view_tag"
 
 /**

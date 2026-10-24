@@ -4,13 +4,14 @@ import android.app.AlarmManager
 import android.content.Context
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Alarm
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.sensor.SensorSetting
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -36,9 +37,12 @@ class NextAlarmManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_alarm,
             commonR.string.sensor_description_next_alarm,
-            "mdi:alarm",
+            Mdi.Alarm,
             deviceClass = "timestamp",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+            settings = listOf(
+                Setting.Apps(SETTING_ALLOW_LIST),
+            ),
         )
     }
 
@@ -74,9 +78,7 @@ class NextAlarmManager @Inject constructor(
         var utc = STATE_UNAVAILABLE
         var pendingIntent = ""
 
-        val sensorRepository = sensorRepository
-        val sensorSetting = sensorRepository.getSettings(nextAlarm.id)
-        val allowPackageList = sensorSetting.firstOrNull { it.name == SETTING_ALLOW_LIST }?.value ?: ""
+        val allowPackageList = getSetting(nextAlarm, SETTING_ALLOW_LIST)
 
         try {
             val alarmManager = applicationContext.getSystemService<AlarmManager>()!!
@@ -94,10 +96,6 @@ class NextAlarmManager @Inject constructor(
                         Timber.d("Skipping update from $pendingIntent as it is not in the allow list")
                         return
                     }
-                } else {
-                    sensorRepository.add(
-                        SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, SensorSettingType.LIST_APPS),
-                    )
                 }
 
                 val cal: Calendar = GregorianCalendar()

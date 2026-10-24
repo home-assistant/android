@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LoopWithTooManyJumpStatements:ProvidesSensorProcessor.kt:ProvidesSensorProcessor$for</ID>
+    <ID>SpreadOperator:ProvidesSensorProcessor.kt:ProvidesSensorProcessor$(aggregating = true, *originatingFiles)</ID>
+  </CurrentIssues>
+</SmellBaseline>

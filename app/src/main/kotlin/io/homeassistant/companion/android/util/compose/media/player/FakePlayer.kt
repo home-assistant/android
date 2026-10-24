@@ -255,7 +255,7 @@ internal class FakePlayer(
     }
 
     override fun getCurrentTracks(): Tracks {
-        TODO("Not yet implemented")
+        return Tracks.EMPTY
     }
 
     override fun getTrackSelectionParameters(): TrackSelectionParameters {
