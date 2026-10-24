@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -82,7 +83,7 @@ class WidgetConfigureScreenTest {
         }
     }
 
-    private class FakeViewModel(initialState: FakeState) : WidgetConfigureViewModel<FakeState> {
+    private class FakeViewModel(initialState: FakeState) : WidgetConfigureStateProvider<FakeState> {
         val mutableState = MutableStateFlow(initialState)
         override val state: StateFlow<FakeState> = mutableState
 
@@ -96,7 +97,16 @@ class WidgetConfigureScreenTest {
         override val selectedServerId: Int = 0,
         override val isUpdateWidget: Boolean = false,
         override val isActionEnabled: Boolean = true,
-    ) : WidgetConfigureState
+    ) : WidgetConfigureState<FakeState> {
+        override fun withServersDropdownItems(items: List<HADropdownItem<Int>>) = copy(serversDropdownItems = items)
+
+        override fun withSelectedServerId(serverId: Int) = copy(selectedServerId = serverId)
+
+        override fun changeServer(serverId: Int) = copy(selectedServerId = serverId)
+
+        // The wrapper under test never changes the background, so the fake has no such field to update.
+        override fun withBackgroundType(backgroundType: WidgetBackgroundType) = this
+    }
 
     private companion object {
         // Enough virtual time to run the error collector and play the snackbar enter animation, while

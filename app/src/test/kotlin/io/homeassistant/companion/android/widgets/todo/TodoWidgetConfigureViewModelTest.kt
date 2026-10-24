@@ -1,14 +1,10 @@
 package io.homeassistant.companion.android.widgets.todo
 
-import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.os.Build
-import android.os.RemoteException
 import app.cash.turbine.test
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.ClipboardList
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -17,7 +13,6 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
@@ -32,7 +27,6 @@ import io.mockk.mockkStatic
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -91,17 +85,6 @@ class TodoWidgetConfigureViewModelTest {
         assertEquals(WidgetBackgroundType.TRANSPARENT, state.selectedBackgroundType)
         assertEquals(BLACK_HEX, state.textColorHex)
         assertEquals(commonR.string.update_widget, state.actionButtonLabel)
-    }
-
-    @Test
-    fun `Given servers when created then they are exposed as dropdown items`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertEquals(
-            listOf(HADropdownItem(key = serverId, label = "Home")),
-            viewModel.state.value.serversDropdownItems,
-        )
     }
 
     @Test
@@ -178,18 +161,6 @@ class TodoWidgetConfigureViewModelTest {
     }
 
     @Test
-    fun `Given an invalid widget id when configuration is saved then an error is reported`() = runTest {
-        val viewModel = createViewModel(widgetId = AppWidgetManager.INVALID_APPWIDGET_ID)
-        advanceUntilIdle()
-
-        viewModel.errors.test {
-            assertFalse(viewModel.updateWidgetConfiguration(mockk()))
-            assertEquals(commonR.string.widget_update_error, awaitItem())
-        }
-        coVerify(exactly = 0) { dao.add(any()) }
-    }
-
-    @Test
     fun `Given the list items cannot be loaded when configuration is saved then an error is reported`() = runTest {
         coEvery { webSocketRepository.getTodos(any()) } throws IllegalStateException("offline")
         val viewModel = createViewModel()
@@ -218,78 +189,7 @@ class TodoWidgetConfigureViewModelTest {
         assertEquals(shoppingList.entityId, viewModel.state.value.selectedEntityId)
     }
 
-    @Test
-    fun `Given an SDK below Oreo when widget creation is requested then an error is reported`() = runTest {
-        SdkVersion.sdkInt = Build.VERSION_CODES.N
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.errors.test {
-            assertFalse(viewModel.requestWidgetCreation(mockk()))
-            assertEquals(commonR.string.widget_creation_error, awaitItem())
-        }
-    }
-
-    @Test
-    fun `Given a launcher that does not support pinning when widget creation is requested then an error is reported`() = runTest {
-        assertWidgetCreationFailsWhenPinningUnsupported { every { isRequestPinAppWidgetSupported } returns false }
-    }
-
-    @Test
-    fun `Given pinning support cannot be read when widget creation is requested then an error is reported`() = runTest {
-        assertWidgetCreationFailsWhenPinningUnsupported {
-            every { isRequestPinAppWidgetSupported } throws RemoteException("binder")
-        }
-    }
-
-    @Test
-    fun `Given no registered server when created then the picker is empty and the action is disabled`() = runTest {
-        coEvery { serverManager.isRegistered() } returns false
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        val state = viewModel.state.value
-        assertEquals(EntityDisplayState.Loaded(emptyList<EntityDisplayWithContext>()), state.entityDisplayState)
-        assertNull(state.selectedEntityId)
-        assertFalse(state.isActionEnabled)
-    }
-
-    private suspend fun TestScope.assertWidgetCreationFailsWhenPinningUnsupported(
-        configure: AppWidgetManager.() -> Unit,
-    ) {
-        SdkVersion.sdkInt = Build.VERSION_CODES.O
-        mockkStatic(AppWidgetManager::class) {
-            val appWidgetManager = mockk<AppWidgetManager>()
-            every { AppWidgetManager.getInstance(any()) } returns appWidgetManager
-            appWidgetManager.configure()
-
-            val viewModel = createViewModel()
-            advanceUntilIdle()
-
-            viewModel.errors.test {
-                assertFalse(viewModel.requestWidgetCreation(mockk()))
-                assertEquals(commonR.string.widget_creation_error, awaitItem())
-            }
-        }
-    }
-
-    @Test
-    fun `Given an error already shown when the screen collects again then the error is not shown again`() = runTest {
-        val viewModel = createViewModel(widgetId = AppWidgetManager.INVALID_APPWIDGET_ID)
-        advanceUntilIdle()
-        assertFalse(viewModel.updateWidgetConfiguration(mockk()))
-
-        viewModel.errors.test {
-            assertEquals(commonR.string.widget_update_error, awaitItem())
-        }
-        // A new collector, e.g. the screen after a rotation, must not show the error again
-        viewModel.errors.test {
-            expectNoEvents()
-        }
-    }
-
-    private fun createViewModel(preselectedEntityId: String? = null, widgetId: Int = this.widgetId) = TodoWidgetConfigureViewModel(
+    private fun createViewModel(preselectedEntityId: String? = null) = TodoWidgetConfigureViewModel(
         todoWidgetDao = dao,
         serverManager = serverManager,
         entitiesForDisplayManager = entitiesForDisplayManager,

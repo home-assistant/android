@@ -78,7 +78,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                     finish()
                 }
             } else {
-                if (viewModel.updateWidgetConfiguration()) {
+                if (viewModel.updateWidgetConfiguration(this@EntityWidgetConfigureActivity)) {
                     viewModel.updateWidget(this@EntityWidgetConfigureActivity)
                     setResult(
                         RESULT_OK,
