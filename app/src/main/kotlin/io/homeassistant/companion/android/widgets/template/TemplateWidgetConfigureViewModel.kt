@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
+import io.homeassistant.companion.android.widgets.configure.WidgetConfigureViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -41,11 +42,12 @@ import kotlinx.serialization.SerializationException
 import timber.log.Timber
 
 @HiltViewModel(assistedFactory = TemplateWidgetConfigureViewModel.Factory::class)
-class TemplateWidgetConfigureViewModel @AssistedInject constructor(
+internal class TemplateWidgetConfigureViewModel @AssistedInject constructor(
     private val templateWidgetDao: TemplateWidgetDao,
     private val serverManager: ServerManager,
     @Assisted private val widgetId: Int,
-) : ViewModel() {
+) : ViewModel(),
+    WidgetConfigureViewModel<TemplateWidgetConfigureState> {
 
     private val _state = MutableStateFlow(
         TemplateWidgetConfigureState(
@@ -57,12 +59,12 @@ class TemplateWidgetConfigureViewModel @AssistedInject constructor(
             },
         ),
     )
-    internal val state: StateFlow<TemplateWidgetConfigureState> = _state.asStateFlow()
+    override val state: StateFlow<TemplateWidgetConfigureState> = _state.asStateFlow()
 
     private val _errors = Channel<Int>(Channel.BUFFERED)
 
     /** Errors to surface to the user, as string resources. */
-    val errors = _errors.receiveAsFlow()
+    override val errors = _errors.receiveAsFlow()
 
     private var renderJob: Job? = null
 
