@@ -13,6 +13,7 @@ class SetHomeNetworkScreenshotTest {
         HAThemeForPreview {
             SetHomeNetworkScreen(
                 onHelpClick = {},
+                onBackClick = {},
                 showEthernet = true,
                 showVpn = true,
                 isUsingVpn = true,
@@ -33,6 +34,7 @@ class SetHomeNetworkScreenshotTest {
         HAThemeForPreview {
             SetHomeNetworkScreen(
                 onHelpClick = {},
+                onBackClick = {},
                 showEthernet = false,
                 showVpn = false,
                 isUsingVpn = false,
