@@ -20,11 +20,11 @@ import java.net.URL
 import javax.inject.Inject
 import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -77,8 +77,8 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
         messagingTokenProvider,
     )
 
-    private val _navigationEventsFlow = MutableSharedFlow<NameYourDeviceNavigationEvent>()
-    val navigationEventsFlow = _navigationEventsFlow.asSharedFlow()
+    private val _navigationEventsFlow = Channel<NameYourDeviceNavigationEvent>(Channel.BUFFERED)
+    val navigationEventsFlow = _navigationEventsFlow.receiveAsFlow()
 
     private val _deviceNameFlow = MutableStateFlow(defaultName)
     val deviceNameFlow = _deviceNameFlow.asStateFlow()
@@ -104,7 +104,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                 val hasPlainTextAccess = url.startsWith("http://")
                 val serverId = addServer(hasPlainTextAccess = hasPlainTextAccess)
 
-                _navigationEventsFlow.emit(
+                _navigationEventsFlow.send(
                     NameYourDeviceNavigationEvent.DeviceNameSaved(
                         serverId,
                         hasPlainTextAccess = hasPlainTextAccess,
@@ -119,7 +119,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                     is SSLException -> commonR.string.webview_error_SSL_INVALID
                     else -> commonR.string.webview_error
                 }
-                _navigationEventsFlow.emit(NameYourDeviceNavigationEvent.Error(messageRes))
+                _navigationEventsFlow.send(NameYourDeviceNavigationEvent.Error(messageRes))
             } finally {
                 _isSavingFlow.emit(false)
             }

@@ -11,9 +11,7 @@ import kotlinx.coroutines.flow.Flow
  */
 interface FrontendBusObserver {
 
-    /**
-     * Flow of events from incoming external bus messages and authentication results.
-     */
+    /** Flow of events from incoming external bus messages and authentication results. */
     fun messageResults(): Flow<FrontendHandlerEvent>
 
     /**
