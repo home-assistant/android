@@ -351,7 +351,7 @@ open class HomeAssistantApplication : Application() {
 
         if (!isAutomotive()) {
             // Update widgets when the screen turns on, updates are skipped if widgets were not added
-            ButtonWidget().registerReceiver(this)
+            ButtonWidget().register(this@HomeAssistantApplication)
             val entityWidget = EntityWidget()
             val mediaPlayerWidget = MediaPlayerControlsWidget()
             val templateWidget = TemplateWidget()

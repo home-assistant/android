@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.button
 
-import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
@@ -10,10 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.toColorInt
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
@@ -22,8 +18,6 @@ import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
-import androidx.glance.LocalGlanceId
-import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
@@ -45,7 +39,6 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
-import androidx.glance.material.ColorProviders
 import androidx.glance.preview.ExperimentalGlancePreviewApi
 import androidx.glance.preview.Preview
 import androidx.glance.semantics.semantics
@@ -64,14 +57,12 @@ import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTheme
 import io.homeassistant.companion.android.util.compose.HomeAssistantGlanceTypography
-import io.homeassistant.companion.android.util.compose.glanceHaLightColors
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.CALL_SERVICE
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.CALL_SERVICE_AUTH
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.DEFAULT_MAX_ICON_SIZE
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.IS_LOADING_KEY
 import io.homeassistant.companion.android.widgets.button.ButtonWidget.Companion.SENT_SUCCESSFUL_KEY
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
+import io.homeassistant.companion.android.widgets.button.ButtonWidgetState.Companion.getColors
 
 private val authKey = ActionParameters.Key<Boolean>("auth")
 private val widgetIdKey = ActionParameters.Key<Int>("widgetId")
@@ -109,7 +100,7 @@ class ButtonGlanceAppWidget : GlanceAppWidget() {
             val flow = remember(widgetId) { updater.getButtonEntityFlow(widgetId) }
             val state by flow.collectAsState(Loading)
 
-            HomeAssistantGlanceTheme(colors = getWidgetColors(state?.backgroundType, state?.textColor) ?: HomeAssistantGlanceTheme.colors) {
+            HomeAssistantGlanceTheme(colors = state?.getColors() ?: HomeAssistantGlanceTheme.colors) {
                 ScreenForState(
                     id = id,
                     context = context,
@@ -121,30 +112,10 @@ class ButtonGlanceAppWidget : GlanceAppWidget() {
             }
         }
     }
-
-    private fun getWidgetColors(backgroundType: WidgetBackgroundType?, textColorString: String?): ColorProviders? {
-        if (backgroundType != WidgetBackgroundType.TRANSPARENT || textColorString == null) return null
-        val textColor = Color(textColorString.toColorInt())
-        val haColors = glanceHaLightColors
-        return ColorProviders(
-            light = haColors.copy(
-                surface = Color.Transparent,
-                onSurface = textColor,
-            ),
-            dark = haColors.copy(
-                surface = Color.Transparent,
-                onSurface = textColor,
-            ),
-        )
-    }
 }
 
 class TapAction : ActionCallback {
-    override suspend fun onAction(
-        context: Context,
-        glanceId: GlanceId,
-        parameters: ActionParameters,
-    ) {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val auth = parameters[authKey] == true
         val appWidgetId = parameters[widgetIdKey] ?: return
 
@@ -253,13 +224,15 @@ private fun ActionSuccessScreen(state: ButtonStateWithData?, modifier: Modifier 
 
 @Composable
 private fun DefaultButtonScreen(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val iconBitmap = remember(context) { Mdi.Flash.toBitmap(context, 24, android.graphics.Color.WHITE) }
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalAlignment = Alignment.CenterVertically,
         modifier = GlanceModifier.fillMaxSize().buttonWidgetBackground().padding(8.dp),
     ) {
         Image(
-            provider = ImageProvider(R.drawable.ic_hand_pointer),
+            provider = ImageProvider(iconBitmap),
             contentDescription = null,
             colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurface),
             modifier = GlanceModifier.size(24.dp),
