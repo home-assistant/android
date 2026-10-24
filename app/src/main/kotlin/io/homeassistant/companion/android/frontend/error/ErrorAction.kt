@@ -22,13 +22,24 @@ data class ErrorAction(@param:StringRes val labelRes: Int, val style: Style, val
  *
  * @param isInternalConnection whether the active connection is the internal one, used to label the
  *   [ErrorActionIntent.Refresh] action.
+ * @param canSwitchServer whether another server exists to offer [ErrorActionIntent.SwitchServer].
  */
-fun errorActions(error: FrontendConnectionError, isInternalConnection: Boolean): List<ErrorAction> {
+fun errorActions(
+    error: FrontendConnectionError,
+    isInternalConnection: Boolean,
+    canSwitchServer: Boolean,
+): List<ErrorAction> {
     val settings = ErrorAction(
         labelRes = commonR.string.open_settings,
         style = ErrorAction.Style.Secondary,
         intent = ErrorActionIntent.GoToSettings,
     )
+
+    val switchServer = ErrorAction(
+        labelRes = commonR.string.error_action_switch_server,
+        style = ErrorAction.Style.Secondary,
+        intent = ErrorActionIntent.SwitchServer,
+    ).takeIf { canSwitchServer }
 
     return when (error) {
         is FrontendConnectionError.TlsCertNotFound -> listOf(
@@ -64,8 +75,9 @@ fun errorActions(error: FrontendConnectionError, isInternalConnection: Boolean):
         is FrontendConnectionError.Unrecoverable,
         -> listOf(settings.copy(style = ErrorAction.Style.Primary))
 
-        is FrontendConnectionError.ExternalBusTimeout -> listOf(
+        is FrontendConnectionError.ExternalBusTimeout -> listOfNotNull(
             refresh(isInternalConnection),
+            switchServer,
             settings,
             ErrorAction(
                 labelRes = commonR.string.wait,
@@ -81,7 +93,7 @@ fun errorActions(error: FrontendConnectionError, isInternalConnection: Boolean):
 
         is FrontendConnectionError.Timeout,
         is FrontendConnectionError.Unreachable,
-        -> listOf(refresh(isInternalConnection), settings)
+        -> listOfNotNull(refresh(isInternalConnection), switchServer, settings)
     }
 }
 

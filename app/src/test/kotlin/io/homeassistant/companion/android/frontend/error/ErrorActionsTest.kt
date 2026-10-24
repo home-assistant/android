@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class ErrorActionsTest {
 
-    private fun actionsFor(error: FrontendConnectionError, isInternalConnection: Boolean = true) = errorActions(error, isInternalConnection)
+    private fun actionsFor(error: FrontendConnectionError, isInternalConnection: Boolean = true, canSwitchServer: Boolean = false) = errorActions(error, isInternalConnection, canSwitchServer)
 
     private val tlsNotFound = FrontendConnectionError.TlsCertNotFound(null, "t")
     private val tlsExpired = FrontendConnectionError.TlsCertExpired(null, "t")
@@ -96,6 +96,19 @@ class ErrorActionsTest {
         assertEquals(
             listOf(ErrorActionIntent.Refresh, ErrorActionIntent.GoToSettings),
             actionsFor(unreachable, isInternalConnection = false).map { it.intent },
+        )
+    }
+
+    @Test
+    fun `Given ExternalBusTimeout and another server when building actions then refresh switch-server settings and wait`() {
+        assertEquals(
+            listOf(
+                ErrorAction(commonR.string.refresh_internal, ErrorAction.Style.Primary, ErrorActionIntent.Refresh),
+                ErrorAction(commonR.string.error_action_switch_server, ErrorAction.Style.Secondary, ErrorActionIntent.SwitchServer),
+                ErrorAction(commonR.string.open_settings, ErrorAction.Style.Secondary, ErrorActionIntent.GoToSettings),
+                ErrorAction(commonR.string.wait, ErrorAction.Style.Secondary, ErrorActionIntent.Wait),
+            ),
+            actionsFor(externalBusTimeout, canSwitchServer = true),
         )
     }
 
