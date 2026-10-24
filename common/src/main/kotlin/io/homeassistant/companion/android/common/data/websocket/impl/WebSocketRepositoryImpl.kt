@@ -37,6 +37,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Fl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.PanelResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
@@ -238,6 +239,18 @@ class WebSocketRepositoryImpl internal constructor(
         )
 
         return mapResponse(socketResponse)
+    }
+
+    override suspend fun getPanels(): List<PanelResponse>? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "get_panels",
+            ),
+        )
+        if (socketResponse?.success != true) return null
+
+        // The panels are keyed by their URL path
+        return mapResponse<Map<String, PanelResponse>>(socketResponse)?.values?.toList()
     }
 
     override suspend fun getAssistPipelines(): AssistPipelineListResponse? {
