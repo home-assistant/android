@@ -67,6 +67,7 @@ enum class GestureDirection(@StringRes val description: Int) {
 
 /** Number of pointers used in a gesture */
 enum class GesturePointers(val asInt: Int, @StringRes val description: Int) {
+    ONE(asInt = 1, description = R.string.gestures_pointers_one),
     TWO(asInt = 2, description = R.string.gestures_pointers_two),
     THREE(asInt = 3, description = R.string.gestures_pointers_three),
 }
@@ -81,6 +82,11 @@ enum class HAGesture(
     val direction: GestureDirection,
     val pointers: GesturePointers,
 ) {
+    SWIPE_LEFT_ONE_EDGE(
+        fullDescription = R.string.gesture_name_swipe_left_one_edge,
+        direction = GestureDirection.LEFT,
+        pointers = GesturePointers.ONE,
+    ),
     SWIPE_LEFT_TWO(
         fullDescription = R.string.gesture_name_swipe_left_two,
         direction = GestureDirection.LEFT,
@@ -90,6 +96,11 @@ enum class HAGesture(
         fullDescription = R.string.gesture_name_swipe_left_three,
         direction = GestureDirection.LEFT,
         pointers = GesturePointers.THREE,
+    ),
+    SWIPE_RIGHT_ONE_EDGE(
+        fullDescription = R.string.gesture_name_swipe_right_one_edge,
+        direction = GestureDirection.RIGHT,
+        pointers = GesturePointers.ONE,
     ),
     SWIPE_RIGHT_TWO(
         fullDescription = R.string.gesture_name_swipe_right_two,
@@ -124,7 +135,10 @@ enum class HAGesture(
     ;
 
     companion object {
-        /** @return [HAGesture] for a detected swipe if supported, or `null` otherwise */
+        /**
+         * Returns the supported swipe gesture, or `null`.
+         * One-pointer swipes must first be validated as inward edge swipes.
+         */
         fun fromSwipeListener(direction: GestureDirection, pointers: Int): HAGesture? =
             entries.firstOrNull { it.direction == direction && it.pointers.asInt == pointers }
     }
