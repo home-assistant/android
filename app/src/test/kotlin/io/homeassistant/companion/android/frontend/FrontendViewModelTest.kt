@@ -57,13 +57,17 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
+import io.homeassistant.companion.android.frontend.url.MORE_INFO_ENTITY_ID_QUERY_PARAM
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
+import io.homeassistant.companion.android.util.compose.webview.EXTERNAL_AUTH_QUERY_PARAM
 import io.homeassistant.companion.android.util.hasSameOrigin
 import io.homeassistant.companion.android.util.mockServer
+import io.homeassistant.companion.android.util.toRelativeUrl
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -72,6 +76,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.runs
+import io.mockk.slot
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlin.time.Duration.Companion.minutes
@@ -1936,6 +1941,118 @@ class FrontendViewModelTest {
 
             assertEquals(2, viewModel.viewState.value.serverId)
             assertFalse(viewModel.canGoBack())
+        }
+    }
+
+    @Nested
+    inner class RelativeUrlPreservation {
+
+        private val visitedUrl = "https://example.com/history?start_date=2026-01-01&external_auth=1"
+        private val relativeUrlServer1 = slot<() -> String?>()
+        private val relativeUrlServer2 = slot<() -> String?>()
+
+        /**
+         * Creates a ViewModel whose URL flows capture the relative URL provider per server, and returns
+         * it with a function reporting a visited URL through the WebView client callback.
+         */
+        private suspend fun createViewModelWithUrlVisitedCapture(): Pair<FrontendViewModel, (String?) -> Unit> {
+            every { urlManager.serverUrlFlow(1, any(), capture(relativeUrlServer1)) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server1.com?external_auth=1", serverId = 1),
+            )
+            every { urlManager.serverUrlFlow(2, any(), capture(relativeUrlServer2)) } returns flowOf(
+                UrlLoadResult.Success(url = "https://server2.com?external_auth=1", serverId = 2),
+            )
+            var capturedUrlVisited: ((String?) -> Unit)? = null
+            coEvery {
+                webViewClientFactory.create(
+                    currentUrlFlow = any(),
+                    onFrontendError = any(),
+                    onCrash = any(),
+                    onUrlIntercepted = any(),
+                    onPageFinished = any(),
+                    onReceivedHttpAuthRequest = any(),
+                    onCanGoBackChanged = any(),
+                    onSubresourceSslError = any(),
+                    onUrlVisited = any(),
+                )
+            } answers {
+                // onUrlVisited is at parameter index 8 in HAWebViewClientFactory.create
+                capturedUrlVisited = arg(8)
+                mockk(relaxed = true)
+            }
+
+            val viewModel = createViewModel(serverId = 1)
+            viewModel.getWebViewClient()
+            return viewModel to {
+                val callback = capturedUrlVisited
+                assertNotNull(callback)
+                callback.invoke(it)
+            }
+        }
+
+        /** Runs [block] with [visitedUrl] resolving to [relativeUrl] when the expected params are excluded. */
+        private inline fun withRelativeUrl(relativeUrl: String, block: () -> Unit) {
+            mockkStatic(Uri::class)
+            mockkStatic("io.homeassistant.companion.android.util.UrlUtilKt")
+            try {
+                val visitedUri = mockk<Uri>()
+                every { Uri.parse(visitedUrl) } returns visitedUri
+                every {
+                    visitedUri.toRelativeUrl(setOf(EXTERNAL_AUTH_QUERY_PARAM, MORE_INFO_ENTITY_ID_QUERY_PARAM))
+                } returns relativeUrl
+                block()
+            } finally {
+                unmockkStatic("io.homeassistant.companion.android.util.UrlUtilKt")
+                unmockkStatic(Uri::class)
+            }
+        }
+
+        @Test
+        fun `Given no visited url when the base url changes then no relative url is provided`() = runTest {
+            createViewModelWithUrlVisitedCapture()
+            advanceUntilIdle()
+
+            assertNull(relativeUrlServer1.captured())
+        }
+
+        @Test
+        fun `Given a visited url when the base url changes then its relative url without auth and more-info params is provided`() = runTest {
+            withRelativeUrl("/history?start_date=2026-01-01") {
+                val (_, reportUrlVisited) = createViewModelWithUrlVisitedCapture()
+                advanceUntilIdle()
+
+                reportUrlVisited(visitedUrl)
+
+                assertEquals("/history?start_date=2026-01-01", relativeUrlServer1.captured())
+            }
+        }
+
+        @Test
+        fun `Given about blank visited after a page when the base url changes then the page is still provided`() = runTest {
+            withRelativeUrl("/history?start_date=2026-01-01") {
+                val (_, reportUrlVisited) = createViewModelWithUrlVisitedCapture()
+                advanceUntilIdle()
+
+                reportUrlVisited(visitedUrl)
+                reportUrlVisited(BLANK_URL)
+                reportUrlVisited(null)
+
+                assertEquals("/history?start_date=2026-01-01", relativeUrlServer1.captured())
+            }
+        }
+
+        @Test
+        fun `Given a visited url when switching servers then the new server gets no relative url`() = runTest {
+            withRelativeUrl("/history?start_date=2026-01-01") {
+                val (viewModel, reportUrlVisited) = createViewModelWithUrlVisitedCapture()
+                advanceUntilIdle()
+                reportUrlVisited(visitedUrl)
+
+                viewModel.switchServer(2)
+                advanceUntilIdle()
+
+                assertNull(relativeUrlServer2.captured())
+            }
         }
     }
 

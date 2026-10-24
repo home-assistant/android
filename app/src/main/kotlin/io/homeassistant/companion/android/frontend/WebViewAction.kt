@@ -131,8 +131,8 @@ sealed interface WebViewAction {
      *   when the dashboard reports it can go back, so reaching [BackAction.None] means back was
      *   consumed but nothing happened — a [FailFast] flags it during development.
      *
-     * @param loadedUrl The URL the ViewModel most recently loaded into the WebView. Used instead of
-     *        [WebView.getUrl], which can be `about:blank` during loads.
+     * @param loadedUrl The URL currently shown in the WebView, as tracked by the ViewModel. Used
+     *        instead of [WebView.getUrl], which can be `about:blank` during loads.
      */
     data class NavigateBack(val loadedUrl: String?) : WebViewAction {
         override fun run(webView: WebView) {
@@ -140,8 +140,7 @@ sealed interface WebViewAction {
                 BackAction.GoBack -> webView.goBack()
                 is BackAction.NavigateToRoot -> {
                     webView.loadUrl(action.rootUrl.toString())
-                    // Drop the stale cross-origin entry so the next back press exits the app
-                    // instead of looping back into it.
+                    // Drop the stale cross-origin entry so a later back press cannot loop back into it.
                     webView.clearHistory()
                 }
                 BackAction.None -> FailFast.fail {

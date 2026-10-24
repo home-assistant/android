@@ -497,6 +497,39 @@ class FrontendUrlManagerTest {
     }
 
     @Test
+    fun `Given InsecureState between base URLs when serverUrlFlow then preserves current relative URL on the new base`() = runTest {
+        val server = createTestServer(id = 1, externalUrl = "https://external.example.com")
+        coEvery { serverManager.getServer(1) } returns server
+        coEvery { sessionManager.isSessionConnected(1) } returns true
+        coEvery { serverManager.activateServer(1) } just runs
+        coEvery { serverManager.connectionStateProvider(1) } returns connectionStateProvider
+        every { connectionStateProvider.urlFlow(null) } returns flowOf(
+            UrlState.HasUrl(URL("http://internal.local:8123")),
+            UrlState.InsecureState,
+            UrlState.HasUrl(URL("https://external.example.com")),
+        )
+        coEvery { connectionStateProvider.getSecurityState() } returns SecurityState(
+            isOnHomeNetwork = false,
+            hasHomeSetup = false,
+            locationEnabled = false,
+        )
+
+        urlManager.serverUrlFlow(
+            serverId = 1,
+            target = FrontendTarget.Default,
+            currentRelativeUrl = { "/history?start_date=2026-01-01" },
+        ).test {
+            assertEquals("http://internal.local:8123/?external_auth=1", (awaitItem() as UrlLoadResult.Success).url)
+            assertTrue(awaitItem() is UrlLoadResult.InsecureBlocked)
+            assertEquals(
+                "https://external.example.com/history?start_date=2026-01-01&external_auth=1",
+                (awaitItem() as UrlLoadResult.Success).url,
+            )
+            awaitComplete()
+        }
+    }
+
+    @Test
     fun `Given path with InsecureState first when serverUrlFlow then path is preserved for subsequent HasUrl`() = runTest {
         val server = createTestServer(id = 1, externalUrl = "https://home.example.com")
         coEvery { serverManager.getServer(1) } returns server
