@@ -186,7 +186,7 @@ class MainViewModel @Inject constructor(
 
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
-    /** Domains of the entities the camera and thermostat tiles can show. */
+    /** Domains of the entities the tiles can show, but the main UI does not support. */
     private val tileDomains = listOf(CAMERA_DOMAIN, CLIMATE_DOMAIN)
 
     fun stringForDomain(domain: String): String? =
