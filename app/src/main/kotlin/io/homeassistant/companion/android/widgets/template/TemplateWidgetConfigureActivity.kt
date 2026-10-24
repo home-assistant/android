@@ -1,89 +1,33 @@
 package io.homeassistant.companion.android.widgets.template
 
-import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
-import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.lifecycle.lifecycleScope
+import androidx.compose.runtime.Composable
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.lifecycle.withCreationCallback
-import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import kotlinx.coroutines.launch
+import io.homeassistant.companion.android.widgets.configure.BaseWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.configure.assistedWidgetViewModel
+import io.homeassistant.companion.android.widgets.configure.widgetConfigureLauncherIntent
 
 @AndroidEntryPoint
-class TemplateWidgetConfigureActivity : BaseActivity() {
+internal class TemplateWidgetConfigureActivity : BaseWidgetConfigureActivity() {
 
     companion object {
-        fun newInstance(context: Context): Intent {
-            return Intent(context, TemplateWidgetConfigureActivity::class.java).apply {
-                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            }
-        }
+        fun newInstance(context: Context): Intent =
+            widgetConfigureLauncherIntent(context, TemplateWidgetConfigureActivity::class.java)
     }
 
-    private val widgetId: Int
-        get() = intent.extras?.getInt(
-            AppWidgetManager.EXTRA_APPWIDGET_ID,
-            AppWidgetManager.INVALID_APPWIDGET_ID,
-        ) ?: AppWidgetManager.INVALID_APPWIDGET_ID
+    override val viewModel: TemplateWidgetConfigureViewModel by assistedWidgetViewModel<
+        TemplateWidgetConfigureViewModel,
+        TemplateWidgetConfigureViewModel.Factory,
+        > { it.create(widgetId) }
 
-    private val viewModel: TemplateWidgetConfigureViewModel by viewModels(
-        extrasProducer = {
-            defaultViewModelCreationExtras.withCreationCallback<TemplateWidgetConfigureViewModel.Factory> { factory ->
-                factory.create(widgetId)
-            }
-        },
-    )
-
-    private val requestLauncherSetup: Boolean
-        get() = intent.extras?.getBoolean(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false) == true
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setResult(RESULT_CANCELED)
-
-        if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
-            finish()
-            return
-        }
-
-        setContent {
-            HATheme {
-                TemplateWidgetConfigureScreen(
-                    viewModel = viewModel,
-                    // The app sets the extra when it opens this screen itself, so there is
-                    // something to go back to. The launcher opens it through the
-                    // APPWIDGET_CONFIGURE filter instead, leaving nothing behind us.
-                    canNavigateBack = requestLauncherSetup,
-                    onNavigate = ::finish,
-                    onActionClick = ::onActionClick,
-                )
-            }
-        }
-    }
-
-    private fun onActionClick() {
-        lifecycleScope.launch {
-            if (requestLauncherSetup) {
-                if (viewModel.requestWidgetCreation(this@TemplateWidgetConfigureActivity)) {
-                    finish()
-                }
-            } else {
-                if (viewModel.updateWidgetConfiguration(this@TemplateWidgetConfigureActivity)) {
-                    viewModel.updateWidget(this@TemplateWidgetConfigureActivity)
-                    setResult(
-                        RESULT_OK,
-                        Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId),
-                    )
-                    finish()
-                }
-            }
-        }
+    @Composable
+    override fun ScreenContent(canNavigateBack: Boolean, onNavigate: () -> Unit, onActionClick: () -> Unit) {
+        TemplateWidgetConfigureScreen(
+            viewModel = viewModel,
+            canNavigateBack = canNavigateBack,
+            onNavigate = onNavigate,
+            onActionClick = onActionClick,
+        )
     }
 }
