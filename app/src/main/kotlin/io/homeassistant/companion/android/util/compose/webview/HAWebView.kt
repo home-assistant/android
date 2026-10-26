@@ -65,7 +65,8 @@ const val EXTERNAL_AUTH_QUERY_PARAM = "external_auth"
  * @param onWebViewCreationFailed Called when the WebView fails to initialize due to a system-level
  *                                issue such as a broken or incompatible WebView provider.
  * @param modifier The modifier to be applied to this WebView.
- * @param debuggingEnabled Whether WebView contents can be debugged.
+ * @param debuggingEnabled Whether WebView contents can be debugged, null leaves the process-wide
+ *                         setting untouched.
  * @param nightModeTheme current [NightModeTheme]
  * @param configure A lambda that allows for customization of the WebView instance.
  * @param factory A lambda that creates the WebView instance. If this returns null, a new
@@ -75,7 +76,7 @@ const val EXTERNAL_AUTH_QUERY_PARAM = "external_auth"
 @Composable
 fun HAWebView(
     onWebViewCreationFailed: (Throwable) -> Unit,
-    debuggingEnabled: Boolean,
+    debuggingEnabled: Boolean?,
     modifier: Modifier = Modifier,
     configure: WebView.() -> Unit = {},
     factory: () -> WebView? = { null },
@@ -98,7 +99,7 @@ fun HAWebView(
         AndroidView(
             factory = { context ->
                 try {
-                    WebView.setWebContentsDebuggingEnabled(debuggingEnabled)
+                    debuggingEnabled?.let(WebView::setWebContentsDebuggingEnabled)
                     (factory() ?: WebView(context)).apply {
                         webview = this
                         // We want the modifier to determine the size so the WebView should match the parent
@@ -135,7 +136,9 @@ fun HAWebView(
 
         // The setting is process-wide and can change while the WebView is shown
         LaunchedEffect(debuggingEnabled, webview) {
-            if (webview != null) WebView.setWebContentsDebuggingEnabled(debuggingEnabled)
+            if (webview != null && debuggingEnabled != null) {
+                WebView.setWebContentsDebuggingEnabled(debuggingEnabled)
+            }
         }
     }
 

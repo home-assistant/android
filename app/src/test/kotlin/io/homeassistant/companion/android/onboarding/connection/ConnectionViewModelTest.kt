@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -92,7 +93,7 @@ class ConnectionViewModelTest {
     private val connectivityCheckRepository: ConnectivityCheckRepository = mockk()
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val prefsRepository: PrefsRepository = mockk {
-        coEvery { isWebViewDebugEnabled() } returns false
+        coEvery { webViewDebugFlow() } returns flowOf(false)
     }
     private val fileChooserHandler = FrontendFileChooserHandler(
         cameraCaptureRepository = mockk(relaxed = true),
@@ -158,7 +159,7 @@ class ConnectionViewModelTest {
     fun `Given a release build when created then webViewDebugEnabled follows the developer setting`(
         enabled: Boolean,
     ) = runTest {
-        coEvery { prefsRepository.isWebViewDebugEnabled() } returns enabled
+        coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(enabled)
 
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
@@ -175,8 +176,25 @@ class ConnectionViewModelTest {
     }
 
     @Test
+    fun `Given the setting not read yet when created then webViewDebugEnabled is null`() = runTest {
+        coEvery { prefsRepository.webViewDebugFlow() } returns MutableSharedFlow()
+
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserHandler,
+            permissionManager,
+            prefsRepository,
+            isDebugBuild = true,
+        )
+
+        assertNull(viewModel.webViewDebugEnabled.value)
+    }
+
+    @Test
     fun `Given a debug build when created then webViewDebugEnabled is true whatever the setting`() = runTest {
-        coEvery { prefsRepository.isWebViewDebugEnabled() } returns false
+        coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(false)
 
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
@@ -189,7 +207,7 @@ class ConnectionViewModelTest {
         )
         advanceUntilIdle()
 
-        assertTrue(viewModel.webViewDebugEnabled.value)
+        assertEquals(true, viewModel.webViewDebugEnabled.value)
     }
 
     @Test

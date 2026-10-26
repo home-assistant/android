@@ -3139,7 +3139,7 @@ class FrontendViewModelTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            coEvery { prefsRepository.isWebViewDebugEnabled() } returns enabled
+            coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(enabled)
 
             val viewModel = createViewModel(isDebugBuild = false)
             advanceUntilIdle()
@@ -3148,16 +3148,28 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given the setting not read yet when created then webViewDebugEnabled is null`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.webViewDebugFlow() } returns MutableSharedFlow()
+
+            val viewModel = createViewModel(isDebugBuild = true)
+
+            assertNull(viewModel.webViewDebugEnabled.value)
+        }
+
+        @Test
         fun `Given a debug build when created then webViewDebugEnabled is true whatever the setting`() = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            coEvery { prefsRepository.isWebViewDebugEnabled() } returns false
+            coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(false)
 
             val viewModel = createViewModel(isDebugBuild = true)
             advanceUntilIdle()
 
-            assertTrue(viewModel.webViewDebugEnabled.value)
+            assertEquals(true, viewModel.webViewDebugEnabled.value)
         }
     }
 

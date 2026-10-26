@@ -65,6 +65,19 @@ class HAWebViewTest {
     }
 
     @Test
+    fun `Given debugging unknown when the WebView is created then contents debugging is left untouched`() {
+        mockkStatic(WebView::class)
+        every { WebView.setWebContentsDebuggingEnabled(any()) } just runs
+
+        composeTestRule.setContent {
+            HAWebView(onWebViewCreationFailed = {}, debuggingEnabled = null)
+        }
+        composeTestRule.waitForIdle()
+
+        verify(exactly = 0) { WebView.setWebContentsDebuggingEnabled(any()) }
+    }
+
+    @Test
     fun `Given the WebView provider fails to start when the WebView is created then the failure is reported`() {
         // Chromium refuses to start when another process of the app still holds the data-directory lock
         mockkStatic(WebView::class)

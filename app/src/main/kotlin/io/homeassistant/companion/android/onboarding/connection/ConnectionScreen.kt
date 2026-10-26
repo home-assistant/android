@@ -83,7 +83,7 @@ internal fun ConnectionScreen(
     webChromeClient: WebChromeClient,
     onBackClick: () -> Unit,
     onWebViewCreationFailed: (Throwable) -> Unit,
-    webViewDebugEnabled: Boolean,
+    webViewDebugEnabled: Boolean?,
     modifier: Modifier = Modifier,
     pendingFileChooser: FileChooserRequest? = null,
     pendingPermissionRequest: PermissionRequest? = null,
@@ -162,7 +162,7 @@ private fun ConnectionScreenPreview() {
             webChromeClient = WebChromeClient(),
             onBackClick = {},
             onWebViewCreationFailed = {},
-            webViewDebugEnabled = false,
+            webViewDebugEnabled = null,
             modifier = Modifier.fillMaxSize(),
         )
     }

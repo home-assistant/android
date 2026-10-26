@@ -33,7 +33,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -105,11 +107,11 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
 
     /**
      * Whether the WebView is debuggable: always in debug builds, otherwise per
-     * the developer setting.
+     * the developer setting. null until we read the pref value
      */
-    val webViewDebugEnabled: StateFlow<Boolean> = flow {
-        emit(isDebugBuild || prefsRepository.isWebViewDebugEnabled())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = isDebugBuild)
+    val webViewDebugEnabled: StateFlow<Boolean?> = flow {
+        emitAll(prefsRepository.webViewDebugFlow().map { it || isDebugBuild })
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
 
     /**
      * The origin (scheme/host/port) of the URL used to open this screen.

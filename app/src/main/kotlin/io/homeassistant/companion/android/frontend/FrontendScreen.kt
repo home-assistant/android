@@ -65,7 +65,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.zxing.BarcodeFormat
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -242,7 +241,7 @@ internal fun FrontendScreenContent(
     onErrorAction: (ErrorActionIntent) -> Unit = {},
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
-    webViewDebugEnabled: Boolean = BuildConfig.DEBUG,
+    webViewDebugEnabled: Boolean? = null,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
     keepScreenOnEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
@@ -598,7 +597,7 @@ private fun SafeHAWebView(
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
     autoPlayVideoEnabled: Boolean,
-    webViewDebugEnabled: Boolean,
+    webViewDebugEnabled: Boolean?,
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },

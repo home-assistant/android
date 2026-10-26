@@ -391,11 +391,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /**
      * Whether the WebView is debuggable: always in debug builds, otherwise per
-     * the developer setting.
+     * the developer setting. null until we read the pref value
      */
-    val webViewDebugEnabled: StateFlow<Boolean> = flow {
-        emit(isDebugBuild || prefsRepository.isWebViewDebugEnabled())
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = isDebugBuild)
+    val webViewDebugEnabled: StateFlow<Boolean?> = flow {
+        emitAll(prefsRepository.webViewDebugFlow().map { it || isDebugBuild })
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
 
     /**
      * The user's "Screen orientation" preference.
