@@ -81,14 +81,13 @@ jobs:
   upload_zizmor_reports:
     name: Upload Zizmor reports
     needs: zizmor_scan
-    if: ${{ !cancelled() }} # Upload the findings even when the scan failed on them
+    if: ${{ !cancelled() && github.repository == 'home-assistant/android' }} # Upload the findings even when the scan failed on them
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       actions: read # To download the SARIF artifact of this run
       contents: read # To check out the scanned commit for fingerprinting
       security-events: write # To upload the findings to Code Scanning
-      issues: write # To open or update the issue when the weekly scan fails
     steps:
       - name: Download SARIF artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -108,40 +107,28 @@ jobs:
           category: zizmor
           checkout_path: ${{ github.workspace }}/src
 
-      - name: Open or update the issue for a failed weekly scan
-        if: github.event_name == 'schedule' && (failure() || needs.zizmor_scan.result != 'success')
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            // One issue at a time: the marker identifies it, so a failing scan
-            // comments on the open issue instead of opening a new one.
-            const marker = '<!-- zizmor-weekly-scan -->';
-            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const { data: issues } = await github.rest.issues.listForRepo({
-              ...context.repo,
-              state: 'open',
-              labels: 'github_actions',
-              per_page: 100,
-            });
-            const existing = issues.find((issue) => issue.body && issue.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.createComment({
-                ...context.repo,
-                issue_number: existing.number,
-                body: `The weekly zizmor scan failed again: ${runUrl}`,
-              });
-              return;
-            }
-            await github.rest.issues.create({
-              ...context.repo,
-              title: 'Weekly zizmor scan of the GitHub Actions workflows failed',
-              labels: ['github_actions'],
-              body: [
-                marker,
-                'The scheduled zizmor scan of the GitHub Actions workflows on `main` failed.',
-                '',
-                `Run: ${runUrl}`,
-                '',
-                'Review the findings in the run log or in the Security tab under Code scanning, then fix them or add an inline `# zizmor: ignore[...]` comment with a reason. While this issue stays open, further failures are added here as comments.',
-              ].join('\n'),
-            });
+  open-failure-issue:
+    name: Open zizmor failure issue
+    needs: zizmor_scan
+    if: github.event_name == 'schedule' && failure() && github.repository == 'home-assistant/android'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write # To open or comment on the zizmor-failure issue
+    steps:
+      - name: Open or comment on the zizmor-failure issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # Empty when the label does not exist yet, i.e. nothing ever failed.
+          NUMBER=$(gh issue list --label zizmor-failure --state open --json number --jq '.[0].number' || true)
+          if [ -n "$NUMBER" ]; then
+            gh issue comment "$NUMBER" --body "The weekly zizmor scan failed again in $RUN_URL."
+          else
+            gh label create zizmor-failure --description "Weekly zizmor scan failures" --color b60205 --force
+            gh issue create --label zizmor-failure \
+              --title "Weekly zizmor scan of the GitHub Actions workflows failed" \
+              --body "The scheduled zizmor scan on main failed: $RUN_URL. Review the findings in the run log or under Security > Code scanning."
+          fi

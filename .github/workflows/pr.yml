@@ -12,8 +12,6 @@ concurrency:
 permissions:
   contents: read
 
-# ktlint, lint, yamllint, license_check, pr_build and pr_build_release are
-# required status checks in the main branch ruleset. Keep their names as they are.
 jobs:
   validate_localize_setup:
     name: "Validate Localize Setup"
