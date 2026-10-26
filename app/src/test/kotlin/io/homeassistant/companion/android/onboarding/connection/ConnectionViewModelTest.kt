@@ -156,7 +156,7 @@ class ConnectionViewModelTest {
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
-    fun `Given a release build when created then webViewDebugEnabled follows the developer setting`(
+    fun `Given the developer setting when created then webViewDebugEnabled follows it`(
         enabled: Boolean,
     ) = runTest {
         coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(enabled)
@@ -168,7 +168,6 @@ class ConnectionViewModelTest {
             fileChooserHandler,
             permissionManager,
             prefsRepository,
-            isDebugBuild = false,
         )
         advanceUntilIdle()
 
@@ -186,28 +185,9 @@ class ConnectionViewModelTest {
             fileChooserHandler,
             permissionManager,
             prefsRepository,
-            isDebugBuild = true,
         )
 
         assertNull(viewModel.webViewDebugEnabled.value)
-    }
-
-    @Test
-    fun `Given a debug build when created then webViewDebugEnabled is true whatever the setting`() = runTest {
-        coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(false)
-
-        val viewModel = ConnectionViewModel(
-            "http://homeassistant.local:8123",
-            webViewClientFactory,
-            connectivityCheckRepository,
-            fileChooserHandler,
-            permissionManager,
-            prefsRepository,
-            isDebugBuild = true,
-        )
-        advanceUntilIdle()
-
-        assertEquals(true, viewModel.webViewDebugEnabled.value)
     }
 
     @Test

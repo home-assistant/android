@@ -65,7 +65,7 @@ class HAWebViewTest {
     }
 
     @Test
-    fun `Given debugging unknown when the WebView is created then contents debugging is left untouched`() {
+    fun `Given debugging unknown when the WebView is created then contents debugging is never disabled`() {
         mockkStatic(WebView::class)
         every { WebView.setWebContentsDebuggingEnabled(any()) } just runs
 
@@ -74,7 +74,7 @@ class HAWebViewTest {
         }
         composeTestRule.waitForIdle()
 
-        verify(exactly = 0) { WebView.setWebContentsDebuggingEnabled(any()) }
+        verify(exactly = 0) { WebView.setWebContentsDebuggingEnabled(false) }
     }
 
     @Test

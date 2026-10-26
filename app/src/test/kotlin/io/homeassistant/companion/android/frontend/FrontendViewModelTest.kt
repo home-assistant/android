@@ -12,7 +12,6 @@ import androidx.media3.common.Player
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.google.zxing.BarcodeFormat
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
@@ -174,7 +173,6 @@ class FrontendViewModelTest {
             dialogManager = dialogManager,
         ),
         improvHandler: FrontendImprovHandler = this.improvHandler,
-        isDebugBuild: Boolean = BuildConfig.DEBUG,
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
@@ -198,7 +196,6 @@ class FrontendViewModelTest {
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
             matterThreadHandler = matterThreadHandler,
             keyChainRepository = keyChainRepository,
-            isDebugBuild = isDebugBuild,
         )
     }
 
@@ -3133,7 +3130,7 @@ class FrontendViewModelTest {
 
         @ParameterizedTest
         @ValueSource(booleans = [true, false])
-        fun `Given a release build when created then webViewDebugEnabled follows the developer setting`(
+        fun `Given the developer setting when created then webViewDebugEnabled follows it`(
             enabled: Boolean,
         ) = runTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
@@ -3141,7 +3138,7 @@ class FrontendViewModelTest {
             )
             coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(enabled)
 
-            val viewModel = createViewModel(isDebugBuild = false)
+            val viewModel = createViewModel()
             advanceUntilIdle()
 
             assertEquals(enabled, viewModel.webViewDebugEnabled.value)
@@ -3154,22 +3151,9 @@ class FrontendViewModelTest {
             )
             coEvery { prefsRepository.webViewDebugFlow() } returns MutableSharedFlow()
 
-            val viewModel = createViewModel(isDebugBuild = true)
+            val viewModel = createViewModel()
 
             assertNull(viewModel.webViewDebugEnabled.value)
-        }
-
-        @Test
-        fun `Given a debug build when created then webViewDebugEnabled is true whatever the setting`() = runTest {
-            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
-                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
-            )
-            coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(false)
-
-            val viewModel = createViewModel(isDebugBuild = true)
-            advanceUntilIdle()
-
-            assertEquals(true, viewModel.webViewDebugEnabled.value)
         }
     }
 

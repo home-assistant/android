@@ -11,7 +11,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.google.zxing.BarcodeFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
@@ -135,7 +134,6 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
     private val keyChainRepository: KeyChainRepository,
-    isDebugBuild: Boolean = BuildConfig.DEBUG,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -389,12 +387,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         emitAll(prefsRepository.autoPlayVideoFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
-    /**
-     * Whether the WebView is debuggable: always in debug builds, otherwise per
-     * the developer setting. null until we read the pref value
-     */
+    /** Whether the WebView is debuggable per the developer setting, null until the pref is read. */
     val webViewDebugEnabled: StateFlow<Boolean?> = flow {
-        emitAll(prefsRepository.webViewDebugFlow().map { it || isDebugBuild })
+        emitAll(prefsRepository.webViewDebugFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
 
     /**

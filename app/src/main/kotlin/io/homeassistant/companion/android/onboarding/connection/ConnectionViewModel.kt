@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
@@ -35,7 +34,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -84,7 +82,6 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     fileChooserHandler: FrontendFileChooserHandler,
     permissionManager: PermissionManager,
     prefsRepository: PrefsRepository,
-    isDebugBuild: Boolean = BuildConfig.DEBUG,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -105,12 +102,9 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         prefsRepository,
     )
 
-    /**
-     * Whether the WebView is debuggable: always in debug builds, otherwise per
-     * the developer setting. null until we read the pref value
-     */
+    /** Whether the WebView is debuggable per the developer setting, null until the pref is read. */
     val webViewDebugEnabled: StateFlow<Boolean?> = flow {
-        emitAll(prefsRepository.webViewDebugFlow().map { it || isDebugBuild })
+        emitAll(prefsRepository.webViewDebugFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
 
     /**
