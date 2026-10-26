@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import com.google.zxing.BarcodeFormat
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
@@ -173,6 +174,7 @@ class FrontendViewModelTest {
             dialogManager = dialogManager,
         ),
         improvHandler: FrontendImprovHandler = this.improvHandler,
+        isDebugBuild: Boolean = BuildConfig.DEBUG,
     ): FrontendViewModel {
         return FrontendViewModel(
             initialServerId = serverId,
@@ -196,6 +198,7 @@ class FrontendViewModelTest {
             barcodeScannerHandler = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager),
             matterThreadHandler = matterThreadHandler,
             keyChainRepository = keyChainRepository,
+            isDebugBuild = isDebugBuild,
         )
     }
 
@@ -3122,6 +3125,39 @@ class FrontendViewModelTest {
                 LifecycleHandler.onActivityStopped(activity) // reset global counter for other tests
             }
             job.cancel()
+        }
+    }
+
+    @Nested
+    inner class WebViewDebugSetting {
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given a release build when created then webViewDebugEnabled follows the developer setting`(
+            enabled: Boolean,
+        ) = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.isWebViewDebugEnabled() } returns enabled
+
+            val viewModel = createViewModel(isDebugBuild = false)
+            advanceUntilIdle()
+
+            assertEquals(enabled, viewModel.webViewDebugEnabled.value)
+        }
+
+        @Test
+        fun `Given a debug build when created then webViewDebugEnabled is true whatever the setting`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.isWebViewDebugEnabled() } returns false
+
+            val viewModel = createViewModel(isDebugBuild = true)
+            advanceUntilIdle()
+
+            assertTrue(viewModel.webViewDebugEnabled.value)
         }
     }
 
