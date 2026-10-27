@@ -166,7 +166,7 @@ class GesturesScreenTest {
 
     private fun awaitToolbarTitle(titleRes: Int) {
         val expected = composeTestRule.stringResource(titleRes)
-        composeTestRule.waitUntil { toolbarTitle == expected }
+        composeTestRule.runOnIdle { assertEquals(expected, toolbarTitle) }
     }
 
     private data class SavedAction(val gesture: HAGesture, val action: GestureAction)
