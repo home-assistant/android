@@ -227,6 +227,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val _connectivityCheckState = MutableStateFlow(ConnectivityCheckState())
     override val connectivityCheckState: StateFlow<ConnectivityCheckState> = _connectivityCheckState.asStateFlow()
 
+    /** Name of the current server while loading or on a connection error, when there is another server to switch to. */
+    val connectingServerName: StateFlow<String?> = combine(_viewState, serverManager.serversFlow) { state, servers ->
+        if ((state is FrontendViewState.Loading || state is FrontendViewState.Error) && servers.size > 1) {
+            servers.find { it.id == state.serverId }?.friendlyName
+        } else {
+            null
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+
     private val _events = MutableSharedFlow<FrontendEvent>(extraBufferCapacity = 1)
     val events: SharedFlow<FrontendEvent> = _events.asSharedFlow()
 
@@ -628,6 +637,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     fun switchServer(serverId: Int) {
         startLoad(serverId = serverId)
+    }
+
+    /** Opens the server chooser. */
+    fun onSwitchServer() {
+        _events.tryEmit(FrontendEvent.ShowServerSwitcher)
     }
 
     /**

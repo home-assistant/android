@@ -2314,6 +2314,38 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given two servers when loading then server name is exposed while loading and after timeout`() = runTest {
+            val servers = listOf(
+                mockServer(url = null, name = "Home", serverId = serverId),
+                mockServer(url = null, name = "Cabin", serverId = 2),
+            )
+            every { serverManager.serversFlow } returns flowOf(servers)
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+
+            val viewModel = createViewModel()
+            runCurrent()
+            assertEquals("Home", viewModel.connectingServerName.value)
+
+            advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+            assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+            assertEquals("Home", viewModel.connectingServerName.value)
+        }
+
+        @Test
+        fun `Given switch server requested when onSwitchServer then ShowServerSwitcher event is emitted`() = runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.events.test {
+                viewModel.onSwitchServer()
+                assertEquals(FrontendEvent.ShowServerSwitcher, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
         fun `Given a non-timeout error when frontend connects then error state is kept`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow

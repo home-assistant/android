@@ -3,10 +3,15 @@ package io.homeassistant.companion.android.frontend.error
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.android.tools.screenshot.PreviewTest
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.UnfoldMoreHorizontal
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckResult
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.frontend.ServerPill
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 
@@ -92,6 +97,33 @@ class FrontendConnectionErrorScreenshotTest {
                 ),
                 onOpenExternalLink = {},
                 connectivityCheckState = ConnectivityCheckState(),
+                actions = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendConnectionErrorScreen with server chip`() {
+        HAThemeForPreview {
+            FrontendConnectionErrorScreen(
+                url = "http://ha.org",
+                error = FrontendConnectionError.Unreachable(
+                    commonR.string.tls_cert_expired_message,
+                    "details",
+                    "raw",
+                ),
+                onOpenExternalLink = {},
+                connectivityCheckState = ConnectivityCheckState(),
+                topContent = {
+                    ServerPill(
+                        serverName = "Home",
+                        onClick = {},
+                        textColor = LocalHAColorScheme.current.colorOnPrimaryNormal,
+                        trailingIcon = Mdi.UnfoldMoreHorizontal.rememberImageVector(),
+                    )
+                },
                 actions = {},
             )
         }

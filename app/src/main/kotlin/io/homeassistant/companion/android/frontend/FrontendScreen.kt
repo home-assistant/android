@@ -14,8 +14,11 @@ import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -29,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -37,6 +41,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -44,15 +51,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.util.TypedValueCompat.pxToDp
 import androidx.core.view.WindowCompat
@@ -65,8 +79,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.zxing.BarcodeFormat
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.UnfoldMoreHorizontal
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.util.isLight
@@ -152,6 +170,7 @@ internal fun FrontendScreen(
     val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
     val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val improvScanRequested by viewModel.improvScanRequested.collectAsStateWithLifecycle()
+    val connectingServerName by viewModel.connectingServerName.collectAsStateWithLifecycle()
 
     // The fullscreen View handed over by the WebView is Activity-scoped. Keep it in screen
     // state so it does not leak across configuration changes via the ViewModel.
@@ -175,6 +194,8 @@ internal fun FrontendScreen(
 
     FrontendScreenContent(
         viewState = viewState,
+        connectingServerName = connectingServerName,
+        onSwitchServer = viewModel::onSwitchServer,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
         getWebViewClient = viewModel::getWebViewClient,
         prepareUrlLoad = viewModel::prepareUrlLoad,
@@ -237,6 +258,8 @@ internal fun FrontendScreenContent(
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
     onErrorAction: (ErrorActionIntent) -> Unit = {},
+    connectingServerName: String? = null,
+    onSwitchServer: () -> Unit = {},
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
@@ -337,6 +360,8 @@ internal fun FrontendScreenContent(
             onOpenExternalLink = onOpenExternalLink,
             onShowSnackbar = onShowSnackbar,
             onErrorAction = onErrorAction,
+            connectingServerName = connectingServerName,
+            onSwitchServer = onSwitchServer,
         )
 
         FrontendBarcodeOverlay(
@@ -457,6 +482,8 @@ private fun StateOverlay(
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onErrorAction: (ErrorActionIntent) -> Unit,
+    connectingServerName: String?,
+    onSwitchServer: () -> Unit,
 ) {
     when (viewState) {
         is FrontendViewState.LoadServer,
@@ -491,6 +518,8 @@ private fun StateOverlay(
             actions = viewState.actions,
             onErrorAction = onErrorAction,
             onOpenExternalLink = onOpenExternalLink,
+            connectingServerName = connectingServerName,
+            onSwitchServer = onSwitchServer,
         )
     }
 
@@ -501,7 +530,16 @@ private fun StateOverlay(
         enter = EnterTransition.None,
         exit = fadeOut(animationSpec = tween(durationMillis = LOADING_OVERLAY_FADE_OUT_MILLIS)),
     ) {
-        LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault), showBrand = true)
+        LoadingScreen(
+            modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault),
+            showBrand = true,
+        ) {
+            ServerPill(
+                serverName = connectingServerName,
+                onClick = onSwitchServer,
+                textColor = LocalHAColorScheme.current.colorTextSecondary,
+            )
+        }
     }
 }
 
@@ -569,11 +607,21 @@ private fun ErrorOverlay(
     actions: List<ErrorAction>,
     onErrorAction: (ErrorActionIntent) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
+    connectingServerName: String?,
+    onSwitchServer: () -> Unit,
 ) {
     FrontendConnectionErrorScreen(
         stateProvider = errorStateProvider,
         onOpenExternalLink = onOpenExternalLink,
         modifier = Modifier.fillMaxSize(),
+        topContent = {
+            ServerPill(
+                serverName = connectingServerName,
+                onClick = onSwitchServer,
+                textColor = LocalHAColorScheme.current.colorOnPrimaryNormal,
+                trailingIcon = Mdi.UnfoldMoreHorizontal.rememberImageVector(),
+            )
+        },
         actions = {
             ErrorActions(
                 actions = actions,
@@ -1074,5 +1122,47 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
             onShowSnackbar = { _, _ -> true },
             onWebViewCreationFailed = {},
         )
+    }
+}
+
+private val PILL_ICON_SIZE = 18.dp
+
+/** Pill showing the server being connected to that opens the server chooser; hidden while [serverName] is null. */
+@Composable
+internal fun ServerPill(
+    serverName: String?,
+    onClick: () -> Unit,
+    textColor: Color,
+    modifier: Modifier = Modifier,
+    trailingIcon: ImageVector? = null,
+) {
+    AnimatedVisibility(visible = serverName != null, enter = fadeIn(), exit = fadeOut(), modifier = modifier) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE1),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .heightIn(min = HADimens.SPACE10)
+                .clip(CircleShape)
+                .background(LocalHAColorScheme.current.colorFillNeutralQuietResting)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(horizontal = HADimens.SPACE5),
+        ) {
+            Text(
+                text = serverName.orEmpty(),
+                style = HATextStyle.Body.copy(fontWeight = FontWeight.SemiBold),
+                color = textColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            trailingIcon?.let {
+                Icon(
+                    imageVector = it,
+                    contentDescription = null,
+                    tint = textColor,
+                    modifier = Modifier.size(PILL_ICON_SIZE),
+                )
+            }
+        }
     }
 }

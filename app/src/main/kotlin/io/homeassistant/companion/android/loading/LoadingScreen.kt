@@ -11,8 +11,10 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -109,14 +111,22 @@ private val LOGO_DOTS = listOf(
 /** Minimum gap kept between the icon and the branding when the icon slides up. */
 private val MIN_ICON_SPACING = HADimens.SPACE6
 
+/** Gap between the icon and the content shown below it. */
+private val BELOW_ICON_SPACING = HADimens.SPACE7
+
 /** Keeps the branding text off the screen edges on narrow screens. */
 private val BRAND_HORIZONTAL_PADDING = HADimens.SPACE4
 
 /** Gap between the branding text and the Open Home Foundation logo below it. */
 private val BRAND_TEXT_SPACING = HADimens.SPACE1
 
+/** @param belowIcon Content centered below the icon. */
 @Composable
-fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
+fun LoadingScreen(
+    modifier: Modifier = Modifier,
+    showBrand: Boolean = false,
+    belowIcon: @Composable ColumnScope.() -> Unit = {},
+) {
     // Skip the fade-in in previews and screenshot tests, which capture the first frame
     val initialAlpha = if (LocalInspectionMode.current) 1f else 0f
     val brandAlpha = remember { Animatable(initialAlpha) }
@@ -149,7 +159,8 @@ fun LoadingScreen(modifier: Modifier = Modifier, showBrand: Boolean = false) {
             bottomPadding = brandBottomPadding,
         )
 
-        LoadingIcon(offset = if (showBrand) iconOffset(maxHeight, brandHeight) else 0.dp)
+        val iconModifier = Modifier.align(Alignment.TopCenter).padding(top = maxHeight / 2 - ICON_SIZE / 2)
+        LoadingIcon(if (showBrand) iconOffset(maxHeight, brandHeight) else 0.dp, iconModifier, belowIcon)
         if (showBrand) {
             Column(
                 modifier = Modifier
@@ -218,10 +229,14 @@ private fun brandHeight(text: String, style: TextStyle, containerWidthPx: Int, l
  * App icon, centered so it lines up with the system splash screen and rising to [offset] as soon as
  * this screen takes over when the height leaves too little room for the branding below it. The three
  * dots of the logo pulse in sequence, drawn over their static counterparts in the drawable so the
- * icon is identical to the splash screen at rest.
+ * icon is identical to the splash screen at rest. [belowIcon] is laid out under the icon and moves with it.
  */
 @Composable
-private fun LoadingIcon(offset: Dp, modifier: Modifier = Modifier) {
+private fun LoadingIcon(
+    offset: Dp,
+    modifier: Modifier = Modifier,
+    belowIcon: @Composable ColumnScope.() -> Unit = {},
+) {
     // Previews and screenshot tests capture the first frame, so they start settled
     val initialOffset = if (LocalInspectionMode.current) offset else 0.dp
     val animatedOffset = remember { Animatable(initialOffset, Dp.VectorConverter) }
@@ -229,24 +244,30 @@ private fun LoadingIcon(offset: Dp, modifier: Modifier = Modifier) {
         animatedOffset.animateTo(offset, tween(durationMillis = CONTENT_FADE_IN_MILLIS))
     }
     val dotScales = logoDotScales()
-    Image(
-        imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
-        contentDescription = stringResource(commonR.string.loading_content_description),
-        modifier = modifier
-            .size(ICON_SIZE)
-            .graphicsLayer { translationY = -animatedOffset.value.toPx() }
-            .drawWithContent {
-                drawContent()
-                val scale = size.width / LOGO_VIEWPORT
-                LOGO_DOTS.forEachIndexed { index, dot ->
-                    drawCircle(
-                        color = LOGO_DOT_COLOR,
-                        radius = LOGO_DOT_RADIUS * scale * dotScales[index].value,
-                        center = dot.center * scale,
-                    )
-                }
-            },
-    )
+    Column(
+        verticalArrangement = Arrangement.spacedBy(BELOW_ICON_SPACING),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.graphicsLayer { translationY = -animatedOffset.value.toPx() },
+    ) {
+        Image(
+            imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
+            contentDescription = stringResource(commonR.string.loading_content_description),
+            modifier = Modifier
+                .size(ICON_SIZE)
+                .drawWithContent {
+                    drawContent()
+                    val scale = size.width / LOGO_VIEWPORT
+                    LOGO_DOTS.forEachIndexed { index, dot ->
+                        drawCircle(
+                            color = LOGO_DOT_COLOR,
+                            radius = LOGO_DOT_RADIUS * scale * dotScales[index].value,
+                            center = dot.center * scale,
+                        )
+                    }
+                },
+        )
+        belowIcon()
+    }
 }
 
 /** Scale of each entry of [LOGO_DOTS] over time, each dot pulsing once per cycle. */
