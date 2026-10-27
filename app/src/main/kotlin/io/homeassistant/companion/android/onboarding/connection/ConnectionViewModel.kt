@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.SuspendLazy
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
@@ -27,9 +28,13 @@ import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
@@ -68,6 +73,7 @@ private const val AUTH_CALLBACK_SCHEME = "homeassistant"
 private const val AUTH_CALLBACK_HOST = "auth-callback"
 private const val AUTH_CALLBACK = "$AUTH_CALLBACK_SCHEME://$AUTH_CALLBACK_HOST"
 
+@Suppress("LongParameterList")
 @HiltViewModel
 internal class ConnectionViewModel @VisibleForTesting constructor(
     private val rawUrl: String,
@@ -75,6 +81,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     private val connectivityCheckRepository: ConnectivityCheckRepository,
     fileChooserHandler: FrontendFileChooserHandler,
     permissionManager: PermissionManager,
+    prefsRepository: PrefsRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -85,13 +92,20 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         connectivityCheckRepository: ConnectivityCheckRepository,
         fileChooserHandler: FrontendFileChooserHandler,
         permissionManager: PermissionManager,
+        prefsRepository: PrefsRepository,
     ) : this(
         savedStateHandle.toRoute<ConnectionRoute>().url,
         webViewClientFactory,
         connectivityCheckRepository,
         fileChooserHandler,
         permissionManager,
+        prefsRepository,
     )
+
+    /** Whether the WebView is debuggable per the developer setting, null until the pref is read. */
+    val webViewDebugEnabled: StateFlow<Boolean?> = flow {
+        emitAll(prefsRepository.webViewDebugFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
 
     /**
      * The origin (scheme/host/port) of the URL used to open this screen.

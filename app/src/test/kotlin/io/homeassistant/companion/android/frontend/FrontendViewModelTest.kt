@@ -3126,6 +3126,38 @@ class FrontendViewModelTest {
     }
 
     @Nested
+    inner class WebViewDebugSetting {
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given the developer setting when created then webViewDebugEnabled follows it`(
+            enabled: Boolean,
+        ) = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(enabled)
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(enabled, viewModel.webViewDebugEnabled.value)
+        }
+
+        @Test
+        fun `Given the setting not read yet when created then webViewDebugEnabled is null`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.webViewDebugFlow() } returns MutableSharedFlow()
+
+            val viewModel = createViewModel()
+
+            assertNull(viewModel.webViewDebugEnabled.value)
+        }
+    }
+
+    @Nested
     inner class MatterThreadRouting {
 
         @Test
