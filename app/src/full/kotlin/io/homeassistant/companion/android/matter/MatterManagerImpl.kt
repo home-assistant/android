@@ -124,6 +124,7 @@ class MatterManagerImpl @Inject constructor(
         }
     }
 
+    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O_MR1)
     override fun appSupportsSharing(): Boolean = appSupportsCommissioning()
 
     override suspend fun prepareDeviceSharing(payload: MatterShareDevicePayload): MatterManager.CommissioningResult {
@@ -167,11 +168,9 @@ class MatterManagerImpl @Inject constructor(
         // A sender that could not be launched also comes back as cancelled, with the reason attached.
         val launchFailed =
             result.data?.hasExtra(StartIntentSenderForResult.EXTRA_SEND_INTENT_EXCEPTION) == true
-        return when {
-            result.resultCode == Activity.RESULT_OK -> MatterManager.SharingRequestResult.Shared
-            result.resultCode == Activity.RESULT_CANCELED && !launchFailed ->
-                MatterManager.SharingRequestResult.Cancelled
-
+        return when (result.resultCode) {
+            Activity.RESULT_OK -> MatterManager.SharingRequestResult.Shared
+            Activity.RESULT_CANCELED if !launchFailed -> MatterManager.SharingRequestResult.Cancelled
             else -> MatterManager.SharingRequestResult.Failed
         }
     }

@@ -382,7 +382,7 @@ class FrontendMatterThreadHandlerTest {
         }
 
         @Test
-        fun `Given sharing Error result when onStartMatterSharing then replies failed`() = runTest {
+        fun `Given sharing Error result when onStartMatterSharing then replies failed and releases`() = runTest {
             coEvery { matterManager.prepareDeviceSharing(any()) } returns
                 MatterManager.CommissioningResult.Error(IllegalStateException("nope"))
             val handler = createHandler()

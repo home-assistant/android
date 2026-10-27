@@ -307,7 +307,8 @@ data class MatterShareDeviceMessage(override val id: Int? = null, val payload: M
     IncomingExternalBusMessage
 
 /**
- * Commissioning window the Matter server opened for [MatterShareDeviceMessage].
+ * Commissioning window the Matter server opened for [MatterShareDeviceMessage], with the device
+ * details for the share sheet.
  *
  * [discriminator] is the long, 12-bit form.
  */
