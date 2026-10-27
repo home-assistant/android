@@ -271,7 +271,12 @@ class IncomingExternalBusMessageTest {
         val json = """{"type":"matter/share_device","id":63,"payload":{"setup_pin_code":20202021,"discriminator":3840,"remaining_seconds":250}}"""
 
         val message = assertInstanceOf(MatterShareDeviceMessage::class.java, frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json))
-        assertEquals(MatterShareDevicePayload(passcode = 20202021, discriminator = 3840, remainingSeconds = 250), message.payload)
+        assertEquals(20202021L, message.payload.passcode)
+        assertEquals(3840, message.payload.discriminator)
+        assertEquals(250L, message.payload.remainingSeconds)
+        assertNull(message.payload.vendorId)
+        assertNull(message.payload.productId)
+        assertNull(message.payload.deviceName)
     }
 
     @Test

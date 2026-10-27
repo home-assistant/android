@@ -67,7 +67,7 @@ class MatterManagerImplTest {
         unmockkStatic(SystemClock::class)
     }
 
-    private fun givenElapsedRealtime(millis: Long) {
+    private fun mockElapsedRealtime(millis: Long) {
         mockkStatic(SystemClock::class)
         every { SystemClock.elapsedRealtime() } returns millis
     }
@@ -267,7 +267,7 @@ class MatterManagerImplTest {
         val intentSender: IntentSender = mockk()
         val request = slot<ShareDeviceRequest>()
         every { commissioningClient.shareDevice(capture(request)) } returns successTask(intentSender)
-        givenElapsedRealtime(1_000L)
+        mockElapsedRealtime(1_000L)
         val manager = createManager()
 
         val event = assertInstanceOf(
@@ -293,7 +293,7 @@ class MatterManagerImplTest {
     fun `Given Play Services fails when prepareDeviceSharing then emits Error with cause`() = runTest {
         val cause = IllegalStateException("play services unavailable")
         every { commissioningClient.shareDevice(any()) } returns failureTask(cause)
-        givenElapsedRealtime(1_000L)
+        mockElapsedRealtime(1_000L)
         val manager = createManager()
 
         val event = assertInstanceOf(
@@ -306,7 +306,7 @@ class MatterManagerImplTest {
     @Test
     fun `Given Play Services cancels the task when prepareDeviceSharing then emits Error`() = runTest {
         every { commissioningClient.shareDevice(any()) } returns cancelledTask()
-        givenElapsedRealtime(1_000L)
+        mockElapsedRealtime(1_000L)
 
         val event = createManager().prepareDeviceSharing(SHARE_PAYLOAD)
 
@@ -319,7 +319,7 @@ class MatterManagerImplTest {
     @Test
     fun `Given Play Services never answers when prepareDeviceSharing then emits Error after the timeout`() = runTest {
         every { commissioningClient.shareDevice(any()) } returns pendingTask()
-        givenElapsedRealtime(1_000L)
+        mockElapsedRealtime(1_000L)
 
         val event = createManager().prepareDeviceSharing(SHARE_PAYLOAD)
 
