@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class AssistChimeManagerTest {
+class AssistChimeUseCaseTest {
 
     private val prefsRepository: PrefsRepository = mockk()
     private val context: Context = mockk(relaxed = true)
@@ -43,9 +43,9 @@ class AssistChimeManagerTest {
     @Test
     fun `Given chime disabled when playListeningChimeIfEnabled then do not create a player`() = runTest {
         coEvery { prefsRepository.isAssistListeningChimeEnabled() } returns false
-        val manager = AssistChimeManager(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
+        val useCase = AssistChimeUseCase(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
 
-        manager.playListeningChimeIfEnabled()
+        useCase.playListeningChimeIfEnabled()
 
         assertEquals(0, createdPlayers)
     }
@@ -53,9 +53,9 @@ class AssistChimeManagerTest {
     @Test
     fun `Given chime enabled when playback completes then suspend until completion and release the player`() = runTest {
         coEvery { prefsRepository.isAssistListeningChimeEnabled() } returns true
-        val manager = AssistChimeManager(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
+        val useCase = AssistChimeUseCase(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
 
-        val job = launch { manager.playListeningChimeIfEnabled() }
+        val job = launch { useCase.playListeningChimeIfEnabled() }
         runCurrent()
 
         verify { player.start() }
@@ -71,9 +71,9 @@ class AssistChimeManagerTest {
     @Test
     fun `Given chime enabled when playback errors then resume and release the player`() = runTest {
         coEvery { prefsRepository.isAssistListeningChimeEnabled() } returns true
-        val manager = AssistChimeManager(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
+        val useCase = AssistChimeUseCase(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
 
-        val job = launch { manager.playListeningChimeIfEnabled() }
+        val job = launch { useCase.playListeningChimeIfEnabled() }
         runCurrent()
 
         onError.captured.onError(player, 1, 2)
@@ -86,9 +86,9 @@ class AssistChimeManagerTest {
     @Test
     fun `Given MediaPlayer delivers two terminal callbacks when playback finishes then resume only once`() = runTest {
         coEvery { prefsRepository.isAssistListeningChimeEnabled() } returns true
-        val manager = AssistChimeManager(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
+        val useCase = AssistChimeUseCase(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
 
-        val job = launch { manager.playListeningChimeIfEnabled() }
+        val job = launch { useCase.playListeningChimeIfEnabled() }
         runCurrent()
 
         onError.captured.onError(player, 1, 2)
@@ -103,9 +103,9 @@ class AssistChimeManagerTest {
     fun `Given start throws when playback begins then resume and release the player`() = runTest {
         coEvery { prefsRepository.isAssistListeningChimeEnabled() } returns true
         every { player.start() } throws IllegalStateException()
-        val manager = AssistChimeManager(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
+        val useCase = AssistChimeUseCase(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
 
-        manager.playListeningChimeIfEnabled()
+        useCase.playListeningChimeIfEnabled()
 
         verify { player.release() }
     }
@@ -114,9 +114,9 @@ class AssistChimeManagerTest {
     fun `Given preparing fails when playListeningChimeIfEnabled then do not start and release the player`() = runTest {
         coEvery { prefsRepository.isAssistListeningChimeEnabled() } returns true
         every { player.prepare() } throws IOException()
-        val manager = AssistChimeManager(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
+        val useCase = AssistChimeUseCase(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
 
-        manager.playListeningChimeIfEnabled()
+        useCase.playListeningChimeIfEnabled()
 
         verify(exactly = 0) { player.start() }
         verify { player.release() }
@@ -125,9 +125,9 @@ class AssistChimeManagerTest {
     @Test
     fun `Given chime never finishes when playListeningChimeIfEnabled then release the player after the timeout`() = runTest {
         coEvery { prefsRepository.isAssistListeningChimeEnabled() } returns true
-        val manager = AssistChimeManager(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
+        val useCase = AssistChimeUseCase(prefsRepository, context, ::trackedPlayer, StandardTestDispatcher(testScheduler))
 
-        val job = launch { manager.playListeningChimeIfEnabled() }
+        val job = launch { useCase.playListeningChimeIfEnabled() }
         runCurrent() // Starts playback and suspends; no terminal callback is ever delivered.
 
         advanceTimeBy(CHIME_TIMEOUT)

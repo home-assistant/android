@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.assist
 import android.app.Application
 import android.content.pm.PackageManager
 import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
-import io.homeassistant.companion.android.common.assist.AssistChimeManager
+import io.homeassistant.companion.android.common.assist.AssistChimeUseCase
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -60,7 +60,7 @@ class AssistViewModelTest {
     private val application: Application = mockk(relaxed = true)
     private val webSocketRepository: WebSocketRepository = mockk(relaxed = true)
     private val integrationRepository: IntegrationRepository = mockk(relaxed = true)
-    private val chimeManager: AssistChimeManager = mockk(relaxed = true)
+    private val chimeUseCase: AssistChimeUseCase = mockk(relaxed = true)
 
     private lateinit var viewModel: AssistViewModel
 
@@ -125,7 +125,7 @@ class AssistViewModelTest {
         return AssistViewModel(
             serverManager = serverManager,
             audioUrlPlayer = audioUrlPlayer,
-            chimeManager = chimeManager,
+            chimeUseCase = chimeUseCase,
             application = application,
             initialAudioStrategy = audioStrategy,
         )
@@ -623,7 +623,7 @@ class AssistViewModelTest {
 
         @BeforeEach
         fun setUpChime() {
-            coEvery { chimeManager.playListeningChimeIfEnabled() } coAnswers { events += CHIME }
+            coEvery { chimeUseCase.playListeningChimeIfEnabled() } coAnswers { events += CHIME }
             coEvery {
                 webSocketRepository.runAssistPipelineForVoice(any(), any(), anyNullable(), anyNullable(), anyNullable())
             } returns MutableSharedFlow()
@@ -675,7 +675,7 @@ class AssistViewModelTest {
 
         @Test
         fun `Given chime playing when listening stops then do not capture audio`() = runTest {
-            coEvery { chimeManager.playListeningChimeIfEnabled() } coAnswers {
+            coEvery { chimeUseCase.playListeningChimeIfEnabled() } coAnswers {
                 events += CHIME
                 awaitCancellation()
             }

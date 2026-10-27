@@ -33,7 +33,7 @@ internal val CHIME_TIMEOUT = 3.seconds
  * @param createPlayer builds the [MediaPlayer] to play the chime with; a seam so tests can supply a
  * player they control instead of a real one.
  */
-class AssistChimeManager @VisibleForTesting constructor(
+class AssistChimeUseCase @VisibleForTesting constructor(
     private val prefsRepository: PrefsRepository,
     private val context: Context,
     private val createPlayer: () -> MediaPlayer,

@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.assist.ui.AssistMessage
 import io.homeassistant.companion.android.assist.ui.AssistUiPipeline
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.assist.AssistAudioStrategy
-import io.homeassistant.companion.android.common.assist.AssistChimeManager
+import io.homeassistant.companion.android.common.assist.AssistChimeUseCase
 import io.homeassistant.companion.android.common.assist.AssistEvent
 import io.homeassistant.companion.android.common.assist.AssistViewModelBase
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -58,7 +58,7 @@ class AssistViewModel @AssistedInject internal constructor(
     serverManager: ServerManager,
     @Assisted initialAudioStrategy: AssistAudioStrategy,
     audioUrlPlayer: AudioUrlPlayer,
-    private val chimeManager: AssistChimeManager,
+    private val chimeUseCase: AssistChimeUseCase,
     application: Application,
 ) : AssistViewModelBase(serverManager, initialAudioStrategy, audioUrlPlayer, application) {
 
@@ -446,7 +446,7 @@ class AssistViewModel @AssistedInject internal constructor(
                     )
                 },
                 beforeRecording = {
-                    if (trigger != AssistTrigger.ScreenUi) chimeManager.playListeningChimeIfEnabled()
+                    if (trigger != AssistTrigger.ScreenUi) chimeUseCase.playListeningChimeIfEnabled()
                 },
             )
         }
