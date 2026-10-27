@@ -8,6 +8,10 @@ on: # yamllint disable-line rule:truthy
 env:
   SUPPLY_UPLOAD_MAX_RETRIES: 5
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # Never cancel a Play Store promotion in flight
+
 permissions:
   contents: read
 
