@@ -384,9 +384,6 @@
     <ID>ReturnCount:DefaultAssistantManager.kt:DefaultAssistantManagerImpl$override suspend fun shouldSuggestAssistantSetup: Boolean</ID>
     <ID>ReturnCount:EntityPickerFilter.kt:internal fun fuzzyMatch: Double</ID>
     <ID>ReturnCount:EntityWidget.kt:EntityWidget$private suspend fun resolveTextToShow: ResolvedText</ID>
-    <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$@SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs. suspend fun requestWidgetCreation: Boolean</ID>
-    <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$private suspend fun getPendingDaoEntity: StaticWidgetEntity?</ID>
-    <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:FrontendGestureManager.kt:FrontendGestureManager$private suspend fun switchServerBy: GestureResult</ID>
     <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun shouldSetSecurityLevel: Boolean</ID>
     <ID>ReturnCount:GeocodeSensorManager.kt:GeocodeSensorManager$private suspend fun updateGeocodedLocation</ID>
@@ -399,9 +396,6 @@
     <ID>ReturnCount:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$private suspend fun callFastForwardAction</ID>
     <ID>ReturnCount:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$private suspend fun callRewindAction</ID>
     <ID>ReturnCount:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget$private suspend fun getEntity: Entity?</ID>
-    <ID>ReturnCount:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel$private suspend fun getPendingDaoEntity: MediaPlayerControlsWidgetEntity?</ID>
-    <ID>ReturnCount:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel$suspend fun requestWidgetCreation: Boolean</ID>
-    <ID>ReturnCount:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:NFCUtil.kt:NFCUtil$@Throws(IllegalArgumentException::class, IOException::class, Exception::class) private fun writeMessageToTag: Boolean</ID>
     <ID>ReturnCount:PermissionManager.kt:PermissionManager$suspend fun checkImprovPermissions: Boolean</ID>
     <ID>ReturnCount:PermissionManager.kt:PermissionManager$suspend fun checkLocalNetworkPermission: Boolean</ID>
@@ -412,8 +406,6 @@
     <ID>ReturnCount:SettingsWearViewModel.kt:SettingsWearViewModel$private suspend fun updateServer</ID>
     <ID>ReturnCount:SsidViewModel.kt:SsidViewModel$fun addHomeWifiSsid: Boolean</ID>
     <ID>ReturnCount:TLSWebViewClient.kt:TLSWebViewClient$private fun getActivity: Activity?</ID>
-    <ID>ReturnCount:TemplateWidgetConfigureViewModel.kt:TemplateWidgetConfigureViewModel$@SuppressLint("NewApi") // The API 26 requirement is checked below before touching the pinning APIs. suspend fun requestWidgetCreation: Boolean</ID>
-    <ID>ReturnCount:TemplateWidgetConfigureViewModel.kt:TemplateWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:ThreadManagerImpl.kt:ThreadManagerImpl$override suspend fun exportPreferredDataset: ThreadManager.SyncResult.ExportResult</ID>
     <ID>ReturnCount:ThreadManagerImpl.kt:ThreadManagerImpl$override suspend fun syncPreferredDataset: ThreadManager.SyncResult</ID>
     <ID>ReturnCount:TodoWidgetActions.kt:ToggleTodoAction$override suspend fun onAction</ID>
@@ -445,11 +437,12 @@
     <ID>TooManyFunctions:AssistVoiceInteractionService.kt:AssistVoiceInteractionService : VoiceInteractionService</ID>
     <ID>TooManyFunctions:BarcodeScanner.kt:io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner.kt</ID>
     <ID>TooManyFunctions:BaseGlanceEntityWidgetReceiver.kt:BaseGlanceEntityWidgetReceiver&lt;T : WidgetEntity&lt;T&gt;, DAO : WidgetDao&lt;T&gt;&gt; : GlanceAppWidgetReceiver</ID>
+    <ID>TooManyFunctions:BaseWidgetConfigureViewModel.kt:BaseWidgetConfigureViewModel&lt;S : WidgetConfigureState&lt;S&gt;, E : WidgetEntity&lt;E&gt;&gt; : ViewModelWidgetConfigureStateProvider</ID>
     <ID>TooManyFunctions:BaseWidgetProvider.kt:BaseWidgetProvider&lt;T : WidgetEntity&lt;T&gt;, DAO : WidgetDao&lt;T&gt;&gt; : AppWidgetProvider</ID>
     <ID>TooManyFunctions:CarSensorManager.kt:CarSensorManager : SensorManagerDefaultLifecycleObserver</ID>
     <ID>TooManyFunctions:DeveloperSettingsPresenterImpl.kt:DeveloperSettingsPresenterImpl : PreferenceDataStoreDeveloperSettingsPresenter</ID>
     <ID>TooManyFunctions:EntityPicker.kt:io.homeassistant.companion.android.util.compose.entity.EntityPicker.kt</ID>
-    <ID>TooManyFunctions:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel : ViewModelWidgetConfigureViewModel</ID>
+    <ID>TooManyFunctions:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel : BaseEntityWidgetConfigureViewModel</ID>
     <ID>TooManyFunctions:FakePlayer.kt:FakePlayer : Player</ID>
     <ID>TooManyFunctions:FrontendScreen.kt:io.homeassistant.companion.android.frontend.FrontendScreen.kt</ID>
     <ID>TooManyFunctions:FrontendViewModel.kt:FrontendViewModel : ViewModelFrontendConnectionErrorStateProvider</ID>
@@ -461,7 +454,6 @@
     <ID>TooManyFunctions:LocationSensorManager.kt:LocationSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:ManageTilesViewModel.kt:ManageTilesViewModel : ViewModel</ID>
     <ID>TooManyFunctions:MediaPlayerControlsWidget.kt:MediaPlayerControlsWidget : BaseWidgetProvider</ID>
-    <ID>TooManyFunctions:MediaPlayerControlsWidgetConfigureViewModel.kt:MediaPlayerControlsWidgetConfigureViewModel : ViewModelWidgetConfigureViewModel</ID>
     <ID>TooManyFunctions:MessagingManager.kt:MessagingManager</ID>
     <ID>TooManyFunctions:NotificationListenerSensorManager.kt:NotificationListenerSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:SensorDetailViewModel.kt:SensorDetailViewModel : AndroidViewModel</ID>

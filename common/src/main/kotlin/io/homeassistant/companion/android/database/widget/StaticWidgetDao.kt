@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface StaticWidgetDao : WidgetDao<StaticWidgetEntity> {
 
     @Query("SELECT * FROM static_widget WHERE id = :id")
-    suspend fun get(id: Int): StaticWidgetEntity?
+    override suspend fun get(id: Int): StaticWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     override suspend fun add(entity: StaticWidgetEntity)
