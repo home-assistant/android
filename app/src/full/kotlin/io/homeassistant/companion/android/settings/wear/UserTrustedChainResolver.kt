@@ -41,7 +41,7 @@ class UserTrustedChainResolver @Inject constructor(
         val httpUrl = url.toHttpUrlOrNull()?.takeIf { it.isHttps } ?: return null
         return try {
             val peerChain = fetchPeerChain(httpUrl.toString()) ?: return null
-            userTrustedAnchor(peerChain, httpUrl.host).also { anchor ->
+            withContext(Dispatchers.IO) { userTrustedAnchor(peerChain, httpUrl.host) }.also { anchor ->
                 Timber.d("User trusted anchor found for ${sensitive(httpUrl.host)}: ${anchor != null}")
             }
         } catch (e: IOException) {
