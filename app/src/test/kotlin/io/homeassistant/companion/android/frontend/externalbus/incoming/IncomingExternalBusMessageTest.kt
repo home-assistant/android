@@ -248,20 +248,30 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given Matter share_device JSON then parses to MatterShareDeviceMessage with raw payload`() {
-        val json = """{"type":"matter/share_device","id":62,"payload":{"setup_pin_code":20202021,"discriminator":3840}}"""
+    fun `Given Matter share_device JSON then parses to MatterShareDeviceMessage`() {
+        val json = """{"type":"matter/share_device","id":62,"payload":{"setup_pin_code":20202021,"setup_qr_code":"MT:Y.K9042C00KA0648G00","discriminator":3840,"remaining_seconds":250,"vendor_id":65521,"product_id":32769,"device_name":"Kitchen light"}}"""
 
         val message = assertInstanceOf(MatterShareDeviceMessage::class.java, frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json))
         assertEquals(62, message.id)
-        assertEquals("20202021", message.payload["setup_pin_code"].toString())
+        assertEquals(
+            MatterShareDevicePayload(
+                passcode = 20202021,
+                discriminator = 3840,
+                remainingSeconds = 250,
+                vendorId = 65521,
+                productId = 32769,
+                deviceName = "Kitchen light",
+            ),
+            message.payload,
+        )
     }
 
     @Test
-    fun `Given Matter share_device JSON without payload then parses with empty payload`() {
-        val json = """{"type":"matter/share_device","id":63}"""
+    fun `Given Matter share_device JSON without optional fields then parses with null device details`() {
+        val json = """{"type":"matter/share_device","id":63,"payload":{"setup_pin_code":20202021,"discriminator":3840,"remaining_seconds":250}}"""
 
         val message = assertInstanceOf(MatterShareDeviceMessage::class.java, frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json))
-        assertTrue(message.payload.isEmpty())
+        assertEquals(MatterShareDevicePayload(passcode = 20202021, discriminator = 3840, remainingSeconds = 250), message.payload)
     }
 
     @Test

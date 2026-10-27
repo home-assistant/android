@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import kotlin.coroutines.resume
@@ -125,7 +126,7 @@ class MatterManagerImpl @Inject constructor(
 
     override fun appSupportsSharing(): Boolean = appSupportsCommissioning()
 
-    override suspend fun prepareDeviceSharing(request: MatterShareRequest): MatterManager.CommissioningResult {
+    override suspend fun prepareDeviceSharing(payload: MatterShareDevicePayload): MatterManager.CommissioningResult {
         if (!appSupportsSharing()) {
             return MatterManager.CommissioningResult.Error(
                 IllegalStateException("Matter sharing is not supported on this device"),
@@ -135,19 +136,18 @@ class MatterManagerImpl @Inject constructor(
             try {
                 // Inside the try, so a value Play Services rejects is reported like any other failure.
                 val window = CommissioningWindow.builder()
-                    .setDiscriminator(Discriminator.forLongValue(request.discriminator))
-                    .setPasscode(request.passcode)
-                    // As in Google's Matter sample; the API does not say which clock it means.
+                    .setDiscriminator(Discriminator.forLongValue(payload.discriminator))
+                    .setPasscode(payload.passcode)
                     .setWindowOpenMillis(SystemClock.elapsedRealtime())
-                    .setDurationSeconds(request.remainingSeconds)
+                    .setDurationSeconds(payload.remainingSeconds)
                     .build()
                 val descriptor = DeviceDescriptor.Builder().apply {
-                    request.vendorId?.let { setVendorId(it) }
-                    request.productId?.let { setProductId(it) }
+                    payload.vendorId?.let { setVendorId(it) }
+                    payload.productId?.let { setProductId(it) }
                 }.build()
                 val shareRequest = ShareDeviceRequest.builder()
                     .setDeviceDescriptor(descriptor)
-                    .setDeviceName(request.deviceName.orEmpty())
+                    .setDeviceName(payload.deviceName.orEmpty())
                     .setCommissioningWindow(window)
                     .build()
                 MatterManager.CommissioningResult.Ready(commissioningClient.shareDevice(shareRequest).await())

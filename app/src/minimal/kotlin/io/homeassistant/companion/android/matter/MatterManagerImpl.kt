@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.matter
 
 import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 import javax.inject.Inject
 
 class MatterManagerImpl @Inject constructor() : MatterManager {
@@ -31,7 +32,7 @@ class MatterManagerImpl @Inject constructor() : MatterManager {
 
     override fun appSupportsSharing(): Boolean = false
 
-    override suspend fun prepareDeviceSharing(request: MatterShareRequest): MatterManager.CommissioningResult =
+    override suspend fun prepareDeviceSharing(payload: MatterShareDevicePayload): MatterManager.CommissioningResult =
         MatterManager.CommissioningResult.Error(
             IllegalStateException("Matter sharing is not supported with the minimal flavor"),
         )

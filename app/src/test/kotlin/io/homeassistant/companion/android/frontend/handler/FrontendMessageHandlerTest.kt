@@ -41,6 +41,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovCo
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDeviceMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -72,7 +73,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
@@ -398,7 +398,7 @@ class FrontendMessageHandlerTest {
 
     @Test
     fun `Given Matter share_device message when messageResults then emits StartMatterSharing`() = runTest {
-        val payload = JsonObject(mapOf("setup_pin_code" to JsonPrimitive(20202021), "discriminator" to JsonPrimitive(3840)))
+        val payload = MatterShareDevicePayload(passcode = 20202021, discriminator = 3840, remainingSeconds = 250)
         val message = MatterShareDeviceMessage(id = 62, payload = payload)
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 

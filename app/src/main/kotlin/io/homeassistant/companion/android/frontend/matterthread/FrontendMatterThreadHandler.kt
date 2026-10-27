@@ -6,11 +6,11 @@ import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ErrorResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.MatterCommissionFinishMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.matter.MatterManager
-import io.homeassistant.companion.android.matter.MatterShareRequest
 import io.homeassistant.companion.android.thread.ThreadManager
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-import kotlinx.serialization.json.JsonObject
 import timber.log.Timber
 
 private const val SHARE_ERROR_CANCELED = "canceled"
@@ -114,30 +113,24 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     }
 
     /**
-     * Emits [Event.LaunchIntent] for the share sheet, or answers [messageId] with `failed`. The frontend
-     * has no timeout, so a path that never answers (cancelled scope, uncollected event, lost intent
-     * result) leaves its dialog waiting until the user closes it.
+     * Starts the Matter device sharing flow. Emits [Event.LaunchIntent] for the share sheet, or answers
+     * [messageId] with `failed`. The frontend has no timeout, so a path that never answers (cancelled
+     * scope, uncollected event, lost intent result) leaves its dialog waiting until the user closes it.
      */
-    suspend fun onStartMatterSharing(messageId: Int?, payload: JsonObject) {
+    suspend fun onStartMatterSharing(messageId: Int?, payload: MatterShareDevicePayload) {
         if (messageId == null) {
             Timber.w("matter/share_device ignored: no message id")
             return
         }
-        val request = MatterShareRequest.fromPayload(payload)
-        // Short-circuits, so nothing is claimed for a payload that cannot be used.
-        if (request == null || !inFlight.compareAndSet(null, InFlight.MatterShare(messageId))) {
-            val reason = if (request == null) {
-                "Invalid matter/share_device payload"
-            } else {
-                "Another Matter flow is in progress"
-            }
+        if (!inFlight.compareAndSet(null, InFlight.MatterShare(messageId))) {
+            val reason = "Another flow is in progress"
             Timber.w("matter/share_device refused: $reason")
             sendShareError(messageId, SHARE_ERROR_FAILED, reason)
             return
         }
         var awaitingIntentResult = false
         try {
-            when (val result = matterManager.prepareDeviceSharing(request)) {
+            when (val result = matterManager.prepareDeviceSharing(payload)) {
                 is MatterManager.CommissioningResult.Ready -> {
                     awaitingIntentResult = true
                     _events.emit(Event.LaunchIntent(result.intentSender))

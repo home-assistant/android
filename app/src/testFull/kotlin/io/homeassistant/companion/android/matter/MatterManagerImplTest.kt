@@ -20,6 +20,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketReposit
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -39,14 +40,17 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 
-private val SHARE_REQUEST = MatterShareRequest(
+private val SHARE_PAYLOAD = MatterShareDevicePayload(
     passcode = 20202021,
     discriminator = 3840,
+    remainingSeconds = 250,
     vendorId = 0xFFF1,
     productId = 0x8001,
     deviceName = "Kitchen light",
-    remainingSeconds = 250,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -268,21 +272,21 @@ class MatterManagerImplTest {
 
         val event = assertInstanceOf(
             MatterManager.CommissioningResult.Ready::class.java,
-            manager.prepareDeviceSharing(SHARE_REQUEST),
+            manager.prepareDeviceSharing(SHARE_PAYLOAD),
         )
 
         assertEquals(intentSender, event.intentSender)
         assertEquals("Kitchen light", request.captured.deviceName)
-        assertEquals(SHARE_REQUEST.passcode, request.captured.commissioningWindow.passcode)
+        assertEquals(SHARE_PAYLOAD.passcode, request.captured.commissioningWindow.passcode)
         // Compared whole: 3840 reads the same in the short form; only the object carries the mask.
         assertEquals(
-            Discriminator.forLongValue(SHARE_REQUEST.discriminator),
+            Discriminator.forLongValue(SHARE_PAYLOAD.discriminator),
             request.captured.commissioningWindow.discriminator,
         )
         assertEquals(1_000L, request.captured.commissioningWindow.windowOpenMillis)
         assertEquals(250L, request.captured.commissioningWindow.durationSeconds)
-        assertEquals(SHARE_REQUEST.vendorId, request.captured.deviceDescriptor.vendorId)
-        assertEquals(SHARE_REQUEST.productId, request.captured.deviceDescriptor.productId)
+        assertEquals(SHARE_PAYLOAD.vendorId, request.captured.deviceDescriptor.vendorId)
+        assertEquals(SHARE_PAYLOAD.productId, request.captured.deviceDescriptor.productId)
     }
 
     @Test
@@ -294,20 +298,9 @@ class MatterManagerImplTest {
 
         val event = assertInstanceOf(
             MatterManager.CommissioningResult.Error::class.java,
-            manager.prepareDeviceSharing(SHARE_REQUEST.copy(deviceName = null)),
+            manager.prepareDeviceSharing(SHARE_PAYLOAD.copy(deviceName = null)),
         )
         assertEquals(cause, event.cause)
-    }
-
-    /** The builders run for real: Play Services, not the app, rejects an out-of-spec value. */
-    @Test
-    fun `Given a discriminator Play Services rejects when prepareDeviceSharing then emits Error`() = runTest {
-        every { commissioningClient.shareDevice(any()) } returns successTask(mockk<IntentSender>())
-        givenElapsedRealtime(1_000L)
-
-        val event = createManager().prepareDeviceSharing(SHARE_REQUEST.copy(discriminator = 4096))
-
-        assertInstanceOf(MatterManager.CommissioningResult.Error::class.java, event)
     }
 
     @Test
@@ -315,7 +308,7 @@ class MatterManagerImplTest {
         every { commissioningClient.shareDevice(any()) } returns cancelledTask()
         givenElapsedRealtime(1_000L)
 
-        val event = createManager().prepareDeviceSharing(SHARE_REQUEST)
+        val event = createManager().prepareDeviceSharing(SHARE_PAYLOAD)
 
         assertInstanceOf(
             CancellationException::class.java,
@@ -328,7 +321,7 @@ class MatterManagerImplTest {
         every { commissioningClient.shareDevice(any()) } returns pendingTask()
         givenElapsedRealtime(1_000L)
 
-        val event = createManager().prepareDeviceSharing(SHARE_REQUEST)
+        val event = createManager().prepareDeviceSharing(SHARE_PAYLOAD)
 
         assertInstanceOf(
             TimeoutException::class.java,
@@ -343,7 +336,7 @@ class MatterManagerImplTest {
         assertFalse(manager.appSupportsSharing())
         assertInstanceOf(
             MatterManager.CommissioningResult.Error::class.java,
-            manager.prepareDeviceSharing(SHARE_REQUEST.copy(deviceName = null)),
+            manager.prepareDeviceSharing(SHARE_PAYLOAD.copy(deviceName = null)),
         )
         verify(exactly = 0) { commissioningClient.shareDevice(any()) }
     }
@@ -361,22 +354,13 @@ class MatterManagerImplTest {
         )
     }
 
-    @Test
-    fun `Given share activity results when parseSharingIntentResult then maps OK, cancel and other codes`() {
-        val manager = createManager()
-
-        assertEquals(
-            MatterManager.SharingRequestResult.Shared,
-            manager.parseSharingIntentResult(ActivityResult(Activity.RESULT_OK, null)),
-        )
-        assertEquals(
-            MatterManager.SharingRequestResult.Cancelled,
-            manager.parseSharingIntentResult(ActivityResult(Activity.RESULT_CANCELED, null)),
-        )
-        assertEquals(
-            MatterManager.SharingRequestResult.Failed,
-            manager.parseSharingIntentResult(ActivityResult(Activity.RESULT_FIRST_USER, null)),
-        )
+    @ParameterizedTest
+    @MethodSource("shareResultCodes")
+    fun `Given a share activity result code when parseSharingIntentResult then maps it`(
+        resultCode: Int,
+        expected: MatterManager.SharingRequestResult,
+    ) {
+        assertEquals(expected, createManager().parseSharingIntentResult(ActivityResult(resultCode, null)))
     }
 
     /**
@@ -419,5 +403,14 @@ class MatterManagerImplTest {
             firstArg<OnFailureListener>().onFailure(cause)
             this@mockk
         }
+    }
+
+    companion object {
+        @JvmStatic
+        fun shareResultCodes(): List<Arguments> = listOf(
+            Arguments.of(Activity.RESULT_OK, MatterManager.SharingRequestResult.Shared),
+            Arguments.of(Activity.RESULT_CANCELED, MatterManager.SharingRequestResult.Cancelled),
+            Arguments.of(Activity.RESULT_FIRST_USER, MatterManager.SharingRequestResult.Failed),
+        )
     }
 }

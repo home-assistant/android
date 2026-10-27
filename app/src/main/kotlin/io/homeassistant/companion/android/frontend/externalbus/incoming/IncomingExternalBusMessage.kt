@@ -6,7 +6,6 @@ import io.homeassistant.companion.android.common.util.UnknownJsonContentDeserial
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.modules.SerializersModule
 
 /**
@@ -300,14 +299,27 @@ data class MatterCommissionMessage(override val id: Int? = null) : IncomingExter
 /**
  * Message requesting the app to share a device already commissioned to Home Assistant through the
  * platform share sheet. Answered with a success result, or an error coded `canceled` or `failed`.
+ * A message whose payload cannot be decoded is dropped without an answer.
  */
 @Serializable
 @SerialName("matter/share_device")
-data class MatterShareDeviceMessage(
-    override val id: Int? = null,
-    // Parsed by the handler, so missing or mistyped fields still get an error result instead of no reply.
-    val payload: JsonObject = JsonObject(emptyMap()),
-) : IncomingExternalBusMessage
+data class MatterShareDeviceMessage(override val id: Int? = null, val payload: MatterShareDevicePayload) :
+    IncomingExternalBusMessage
+
+/**
+ * Commissioning window the Matter server opened for [MatterShareDeviceMessage].
+ *
+ * [discriminator] is the long, 12-bit form.
+ */
+@Serializable
+data class MatterShareDevicePayload(
+    @SerialName("setup_pin_code") val passcode: Long,
+    val discriminator: Int,
+    @SerialName("remaining_seconds") val remainingSeconds: Long,
+    @SerialName("vendor_id") val vendorId: Int? = null,
+    @SerialName("product_id") val productId: Int? = null,
+    @SerialName("device_name") val deviceName: String? = null,
+)
 
 /**
  * Message requesting the app to share its locally-stored Thread credentials with the Home Assistant

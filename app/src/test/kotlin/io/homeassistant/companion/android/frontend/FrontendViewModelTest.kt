@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserResult
 import io.homeassistant.companion.android.frontend.filechooser.FrontendFileChooserHandler
@@ -89,8 +90,6 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -3154,7 +3153,7 @@ class FrontendViewModelTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            val payload = buildJsonObject { put("setup_pin_code", 20202021) }
+            val payload = MatterShareDevicePayload(passcode = 20202021, discriminator = 3840, remainingSeconds = 250)
 
             createViewModel()
             advanceUntilIdle()

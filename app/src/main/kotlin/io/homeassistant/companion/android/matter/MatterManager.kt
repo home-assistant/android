@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.matter
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 
 interface MatterManager {
 
@@ -108,9 +109,20 @@ interface MatterManager {
      */
     fun appSupportsSharing(): Boolean
 
-    /** Returns the share sheet's `IntentSender`, to be launched from an Activity. */
-    suspend fun prepareDeviceSharing(request: MatterShareRequest): CommissioningResult
+    /**
+     * Prepare sharing a Matter device from the [payload].
+     *
+     * Returns exactly one [CommissioningResult]:
+     *   - [CommissioningResult.Ready] when Play Services produced an `IntentSender` the caller
+     *     must launch from an Activity to continue the flow.
+     *   - [CommissioningResult.Error] when sharing is unsupported on this device (SDK < O_MR1,
+     *     Automotive, minimal flavor) or Play Services failed to prepare the flow.
+     */
+    suspend fun prepareDeviceSharing(payload: MatterShareDevicePayload): CommissioningResult
 
-    /** Interpret the `ActivityResult` of the share sheet launched from [prepareDeviceSharing]. */
+    /**
+     * Interpret the `ActivityResult` of the share sheet launched from
+     * [CommissioningResult.Ready.intentSender].
+     */
     fun parseSharingIntentResult(result: ActivityResult): SharingRequestResult
 }
