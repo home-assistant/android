@@ -127,7 +127,6 @@ jobs:
           if [ -n "$NUMBER" ]; then
             gh issue comment "$NUMBER" --body "The weekly zizmor scan failed again in $RUN_URL."
           else
-            gh label create zizmor-failure --description "Weekly zizmor scan failures" --color b60205 --force
             gh issue create --label zizmor-failure \
               --title "Weekly zizmor scan of the GitHub Actions workflows failed" \
               --body "The scheduled zizmor scan on main failed: $RUN_URL. Review the findings in the run log or under Security > Code scanning."
