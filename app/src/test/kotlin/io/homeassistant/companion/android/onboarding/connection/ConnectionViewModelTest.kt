@@ -156,7 +156,7 @@ class ConnectionViewModelTest {
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
-    fun `Given the developer setting when created then webViewDebugEnabled follows it`(
+    fun `Given the webview debugging developer setting when created then webViewDebugEnabled follows it`(
         enabled: Boolean,
     ) = runTest {
         coEvery { prefsRepository.webViewDebugFlow() } returns flowOf(enabled)
@@ -175,7 +175,7 @@ class ConnectionViewModelTest {
     }
 
     @Test
-    fun `Given the setting not read yet when created then webViewDebugEnabled is null`() = runTest {
+    fun `Given the webview debugging setting not read yet when created then webViewDebugEnabled is null`() = runTest {
         coEvery { prefsRepository.webViewDebugFlow() } returns MutableSharedFlow()
 
         val viewModel = ConnectionViewModel(
