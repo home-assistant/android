@@ -23,6 +23,9 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
@@ -201,11 +204,6 @@ class TemplateWidget : AppWidgetProvider() {
         // (e.g home screen rotation) the widget will fall back on its default layout
         // without any click listener being applied
 
-        val intent = Intent(context, TemplateWidget::class.java).apply {
-            action = UPDATE_VIEW
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        }
-
         val widget = templateWidgetDao.get(appWidgetId)
 
         val useDynamicColors =
@@ -218,14 +216,28 @@ class TemplateWidget : AppWidgetProvider() {
                 R.layout.widget_template_wrapper_default
             },
         ).apply {
-            setOnClickPendingIntent(
-                R.id.widgetLayout,
+            val dashboardPath = widget?.dashboardPath?.takeIf { widget.tapAction == WidgetTapAction.OPEN_DASHBOARD }
+            val pendingIntent = if (widget != null && dashboardPath != null) {
+                PendingIntent.getActivity(
+                    context,
+                    appWidgetId,
+                    context.intentLaunchWithNavigateTo(FrontendTarget.Path("/$dashboardPath"), widget.serverId),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                )
+            } else {
                 PendingIntent.getBroadcast(
                     context,
                     appWidgetId,
-                    intent,
+                    Intent(context, TemplateWidget::class.java).apply {
+                        action = UPDATE_VIEW
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                    },
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                ),
+                )
+            }
+            setOnClickPendingIntent(
+                R.id.widgetLayout,
+                pendingIntent,
             )
             if (widget != null) {
                 // Theming
