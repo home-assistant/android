@@ -44,6 +44,14 @@
             datasourceTemplate: 'github-releases',
             extractVersionTemplate: '^cli-(?<version>.+)$',
         },
+        {
+            customType: 'regex',
+            description: 'Tool versions pinned in workflow env blocks and annotated with a `# renovate:` comment, such as uv and zizmor',
+            managerFilePatterns: ['/^\\.github/workflows/.+\\.ya?ml$/'],
+            matchStrings: [
+                '# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*[A-Z_]+_VERSION: "(?<currentValue>[^"]+)"',
+            ],
+        },
     ],
     packageRules: [
         {
