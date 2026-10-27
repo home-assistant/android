@@ -103,6 +103,30 @@ class FrontendScreenTest {
     }
 
     @Test
+    fun `Given a connecting server name when pill is clicked then onSwitchServer is invoked`() {
+        var switchServerCalled = false
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = FrontendViewState.Loading(serverId = 1, url = "https://example.com"),
+                connectingServerName = "Home",
+                onSwitchServer = { switchServerCalled = true },
+            )
+
+            onNodeWithText("Home").performClick()
+            assertTrue("onSwitchServer should be called when the server pill is clicked", switchServerCalled)
+        }
+    }
+
+    @Test
+    fun `Given no connecting server name when loading then server pill is not displayed`() {
+        composeTestRule.apply {
+            setFrontendScreen(viewState = FrontendViewState.Loading(serverId = 1, url = "https://example.com"))
+
+            onNodeWithText("Home").assertDoesNotExist()
+        }
+    }
+
+    @Test
     fun `Given Error state then error screen with recovery action and webview are displayed`() {
         var action: ErrorActionIntent? = null
         val error = FrontendConnectionError.Unreachable(
@@ -515,6 +539,8 @@ class FrontendScreenTest {
         onImprovConnectDevice: (ssid: String, password: String) -> Unit = { _, _ -> },
         onImprovRestart: () -> Unit = {},
         onImprovDismiss: () -> Unit = {},
+        connectingServerName: String? = null,
+        onSwitchServer: () -> Unit = {},
         registry: ActivityResultRegistry? = null,
     ) {
         setContent {
@@ -541,6 +567,8 @@ class FrontendScreenTest {
                     onImprovConnectDevice = onImprovConnectDevice,
                     onImprovRestart = onImprovRestart,
                     onImprovDismiss = onImprovDismiss,
+                    connectingServerName = connectingServerName,
+                    onSwitchServer = onSwitchServer,
                 )
             }
 

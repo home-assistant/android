@@ -74,6 +74,34 @@ class FrontendScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
+    fun `FrontendScreen Loading state with connecting server name`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                viewState = FrontendViewState.Loading(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                connectingServerName = "Home",
+                getWebViewClient = { WebViewClient() },
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
     fun `FrontendScreen SecurityLevelRequired state`() {
         HAThemeForPreview {
             FrontendScreenContent(

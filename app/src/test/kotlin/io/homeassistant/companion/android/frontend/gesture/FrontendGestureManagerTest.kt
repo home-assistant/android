@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend.gesture
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.servers.ServerManager.Companion.SERVER_ID_ACTIVE
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.common.util.HAGesture
@@ -366,6 +367,18 @@ class FrontendGestureManagerTest {
         )
 
         assertEquals(GestureResult.Ignored, result)
+    }
+
+    @Test
+    fun `Given active server ID when switching server by gesture then returns its neighbor`() = runTest {
+        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_LEFT_TWO) } returns GestureAction.SERVER_NEXT
+        val servers = (1..3).map { mockServer(url = "https://$it.test", name = "$it", serverId = it) }
+        coEvery { serverManager.servers() } returns servers
+        coEvery { serverManager.getServer() } returns servers[1]
+
+        val result = manager.handleGesture(serverId = SERVER_ID_ACTIVE, direction = GestureDirection.LEFT, pointerCount = 2)
+
+        assertEquals(GestureResult.SwitchServer(3), result)
     }
 
     @Test

@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -74,6 +75,7 @@ fun FrontendConnectionErrorScreen(
     stateProvider: FrontendConnectionErrorStateProvider,
     onOpenExternalLink: suspend (Uri) -> Unit,
     modifier: Modifier = Modifier,
+    topContent: @Composable () -> Unit = {},
     actions: @Composable () -> Unit = {},
 ) {
     val url by stateProvider.urlFlow.collectAsState()
@@ -87,6 +89,7 @@ fun FrontendConnectionErrorScreen(
         modifier = modifier,
         connectivityCheckState = connectivityCheckState,
         onRetryConnectivityCheck = stateProvider::runConnectivityChecks,
+        topContent = topContent,
         actions = actions,
     )
 }
@@ -103,6 +106,7 @@ fun FrontendConnectionErrorScreen(
  * @param modifier Modifier for the screen
  * @param errorDetailsExpanded Whether the error details section should be expanded by default
  * @param onRetryConnectivityCheck Callback when retry connectivity check is requested
+ * @param topContent Optional content shown where a top bar would be, such as the server pill
  * @param actions Composable slot for action buttons at the bottom of the screen
  */
 @Composable
@@ -114,6 +118,7 @@ fun FrontendConnectionErrorScreen(
     modifier: Modifier = Modifier,
     errorDetailsExpanded: Boolean = false,
     onRetryConnectivityCheck: () -> Unit = {},
+    topContent: @Composable () -> Unit = {},
     actions: @Composable () -> Unit = {},
 ) {
     error?.let { connectionError ->
@@ -130,6 +135,7 @@ fun FrontendConnectionErrorScreen(
             errorType = connectionError.rawErrorType,
             errorDetailsExpanded = errorDetailsExpanded,
             modifier = modifier,
+            topContent = topContent,
             actions = actions,
         )
     }
@@ -149,6 +155,7 @@ fun FrontendConnectionErrorScreen(
  * @param errorType The raw error type for debugging
  * @param errorDetailsExpanded Whether the error details section should be expanded by default
  * @param modifier Modifier for the screen
+ * @param topContent Optional content shown where a top bar would be, such as the server pill
  * @param actions Composable slot for action buttons at the bottom of the screen
  */
 @Composable
@@ -164,26 +171,32 @@ fun FrontendConnectionErrorScreen(
     errorType: String,
     errorDetailsExpanded: Boolean,
     modifier: Modifier = Modifier,
+    topContent: @Composable () -> Unit = {},
     actions: @Composable () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
-        FrontendErrorContent(
-            onOpenExternalLink = onOpenExternalLink,
-            title = title,
-            subtitle = subtitle,
-            errorDescription = errorDescription,
-            errorType = errorType,
-            url = url,
-            icon = icon,
-            errorDetailsExpanded = errorDetailsExpanded,
-            connectivityCheckState = connectivityCheckState,
-            onRetryConnectivityCheck = onRetryConnectivityCheck,
-            actions = actions,
-            modifier = Modifier.padding(contentPadding),
-        )
+        Box(modifier = Modifier.padding(contentPadding)) {
+            FrontendErrorContent(
+                onOpenExternalLink = onOpenExternalLink,
+                title = title,
+                subtitle = subtitle,
+                errorDescription = errorDescription,
+                errorType = errorType,
+                url = url,
+                icon = icon,
+                errorDetailsExpanded = errorDetailsExpanded,
+                connectivityCheckState = connectivityCheckState,
+                onRetryConnectivityCheck = onRetryConnectivityCheck,
+                actions = actions,
+            )
+            // Drawn over the top bar sized space so the image stays aligned with the other screens
+            Box(modifier = Modifier.align(Alignment.TopCenter).padding(top = HADimens.SPACE4)) {
+                topContent()
+            }
+        }
     }
 }
 
