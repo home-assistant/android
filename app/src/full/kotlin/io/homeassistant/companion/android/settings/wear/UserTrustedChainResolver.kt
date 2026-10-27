@@ -59,7 +59,9 @@ class UserTrustedChainResolver @Inject constructor(
     /** Returns the certificates sent by the server during the handshake, or `null` when there are none. */
     private suspend fun fetchPeerChain(url: String): List<X509Certificate>? {
         val request = Request.Builder().url(url).head().build()
-        val client = homeAssistantApis.getOkHttpClient()
+        val client = homeAssistantApis.getOkHttpClient().newBuilder()
+            .followRedirects(false)
+            .build()
         val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
         val peerCertificates = response.use { it.handshake?.peerCertificates }
         return peerCertificates?.filterIsInstance<X509Certificate>()?.takeIf { it.isNotEmpty() }
