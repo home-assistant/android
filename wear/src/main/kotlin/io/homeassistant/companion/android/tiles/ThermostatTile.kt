@@ -225,6 +225,7 @@ class ThermostatTile : TileService() {
         const val TAP_ACTION_DOWN = "Down"
         const val TAP_ACTION_TOGGLE = "Toggle"
         internal const val RESOURCE_POWER = "power"
+        private const val BUTTON_SIZE_DP = 40f
 
         internal fun timeline(
             context: Context,
@@ -355,6 +356,7 @@ class ThermostatTile : TileService() {
             }
 
             return Button.Builder(context, clickable.build())
+                .setSize(BUTTON_SIZE_DP)
                 .setTextContent(if (action == TAP_ACTION_DOWN) "—" else "+")
                 .setButtonColors(
                     ButtonColors(
@@ -377,6 +379,7 @@ class ThermostatTile : TileService() {
             }
 
             return Button.Builder(context, clickable.build())
+                .setSize(BUTTON_SIZE_DP)
                 .setIconContent(RESOURCE_POWER)
                 .setButtonColors(
                     ButtonColors(

@@ -62,7 +62,9 @@ dependencies {
     // watch need it.
     implementation(libs.media3.datasource.cronet)
 
+    debugImplementation(libs.wear.tiles.tooling)
     debugImplementation(libs.wear.tiles.tooling.preview)
+    "screenshotTestImplementation"(libs.wear.tiles.tooling)
 
     androidTestImplementation(libs.bundles.androidx.test)
     testImplementation(libs.bundles.androidx.test)

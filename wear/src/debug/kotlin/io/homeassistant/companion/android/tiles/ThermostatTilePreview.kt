@@ -2,11 +2,12 @@ package io.homeassistant.companion.android.tiles
 
 import android.content.Context
 import androidx.wear.protolayout.ResourceBuilders
+import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.tooling.preview.Preview
 import androidx.wear.tiles.tooling.preview.TilePreviewData
-import androidx.wear.tiles.tooling.preview.TilePreviewHelper
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ChevronDown
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
@@ -25,7 +26,7 @@ private fun mockEntity(rawState: String, hvacAction: String, targetTemp: Float?)
     EntityDisplayWithoutContext(
         entityId = "climate.living_room",
         name = PREVIEW_NAME,
-        icon = Mdi.Bookmark,
+        icon = Mdi.ChevronDown,
         rawState = rawState,
         climateControls = ClimateControls(
             currentTemperature = 19.8f,
@@ -63,11 +64,14 @@ private fun previewResources(): ResourceBuilders.Resources = ResourceBuilders.Re
     .build()
 
 private fun previewData(context: Context, entity: EntityDisplay, targetTemp: Float?) = TilePreviewData(
-    onTileResourcesRequest = { previewResources() },
+    onTileResourceRequest = { previewResources() },
 ) {
-    TilePreviewHelper.singleTimelineEntryTileBuilder(
-        ThermostatTile.timeline(context, mockTileConfig, entity, PREVIEW_NAME, targetTemp, "°C"),
-    ).build()
+    Tile.Builder()
+        .setResourcesVersion("preview")
+        .setTileTimeline(
+            ThermostatTile.timeline(context, mockTileConfig, entity, PREVIEW_NAME, targetTemp, "°C"),
+        )
+        .build()
 }
 
 @Preview(device = WearDevices.SMALL_ROUND)
