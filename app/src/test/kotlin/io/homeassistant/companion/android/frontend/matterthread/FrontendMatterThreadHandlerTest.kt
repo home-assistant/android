@@ -53,7 +53,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Matter Ready result when onStartMatterCommissioning then emits LaunchIntent`() = runTest {
+    fun `Given Matter Ready result when onStartMatterCommissioning then sends LaunchIntent`() = runTest {
         val intent: IntentSender = mockk()
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(intent)
         val handler = createHandler()
@@ -68,7 +68,24 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Matter Error result when onStartMatterCommissioning then emits MatterError snackbar event`() = runTest {
+    fun `Given LaunchIntent sent before collecting when collecting then it is delivered once`() = runTest {
+        val intent: IntentSender = mockk()
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(intent)
+        val handler = createHandler()
+
+        handler.onStartMatterCommissioning()
+
+        handler.events.test {
+            val event = assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+            assertEquals(intent, event.intentSender)
+        }
+        handler.events.test {
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given Matter Error result when onStartMatterCommissioning then sends MatterError snackbar event`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns
             MatterManager.CommissioningResult.Error(IllegalStateException("nope"))
         val handler = createHandler()
@@ -85,7 +102,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given commissionMatterDevice throws when onStartMatterCommissioning then emits MatterError snackbar event`() = runTest {
+    fun `Given commissionMatterDevice throws when onStartMatterCommissioning then sends MatterError snackbar event`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } throws IllegalStateException("boom")
         val handler = createHandler()
 
@@ -106,10 +123,12 @@ class FrontendMatterThreadHandlerTest {
         every { matterManager.parseCommissioningIntentResult(any()) } returns
             MatterManager.CommissioningRequestResult.Success(deviceName = "Kitchen light")
         val handler = createHandler()
-        // Drive the handler to the awaiting-intent-result state.
-        handler.onStartMatterCommissioning()
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onStartMatterCommissioning()
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null))
             expectNoEvents()
         }
@@ -118,14 +137,17 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Matter is in-flight and commissioning failed on old server when onMatterThreadIntentResult then reports failure and emits MatterCancelled snackbar`() = runTest {
+    fun `Given Matter is in-flight and commissioning failed on old server when onMatterThreadIntentResult then reports failure and sends MatterCancelled snackbar`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
         every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningRequestResult.Failed
         givenServerVersion(HomeAssistantVersion(2026, 6, 0))
         val handler = createHandler()
-        handler.onStartMatterCommissioning()
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onStartMatterCommissioning()
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             launch { handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_CANCELED, null)) }
             val event = assertInstanceOf(FrontendMatterThreadHandler.Event.ShowSnackbar::class.java, awaitItem())
 
@@ -144,9 +166,12 @@ class FrontendMatterThreadHandlerTest {
         every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningRequestResult.Failed
         givenServerVersion(HomeAssistantVersion(2026, 7, 0))
         val handler = createHandler()
-        handler.onStartMatterCommissioning()
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onStartMatterCommissioning()
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_CANCELED, null))
             expectNoEvents()
         }
@@ -166,7 +191,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Thread Ready result when onImportThreadCredentials then emits LaunchIntent`() = runTest {
+    fun `Given Thread Ready result when onImportThreadCredentials then sends LaunchIntent`() = runTest {
         val intent: IntentSender = mockk()
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = intent)
         val handler = createHandler()
@@ -200,7 +225,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Thread AppUnsupported result when onImportThreadCredentials then emits ThreadError snackbar event`() = runTest {
+    fun `Given Thread AppUnsupported result when onImportThreadCredentials then sends ThreadError snackbar event`() = runTest {
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.AppUnsupported
         val handler = createHandler()
 
@@ -217,7 +242,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given exportThreadCredentials throws when onImportThreadCredentials then emits ThreadError snackbar event`() = runTest {
+    fun `Given exportThreadCredentials throws when onImportThreadCredentials then sends ThreadError snackbar event`() = runTest {
         coEvery { threadManager.exportPreferredDataset(any()) } throws IllegalStateException("boom")
         val handler = createHandler()
 
@@ -247,13 +272,16 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Thread is in-flight and sendThreadDatasetExportResult returns name when onMatterThreadIntentResult then emits ThreadSuccess snackbar`() = runTest {
+    fun `Given Thread is in-flight and sendThreadDatasetExportResult returns name when onMatterThreadIntentResult then sends ThreadSuccess snackbar`() = runTest {
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
         coEvery { threadManager.sendThreadDatasetExportResult(any(), any()) } returns "My Thread Network"
         val handler = createHandler()
-        handler.onImportThreadCredentials(serverId = 42)
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onImportThreadCredentials(serverId = 42)
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             launch { handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null)) }
             val event = assertInstanceOf(FrontendMatterThreadHandler.Event.ShowSnackbar::class.java, awaitItem())
 
@@ -280,13 +308,16 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Thread is in-flight and sendThreadDatasetExportResult throws when onMatterThreadIntentResult then emits ThreadError snackbar`() = runTest {
+    fun `Given Thread is in-flight and sendThreadDatasetExportResult throws when onMatterThreadIntentResult then sends ThreadError snackbar`() = runTest {
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
         coEvery { threadManager.sendThreadDatasetExportResult(any(), any()) } throws IllegalStateException("boom")
         val handler = createHandler()
-        handler.onImportThreadCredentials(serverId = 1)
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onImportThreadCredentials(serverId = 1)
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             launch { handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null)) }
             val event = assertInstanceOf(FrontendMatterThreadHandler.Event.ShowSnackbar::class.java, awaitItem())
 

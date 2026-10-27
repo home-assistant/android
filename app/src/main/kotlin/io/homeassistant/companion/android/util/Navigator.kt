@@ -1,18 +1,18 @@
 package io.homeassistant.companion.android.util
 
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 
 class Navigator {
-    private val mutableFlow = MutableSharedFlow<NavigatorItem>(extraBufferCapacity = 1)
-    val flow = mutableFlow.asSharedFlow()
+    private val mutableFlow = Channel<NavigatorItem>(Channel.BUFFERED)
+    val flow = mutableFlow.receiveAsFlow()
 
     fun navigateTo(navTarget: String) {
-        mutableFlow.tryEmit(NavigatorItem(navTarget))
+        mutableFlow.trySend(NavigatorItem(navTarget))
     }
 
     fun navigateTo(navItem: NavigatorItem) {
-        mutableFlow.tryEmit(navItem)
+        mutableFlow.trySend(navItem)
     }
 
     data class NavigatorItem(
