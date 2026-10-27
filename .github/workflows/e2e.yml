@@ -28,8 +28,8 @@ jobs:
     timeout-minutes: 30
     environment: ui-test
     permissions:
-      contents: read
-      id-token: write
+      contents: read # To check out the repository
+      id-token: write # To authenticate to emulator.wtf through OIDC
     env:
       E2E_FORWARD_IP: 172.16.0.2
       E2E_HOME_ASSISTANT_VERSION: ${{ inputs.home-assistant-version || 'dev' }}
@@ -243,7 +243,7 @@ jobs:
     if: failure() && github.repository == 'home-assistant/android'
     runs-on: ubuntu-latest
     permissions:
-      actions: write
+      actions: write # To dispatch the E2E failure triage workflow
     steps:
       - name: Dispatch triage
         env:
@@ -259,7 +259,7 @@ jobs:
     if: success() && github.repository == 'home-assistant/android'
     runs-on: ubuntu-latest
     permissions:
-      issues: write
+      issues: write # To comment on and close the open e2e-failure issues
     steps:
       - name: Close open E2E failure issues
         env:
