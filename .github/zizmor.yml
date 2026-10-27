@@ -1,0 +1,16 @@
+# zizmor configuration. See https://docs.zizmor.sh/configuration/
+#
+# Findings are fixed, or suppressed inline with a `# zizmor: ignore[...]`
+# comment and a reason. This file is only for the cases where an inline
+# comment is impossible, each scoped to one exact location.
+rules:
+  # ludeeus/setup-homeassistant has no tagged release since 2021, so it is
+  # pinned to a commit of its main branch and Renovate keeps the digest current.
+  # Renovate only recognises that branch pin when `# main` is the whole comment,
+  # so the zizmor ignore cannot sit on the same line.
+  stale-action-refs:
+    ignore:
+      - e2e.yml:93:15
+  ref-version-mismatch:
+    ignore:
+      - e2e.yml:93:86
