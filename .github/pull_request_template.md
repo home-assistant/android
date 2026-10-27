@@ -1,5 +1,5 @@
 <!--
-    Please review the contributing guide before submitting: https://developers.home-assistant.io/docs/android/submit
+    Please review the contributing guide before submitting: https://contributors.home-assistant.io/companion/android/submitting/
     Please, complete the following sections to help the processing and review of your changes.
     Please, DO NOT DELETE ANY TEXT from this template! (unless instructed).
 
@@ -23,11 +23,11 @@
     for before merging your code.
 -->
 
-- [ ] New or updated tests have been added to cover the changes following the testing [guidelines](https://developers.home-assistant.io/docs/android/testing/introduction).
-- [ ] The code follows the project's [code style](https://developers.home-assistant.io/docs/android/codestyle) and [best_practices](https://developers.home-assistant.io/docs/android/best_practices).
+- [ ] New or updated tests have been added to cover the changes following the testing [guidelines](https://contributors.home-assistant.io/companion/android/testing/).
+- [ ] The code follows the project's [code style](https://contributors.home-assistant.io/companion/android/code-style/) and [best_practices](https://contributors.home-assistant.io/companion/android/best-practices/).
 - [ ] The changes have been thoroughly tested, and edge cases have been considered.
 - [ ] Changes are backward compatible whenever feasible. Any breaking changes are documented in the changelog for users and/or in the code for developers depending on the relevance.
-- [ ] I have read the [Open Home Foundation AI Policy](https://developers.home-assistant.io/docs/ai_policy).
+- [ ] I have read the [Open Home Foundation AI Policy](https://contributors.home-assistant.io/start/ai-policy/).
 
 Select exactly one option that describes AI usage in this contribution:
 
@@ -58,7 +58,7 @@ User Documentation: home-assistant/companion.home-assistant#
 
 <!-- 
     This pull request introduces, changes, or removes developer-facing functionality.
-    A corresponding update to the Developer documentation in the documentation repository (https://github.com/home-assistant/developers.home-assistant) is required.
+    A corresponding update to the contributor documentation in the documentation repository (https://github.com/home-assistant/contributors.home-assistant.io) is required.
 
     Instructions:
     1. Create a pull request in the documentation repository.
@@ -66,7 +66,7 @@ User Documentation: home-assistant/companion.home-assistant#
 
     Note: Remove this section if there is no PR.
 -->
-Developer Documentation: home-assistant/developers.home-assistant#
+Contributor Documentation: home-assistant/contributors.home-assistant.io#
 
 ## Any other notes
 <!-- 
