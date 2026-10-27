@@ -137,7 +137,7 @@ class FrontendJsBridge @AssistedInject constructor(
      * no-op until [detachFromWebView] is called: removing and re-adding the listener on a
      * WebView that still hosts a live document, right before a navigation, crashes WebView
      * natively (SIGSEGV in libwebviewchromium when switching between the internal and
-     * external URL).
+     * external URL). See https://issues.chromium.org/issues/573671233 for more details.
      */
     @SuppressLint("RequiresFeature")
     override suspend fun attachToWebView(webView: WebView) {
