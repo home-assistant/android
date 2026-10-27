@@ -55,6 +55,7 @@ import io.homeassistant.companion.android.util.PlayServicesAvailability
 import io.homeassistant.companion.android.util.compose.HAApp
 import io.homeassistant.companion.android.util.compose.navigateToUri
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
+import io.homeassistant.companion.android.util.setRecentsScreenshotProtection
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -193,6 +194,10 @@ class LaunchActivity : AppCompatActivity() {
         }
 
         enableEdgeToEdgeCompat()
+
+        lifecycleScope.launch {
+            viewModel.isAppLockEnabled.collect(::setRecentsScreenshotProtection)
+        }
 
         setContent {
             HATheme {

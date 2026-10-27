@@ -49,4 +49,18 @@ class SettingsViewModelTest {
         if (locked) assertTrue(result) else assertFalse(result)
         coVerify { appLockStateManager.isAppLocked(serverId = 1) }
     }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given isAppLockEnabled when invoked then returns the manager's result`(
+        enabled: Boolean,
+    ) = runTest {
+        coEvery { appLockStateManager.isAppLockEnabled(any()) } returns enabled
+        viewModel = SettingsViewModel(appLockStateManager)
+
+        val result = viewModel.isAppLockEnabled(serverId = 1)
+
+        if (enabled) assertTrue(result) else assertFalse(result)
+        coVerify { appLockStateManager.isAppLockEnabled(serverId = 1) }
+    }
 }

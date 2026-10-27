@@ -45,7 +45,7 @@ Every contribution, big or small, is greatly appreciated. Together, we can make 
 
 ### Getting started
 
-1. Read the [Developer Guide](https://developers.home-assistant.io/docs/android/).
+1. Read the [Developer Guide](https://contributors.home-assistant.io/companion/android/).
 2. Fork the repository and create a branch for your changes.
 3. Submit a pull request and join the discussion!
 
