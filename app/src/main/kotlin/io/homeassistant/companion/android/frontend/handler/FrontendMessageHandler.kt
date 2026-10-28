@@ -36,6 +36,8 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWrite
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadImportCredentialsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamStartMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamStopMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.EntityAddToActionsResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
@@ -304,6 +306,20 @@ class FrontendMessageHandler @Inject constructor(
                 FrontendHandlerEvent.ImportThreadCredentials
             }
 
+            is WebRtcStreamStartMessage -> {
+                Timber.d("webrtc/stream/start received type=${message.payload.streamType}")
+                FrontendHandlerEvent.StartWebRtcStream(
+                    messageId = message.id,
+                    streamType = message.payload.streamType,
+                    entityId = message.payload.entityId,
+                )
+            }
+
+            is WebRtcStreamStopMessage -> {
+                Timber.d("webrtc/stream/stop received")
+                FrontendHandlerEvent.StopWebRtcStream(message.payload.sessionId)
+            }
+
             is UnknownIncomingMessage -> {
                 Timber.d("Unknown message type received: ${message.content}")
                 FrontendHandlerEvent.UnknownMessage
@@ -323,6 +339,7 @@ class FrontendMessageHandler @Inject constructor(
         } else {
             0
         }
+        val hasCameraMicrophoneStream = packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
 
         val response = ConfigResultMessage(
             id = messageId,
@@ -333,6 +350,7 @@ class FrontendMessageHandler @Inject constructor(
             hasBarCodeScanner = hasBarCodeScanner,
             canSetupImprov = bluetoothCapabilities.hasBluetoothLe(),
             appVersion = appVersion,
+            hasCameraMicrophoneStream = hasCameraMicrophoneStream,
         )
         externalBusRepository.send(response)
     }

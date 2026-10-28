@@ -148,7 +148,7 @@ class WebRtcSessionTest {
         advanceUntilIdle()
 
         assertEquals(
-            ConnectionState.Failed(SessionFailure.Signaling("webrtc_offer_failed", "Camera does not support WebRTC")),
+            ConnectionState.Failed(SessionFailure.Signaling("webrtc_offer_failed: Camera does not support WebRTC")),
             session.state.value,
         )
         assertTrue(factory.lastController.disposed)
@@ -164,7 +164,7 @@ class WebRtcSessionTest {
         advanceUntilIdle()
 
         assertEquals(
-            ConnectionState.Failed(SessionFailure.Signaling("webrtc_get_client_config_failed", null)),
+            ConnectionState.Failed(SessionFailure.Signaling("webrtc_get_client_config_failed")),
             session.state.value,
         )
         assertEquals(0, signaling.openSessionCount)
@@ -573,7 +573,7 @@ class WebRtcSessionTest {
         advanceUntilIdle()
 
         assertEquals(
-            ConnectionState.Failed(SessionFailure.Signaling("webrtc_offer_failed", "boom")),
+            ConnectionState.Failed(SessionFailure.Signaling("webrtc_offer_failed: boom")),
             session.state.value,
         )
         assertEquals(1, signaling.openSessionCount)
