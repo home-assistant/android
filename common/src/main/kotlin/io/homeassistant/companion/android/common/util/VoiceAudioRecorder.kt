@@ -9,12 +9,16 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -49,6 +53,13 @@ private const val READ_CHUNK_SIZE = VOICE_SAMPLE_RATE * READ_CHUNK_DURATION_MS /
 private const val FALLBACK_READ_CHUNK_SIZE = FALLBACK_SAMPLE_RATE * READ_CHUNK_DURATION_MS / 1000
 
 /**
+ * Number of chunks a collector may lag behind the read loop before its oldest chunks are
+ * dropped (1s of audio at [READ_CHUNK_DURATION_MS]).
+ */
+@VisibleForTesting
+internal const val SHARED_BUFFER_CHUNKS = 1000 / READ_CHUNK_DURATION_MS
+
+/**
  * Converts a [ShortArray] of PCM 16-bit audio samples to a little-endian [ByteArray].
  *
  * Each 16-bit sample is split into two bytes (low byte first) matching the format
@@ -75,6 +86,11 @@ fun ShortArray.toAudioBytes(): ByteArray {
  * This sharing is critical on pre-Android 10 devices where only one [AudioRecord]
  * can be active at a time. Both the Assist pipeline and wake word detection can
  * safely collect from the same [VoiceAudioRecorder] concurrently.
+ *
+ * A collector that cannot keep up with real time never slows down the read loop or
+ * the other collectors: once it lags by [SHARED_BUFFER_CHUNKS], its oldest chunks are
+ * dropped. Blocking the read loop instead would overflow the much smaller [AudioRecord]
+ * buffer and lose audio for every collector.
  */
 class VoiceAudioRecorder(
     private val audioRecordFactory: () -> AudioRecord = ::createVoiceAudioRecord,
@@ -91,72 +107,99 @@ class VoiceAudioRecorder(
      * [Dispatchers.IO]) because [AudioRecord.read] is a blocking call. Each emission
      * contains one chunk of PCM 16-bit mono samples.
      *
-     * The flow is shared via [shareIn] with [SharingStarted.WhileSubscribed]:
+     * The flow is shared between collectors:
      * - First collector starts the [AudioRecord] and begins emitting
      * - Additional collectors receive the same audio stream
      * - When the last collector cancels, [AudioRecord] stops immediately
+     * - A collector lagging by more than [SHARED_BUFFER_CHUNKS] loses its oldest chunks
      */
     suspend fun audioData(): Flow<ShortArray> = mutex.withLock {
         sharedFlow ?: createSharedFlow().also { sharedFlow = it }
     }
 
+    /**
+     * Creates the drop-oldest shared flow and the job that records into it while there are
+     * subscribers.
+     *
+     * The recording runs in its own job launched on [recorderDispatcher] rather than inside the
+     * subscription observer: the read loop blocks in [AudioRecord.read] and never suspends on
+     * emission, so running it inline would starve the observer and the last unsubscribe would
+     * never stop the recorder.
+     */
     private fun createSharedFlow(): Flow<ShortArray> {
-        val upstream = channelFlow {
-            val recorder = audioRecordFactory()
-
-            if (recorder.state != AudioRecord.STATE_INITIALIZED) {
-                recorder.release()
-                Timber.e("AudioRecord failed to initialize")
-                return@channelFlow
-            }
-
-            val actualSampleRate = recorder.sampleRate
-            val needsDownsampling = actualSampleRate != VOICE_SAMPLE_RATE
-            val chunkSize = if (needsDownsampling) FALLBACK_READ_CHUNK_SIZE else READ_CHUNK_SIZE
-
-            if (needsDownsampling) {
-                Timber.d("Recording at ${actualSampleRate}Hz, downsampling to ${VOICE_SAMPLE_RATE}Hz")
-            }
-
-            recorder.startRecording()
-
-            val buffer = ShortArray(chunkSize)
-
-            try {
-                while (isActive) {
-                    val readResult = recorder.read(buffer, 0, chunkSize)
-                    when {
-                        readResult > 0 -> {
-                            val chunk = buffer.copyOf(readResult)
-                            val output = if (needsDownsampling) {
-                                downsample(chunk, fromRate = actualSampleRate, toRate = VOICE_SAMPLE_RATE)
-                            } else {
-                                chunk
-                            }
-                            send(output)
-                        }
-
-                        readResult < 0 -> {
-                            Timber.e("AudioRecord read error: $readResult")
-                            break
-                        }
-                    }
-                }
-            } finally {
-                try {
-                    recorder.stop()
-                } catch (e: IllegalStateException) {
-                    Timber.e(e, "Error stopping AudioRecord")
-                }
-                recorder.release()
-            }
-        }.flowOn(recorderDispatcher)
-
-        return upstream.shareIn(
-            scope = sharingScope,
-            started = SharingStarted.WhileSubscribed(),
-            replay = 0,
+        val shared = MutableSharedFlow<ShortArray>(
+            extraBufferCapacity = SHARED_BUFFER_CHUNKS,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
         )
+        sharingScope.launch {
+            var recording: Job? = null
+            shared.subscriptionCount.map { it > 0 }.distinctUntilChanged().collect { hasSubscribers ->
+                recording?.cancelAndJoin()
+                recording = if (hasSubscribers) sharingScope.launch { record(shared) } else null
+            }
+        }
+        return shared
+    }
+
+    /**
+     * Records from a new [AudioRecord] into [collector] until cancelled, then releases it.
+     */
+    private suspend fun record(collector: FlowCollector<ShortArray>) {
+        val recorder = audioRecordFactory()
+
+        if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+            recorder.release()
+            Timber.e("AudioRecord failed to initialize")
+            return
+        }
+
+        recorder.startRecording()
+        try {
+            readLoop(recorder, collector)
+        } finally {
+            try {
+                recorder.stop()
+            } catch (e: IllegalStateException) {
+                Timber.e(e, "Error stopping AudioRecord")
+            }
+            recorder.release()
+        }
+    }
+
+    /**
+     * Reads chunks from [recorder] and emits them at [VOICE_SAMPLE_RATE] until cancelled or a read
+     * error occurs.
+     */
+    private suspend fun readLoop(recorder: AudioRecord, collector: FlowCollector<ShortArray>) {
+        val actualSampleRate = recorder.sampleRate
+        val needsDownsampling = actualSampleRate != VOICE_SAMPLE_RATE
+        val chunkSize = if (needsDownsampling) FALLBACK_READ_CHUNK_SIZE else READ_CHUNK_SIZE
+
+        if (needsDownsampling) {
+            Timber.d("Recording at ${actualSampleRate}Hz, downsampling to ${VOICE_SAMPLE_RATE}Hz")
+        }
+
+        val buffer = ShortArray(chunkSize)
+
+        while (currentCoroutineContext().isActive) {
+            val readResult = recorder.read(buffer, 0, chunkSize)
+            when {
+                readResult > 0 -> {
+                    val chunk = buffer.copyOf(readResult)
+                    val output = if (needsDownsampling) {
+                        downsample(chunk, fromRate = actualSampleRate, toRate = VOICE_SAMPLE_RATE)
+                    } else {
+                        chunk
+                    }
+                    collector.emit(output)
+                }
+
+                readResult < 0 -> {
+                    Timber.e("AudioRecord read error: $readResult")
+                    break
+                }
+            }
+        }
     }
 }
 

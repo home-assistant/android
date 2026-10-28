@@ -7,6 +7,8 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -276,6 +278,48 @@ class VoiceAudioRecorderTest {
 
             // Only one AudioRecord should have been created
             verify(exactly = 1) { recorder.startRecording() }
+        }
+
+        @Test
+        fun `Given one collector stalled When audio keeps coming Then other collector keeps receiving`() = runTest {
+            val recorder = mockk<AudioRecord>(relaxed = true) {
+                every { state } returns AudioRecord.STATE_INITIALIZED
+                every { sampleRate } returns VOICE_SAMPLE_RATE
+                every { read(any<ShortArray>(), eq(0), any()) } answers {
+                    // Simulate the blocking nature of a real AudioRecord.read() call
+                    Thread.sleep(1)
+                    val buffer = firstArg<ShortArray>()
+                    shortArrayOf(42).copyInto(buffer)
+                    1
+                }
+            }
+            val voiceAudioRecorder = VoiceAudioRecorder(
+                audioRecordFactory = { recorder },
+                sharingScope = backgroundScope,
+            )
+            val flow = voiceAudioRecorder.audioData()
+
+            // A collector that takes one chunk and then never consumes again
+            val stalledCollectorStarted = CompletableDeferred<Unit>()
+            val stalledCollector = backgroundScope.launch {
+                flow.collect {
+                    stalledCollectorStarted.complete(Unit)
+                    awaitCancellation()
+                }
+            }
+
+            turbineScope {
+                val turbine = flow.testIn(this)
+                stalledCollectorStarted.await()
+
+                // Far more than the shared buffer can hold: the read loop must not have been blocked
+                repeat(SHARED_BUFFER_CHUNKS * 3) {
+                    turbine.awaitItem()
+                }
+
+                turbine.cancelAndConsumeRemainingEvents()
+            }
+            stalledCollector.cancel()
         }
     }
 
