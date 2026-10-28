@@ -159,6 +159,22 @@ internal class PermissionManager @Inject constructor(
     }
 
     /**
+     * Ensures the app has the microphone permission.
+     *
+     * @return `true` immediately when it has permission, otherwise enqueues a
+     *          [PermissionRequest.Microphone], suspends until the user responds, and returns whether
+     *          they granted it.
+     */
+    suspend fun checkMicrophonePermission(): Boolean {
+        if (permissionChecker.hasPermission(Manifest.permission.RECORD_AUDIO)) return true
+
+        Timber.d("Microphone permission required, awaiting user response")
+        return queue.awaitResult { onResult ->
+            PermissionRequest.Microphone(onResult = onResult)
+        }
+    }
+
+    /**
      * Drives the full permission flow for the Improv Wi-Fi onboarding session.
      *
      * Returns `true` immediately when every permission in [requiredPermissions] is already
@@ -212,7 +228,11 @@ internal class PermissionManager @Inject constructor(
 
         val status = assessWebViewPermissions(request)
         if (status.toBeGranted.isEmpty()) {
-            autoGrantWebViewResources(request, status.alreadyGranted)
+            // Nothing needs the user, so grant any already-granted resources without showing UI.
+            if (status.alreadyGranted.isNotEmpty()) {
+                Timber.d("Auto-granting WebView resources: ${status.alreadyGranted}")
+                request.grant(status.alreadyGranted.toTypedArray())
+            }
             return
         }
         val grantedPermissions = queue.awaitResult { onResult ->
@@ -245,16 +265,6 @@ internal class PermissionManager @Inject constructor(
             toBeGranted = toBeGranted,
             resourcesByPermission = resourcesByPermission,
         )
-    }
-
-    /**
-     * Grants [alreadyGranted] resources without showing UI, or returns silently when there is
-     * nothing to grant.
-     */
-    private fun autoGrantWebViewResources(request: WebViewPermissionRequest, alreadyGranted: List<String>) {
-        if (alreadyGranted.isEmpty()) return
-        Timber.d("Auto-granting WebView resources: $alreadyGranted")
-        request.grant(alreadyGranted.toTypedArray())
     }
 
     /**
