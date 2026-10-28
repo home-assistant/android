@@ -70,10 +70,11 @@
             ],
         },
         {
-            description: 'Guava publishes -android and -jre variants of each release, only follow the -android one',
+            description: 'Guava publishes -android and -jre variants of each release, only follow the -android one. Maven versioning keeps 33.x.y-android at least as new as the suffix-less 33.x.y that security advisories name as the fix.',
             matchPackageNames: [
                 '/^com.google.guava:/',
             ],
+            versioning: 'maven',
             allowedVersions: '/-android$/',
         },
         {
