@@ -12,15 +12,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
-import io.homeassistant.companion.android.database.wear.ThermostatTile as ThermostatTileConfig
 
 private const val PREVIEW_NAME = "Example thermostat"
-
-private val mockTileConfig = ThermostatTileConfig(
-    id = 0,
-    entityId = "climate.living_room",
-    showEntityName = true,
-)
 
 private fun mockEntity(rawState: String, hvacAction: String, targetTemp: Float?): EntityDisplay =
     EntityDisplayWithoutContext(
@@ -69,7 +62,7 @@ private fun previewData(context: Context, entity: EntityDisplay, targetTemp: Flo
     Tile.Builder()
         .setResourcesVersion("preview")
         .setTileTimeline(
-            ThermostatTile.timeline(context, mockTileConfig, entity, PREVIEW_NAME, targetTemp, "°C"),
+            ThermostatTile.timeline(context, entity, PREVIEW_NAME, targetTemp, "°C"),
         )
         .build()
 }
@@ -87,5 +80,4 @@ fun thermostatIdlePreview(context: Context): TilePreviewData =
     previewData(context, mockEntity("heat", "idle", 21.5f), 21.5f)
 
 @Preview(device = WearDevices.SMALL_ROUND)
-fun thermostatOffPreview(context: Context): TilePreviewData =
-    previewData(context, mockEntity("off", "off", null), null)
+fun thermostatOffPreview(context: Context): TilePreviewData = previewData(context, mockEntity("off", "off", null), null)

@@ -143,12 +143,11 @@ class ThermostatTile : TileService() {
                             )
                         }
 
-                        val name = if (tileConfig.showEntityName == true) entity.name else ""
+                        val name = entity.name.takeIf { tileConfig.showEntityName == true }
 
                         tile.setTileTimeline(
                             timeline(
                                 this@ThermostatTile,
-                                tileConfig,
                                 entity,
                                 name,
                                 targetTemp,
@@ -246,130 +245,129 @@ class ThermostatTile : TileService() {
         const val TAP_ACTION_TOGGLE = "Toggle"
         internal const val RESOURCE_POWER = "power"
         private const val BUTTON_SIZE_DP = 40f
+        private const val TARGET_TEMPERATURE_SIZE_SP = 30f
+        private const val SPACING_DP = 10f
+        private const val NAME_ARC_THICKNESS_DP = 30f
+        private const val FULL_CIRCLE_DEGREES = 360f
+        private const val HALF_CIRCLE_DEGREES = 180f
 
         /** Entity id and name per tile, as of the last full fetch, so a tap doesn't fetch the registry. */
         private val entityNames = ConcurrentHashMap<Int, Pair<String, String>>()
 
+        /** [entityName] is null when the name isn't shown on the tile. */
         internal fun timeline(
             context: Context,
-            tileConfig: ThermostatTile,
             entity: EntityDisplay,
-            entityName: String,
+            entityName: String?,
             targetTemperature: Float?,
             temperatureUnit: String,
         ): Timeline = Timeline.fromLayoutElement(
             LayoutElementBuilders.Box.Builder().apply {
-                val currentTemperature = entity.climateControls?.currentTemperature
-                val hvacAction = entity.climateControls?.hvacAction.toString()
-                val buttonsEnabled = hvacAction != "off" && entity.rawState != "unavailable"
-
-                val hvacActionColor = when (hvacAction) {
-                    "heating" -> context.getColor(commonR.color.colorDeviceControlsThermostatHeat)
-                    "cooling" -> context.getColor(commonR.color.colorDeviceControlsDefaultOn)
-                    else -> 0x00000000
-                }
-
-                val friendlyHvacAction = when (hvacAction) {
-                    "heating" -> context.getString(commonR.string.climate_heating)
-                    "cooling" -> context.getString(commonR.string.climate_cooling)
-                    "idle" -> context.getString(commonR.string.state_idle)
-                    "off" -> context.getString(commonR.string.state_off)
-                    else -> hvacAction.replaceFirstChar { it.uppercase() }
-                }
-
-                addContent(
-                    LayoutElementBuilders.Column.Builder()
-                        .addContent(
-                            LayoutElementBuilders.Text.Builder()
-                                .setText(friendlyHvacAction)
-                                .build(),
-                        )
-                        .addContent(
-                            LayoutElementBuilders.Text.Builder()
-                                .setText(
-                                    if (targetTemperature == null) {
-                                        "-- $temperatureUnit"
-                                    } else {
-                                        "$targetTemperature $temperatureUnit"
-                                    },
-                                )
-                                .setFontStyle(
-                                    LayoutElementBuilders.FontStyle.Builder().setSize(
-                                        DimensionBuilders.sp(30f),
-                                    ).build(),
-                                )
-                                .build(),
-                        )
-                        .addContent(
-                            LayoutElementBuilders.Text.Builder()
-                                .setText(
-                                    if (currentTemperature == null) {
-                                        "-- $temperatureUnit"
-                                    } else {
-                                        "$currentTemperature $temperatureUnit"
-                                    },
-                                )
-                                .build(),
-                        )
-                        .addContent(
-                            LayoutElementBuilders.Spacer.Builder()
-                                .setHeight(DimensionBuilders.dp(10f)).build(),
-                        )
-                        .addContent(
-                            LayoutElementBuilders.Row.Builder()
-                                .addContent(getTempButton(context, buttonsEnabled, TAP_ACTION_DOWN))
-                                .addContent(
-                                    LayoutElementBuilders.Spacer.Builder()
-                                        .setWidth(DimensionBuilders.dp(10f)).build(),
-                                )
-                                .addContent(getPowerButton(context, entity.rawState != "unavailable"))
-                                .addContent(
-                                    LayoutElementBuilders.Spacer.Builder()
-                                        .setWidth(DimensionBuilders.dp(10f)).build(),
-                                )
-                                .addContent(getTempButton(context, buttonsEnabled, TAP_ACTION_UP))
-                                .build(),
-                        )
-                        .build(),
-                )
-                addContent(
-                    LayoutElementBuilders.Arc.Builder()
-                        .addContent(
-                            LayoutElementBuilders.ArcLine.Builder()
-                                .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
-                                .setThickness(DimensionBuilders.DpProp.Builder(2f).build())
-                                .setColor(ColorBuilders.argb(hvacActionColor))
-                                .build(),
-                        )
-                        .build(),
-                )
-                if (tileConfig.showEntityName == true) {
-                    addContent(
-                        LayoutElementBuilders.Arc.Builder()
-                            .setAnchorAngle(
-                                DimensionBuilders.DegreesProp.Builder(180f).build(),
-                            )
-                            .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
-                            .addContent(
-                                LayoutElementBuilders.ArcLine.Builder()
-                                    .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
-                                    .setThickness(DimensionBuilders.DpProp.Builder(30f).build())
-                                    .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
-                                    .build(),
-                            )
-                            .addContent(
-                                LayoutElementBuilders.ArcText.Builder()
-                                    .setText(entityName)
-                                    .build(),
-                            )
-                            .build(),
-                    )
-                }
+                addContent(getControlsColumn(context, entity, targetTemperature, temperatureUnit))
+                addContent(getStatusRing(context, entity))
+                if (entityName != null) addContent(getNameArc(entityName))
                 // Refresh button
                 addContent(getRefreshButton())
                 setModifiers(getRefreshModifiers())
             }.build(),
         )
+
+        private fun getControlsColumn(
+            context: Context,
+            entity: EntityDisplay,
+            targetTemperature: Float?,
+            temperatureUnit: String,
+        ): LayoutElement {
+            val hvacAction = entity.climateControls?.hvacAction.toString()
+
+            return LayoutElementBuilders.Column.Builder()
+                .addContent(
+                    LayoutElementBuilders.Text.Builder()
+                        .setText(getFriendlyHvacAction(context, hvacAction))
+                        .build(),
+                )
+                .addContent(
+                    LayoutElementBuilders.Text.Builder()
+                        .setText("${targetTemperature ?: "--"} $temperatureUnit")
+                        .setFontStyle(
+                            LayoutElementBuilders.FontStyle.Builder().setSize(
+                                DimensionBuilders.sp(TARGET_TEMPERATURE_SIZE_SP),
+                            ).build(),
+                        )
+                        .build(),
+                )
+                .addContent(
+                    LayoutElementBuilders.Text.Builder()
+                        .setText("${entity.climateControls?.currentTemperature ?: "--"} $temperatureUnit")
+                        .build(),
+                )
+                .addContent(
+                    LayoutElementBuilders.Spacer.Builder()
+                        .setHeight(DimensionBuilders.dp(SPACING_DP)).build(),
+                )
+                .addContent(getButtonsRow(context, entity, hvacAction))
+                .build()
+        }
+
+        private fun getButtonsRow(context: Context, entity: EntityDisplay, hvacAction: String): LayoutElement {
+            val buttonsEnabled = hvacAction != "off" && entity.rawState != "unavailable"
+
+            return LayoutElementBuilders.Row.Builder()
+                .addContent(getTempButton(context, buttonsEnabled, TAP_ACTION_DOWN))
+                .addContent(getSpacer())
+                .addContent(getPowerButton(context, entity.rawState != "unavailable"))
+                .addContent(getSpacer())
+                .addContent(getTempButton(context, buttonsEnabled, TAP_ACTION_UP))
+                .build()
+        }
+
+        private fun getSpacer(): LayoutElement = LayoutElementBuilders.Spacer.Builder()
+            .setWidth(DimensionBuilders.dp(SPACING_DP)).build()
+
+        private fun getFriendlyHvacAction(context: Context, hvacAction: String): String = when (hvacAction) {
+            "heating" -> context.getString(commonR.string.climate_heating)
+            "cooling" -> context.getString(commonR.string.climate_cooling)
+            "idle" -> context.getString(commonR.string.state_idle)
+            "off" -> context.getString(commonR.string.state_off)
+            else -> hvacAction.replaceFirstChar { it.uppercase() }
+        }
+
+        private fun getStatusRing(context: Context, entity: EntityDisplay): LayoutElement {
+            val hvacActionColor = when (entity.climateControls?.hvacAction.toString()) {
+                "heating" -> context.getColor(commonR.color.colorDeviceControlsThermostatHeat)
+                "cooling" -> context.getColor(commonR.color.colorDeviceControlsDefaultOn)
+                else -> 0x00000000
+            }
+
+            return LayoutElementBuilders.Arc.Builder()
+                .addContent(
+                    LayoutElementBuilders.ArcLine.Builder()
+                        .setLength(DimensionBuilders.DegreesProp.Builder(FULL_CIRCLE_DEGREES).build())
+                        .setThickness(DimensionBuilders.DpProp.Builder(2f).build())
+                        .setColor(ColorBuilders.argb(hvacActionColor))
+                        .build(),
+                )
+                .build()
+        }
+
+        private fun getNameArc(entityName: String): LayoutElement = LayoutElementBuilders.Arc.Builder()
+            .setAnchorAngle(
+                DimensionBuilders.DegreesProp.Builder(HALF_CIRCLE_DEGREES).build(),
+            )
+            .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
+            .addContent(
+                LayoutElementBuilders.ArcLine.Builder()
+                    .setLength(DimensionBuilders.DegreesProp.Builder(FULL_CIRCLE_DEGREES).build())
+                    .setThickness(DimensionBuilders.DpProp.Builder(NAME_ARC_THICKNESS_DP).build())
+                    .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
+                    .build(),
+            )
+            .addContent(
+                LayoutElementBuilders.ArcText.Builder()
+                    .setText(entityName)
+                    .build(),
+            )
+            .build()
 
         private fun getTempButton(context: Context, enabled: Boolean, action: String): LayoutElement {
             val clickable = Clickable.Builder()
