@@ -135,7 +135,7 @@ class VoiceAudioRecorder(
             var recording: Job? = null
             shared.subscriptionCount.map { it > 0 }.distinctUntilChanged().collect { hasSubscribers ->
                 recording?.cancelAndJoin()
-                recording = if (hasSubscribers) sharingScope.launch { record(shared) } else null
+                recording = if (hasSubscribers) sharingScope.launch(recorderDispatcher) { record(shared) } else null
             }
         }
         return shared
