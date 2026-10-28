@@ -50,6 +50,12 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.MediaControls),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_assist_listening_chime,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
+            actionRequiresPlatform = true,
+        ),
     ),
     improved = listOf(
         ChangelogEntry(
