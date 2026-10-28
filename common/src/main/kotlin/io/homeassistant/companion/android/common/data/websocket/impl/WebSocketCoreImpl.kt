@@ -919,9 +919,10 @@ internal class WebSocketCoreImpl(
 
         if (activeMessage == null) {
             Timber.d("Received event for unknown subscription id= $subscriptionId, unsubscribing")
-            subscriptionId?.let {
-                unsubscribeEvents(subscriptionId)
-            }
+            // Events are handled on the inbound message queue, which is also the only path that
+            // delivers the answer to the unsubscribe: waiting for it here would stall every
+            // inbound message until the request times out
+            subscriptionId?.let { wsScope.launch { unsubscribeEvents(it) } }
             return
         }
         val subscriptionType = activeMessage.request.message["type"]
