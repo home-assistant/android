@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.integration.display
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.integrationRepositoryOrNull
@@ -202,14 +203,23 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     private suspend fun fetchEntities(serverId: Int, entityIds: List<String>?): List<Entity> {
         val repository = serverManager.integrationRepositoryOrNull(serverId) ?: return emptyList()
 
-        if (entityIds != null && entityIds.size <= MAX_SINGLE_ENTITY_FETCHES) {
-            return coroutineScope {
-                entityIds.map { entityId ->
-                    async { orNull("entity $entityId") { repository.getEntity(entityId) } }
-                }.awaitAll().filterNotNull()
-            }
+        return if (entityIds != null && entityIds.size <= MAX_SINGLE_ENTITY_FETCHES) {
+            fetchEntitiesOneByOne(repository, entityIds)
+        } else {
+            fetchAllEntities(repository, entityIds)
         }
+    }
 
+    private suspend fun fetchEntitiesOneByOne(
+        repository: IntegrationRepository,
+        entityIds: List<String>,
+    ): List<Entity> = coroutineScope {
+        entityIds.map { entityId ->
+            async { orNull("entity $entityId") { repository.getEntity(entityId) } }
+        }.awaitAll().filterNotNull()
+    }
+
+    private suspend fun fetchAllEntities(repository: IntegrationRepository, entityIds: List<String>?): List<Entity> {
         val entities = orNull("entities") { repository.getEntities() }.orEmpty()
         if (entityIds == null) return entities
 
