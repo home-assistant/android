@@ -80,6 +80,7 @@ class EntitiesForDisplayManagerTest {
         coEvery { serverManager.webSocketRepository(serverId) } returns webSocketRepository
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
+        coEvery { integrationRepository.getEntity("light.bed") } returns entity("light.bed", "Bed Light")
         coEvery { integrationRepository.getEntityUpdates(entityIds) } returns entityUpdates
         coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
     }
@@ -125,7 +126,7 @@ class EntitiesForDisplayManagerTest {
     @Test
     fun `Given an entity without registry entry when snapshotting then the friendly name is used`() = runTest {
         givenRegistryName("Bed")
-        coEvery { integrationRepository.getEntities() } returns listOf(entity("switch.fan", "Fan"))
+        coEvery { integrationRepository.getEntity("switch.fan") } returns entity("switch.fan", "Fan")
 
         val items = manager.snapshot(serverId, listOf("switch.fan")).awaitLoadedOrNull()?.entities.orEmpty()
 
@@ -133,15 +134,30 @@ class EntitiesForDisplayManagerTest {
     }
 
     @Test
-    fun `Given several ids when snapshotting then the registry and the entities are each fetched once`() = runTest {
+    fun `Given several ids when snapshotting then each entity is fetched on its own and the registry once`() = runTest {
         givenRegistryName("Bed")
-        coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed"), entity("switch.fan", "Fan"))
+        coEvery { integrationRepository.getEntity("light.bed") } returns entity("light.bed")
+        coEvery { integrationRepository.getEntity("switch.fan") } returns entity("switch.fan", "Fan")
 
         val items = manager.snapshot(serverId, listOf("light.bed", "switch.fan")).awaitLoadedOrNull()?.entities.orEmpty()
 
         assertEquals(listOf("Bed", "Fan"), items.map { it.name })
         coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay() }
+        coVerify(exactly = 1) { integrationRepository.getEntity("light.bed") }
+        coVerify(exactly = 1) { integrationRepository.getEntity("switch.fan") }
+        coVerify(exactly = 0) { integrationRepository.getEntities() }
+    }
+
+    @Test
+    fun `Given many ids when snapshotting then every state is fetched once instead of each entity`() = runTest {
+        val ids = (1..6).map { "light.l$it" }
+        coEvery { integrationRepository.getEntities() } returns ids.map { entity(it) }
+
+        val items = manager.snapshot(serverId, ids).awaitLoadedOrNull()?.entities.orEmpty()
+
+        assertEquals(ids, items.map { it.entityId })
         coVerify(exactly = 1) { integrationRepository.getEntities() }
+        coVerify(exactly = 0) { integrationRepository.getEntity(any()) }
     }
 
     @Test
@@ -159,7 +175,7 @@ class EntitiesForDisplayManagerTest {
 
     @Test
     fun `Given no entity that can be retrieved when snapshotting then the flow completes with Error`() = runTest {
-        coEvery { integrationRepository.getEntities() } returns emptyList()
+        coEvery { integrationRepository.getEntity("light.bed") } returns null
 
         manager.snapshot(serverId, listOf("light.bed")).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
@@ -307,7 +323,7 @@ class EntitiesForDisplayManagerTest {
     @Test
     fun `Given no entity that can be retrieved when observing then the flow completes with Error`() = runTest {
         givenRegistryName("Bed")
-        coEvery { integrationRepository.getEntities() } returns null
+        coEvery { integrationRepository.getEntity("light.bed") } returns null
 
         manager.observe(serverId, entityIds).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
@@ -319,7 +335,7 @@ class EntitiesForDisplayManagerTest {
     @Test
     fun `Given a server that does not know the entity when observing then the flow completes with Error`() = runTest {
         givenRegistryName("Bed")
-        coEvery { integrationRepository.getEntities() } returns listOf(entity("light.other"))
+        coEvery { integrationRepository.getEntity("light.bed") } returns null
 
         manager.observe(serverId, entityIds).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
@@ -337,7 +353,8 @@ class EntitiesForDisplayManagerTest {
                 EntityRegistryDisplayEntry(entityId = "switch.fan", name = "Fan"),
             ),
         )
-        coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"), entity("switch.fan"))
+        coEvery { integrationRepository.getEntity("light.bed") } returns entity("light.bed", "Bed Light")
+        coEvery { integrationRepository.getEntity("switch.fan") } returns entity("switch.fan")
         coEvery { integrationRepository.getEntityUpdates(ids) } returns entityUpdates
 
         manager.observe(serverId, ids).test {

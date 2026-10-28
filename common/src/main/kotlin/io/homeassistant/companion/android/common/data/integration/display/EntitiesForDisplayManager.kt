@@ -20,6 +20,7 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
@@ -194,13 +195,22 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     ).merge()
 
     /**
-     * Fetches the entities of the server in a single call, keeping [entityIds] in the order they
-     * were requested and omitting the ones the server doesn't know, or all of them when it is null.
+     * Fetches the entities of the server, keeping [entityIds] in the order they were requested and
+     * omitting the ones the server doesn't know, or all of them when it is null. A few requested
+     * entities are fetched one by one, since getting every state of the server is much slower.
      */
     private suspend fun fetchEntities(serverId: Int, entityIds: List<String>?): List<Entity> {
-        val entities = serverManager.integrationRepositoryOrNull(serverId)
-            ?.let { repository -> orNull("entities") { repository.getEntities() } }
-            .orEmpty()
+        val repository = serverManager.integrationRepositoryOrNull(serverId) ?: return emptyList()
+
+        if (entityIds != null && entityIds.size <= MAX_SINGLE_ENTITY_FETCHES) {
+            return coroutineScope {
+                entityIds.map { entityId ->
+                    async { orNull("entity $entityId") { repository.getEntity(entityId) } }
+                }.awaitAll().filterNotNull()
+            }
+        }
+
+        val entities = orNull("entities") { repository.getEntities() }.orEmpty()
         if (entityIds == null) return entities
 
         val entitiesById = entities.associateBy { it.entityId }
@@ -494,6 +504,9 @@ private suspend fun WebSocketRepository?.fetchEntityRegistryEntries(): EntityReg
         classicEntries = classicEntries?.associateBy { it.entityId },
     )
 }
+
+/** Up to this many requested entities are fetched one by one instead of fetching every state. */
+private const val MAX_SINGLE_ENTITY_FETCHES = 5
 
 /**
  * Absorbs failures of the repository call fetching [name], which the display pipeline degrades
