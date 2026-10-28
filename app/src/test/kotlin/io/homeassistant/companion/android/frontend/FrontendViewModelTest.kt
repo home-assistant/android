@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.frontend.exoplayer.ExoPlayerUiState
 import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserResult
 import io.homeassistant.companion.android.frontend.filechooser.FrontendFileChooserHandler
@@ -3175,6 +3176,24 @@ class FrontendViewModelTest {
             advanceUntilIdle()
 
             coVerify { matterThreadHandler.onStartMatterCommissioning() }
+        }
+
+        @Test
+        fun `Given StartMatterSharing handler event when collected then handler is called with its message`() = runTest {
+            val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messageFlow
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val payload = MatterShareDevicePayload(passcode = 20202021, discriminator = 3840, remainingSeconds = 250)
+
+            createViewModel()
+            advanceUntilIdle()
+
+            messageFlow.emit(FrontendHandlerEvent.StartMatterSharing(messageId = 7, payload = payload))
+            advanceUntilIdle()
+
+            coVerify { matterThreadHandler.onStartMatterSharing(messageId = 7, payload = payload) }
         }
 
         @Test
