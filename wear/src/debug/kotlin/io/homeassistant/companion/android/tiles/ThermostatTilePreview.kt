@@ -14,7 +14,7 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.database.wear.ThermostatTile as ThermostatTileConfig
 
-private const val PREVIEW_NAME = "Living Room"
+private const val PREVIEW_NAME = "Example thermostat"
 
 private val mockTileConfig = ThermostatTileConfig(
     id = 0,
@@ -29,7 +29,7 @@ private fun mockEntity(rawState: String, hvacAction: String, targetTemp: Float?)
         icon = Mdi.ChevronDown,
         rawState = rawState,
         climateControls = ClimateControls(
-            currentTemperature = 19.8f,
+            currentTemperature = 19.4f,
             targetTemperature = targetTemp,
             targetTemperatureStep = 0.5f,
             hvacAction = hvacAction,
@@ -76,7 +76,7 @@ private fun previewData(context: Context, entity: EntityDisplay, targetTemp: Flo
 
 @Preview(device = WearDevices.SMALL_ROUND)
 fun thermostatHeatingPreview(context: Context): TilePreviewData =
-    previewData(context, mockEntity("heat", "heating", 21.5f), 21.5f)
+    previewData(context, mockEntity("heat", "heating", 19.5f), 19.5f)
 
 @Preview(device = WearDevices.SMALL_ROUND)
 fun thermostatCoolingPreview(context: Context): TilePreviewData =
