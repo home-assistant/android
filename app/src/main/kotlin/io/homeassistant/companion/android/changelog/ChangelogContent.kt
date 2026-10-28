@@ -50,6 +50,10 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.MediaControls),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_thermostat_tile_power,
+            platforms = setOf(ChangelogPlatform.WEAR),
+        ),
     ),
     improved = listOf(
         ChangelogEntry(
