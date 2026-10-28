@@ -106,6 +106,7 @@ class FrontendMessageHandlerTest {
     fun setup() {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_NFC) } returns false
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
+        every { packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) } returns true
         every { matterManager.appSupportsCommissioning() } returns false
         every { matterManager.appSupportsSharing() } returns false
         every { threadManager.appSupportsThread() } returns false
