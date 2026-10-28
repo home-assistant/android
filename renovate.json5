@@ -70,11 +70,11 @@
             ],
         },
         {
-            versionCompatibility: '^(?<version>.*-android)$',
-            versioning: 'semver',
+            description: 'Guava publishes -android and -jre variants of each release, only follow the -android one',
             matchPackageNames: [
                 '/^com.google.guava:/',
             ],
+            allowedVersions: '/-android$/',
         },
         {
             groupName: 'org.jetbrains.kotlin:*',
