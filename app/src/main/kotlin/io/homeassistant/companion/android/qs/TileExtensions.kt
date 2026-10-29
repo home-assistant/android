@@ -13,6 +13,7 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import androidx.core.content.getSystemService
 import androidx.core.service.quicksettings.PendingIntentActivityWrapper
 import androidx.core.service.quicksettings.TileServiceCompat
@@ -25,6 +26,7 @@ import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
@@ -41,6 +43,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.qs.TileId
 import io.homeassistant.companion.android.settings.qs.updateActiveTileServices
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
@@ -54,7 +57,11 @@ private const val TILE_ICON_SIZE_DP = 48
 
 @RequiresApi(Build.VERSION_CODES.N)
 @AndroidEntryPoint
-internal abstract class TileExtensions : TileService() {
+internal abstract class TileExtensions @VisibleForTesting internal constructor(
+    private val ioDispatcher: CoroutineDispatcher,
+) : TileService() {
+
+    constructor() : this(Dispatchers.IO)
 
     abstract val tileId: TileId
     abstract fun getTile(): Tile?
@@ -118,10 +125,14 @@ internal abstract class TileExtensions : TileService() {
                 ) {
                     serverManager.integrationRepository(
                         tileData.serverId,
-                    ).getEntityUpdates(listOf(tileData.entityId))?.collect {
-                        tile.state =
-                            if (it.isActive()) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-                        getTileIcon(tileData.iconName, it, applicationContext)?.let { icon ->
+                    ).getEntityChanges(listOf(tileData.entityId))?.collect { change ->
+                        val entity = when (change) {
+                            is EntityChange.StateChanged -> change.entity
+                            // The entity has no state anymore, the tile becomes unavailable
+                            is EntityChange.Removed -> null
+                        }
+                        tile.state = toggleTileState(entity)
+                        getTileIcon(tileData.iconName, entity, applicationContext)?.let { icon ->
                             tile.icon = Icon.createWithBitmap(icon)
                         }
                         tile.updateTile()
@@ -157,7 +168,7 @@ internal abstract class TileExtensions : TileService() {
                         tileData.entityId.split(".")[0] in toggleDomainsWithLock ||
                         tileData.iconName == null
                     ) {
-                        withContext(Dispatchers.IO) {
+                        withContext(ioDispatcher) {
                             try {
                                 serverManager.integrationRepository(tileData.serverId).getEntity(tileData.entityId)
                             } catch (e: Exception) {
@@ -169,11 +180,7 @@ internal abstract class TileExtensions : TileService() {
                         null
                     }
                 if (tileData.entityId.split('.')[0] in toggleDomainsWithLock) {
-                    tile.state = when {
-                        state?.isActive() == true -> Tile.STATE_ACTIVE
-                        state?.state != null && !state.isActive() -> Tile.STATE_INACTIVE
-                        else -> Tile.STATE_UNAVAILABLE
-                    }
+                    tile.state = toggleTileState(state)
                 } else {
                     tile.state = Tile.STATE_INACTIVE
                 }
@@ -241,7 +248,7 @@ internal abstract class TileExtensions : TileService() {
                 tile.state = Tile.STATE_ACTIVE
                 tile.updateTile()
             }
-            withContext(Dispatchers.IO) {
+            withContext(ioDispatcher) {
                 try {
                     onEntityPressedWithoutState(
                         tileData.entityId,
@@ -325,6 +332,13 @@ internal abstract class TileExtensions : TileService() {
         val highestInUse = tileDao.getHighestInUse()?.numberedId ?: 0
         Timber.d("Highest tile in use: $highestInUse")
         updateActiveTileServices(highestInUse, applicationContext)
+    }
+
+    /** State of a toggle tile for [entity], unavailable when it has no state or was removed. */
+    private fun toggleTileState(entity: Entity?): Int = when {
+        entity == null -> Tile.STATE_UNAVAILABLE
+        entity.isActive() -> Tile.STATE_ACTIVE
+        else -> Tile.STATE_INACTIVE
     }
 
     private fun getTileIcon(tileIconName: String?, entity: Entity?, context: Context): Bitmap? {
