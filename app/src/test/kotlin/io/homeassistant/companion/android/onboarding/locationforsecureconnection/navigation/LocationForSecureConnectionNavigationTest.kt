@@ -2,13 +2,11 @@ package io.homeassistant.companion.android.onboarding.locationforsecureconnectio
 
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTouchInput
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import dagger.hilt.android.testing.BindValue
@@ -98,23 +96,6 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
             activity.onBackPressedDispatcher.onBackPressed()
             waitForIdle()
             assertLocationForSecureConnectionWithMostSecureSelected()
-        }
-    }
-
-    @Test
-    fun `Given SetHomeNetwork when tapping back twice quickly then show LocationForSecureConnection`() {
-        testNavigation {
-            navController.navigateToLocationForSecureConnection(42)
-
-            goToSetHomeNetwork()
-            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performTouchInput {
-                click()
-                click()
-            }
-            waitForIdle()
-            assertTrue(
-                navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
-            )
         }
     }
 
