@@ -59,7 +59,6 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -502,11 +501,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         return response
     }
 
-    override suspend fun getEntityUpdates(): Flow<Entity>? = getEntityChanges(entityIds = null)?.states()
-
-    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? =
-        getEntityChanges(entityIds)?.states()
-
     override suspend fun getEntityChanges(entityIds: List<String>?): Flow<EntityChange>? = when {
         supportsCompressedStateChanges() -> {
             // Contrary to the state trigger below, the subscription filters server side for any
@@ -525,10 +519,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         else -> webSocketRepository().getStateChanges()
             ?.filter { entityIds == null || it.entityId in entityIds }
             ?.map { it.toEntityChange() }
-    }
-
-    private fun Flow<EntityChange>.states(): Flow<Entity> = filterIsInstance<EntityChange.StateChanged>().map {
-        it.entity
     }
 
     /** An event without new state is the removal of the entity. */
