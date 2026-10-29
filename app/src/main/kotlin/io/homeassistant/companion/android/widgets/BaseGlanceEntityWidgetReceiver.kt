@@ -12,6 +12,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.updateAll
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
@@ -242,25 +243,29 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
             val serverId = entitiesPerServer.serverId
             val entitiesId = entitiesPerServer.entityIds
 
-            val entityUpdatesFlow = if (serverManager.getServer(serverId) != null) {
+            val entityChangesFlow = if (serverManager.getServer(serverId) != null) {
                 serverManager.integrationRepository(
                     serverId,
-                ).getEntityUpdates(EntityFilter(entityIds = entitiesId.toSet()))
+                ).getEntityChanges(EntityFilter(entityIds = entitiesId.toSet()))
             } else {
                 null
             }
-            if (entityUpdatesFlow != null) {
+            if (entityChangesFlow != null) {
                 widgetJobs[appWidgetId] = widgetScope.launch {
                     Timber.tag(
                         widgetClassName,
-                    ).d("Watching updates of entities($entitiesId) for widget $appWidgetId")
-                    entityUpdatesFlow.collect {
-                        onEntityUpdate(context, appWidgetId, it)
+                    ).d("Watching changes of entities($entitiesId) for widget $appWidgetId")
+                    entityChangesFlow.collect { change ->
+                        when (change) {
+                            is EntityChange.StateChanged -> onEntityUpdate(context, appWidgetId, change.entity)
+                            // The view renders the entity being gone itself
+                            is EntityChange.Removed -> Unit
+                        }
                         updateView(context, appWidgetId)
                     }
                 }
             } else {
-                Timber.tag(widgetClassName).w("Entity updates is null for widget $appWidgetId not watching")
+                Timber.tag(widgetClassName).w("Entity changes is null for widget $appWidgetId not watching")
                 // Shouldn't do anything since the job should have been canceled already
                 removeSubscription(appWidgetId)
             }

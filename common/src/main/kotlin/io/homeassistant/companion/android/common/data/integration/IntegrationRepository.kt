@@ -53,9 +53,6 @@ interface IntegrationRepository {
     suspend fun getEntities(filter: EntityFilter = EntityFilter()): List<Entity>?
     suspend fun getEntity(entityId: String): Entity?
 
-    /** Same as [getEntityChanges], without the removals of the entities from the server. */
-    suspend fun getEntityUpdates(filter: EntityFilter = EntityFilter()): Flow<Entity>?
-
     /**
      * State changes and removals of the entities selected by [filter], or of every entity when it
      * is empty. Pass a filter whenever possible: servers supporting it (2022.4 for ids, 2024.9 for
