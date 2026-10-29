@@ -28,8 +28,8 @@ jobs:
     timeout-minutes: 30
     environment: ui-test
     permissions:
-      contents: read
-      id-token: write
+      contents: read # To check out the repository
+      id-token: write # To authenticate to emulator.wtf through OIDC
     env:
       E2E_FORWARD_IP: 172.16.0.2
       E2E_HOME_ASSISTANT_VERSION: ${{ inputs.home-assistant-version || 'dev' }}
@@ -90,7 +90,7 @@ jobs:
 
       - name: Start Home Assistant
         id: homeassistant
-        uses: ludeeus/setup-homeassistant@c326e6e244b4bc92cf61579165051122a008fef7 # main
+        uses: ludeeus/setup-homeassistant@c63463d8e5e22093a8e4c4ea1e6f3c72a4dc0e04 # main
         with:
           tag: ${{ env.E2E_HOME_ASSISTANT_VERSION }}
           config-dir: .github/e2e/homeassistant
@@ -107,13 +107,13 @@ jobs:
 
           jq -e '.components | index("mobile_app") != null' homeassistant-config.json >/dev/null
 
-      - uses: emulator-wtf/actions/configure-credentials@8ebd78518fdcffab32d868226ec882f1be6dcb50 # v1.2.1
+      - uses: emulator-wtf/actions/configure-credentials@444e4aefaf6016543eeff0ab9b44e8801c436284 # v1.2.3
         with:
           oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
 
       - name: Start emulators
         id: emulator
-        uses: emulator-wtf/actions/use-emulator@8ebd78518fdcffab32d868226ec882f1be6dcb50 # v1.2.1
+        uses: emulator-wtf/actions/use-emulator@444e4aefaf6016543eeff0ab9b44e8801c436284 # v1.2.3
         with:
           devices: ${{ steps.devices.outputs.list }}
           egress-tunnel: true
@@ -243,7 +243,7 @@ jobs:
     if: failure() && github.repository == 'home-assistant/android'
     runs-on: ubuntu-latest
     permissions:
-      actions: write
+      actions: write # To dispatch the E2E failure triage workflow
     steps:
       - name: Dispatch triage
         env:
@@ -259,7 +259,7 @@ jobs:
     if: success() && github.repository == 'home-assistant/android'
     runs-on: ubuntu-latest
     permissions:
-      issues: write
+      issues: write # To comment on and close the open e2e-failure issues
     steps:
       - name: Close open E2E failure issues
         env:

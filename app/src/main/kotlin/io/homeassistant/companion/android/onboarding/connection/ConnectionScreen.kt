@@ -56,6 +56,7 @@ internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionView
     val error by viewModel.errorFlow.collectAsState()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsState()
     val pendingPermissionRequest by viewModel.pendingPermissionRequest.collectAsState()
+    val webViewDebugEnabled by viewModel.webViewDebugEnabled.collectAsState()
     val isError = error != null
 
     ConnectionScreen(
@@ -68,6 +69,7 @@ internal fun ConnectionScreen(onBackClick: () -> Unit, viewModel: ConnectionView
         pendingPermissionRequest = pendingPermissionRequest,
         onBackClick = onBackClick,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
+        webViewDebugEnabled = webViewDebugEnabled,
         modifier = modifier,
     )
 }
@@ -81,6 +83,7 @@ internal fun ConnectionScreen(
     webChromeClient: WebChromeClient,
     onBackClick: () -> Unit,
     onWebViewCreationFailed: (Throwable) -> Unit,
+    webViewDebugEnabled: Boolean?,
     modifier: Modifier = Modifier,
     pendingFileChooser: FileChooserRequest? = null,
     pendingPermissionRequest: PermissionRequest? = null,
@@ -110,6 +113,7 @@ internal fun ConnectionScreen(
                     },
                     onBackPressed = onBackClick,
                     onWebViewCreationFailed = onWebViewCreationFailed,
+                    debuggingEnabled = webViewDebugEnabled,
                 )
                 webView?.let { view ->
                     LaunchedEffect(view, url) {
@@ -158,6 +162,7 @@ private fun ConnectionScreenPreview() {
             webChromeClient = WebChromeClient(),
             onBackClick = {},
             onWebViewCreationFailed = {},
+            webViewDebugEnabled = null,
             modifier = Modifier.fillMaxSize(),
         )
     }

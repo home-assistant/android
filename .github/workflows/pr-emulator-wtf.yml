@@ -1,7 +1,7 @@
 name: PR Emulator.wtf
 
 on: # yamllint disable-line rule:truthy
-  workflow_run:
+  workflow_run: # zizmor: ignore[dangerous-triggers] inputs are artifacts only, no PR code runs here
     workflows: ['Pull Request']
     types: [completed]
 
@@ -149,12 +149,12 @@ jobs:
             echo 'DEVICES_EOF'
           } >> "$GITHUB_OUTPUT"
 
-      - uses: emulator-wtf/actions/configure-credentials@8ebd78518fdcffab32d868226ec882f1be6dcb50 # v1.2.1
+      - uses: emulator-wtf/actions/configure-credentials@444e4aefaf6016543eeff0ab9b44e8801c436284 # v1.2.3
         with:
           oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
 
       - name: Run tests full
-        uses: emulator-wtf/actions/run-tests@8ebd78518fdcffab32d868226ec882f1be6dcb50 # v1.2.1
+        uses: emulator-wtf/actions/run-tests@444e4aefaf6016543eeff0ab9b44e8801c436284 # v1.2.3
         with:
           devices: ${{ steps.devices.outputs.list }}
           app: emulator-wtf-inputs/app/build/outputs/apk/full/debug/app-full-debug.apk
@@ -162,7 +162,7 @@ jobs:
           outputs-dir: build/test-results/full
 
       - name: Run tests minimal
-        uses: emulator-wtf/actions/run-tests@8ebd78518fdcffab32d868226ec882f1be6dcb50 # v1.2.1
+        uses: emulator-wtf/actions/run-tests@444e4aefaf6016543eeff0ab9b44e8801c436284 # v1.2.3
         with:
           devices: ${{ steps.devices.outputs.list }}
           app: emulator-wtf-inputs/app/build/outputs/apk/minimal/debug/app-minimal-debug.apk
@@ -216,10 +216,10 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     permissions:
-      checks: write
-      pull-requests: write
-      actions: read
-      contents: read
+      checks: write  # Needed to publish the test results as a check run
+      pull-requests: write  # Needed to comment the test failures on the PR
+      actions: read  # Needed for retrieving artifacts of the triggering run
+      contents: read  # Needed by publish-unit-test-result-action to resolve the PR from the commit
     steps:
       # Exclude emulator-wtf-inputs (APKs, no test XML): it is the only artifact
       # here with a short retention, and download-artifact errors on an expired
