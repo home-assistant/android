@@ -58,6 +58,7 @@ internal const val VPN_TAG = "vpn_tag"
 @Composable
 fun SetHomeNetworkScreen(
     onHelpClick: suspend () -> Unit,
+    onBackClick: () -> Unit,
     onGotoNextScreen: () -> Unit,
     viewModel: SetHomeNetworkViewModel,
     modifier: Modifier = Modifier,
@@ -68,6 +69,7 @@ fun SetHomeNetworkScreen(
 
     SetHomeNetworkScreen(
         onHelpClick = onHelpClick,
+        onBackClick = onBackClick,
         onNextClick = {
             viewModel.onNextClick()
             onGotoNextScreen()
@@ -87,6 +89,7 @@ fun SetHomeNetworkScreen(
 @Composable
 internal fun SetHomeNetworkScreen(
     onHelpClick: suspend () -> Unit,
+    onBackClick: () -> Unit,
     onNextClick: () -> Unit,
     currentWifiNetwork: String,
     onCurrentWifiNetworkChange: (String) -> Unit,
@@ -100,7 +103,7 @@ internal fun SetHomeNetworkScreen(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { HATopBar(onHelpClick = onHelpClick) },
+        topBar = { HATopBar(onHelpClick = onHelpClick, onBackClick = onBackClick) },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         SetHomeNetworkContent(
@@ -253,6 +256,7 @@ private fun SetHomeNetworkScreenPreview() {
     HAThemeForPreview {
         SetHomeNetworkScreen(
             onHelpClick = {},
+            onBackClick = {},
             showEthernet = true,
             showVpn = true,
             isUsingVpn = true,
