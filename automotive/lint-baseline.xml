@@ -1537,7 +1537,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/settings/wear/UserTrustedChainResolver.kt"
-            line="79"
+            line="94"
             column="5"/>
     </issue>
 
