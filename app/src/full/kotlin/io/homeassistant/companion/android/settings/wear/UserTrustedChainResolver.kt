@@ -10,9 +10,11 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.util.sensitive
 import java.io.IOException
 import java.security.GeneralSecurityException
+import java.security.cert.Certificate
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import javax.inject.Inject
+import javax.net.ssl.SSLSocket
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,14 +66,27 @@ class UserTrustedChainResolver @VisibleForTesting constructor(
         }
     }
 
-    /** Returns the certificates sent by the server during the handshake, or `null` when there are none. */
+    /**
+     * Returns the certificates sent by the server during the handshake, or `null` when there are none.
+     *
+     * Prefers the chain cleaned by OkHttp, and falls back to the raw chain of the SSL session when the
+     * platform trust manager OkHttp cleans with rejects it (the server is only trusted by the user-CA
+     * fallback of [TLSHelper]).
+     */
     private suspend fun fetchPeerChain(url: String): List<X509Certificate>? {
         val request = Request.Builder().url(url).head().build()
+        var sessionChain: List<Certificate>? = null
         val client = homeAssistantApis.getOkHttpClient().newBuilder()
             .followRedirects(false)
+            .addNetworkInterceptor { chain ->
+                val session = (chain.connection()?.socket() as? SSLSocket)?.session
+                sessionChain = session?.peerCertificates?.toList()
+                chain.proceed(chain.request())
+            }
             .build()
         val response = withContext(backgroundDispatcher) { client.newCall(request).execute() }
-        val peerCertificates = response.use { it.handshake?.peerCertificates }
+        val cleanedChain = response.use { it.handshake?.peerCertificates }
+        val peerCertificates = cleanedChain?.takeIf { it.isNotEmpty() } ?: sessionChain
         return peerCertificates?.filterIsInstance<X509Certificate>()?.takeIf { it.isNotEmpty() }
     }
 
