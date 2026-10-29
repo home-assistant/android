@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
@@ -43,6 +44,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.isNullOrBlank
@@ -56,8 +59,10 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl
@@ -497,68 +502,82 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         return response
     }
 
-    override suspend fun getEntityUpdates(): Flow<Entity>? {
-        return if (supportsCompressedStateChanges()) {
-            webSocketRepository().getCompressedStateAndChanges()?.toEntityUpdates()
-        } else {
-            webSocketRepository().getStateChanges()
-                ?.filter { it.newState != null }
-                ?.map { it.newState!! }
-        }
-    }
+    override suspend fun getEntityUpdates(): Flow<Entity>? = getEntityChanges(entityIds = null)?.states()
 
-    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
-        return if (supportsCompressedStateChanges()) {
+    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? =
+        getEntityChanges(entityIds)?.states()
+
+    override suspend fun getEntityChanges(entityIds: List<String>?): Flow<EntityChange>? = when {
+        supportsCompressedStateChanges() -> {
             // Contrary to the state trigger below, the subscription filters server side for any
             // user, without requiring admin rights
-            webSocketRepository().getCompressedStateAndChanges(entityIds)?.toEntityUpdates(entityIds.toSet())
-        } else if (server().user.isAdmin == true) {
-            webSocketRepository().getStateChanges(entityIds)
-                ?.filter { it.toState != null }
-                ?.map { it.toState!! }
-        } else {
-            webSocketRepository().getStateChanges()
-                ?.filter { it.newState != null && entityIds.contains(it.entityId) }
-                ?.map { it.newState!! }
+            val events = if (entityIds == null) {
+                webSocketRepository().getCompressedStateAndChanges()
+            } else {
+                webSocketRepository().getCompressedStateAndChanges(entityIds)
+            }
+            events?.toEntityChanges(entityIds?.toSet())
         }
+
+        entityIds != null && server().user.isAdmin == true -> webSocketRepository().getStateChanges(entityIds)
+            ?.mapNotNull { it.toEntityChange() }
+
+        else -> webSocketRepository().getStateChanges()
+            ?.filter { entityIds == null || it.entityId in entityIds }
+            ?.map { it.toEntityChange() }
+    }
+
+    private fun Flow<EntityChange>.states(): Flow<Entity> = filterIsInstance<EntityChange.StateChanged>().map {
+        it.entity
+    }
+
+    /** An event without new state is the removal of the entity. */
+    private fun StateChangedEvent.toEntityChange(): EntityChange =
+        newState?.let { EntityChange.StateChanged(it) } ?: EntityChange.Removed(entityId)
+
+    /** An event without new state is the removal of the entity, null for a trigger without entity. */
+    private fun TriggerEvent.toEntityChange(): EntityChange? {
+        val entityId = entityId ?: return null
+        return toState?.let { EntityChange.StateChanged(it) } ?: EntityChange.Removed(entityId)
     }
 
     /** Whether the server supports `subscribe_entities` (compressed state changes), added in 2022.4. */
     private suspend fun supportsCompressedStateChanges(): Boolean = server().version?.isAtLeast(2022, 4, 0) == true
 
     /**
-     * Converts compressed state change events to full [Entity] states, resolving the diffs
-     * against the last known state of each entity. The full states the subscription sends when it
-     * starts are emitted too, so collectors also converge back to the server state after a
-     * reconnection.
+     * Converts compressed state change events to [EntityChange]s, resolving the diffs against the
+     * last known state of each entity. The full states the subscription sends when it starts are
+     * emitted too, so collectors also converge back to the server state after a reconnection.
      */
-    private fun Flow<CompressedStateChangedEvent>.toEntityUpdates(entityIds: Set<String>? = null): Flow<Entity> = flow {
-        val entities = mutableMapOf<String, Entity>()
-        // Seed before collecting: a collector joining an already active shared subscription missed
-        // its initial full states, and fetching while handling an event would deadlock because the
-        // websocket processes messages sequentially, so the fetch response could never arrive.
-        entities.seedCurrentStates(entityIds)
-        collect { event ->
-            event.added?.forEach { (entityId, state) ->
-                val entity = state.toEntity(entityId)
-                entities[entityId] = entity
-                emit(entity)
-            }
-            event.changed?.forEach { (entityId, diff) ->
-                val entity = entities[entityId]?.applyCompressedStateDiff(diff)
-                if (entity != null) {
+    private fun Flow<CompressedStateChangedEvent>.toEntityChanges(entityIds: Set<String>? = null): Flow<EntityChange> =
+        flow {
+            val entities = mutableMapOf<String, Entity>()
+            // Seed before collecting: a collector joining an already active shared subscription missed
+            // its initial full states, and fetching while handling an event would deadlock because the
+            // websocket processes messages sequentially, so the fetch response could never arrive.
+            entities.seedCurrentStates(entityIds)
+            collect { event ->
+                event.added?.forEach { (entityId, state) ->
+                    val entity = state.toEntity(entityId)
                     entities[entityId] = entity
-                    emit(entity)
-                } else {
-                    // The entity converges again on its next full state event.
-                    Timber.w("Dropping state diff for $entityId without a known state")
+                    emit(EntityChange.StateChanged(entity))
+                }
+                event.changed?.forEach { (entityId, diff) ->
+                    val entity = entities[entityId]?.applyCompressedStateDiff(diff)
+                    if (entity != null) {
+                        entities[entityId] = entity
+                        emit(EntityChange.StateChanged(entity))
+                    } else {
+                        // The entity converges again on its next full state event.
+                        Timber.w("Dropping state diff for $entityId without a known state")
+                    }
+                }
+                event.removed?.forEach { entityId ->
+                    entities.remove(entityId)
+                    emit(EntityChange.Removed(entityId))
                 }
             }
-            event.removed?.forEach { entityId ->
-                entities.remove(entityId)
-            }
         }
-    }
 
     /**
      * Seeds with the current state of every subscribed entity, limited to [entityIds]
