@@ -1214,6 +1214,40 @@ class WebSocketCoreImplTest {
         }
 
         @Test
+        fun `Given an unknown event received When the next event arrives Then it is delivered without waiting for the unsubscribe answer`() = runTest {
+            // The unsubscribes message is sent from the background so we need to control it
+            val customScope = TestScope(UnconfinedTestDispatcher())
+
+            setupServer(backgroundScope = customScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+            mockResultSuccessForId(2)
+
+            val flow = checkNotNull(
+                webSocketCore.subscribeTo<StateChangedEvent>(
+                    SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                    mapOf("event_type" to "state_changed"),
+                ),
+            )
+
+            // The unsubscribe sent for the unknown event is accepted but never answered: its answer
+            // could only be delivered by the same queue that handles the events, so waiting for it
+            // would stall every inbound message until the timeout
+            every { mockConnection.send(match<String> { it.contains("unsubscribe_events") }) } returns true
+
+            flow.test {
+                webSocketListener.onMessage(mockConnection, """{"id":42, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.kitchen"}}}""")
+                val timeBeforeEvent = testScheduler.currentTime
+
+                webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""")
+
+                assertEquals("light.bed_light", awaitItem().entityId)
+                assertEquals(timeBeforeEvent, testScheduler.currentTime)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
         fun `Given subscription setup in progress When coroutine is cancelled Then activeMessages is cleaned up`() = runTest {
             setupServer()
             prepareAuthenticationAnswer()

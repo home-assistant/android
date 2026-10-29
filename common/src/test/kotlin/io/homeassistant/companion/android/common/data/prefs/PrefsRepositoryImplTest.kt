@@ -191,6 +191,21 @@ class PrefsRepositoryImplTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+        @Test
+        fun `Given collecting flow when webview debug changes then updated webview debug is emitted`() = runTest {
+            coEvery { localStorage.getBoolean("webview_debug_enabled") } returns false
+
+            repository.webViewDebugFlow().test {
+                assertFalse(awaitItem())
+
+                coEvery { localStorage.getBoolean("webview_debug_enabled") } returns true
+                keyChangesFlow.emit("webview_debug_enabled")
+
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
     }
 
     @Nested
