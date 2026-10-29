@@ -108,13 +108,11 @@ class TLSHelper @Inject constructor(
         trustManager: X509TrustManager,
         serverTrustAnchorProvider: ServerTrustAnchorProvider,
     ): X509TrustManager {
-        val extended = trustManager as? X509ExtendedTrustManager
-        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.N) && extended != null) {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.N)) return trustManager
+        return (trustManager as? X509ExtendedTrustManager)?.let { extended ->
             val anchorTrustManager = ServerTrustAnchorTrustManager(serverTrustAnchorProvider)
             CompositeX509ExtendedTrustManager(primary = extended, fallback = anchorTrustManager)
-        } else {
-            trustManager
-        }
+        } ?: trustManager
     }
 
     /**
@@ -193,6 +191,5 @@ internal fun userInstalledCaKeyStore(caStore: KeyStore): KeyStore? {
 /**
  * Returns a key store of the given [type] initialized with `load(null, null)`.
  */
-@VisibleForTesting
 internal fun loadKeyStore(type: String = KeyStore.getDefaultType()): KeyStore =
     KeyStore.getInstance(type).apply { load(null, null) }
