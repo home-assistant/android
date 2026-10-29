@@ -160,7 +160,6 @@
     <ID>LongMethod:FrontendViewModel.kt:FrontendViewModel$private suspend fun handleMessageResult</ID>
     <ID>LongMethod:HANavHost.kt:@Composable internal fun HANavHost</ID>
     <ID>LongMethod:HaControlsProviderService.kt:HaControlsProviderService$override fun createPublisherForAllAvailable: Flow.Publisher&lt;Control&gt;</ID>
-    <ID>LongMethod:HaControlsProviderService.kt:HaControlsProviderService$private suspend fun subscribeToEntitiesForServer</ID>
     <ID>LongMethod:HealthConnectSensorManager.kt:HealthConnectSensorManager$override suspend fun requestSensorUpdate</ID>
     <ID>LongMethod:HomeAssistantApplication.kt:HomeAssistantApplication$override fun onCreate</ID>
     <ID>LongMethod:LocationForSecureConnectionScreen.kt:@OptIn(ExperimentalPermissionsApi::class) @Composable private fun LocationForSecureConnectionContent</ID>
@@ -221,7 +220,6 @@
     <ID>LongParameterList:FrontendViewModel.kt:FrontendViewModel$constructor</ID>
     <ID>LongParameterList:HAWebViewClient.kt:HAWebViewClient</ID>
     <ID>LongParameterList:HAWebViewClient.kt:HAWebViewClientFactory$suspend fun create: HAWebViewClient</ID>
-    <ID>LongParameterList:HaControlsProviderService.kt:HaControlsProviderService$private suspend fun sendControl</ID>
     <ID>LongParameterList:HaShortcutManager.kt:HaShortcutManager$fun buildShortcutInfo: ShortcutInfoCompat</ID>
     <ID>LongParameterList:LaunchViewModel.kt:LaunchViewModel</ID>
     <ID>LongParameterList:LaunchViewModel.kt:LaunchViewModel$constructor</ID>
@@ -557,7 +555,6 @@
     <ID>UseOrEmpty:GesturesListView.kt:action?.let { stringResource(it.description) } ?: ""</ID>
     <ID>UseOrEmpty:HAWebViewClient.kt:HAWebViewClient$context?.getString( commonR.string.connection_error_more_details_description_content, code.toString(), description?.takeIf { it.isNotEmpty() } ?: context.getString(commonR.string.no_description), ) ?: ""</ID>
     <ID>UseOrEmpty:HaControl.kt:HaControl$item.areaName ?: ""</ID>
-    <ID>UseOrEmpty:HaControlsProviderService.kt:HaControlsProviderService$serverManager.connectionStateProvider(serverId).urlFlow().firstUrlOrNull()?.toString()?.removeSuffix("/") ?: ""</ID>
     <ID>UseOrEmpty:HealthConnectSensorManager.kt:HealthConnectSensorManager$permissions ?: emptyArray()</ID>
     <ID>UseOrEmpty:ImprovSheet.kt:activeSsid ?: ""</ID>
     <ID>UseOrEmpty:LocationSensorManager.kt:LocationSensorManager$zones[serverId] ?: emptyList()</ID>
