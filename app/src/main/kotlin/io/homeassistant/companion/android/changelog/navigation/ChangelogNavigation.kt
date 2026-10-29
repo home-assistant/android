@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
@@ -38,7 +39,7 @@ internal fun NavGraphBuilder.changelogScreen(navController: NavController, onOpe
         val coroutineScope = rememberCoroutineScope()
         ChangelogScreen(
             viewModel = hiltViewModel(),
-            onCloseClick = { navController.popBackStack() },
+            onCloseClick = dropUnlessResumed { navController.popBackStack() },
             onActionClick = { action ->
                 when (action) {
                     is ChangelogAction.OpenUrl -> coroutineScope.launch { onOpenUrl(action.url) }

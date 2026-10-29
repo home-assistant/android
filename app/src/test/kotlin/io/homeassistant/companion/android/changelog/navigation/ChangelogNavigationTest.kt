@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.homeassistant.companion.android.testing.unit.stringResource
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import javax.inject.Inject
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -129,6 +130,20 @@ internal class ChangelogNavigationTest {
 
         composeTestRule.onNodeWithText(FRONTEND_FAKE_CONTENT).assertIsDisplayed()
         assertTrue(hasUnseenChangelog())
+    }
+
+    @Test
+    fun `Given changelog displayed when tapping got it twice quickly then returns to frontend`() = runTest {
+        seedLastSeenVersionCode(BuildConfig.VERSION_CODE - 1)
+
+        setContent()
+        composeTestRule.waitUntil { isOnChangelog() }
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.changelog_got_it))
+            .performTwoQuickClicks()
+        composeTestRule.waitForIdle()
+
+        assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
     }
 
     @Test

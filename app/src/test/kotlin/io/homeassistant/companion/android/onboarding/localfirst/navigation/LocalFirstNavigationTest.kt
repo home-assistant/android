@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
 import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,6 +43,23 @@ internal class LocalFirstNavigationTest : BaseOnboardingNavigationTest() {
             waitForIdle()
 
             // In the test scenario since we never opened NameYourDevice the stack still contains Welcome
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given LocalFirst when tapping next twice quickly then LocationSharing is shown once`() {
+        testNavigation {
+            navController.navigateToLocalFirst(42, true)
+
+            onNodeWithText(stringResource(commonR.string.local_first_next))
+                .performScrollTo()
+                .performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
         }
     }

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding.nameyourdevice.navigation
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -16,8 +17,10 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.onboarding.locationsharing.navigation.LocationSharingRoute
 import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceNavigationEvent
 import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDeviceViewModel
+import io.homeassistant.companion.android.onboarding.welcome.navigation.WelcomeRoute
 import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.homeassistant.companion.android.testing.unit.stringResource
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import io.mockk.every
 import io.mockk.mockk
 import junit.framework.TestCase.assertTrue
@@ -88,6 +91,18 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
 
             // The back stack is unchanged in this situation, but in reality the app is in background
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocalFirstRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given NameYourDevice when tapping back twice quickly then show Welcome`() {
+        testNavigation {
+            navController.navigateToNameYourDevice("http://dummy.local", "code")
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performTwoQuickClicks()
+            waitForIdle()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
         }
     }
 
