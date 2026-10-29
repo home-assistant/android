@@ -133,6 +133,29 @@ class HaControlsProviderServiceTest {
     }
 
     @Test
+    fun `Given an entity leaving a snapshot when subscribed then its control is not found`() = runTest {
+        val service = createService()
+
+        service.createPublisherFor(mutableListOf("$SERVER_ID.$SWITCH_A", "$SERVER_ID.$SWITCH_B")).subscribe(subscriber)
+        subscriber.subscription.request(Long.MAX_VALUE)
+        displayStates.subscriptionCount.first { it > 0 }
+        displayStates.emit(loaded(switchItem(SWITCH_A), switchItem(SWITCH_B)))
+        advanceUntilIdle()
+
+        displayStates.emit(loaded(switchItem(SWITCH_A)))
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                "$SERVER_ID.$SWITCH_A" to Control.STATUS_OK,
+                "$SERVER_ID.$SWITCH_B" to Control.STATUS_OK,
+                "$SERVER_ID.$SWITCH_B" to Control.STATUS_NOT_FOUND,
+            ),
+            subscriber.controls.map { it.controlId to it.status },
+        )
+    }
+
+    @Test
     fun `Given a snapshot when the system cancels the subscription then the controls are not failed`() = runTest {
         val service = createService()
 
