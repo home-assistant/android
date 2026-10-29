@@ -79,6 +79,76 @@ class HaControlsProviderServiceTest {
     }
 
     @Test
+    fun `Given entities that can no longer be followed when subscribed then their controls are failed`() = runTest {
+        val service = createService()
+        every { entitiesForDisplayManager.observeInContext(any(), any<List<String>>()) } returns
+            flowOf(loaded(switchItem(SWITCH_A), switchItem(SWITCH_B)))
+
+        service.createPublisherFor(mutableListOf("$SERVER_ID.$SWITCH_A", "$SERVER_ID.$SWITCH_B")).subscribe(subscriber)
+        subscriber.subscription.request(Long.MAX_VALUE)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                "$SERVER_ID.$SWITCH_A" to Control.STATUS_OK,
+                "$SERVER_ID.$SWITCH_B" to Control.STATUS_OK,
+                "$SERVER_ID.$SWITCH_A" to Control.STATUS_ERROR,
+                "$SERVER_ID.$SWITCH_B" to Control.STATUS_ERROR,
+            ),
+            subscriber.controls.map { it.controlId to it.status },
+        )
+    }
+
+    @Test
+    fun `Given an error state when subscribed then the controls are failed once`() = runTest {
+        val service = createService()
+        every { entitiesForDisplayManager.observeInContext(any(), any<List<String>>()) } returns
+            flowOf(EntityDisplayState.Error)
+
+        service.createPublisherFor(mutableListOf("$SERVER_ID.$SWITCH_A", "$SERVER_ID.$SWITCH_B")).subscribe(subscriber)
+        subscriber.subscription.request(Long.MAX_VALUE)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("$SERVER_ID.$SWITCH_A" to Control.STATUS_ERROR, "$SERVER_ID.$SWITCH_B" to Control.STATUS_ERROR),
+            subscriber.controls.map { it.controlId to it.status },
+        )
+    }
+
+    @Test
+    fun `Given an entity missing from the first snapshot when subscribed then its control is not found`() = runTest {
+        val service = createService()
+
+        service.createPublisherFor(mutableListOf("$SERVER_ID.$SWITCH_A", "$SERVER_ID.$SWITCH_B")).subscribe(subscriber)
+        subscriber.subscription.request(Long.MAX_VALUE)
+        displayStates.subscriptionCount.first { it > 0 }
+
+        displayStates.emit(loaded(switchItem(SWITCH_A)))
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("$SERVER_ID.$SWITCH_B" to Control.STATUS_NOT_FOUND, "$SERVER_ID.$SWITCH_A" to Control.STATUS_OK),
+            subscriber.controls.map { it.controlId to it.status },
+        )
+    }
+
+    @Test
+    fun `Given a snapshot when the system cancels the subscription then the controls are not failed`() = runTest {
+        val service = createService()
+
+        service.createPublisherFor(mutableListOf("$SERVER_ID.$SWITCH_A")).subscribe(subscriber)
+        subscriber.subscription.request(Long.MAX_VALUE)
+        displayStates.subscriptionCount.first { it > 0 }
+        displayStates.emit(loaded(switchItem(SWITCH_A)))
+        advanceUntilIdle()
+
+        subscriber.subscription.cancel()
+        advanceUntilIdle()
+
+        assertEquals(listOf("$SERVER_ID.$SWITCH_A" to Control.STATUS_OK), subscriber.controls.map { it.controlId to it.status })
+    }
+
+    @Test
     fun `Given control ids when subscribed then only their entities are observed`() = runTest {
         val service = createService()
 

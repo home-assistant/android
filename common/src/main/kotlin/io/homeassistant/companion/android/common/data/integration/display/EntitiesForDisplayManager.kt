@@ -23,6 +23,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -58,8 +59,9 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * the resolved values matter.
      *
      * The flow completes with [EntityDisplayState.Error] when none of the entities can be
-     * retrieved, and completes after the initial snapshot when no update subscription is
-     * available (for example when the websocket connection is unavailable).
+     * retrieved, and completes after the initial snapshot when the state changes cannot be
+     * followed (for example when the websocket connection is unavailable), so collectors can tell
+     * their last snapshot is no longer kept current.
      */
     fun observe(serverId: Int, entityIds: List<String>? = null): Flow<EntityDisplayState<EntityDisplayWithoutContext>> =
         flow {
@@ -124,8 +126,9 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * can safely `conflate()` the flow and only render the latest one.
      *
      * The flow completes with [EntityDisplayState.Error] when the entities cannot be
-     * retrieved, and completes after the initial [EntityDisplayState.Loaded] when no update
-     * subscription is available (for example when the websocket connection is unavailable).
+     * retrieved, and completes after the initial [EntityDisplayState.Loaded] when the state changes
+     * cannot be followed (for example when the websocket connection is unavailable), so collectors
+     * can tell their last snapshot is no longer kept current.
      */
     fun observeInContext(serverId: Int, entityIds: List<String>): Flow<EntityDisplayState<EntityDisplayWithContext>> =
         observeInContext(serverId, subscribedEntityIds = entityIds) { it.entityId in entityIds }
@@ -143,8 +146,9 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * known, so that only their state changes are subscribed to.
      *
      * The flow completes with [EntityDisplayState.Error] when the entities cannot be
-     * retrieved, and completes after the initial [EntityDisplayState.Loaded] when no update
-     * subscription is available (for example when the websocket connection is unavailable).
+     * retrieved, and completes after the initial [EntityDisplayState.Loaded] when the state changes
+     * cannot be followed (for example when the websocket connection is unavailable), so collectors
+     * can tell their last snapshot is no longer kept current.
      */
     fun observeInContext(
         serverId: Int,
@@ -210,17 +214,21 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 
     /**
      * Merges what an [EntityDisplayWithoutContext] depends on into a single [ObserveEvent] flow: the state
-     * changes of [entityIds] and the entity registry updates. Subscriptions that cannot be
-     * established are skipped, so the flow is empty when the server supports none.
+     * changes of [entityIds] and the entity registry updates. The flow is empty when the state
+     * changes cannot be subscribed to, since the registry updates alone cannot keep the entities
+     * current; a registry subscription that cannot be established is skipped.
      */
     private suspend fun observeEntityEvents(
         serverId: Int,
         webSocketRepository: WebSocketRepository?,
         entityIds: List<String>?,
-    ): Flow<ObserveEvent.EntityEvent> = listOfNotNull(
-        stateChanges(serverId, entityIds),
-        webSocketRepository?.entityRegistryChanges(),
-    ).merge()
+    ): Flow<ObserveEvent.EntityEvent> {
+        val stateChanges = stateChanges(serverId, entityIds) ?: return emptyFlow()
+        return listOfNotNull(
+            stateChanges,
+            webSocketRepository?.entityRegistryChanges(),
+        ).merge()
+    }
 
     /**
      * Fetches the entities of the server in a single call, keeping [entityIds] in the order they
@@ -238,20 +246,23 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 
     /**
      * Merges the state changes of [entityIds], or of every entity of the server when it is null,
-     * and the registry update events of the server into a single [ObserveEvent] flow.
-     * Subscriptions that cannot be established are skipped, so the flow is empty when the server
-     * supports none.
+     * and the registry update events of the server into a single [ObserveEvent] flow. The flow is
+     * empty when the state changes cannot be subscribed to, since the registry updates alone cannot
+     * keep the entities current; a registry subscription that cannot be established is skipped.
      */
     private suspend fun observeContextEvents(
         serverId: Int,
         webSocketRepository: WebSocketRepository?,
         entityIds: List<String>?,
-    ): Flow<ObserveEvent> = listOfNotNull(
-        stateChanges(serverId, entityIds),
-        webSocketRepository?.areaRegistryChanges(),
-        webSocketRepository?.deviceRegistryChanges(),
-        webSocketRepository?.entityRegistryChanges(),
-    ).merge()
+    ): Flow<ObserveEvent> {
+        val stateChanges = stateChanges(serverId, entityIds) ?: return emptyFlow()
+        return listOfNotNull(
+            stateChanges,
+            webSocketRepository?.areaRegistryChanges(),
+            webSocketRepository?.deviceRegistryChanges(),
+            webSocketRepository?.entityRegistryChanges(),
+        ).merge()
+    }
 
     /**
      * Subscription to the state changes of [entityIds], or of every entity of the server when it
