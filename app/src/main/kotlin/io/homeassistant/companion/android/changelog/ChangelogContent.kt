@@ -55,6 +55,10 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.MediaControls),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_matter_share,
+            platforms = setOf(ChangelogPlatform.APP),
+        ),
     ),
     improved = listOf(
         ChangelogEntry(

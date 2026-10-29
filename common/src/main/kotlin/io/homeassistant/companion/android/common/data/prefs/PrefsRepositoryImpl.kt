@@ -295,6 +295,12 @@ internal class PrefsRepositoryImpl @Inject constructor(
         localStorage().putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, enabled)
     }
 
+    override suspend fun webViewDebugFlow(): Flow<Boolean> {
+        return localStorage().observeChanges(PREF_WEBVIEW_DEBUG_ENABLED) {
+            isWebViewDebugEnabled()
+        }
+    }
+
     override suspend fun isCrashReporting(): Boolean {
         return !localStorage().getBoolean(PREF_CRASH_REPORTING_DISABLED)
     }

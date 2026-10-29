@@ -150,6 +150,8 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "implementation"(libs.timber)
                     "implementation"(libs.kotlinx.serialization.json)
 
+                    "implementation"(libs.guava)
+
                     "ksp"(libs.hilt.android.compiler)
                     "kspTest"(libs.hilt.android.compiler)
                     "implementation"(libs.hilt.android)

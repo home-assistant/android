@@ -70,11 +70,19 @@
             ],
         },
         {
-            versionCompatibility: '^(?<version>.*-android)$',
-            versioning: 'semver',
+            description: 'Guava publishes -android and -jre variants of each release, only follow the -android one. Maven versioning keeps 33.x.y-android at least as new as the suffix-less 33.x.y that security advisories name as the fix.',
             matchPackageNames: [
                 '/^com.google.guava:/',
             ],
+            versioning: 'maven',
+            allowedVersions: '/-android$/',
+        },
+        {
+            description: 'BlurView tags are prefixed with version-, which hides the major from the default gradle versioning',
+            matchPackageNames: [
+                'com.github.Dimezis:BlurView',
+            ],
+            versioning: 'regex:^version-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$',
         },
         {
             groupName: 'org.jetbrains.kotlin:*',
