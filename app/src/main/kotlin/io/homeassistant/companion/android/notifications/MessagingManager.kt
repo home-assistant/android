@@ -74,7 +74,7 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
-import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.getActiveNotificationGroup
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.parseExternalIntentUri
@@ -1057,9 +1057,9 @@ class MessagingManager @Inject constructor(
             groupId = group.hashCode()
         } else {
             if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
-                if (notification != null && notification.isGroup) {
-                    previousGroup = NotificationData.GROUP_PREFIX + notification.tag
+                val activeGroup = notificationManagerCompat.getActiveNotificationGroup(tag, messageId)
+                if (activeGroup != null) {
+                    previousGroup = activeGroup
                     previousGroupId = previousGroup.hashCode()
                 }
             }

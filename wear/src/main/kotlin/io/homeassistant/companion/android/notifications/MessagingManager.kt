@@ -19,7 +19,7 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
-import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.getActiveNotificationGroup
 import io.homeassistant.companion.android.common.util.toJsonObject
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
@@ -123,9 +123,9 @@ class MessagingManager @Inject constructor(
             group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
-            val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
-            if (notification != null && notification.isGroup) {
-                previousGroup = NotificationData.GROUP_PREFIX + notification.tag
+            val activeGroup = notificationManagerCompat.getActiveNotificationGroup(tag, messageId)
+            if (activeGroup != null) {
+                previousGroup = activeGroup
                 previousGroupId = previousGroup.hashCode()
             }
         }
