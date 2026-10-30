@@ -3,6 +3,7 @@
      Kept in a dedicated file so the per-release content is easy to spot and can be managed.
      Escaped inline HTML (like &lt;b&gt;) is rendered as styling. -->
 <resources>
+    <string name="changelog_entry_conversation_notifications">Added optional &lt;b&gt;conversation notifications&lt;/b&gt; with custom sender icons (Android 11+)</string>
     <string name="changelog_entry_assistant_volume_sensor">Added an &lt;b&gt;assistant volume&lt;/b&gt; sensor (Android 17+)</string>
     <string name="changelog_entry_assistant_volume_command">Added a notification command to set the &lt;b&gt;assistant volume&lt;/b&gt; (Android 17+)</string>
     <string name="changelog_entry_health_connect">&lt;b&gt;Health Connect&lt;/b&gt; sleep duration now ignores awake and out-of-bed time</string>
