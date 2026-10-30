@@ -19,6 +19,7 @@ import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.prepareText
@@ -38,10 +39,16 @@ private const val NOTIFICATION_STYLE = "notification_style"
 private const val CONVERSATION_STYLE = "conversation"
 private const val NOTIFICATION_TAG = "tag"
 private const val SHORTCUT_PREFIX = "notification_conversation_"
+private const val CONVERSATION_SHORTCUT_RANK = Int.MAX_VALUE
 private const val AVATAR_SIZE = 192
 private const val GLYPH_SIZE = 112
 
-private data class NotificationConversation(val tag: String, val title: String, val serverId: Int, val icon: MdiIcon)
+private data class NotificationConversation(
+    val tag: String,
+    val title: CharSequence,
+    val serverId: Int,
+    val icon: MdiIcon,
+)
 
 /** Opt-in conversation presentation for notifications with a stable tag and an MDI sender icon. */
 class ConversationNotificationStyle @Inject constructor(
@@ -58,10 +65,10 @@ class ConversationNotificationStyle @Inject constructor(
         }
 
         val conversation = parseConversation(data) ?: return
+        val title = conversation.title
         val avatar = createAvatar(conversation.icon, data)
         val topicId = UUID.nameUUIDFromBytes(conversation.tag.toByteArray(Charsets.UTF_8))
         val shortcutId = "$SHORTCUT_PREFIX${conversation.serverId}_$topicId"
-        val title = prepareText(conversation.title)
         val message = prepareText(data[NotificationData.MESSAGE].orEmpty())
         if (publishShortcut(shortcutId, title.toString(), avatar, conversation.serverId)) {
             val sender = Person.Builder().setName(title).setKey(shortcutId).setIcon(avatar).setBot(true).build()
@@ -80,11 +87,12 @@ class ConversationNotificationStyle @Inject constructor(
     private fun supportsConversations() =
         SdkVersion.isAtLeast(Build.VERSION_CODES.R) && !context.isAutomotive() && !QuestUtil.isQuest
 
-    private fun parseConversation(data: Map<String, String>): NotificationConversation? {
+    private suspend fun parseConversation(data: Map<String, String>): NotificationConversation? {
         val tag = data[NOTIFICATION_TAG]
-        val title = data[NotificationData.TITLE]
+        val title = data[NotificationData.TITLE]?.let { prepareText(it) }
         if (tag.isNullOrBlank() || title.isNullOrBlank()) return null
         val serverId = data[MessagingManager.THIS_SERVER_ID]?.toIntOrNull()
+            ?.takeUnless { it == ServerManager.SERVER_ID_ACTIVE }
         val icon = data[NotificationData.NOTIFICATION_ICON]
             ?.takeIf { it.startsWith(MDI_PREFIX) }
             ?.let { Mdi.fromHaName(it) }
@@ -126,6 +134,8 @@ class ConversationNotificationStyle @Inject constructor(
             .setShortLabel(title)
             .setIcon(icon)
             .setIntent(intent)
+            // Launcher shortcuts take priority when their publication needs to reclaim a slot.
+            .setRank(CONVERSATION_SHORTCUT_RANK)
             .setLongLived(true)
             // The notification identifies the sender as a bot. A bot-only shortcut participant list
             // makes Android reject the conversation, so this topic shortcut has no participants.

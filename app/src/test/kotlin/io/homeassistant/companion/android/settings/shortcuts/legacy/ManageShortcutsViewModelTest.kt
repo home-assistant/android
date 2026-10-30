@@ -2,9 +2,11 @@ package io.homeassistant.companion.android.settings.shortcuts.legacy
 
 import android.app.Application
 import android.content.Intent
+import android.content.pm.ShortcutManager
 import android.os.Build
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
@@ -20,10 +22,14 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,6 +38,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -74,9 +81,15 @@ class ManageShortcutsViewModelTest {
         user = ServerUserInfo(),
     )
 
+    @After
+    fun tearDown() {
+        unmockkAll()
+    }
+
     private fun fakeShortcutInfo(id: String, path: String = "path_$id") = ShortcutInfoCompat.Builder(application, id)
         .setShortLabel("Label $id")
         .setLongLabel("Description $id")
+        .setIcon(IconCompat.createWithResource(application, android.R.drawable.ic_dialog_info))
         .setIntent(
             Intent(Intent.ACTION_VIEW)
                 .putExtra(SHORTCUT_EXTRA_SERVER, 0)
@@ -168,4 +181,43 @@ class ManageShortcutsViewModelTest {
             ShortcutManagerCompat.getShortcuts(application, ShortcutManagerCompat.FLAG_MATCH_DYNAMIC).map { it.id },
         )
     }
+
+    @Test
+    fun `Given an exhausted add shortcut quota when saving a launcher shortcut then use eviction aware publication`() = runTest {
+        val existing = (1..4).map { fakeShortcutInfo("shortcut_$it") } + conversationShortcut()
+        ShortcutManagerCompat.addDynamicShortcuts(application, existing)
+        val shortcut = fakeShortcutInfo("shortcut_5")
+        every { shortcutManager.buildShortcutInfo(any(), any(), any(), any(), any(), any()) } returns shortcut
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        // Robolectric does not enforce the native quota, so make the old publication API fail.
+        mockkStatic(ShortcutManagerCompat::class)
+        every { ShortcutManagerCompat.addDynamicShortcuts(application, any()) } throws IllegalArgumentException("Quota exceeded")
+
+        viewModel.createShortcut("shortcut_5", 0, "Label", "Description", "path", null)
+
+        verify(exactly = 1) { ShortcutManagerCompat.pushDynamicShortcut(application, shortcut) }
+        assertTrue(viewModel.dynamicShortcuts.any { it.id == "shortcut_5" })
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.Q])
+    fun `Given a full quota on the compat path when saving a launcher shortcut then evict the conversation first`() = runTest {
+        shadowOf(application.getSystemService(ShortcutManager::class.java)).setMaxShortcutCountPerActivity(5)
+        val existing = (1..4).map { fakeShortcutInfo("shortcut_$it") } + conversationShortcut()
+        ShortcutManagerCompat.addDynamicShortcuts(application, existing)
+        every {
+            shortcutManager.buildShortcutInfo(any(), any(), any(), any(), any(), any())
+        } returns fakeShortcutInfo("shortcut_5")
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.createShortcut("shortcut_5", 0, "Label", "Description", "path", null)
+
+        assertEquals((1..5).map { "shortcut_$it" }, viewModel.dynamicShortcuts.map { it.id })
+    }
+
+    private fun conversationShortcut() = ShortcutInfoCompat.Builder(
+        fakeShortcutInfo("notification_conversation_test"),
+    ).setRank(Int.MAX_VALUE).setLongLived(true).build()
 }

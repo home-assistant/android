@@ -11,6 +11,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.util.QuestUtil
@@ -86,6 +87,7 @@ class ConversationNotificationStyleTest {
         assertFalse(messaging.isGroupConversation)
         assertEquals(shortcut.id, notification.shortcutId)
         assertEquals("Dishwasher", shortcut.shortLabel)
+        assertEquals(Int.MAX_VALUE, shortcut.rank)
         assertEquals(context.packageName, shortcut.intent.`package`)
         assertEquals("1", shortcut.intent.data?.getQueryParameter("server_id"))
     }
@@ -195,6 +197,20 @@ class ConversationNotificationStyleTest {
             NotificationData.NOTIFICATION_ICON to "dishwasher",
             MessagingManager.THIS_SERVER_ID to "invalid",
         ).forEach { assertOrdinary(data + it) }
+        assertTrue(published.isEmpty())
+    }
+
+    @Test
+    fun `Given a title that renders blank when applied then retain the ordinary notification`() = runTest {
+        listOf("<b></b>", "<b> </b>", "&#32;").forEach { title ->
+            assertOrdinary(data + (NotificationData.TITLE to title))
+        }
+        assertTrue(published.isEmpty())
+    }
+
+    @Test
+    fun `Given the active server sentinel when applied then do not publish an unstable conversation`() = runTest {
+        assertOrdinary(data + (MessagingManager.THIS_SERVER_ID to ServerManager.SERVER_ID_ACTIVE.toString()))
         assertTrue(published.isEmpty())
     }
 
