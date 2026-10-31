@@ -4,6 +4,7 @@ import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl.Companion.PREF_ASK_NOTIFICATION_PERMISSION
@@ -406,6 +407,30 @@ class IntegrationRepositoryImplTest {
             val updates = checkNotNull(repository.getEntityUpdates(listOf(entityId))).toList()
 
             assertEquals("on", updates.single().state)
+        }
+
+        @Test
+        fun `Given a removed entity when collecting entity changes then its removal follows its states`() = runTest {
+            coEvery { webSocketRepository.getCompressedStateAndChanges() } returns flowOf(
+                addedEvent("on"),
+                CompressedStateChangedEvent(removed = listOf(entityId)),
+            )
+
+            val changes = checkNotNull(repository.getEntityChanges(null)).toList()
+
+            assertEquals(listOf("on"), changes.filterIsInstance<EntityChange.StateChanged>().map { it.entity.state })
+            assertEquals(EntityChange.Removed(entityId), changes.last())
+            assertEquals(2, changes.size)
+        }
+
+        @Test
+        fun `Given an older server when collecting entity changes then an event without new state is a removal`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+            coEvery { webSocketRepository.getStateChanges() } returns flowOf(StateChangedEvent(entityId, newState = null))
+
+            val changes = checkNotNull(repository.getEntityChanges(null)).toList()
+
+            assertEquals(listOf(EntityChange.Removed(entityId)), changes)
         }
 
         @Test
