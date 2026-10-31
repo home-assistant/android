@@ -210,12 +210,16 @@ Watch for update
             verifyDaoUpdate(exactly = 2)
             verifyEntityUpdates(exactly = 2) // Subscribe a second time since the configuration changed
 
-            // Every emission is a change of the entity upstream, so each one refreshes the todos
+            // The same display entity again, as a registry update of another entity produces, is skipped
             entityUpdatesEmitter!!.send(loaded(displayEntity))
+            expectNoEvents()
+            verifyDaoUpdate(exactly = 2)
+
+            entityUpdatesEmitter.send(loaded(displayEntity.copy(name = "Renamed list")))
             awaitItem()
             verifyDaoUpdate(exactly = 3)
 
-            entityUpdatesEmitter.send(loaded(displayEntity.copy(name = "Renamed list")))
+            entityUpdatesEmitter.send(loaded(displayEntity.copy(name = "Renamed list", rawState = "2")))
             awaitItem()
             verifyDaoUpdate(exactly = 4)
 

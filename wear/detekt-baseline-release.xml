@@ -10,7 +10,6 @@
     <ID>CyclomaticComplexMethod:ConversationViewModel.kt:ConversationViewModel$suspend fun onCreate: Boolean</ID>
     <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private fun getActivityIcon: MdiIcon</ID>
     <ID>CyclomaticComplexMethod:HealthServicesSensorManager.kt:HealthServicesSensorManager$private suspend fun updateHealthServices</ID>
-    <ID>CyclomaticComplexMethod:HomeView.kt:@Composable fun LoadHomePage</ID>
     <ID>CyclomaticComplexMethod:MainView.kt:@Composable fun MainView</ID>
     <ID>CyclomaticComplexMethod:MessagingManager.kt:MessagingManager$fun handleMessage</ID>
     <ID>CyclomaticComplexMethod:SensorUi.kt:@Composable fun SensorUi</ID>

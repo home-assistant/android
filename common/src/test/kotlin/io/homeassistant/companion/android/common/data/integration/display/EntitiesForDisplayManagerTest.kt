@@ -1077,6 +1077,27 @@ class EntitiesForDisplayManagerTest {
             }
 
             @Test
+            fun `Given entity ids when observing then only their state changes are subscribed`() = runTest {
+                coEvery { integrationRepository.getEntities() } returns listOf(
+                    entity("light.bed", "Bed Light"),
+                    entity("switch.fan", "Fan"),
+                )
+                coEvery { integrationRepository.getEntityUpdates(entityIds) } returns entityUpdates
+
+                manager.observeInContext(serverId, entityIds).test {
+                    assertEquals(listOf("light.bed"), awaitInitialLoad().map { it.entityId })
+                    entityUpdates.awaitSubscribed()
+
+                    entityUpdates.emit(entity("light.bed", "Renamed Light"))
+
+                    assertEquals(listOf("Renamed Light"), awaitLoaded().map { it.name })
+                    cancelAndIgnoreRemainingEvents()
+                }
+                coVerify(exactly = 1) { integrationRepository.getEntityUpdates(entityIds) }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+            }
+
+            @Test
             fun `Given an entity registry update when observing then only the entity registry is refetched`() = runTest {
                 coEvery { webSocketRepository.getEntityRegistryDisplay() } returns
                     EntityRegistryDisplayResponse(
