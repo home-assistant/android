@@ -99,13 +99,17 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * The flow emits [EntityDisplayState.Loading], then [EntityDisplayState.Error] when none of the
      * entities can be retrieved, otherwise a single [EntityDisplayState.Loaded] holding the entities
      * that could be retrieved, in the requested order.
+     *
+     * Each entity is fetched on its own instead of fetching all the states of the server, as the
+     * callers (Wear OS complications and tiles) only ask for a handful of entities and run on
+     * constrained devices where downloading every state can take long enough to fail.
      */
     fun snapshot(serverId: Int, entityIds: List<String>): Flow<EntityDisplayState<EntityDisplayWithoutContext>> = flow {
         emit(EntityDisplayState.Loading)
 
         if (!hasRegisteredServer()) return@flow
 
-        val entities = fetchEntities(serverId, entityIds)
+        val entities = fetchEntitiesById(serverId, entityIds)
         if (entities.isEmpty()) {
             emit(EntityDisplayState.Error)
             return@flow
@@ -205,6 +209,19 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 
         val entitiesById = entities.associateBy { it.entityId }
         return entityIds.mapNotNull { entitiesById[it] }
+    }
+
+    /**
+     * Fetches each of [entityIds] on its own, concurrently, keeping the requested order and
+     * omitting the ones that can't be retrieved.
+     */
+    private suspend fun fetchEntitiesById(serverId: Int, entityIds: List<String>): List<Entity> {
+        val repository = serverManager.integrationRepositoryOrNull(serverId) ?: return emptyList()
+        return coroutineScope {
+            entityIds
+                .map { entityId -> async { orNull("entity $entityId") { repository.getEntity(entityId) } } }
+                .mapNotNull { it.await() }
+        }
     }
 
     /**
