@@ -26,7 +26,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_BUFFERING
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_PLAYING
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
-import io.homeassistant.companion.android.common.data.integration.MediaPlayerControls
 import io.homeassistant.companion.android.common.data.integration.getMediaPlayerControls
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
@@ -163,7 +162,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
                 val mediaPlayerControls = entity?.getMediaPlayerControls()
-                val playbackAction = getPlaybackAction(entity, mediaPlayerControls)
+                val playbackAction = getPlaybackAction(entity)
                 if (playbackAction != null) {
                     setImageViewResource(R.id.widgetPlayPauseButton, playbackAction.iconRes)
                     setContentDescription(
@@ -639,10 +638,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
         }
     }
 
-    private fun getPlaybackAction(
-        entity: Entity?,
-        controls: MediaPlayerControls? = entity?.getMediaPlayerControls(),
-    ): PlaybackAction? {
+    /** Returns the supported playback action for the entity's current state, if any. */
+    private fun getPlaybackAction(entity: Entity?): PlaybackAction? {
+        val controls = entity?.getMediaPlayerControls()
         val isActive = entity?.state == MEDIA_PLAYER_STATE_PLAYING ||
             entity?.state == MEDIA_PLAYER_STATE_BUFFERING
         return when {
