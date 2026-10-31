@@ -118,6 +118,14 @@ class FrontendJsBridge @AssistedInject constructor(
     @Assisted private val stateProvider: () -> BridgeState,
 ) : FrontendJsCallback {
 
+    private sealed interface BridgeVersion {
+        data object V1 : BridgeVersion
+        data object V2 : BridgeVersion
+    }
+
+    /** The bridge version currently registered, or null when nothing is attached. */
+    private var attachedVersion: BridgeVersion? = null
+
     /**
      * Registers the appropriate native bridge for the current server.
      *
@@ -125,14 +133,23 @@ class FrontendJsBridge @AssistedInject constructor(
      * V2 bridge or the legacy V1 bridge. V2 also requires
      * [WebViewFeature.WEB_MESSAGE_LISTENER] support; falls back to V1 if unavailable.
      *
-     * Safe to call multiple times: each path removes the previously registered interface
-     * before adding the new one.
+     * Safe to call multiple times. When the same bridge version is already attached this is a
+     * no-op until [detachFromWebView] is called: removing and re-adding the listener on a
+     * WebView that still hosts a live document, right before a navigation, crashes WebView
+     * natively (SIGSEGV in libwebviewchromium when switching between the internal and
+     * external URL). See https://issues.chromium.org/issues/573671233 for more details.
      */
     @SuppressLint("RequiresFeature")
     override suspend fun attachToWebView(webView: WebView) {
         val useV2 = serverManager.getServer(stateProvider().serverId).isServerSupportingExternalAppV2()
         val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
-        if (useV2 && webMessageListenerSupported) {
+        val bridge = if (useV2 && webMessageListenerSupported) BridgeVersion.V2 else BridgeVersion.V1
+        if (attachedVersion == bridge) {
+            Timber.d("JS bridge $bridge already attached, skipping re-registration")
+            return
+        }
+        attachedVersion = bridge
+        if (bridge == BridgeVersion.V2) {
             webView.removeJavascriptInterface(EXTERNAL_APP_V1)
             registerV2(webView)
         } else {
@@ -148,6 +165,7 @@ class FrontendJsBridge @AssistedInject constructor(
      */
     @SuppressLint("RequiresFeature")
     override fun detachFromWebView(webView: WebView) {
+        attachedVersion = null
         val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
         webView.removeJavascriptInterface(EXTERNAL_APP_V1)
         if (webMessageListenerSupported) {

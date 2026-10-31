@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.4.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.4.1)" variant="all" version="9.4.1">
+<issues format="6" by="lint 9.5.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.0)" variant="all" version="9.5.0">
 
     <issue
         id="MissingPermission"
@@ -8,7 +8,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="85"
+            line="101"
             column="21"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="88"
+            line="104"
             column="21"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="288"
+            line="290"
             column="28"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="332"
+            line="334"
             column="28"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="340"
+            line="342"
             column="46"/>
     </issue>
 
@@ -63,7 +63,7 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/StorageSensorManager.kt"
-            line="148"
+            line="151"
             column="42"/>
     </issue>
 
@@ -74,7 +74,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="85"
+            line="101"
             column="38"/>
     </issue>
 
@@ -85,7 +85,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="88"
+            line="104"
             column="38"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorUpdater.kt"
-            line="420"
+            line="418"
             column="9"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/authentication/impl/AuthenticationRepositoryImpl.kt"
-            line="41"
+            line="44"
             column="13"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                                                            ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorManager.kt"
-            line="375"
+            line="377"
             column="61"/>
     </issue>
 

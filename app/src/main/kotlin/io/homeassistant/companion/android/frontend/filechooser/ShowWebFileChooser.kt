@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.frontend.filechooser
 
 import android.app.Activity
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import android.webkit.WebChromeClient.FileChooserParams
 import androidx.activity.result.contract.ActivityResultContract
@@ -27,39 +29,104 @@ private const val UNKNOWN_MIME_TYPE = "application/octet-stream"
  *
  * @param params The WebView file chooser parameters
  * @param pickerMimeTypes MIME types to filter the file picker with, or `null` to show any file
+ * @param cameraCapture How the camera is involved, or `null` to only show the file picker
  */
-internal data class FileChooserInput(val params: FileChooserParams, val pickerMimeTypes: List<String>?)
+internal data class FileChooserInput(
+    val params: FileChooserParams,
+    val pickerMimeTypes: List<String>?,
+    val cameraCapture: CameraCapture?,
+)
 
 /**
- * Launches the system file picker for an `<input type="file">` or a File System Access API call and
- * returns the selected URIs, or `null` if the user cancelled.
+ * Kind of media a camera app captures.
+ *
+ * @param captureAction Intent action opening a camera app for this kind of media
+ * @param suffix File suffix of the captured media
+ */
+internal enum class CaptureKind(private val mimeTypePrefix: String, val captureAction: String, val suffix: String) {
+    Photo(mimeTypePrefix = "image/", captureAction = MediaStore.ACTION_IMAGE_CAPTURE, suffix = ".jpg"),
+    Video(mimeTypePrefix = "video/", captureAction = MediaStore.ACTION_VIDEO_CAPTURE, suffix = ".mp4"),
+    ;
+
+    /** `true` when [mimeType] is of this kind of media, like `image/png` for [Photo]. */
+    fun accepts(mimeType: String): Boolean = mimeType.startsWith(mimeTypePrefix)
+}
+
+/**
+ * File a camera app writes newly captured media to.
+ *
+ * @param kind The kind of media captured
+ * @param uri Content URI of the file the camera app writes to
+ */
+internal data class CaptureOutput(val kind: CaptureKind, val uri: Uri)
+
+/** How the camera is involved in a file chooser. */
+internal sealed interface CameraCapture {
+    /** The files camera apps may write to. */
+    val outputs: List<CaptureOutput>
+
+    /** Opens the camera app for [output] directly, as the page requested with the `capture` attribute. */
+    data class Direct(val output: CaptureOutput) : CameraCapture {
+        override val outputs: List<CaptureOutput> get() = listOf(output)
+    }
+
+    /** Offers a camera app for each of [outputs] next to the file picker. */
+    data class Offered(override val outputs: List<CaptureOutput>) : CameraCapture
+}
+
+/** Outcome of a file chooser launched with [ShowWebFileChooser]. */
+internal sealed interface FileChooserResult {
+    /** The user selected [uris]. */
+    data class Selected(val uris: List<Uri>) : FileChooserResult
+
+    /**
+     * Completed without returning any URI, which is how a camera app reports media written to one
+     * of [CameraCapture.outputs].
+     */
+    data object Captured : FileChooserResult
+
+    /** The user cancelled. */
+    data object Cancelled : FileChooserResult
+}
+
+/**
+ * Launches the system file picker for an `<input type="file">` or a File System Access API call,
+ * optionally with the camera.
  *
  * [FileChooserParams.createIntent] and [FileChooserParams.parseResult] are not used: the former
  * only applies the first `accept` entry as MIME type (an extension like `.pdf` then matches
  * nothing) and the latter ignores [Intent.getClipData], dropping multi-selections
  * (https://github.com/home-assistant/android/issues/7548).
  */
-internal class ShowWebFileChooser : ActivityResultContract<FileChooserInput, Array<Uri>?>() {
+internal class ShowWebFileChooser : ActivityResultContract<FileChooserInput, FileChooserResult>() {
 
-    // Mirrors the intent actions of WebView's own implementation:
-    // https://source.chromium.org/chromium/chromium/src/+/main:android_webview/java/src/org/chromium/android_webview/AwContentsClient.java;l=554;drc=b1a4f4802448a816b169dcf03ef43cb8ec849d8e
-    override fun createIntent(context: Context, input: FileChooserInput): Intent = when (input.params.mode) {
-        FileChooserParams.MODE_OPEN_FOLDER -> Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-        FileChooserParams.MODE_SAVE -> input.toDocumentIntent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            // The created document needs a concrete type, the first accepted one like WebView.
-            type = input.pickerMimeTypes?.firstOrNull() ?: ANY_MIME_TYPE
-            input.params.filenameHint?.let { putExtra(Intent.EXTRA_TITLE, it) }
+    override fun createIntent(context: Context, input: FileChooserInput): Intent {
+        return when (val capture = input.cameraCapture) {
+            null -> input.toPickerIntent()
+            is CameraCapture.Direct -> capture.output.toCaptureIntent()
+            is CameraCapture.Offered -> Intent.createChooser(input.toPickerIntent(), input.params.title)
+                .putExtra(Intent.EXTRA_INITIAL_INTENTS, capture.outputs.map { it.toCaptureIntent() }.toTypedArray())
         }
-        else -> input.toDocumentIntent(
-            if (input.params.opensWritable()) Intent.ACTION_OPEN_DOCUMENT else Intent.ACTION_GET_CONTENT,
-        )
     }
 
-    override fun parseResult(resultCode: Int, intent: Intent?): Array<Uri>? {
-        if (resultCode != Activity.RESULT_OK || intent == null) return null
-        val clipUris = intent.clipData?.let { clip -> (0 until clip.itemCount).mapNotNull { clip.getItemAt(it).uri } }
-        return if (!clipUris.isNullOrEmpty()) clipUris.toTypedArray() else intent.data?.let { arrayOf(it) }
+    override fun parseResult(resultCode: Int, intent: Intent?): FileChooserResult {
+        if (resultCode != Activity.RESULT_OK) return FileChooserResult.Cancelled
+        val clipUris = intent?.clipData?.let { clip -> (0 until clip.itemCount).mapNotNull { clip.getItemAt(it).uri } }
+        val uris = if (!clipUris.isNullOrEmpty()) clipUris else listOfNotNull(intent?.data)
+        return if (uris.isEmpty()) FileChooserResult.Captured else FileChooserResult.Selected(uris)
     }
+}
+
+// Mirrors the intent actions of WebView's own implementation:
+// https://source.chromium.org/chromium/chromium/src/+/main:android_webview/java/src/org/chromium/android_webview/AwContentsClient.java;l=554;drc=b1a4f4802448a816b169dcf03ef43cb8ec849d8e
+private fun FileChooserInput.toPickerIntent(): Intent = when (params.mode) {
+    FileChooserParams.MODE_OPEN_FOLDER -> Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+    FileChooserParams.MODE_SAVE -> toDocumentIntent(Intent.ACTION_CREATE_DOCUMENT).apply {
+        // The created document needs a concrete type, the first accepted one like WebView.
+        type = pickerMimeTypes?.firstOrNull() ?: ANY_MIME_TYPE
+        params.filenameHint?.let { putExtra(Intent.EXTRA_TITLE, it) }
+    }
+    else -> toDocumentIntent(if (params.opensWritable()) Intent.ACTION_OPEN_DOCUMENT else Intent.ACTION_GET_CONTENT)
 }
 
 private fun FileChooserInput.toDocumentIntent(action: String): Intent = Intent(action).apply {
@@ -76,6 +143,16 @@ private fun FileChooserParams.opensWritable(): Boolean = SdkVersion.isAtLeast(Bu
     permissionMode == FileChooserParams.PERMISSION_MODE_READ_WRITE
 
 /**
+ * The output URI is also set as clip data, since URI permissions are only granted for the data
+ * and clip data of an intent, not for extras.
+ */
+private fun CaptureOutput.toCaptureIntent(): Intent = Intent(kind.captureAction).apply {
+    putExtra(MediaStore.EXTRA_OUTPUT, uri)
+    clipData = ClipData.newRawUri(null, uri)
+    addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+}
+
+/**
  * Converts the `accept` attribute values (MIME types or file extensions) into MIME types.
  *
  * | Entry                                          | Example              | Result                        |
@@ -90,18 +167,23 @@ private fun FileChooserParams.opensWritable(): Boolean = SdkVersion.isAtLeast(Bu
  * know, and custom MIME types are kept for providers reporting them, so third-party integrations using
  * custom extensions or types can still pick their files.
  *
- * Returns `null` when the picker should not filter: nothing valid is accepted or any file type is
- * accepted.
- *
  * Runs on [dispatcher], as the system MIME table is read from disk on first use.
  */
 internal suspend fun FileChooserParams.acceptedMimeTypes(
     dispatcher: CoroutineDispatcher = Dispatchers.IO,
-): List<String>? = withContext(dispatcher) {
-    val entries = acceptTypes.orEmpty().map { it.trim().lowercase(Locale.ROOT) }.filter { it.isNotEmpty() }
-    if (entries.isEmpty() || ANY_MIME_TYPE in entries) return@withContext null
-    entries.flatMap { it.toMimeTypes() }.distinct().takeIf { it.isNotEmpty() }
+): List<String> = withContext(dispatcher) {
+    acceptTypes.orEmpty()
+        .map { it.trim().lowercase(Locale.ROOT) }
+        .filter { it.isNotEmpty() }
+        .flatMap { it.toMimeTypes() }
 }
+
+/**
+ * Returns the MIME types to filter the picker with, or `null` when it should not filter: nothing valid
+ * is accepted or any file type is accepted.
+ */
+internal fun List<String>.toPickerMimeTypes(): List<String>? =
+    distinct().takeIf { it.isNotEmpty() && ANY_MIME_TYPE !in it }
 
 /** Returns the MIME types for an `accept` entry, none if it's neither an extension nor a MIME type. */
 private fun String.toMimeTypes(): List<String> {

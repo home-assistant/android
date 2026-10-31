@@ -42,7 +42,7 @@ val frontendExternalBusJson = Json(kotlinJsonMapper) {
  * Messages are serialized/deserialized using kotlinx.serialization with polymorphic support,
  * allowing graceful handling of unknown message types from newer Home Assistant versions.
  *
- * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus">External bus documentation</a>
+ * @see <a href="https://contributors.home-assistant.io/frontend/reference/external-bus/">External bus documentation</a>
  */
 @ViewModelScoped
 class FrontendExternalBusRepository @Inject constructor() {

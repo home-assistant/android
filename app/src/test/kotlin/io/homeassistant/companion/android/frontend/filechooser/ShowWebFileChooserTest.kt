@@ -6,7 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import android.webkit.WebChromeClient.FileChooserParams
+import androidx.core.content.IntentCompat
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -29,6 +31,8 @@ class ShowWebFileChooserTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val contract = ShowWebFileChooser()
+    private val photoOutput = CaptureOutput(CaptureKind.Photo, Uri.parse("content://provider/capture.jpg"))
+    private val videoOutput = CaptureOutput(CaptureKind.Video, Uri.parse("content://provider/capture.mp4"))
 
     @Test
     fun `Given no accept types when creating intent then any openable file can be picked`() = runTest {
@@ -46,10 +50,7 @@ class ShowWebFileChooserTest {
         val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*", " .PDF ", "application/pdf")))
 
         assertEquals("*/*", intent.type)
-        assertArrayEquals(
-            arrayOf("image/*", "application/pdf"),
-            intent.getStringArrayExtra(Intent.EXTRA_MIME_TYPES),
-        )
+        assertArrayEquals(arrayOf("image/*", "application/pdf"), intent.getStringArrayExtra(Intent.EXTRA_MIME_TYPES))
     }
 
     @Test
@@ -76,6 +77,16 @@ class ShowWebFileChooserTest {
         val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "*/*")))
 
         assertFalse(intent.hasExtra(Intent.EXTRA_MIME_TYPES))
+    }
+
+    @Test
+    fun `Given accept entries when converting each then every valid entry is kept as a MIME type`() = runTest {
+        val params = FakeFileChooserParams(acceptTypes = arrayOf("image/*", " .JPG ", ".unknownextension", "*/*", "png", ""))
+
+        assertEquals(
+            listOf("image/*", "image/jpeg", "application/octet-stream", "*/*"),
+            params.acceptedMimeTypes(StandardTestDispatcher(testScheduler)),
+        )
     }
 
     @Test
@@ -143,57 +154,81 @@ class ShowWebFileChooserTest {
     }
 
     @Test
-    fun `Given several files in clip data when parsing result then all uris are returned`() {
+    fun `Given direct camera capture when creating intent then the camera app writes to the output uri`() = runTest {
+        assertCaptureIntent(createIntent(FakeFileChooserParams(), CameraCapture.Direct(photoOutput)), photoOutput)
+        assertCaptureIntent(createIntent(FakeFileChooserParams(), CameraCapture.Direct(videoOutput)), videoOutput)
+    }
+
+    @Test
+    fun `Given offered camera capture when creating intent then a chooser shows the picker and each camera app`() = runTest {
+        val intent = createIntent(
+            FakeFileChooserParams(acceptTypes = arrayOf("image/*")),
+            CameraCapture.Offered(listOf(photoOutput, videoOutput)),
+        )
+
+        assertEquals(Intent.ACTION_CHOOSER, intent.action)
+        val pickerIntent = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_INTENT, Intent::class.java)
+        assertEquals(Intent.ACTION_GET_CONTENT, pickerIntent?.action)
+        assertArrayEquals(arrayOf("image/*"), pickerIntent?.getStringArrayExtra(Intent.EXTRA_MIME_TYPES))
+        val initialIntents = IntentCompat.getParcelableArrayExtra(intent, Intent.EXTRA_INITIAL_INTENTS, Intent::class.java)
+        assertEquals(2, initialIntents?.size)
+        assertCaptureIntent(initialIntents!![0] as Intent, photoOutput)
+        assertCaptureIntent(initialIntents[1] as Intent, videoOutput)
+    }
+
+    @Test
+    fun `Given several files in clip data when parsing result then all uris are selected`() {
         val first = Uri.parse("content://provider/first")
         val second = Uri.parse("content://provider/second")
         val intent = Intent().apply {
             clipData = ClipData.newRawUri(null, first).apply { addItem(ClipData.Item(second)) }
         }
 
-        assertArrayEquals(arrayOf(first, second), contract.parseResult(Activity.RESULT_OK, intent))
+        assertEquals(FileChooserResult.Selected(listOf(first, second)), contract.parseResult(Activity.RESULT_OK, intent))
     }
 
     @Test
-    fun `Given a single file in clip data without data when parsing result then the uri is returned`() {
+    fun `Given a single file in clip data without data when parsing result then the uri is selected`() {
         val uri = Uri.parse("content://provider/file")
         val intent = Intent().apply { clipData = ClipData.newRawUri(null, uri) }
 
-        assertArrayEquals(arrayOf(uri), contract.parseResult(Activity.RESULT_OK, intent))
+        assertEquals(FileChooserResult.Selected(listOf(uri)), contract.parseResult(Activity.RESULT_OK, intent))
     }
 
     @Test
-    fun `Given only data when parsing result then the uri is returned`() {
+    fun `Given only data when parsing result then the uri is selected`() {
         val uri = Uri.parse("content://provider/file")
 
-        assertArrayEquals(arrayOf(uri), contract.parseResult(Activity.RESULT_OK, Intent().setData(uri)))
+        assertEquals(FileChooserResult.Selected(listOf(uri)), contract.parseResult(Activity.RESULT_OK, Intent().setData(uri)))
     }
 
     @Test
-    fun `Given cancelled or empty result when parsing result then null is returned`() {
-        val uri = Uri.parse("content://provider/file")
-
-        assertNull(contract.parseResult(Activity.RESULT_CANCELED, Intent().setData(uri)))
-        assertNull(contract.parseResult(Activity.RESULT_OK, null))
-        assertNull(contract.parseResult(Activity.RESULT_OK, Intent()))
+    fun `Given success without uri when parsing result then it is captured`() {
+        assertEquals(FileChooserResult.Captured, contract.parseResult(Activity.RESULT_OK, null))
+        assertEquals(FileChooserResult.Captured, contract.parseResult(Activity.RESULT_OK, Intent()))
     }
 
-    private suspend fun TestScope.createIntent(params: FileChooserParams): Intent {
-        val input = FileChooserInput(params, params.acceptedMimeTypes(StandardTestDispatcher(testScheduler)))
-        return contract.createIntent(context, input)
-    }
-}
+    @Test
+    fun `Given cancelled result when parsing result then it is cancelled`() {
+        val intent = Intent().setData(Uri.parse("content://provider/file"))
 
-private class FakeFileChooserParams(
-    private val acceptTypes: Array<String> = emptyArray(),
-    private val mode: Int = MODE_OPEN,
-    private val filenameHint: String? = null,
-    private val permissionMode: Int = PERMISSION_MODE_READ,
-) : FileChooserParams() {
-    override fun getMode(): Int = mode
-    override fun getAcceptTypes(): Array<String> = acceptTypes
-    override fun isCaptureEnabled(): Boolean = false
-    override fun getTitle(): CharSequence? = null
-    override fun getFilenameHint(): String? = filenameHint
-    override fun getPermissionMode(): Int = permissionMode
-    override fun createIntent(): Intent = error("Not used by ShowWebFileChooser")
+        assertEquals(FileChooserResult.Cancelled, contract.parseResult(Activity.RESULT_CANCELED, intent))
+    }
+
+    private suspend fun TestScope.createIntent(params: FileChooserParams, cameraCapture: CameraCapture? = null): Intent {
+        val mimeTypes = params.acceptedMimeTypes(StandardTestDispatcher(testScheduler))
+        return contract.createIntent(context, FileChooserInput(params, mimeTypes.toPickerMimeTypes(), cameraCapture))
+    }
+
+    private fun assertCaptureIntent(intent: Intent, output: CaptureOutput) {
+        val expectedAction = when (output.kind) {
+            CaptureKind.Photo -> MediaStore.ACTION_IMAGE_CAPTURE
+            CaptureKind.Video -> MediaStore.ACTION_VIDEO_CAPTURE
+        }
+        assertEquals(expectedAction, intent.action)
+        assertEquals(output.uri, IntentCompat.getParcelableExtra(intent, MediaStore.EXTRA_OUTPUT, Uri::class.java))
+        assertEquals(output.uri, intent.clipData?.getItemAt(0)?.uri)
+        assertTrue(intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION != 0)
+        assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
+    }
 }

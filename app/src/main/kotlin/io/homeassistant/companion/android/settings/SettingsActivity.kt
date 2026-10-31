@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
@@ -17,6 +16,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
+import eightbitlab.com.blurview.BlurTarget
 import eightbitlab.com.blurview.BlurView
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.settings.server.ServerSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.applySafeDrawingInsets
+import io.homeassistant.companion.android.util.setRecentsScreenshotProtection
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
@@ -94,8 +95,10 @@ class SettingsActivity : BaseActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        val blurTarget = findViewById<BlurTarget>(R.id.blurTarget)
         blurView = findViewById(R.id.blurView)
-        blurView.setupWith(window.decorView.rootView as ViewGroup)
+        blurView.setupWith(blurTarget)
+            .setFrameClearDrawable(window.decorView.background)
             .setBlurRadius(8f)
             .setBlurEnabled(false)
 
@@ -169,6 +172,7 @@ class SettingsActivity : BaseActivity() {
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
+            setRecentsScreenshotProtection(isAppLockEnabled())
             blurView.setBlurEnabled(isAppLocked())
         }
     }
@@ -177,6 +181,7 @@ class SettingsActivity : BaseActivity() {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
+                setRecentsScreenshotProtection(isAppLockEnabled())
                 if (isAppLocked()) {
                     authenticating = true
                     authenticator.authenticate(getString(commonR.string.biometric_title))
@@ -225,6 +230,17 @@ class SettingsActivity : BaseActivity() {
             viewModel.isAppLocked((it as ServerSettingsFragment).getServerId())
         } ?: false
         return serverLocked || viewModel.isAppLocked(ServerManager.SERVER_ID_ACTIVE)
+    }
+
+    /**
+     * @return `true` if app lock is enabled for the active server or the currently visible server
+     */
+    private suspend fun isAppLockEnabled(): Boolean {
+        val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
+        val serverEnabled = serverFragment?.let {
+            viewModel.isAppLockEnabled((it as ServerSettingsFragment).getServerId())
+        } ?: false
+        return serverEnabled || viewModel.isAppLockEnabled(ServerManager.SERVER_ID_ACTIVE)
     }
 
     /**

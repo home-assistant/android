@@ -24,4 +24,6 @@ class SettingsViewModel @Inject constructor(private val appLockStateManager: App
     }
 
     suspend fun isAppLocked(serverId: Int?): Boolean = appLockStateManager.isAppLocked(serverId)
+
+    suspend fun isAppLockEnabled(serverId: Int?): Boolean = appLockStateManager.isAppLockEnabled(serverId)
 }

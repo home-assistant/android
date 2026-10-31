@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.VirtualReality
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -27,7 +29,7 @@ class QuestSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_headset_mounted,
             commonR.string.sensor_description_headset_mounted,
-            "mdi:virtual-reality",
+            Mdi.VirtualReality,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )

@@ -8,6 +8,12 @@ import android.os.Build
 import android.os.Process
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Android
+import io.github.timoptr.mdiicons.generated.Memory
+import io.github.timoptr.mdiicons.generated.RadioTower
+import io.github.timoptr.mdiicons.generated.TimerOffOutline
+import io.github.timoptr.mdiicons.generated.TimerOutline
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -30,7 +36,7 @@ abstract class AppSensorManagerBase(
             "sensor",
             commonR.string.basic_sensor_name_current_version,
             commonR.string.sensor_description_current_version,
-            "mdi:android",
+            Mdi.Android,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#current-version-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -41,7 +47,7 @@ abstract class AppSensorManagerBase(
             "sensor",
             commonR.string.basic_sensor_name_app_rx_gb,
             commonR.string.sensor_description_app_rx_gb,
-            "mdi:radio-tower",
+            Mdi.RadioTower,
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -54,7 +60,7 @@ abstract class AppSensorManagerBase(
             "sensor",
             commonR.string.basic_sensor_name_app_tx_gb,
             commonR.string.sensor_description_app_tx_gb,
-            "mdi:radio-tower",
+            Mdi.RadioTower,
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -67,7 +73,7 @@ abstract class AppSensorManagerBase(
             "sensor",
             commonR.string.basic_sensor_name_app_memory,
             commonR.string.sensor_description_app_memory,
-            "mdi:memory",
+            Mdi.Memory,
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-memory-sensor",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -80,7 +86,7 @@ abstract class AppSensorManagerBase(
             "binary_sensor",
             commonR.string.basic_sensor_name_app_inactive,
             commonR.string.sensor_description_app_inactive,
-            "mdi:timer-outline",
+            Mdi.TimerOutline,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -91,7 +97,7 @@ abstract class AppSensorManagerBase(
             "sensor",
             commonR.string.basic_sensor_name_app_standby,
             commonR.string.sensor_description_app_standby,
-            "mdi:android",
+            Mdi.Android,
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -103,7 +109,7 @@ abstract class AppSensorManagerBase(
             "sensor",
             commonR.string.basic_sensor_name_app_importance,
             commonR.string.sensor_description_app_importance,
-            "mdi:android",
+            Mdi.Android,
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-importance-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -240,7 +246,7 @@ abstract class AppSensorManagerBase(
 
         val isAppInactive = usageStatsManager.isAppInactive(applicationContext.packageName)
 
-        val icon = if (isAppInactive) "mdi:timer-off-outline" else "mdi:timer-outline"
+        val icon = if (isAppInactive) Mdi.TimerOffOutline else Mdi.TimerOutline
 
         onSensorUpdated(
             app_inactive,

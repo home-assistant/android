@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.4.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.4.1)" variant="all" version="9.4.1">
+<issues format="6" by="lint 9.5.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.0)" variant="all" version="9.5.0">
 
     <issue
         id="CustomSplashScreen"
@@ -365,50 +365,6 @@
     </issue>
 
     <issue
-        id="SquareAndRoundTilePreviews"
-        message="Tiles need a preview asset in both drawable-round and drawable"
-        errorLine1="                android:resource=&quot;@drawable/favorite_entities_tile_example&quot; />"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="162"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="SquareAndRoundTilePreviews"
-        message="Tiles need a preview asset in both drawable-round and drawable"
-        errorLine1="                android:resource=&quot;@drawable/template_tile_example&quot; />"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="183"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="SquareAndRoundTilePreviews"
-        message="Tiles need a preview asset in both drawable-round and drawable"
-        errorLine1="                android:resource=&quot;@drawable/conversation_tile_example&quot; />"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="203"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="SquareAndRoundTilePreviews"
-        message="Tiles need a preview asset in both drawable-round and drawable"
-        errorLine1="                android:resource=&quot;@drawable/thermostat_tile_example&quot; />"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="237"
-            column="35"/>
-    </issue>
-
-    <issue
         id="IconLocation"
         message="Found bitmap drawable `res/drawable/camera_tile_example.png` in densityless folder">
         <location
@@ -562,28 +518,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/onboarding/integration/MobileAppIntegrationActivity.kt"
             line="69"
             column="31"/>
-    </issue>
-
-    <issue
-        id="WearRecents"
-        message="Avoid using `FLAG_ACTIVITY_NEW_TASK` and `FLAG_ACTIVITY_CLEAR_TOP`"
-        errorLine1="            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="212"
-            column="35"/>
-    </issue>
-
-    <issue
-        id="WearRecents"
-        message="Avoid using `FLAG_ACTIVITY_NEW_TASK` and `FLAG_ACTIVITY_CLEAR_TOP`"
-        errorLine1="            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK"
-        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/phone/PhoneSettingsListener.kt"
-            line="212"
-            column="35"/>
     </issue>
 
 </issues>

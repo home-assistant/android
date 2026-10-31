@@ -362,7 +362,7 @@ data class FanControls(val speed: EntityPosition, val steps: Int)
 @Immutable
 data class ColorTemperatureControl(val current: Float, val min: Float, val max: Float, val isKelvin: Boolean)
 
-/** Controls of a light entity, each null when the light does not support it. */
+/** Controls of a light entity, null for the ones it doesn't support. A light off has a [brightness] of 0. */
 @Immutable
 data class LightControls(val brightness: EntityPosition?, val colorTemperature: ColorTemperatureControl?)
 
@@ -692,29 +692,28 @@ fun Entity.supportsLightBrightness(): Boolean {
     }
 }
 
+/**
+ * Brightness of the light as a percentage, null when it doesn't support brightness. The value is 0
+ * while the light is off, like the brightness slider of the frontend.
+ */
 fun Entity.getLightBrightness(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-light.ts#L90
     return try {
         if (!supportsLightBrightness()) return null
 
-        when (state) {
-            "on" -> {
-                val minValue = 0f
-                val maxValue = 100f
-                val currentValue =
-                    floatAttributeOrNull("brightness")?.div(255f)
-                        ?.times(100)
-                        ?: 0f
-
-                EntityPosition(
-                    value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
-                    min = minValue,
-                    max = maxValue,
-                )
-            }
-
-            else -> null
+        val minValue = 0f
+        val maxValue = 100f
+        val currentValue = if (state == "on") {
+            floatAttributeOrNull("brightness")?.div(255f)?.times(100) ?: 0f
+        } else {
+            0f
         }
+
+        EntityPosition(
+            value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
+            min = minValue,
+            max = maxValue,
+        )
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getLightBrightness")
         null

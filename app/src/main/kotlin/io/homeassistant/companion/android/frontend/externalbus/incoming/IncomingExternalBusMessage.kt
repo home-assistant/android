@@ -15,7 +15,7 @@ import kotlinx.serialization.modules.SerializersModule
  * and the Android app, allowing the frontend to request native functionality like
  * NFC tag writing, Matter commissioning, haptic feedback, etc.
  *
- * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus">External bus documentation</a>
+ * @see <a href="https://contributors.home-assistant.io/frontend/reference/external-bus/">External bus documentation</a>
  * @see <a href="https://github.com/home-assistant/frontend/blob/dev/src/external_app/external_messaging.ts">Frontend implementation</a>
  */
 @Serializable
@@ -295,6 +295,32 @@ data class EntityAddToPayload(
 @Serializable
 @SerialName("matter/commission")
 data class MatterCommissionMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * Message requesting the app to share a device already commissioned to Home Assistant through the
+ * platform share sheet. Answered with a success result, or an error coded `canceled` or `failed`.
+ * A message whose payload cannot be decoded is dropped without an answer.
+ */
+@Serializable
+@SerialName("matter/share_device")
+data class MatterShareDeviceMessage(override val id: Int? = null, val payload: MatterShareDevicePayload) :
+    IncomingExternalBusMessage
+
+/**
+ * Commissioning window the Matter server opened for [MatterShareDeviceMessage], with the device
+ * details for the share sheet.
+ *
+ * [discriminator] is the long, 12-bit form.
+ */
+@Serializable
+data class MatterShareDevicePayload(
+    @SerialName("setup_pin_code") val passcode: Long,
+    val discriminator: Int,
+    @SerialName("remaining_seconds") val remainingSeconds: Long,
+    @SerialName("vendor_id") val vendorId: Int? = null,
+    @SerialName("product_id") val productId: Int? = null,
+    @SerialName("device_name") val deviceName: String? = null,
+)
 
 /**
  * Message requesting the app to share its locally-stored Thread credentials with the Home Assistant

@@ -43,6 +43,23 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.response.ReadRecordsResponse
 import androidx.health.connect.client.time.TimeRangeFilter
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AccountVoice
+import io.github.timoptr.mdiicons.generated.Bone
+import io.github.timoptr.mdiicons.generated.CupWater
+import io.github.timoptr.mdiicons.generated.Diabetes
+import io.github.timoptr.mdiicons.generated.ElevationRise
+import io.github.timoptr.mdiicons.generated.Fire
+import io.github.timoptr.mdiicons.generated.Heart
+import io.github.timoptr.mdiicons.generated.HeartPulse
+import io.github.timoptr.mdiicons.generated.HumanMaleHeight
+import io.github.timoptr.mdiicons.generated.MapMarkerDistance
+import io.github.timoptr.mdiicons.generated.ScaleBathroom
+import io.github.timoptr.mdiicons.generated.Sleep
+import io.github.timoptr.mdiicons.generated.Stairs
+import io.github.timoptr.mdiicons.generated.Thermometer
+import io.github.timoptr.mdiicons.generated.Walk
+import io.github.timoptr.mdiicons.generated.Water
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -52,7 +69,6 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -61,8 +77,8 @@ import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.reflect.KClass
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration
+import kotlin.time.toKotlinDuration
 import timber.log.Timber
 
 @Singleton
@@ -83,7 +99,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_active_calories_burned,
             commonR.string.sensor_description_active_calories_burned,
-            "mdi:fire",
+            Mdi.Fire,
             "energy",
             unitOfMeasurement = "kcal",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -95,7 +111,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_basal_body_temperature,
             commonR.string.sensor_description_basal_body_temperature,
-            "mdi:thermometer",
+            Mdi.Thermometer,
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -107,7 +123,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_basal_metabolic_rate,
             commonR.string.sensor_description_basal_metabolic_rate,
-            "mdi:fire",
+            Mdi.Fire,
             unitOfMeasurement = "kcal/day",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -118,7 +134,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_blood_glucose,
             commonR.string.sensor_description_blood_glucose,
-            "mdi:diabetes",
+            Mdi.Diabetes,
             deviceClass = "blood_glucose_concentration",
             unitOfMeasurement = "mg/dL",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -130,7 +146,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_body_fat,
             commonR.string.sensor_description_body_fat,
-            "mdi:scale-bathroom",
+            Mdi.ScaleBathroom,
             unitOfMeasurement = "%",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -141,7 +157,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_body_water_mass,
             commonR.string.sensor_description_body_water_mass,
-            "mdi:water",
+            Mdi.Water,
             deviceClass = "weight",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -153,7 +169,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_body_temperature,
             commonR.string.sensor_description_body_temperature,
-            "mdi:thermometer",
+            Mdi.Thermometer,
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -165,7 +181,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_bone_mass,
             commonR.string.sensor_description_bone_mass,
-            "mdi:bone",
+            Mdi.Bone,
             deviceClass = "weight",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -177,7 +193,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_diastolic_blood_pressure,
             commonR.string.sensor_description_diastolic_blood_pressure,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -189,7 +205,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.sensor_name_daily_distance,
             commonR.string.sensor_description_distance,
-            "mdi:map-marker-distance",
+            Mdi.MapMarkerDistance,
             deviceClass = "distance",
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -202,7 +218,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_daily_elevation_gained,
             commonR.string.sensor_description_elevation_gained,
-            "mdi:elevation-rise",
+            Mdi.ElevationRise,
             deviceClass = "distance",
             unitOfMeasurement = "m",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -215,7 +231,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.sensor_name_daily_floors,
             commonR.string.sensor_description_floors_climbed,
-            "mdi:stairs",
+            Mdi.Stairs,
             unitOfMeasurement = "floors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -227,7 +243,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.sensor_name_heart_rate,
             commonR.string.sensor_description_health_connect_heart_rate,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -238,7 +254,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_heart_rate_variability,
             commonR.string.sensor_description_heart_rate_variability,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             deviceClass = "duration",
             unitOfMeasurement = "ms",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -250,7 +266,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_height,
             commonR.string.sensor_description_height,
-            "mdi:human-male-height",
+            Mdi.HumanMaleHeight,
             deviceClass = "distance",
             unitOfMeasurement = "m",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -262,7 +278,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_hydration,
             commonR.string.sensor_description_hydration,
-            "mdi:cup-water",
+            Mdi.CupWater,
             unitOfMeasurement = "mL",
             deviceClass = "volume",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -275,7 +291,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_lean_body_mass,
             commonR.string.sensor_description_lean_body_mass,
-            "mdi:scale-bathroom",
+            Mdi.ScaleBathroom,
             deviceClass = "weight",
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -287,7 +303,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_oxygen_saturation,
             commonR.string.sensor_description_oxygen_saturation,
-            "mdi:sleep",
+            Mdi.Sleep,
             unitOfMeasurement = "%",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -298,7 +314,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_respiratory_rate,
             commonR.string.sensor_description_respiratory_rate,
-            "mdi:account-voice",
+            Mdi.AccountVoice,
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -309,7 +325,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_resting_heart_rate,
             commonR.string.sensor_description_resting_heart_rate,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             unitOfMeasurement = "bpm",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -320,7 +336,125 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_sleep_duration,
             commonR.string.sensor_description_sleep_duration,
-            "mdi:sleep",
+            Mdi.Sleep,
+            deviceClass = "duration",
+            unitOfMeasurement = "min",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepStart = SensorManager.BasicSensor(
+            id = "health_connect_sleep_start",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_start,
+            commonR.string.sensor_description_sleep_start,
+            Mdi.Sleep,
+            deviceClass = "timestamp",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepEnd = SensorManager.BasicSensor(
+            id = "health_connect_sleep_end",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_end,
+            commonR.string.sensor_description_sleep_end,
+            Mdi.Sleep,
+            deviceClass = "timestamp",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepLightDuration = SensorManager.BasicSensor(
+            id = "health_connect_sleep_light_duration",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_light_duration,
+            commonR.string.sensor_description_sleep_light_duration,
+            Mdi.Sleep,
+            deviceClass = "duration",
+            unitOfMeasurement = "min",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepDeepDuration = SensorManager.BasicSensor(
+            id = "health_connect_sleep_deep_duration",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_deep_duration,
+            commonR.string.sensor_description_sleep_deep_duration,
+            Mdi.Sleep,
+            deviceClass = "duration",
+            unitOfMeasurement = "min",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepRemDuration = SensorManager.BasicSensor(
+            id = "health_connect_sleep_rem_duration",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_rem_duration,
+            commonR.string.sensor_description_sleep_rem_duration,
+            Mdi.Sleep,
+            deviceClass = "duration",
+            unitOfMeasurement = "min",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepAwakeDuration = SensorManager.BasicSensor(
+            id = "health_connect_sleep_awake_duration",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_awake_duration,
+            commonR.string.sensor_description_sleep_awake_duration,
+            Mdi.Sleep,
+            deviceClass = "duration",
+            unitOfMeasurement = "min",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepAwakeInBedDuration = SensorManager.BasicSensor(
+            id = "health_connect_sleep_awake_in_bed_duration",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_awake_in_bed_duration,
+            commonR.string.sensor_description_sleep_awake_in_bed_duration,
+            Mdi.Sleep,
+            deviceClass = "duration",
+            unitOfMeasurement = "min",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepOutOfBedDuration = SensorManager.BasicSensor(
+            id = "health_connect_sleep_out_of_bed_duration",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_out_of_bed_duration,
+            commonR.string.sensor_description_sleep_out_of_bed_duration,
+            Mdi.Sleep,
+            deviceClass = "duration",
+            unitOfMeasurement = "min",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepUnspecifiedDuration = SensorManager.BasicSensor(
+            id = "health_connect_sleep_unspecified_duration",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_unspecified_duration,
+            commonR.string.sensor_description_sleep_unspecified_duration,
+            Mdi.Sleep,
+            deviceClass = "duration",
+            unitOfMeasurement = "min",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
+        )
+
+        @ProvidesSensor
+        val sleepUnknownDuration = SensorManager.BasicSensor(
+            id = "health_connect_sleep_unknown_duration",
+            type = "sensor",
+            commonR.string.basic_sensor_name_sleep_unknown_duration,
+            commonR.string.sensor_description_sleep_unknown_duration,
+            Mdi.Sleep,
             deviceClass = "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -332,7 +466,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.sensor_name_daily_steps,
             commonR.string.sensor_description_steps,
-            "mdi:walk",
+            Mdi.Walk,
             unitOfMeasurement = "steps",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -344,7 +478,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_systolic_blood_pressure,
             commonR.string.sensor_description_systolic_blood_pressure,
-            "mdi:heart-pulse",
+            Mdi.HeartPulse,
             deviceClass = "pressure",
             unitOfMeasurement = "mmHg",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -356,7 +490,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_total_calories_burned,
             commonR.string.sensor_description_total_calories_burned,
-            "mdi:fire",
+            Mdi.Fire,
             "energy",
             unitOfMeasurement = "kcal",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -369,7 +503,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_vo2_max,
             commonR.string.sensor_description_vo2_max,
-            "mdi:heart",
+            Mdi.Heart,
             unitOfMeasurement = "mL/kg/min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -380,7 +514,7 @@ class HealthConnectSensorManager @Inject constructor(
             type = "sensor",
             commonR.string.basic_sensor_name_weight,
             commonR.string.sensor_description_weight,
-            "mdi:scale-bathroom",
+            Mdi.ScaleBathroom,
             unitOfMeasurement = "g",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             deviceClass = "weight",
@@ -408,6 +542,16 @@ class HealthConnectSensorManager @Inject constructor(
             respiratoryRate.id to RespiratoryRateRecord::class,
             restingHeartRate.id to RestingHeartRateRecord::class,
             sleepDuration.id to SleepSessionRecord::class,
+            sleepStart.id to SleepSessionRecord::class,
+            sleepEnd.id to SleepSessionRecord::class,
+            sleepLightDuration.id to SleepSessionRecord::class,
+            sleepDeepDuration.id to SleepSessionRecord::class,
+            sleepRemDuration.id to SleepSessionRecord::class,
+            sleepAwakeDuration.id to SleepSessionRecord::class,
+            sleepAwakeInBedDuration.id to SleepSessionRecord::class,
+            sleepOutOfBedDuration.id to SleepSessionRecord::class,
+            sleepUnspecifiedDuration.id to SleepSessionRecord::class,
+            sleepUnknownDuration.id to SleepSessionRecord::class,
             steps.id to StepsRecord::class,
             systolicBloodPressure.id to BloodPressureRecord::class,
             totalCaloriesBurned.id to TotalCaloriesBurnedRecord::class,
@@ -498,8 +642,8 @@ class HealthConnectSensorManager @Inject constructor(
         if (isEnabled(restingHeartRate)) {
             updateRestingHeartRateSensor()
         }
-        if (isEnabled(sleepDuration)) {
-            updateSleepDurationSensor()
+        if (isAnySleepSensorEnabled()) {
+            updateSleepSensors()
         }
         if (isEnabled(steps)) {
             updateStepsSensor()
@@ -872,39 +1016,175 @@ class HealthConnectSensorManager @Inject constructor(
         )
     }
 
-    private suspend fun updateSleepDurationSensor() {
+    private suspend fun updateSleepSensors() {
         val healthConnectClient = getOrCreateHealthConnectClient() ?: return
         val sleepRequest = buildReadRecordsRequest(SleepSessionRecord::class)
         val sleepRecords = healthConnectClient.readRecordsOrNull(sleepRequest)
         if (sleepRecords == null || sleepRecords.records.isEmpty()) {
             return
         }
+
         val lastSleepRecord = sleepRecords.records.last()
-        val sleepRecordDuration = calculateSleepDurationInMinutes(lastSleepRecord.stages)
+        val includeTimeline = isEnabled(sleepDuration)
+        val analysis = analyzeSleepStages(lastSleepRecord.stages, includeTimeline)
+
+        val basicAttributes = mapOf(
+            "startTime" to lastSleepRecord.startTime,
+            "endTime" to lastSleepRecord.endTime,
+            "sources" to lastSleepRecord.metadata.dataOrigin.packageName,
+        )
+
+        if (isEnabled(sleepDuration)) {
+            val sessionAttributes = buildSleepSessionAttributes(lastSleepRecord, analysis)
+            onSensorUpdated(
+                sleepDuration,
+                analysis.sleepDuration.inWholeMinutes,
+                sleepDuration.statelessIcon,
+                attributes = sessionAttributes,
+            )
+        }
+        if (isEnabled(sleepStart)) {
+            onSensorUpdated(
+                sleepStart,
+                lastSleepRecord.startTime.toString(),
+                sleepStart.statelessIcon,
+                attributes = basicAttributes,
+            )
+        }
+        if (isEnabled(sleepEnd)) {
+            onSensorUpdated(
+                sleepEnd,
+                lastSleepRecord.endTime.toString(),
+                sleepEnd.statelessIcon,
+                attributes = basicAttributes,
+            )
+        }
+
+        updateSleepStageSensors(analysis, basicAttributes)
+    }
+
+    private suspend fun isAnySleepSensorEnabled(): Boolean = listOf(
+        sleepDuration,
+        sleepStart,
+        sleepEnd,
+        sleepLightDuration,
+        sleepDeepDuration,
+        sleepRemDuration,
+        sleepAwakeDuration,
+        sleepAwakeInBedDuration,
+        sleepOutOfBedDuration,
+        sleepUnspecifiedDuration,
+        sleepUnknownDuration,
+    ).any { sensor -> isEnabled(sensor) }
+
+    private suspend fun updateSleepStageSensors(analysis: SleepStageAnalysis, attributes: Map<String, Any?>) {
+        val stageSensors = listOf(
+            sleepLightDuration to SleepSessionRecord.STAGE_TYPE_LIGHT,
+            sleepDeepDuration to SleepSessionRecord.STAGE_TYPE_DEEP,
+            sleepRemDuration to SleepSessionRecord.STAGE_TYPE_REM,
+            sleepAwakeDuration to SleepSessionRecord.STAGE_TYPE_AWAKE,
+            sleepAwakeInBedDuration to SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
+            sleepOutOfBedDuration to SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+            sleepUnspecifiedDuration to SleepSessionRecord.STAGE_TYPE_SLEEPING,
+            sleepUnknownDuration to SleepSessionRecord.STAGE_TYPE_UNKNOWN,
+        )
+        stageSensors.forEach { (sensor, stageType) ->
+            updateSleepStageDurationSensor(
+                sensor,
+                analysis.durationByStage[stageType],
+                attributes,
+            )
+        }
+    }
+
+    private suspend fun updateSleepStageDurationSensor(
+        sensor: SensorManager.BasicSensor,
+        duration: Duration?,
+        attributes: Map<String, Any?>,
+    ) {
+        if (!isEnabled(sensor)) {
+            return
+        }
         onSensorUpdated(
-            sleepDuration,
-            sleepRecordDuration,
-            sleepDuration.statelessIcon,
-            attributes = mapOf(
-                "endTime" to lastSleepRecord.endTime,
-                "startTime" to lastSleepRecord.startTime,
-                "sources" to lastSleepRecord.metadata.dataOrigin.packageName,
-            ),
+            sensor,
+            duration?.inWholeMinutes ?: STATE_UNKNOWN,
+            sensor.statelessIcon,
+            attributes = attributes,
         )
     }
 
-    /** @return Sleep duration based on the stages, excluding awake (+ in bed) and out of bed */
+    private fun buildSleepSessionAttributes(
+        sleepRecord: SleepSessionRecord,
+        analysis: SleepStageAnalysis,
+    ): Map<String, Any?> = mapOf(
+        "startTime" to sleepRecord.startTime,
+        "endTime" to sleepRecord.endTime,
+        "sources" to sleepRecord.metadata.dataOrigin.packageName,
+        "stageTypes" to analysis.stageTypes,
+        "stageStartTimes" to analysis.stageStartTimes.map(Instant::toString),
+        "stageEndTimes" to analysis.stageEndTimes.map(Instant::toString),
+    )
+
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    internal fun calculateSleepDurationInMinutes(stages: List<SleepSessionRecord.Stage>): Long = stages
-        .filter {
-            it.stage != SleepSessionRecord.STAGE_TYPE_AWAKE &&
-                it.stage != SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED &&
-                it.stage != SleepSessionRecord.STAGE_TYPE_OUT_OF_BED
+    internal data class SleepStageAnalysis(
+        val sleepDuration: Duration,
+        val durationByStage: Map<Int, Duration>,
+        val stageTypes: List<String>,
+        val stageStartTimes: List<Instant>,
+        val stageEndTimes: List<Instant>,
+    )
+
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    internal fun analyzeSleepStages(
+        stages: List<SleepSessionRecord.Stage>,
+        includeTimeline: Boolean = true,
+    ): SleepStageAnalysis {
+        val durationByStage = stages
+            .groupingBy { it.stage }
+            .fold(Duration.ZERO) { duration, stage ->
+                duration + java.time.Duration.between(stage.startTime, stage.endTime).toKotlinDuration()
+            }
+        val sleepDuration = durationByStage
+            .filterKeys { stageType ->
+                when (stageType) {
+                    SleepSessionRecord.STAGE_TYPE_AWAKE,
+                    SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
+                    SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+                    -> false
+                    SleepSessionRecord.STAGE_TYPE_UNKNOWN,
+                    SleepSessionRecord.STAGE_TYPE_SLEEPING,
+                    SleepSessionRecord.STAGE_TYPE_LIGHT,
+                    SleepSessionRecord.STAGE_TYPE_DEEP,
+                    SleepSessionRecord.STAGE_TYPE_REM,
+                    -> true
+                    else -> false
+                }
+            }
+            .values
+            .fold(Duration.ZERO) { total, duration -> total + duration }
+
+        return SleepStageAnalysis(
+            sleepDuration = sleepDuration,
+            durationByStage = durationByStage,
+            stageTypes = if (includeTimeline) stages.map { stage -> getSleepStageType(stage.stage) } else emptyList(),
+            stageStartTimes = if (includeTimeline) stages.map { stage -> stage.startTime } else emptyList(),
+            stageEndTimes = if (includeTimeline) stages.map { stage -> stage.endTime } else emptyList(),
+        )
+    }
+
+    private fun getSleepStageType(stageType: Int): String {
+        return when (stageType) {
+            SleepSessionRecord.STAGE_TYPE_UNKNOWN -> "unknown"
+            SleepSessionRecord.STAGE_TYPE_AWAKE -> "awake"
+            SleepSessionRecord.STAGE_TYPE_SLEEPING -> "sleeping"
+            SleepSessionRecord.STAGE_TYPE_OUT_OF_BED -> "out_of_bed"
+            SleepSessionRecord.STAGE_TYPE_LIGHT -> "light"
+            SleepSessionRecord.STAGE_TYPE_DEEP -> "deep"
+            SleepSessionRecord.STAGE_TYPE_REM -> "rem"
+            SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED -> "awake_in_bed"
+            else -> STATE_UNKNOWN
         }
-        .sumOf { Duration.between(it.startTime, it.endTime).seconds }
-        .toDuration(DurationUnit.SECONDS)
-        // Don't convert to minutes until the end to avoid losing detail
-        .inWholeMinutes
+    }
 
     private suspend fun updateStepsSensor() {
         val healthConnectClient = getOrCreateHealthConnectClient() ?: return
@@ -998,6 +1278,16 @@ class HealthConnectSensorManager @Inject constructor(
                 respiratoryRate,
                 restingHeartRate,
                 sleepDuration,
+                sleepStart,
+                sleepEnd,
+                sleepLightDuration,
+                sleepDeepDuration,
+                sleepRemDuration,
+                sleepAwakeDuration,
+                sleepAwakeInBedDuration,
+                sleepOutOfBedDuration,
+                sleepUnspecifiedDuration,
+                sleepUnknownDuration,
                 steps,
                 systolicBloodPressure,
                 totalCaloriesBurned,

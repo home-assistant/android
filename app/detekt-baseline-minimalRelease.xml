@@ -87,8 +87,6 @@
     <ID>InjectDispatcher:EntityPicker.kt:Default</ID>
     <ID>InjectDispatcher:FrontendDownloadManager.kt:FrontendDownloadManager$IO</ID>
     <ID>InjectDispatcher:FrontendEntityAddToManager.kt:FrontendEntityAddToManager$Default</ID>
-    <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService$IO</ID>
-    <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService.&lt;no name provided&gt;$IO</ID>
     <ID>InjectDispatcher:HaMediaSession.kt:HaMediaSession$IO</ID>
     <ID>InjectDispatcher:HaShortcutManager.kt:HaShortcutManager$IO</ID>
     <ID>InjectDispatcher:HomeAssistantApplication.kt:HomeAssistantApplication$IO</ID>
@@ -315,8 +313,6 @@
     <ID>NestedBlockDepth:MessagingManager.kt:MessagingManager$private suspend fun notifyMissingPermission</ID>
     <ID>NestedBlockDepth:OnSwipeListener.kt:OnSwipeListener$override fun onTouch: Boolean</ID>
     <ID>NestedBlockDepth:TilePreferenceActivity.kt:TilePreferenceActivity$override fun onCreate</ID>
-    <ID>NoNameShadowing:EntityPickerFilter.kt:{ add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }</ID>
-    <ID>NoNameShadowing:EntityPickerFilter.kt:{ add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME)) }</ID>
     <ID>NoNameShadowing:FrontendConnectionErrorScreen.kt:url</ID>
     <ID>NoNameShadowing:HAWebView.kt:modifier</ID>
     <ID>NoNameShadowing:ManageTilesViewModel.kt:ManageTilesViewModel$context</ID>
@@ -473,7 +469,6 @@
     <ID>UnusedParameter:LocationSensorManager.kt:LocationSensorManager.Companion$updateInterval: Int</ID>
     <ID>UnusedParameter:QuestSensorManager.kt:QuestSensorManager$applicationContext: Context</ID>
     <ID>UnusedParameter:SettingsWearDetection.kt:SettingsWearDetection$context: Context</ID>
-    <ID>UnusedPrivateProperty:ConnectionViewModel.kt:ConnectionViewModel$private val fileChooserManager: FileChooserManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val nsdManager: NsdManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val wifiManager: WifiManager?</ID>
     <ID>UnusedPrivateProperty:LaunchViewModel.kt:LaunchViewModel$private val prefsRepository: PrefsRepository</ID>

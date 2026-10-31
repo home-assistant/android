@@ -5,6 +5,7 @@ import android.service.controls.Control
 import android.service.controls.ControlsProviderService
 import android.service.controls.actions.ControlAction
 import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.Alert
@@ -28,6 +29,7 @@ import java.util.concurrent.Flow
 import java.util.function.Consumer
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -42,7 +44,11 @@ private const val FAILED_STATE_EXCEPTION = "exception"
 
 @RequiresApi(Build.VERSION_CODES.R)
 @AndroidEntryPoint
-class HaControlsProviderService : ControlsProviderService() {
+class HaControlsProviderService @VisibleForTesting internal constructor(
+    private val ioDispatcher: CoroutineDispatcher,
+) : ControlsProviderService() {
+
+    constructor() : this(Dispatchers.IO)
 
     companion object {
         private val domainToHaControl = mapOf(
@@ -90,7 +96,7 @@ class HaControlsProviderService : ControlsProviderService() {
     @Inject
     lateinit var entitiesForDisplayManager: EntitiesForDisplayManager
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val ioScope: CoroutineScope = CoroutineScope(ioDispatcher)
 
     override fun createPublisherForAllAvailable(): Flow.Publisher<Control> {
         return Flow.Publisher { subscriber ->
@@ -168,7 +174,7 @@ class HaControlsProviderService : ControlsProviderService() {
         return Flow.Publisher { subscriber ->
             subscriber.onSubscribe(
                 object : Flow.Subscription {
-                    val webSocketScope = CoroutineScope(Dispatchers.IO)
+                    val webSocketScope = CoroutineScope(ioDispatcher)
                     override fun request(n: Long) {
                         ioScope.launch {
                             if (!serverManager.isRegistered()) return@launch else Timber.d("request $n")
@@ -276,7 +282,10 @@ class HaControlsProviderService : ControlsProviderService() {
 
         webSocketScope.launch {
             var sentInitial = false
-            entitiesForDisplayManager.observeInContext(serverId) { it.entityId in entityIds }
+            // Each snapshot is complete, so only the items that differ from the last sent ones are
+            // sent again: re-sending them all would make the system redraw every control
+            var sentItems = emptyMap<String, EntityDisplayWithContext>()
+            entitiesForDisplayManager.observeInContext(serverId, entityIds)
                 .collect { state ->
                     when (state) {
                         EntityDisplayState.Loading -> Unit
@@ -312,8 +321,10 @@ class HaControlsProviderService : ControlsProviderService() {
                                     )
                                 }
                             }
-                            Timber.d("Sending ${state.entities.size} entities to subscriber")
-                            state.entities.forEach { item ->
+                            val changedItems = state.entities.filter { sentItems[it.entityId] != it }
+                            sentItems = state.entitiesById
+                            Timber.d("Sending ${changedItems.size} of ${state.entities.size} entities to subscriber")
+                            changedItems.forEach { item ->
                                 sendControl(
                                     subscriber = subscriber,
                                     item = item,

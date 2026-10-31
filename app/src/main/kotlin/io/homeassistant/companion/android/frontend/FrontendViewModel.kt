@@ -35,8 +35,8 @@ import io.homeassistant.companion.android.frontend.exoplayer.FrontendExoPlayerMa
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.NavigateToMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
-import io.homeassistant.companion.android.frontend.filechooser.FileChooserManager
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
+import io.homeassistant.companion.android.frontend.filechooser.FrontendFileChooserHandler
 import io.homeassistant.companion.android.frontend.gesture.FrontendGestureManager
 import io.homeassistant.companion.android.frontend.gesture.GestureResult
 import io.homeassistant.companion.android.frontend.handler.FrontendBusObserver
@@ -127,7 +127,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val gestureManager: FrontendGestureManager,
     private val prefsRepository: PrefsRepository,
     private val dialogManager: FrontendDialogManager,
-    private val fileChooserManager: FileChooserManager,
+    private val fileChooserHandler: FrontendFileChooserHandler,
     private val httpAuthHandler: FrontendHttpAuthHandler,
     private val exoPlayerManager: FrontendExoPlayerManager,
     private val improvHandler: FrontendImprovHandler,
@@ -152,7 +152,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         gestureManager: FrontendGestureManager,
         prefsRepository: PrefsRepository,
         dialogManager: FrontendDialogManager,
-        fileChooserManager: FileChooserManager,
+        fileChooserHandler: FrontendFileChooserHandler,
         httpAuthHandler: FrontendHttpAuthHandler,
         exoPlayerManager: FrontendExoPlayerManager,
         improvHandler: FrontendImprovHandler,
@@ -174,7 +174,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         gestureManager = gestureManager,
         prefsRepository = prefsRepository,
         dialogManager = dialogManager,
-        fileChooserManager = fileChooserManager,
+        fileChooserHandler = fileChooserHandler,
         httpAuthHandler = httpAuthHandler,
         exoPlayerManager = exoPlayerManager,
         improvHandler = improvHandler,
@@ -351,7 +351,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /** The current pending file chooser request from the WebView, or null if none. */
-    val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserManager.pendingFileChooser
+    val pendingFileChooser: StateFlow<FileChooserRequest?> = fileChooserHandler.pendingFileChooser
 
     /** The current pending permission request that needs user approval, or null if none. */
     val pendingPermissionRequest = permissionManager.pendingPermissionRequest
@@ -386,6 +386,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     val autoPlayVideoEnabled: StateFlow<Boolean> = flow {
         emitAll(prefsRepository.autoPlayVideoFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
+
+    /** Whether the WebView is debuggable per the developer setting, null until the pref is read. */
+    val webViewDebugEnabled: StateFlow<Boolean?> = flow {
+        emitAll(prefsRepository.webViewDebugFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
 
     /**
      * The user's "Screen orientation" preference.
@@ -540,7 +545,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             },
             onShowFileChooser = { filePathCallback, fileChooserParams ->
                 viewModelScope.launch {
-                    filePathCallback.onReceiveValue(fileChooserManager.pickFiles(fileChooserParams))
+                    filePathCallback.onReceiveValue(fileChooserHandler.pickFiles(fileChooserParams))
                 }
                 true
             },
@@ -947,6 +952,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is FrontendHandlerEvent.StartMatterCommissioning -> {
                 viewModelScope.launch { matterThreadHandler.onStartMatterCommissioning() }
+            }
+
+            is FrontendHandlerEvent.StartMatterSharing -> {
+                viewModelScope.launch {
+                    matterThreadHandler.onStartMatterSharing(messageId = result.messageId, payload = result.payload)
+                }
             }
 
             is FrontendHandlerEvent.ImportThreadCredentials -> {
