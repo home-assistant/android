@@ -422,6 +422,7 @@ data class MediaPlayerControls(
     val supportsPreviousTrack: Boolean = false,
     val supportsNextTrack: Boolean = false,
     val supportsVolumeSet: Boolean = false,
+    val supportsVolumeStep: Boolean = false,
     val supportsVolumeMute: Boolean = false,
     val supportsShuffleSet: Boolean = false,
     val supportsRepeatSet: Boolean = false,
@@ -488,6 +489,7 @@ object EntityExt {
     const val MEDIA_PLAYER_SUPPORT_VOLUME_MUTE = 8
     const val MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK = 16
     const val MEDIA_PLAYER_SUPPORT_NEXT_TRACK = 32
+    const val MEDIA_PLAYER_SUPPORT_VOLUME_STEP = 1024
     const val MEDIA_PLAYER_SUPPORT_STOP = 4096
     const val MEDIA_PLAYER_SUPPORT_PLAY = 16384
     const val MEDIA_PLAYER_SUPPORT_SHUFFLE_SET = 32768
@@ -826,6 +828,7 @@ fun Entity.getMediaPlayerControls(): MediaPlayerControls? {
         supportsPreviousTrack = supportsPreviousTrack(),
         supportsNextTrack = supportsNextTrack(),
         supportsVolumeSet = supportsVolumeSet(),
+        supportsVolumeStep = supportsVolumeStep(),
         supportsVolumeMute = supportsVolumeMute(),
         supportsShuffleSet = supportsShuffleSet(),
         supportsRepeatSet = supportsRepeatSet(),
@@ -909,6 +912,9 @@ fun Entity.getLightColor(): Int? {
 
 fun Entity.supportsVolumeSet(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
     supportsFeature(EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET)
+
+fun Entity.supportsVolumeStep(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    supportsFeature(EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_STEP)
 
 fun Entity.getVolumeLevel(): EntityPosition? {
     return try {

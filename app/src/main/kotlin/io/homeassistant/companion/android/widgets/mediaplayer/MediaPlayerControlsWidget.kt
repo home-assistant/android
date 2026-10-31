@@ -9,6 +9,8 @@ import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
@@ -21,7 +23,10 @@ import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_BUFFERING
+import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_PLAYING
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.getMediaPlayerControls
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
@@ -37,6 +42,32 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 private const val MEDIA_ICON_SIZE_DP = 24
+
+private sealed interface PlaybackAction {
+    val serviceAction: String
+
+    @get:DrawableRes val iconRes: Int
+
+    @get:StringRes val contentDescriptionRes: Int
+
+    data object Play : PlaybackAction {
+        override val serviceAction = "media_play"
+        override val iconRes = R.drawable.ic_play
+        override val contentDescriptionRes = commonR.string.widget_media_play_button
+    }
+
+    data object Pause : PlaybackAction {
+        override val serviceAction = "media_pause"
+        override val iconRes = R.drawable.ic_pause
+        override val contentDescriptionRes = commonR.string.widget_media_pause_button
+    }
+
+    data object Stop : PlaybackAction {
+        override val serviceAction = "media_stop"
+        override val iconRes = R.drawable.ic_stop
+        override val contentDescriptionRes = commonR.string.widget_media_stop_button
+    }
+}
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEntity, MediaPlayerControlsWidgetDao>() {
@@ -130,16 +161,17 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val showSource: Boolean = widget.showSource
                 val entity = getEntity(context, widget.serverId, entityIds, suggestedEntity)
 
-                if (entity?.state.equals("playing")) {
-                    setImageViewResource(
+                val mediaPlayerControls = entity?.getMediaPlayerControls()
+                val playbackAction = getPlaybackAction(entity)
+                if (playbackAction != null) {
+                    setImageViewResource(R.id.widgetPlayPauseButton, playbackAction.iconRes)
+                    setContentDescription(
                         R.id.widgetPlayPauseButton,
-                        R.drawable.ic_pause,
+                        context.getString(playbackAction.contentDescriptionRes),
                     )
+                    setViewVisibility(R.id.widgetPlayPauseButton, View.VISIBLE)
                 } else {
-                    setImageViewResource(
-                        R.id.widgetPlayPauseButton,
-                        R.drawable.ic_play,
-                    )
+                    setViewVisibility(R.id.widgetPlayPauseButton, View.GONE)
                 }
 
                 val artist = (
@@ -289,17 +321,22 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     ),
                 )
-                setOnClickPendingIntent(
-                    R.id.widgetPlayPauseButton,
-                    PendingIntent.getBroadcast(
-                        context,
-                        appWidgetId,
-                        playPauseIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                    ),
-                )
+                if (playbackAction != null) {
+                    setOnClickPendingIntent(
+                        R.id.widgetPlayPauseButton,
+                        PendingIntent.getBroadcast(
+                            context,
+                            appWidgetId,
+                            playPauseIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                        ),
+                    )
+                }
 
-                if (showVolume) {
+                if (
+                    showVolume &&
+                    mediaPlayerControls?.let { it.supportsVolumeSet || it.supportsVolumeStep } == true
+                ) {
                     setOnClickPendingIntent(
                         R.id.widgetVolumeDownButton,
                         PendingIntent.getBroadcast(
@@ -325,7 +362,17 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     setViewVisibility(R.id.widgetVolumeUpButton, View.GONE)
                 }
 
-                if (showSkip) {
+                val showPreviousTrack = showSkip && mediaPlayerControls?.supportsPreviousTrack == true
+                val showNextTrack = showSkip && mediaPlayerControls?.supportsNextTrack == true
+                setViewVisibility(
+                    R.id.widgetPrevTrackButton,
+                    if (showPreviousTrack) View.VISIBLE else View.GONE,
+                )
+                setViewVisibility(
+                    R.id.widgetNextTrackButton,
+                    if (showNextTrack) View.VISIBLE else View.GONE,
+                )
+                if (showPreviousTrack) {
                     setOnClickPendingIntent(
                         R.id.widgetPrevTrackButton,
                         PendingIntent.getBroadcast(
@@ -335,6 +382,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                         ),
                     )
+                }
+                if (showNextTrack) {
                     setOnClickPendingIntent(
                         R.id.widgetNextTrackButton,
                         PendingIntent.getBroadcast(
@@ -344,14 +393,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                         ),
                     )
-                    setViewVisibility(R.id.widgetPrevTrackButton, View.VISIBLE)
-                    setViewVisibility(R.id.widgetNextTrackButton, View.VISIBLE)
-                } else {
-                    setViewVisibility(R.id.widgetPrevTrackButton, View.GONE)
-                    setViewVisibility(R.id.widgetNextTrackButton, View.GONE)
                 }
 
-                if (showSeek) {
+                if (showSeek && mediaPlayerControls?.supportsSeek == true) {
                     setOnClickPendingIntent(
                         R.id.widgetRewindButton,
                         PendingIntent.getBroadcast(
@@ -406,7 +450,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 val entities: LinkedList<Entity?> = LinkedList()
                 entityIds.forEach {
                     val e = serverManager.integrationRepository(serverId).getEntity(it)
-                    if (e?.state == "playing") return e
+                    if (e?.state == MEDIA_PLAYER_STATE_PLAYING) return e
                     entities.add(e)
                 }
                 return entities[0]
@@ -462,9 +506,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
 
     private suspend fun callPreviousTrackAction(context: Context, appWidgetId: Int) {
         Timber.d("Retrieving media player entity for app widget $appWidgetId")
-        val entity: MediaPlayerControlsWidgetEntity? = dao.get(appWidgetId)
-
-        if (entity == null) {
+        val entity = dao.get(appWidgetId) ?: run {
             Timber.d("Failed to retrieve media player entity")
             return
         }
@@ -570,24 +612,42 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                 "entity id: " + entity.entityId + System.lineSeparator(),
         )
 
-        val action = "media_play_pause"
-        val entityId: String = getEntity(
+        val actionEntity = getEntity(
             context,
             entity.serverId,
             entity.entityId.split(","),
             null,
-        )?.entityId.toString()
+        )
+        val playbackAction = actionEntity?.let { getPlaybackAction(it) }
+        if (actionEntity == null) {
+            Timber.d("Failed to resolve media player entity for play/pause action")
+        } else if (playbackAction == null) {
+            Timber.d("Media player entity does not support a playback action")
+        } else {
+            try {
+                serverManager.integrationRepository(entity.serverId).callAction(
+                    MEDIA_PLAYER_DOMAIN,
+                    playbackAction.serviceAction,
+                    mapOf("entity_id" to actionEntity.entityId),
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Exception calling play pause action")
+            }
+        }
+    }
 
-        val actionDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entityId)
-
-        try {
-            serverManager.integrationRepository(
-                entity.serverId,
-            ).callAction(MEDIA_PLAYER_DOMAIN, action, actionDataMap)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.e(e, "Exception calling play pause action")
+    /** Returns the supported playback action for the entity's current state, if any. */
+    private fun getPlaybackAction(entity: Entity?): PlaybackAction? {
+        val controls = entity?.getMediaPlayerControls()
+        val isActive = entity?.state == MEDIA_PLAYER_STATE_PLAYING ||
+            entity?.state == MEDIA_PLAYER_STATE_BUFFERING
+        return when {
+            !isActive && controls?.supportsPlay == true -> PlaybackAction.Play
+            isActive && controls?.supportsPause == true -> PlaybackAction.Pause
+            isActive && controls?.supportsStop == true -> PlaybackAction.Stop
+            else -> null
         }
     }
 
