@@ -9,6 +9,7 @@ import io.github.timoptr.mdiicons.generated.Heart
 import io.github.timoptr.mdiicons.generated.Robot
 import io.github.timoptr.mdiicons.generated.RobotOff
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -69,7 +70,7 @@ class EntitiesForDisplayManagerTest {
      */
     private suspend fun MutableSharedFlow<*>.awaitSubscribed() = subscriptionCount.first { it > 0 }
 
-    private val entityUpdates = MutableSharedFlow<Entity>()
+    private val entityUpdates = MutableSharedFlow<EntityChange>()
     private val entityRegistryUpdates = MutableSharedFlow<EntityRegistryUpdatedEvent>()
     private val entityIds = listOf("light.bed")
 
@@ -80,7 +81,7 @@ class EntitiesForDisplayManagerTest {
         coEvery { serverManager.webSocketRepository(serverId) } returns webSocketRepository
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
-        coEvery { integrationRepository.getEntityUpdates(entityIds) } returns entityUpdates
+        coEvery { integrationRepository.getEntityChanges(entityIds) } returns entityUpdates
         coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
     }
 
@@ -223,8 +224,7 @@ class EntitiesForDisplayManagerTest {
             entityUpdates.awaitSubscribed()
 
             // The name is unchanged, the snapshot is emitted again so consumers refresh
-            entityUpdates.emit(entity("light.bed", "Ignored friendly name").copy(state = "off"))
-
+            entityUpdates.emit(EntityChange.StateChanged(entity("light.bed", "Ignored friendly name").copy(state = "off")))
             assertEquals("Bed", awaitLoaded().entities.single().name)
             cancelAndIgnoreRemainingEvents()
         }
@@ -273,7 +273,7 @@ class EntitiesForDisplayManagerTest {
         }
 
         coVerify(exactly = 0) {
-            integrationRepository.getEntityUpdates()
+            integrationRepository.getEntityChanges(null)
             webSocketRepository.getDeviceRegistry()
             webSocketRepository.getAreaRegistry()
             webSocketRepository.getFloorRegistry()
@@ -286,22 +286,21 @@ class EntitiesForDisplayManagerTest {
     fun `Given no entity ids when observing then every entity of the server is observed`() = runTest {
         givenRegistryName("Bed")
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
-        coEvery { integrationRepository.getEntityUpdates() } returns entityUpdates
+        coEvery { integrationRepository.getEntityChanges(null) } returns entityUpdates
 
         manager.observe(serverId).test {
             assertEquals(listOf("light.bed"), awaitInitialLoad().entities.map { it.entityId })
             entityUpdates.awaitSubscribed()
 
             // A new entity of the server is picked up, not only the initially fetched ones
-            entityUpdates.emit(entity("switch.fan", "Fan"))
-
+            entityUpdates.emit(EntityChange.StateChanged(entity("switch.fan", "Fan")))
             assertEquals(listOf("light.bed", "switch.fan"), awaitLoaded().entities.map { it.entityId })
             cancelAndIgnoreRemainingEvents()
         }
 
         // Subscribed to every entity, not to a filtered id list
-        coVerify(exactly = 1) { integrationRepository.getEntityUpdates() }
-        coVerify(exactly = 0) { integrationRepository.getEntityUpdates(any<List<String>>()) }
+        coVerify(exactly = 1) { integrationRepository.getEntityChanges(null) }
+        coVerify(exactly = 1) { integrationRepository.getEntityChanges(any()) }
     }
 
     @Test
@@ -329,6 +328,24 @@ class EntitiesForDisplayManagerTest {
     }
 
     @Test
+    fun `Given an entity removal when observing then it leaves the snapshot`() = runTest {
+        givenRegistryName("Bed")
+        val ids = listOf("light.bed", "switch.fan")
+        coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"), entity("switch.fan"))
+        coEvery { integrationRepository.getEntityChanges(ids) } returns entityUpdates
+
+        manager.observe(serverId, ids).test {
+            assertEquals(ids, awaitInitialLoad().entities.map { it.entityId })
+            entityUpdates.awaitSubscribed()
+
+            entityUpdates.emit(EntityChange.Removed("switch.fan"))
+
+            assertEquals(listOf("light.bed"), awaitLoaded().entities.map { it.entityId })
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `Given several entity ids when observing then each snapshot holds them all`() = runTest {
         val ids = listOf("light.bed", "switch.fan")
         coEvery { webSocketRepository.getEntityRegistryDisplay() } returns EntityRegistryDisplayResponse(
@@ -338,14 +355,13 @@ class EntitiesForDisplayManagerTest {
             ),
         )
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"), entity("switch.fan"))
-        coEvery { integrationRepository.getEntityUpdates(ids) } returns entityUpdates
+        coEvery { integrationRepository.getEntityChanges(ids) } returns entityUpdates
 
         manager.observe(serverId, ids).test {
             assertEquals(listOf("Bed", "Fan"), awaitInitialLoad().entities.map { it.name })
             entityUpdates.awaitSubscribed()
 
-            entityUpdates.emit(entity("switch.fan").copy(state = "off"))
-
+            entityUpdates.emit(EntityChange.StateChanged(entity("switch.fan").copy(state = "off")))
             // The snapshot still holds both entities
             val updated = awaitLoaded()
             assertEquals(listOf("Bed", "Fan"), updated.entities.map { it.name })
@@ -997,14 +1013,14 @@ class EntitiesForDisplayManagerTest {
         @Nested
         inner class Observe {
 
-            private val entityUpdates = MutableSharedFlow<Entity>()
+            private val entityUpdates = MutableSharedFlow<EntityChange>()
             private val entityRegistryUpdates = MutableSharedFlow<EntityRegistryUpdatedEvent>()
 
             @BeforeEach
             fun setUpObserve() {
                 coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
                 coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
-                coEvery { integrationRepository.getEntityUpdates() } returns entityUpdates
+                coEvery { integrationRepository.getEntityChanges(null) } returns entityUpdates
                 coEvery { webSocketRepository.getAreaRegistryUpdates() } returns null
                 coEvery { webSocketRepository.getDeviceRegistryUpdates() } returns null
                 coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
@@ -1017,13 +1033,30 @@ class EntitiesForDisplayManagerTest {
             }
 
             @Test
+            fun `Given an entity removal when observing then it leaves the loaded state`() = runTest {
+                coEvery { integrationRepository.getEntities() } returns listOf(
+                    entity("light.bed", "Bed Light"),
+                    entity("switch.fan", "Fan"),
+                )
+
+                manager.observeInContext(serverId).test {
+                    assertEquals(listOf("light.bed", "switch.fan"), awaitInitialLoad().map { it.entityId })
+                    entityUpdates.awaitSubscribed()
+
+                    entityUpdates.emit(EntityChange.Removed("switch.fan"))
+
+                    assertEquals(listOf("light.bed"), awaitLoaded().map { it.entityId })
+                    cancelAndIgnoreRemainingEvents()
+                }
+            }
+
+            @Test
             fun `Given an entity state change when observing then a new loaded state is emitted`() = runTest {
                 manager.observeInContext(serverId).test {
                     assertEquals("Bed Light", awaitInitialLoad().single().name)
                     entityUpdates.awaitSubscribed()
 
-                    entityUpdates.emit(entity("light.bed", "Renamed Light"))
-
+                    entityUpdates.emit(EntityChange.StateChanged(entity("light.bed", "Renamed Light")))
                     val updated = EntityDisplayState.Loaded(awaitLoaded().toList())
                     assertEquals("Renamed Light", updated.entities.single().name)
                     cancelAndIgnoreRemainingEvents()
@@ -1036,9 +1069,8 @@ class EntitiesForDisplayManagerTest {
                     awaitInitialLoad()
                     entityUpdates.awaitSubscribed()
 
-                    entityUpdates.emit(entity("light.bed", "Bed Light"))
-                    entityUpdates.emit(entity("light.bed", "Renamed Light"))
-
+                    entityUpdates.emit(EntityChange.StateChanged(entity("light.bed", "Bed Light")))
+                    entityUpdates.emit(EntityChange.StateChanged(entity("light.bed", "Renamed Light")))
                     // Only the renaming update emits: the unchanged one before it was skipped
                     val updated = EntityDisplayState.Loaded(awaitLoaded().toList())
                     assertEquals("Renamed Light", updated.entities.single().name)
@@ -1052,8 +1084,7 @@ class EntitiesForDisplayManagerTest {
                     awaitInitialLoad()
                     entityUpdates.awaitSubscribed()
 
-                    entityUpdates.emit(entity("switch.fan", "Fan"))
-
+                    entityUpdates.emit(EntityChange.StateChanged(entity("switch.fan", "Fan")))
                     val updated = EntityDisplayState.Loaded(awaitLoaded().toList())
                     assertEquals(listOf("light.bed", "switch.fan"), updated.entities.map { it.entityId })
                     cancelAndIgnoreRemainingEvents()
@@ -1066,9 +1097,8 @@ class EntitiesForDisplayManagerTest {
                     awaitInitialLoad()
                     entityUpdates.awaitSubscribed()
 
-                    entityUpdates.emit(entity("switch.fan", "Fan"))
-                    entityUpdates.emit(entity("light.bed", "Renamed Light"))
-
+                    entityUpdates.emit(EntityChange.StateChanged(entity("switch.fan", "Fan")))
+                    entityUpdates.emit(EntityChange.StateChanged(entity("light.bed", "Renamed Light")))
                     // Only the light update emits: the switch was filtered out
                     val updated = EntityDisplayState.Loaded(awaitLoaded().toList())
                     assertEquals(listOf("Renamed Light"), updated.entities.map { it.name })
@@ -1082,19 +1112,18 @@ class EntitiesForDisplayManagerTest {
                     entity("light.bed", "Bed Light"),
                     entity("switch.fan", "Fan"),
                 )
-                coEvery { integrationRepository.getEntityUpdates(entityIds) } returns entityUpdates
+                coEvery { integrationRepository.getEntityChanges(entityIds) } returns entityUpdates
 
                 manager.observeInContext(serverId, entityIds).test {
                     assertEquals(listOf("light.bed"), awaitInitialLoad().map { it.entityId })
                     entityUpdates.awaitSubscribed()
 
-                    entityUpdates.emit(entity("light.bed", "Renamed Light"))
-
+                    entityUpdates.emit(EntityChange.StateChanged(entity("light.bed", "Renamed Light")))
                     assertEquals(listOf("Renamed Light"), awaitLoaded().map { it.name })
                     cancelAndIgnoreRemainingEvents()
                 }
-                coVerify(exactly = 1) { integrationRepository.getEntityUpdates(entityIds) }
-                coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+                coVerify(exactly = 1) { integrationRepository.getEntityChanges(entityIds) }
+                coVerify(exactly = 0) { integrationRepository.getEntityChanges(null) }
             }
 
             @Test
@@ -1162,7 +1191,7 @@ class EntitiesForDisplayManagerTest {
 
             @Test
             fun `Given no update subscriptions when observing then flow completes after the loaded state`() = runTest {
-                coEvery { integrationRepository.getEntityUpdates() } returns null
+                coEvery { integrationRepository.getEntityChanges(null) } returns null
                 coEvery { webSocketRepository.getEntityRegistryUpdates() } returns null
 
                 manager.observeInContext(serverId).test {
@@ -1173,7 +1202,7 @@ class EntitiesForDisplayManagerTest {
 
             @Test
             fun `Given no state subscription when observing then flow completes without following the registries`() = runTest {
-                coEvery { integrationRepository.getEntityUpdates() } returns null
+                coEvery { integrationRepository.getEntityChanges(null) } returns null
 
                 manager.observeInContext(serverId).test {
                     awaitInitialLoad()
