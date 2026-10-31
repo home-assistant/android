@@ -68,6 +68,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
@@ -802,6 +803,12 @@ internal class WebSocketCoreImpl(
         val flow = callbackFlow<T> {
             launch { channel.consumeAsFlow().collect(::send) }
             awaitClose {
+                // Nobody collects the channel anymore. Close it before waiting for the server to
+                // acknowledge the unsubscribe: events still in flight (like the remaining events of
+                // an Assist pipeline run) would otherwise fill the buffer, suspend the inbound
+                // message queue in handleEvent and delay the acknowledgement of the unsubscribe
+                // itself until its timeout, stalling every other message in the meantime.
+                channel.close()
                 wsScope.launch {
                     eventSubscriptionMutex.withLock {
                         findSubscription(subscribeMessage)?.let { (subscriptionId, subscription) ->
@@ -1033,6 +1040,8 @@ internal class WebSocketCoreImpl(
             activeMessage.onEvent.send(message)
         } catch (e: CancellationException) {
             throw e
+        } catch (e: ClosedSendChannelException) {
+            Timber.d("Dropping event for subscription $subscriptionId, its channel is closed")
         } catch (e: Exception) {
             Timber.e(e, "Unable to send event message to channel")
         }
