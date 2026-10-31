@@ -52,7 +52,12 @@ data object NoServerFound : DiscoveryState
 /**
  * The first server has been fully discovered.
  */
-data class ServerDiscovered(val name: String, val url: URL, val version: HomeAssistantVersion?) : DiscoveryState
+data class ServerDiscovered(
+    val name: String,
+    val url: URL,
+    val version: HomeAssistantVersion?,
+    val internalUrl: URL? = null,
+) : DiscoveryState
 
 /**
  * Multiple server have been fully discovered.
@@ -149,6 +154,7 @@ internal class ServerDiscoveryViewModel @VisibleForTesting constructor(
                             instanceFound.name,
                             instanceFound.url,
                             instanceFound.version,
+                            instanceFound.internalUrl,
                         )
                         onServerDiscovered(serverDiscovered)
                     }

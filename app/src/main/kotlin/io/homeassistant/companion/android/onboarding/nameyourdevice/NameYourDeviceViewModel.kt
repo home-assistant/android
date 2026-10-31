@@ -145,7 +145,7 @@ internal class NameYourDeviceViewModel @VisibleForTesting constructor(
                 ),
             ) { "Registration failed" }
 
-            serverId = serverManager.addServer(temporaryServer)
+            serverId = serverManager.addServer(temporaryServer.copy(internalUrl = route.internalUrl))
             serverManager.integrationRepository(serverId).registerDevice(
                 DeviceRegistration(
                     appVersion,
