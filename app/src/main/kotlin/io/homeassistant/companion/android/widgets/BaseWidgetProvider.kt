@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.WidgetDao
@@ -114,17 +115,21 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
                 widgetJobs[id]?.cancel()
 
                 val (serverId, entities) = pair.first to pair.second
-                val entityUpdates =
+                val entityChanges =
                     if (serverManager.getServer(serverId) != null) {
-                        serverManager.integrationRepository(serverId).getEntityUpdates(entities)
+                        serverManager.integrationRepository(serverId).getEntityChanges(entities)
                     } else {
                         null
                     }
-                if (entityUpdates != null) {
+                if (entityChanges != null) {
                     widgetEntities[id] = entities
                     widgetJobs[id] = widgetScope.launch {
-                        entityUpdates.collect {
-                            onEntityStateChanged(context, id, it)
+                        entityChanges.collect { change ->
+                            when (change) {
+                                is EntityChange.StateChanged -> onEntityStateChanged(context, id, change.entity)
+                                // Rendered without the entity, like when it cannot be fetched
+                                is EntityChange.Removed -> updateView(context, id)
+                            }
                         }
                     }
                 } else { // Remove data to make it retry on the next update
