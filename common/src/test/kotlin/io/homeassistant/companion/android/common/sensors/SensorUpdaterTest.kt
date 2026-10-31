@@ -17,6 +17,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -127,6 +128,22 @@ class SensorUpdaterTest {
         coVerify(exactly = 1) { integrationRepository.registerSensor(any()) }
         // ...and its state is sent in the same pass, because the just-registered state is visible downstream.
         coVerify(exactly = 1) { integrationRepository.updateSensors(any()) }
+    }
+
+    @Test
+    fun `Given a direct-update sensor when updateSensors runs then the shared updater leaves state delivery to its manager`() = runTest {
+        val sensor = newEnabledSensor()
+        val integrationRepository = stubbedIntegrationRepository()
+        val serverManager = registeredServerManager(integrationRepository)
+        val manager = sensorManager(hasPermission = true)
+        every { manager.managesSensorStateUpdates(basicSensor.id, serverId) } returns true
+        coEvery { sensorRepository.getFull(basicSensor.id, serverId) } returns mapOf(sensor to emptyList())
+
+        updater(serverManager, setOf(manager)).updateSensors()
+
+        coVerify(exactly = 1) { integrationRepository.registerSensor(any()) }
+        coVerify(exactly = 0) { integrationRepository.updateSensors(any()) }
+        coVerify(exactly = 1) { manager.onSensorSyncComplete() }
     }
 
     @Test
