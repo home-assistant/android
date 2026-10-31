@@ -17,10 +17,12 @@ import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTes
 import io.homeassistant.companion.android.onboarding.URL_GETTING_STARTED_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
+import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServer
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import io.mockk.coVerify
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
@@ -35,6 +37,32 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
+
+    @Test
+    fun `Given ManualServer when tapping connect then back twice quickly then each navigates once`() {
+        testNavigation {
+            mockCheckPermission(true)
+            navController.navigateToServerDiscovery()
+            navController.navigateToManualServer()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
+
+            onNodeWithText("http://homeassistant.local").performTextInput("http://ha.local")
+            onNodeWithText(stringResource(commonR.string.connect))
+                .performScrollTo()
+                .performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+        }
+    }
 
     @Test
     fun `Given enter manual address when setting url and clicking connect then show ConnectScreen then back goes to ManualServer`() {

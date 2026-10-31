@@ -2,11 +2,13 @@ package io.homeassistant.companion.android.onboarding.serverdiscovery.navigation
 
 import androidx.annotation.Keep
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryScreen
+import io.homeassistant.companion.android.util.compose.dropUnlessResumed
 import java.net.URL
 import kotlinx.serialization.Serializable
 
@@ -44,10 +46,10 @@ internal fun NavGraphBuilder.serverDiscoveryScreen(
 ) {
     composable<ServerDiscoveryRoute> {
         ServerDiscoveryScreen(
-            onConnectClick = onConnectClick,
-            onBackClick = onBackClick,
+            onConnectClick = dropUnlessResumed(block = onConnectClick),
+            onBackClick = dropUnlessResumed(block = onBackClick),
             onHelpClick = onHelpClick,
-            onManualSetupClick = onManualSetupClick,
+            onManualSetupClick = dropUnlessResumed(block = onManualSetupClick),
             onLocalNetworkPermissionDenied = onLocalNetworkPermissionDenied,
             viewModel = hiltViewModel(),
         )
