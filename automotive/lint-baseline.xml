@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.4.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.4.1)" variant="all" version="9.4.1">
+<issues format="6" by="lint 9.5.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.0)" variant="all" version="9.5.0">
 
     <issue
         id="MissingPermission"
@@ -8,7 +8,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="242"
+            line="254"
             column="13"/>
     </issue>
 
@@ -19,41 +19,8 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="247"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
-        errorLine2="                        ^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
             line="259"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
-        errorLine2="                        ^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="267"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
-        errorLine2="                        ^">
-        <location
-            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*7}/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="275"
-            column="25"/>
+            column="17"/>
     </issue>
 
     <issue
@@ -85,7 +52,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1128"
+            line="1129"
             column="17"/>
     </issue>
 
@@ -338,7 +305,7 @@
         errorLine2="    ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="176"
+            line="177"
             column="5"/>
     </issue>
 
@@ -349,7 +316,7 @@
         errorLine2="        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="325"
+            line="329"
             column="9"/>
     </issue>
 
@@ -360,7 +327,7 @@
         errorLine2="                                                      ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="472"
+            line="476"
             column="55"/>
     </issue>
 
@@ -371,7 +338,7 @@
         errorLine2="        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="518"
+            line="522"
             column="9"/>
     </issue>
 
@@ -448,7 +415,7 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="88"
+            line="90"
             column="7"/>
     </issue>
 
@@ -745,7 +712,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="104"
+            line="83"
             column="5"/>
     </issue>
 
@@ -756,7 +723,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="118"
+            line="97"
             column="5"/>
     </issue>
 
@@ -767,7 +734,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="133"
+            line="112"
             column="5"/>
     </issue>
 
@@ -778,7 +745,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="149"
+            line="128"
             column="5"/>
     </issue>
 
@@ -789,7 +756,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="166"
+            line="145"
             column="5"/>
     </issue>
 
@@ -800,7 +767,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="181"
+            line="160"
             column="5"/>
     </issue>
 
@@ -811,7 +778,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="206"
+            line="185"
             column="5"/>
     </issue>
 
@@ -822,7 +789,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="220"
+            line="199"
             column="5"/>
     </issue>
 
@@ -833,7 +800,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="237"
+            line="216"
             column="5"/>
     </issue>
 
@@ -844,7 +811,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="254"
+            line="233"
             column="5"/>
     </issue>
 
@@ -855,7 +822,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="270"
+            line="249"
             column="5"/>
     </issue>
 
@@ -866,7 +833,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="293"
+            line="272"
             column="5"/>
     </issue>
 
@@ -877,7 +844,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/util/IgnoreViolationRules.kt"
-            line="319"
+            line="298"
             column="5"/>
     </issue>
 
