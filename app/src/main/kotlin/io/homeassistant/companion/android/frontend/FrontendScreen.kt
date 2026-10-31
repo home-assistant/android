@@ -613,16 +613,16 @@ private fun SafeHAWebView(
     val backgroundColor = contentState?.backgroundColor ?: fallbackColor
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // The top is never drawn edge-to-edge: we always reserve and color the status bar strip.
-        // Before considering removal, https://github.com/home-assistant/frontend/issues/29125 and
-        // contrast with drawers (left/right status bar cannot be different colors) should be addressed.
-        statusBarColor.Overlay(
-            modifier = Modifier
-                .height(insetsPaddingValues.calculateTopPadding())
-                .fillMaxWidth()
-                // We don't want the status bar to color the left and right areas
-                .padding(insets.only(WindowInsetsSides.Horizontal).asPaddingValues()),
-        )
+        // The top status bar guardrail is retained for legacy servers (< 2026.2) where the frontend does not handle safe areas.
+        if (!serverHandleInsets) {
+            statusBarColor.Overlay(
+                modifier = Modifier
+                    .height(insetsPaddingValues.calculateTopPadding())
+                    .fillMaxWidth()
+                    // We don't want the status bar to color the left and right areas
+                    .padding(insets.only(WindowInsetsSides.Horizontal).asPaddingValues()),
+            )
+        }
 
         // Main content row with left/right safe areas
         Row(modifier = Modifier.weight(1f)) {
@@ -864,11 +864,7 @@ private fun ReportSafeAreaInsetsEffect(onSafeAreaInsetsChanged: (SafeAreaInsets)
     val displayMetrics = LocalResources.current.displayMetrics
     val layoutDirection = LocalLayoutDirection.current
 
-    // The app already reserves and colors the status bar strip itself (see SafeHAWebView), so the
-    // frontend must not add its own top inset — otherwise the top spacing would be applied twice.
-    // Kept 0 until the frontend can go edge-to-edge at the top.
-    // https://github.com/home-assistant/frontend/issues/29125
-    val top = 0f
+    val top = pxToDp(insets.getTop(density).toFloat(), displayMetrics)
     val bottom = pxToDp(insets.getBottom(density).toFloat(), displayMetrics)
     val left = pxToDp(insets.getLeft(density, layoutDirection).toFloat(), displayMetrics)
     val right = pxToDp(insets.getRight(density, layoutDirection).toFloat(), displayMetrics)
