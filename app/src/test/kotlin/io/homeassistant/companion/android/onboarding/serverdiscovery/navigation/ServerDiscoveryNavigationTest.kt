@@ -42,6 +42,7 @@ import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -187,6 +188,28 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up))
                 .assertIsDisplayed()
                 .performClick()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given ServerDiscovery when tapping manual setup then back twice quickly then each navigates once`() {
+        testNavigation {
+            mockCheckPermission(true)
+            navController.navigateToServerDiscovery()
+
+            onNodeWithText(stringResource(commonR.string.manual_setup))
+                .performScrollTo()
+                .performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performTwoQuickClicks()
+            waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
         }
     }

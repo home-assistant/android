@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.onboarding.URL_GETTING_STARTED_DOCUMEN
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import io.mockk.coVerify
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
@@ -52,6 +53,21 @@ internal class WelcomeInvitationNavigationTest : BaseOnboardingNavigationTest() 
             assertTrue(
                 navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true,
             )
+        }
+    }
+
+    @Test
+    fun `Given WelcomeInvitation when tapping accept twice quickly then Connection is shown once`() {
+        testNavigation(urlToOnboard = INVITATION_URL, fromInvitation = true) {
+            onNodeWithText(stringResource(commonR.string.welcome_invitation_accept))
+                .performScrollTo()
+                .performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeInvitationRoute>() == true)
         }
     }
 

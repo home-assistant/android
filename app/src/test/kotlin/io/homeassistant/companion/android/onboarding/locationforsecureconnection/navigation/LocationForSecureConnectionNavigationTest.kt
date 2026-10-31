@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTes
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.SetHomeNetworkRoute
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -96,6 +97,21 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
             activity.onBackPressedDispatcher.onBackPressed()
             waitForIdle()
             assertLocationForSecureConnectionWithMostSecureSelected()
+        }
+    }
+
+    @Test
+    fun `Given SetHomeNetwork when tapping back twice quickly then show LocationForSecureConnection`() {
+        testNavigation {
+            navController.navigateToLocationForSecureConnection(42)
+            goToSetHomeNetwork()
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performTwoQuickClicks()
+            waitForIdle()
+
+            assertTrue(
+                navController.currentBackStackEntry?.destination?.hasRoute<LocationForSecureConnectionRoute>() == true,
+            )
         }
     }
 

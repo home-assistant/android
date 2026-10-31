@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.util.compose.dropUnlessResumed
 import io.homeassistant.companion.android.util.getActivity
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.Serializable
@@ -151,7 +152,7 @@ internal fun NavGraphBuilder.frontendScreen(
             onBlockInsecureHelpClick = onSecurityLevelHelpClick,
             onOpenSettings = { onNavigateToSettings(null) },
             onOpenLocationSettings = onOpenLocationSettings,
-            onConfigureHomeNetwork = onConfigureHomeNetwork,
+            onConfigureHomeNetwork = dropUnlessResumed(block = onConfigureHomeNetwork),
             onSecurityLevelHelpClick = onSecurityLevelHelpClick,
             onShowSnackbar = onShowSnackbar,
             onPipReadinessChanged = onPipReadinessChanged,

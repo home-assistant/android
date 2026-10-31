@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.localfirst.navigation
 
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -20,12 +21,10 @@ internal fun NavController.navigateToLocalFirst(
 }
 
 internal fun NavGraphBuilder.localFirstScreen(onNextClick: (serverId: Int, hasPlainTextAccess: Boolean) -> Unit) {
-    composable<LocalFirstRoute> {
+    composable<LocalFirstRoute> { backStackEntry ->
+        val route = backStackEntry.toRoute<LocalFirstRoute>()
         LocalFirstScreen(
-            onNextClick = {
-                val route = it.toRoute<LocalFirstRoute>()
-                onNextClick(route.serverId, route.hasPlainTextAccess)
-            },
+            onNextClick = dropUnlessResumed { onNextClick(route.serverId, route.hasPlainTextAccess) },
         )
     }
 }
