@@ -266,6 +266,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
     @Test
     fun `Given a server discovered and connecting when authenticated then show NameYourDevice then back goes to ServerDiscovery not ConnectionScreen`() {
         val instanceUrl = "http://ha.local"
+        val internalUrl = "http://192.168.1.2:8123"
         testNavigation {
             mockCheckPermission(true)
             navController.navigateToServerDiscovery()
@@ -275,7 +276,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
                 .assertIsDisplayed()
 
             instanceChannel.send(
-                HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1)),
+                HomeAssistantInstance("Test", URL(instanceUrl), HomeAssistantVersion(2025, 9, 1), URL(internalUrl)),
             )
 
             mainDispatcherRule.testDispatcher.scheduler.advanceTimeBy(DELAY_BEFORE_DISPLAY_DISCOVERY.inWholeMilliseconds)
@@ -299,6 +300,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             val route = navController.currentBackStackEntry?.toRoute<NameYourDeviceRoute>()
             assertEquals(instanceUrl, route?.url)
             assertEquals("super_code", route?.authCode)
+            assertEquals(internalUrl, route?.internalUrl)
 
             onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performClick()
 

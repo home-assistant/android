@@ -28,7 +28,12 @@ const val SERVICE_TYPE = "_home-assistant._tcp"
 @VisibleForTesting
 const val LOCK_TAG = "HomeAssistantSearcher_lock"
 
-internal data class HomeAssistantInstance(val name: String, val url: URL, val version: HomeAssistantVersion?)
+internal data class HomeAssistantInstance(
+    val name: String,
+    val url: URL,
+    val version: HomeAssistantVersion?,
+    val internalUrl: URL? = null,
+)
 
 /**
  * Interface responsible for discovering Home Assistant instances on the local network.
@@ -253,9 +258,19 @@ private fun NsdServiceInfo.toHomeAssistantInstance(): HomeAssistantInstance? {
         Timber.w("Version is missing in NSD attributes for service: $serviceName")
     }
 
+    val internalUrl = attribute("internal_url")?.let {
+        try {
+            URL(it)
+        } catch (e: MalformedURLException) {
+            Timber.w(e, "Invalid internal url format: $it for service: $this")
+            null
+        }
+    }
+
     return HomeAssistantInstance(
         serviceName,
         url,
         haVersion,
+        internalUrl,
     )
 }

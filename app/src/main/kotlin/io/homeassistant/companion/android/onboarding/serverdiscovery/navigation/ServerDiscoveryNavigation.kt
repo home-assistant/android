@@ -6,8 +6,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscovered
 import io.homeassistant.companion.android.onboarding.serverdiscovery.ServerDiscoveryScreen
-import java.net.URL
 import kotlinx.serialization.Serializable
 
 /**
@@ -36,7 +36,7 @@ internal fun NavController.navigateToServerDiscovery(
 }
 
 internal fun NavGraphBuilder.serverDiscoveryScreen(
-    onConnectClick: (server: URL) -> Unit,
+    onConnectClick: (server: ServerDiscovered) -> Unit,
     onBackClick: () -> Unit,
     onHelpClick: suspend () -> Unit,
     onManualSetupClick: () -> Unit,
