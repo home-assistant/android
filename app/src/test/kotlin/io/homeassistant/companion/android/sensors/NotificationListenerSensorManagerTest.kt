@@ -37,10 +37,10 @@ class NotificationListenerSensorManagerTest {
     }
 
     @Test
-    fun `Given active notification count sensor when inspected then content setting is declared`() {
+    fun `Given active notification count sensor when inspected then content setting defaults to off`() {
         assertEquals(
             listOf(
-                Setting.Toggle(name = "active_notification_count_content_attrs", default = true),
+                Setting.Toggle(name = "active_notification_count_content_attrs", default = false),
             ),
             NotificationListenerSensorManager.activeNotificationCount.settings,
         )
