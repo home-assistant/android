@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.frontend
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.view.MotionEvent
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
@@ -85,6 +84,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
+import io.homeassistant.companion.android.frontend.gesture.FrontendSwipeListener
 import io.homeassistant.companion.android.frontend.improv.ui.ImprovOverlay
 import io.homeassistant.companion.android.frontend.insecure.BlockInsecureScreen
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
@@ -96,7 +96,6 @@ import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
-import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
@@ -104,9 +103,6 @@ import io.homeassistant.companion.android.util.sensitive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import timber.log.Timber
-
-/** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
-private const val MINIMUM_GESTURE_VELOCITY = 75f
 
 /** Duration of the loading overlay fade-out once the frontend is ready. */
 private const val LOADING_OVERLAY_FADE_OUT_MILLIS = 350
@@ -683,9 +679,7 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
 /**
  * Applies the WebView configuration required to host the Home Assistant frontend
  *
- * The `ClickableViewAccessibility` lint is suppressed because the touch listener only observes
- * multi-pointer swipe gestures (returning `false` for every event) — clicks still flow through
- * the WebView's built-in handling, so overriding `performClick` would add no accessibility value.
+ * The touch listener observes swipes; the WebView continues to handle clicks and accessibility.
  */
 @SuppressLint("ClickableViewAccessibility")
 private fun WebView.configureForFrontend(
@@ -713,24 +707,7 @@ private fun WebView.configureForFrontend(
         onDownloadRequested(url, contentDisposition, mimetype)
     }
 
-    setOnTouchListener(
-        object : OnSwipeListener(context) {
-            override fun onSwipe(
-                e1: MotionEvent,
-                e2: MotionEvent,
-                velocity: Float,
-                direction: GestureDirection,
-                pointerCount: Int,
-            ): Boolean {
-                if (pointerCount > 1 && velocity >= MINIMUM_GESTURE_VELOCITY) {
-                    onGesture(direction, pointerCount)
-                }
-                return false
-            }
-
-            override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean = false
-        },
-    )
+    setOnTouchListener(FrontendSwipeListener(view = this, onGesture = onGesture))
 }
 
 /**
