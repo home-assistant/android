@@ -26,6 +26,7 @@ data class UpdateLocationRequest(
     val altitude: Int? = null,
     val course: Int? = null,
     val verticalAccuracy: Int? = null,
+    val locationTime: String? = null,
 )
 
 /**
@@ -34,6 +35,8 @@ data class UpdateLocationRequest(
  * values, so this serializer is used to avoid null values being encoded.
  */
 private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationRequest> {
+    private const val LOCATION_TIME_INDEX = 8
+
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor(UpdateLocationRequest::class.jvmName) {
         element("gps", DoubleArraySerializer().descriptor)
         element("gps_accuracy", Int.serializer().descriptor)
@@ -43,6 +46,7 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
         element("altitude", Int.serializer().descriptor)
         element("course", Int.serializer().descriptor)
         element("verticalAccuracy", Int.serializer().descriptor)
+        element("locationTime", String.serializer().descriptor)
     }
 
     override fun serialize(encoder: Encoder, value: UpdateLocationRequest) {
@@ -59,6 +63,7 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
                 if (altitude != null) encodeIntElement(descriptor, 5, altitude)
                 if (course != null) encodeIntElement(descriptor, 6, course)
                 if (verticalAccuracy != null) encodeIntElement(descriptor, 7, verticalAccuracy)
+                if (locationTime != null) encodeStringElement(descriptor, LOCATION_TIME_INDEX, locationTime)
             }
         }
     }
@@ -74,6 +79,7 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
             var altitude: Int? = null
             var course: Int? = null
             var verticalAccuracy: Int? = null
+            var locationTime: String? = null
 
             while (true) {
                 when (val index = decodeElementIndex(descriptor)) {
@@ -85,6 +91,7 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
                     5 -> altitude = decodeIntElement(descriptor, index)
                     6 -> course = decodeIntElement(descriptor, index)
                     7 -> verticalAccuracy = decodeIntElement(descriptor, index)
+                    LOCATION_TIME_INDEX -> locationTime = decodeStringElement(descriptor, index)
                     CompositeDecoder.DECODE_DONE -> break
                 }
             }
@@ -97,6 +104,7 @@ private object UpdateLocationRequestSerializer : KSerializer<UpdateLocationReque
                 altitude = altitude,
                 course = course,
                 verticalAccuracy = verticalAccuracy,
+                locationTime = locationTime,
             )
         }
     }

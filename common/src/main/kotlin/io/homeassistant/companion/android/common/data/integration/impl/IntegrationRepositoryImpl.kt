@@ -745,6 +745,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 altitude = updateLocation.altitude,
                 course = updateLocation.course,
                 verticalAccuracy = updateLocation.verticalAccuracy,
+                locationTime = updateLocation.locationTime?.toString(),
             ),
         )
     }
