@@ -80,6 +80,7 @@ class EntitiesForDisplayManagerTest {
         coEvery { serverManager.webSocketRepository(serverId) } returns webSocketRepository
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
+        coEvery { integrationRepository.getEntity("light.bed") } returns entity("light.bed", "Bed Light")
         coEvery { integrationRepository.getEntityUpdates(entityIds) } returns entityUpdates
         coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
     }
@@ -125,7 +126,7 @@ class EntitiesForDisplayManagerTest {
     @Test
     fun `Given an entity without registry entry when snapshotting then the friendly name is used`() = runTest {
         givenRegistryName("Bed")
-        coEvery { integrationRepository.getEntities() } returns listOf(entity("switch.fan", "Fan"))
+        coEvery { integrationRepository.getEntity("switch.fan") } returns entity("switch.fan", "Fan")
 
         val items = manager.snapshot(serverId, listOf("switch.fan")).awaitLoadedOrNull()?.entities.orEmpty()
 
@@ -133,15 +134,38 @@ class EntitiesForDisplayManagerTest {
     }
 
     @Test
-    fun `Given several ids when snapshotting then the registry and the entities are each fetched once`() = runTest {
+    fun `Given several ids when snapshotting then the registry is fetched once and each entity on its own`() = runTest {
         givenRegistryName("Bed")
-        coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed"), entity("switch.fan", "Fan"))
+        coEvery { integrationRepository.getEntity("light.bed") } returns entity("light.bed")
+        coEvery { integrationRepository.getEntity("switch.fan") } returns entity("switch.fan", "Fan")
 
         val items = manager.snapshot(serverId, listOf("light.bed", "switch.fan")).awaitLoadedOrNull()?.entities.orEmpty()
 
         assertEquals(listOf("Bed", "Fan"), items.map { it.name })
         coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay() }
-        coVerify(exactly = 1) { integrationRepository.getEntities() }
+        coVerify(exactly = 1) { integrationRepository.getEntity("light.bed") }
+        coVerify(exactly = 1) { integrationRepository.getEntity("switch.fan") }
+    }
+
+    @Test
+    fun `Given some ids when snapshotting then the states of the whole server are never fetched`() = runTest {
+        givenRegistryName("Bed")
+
+        manager.snapshot(serverId, listOf("light.bed")).awaitLoadedOrNull()
+
+        coVerify(exactly = 0) { integrationRepository.getEntities() }
+    }
+
+    @Test
+    fun `Given an entity that fails to be retrieved when snapshotting then the others are kept in order`() = runTest {
+        givenRegistryName("Bed")
+        coEvery { integrationRepository.getEntity("switch.fan") } throws IllegalStateException("Network")
+        coEvery { integrationRepository.getEntity("sensor.temp") } returns entity("sensor.temp", "Temp")
+
+        val items = manager.snapshot(serverId, listOf("sensor.temp", "switch.fan", "light.bed"))
+            .awaitLoadedOrNull()?.entities.orEmpty()
+
+        assertEquals(listOf("sensor.temp", "light.bed"), items.map { it.entityId })
     }
 
     @Test
@@ -159,7 +183,7 @@ class EntitiesForDisplayManagerTest {
 
     @Test
     fun `Given no entity that can be retrieved when snapshotting then the flow completes with Error`() = runTest {
-        coEvery { integrationRepository.getEntities() } returns emptyList()
+        coEvery { integrationRepository.getEntity("light.bed") } returns null
 
         manager.snapshot(serverId, listOf("light.bed")).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
