@@ -35,6 +35,7 @@ private const val ARG_SCREEN_TEMPLATE_TILE_ID = "templateTileId"
 
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_ENTITY_DETAIL = "entity_detail"
+private const val SCREEN_COLOR_PICKER = "color_picker"
 private const val SCREEN_ENTITY_LIST = "entity_list"
 private const val SCREEN_MANAGE_SENSORS = "manage_all_sensors"
 private const val SCREEN_SINGLE_SENSOR_MANAGER = "sensor_manager"
@@ -122,6 +123,29 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                                 isKelvin,
                             )
                         },
+                        onColorChanged = { rgb ->
+                            mainViewModel.setColor(
+                                entity.entityId,
+                                rgb,
+                            )
+                        },
+                        onNavigateToColorPicker = {
+                            swipeDismissableNavController.navigate("$SCREEN_COLOR_PICKER/${entity.entityId}")
+                        },
+                        isToastEnabled = uiState.isToastEnabled,
+                        isHapticEnabled = uiState.isHapticEnabled,
+                    )
+                }
+            }
+            composable("$SCREEN_COLOR_PICKER/{entityId}") {
+                val entityId = it.arguments?.getString("entityId")
+                if (entityId != null) {
+                    CustomColorPicker(
+                        onColorChanged = { rgb ->
+                            mainViewModel.setColor(entityId, rgb)
+                            swipeDismissableNavController.popBackStack()
+                        },
+                        onBack = { swipeDismissableNavController.popBackStack() },
                         isToastEnabled = uiState.isToastEnabled,
                         isHapticEnabled = uiState.isHapticEnabled,
                     )
