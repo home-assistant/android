@@ -26,10 +26,10 @@ sealed interface ConnectionState {
  */
 sealed interface SessionFailure {
     /**
-     * The server rejected the session, for example because the stream does not support WebRTC
-     * (`webrtc_offer_failed`, `webrtc_get_client_config_failed`).
+     * The server rejected the session, for example because the stream does not support WebRTC. The
+     * [message] carries whatever detail the server gave (including its error code, if any).
      */
-    data class Signaling(val code: String?, val message: String?) : SessionFailure
+    data class Signaling(val message: String?) : SessionFailure
 
     /** The media connection could not be established, or was lost and could not be recovered. */
     data object ConnectionLost : SessionFailure

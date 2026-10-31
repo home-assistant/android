@@ -91,6 +91,26 @@ class HAWebViewClientTest {
     }
 
     @Test
+    fun `Given onPageStarted callback when onPageStarted then invokes callback with the loading url`() {
+        var startedUrl: String? = null
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            clientCertProvider = clientCertProvider,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = null,
+            onPageFinished = null,
+            onPageStarted = { startedUrl = it },
+            onReceivedHttpAuthRequest = null,
+        )
+
+        client.onPageStarted(null, "http://homeassistant.local:80/lovelace", null)
+
+        assertEquals("http://homeassistant.local:80/lovelace", startedUrl)
+    }
+
+    @Test
     fun `Given SSL_DATE_INVALID error when onReceivedSslError then emits SslError`() {
         testSslError(SslError.SSL_DATE_INVALID, commonR.string.webview_error_SSL_DATE_INVALID)
     }

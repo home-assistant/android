@@ -52,6 +52,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
+import io.homeassistant.companion.android.frontend.webrtc.WebRtcHandler
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -60,9 +61,12 @@ import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -133,6 +137,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
+    private val webRtcHandler: WebRtcHandler,
     private val keyChainRepository: KeyChainRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
@@ -158,6 +163,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
         matterThreadHandler: FrontendMatterThreadHandler,
+        webRtcHandler: WebRtcHandler,
         keyChainRepository: KeyChainRepository,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
@@ -180,6 +186,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler = improvHandler,
         barcodeScannerHandler = barcodeScannerHandler,
         matterThreadHandler = matterThreadHandler,
+        webRtcHandler = webRtcHandler,
         keyChainRepository = keyChainRepository,
     )
 
@@ -270,6 +277,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             onFrontendError = ::onError,
             onCrash = ::onRetry,
             onPageFinished = ::onPageFinished,
+            onPageStarted = { onPageStarted() },
             onUrlIntercepted = { uri, _ -> onUrlIntercepted(uri) },
             onReceivedHttpAuthRequest = { handler, host, resource, realm ->
                 viewModelScope.launch {
@@ -503,6 +511,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     override fun onCleared() {
         exoPlayerManager.close()
+        // viewModelScope is already cancelling, which stops the session collectors but does not
+        // release their native peer connections; run the release on a short-lived scope that
+        // outlives it.
+        val cleanupScope = CoroutineScope(Dispatchers.Main.immediate)
+        cleanupScope.launch { webRtcHandler.stopAll() }.invokeOnCompletion { cleanupScope.cancel() }
     }
 
     /**
@@ -732,19 +745,22 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
-     * Called when the app is leaving the foreground (host activity stop). When the user enabled
-     * "always show first view on app start", resets the frontend to its default dashboard so the
-     * next launch starts there — unless the user is in the Home Assistant settings or add-ons area.
+     * Called when the host activity stops (the frontend leaves the foreground). Ends any mic talk-back
+     * session. When the user enabled "always show first view on app start", resets the frontend to its
+     * default dashboard — unless the user is in the Home Assistant settings or add-ons area.
      *
-     * The preference is read first on purpose: it suspends, which lets the pending stop dispatch
-     * complete so [LifecycleHandler.isAppInBackground] reads an up-to-date value (the activity stop
-     * is not yet reflected at the instant the stop event fires). The background check then excludes
-     * the case where one of our own activities (e.g. NFC write) came to the foreground.
+     * Dispatched on the non-immediate Main dispatcher on purpose: this runs during the activity's
+     * `ON_STOP`, before [LifecycleHandler.onActivityStopped] has decremented its activity count, so
+     * posting the work lets those stop callbacks finish first and [LifecycleHandler.isAppInBackground]
+     * reads an up-to-date value for the dashboard reset. The mic teardown does not need that value: it
+     * happens on any stop, so opening another of our own activities (e.g. NFC write) still ends it.
      */
     fun onLeavingApp(currentUrl: String?) {
-        viewModelScope.launch {
-            if (!prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()) return@launch
+        viewModelScope.launch(Dispatchers.Main) {
+            webRtcHandler.stopAll(notifyFrontend = true)
+
             if (!LifecycleHandler.isAppInBackground()) return@launch
+            if (!prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()) return@launch
             if (!shouldShowFirstView(currentUrl)) return@launch
             navigateToDefaultDashboard(_viewState.value.serverId)
         }
@@ -894,9 +910,24 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is FrontendHandlerEvent.Connected -> onConnected()
 
             is FrontendHandlerEvent.Disconnected -> {
-                // Disconnection handling not yet implemented
                 Timber.d("Frontend external bus disconnected")
+                // Frontend WebSocket disconnected, stopping the WebRTC stream and notify the frontend.
+                webRtcHandler.stopAll(notifyFrontend = true)
             }
+
+            is FrontendHandlerEvent.StartWebRtcStream -> viewModelScope.launch {
+                webRtcHandler.start(
+                    scope = viewModelScope,
+                    serverId = viewState.value.serverId,
+                    messageId = result.messageId,
+                    streamType = result.streamType,
+                    entityId = result.entityId,
+                )
+            }
+
+            is FrontendHandlerEvent.StopWebRtcStream ->
+                viewModelScope.launch { webRtcHandler.stop(result.sessionId) }
+
             is FrontendHandlerEvent.Loaded -> showContent()
 
             is FrontendHandlerEvent.ThemeUpdated -> {
@@ -1215,6 +1246,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 ),
             )
         }
+    }
+
+    /**
+     * A main-frame load begins, including a same-URL reload the view-state URL never reflects: the
+     * page that owns any mic session is being replaced and the new one has no session id to stop it,
+     * so the sessions are released now rather than once the load finishes, which can take a while.
+     */
+    private fun onPageStarted() {
+        viewModelScope.launch { webRtcHandler.stopAll() }
     }
 
     /**
