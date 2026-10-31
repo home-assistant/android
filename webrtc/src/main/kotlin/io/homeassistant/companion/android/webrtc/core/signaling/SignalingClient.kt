@@ -26,10 +26,12 @@ interface SignalingClient {
      * Send the SDP offer for a new session and observe the signaling events for it.
      *
      * The returned Flow is cold: collecting it starts the session on the server and cancelling
-     * the collection closes the session. There is at most one [SignalingEvent.Session] and one
-     * [SignalingEvent.Answer] per collection, while [SignalingEvent.Candidate] can be emitted at
-     * any time (trickle ICE). A session that cannot be started, or that the server rejects, is
-     * reported as a terminal [SignalingEvent.Error].
+     * the collection closes the session. It completes when the server ends the session or the
+     * signaling transport is lost; the session is never reopened on the collector's behalf. There
+     * is at most one [SignalingEvent.Session] and one [SignalingEvent.Answer] per collection,
+     * while [SignalingEvent.Candidate] can be emitted at any time (trickle ICE). A session that
+     * cannot be started, or that the server rejects, is reported as a terminal
+     * [SignalingEvent.Error].
      */
     fun openSession(offerSdp: String): Flow<SignalingEvent>
 

@@ -8,6 +8,7 @@ internal object WebSocketConstants {
     const val EVENT_ENTITY_REGISTRY_UPDATED = "entity_registry_updated"
 
     const val SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN = "assist_pipeline/run"
+    const val SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER = "camera/webrtc/offer"
     const val SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS = "subscribe_events"
     const val SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES = "subscribe_entities"
     const val SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER = "subscribe_trigger"

@@ -287,15 +287,48 @@ class WebRtcSessionTest {
     }
 
     @Test
-    fun `Given a server closed subscription When streaming Then the session renegotiates`() = runTest {
+    fun `Given a connected session When the signaling session closes Then the stream continues without renegotiating`() = runTest {
         val session = createSession()
         startConnectedSession(session)
 
+        // The signaling session is kept open while streaming: closing it closes the session on the
+        // server, which stops the stream for some cameras.
+        assertEquals(1, signaling.activeSessionCount)
+
+        // The server ended it or the transport dropped: media flows on its own transport, so only the
+        // peer connection decides whether a reconnection is needed.
+        signaling.currentSession.close()
+        advanceUntilIdle()
+
+        assertEquals(ConnectionState.Connected, session.state.value)
+        assertEquals(1, signaling.openSessionCount)
+        assertFalse(factory.lastController.disposed)
+    }
+
+    @Test
+    fun `Given a negotiated session When a second answer arrives Then it is ignored`() = runTest {
+        val session = createSession()
+        startConnectedSession(session)
+
+        signaling.currentSession.trySend(SignalingEvent.Answer("v=0 replayed answer"))
+        advanceUntilIdle()
+
+        assertEquals(listOf("v=0 answer"), factory.lastController.appliedAnswers)
+        assertEquals(ConnectionState.Connected, session.state.value)
+    }
+
+    @Test
+    fun `Given the signaling subscription closes before connecting Then the session renegotiates`() = runTest {
+        val session = createSession()
+        session.start()
+        advanceUntilIdle()
+        assertEquals(ConnectionState.Connecting, session.state.value)
+
+        // A close before the connection is established is a real server drop: the session renegotiates.
         signaling.currentSession.close()
         advanceUntilIdle()
 
         assertEquals(2, signaling.openSessionCount)
-        assertEquals(ConnectionState.Reconnecting, session.state.value)
     }
 
     @Test
