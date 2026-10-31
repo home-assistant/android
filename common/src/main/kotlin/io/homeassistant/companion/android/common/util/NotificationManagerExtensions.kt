@@ -33,6 +33,13 @@ fun NotificationManagerCompat.getActiveNotification(tag: String?, id: Int): Stat
     return this.getNotificationManager().activeNotifications.singleOrNull { s -> s.id == id && s.tag == tag }
 }
 
+/**
+ * Returns the group of the active notification with the given [tag] and [id], or `null` if there is no such
+ * notification or it is not in a group set by the app (groups created automatically by Android are not returned).
+ */
+fun NotificationManagerCompat.getActiveNotificationGroup(tag: String?, id: Int): String? =
+    getActiveNotification(tag, id)?.notification?.group?.takeIf { it.isNotBlank() }
+
 fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolean = cancelNotificationGroupIfNeeded(
     this.getNotificationManager(),
     tag,
