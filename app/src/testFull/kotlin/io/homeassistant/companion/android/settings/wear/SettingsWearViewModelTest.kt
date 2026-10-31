@@ -37,7 +37,7 @@ class SettingsWearViewModelTest {
         capabilityClient.capabilities[CAPABILITY_WEAR_APP] = setOf("1234")
         nodeClient = FakeNodeClient(application)
         nodeClient.setNodes(listOf("1234"))
-        viewModel = SettingsWearViewModel(settingsWearRepository, application)
+        viewModel = SettingsWearViewModel(settingsWearRepository, mockk(), application)
     }
 
     @Test
