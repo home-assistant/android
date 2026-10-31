@@ -1170,6 +1170,17 @@ class EntitiesForDisplayManagerTest {
                     awaitComplete()
                 }
             }
+
+            @Test
+            fun `Given no state subscription when observing then flow completes without following the registries`() = runTest {
+                coEvery { integrationRepository.getEntityUpdates() } returns null
+
+                manager.observeInContext(serverId).test {
+                    awaitInitialLoad()
+                    awaitComplete()
+                }
+                coVerify(exactly = 0) { webSocketRepository.getEntityRegistryUpdates() }
+            }
         }
     }
 }
