@@ -13,6 +13,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
@@ -127,7 +128,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityChanges(listOf("entity1")) } returns channelFlow {
             close()
         }
         coJustRun { mockedDao.deleteAll(any()) }
@@ -155,8 +156,8 @@ class BaseGlanceEntityWidgetReceiverTest {
         )
         val glanceIds = listOf<GlanceId>(FakeGlanceId(1), FakeGlanceId(2))
         val integrationRepository = mockk<IntegrationRepository>()
-        var widget1EntityProducer: ProducerScope<Entity>? = null
-        var widget2EntityProducer: ProducerScope<Entity>? = null
+        var widget1EntityProducer: ProducerScope<EntityChange>? = null
+        var widget2EntityProducer: ProducerScope<EntityChange>? = null
 
         serverRegistered()
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
@@ -165,11 +166,11 @@ class BaseGlanceEntityWidgetReceiverTest {
         coJustRun { mockedWidget.update(context, any()) }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityChanges(listOf("entity1")) } returns channelFlow {
             widget1EntityProducer = this
             awaitClose()
         }
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity2")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityChanges(listOf("entity2")) } returns channelFlow {
             widget2EntityProducer = this
             awaitClose()
         }
@@ -180,12 +181,12 @@ class BaseGlanceEntityWidgetReceiverTest {
         assertNull(entityReceived)
 
         val dummyUpdateWidget1: Entity = mockk()
-        widget1EntityProducer!!.send(dummyUpdateWidget1)
+        widget1EntityProducer!!.send(EntityChange.StateChanged(dummyUpdateWidget1))
         advanceUntilIdle()
         assertEquals(dummyUpdateWidget1, entityReceived)
 
         val dummyUpdateWidget2: Entity = mockk()
-        widget2EntityProducer!!.send(dummyUpdateWidget2)
+        widget2EntityProducer!!.send(EntityChange.StateChanged(dummyUpdateWidget2))
         advanceUntilIdle()
         assertEquals(dummyUpdateWidget2, entityReceived)
         advanceUntilIdle()
@@ -198,6 +199,43 @@ class BaseGlanceEntityWidgetReceiverTest {
         // Closing producers to end the test
         widget1EntityProducer.close()
         widget2EntityProducer.close()
+    }
+
+    @Test
+    fun `Given a removed entity when watching for changes then the widget is updated without an entity update`() = runTest {
+        val context: Context = mockk()
+        var entityReceived: Entity? = null
+        val receiver = getReceiver(
+            mapOf(1 to EntitiesPerServer(42, listOf("entity1"))),
+            onEntityUpdateCallback = { _, _, entity ->
+                entityReceived = entity
+            },
+        )
+        val integrationRepository = mockk<IntegrationRepository>()
+        var producer: ProducerScope<EntityChange>? = null
+
+        serverRegistered()
+        coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns listOf<GlanceId>(FakeGlanceId(1))
+        every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
+        every { glanceManager.getGlanceIdBy(any<Int>()) } answers { FakeGlanceId(firstArg()) }
+        coJustRun { mockedWidget.update(context, any()) }
+        coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
+        coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { integrationRepository.getEntityChanges(listOf("entity1")) } returns channelFlow {
+            producer = this
+            awaitClose()
+        }
+
+        receiver.onReceive(context, mockIntent(Intent.ACTION_SCREEN_ON))
+        advanceUntilIdle()
+
+        producer!!.send(EntityChange.Removed("entity1"))
+        advanceUntilIdle()
+
+        assertNull(entityReceived)
+        coVerify(exactly = 1) { mockedWidget.update(context, FakeGlanceId(1)) }
+
+        producer.close()
     }
 
     @Test
@@ -231,14 +269,14 @@ class BaseGlanceEntityWidgetReceiverTest {
         val glanceIds = listOf<GlanceId>(FakeGlanceId(1))
         val integrationRepository = mockk<IntegrationRepository>()
 
-        var producer: ProducerScope<Entity>? = null
+        var producer: ProducerScope<EntityChange>? = null
 
         serverRegistered()
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityChanges(listOf("entity1")) } returns channelFlow {
             producer = this
             awaitClose()
         }
