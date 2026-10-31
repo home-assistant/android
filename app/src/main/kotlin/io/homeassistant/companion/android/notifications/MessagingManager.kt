@@ -139,6 +139,7 @@ class MessagingManager @Inject constructor(
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
     private val bluetoothSensorManager: BluetoothSensorManager,
+    private val conversationNotificationStyle: ConversationNotificationStyle,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -1112,6 +1113,8 @@ class MessagingManager @Inject constructor(
         handleLive(notificationBuilder, data)
 
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
+
+        conversationNotificationStyle.apply(notificationBuilder, data)
 
         if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             handleLegacyPriority(notificationBuilder, data)
