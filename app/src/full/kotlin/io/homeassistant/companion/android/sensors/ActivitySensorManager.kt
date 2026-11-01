@@ -28,6 +28,8 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase.Companion.ACTION_UPDATE_SENSOR
+import io.homeassistant.companion.android.common.sensors.SensorReceiverBase.Companion.EXTRA_SENSOR_ID
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase.Companion.shouldDoFastUpdates
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -169,8 +171,13 @@ class ActivitySensorManager @Inject constructor(
                     ),
                 )
 
-                // Send the update immediately
-                SensorReceiver.updateAllSensors(applicationContext)
+                // Send sleep confidence immediately without refreshing unrelated sensor managers.
+                applicationContext.sendBroadcast(
+                    Intent(applicationContext, SensorReceiver::class.java).apply {
+                        action = ACTION_UPDATE_SENSOR
+                        putExtra(EXTRA_SENSOR_ID, sleepConfidence.id)
+                    },
+                )
             }
         }
         if (SleepSegmentEvent.hasEvents(intent) && isEnabled(sleepSegment)) {
