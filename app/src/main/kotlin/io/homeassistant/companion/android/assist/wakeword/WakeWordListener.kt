@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.microwakeword.MicroWakeWord
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
+import java.util.Random
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +25,12 @@ import timber.log.Timber
 /** Number of audio chunks to skip wake word processing after a detection (2s at 10ms/chunk). */
 @VisibleForTesting
 internal const val POST_DETECTION_COOLDOWN_CHUNKS = 200
+
+/** Warm-up of a new engine: 4s (400 chunks of 160 samples at 16kHz) of background noise. */
+private const val WARM_UP_CHUNKS = 400
+private const val WARM_UP_CHUNK_SAMPLES = 160
+private const val WARM_UP_NOISE_STDDEV = 25.0
+private const val WARM_UP_SEED = 42L
 
 /**
  * Listens for wake words using microWakeWord TFLite models.
@@ -161,8 +168,24 @@ private suspend fun createMicroWakeWord(context: Context, modelConfig: MicroWake
             featureStepSizeMs = modelConfig.micro.featureStepSize,
             probabilityCutoff = modelConfig.micro.probabilityCutoff,
             slidingWindowSize = modelConfig.micro.slidingWindowSize,
-        )
+        ).also(::warmUp)
     }
+
+/**
+ * A freshly created engine needs a few seconds of audio to settle its front end (noise estimate),
+ * during which speech is missed. The listener is recreated every time Assist closes, so feed the
+ * engine a few seconds of low-level background noise, faster than real time, before the real audio.
+ */
+private fun warmUp(microWakeWord: MicroWakeWord) {
+    val noise = Random(WARM_UP_SEED)
+    val chunk = ShortArray(WARM_UP_CHUNK_SAMPLES)
+    repeat(WARM_UP_CHUNKS) {
+        for (i in chunk.indices) {
+            chunk[i] = (noise.nextGaussian() * WARM_UP_NOISE_STDDEV).toInt().toShort()
+        }
+        microWakeWord.processAudio(chunk)
+    }
+}
 
 /**
  * Load a model file from assets into a direct ByteBuffer suitable for JNI.
