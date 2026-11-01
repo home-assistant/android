@@ -14,7 +14,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.SystemClock
 import android.service.voice.VoiceInteractionService
 import androidx.annotation.RequiresPermission
 import androidx.annotation.VisibleForTesting
@@ -38,6 +37,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 /**
@@ -69,7 +70,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         )
     }
     private var isServiceReady = false
-    private var lastResumeAt = -RESUME_DEDUP_WINDOW_MS
+    private val resumeMutex = Mutex()
 
     /** One-way latch set once the service has begun tearing down (via [onShutdown] or [onDestroy]). */
     private var isTornDown = false
@@ -177,11 +178,15 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             return
         }
 
-        serviceScope.launch {
-            wakeWordListener.stop()
-            val model = loadWakeWordModel()
-            wakeWordListener.start(this, model)
-        }
+        serviceScope.launch { restartListener() }
+    }
+
+    /** Stops the current detection, if any, and starts a new one with the currently selected model. */
+    @SuppressLint("MissingPermission")
+    private suspend fun restartListener() {
+        wakeWordListener.stop()
+        val model = loadWakeWordModel()
+        wakeWordListener.start(serviceScope, model)
     }
 
     private suspend fun loadWakeWordModel(): MicroWakeWordModelConfig {
@@ -223,16 +228,16 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
      * Resume wake word listening if it is still enabled in settings.
      */
     private fun resumeListening() {
-        // Closing the Assist screen requests a resume from several places at once (activity
-        // destruction and the audio strategy). Run the first one immediately and drop the
-        // duplicates arriving right after, otherwise the listener is restarted several times
-        // concurrently and the wake word is missed while it settles.
-        val now = SystemClock.elapsedRealtime()
-        if (now - lastResumeAt < RESUME_DEDUP_WINDOW_MS) return
-        lastResumeAt = now
         serviceScope.launch {
-            if (assistConfigManager.isWakeWordEnabled()) {
-                startListening()
+            if (assistConfigManager.isWakeWordEnabled() && hasRecordAudioPermission()) {
+                // Closing the Assist screen asks to resume from several places at once, so only
+                // restart the listener when it is not already running instead of restarting it
+                // once per request.
+                resumeMutex.withLock {
+                    if (!wakeWordListener.isListening) {
+                        restartListener()
+                    }
+                }
             }
         }
     }
@@ -348,9 +353,6 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         const val EXTRA_WAKE_WORD = "wake_word"
 
         private const val ACTION_WAKE_WORD_DETECTED = "io.homeassistant.companion.android.WAKE_WORD_DETECTED"
-
-        /** Resume requests arriving within this window of a previous one are duplicates. */
-        private const val RESUME_DEDUP_WINDOW_MS = 500L
 
         /**
          * Check if this VoiceInteractionService is currently the active system assistant.

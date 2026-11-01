@@ -61,7 +61,13 @@ class WakeWordListener(
     ) -> MicroWakeWord = { modelConfig -> createMicroWakeWord(context, modelConfig) },
 ) {
     private val detectionMutex = Mutex()
+
+    @Volatile
     private var detectionJob: Job? = null
+
+    /** Whether a detection is currently running, i.e. [start] was called and neither [stop] nor an error ended it. */
+    val isListening: Boolean
+        get() = detectionJob?.isActive == true
 
     /**
      * Start listening for wake words.

@@ -115,6 +115,26 @@ class WakeWordListenerTest {
 
             assertEquals(2, factoryCallCount, "Factory should be called again for second start")
         }
+
+        @Test
+        fun `Given listener not started then it is not listening`() = runTest {
+            val listener = createListener()
+
+            assertFalse(listener.isListening)
+        }
+
+        @Test
+        fun `Given start called then it is listening until stop is called`() = runTest {
+            val listener = createListener()
+
+            listener.start(backgroundScope, testModelConfig, testScheduler)
+            runCurrent()
+            assertTrue(listener.isListening)
+
+            listener.stop()
+            runCurrent()
+            assertFalse(listener.isListening)
+        }
     }
 
     @Nested

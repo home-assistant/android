@@ -156,6 +156,30 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
+    fun `Given RESUME_LISTENING action and listener already listening then do not restart it`() = runTest {
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
+        every { wakeWordListener.isListening } returns true
+
+        sendAction(ACTION_RESUME_LISTENING)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { wakeWordListener.stop() }
+        coVerify(exactly = 0) { wakeWordListener.start(any(), any()) }
+    }
+
+    @Test
+    fun `Given RESUME_LISTENING action and listener stopped then restart it`() = runTest {
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+        every { wakeWordListener.isListening } returns false
+
+        sendAction(ACTION_RESUME_LISTENING)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { wakeWordListener.start(any(), microWakeWordModelConfigs[0]) }
+    }
+
+    @Test
     fun `Given null intent when onStartCommand then do nothing`() = runTest {
         service.onStartCommand(null, 0, 1)
         advanceUntilIdle()
