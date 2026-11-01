@@ -168,7 +168,8 @@ class SensorUpdater @VisibleForTesting internal constructor(
                         } else {
                             // Re-register during the next normal refresh when the server rejects the update.
                             val sensor = sensorRepository.get(basicSensor.id, fullSensor.sensor.serverId)
-                            if (sensor != null) {
+                            // Missing rows have an unregistered default; do not persist it on rejection.
+                            if (sensor?.registered != null) {
                                 sensorRepository.update(
                                     sensor.copy(registered = null, lastSentState = null, lastSentIcon = null),
                                 )

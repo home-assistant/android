@@ -9,15 +9,18 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.server.ServerDao
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
-import org.junit.jupiter.params.provider.ValueSource
 
 class SensorUpdaterTargetedTest {
     private val basicSensor = SensorManager.BasicSensor(
@@ -101,9 +104,10 @@ class SensorUpdaterTargetedTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = [true, false])
+    @CsvSource("true, true", "true, false", "false, true")
     fun `Given a rejected targeted update when delivering then only that server is reset for normal refresh`(
         sensorStillExists: Boolean,
+        registeredAfterResponse: Boolean,
     ) = runTest {
         val rejected = Sensor(
             id = basicSensor.id,
@@ -120,26 +124,56 @@ class SensorUpdaterTargetedTest {
         val acceptedIntegration = mockk<IntegrationRepository>(relaxed = true) {
             coEvery { updateSensors(any()) } returns true
         }
-        coEvery { integration.updateSensors(any()) } returns false
+        val dao = mockk<SensorDao>(relaxed = true)
+        val serverDao = mockk<ServerDao> {
+            coEvery { getAll() } returns listOf(1, 2).map { serverId ->
+                mockk<Server> { every { id } returns serverId }
+            }
+        }
+        val realRepository = SensorRepositoryImpl(dao, serverDao, setOf(basicSensor))
+        var persisted: Sensor? = rejected
+        coEvery { dao.get(basicSensor.id, 1) } coAnswers { persisted }
+        coEvery { dao.upsert(any()) } coAnswers { persisted = firstArg() }
+        coEvery { integration.updateSensors(any()) } coAnswers {
+            persisted = rejected.copy(registered = registeredAfterResponse).takeIf { sensorStillExists }
+            if (!sensorStillExists) {
+                // The real repository returns an unregistered default, not null, for a missing row.
+                assertEquals(
+                    Sensor(basicSensor.id, 1, enabled = basicSensor.enabledByDefault, state = ""),
+                    realRepository.get(basicSensor.id, 1),
+                )
+            }
+            false
+        }
         coEvery { serverManager.integrationRepository(2) } returns acceptedIntegration
-        coEvery { repository.getFull(basicSensor.id) } returns mapOf(
+        coEvery { dao.getFull(basicSensor.id) } returns mapOf(
             rejected to emptyList(),
             accepted to emptyList(),
         )
-        coEvery { repository.get(basicSensor.id, 1) } returns rejected.takeIf { sensorStillExists }
 
-        updater.updateSensor(basicSensor.id)
+        SensorUpdater(
+            mockk<Context>(relaxed = true),
+            serverManager,
+            realRepository,
+            AppVersion("1.0", 1),
+            setOf(unrelatedManager, owner),
+            SensorSettingsIntentProvider { _, _, _, _ -> null },
+            mockk(relaxed = true),
+        ).updateSensor(basicSensor.id)
 
         coVerify(exactly = 1) { integration.updateSensors(any()) }
         coVerify(exactly = 1) { acceptedIntegration.updateSensors(any()) }
-        coVerify(exactly = 1) { repository.get(basicSensor.id, 1) }
         coVerify(exactly = if (sensorStillExists) 1 else 0) {
-            repository.update(rejected.copy(registered = null, lastSentState = null, lastSentIcon = null))
+            dao.upsert(rejected.copy(registered = null, lastSentState = null, lastSentIcon = null))
         }
-        coVerify(exactly = if (sensorStillExists) 1 else 0) { repository.update(any()) }
-        coVerify(exactly = 0) { repository.updateLastSentStateAndIcon(any(), 1, any(), any()) }
+        coVerify(exactly = if (sensorStillExists) 1 else 0) { dao.upsert(any()) }
+        assertEquals(
+            rejected.copy(registered = null, lastSentState = null, lastSentIcon = null).takeIf { sensorStillExists },
+            persisted,
+        )
+        coVerify(exactly = 0) { dao.updateLastSentStateAndIcon(any(), 1, any(), any()) }
         coVerify(exactly = 1) {
-            repository.updateLastSentStateAndIcon(basicSensor.id, 2, "87", "mdi:sleep")
+            dao.updateLastSentStateAndIcon(basicSensor.id, 2, "87", "mdi:sleep")
         }
         coVerify(exactly = 1) { owner.requestSensorUpdate() }
         coVerify(exactly = 0) { unrelatedManager.requestSensorUpdate() }
