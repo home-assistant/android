@@ -333,4 +333,28 @@ class WakeWordListenerTest {
             }
         }
     }
+
+    @Nested
+    inner class WarmUpTests {
+
+        @Test
+        fun `Given an engine when warming it up then it processes low level noise and ignores the result`() {
+            val processed = mutableListOf<ShortArray>()
+            val engine = mockk<MicroWakeWord> {
+                // The same buffer is reused between calls, so keep a copy of each one
+                every { processAudio(any()) } answers {
+                    processed += firstArg<ShortArray>().copyOf()
+                    true
+                }
+            }
+
+            warmUp(engine)
+
+            assertEquals(WARM_UP_CHUNKS, processed.size)
+            assertTrue(processed.all { it.size == WARM_UP_CHUNK_SAMPLES })
+            // Background noise only: far below the level of speech (a few thousand)
+            assertTrue(processed.all { chunk -> chunk.all { kotlin.math.abs(it.toInt()) < 500 } })
+            assertTrue(processed.any { chunk -> chunk.any { it.toInt() != 0 } })
+        }
+    }
 }

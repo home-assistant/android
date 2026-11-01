@@ -27,8 +27,11 @@ import timber.log.Timber
 internal const val POST_DETECTION_COOLDOWN_CHUNKS = 200
 
 /** Warm-up of a new engine: 4s (400 chunks of 160 samples at 16kHz) of background noise. */
-private const val WARM_UP_CHUNKS = 400
-private const val WARM_UP_CHUNK_SAMPLES = 160
+@VisibleForTesting
+internal const val WARM_UP_CHUNKS = 400
+
+@VisibleForTesting
+internal const val WARM_UP_CHUNK_SAMPLES = 160
 private const val WARM_UP_NOISE_STDDEV = 25.0
 private const val WARM_UP_SEED = 42L
 
@@ -176,7 +179,8 @@ private suspend fun createMicroWakeWord(context: Context, modelConfig: MicroWake
  * during which speech is missed. The listener is recreated every time Assist closes, so feed the
  * engine a few seconds of low-level background noise, faster than real time, before the real audio.
  */
-private fun warmUp(microWakeWord: MicroWakeWord) {
+@VisibleForTesting
+internal fun warmUp(microWakeWord: MicroWakeWord) {
     val noise = Random(WARM_UP_SEED)
     val chunk = ShortArray(WARM_UP_CHUNK_SAMPLES)
     repeat(WARM_UP_CHUNKS) {
