@@ -4,15 +4,29 @@ import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.response.ReadRecordsResponse
+import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
+import io.homeassistant.companion.android.database.sensor.Sensor
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -24,13 +38,170 @@ class HealthConnectSensorManagerTest {
         every { applicationContext } returns this
     }
 
-    private val sensorManager = HealthConnectSensorManager(context, mockk(), mockk())
+    private val sensorRepository = mockk<SensorRepository>(relaxed = true)
+    private val sensorManager = HealthConnectSensorManager(context, sensorRepository, mockk())
     private val healthConnectClient = mockk<HealthConnectClient>(relaxed = true)
 
     @BeforeEach
     fun setup() {
         mockkObject(HealthConnectClient.Companion)
         every { HealthConnectClient.getOrCreate(any()) } returns healthConnectClient
+    }
+
+    @Test
+    fun `Given disabled sensors when updating then permissions are queried once`() = runTest {
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returns emptySet()
+
+        sensorManager.requestSensorUpdate()
+
+        coVerify(exactly = 1) { healthConnectClient.permissionController.getGrantedPermissions() }
+        coVerify(exactly = 0) { healthConnectClient.readRecords(any<ReadRecordsRequest<Record>>()) }
+        coVerify(exactly = 0) { healthConnectClient.aggregate(any()) }
+    }
+
+    @Test
+    fun `Given granted permissions but disabled sensors when updating then no health data is read`() = runTest {
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returns
+            setOf(HealthPermission.getReadPermission(StepsRecord::class))
+
+        sensorManager.requestSensorUpdate()
+
+        coVerify(exactly = 1) { healthConnectClient.permissionController.getGrantedPermissions() }
+        coVerify(exactly = 1) { sensorRepository.get(HealthConnectSensorManager.steps.id) }
+        coVerify(exactly = 0) { healthConnectClient.readRecords(any<ReadRecordsRequest<Record>>()) }
+        coVerify(exactly = 0) { healthConnectClient.aggregate(any()) }
+    }
+
+    @Test
+    fun `Given revoked permissions when updating again then grants are refreshed before reading`() = runTest {
+        enableSensor(HealthConnectSensorManager.steps)
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returnsMany listOf(
+            setOf(HealthPermission.getReadPermission(StepsRecord::class)),
+            emptySet(),
+        )
+        coEvery { healthConnectClient.aggregate(any()) } throws SecurityException("Read permission revoked")
+
+        sensorManager.requestSensorUpdate()
+        sensorManager.requestSensorUpdate()
+
+        coVerify(exactly = 2) { healthConnectClient.permissionController.getGrantedPermissions() }
+        coVerify(exactly = 1) { healthConnectClient.aggregate(any()) }
+        coVerify(exactly = 0) { healthConnectClient.readRecords(any<ReadRecordsRequest<Record>>()) }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given a missing required permission when updating then enabled sensor is not read`(
+        missingBackgroundPermission: Boolean,
+    ) = runTest {
+        enableSensor(HealthConnectSensorManager.steps)
+        every {
+            healthConnectClient.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
+        } returns HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
+        val grantedPermission = if (missingBackgroundPermission) {
+            HealthPermission.getReadPermission(StepsRecord::class)
+        } else {
+            HealthPermission.PERMISSION_READ_HEALTH_DATA_IN_BACKGROUND
+        }
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returns setOf(grantedPermission)
+
+        sensorManager.requestSensorUpdate()
+
+        coVerify(exactly = 1) { healthConnectClient.permissionController.getGrantedPermissions() }
+        coVerify(exactly = 0) { healthConnectClient.aggregate(any()) }
+    }
+
+    @Test
+    fun `Given permission query failure when updating then enabled state is checked and next update retries`() = runTest {
+        enableSensor(HealthConnectSensorManager.steps)
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } throws
+            IllegalStateException("Permission service unavailable")
+        coEvery { healthConnectClient.aggregate(any()) } throws SecurityException("Read denied")
+
+        sensorManager.requestSensorUpdate()
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returns emptySet()
+        sensorManager.requestSensorUpdate()
+
+        coVerify(exactly = 2) { healthConnectClient.permissionController.getGrantedPermissions() }
+        coVerify(exactly = 1) { healthConnectClient.aggregate(any()) }
+        coVerify(exactly = 0) { healthConnectClient.readRecords(any<ReadRecordsRequest<Record>>()) }
+    }
+
+    @Test
+    fun `Given standalone checks when permissions change or query fails then each check stays fresh`() = runTest {
+        val sensorId = HealthConnectSensorManager.steps.id
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returnsMany listOf(
+            setOf(HealthPermission.getReadPermission(StepsRecord::class)),
+            emptySet(),
+        )
+        assertTrue(sensorManager.checkPermission(sensorId))
+        assertFalse(sensorManager.checkPermission(sensorId))
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } throws
+            IllegalStateException("Permission service unavailable")
+        assertTrue(sensorManager.checkPermission(sensorId))
+        coVerify(exactly = 3) { healthConnectClient.permissionController.getGrantedPermissions() }
+    }
+
+    @Test
+    fun `Given unavailable client when checking and updating then permission is denied without reads`() = runTest {
+        every { HealthConnectClient.getOrCreate(any()) } throws IllegalStateException("Client unavailable")
+
+        assertFalse(sensorManager.checkPermission(HealthConnectSensorManager.steps.id))
+        sensorManager.requestSensorUpdate()
+
+        coVerify(exactly = 0) { healthConnectClient.permissionController.getGrantedPermissions() }
+        coVerify(exactly = 0) { sensorRepository.get(any<String>()) }
+    }
+
+    @Test
+    fun `Given enabled sleep sensors when updating then nested checks share permissions and one read`() = runTest {
+        enableSensor(HealthConnectSensorManager.sleepDuration)
+        enableSensor(HealthConnectSensorManager.sleepDeepDuration)
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returns
+            setOf(HealthPermission.getReadPermission(SleepSessionRecord::class))
+        val midnight = Instant.parse("2026-07-01T00:00:00Z")
+        val record = mockk<SleepSessionRecord>(relaxed = true) {
+            every { startTime } returns midnight
+            every { endTime } returns midnight.plus(1, ChronoUnit.HOURS)
+            every { stages } returns emptyList()
+        }
+        coEvery { healthConnectClient.readRecords(any<ReadRecordsRequest<SleepSessionRecord>>()) } returns
+            mockk<ReadRecordsResponse<SleepSessionRecord>> { every { records } returns listOf(record) }
+
+        sensorManager.requestSensorUpdate()
+
+        coVerify(exactly = 1) { healthConnectClient.permissionController.getGrantedPermissions() }
+        coVerify(exactly = 1) { healthConnectClient.readRecords(any<ReadRecordsRequest<SleepSessionRecord>>()) }
+        coVerify(exactly = 1) { sensorRepository.update(match { it.id == HealthConnectSensorManager.sleepDuration.id }) }
+        coVerify(exactly = 1) { sensorRepository.update(match { it.id == HealthConnectSensorManager.sleepDeepDuration.id }) }
+        coVerify(exactly = 2) { sensorRepository.update(any()) }
+        coVerify(exactly = 0) { healthConnectClient.aggregate(any()) }
+    }
+
+    @Test
+    fun `Given overlapping updates and standalone check when grants differ then snapshots are isolated`() = runTest {
+        enableSensor(HealthConnectSensorManager.steps)
+        val firstQuery = CompletableDeferred<Set<String>>()
+        var queries = 0
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } coAnswers {
+            if (queries++ == 0) firstQuery.await() else emptySet()
+        }
+        coEvery { healthConnectClient.aggregate(any()) } throws SecurityException("Read denied")
+        val firstUpdate = launch(start = CoroutineStart.UNDISPATCHED) { sensorManager.requestSensorUpdate() }
+
+        assertFalse(sensorManager.checkPermission(HealthConnectSensorManager.steps.id))
+        sensorManager.requestSensorUpdate()
+        firstQuery.complete(setOf(HealthPermission.getReadPermission(StepsRecord::class)))
+        firstUpdate.join()
+
+        coVerify(exactly = 3) { healthConnectClient.permissionController.getGrantedPermissions() }
+        coVerify(exactly = 1) { healthConnectClient.aggregate(any()) }
+    }
+
+    private fun enableSensor(sensor: SensorManager.BasicSensor) {
+        coEvery { sensorRepository.get(sensor.id) } returns listOf(
+            Sensor(id = sensor.id, serverId = 1, enabled = true, state = ""),
+        )
     }
 
     @ParameterizedTest

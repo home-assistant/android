@@ -582,6 +582,9 @@ class HealthConnectSensorManager @Inject constructor(
     }
 
     override suspend fun requestSensorUpdate() {
+        val grantedPermissions = getGrantedPermissions()
+        suspend fun isEnabled(sensor: SensorManager.BasicSensor): Boolean = isEnabled(sensor, grantedPermissions)
+
         if (isEnabled(activeCaloriesBurned)) {
             updateActiveCaloriesBurnedSensor()
         }
@@ -642,8 +645,8 @@ class HealthConnectSensorManager @Inject constructor(
         if (isEnabled(restingHeartRate)) {
             updateRestingHeartRateSensor()
         }
-        if (isAnySleepSensorEnabled()) {
-            updateSleepSensors()
+        if (isAnySleepSensorEnabled(grantedPermissions)) {
+            updateSleepSensors(grantedPermissions)
         }
         if (isEnabled(steps)) {
             updateStepsSensor()
@@ -1016,7 +1019,7 @@ class HealthConnectSensorManager @Inject constructor(
         )
     }
 
-    private suspend fun updateSleepSensors() {
+    private suspend fun updateSleepSensors(grantedPermissions: Result<Set<String>>?) {
         val healthConnectClient = getOrCreateHealthConnectClient() ?: return
         val sleepRequest = buildReadRecordsRequest(SleepSessionRecord::class)
         val sleepRecords = healthConnectClient.readRecordsOrNull(sleepRequest)
@@ -1025,7 +1028,7 @@ class HealthConnectSensorManager @Inject constructor(
         }
 
         val lastSleepRecord = sleepRecords.records.last()
-        val includeTimeline = isEnabled(sleepDuration)
+        val includeTimeline = isEnabled(sleepDuration, grantedPermissions)
         val analysis = analyzeSleepStages(lastSleepRecord.stages, includeTimeline)
 
         val basicAttributes = mapOf(
@@ -1034,7 +1037,7 @@ class HealthConnectSensorManager @Inject constructor(
             "sources" to lastSleepRecord.metadata.dataOrigin.packageName,
         )
 
-        if (isEnabled(sleepDuration)) {
+        if (isEnabled(sleepDuration, grantedPermissions)) {
             val sessionAttributes = buildSleepSessionAttributes(lastSleepRecord, analysis)
             onSensorUpdated(
                 sleepDuration,
@@ -1043,7 +1046,7 @@ class HealthConnectSensorManager @Inject constructor(
                 attributes = sessionAttributes,
             )
         }
-        if (isEnabled(sleepStart)) {
+        if (isEnabled(sleepStart, grantedPermissions)) {
             onSensorUpdated(
                 sleepStart,
                 lastSleepRecord.startTime.toString(),
@@ -1051,7 +1054,7 @@ class HealthConnectSensorManager @Inject constructor(
                 attributes = basicAttributes,
             )
         }
-        if (isEnabled(sleepEnd)) {
+        if (isEnabled(sleepEnd, grantedPermissions)) {
             onSensorUpdated(
                 sleepEnd,
                 lastSleepRecord.endTime.toString(),
@@ -1060,10 +1063,10 @@ class HealthConnectSensorManager @Inject constructor(
             )
         }
 
-        updateSleepStageSensors(analysis, basicAttributes)
+        updateSleepStageSensors(analysis, basicAttributes, grantedPermissions)
     }
 
-    private suspend fun isAnySleepSensorEnabled(): Boolean = listOf(
+    private suspend fun isAnySleepSensorEnabled(grantedPermissions: Result<Set<String>>?): Boolean = listOf(
         sleepDuration,
         sleepStart,
         sleepEnd,
@@ -1075,9 +1078,13 @@ class HealthConnectSensorManager @Inject constructor(
         sleepOutOfBedDuration,
         sleepUnspecifiedDuration,
         sleepUnknownDuration,
-    ).any { sensor -> isEnabled(sensor) }
+    ).any { sensor -> isEnabled(sensor, grantedPermissions) }
 
-    private suspend fun updateSleepStageSensors(analysis: SleepStageAnalysis, attributes: Map<String, Any?>) {
+    private suspend fun updateSleepStageSensors(
+        analysis: SleepStageAnalysis,
+        attributes: Map<String, Any?>,
+        grantedPermissions: Result<Set<String>>?,
+    ) {
         val stageSensors = listOf(
             sleepLightDuration to SleepSessionRecord.STAGE_TYPE_LIGHT,
             sleepDeepDuration to SleepSessionRecord.STAGE_TYPE_DEEP,
@@ -1093,6 +1100,7 @@ class HealthConnectSensorManager @Inject constructor(
                 sensor,
                 analysis.durationByStage[stageType],
                 attributes,
+                grantedPermissions,
             )
         }
     }
@@ -1101,8 +1109,9 @@ class HealthConnectSensorManager @Inject constructor(
         sensor: SensorManager.BasicSensor,
         duration: Duration?,
         attributes: Map<String, Any?>,
+        grantedPermissions: Result<Set<String>>?,
     ) {
-        if (!isEnabled(sensor)) {
+        if (!isEnabled(sensor, grantedPermissions)) {
             return
         }
         onSensorUpdated(
@@ -1304,9 +1313,30 @@ class HealthConnectSensorManager @Inject constructor(
     }
 
     override suspend fun checkPermission(sensorId: String): Boolean {
-        val healthConnectClient = getOrCreateHealthConnectClient() ?: return false
+        return checkPermission(sensorId, getGrantedPermissions())
+    }
+
+    private suspend fun getGrantedPermissions(): Result<Set<String>>? {
+        val healthConnectClient = getOrCreateHealthConnectClient() ?: return null
         return try {
-            healthConnectClient.permissionController.getGrantedPermissions().containsAll(
+            Result.success(healthConnectClient.permissionController.getGrantedPermissions())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private suspend fun isEnabled(
+        sensor: SensorManager.BasicSensor,
+        grantedPermissions: Result<Set<String>>?,
+    ): Boolean {
+        if (!checkPermission(sensor.id, grantedPermissions)) return false
+        return sensorRepository.get(sensor.id).any { it.enabled }
+    }
+
+    private fun checkPermission(sensorId: String, grantedPermissions: Result<Set<String>>?): Boolean {
+        if (grantedPermissions == null) return false
+        return try {
+            grantedPermissions.getOrThrow().containsAll(
                 requiredPermissions(sensorId).toSet(),
             )
         } catch (e: Exception) {
