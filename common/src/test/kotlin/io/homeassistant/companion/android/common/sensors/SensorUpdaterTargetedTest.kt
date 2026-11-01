@@ -17,6 +17,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.ValueSource
 
 class SensorUpdaterTargetedTest {
     private val basicSensor = SensorManager.BasicSensor(
@@ -60,6 +61,7 @@ class SensorUpdaterTargetedTest {
         lastSentIcon: String,
         sendCount: Int,
     ) = runTest {
+        coEvery { integration.updateSensors(any()) } returns true
         val sensor = Sensor(
             id = basicSensor.id,
             serverId = 1,
@@ -88,6 +90,7 @@ class SensorUpdaterTargetedTest {
         }
         coVerify(exactly = 0) { repository.updateLastSentStateAndIcon(any(), 2, any(), any()) }
         coVerify(exactly = 0) { integration.registerSensor(any()) }
+        coVerify(exactly = 0) { repository.update(any()) }
         if (sendCount != 0) {
             val payload = slot<List<SensorRegistration<Any>>>()
             coVerify { integration.updateSensors(capture(payload)) }
@@ -95,5 +98,53 @@ class SensorUpdaterTargetedTest {
             assertEquals(87, payload.captured.single().state)
             assertEquals(mapOf("motion" to 4), payload.captured.single().attributes)
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given a rejected targeted update when delivering then only that server is reset for normal refresh`(
+        sensorStillExists: Boolean,
+    ) = runTest {
+        val rejected = Sensor(
+            id = basicSensor.id,
+            serverId = 1,
+            enabled = true,
+            registered = true,
+            state = "87",
+            stateType = "int",
+            icon = "mdi:sleep",
+            lastSentState = "42",
+            lastSentIcon = "mdi:walk",
+        )
+        val accepted = rejected.copy(serverId = 2)
+        val acceptedIntegration = mockk<IntegrationRepository>(relaxed = true) {
+            coEvery { updateSensors(any()) } returns true
+        }
+        coEvery { integration.updateSensors(any()) } returns false
+        coEvery { serverManager.integrationRepository(2) } returns acceptedIntegration
+        coEvery { repository.getFull(basicSensor.id) } returns mapOf(
+            rejected to emptyList(),
+            accepted to emptyList(),
+        )
+        coEvery { repository.get(basicSensor.id, 1) } returns rejected.takeIf { sensorStillExists }
+
+        updater.updateSensor(basicSensor.id)
+
+        coVerify(exactly = 1) { integration.updateSensors(any()) }
+        coVerify(exactly = 1) { acceptedIntegration.updateSensors(any()) }
+        coVerify(exactly = 1) { repository.get(basicSensor.id, 1) }
+        coVerify(exactly = if (sensorStillExists) 1 else 0) {
+            repository.update(rejected.copy(registered = null, lastSentState = null, lastSentIcon = null))
+        }
+        coVerify(exactly = if (sensorStillExists) 1 else 0) { repository.update(any()) }
+        coVerify(exactly = 0) { repository.updateLastSentStateAndIcon(any(), 1, any(), any()) }
+        coVerify(exactly = 1) {
+            repository.updateLastSentStateAndIcon(basicSensor.id, 2, "87", "mdi:sleep")
+        }
+        coVerify(exactly = 1) { owner.requestSensorUpdate() }
+        coVerify(exactly = 0) { unrelatedManager.requestSensorUpdate() }
+        coVerify(exactly = 0) { unrelatedManager.requestSensorUpdate(any()) }
+        coVerify(exactly = 0) { integration.registerSensor(any()) }
+        coVerify(exactly = 0) { acceptedIntegration.registerSensor(any()) }
     }
 }
