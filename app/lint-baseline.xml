@@ -52,7 +52,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1129"
+            line="1127"
             column="17"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="51"
+            line="57"
             column="30"/>
     </issue>
 
@@ -934,39 +934,6 @@
             file="src/main/res/drawable/ic_no_remote.xml"
             line="155"
             column="25"/>
-    </issue>
-
-    <issue
-        id="ComposeNonRestartableComposable"
-        message="This composable&apos;s body only delegates to another composable. Consider marking it @NonRestartableComposable when its own restart and skip boundary is unlikely to be useful. The annotation avoids generating that code, but also prevents the wrapper from being restarted or skipped independently.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-unnecessary-restart-groups for more information."
-        errorLine1="@Composable"
-        errorLine2="~~~~~~~~~~~">
-        <location
-            file="src/debug/kotlin/io/homeassistant/companion/android/developer/catalog/HAComposeCatalogScreen.kt"
-            line="142"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeNonRestartableComposable"
-        message="This composable&apos;s body only delegates to another composable. Consider marking it @NonRestartableComposable when its own restart and skip boundary is unlikely to be useful. The annotation avoids generating that code, but also prevents the wrapper from being restarted or skipped independently.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-unnecessary-restart-groups for more information."
-        errorLine1="@Composable"
-        errorLine2="~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcWriteView.kt"
-            line="118"
-            column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeNonRestartableComposable"
-        message="This composable&apos;s body only delegates to another composable. Consider marking it @NonRestartableComposable when its own restart and skip boundary is unlikely to be useful. The annotation avoids generating that code, but also prevents the wrapper from being restarted or skipped independently.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#avoid-unnecessary-restart-groups for more information."
-        errorLine1="@Composable"
-        errorLine2="~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/settings/views/SettingsSubheader.kt"
-            line="50"
-            column="1"/>
     </issue>
 
     <issue
