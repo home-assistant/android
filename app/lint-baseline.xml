@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.3.2" type="baseline" client="gradle" dependencies="false" name="AGP (9.3.2)" variant="all" version="9.3.2">
+<issues format="6" by="lint 9.5.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.0)" variant="all" version="9.5.0">
 
     <issue
         id="MissingPermission"
@@ -8,7 +8,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="242"
+            line="254"
             column="13"/>
     </issue>
 
@@ -19,41 +19,8 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="247"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
-        errorLine2="                        ^">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
             line="259"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
-        errorLine2="                        ^">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="267"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="MissingPermission"
-        message="Call requires permission which may be rejected by user: code should explicitly check to see if permission is available (with `checkPermission`) or explicitly handle a potential `SecurityException`"
-        errorLine1="                        ActivityRecognition.getClient(applicationContext).requestSleepSegmentUpdates("
-        errorLine2="                        ^">
-        <location
-            file="src/full/kotlin/io/homeassistant/companion/android/sensors/ActivitySensorManager.kt"
-            line="275"
-            column="25"/>
+            column="17"/>
     </issue>
 
     <issue
@@ -85,7 +52,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1118"
+            line="1129"
             column="17"/>
     </issue>
 
@@ -129,7 +96,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="50"
+            line="51"
             column="30"/>
     </issue>
 
@@ -393,7 +360,7 @@
         errorLine2="        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="326"
+            line="329"
             column="9"/>
     </issue>
 
@@ -404,7 +371,7 @@
         errorLine2="                                                      ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="473"
+            line="476"
             column="55"/>
     </issue>
 
@@ -415,7 +382,7 @@
         errorLine2="        ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="519"
+            line="522"
             column="9"/>
     </issue>
 
@@ -426,7 +393,7 @@
         errorLine2="            ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="82"
+            line="83"
             column="13"/>
     </issue>
 
@@ -437,7 +404,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="268"
+            line="269"
             column="9"/>
     </issue>
 
@@ -448,7 +415,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="269"
+            line="270"
             column="9"/>
     </issue>
 
@@ -459,19 +426,19 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="374"
+            line="375"
             column="9"/>
     </issue>
 
     <issue
         id="ComposeViewModelForwarding"
         message="Forwarding a ViewModel through multiple @Composable functions should be avoided. Consider using state hoisting.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#hoist-all-the-things for more information."
-        errorLine1="                SensorDetailSettingDialog("
-        errorLine2="                ^">
+        errorLine1="                    SensorDetailSettingDialog("
+        errorLine2="                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="162"
-            column="17"/>
+            line="182"
+            column="21"/>
     </issue>
 
     <issue
@@ -481,7 +448,7 @@
         errorLine2="                ^">
         <location
             file="src/full/kotlin/io/homeassistant/companion/android/settings/wear/views/SettingsWearHomeView.kt"
-            line="46"
+            line="49"
             column="17"/>
     </issue>
 
@@ -492,7 +459,7 @@
         errorLine2="      ~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/launch/LaunchActivity.kt"
-            line="88"
+            line="90"
             column="7"/>
     </issue>
 
@@ -503,7 +470,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/compose/media/player/HAMediaPlayer.kt"
-            line="306"
+            line="311"
             column="31"/>
     </issue>
 
@@ -514,7 +481,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/compose/media/player/HAMediaPlayer.kt"
-            line="308"
+            line="313"
             column="31"/>
     </issue>
 
@@ -525,7 +492,7 @@
         errorLine2="     ~~~~~~~~~~~">
         <location
             file="src/main/AndroidManifest.xml"
-            line="91"
+            line="92"
             column="6"/>
     </issue>
 
@@ -564,7 +531,7 @@
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                onToolbarTitleChanged(context.getString(R.string.gestures))"
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -575,7 +542,7 @@
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                onToolbarTitleChanged(context.getString(action.gesture.fullDescription))"
         errorLine2="                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -586,7 +553,7 @@
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                    onShowSnackbar(context.getString(it.messageRes), null)"
         errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -597,56 +564,56 @@
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                scaffoldState.snackbarHostState.showSnackbar(context.getString(it))"
         errorLine2="                                                             ~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/nfc/views/NfcNavigationView.kt"
-            line="65"
+            line="66"
             column="62"/>
     </issue>
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                                                    context.getString("
         errorLine2="                                                    ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
-            line="99"
+            line="100"
             column="53"/>
     </issue>
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                                                    context.getString(R.string.undo),"
         errorLine2="                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/notification/views/NotificationChannelView.kt"
-            line="103"
+            line="104"
             column="53"/>
     </issue>
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                context.getString(it.message),"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="123"
+            line="131"
             column="17"/>
     </issue>
 
     <issue
         id="LocalContextGetResourceValueCall"
-        message="Querying resource values using LocalContext.current"
+        message="Querying resource values using LocalContext.current is not configuration-aware and may return stale values if the Configuration changes"
         errorLine1="                context.getString(commonR.string.settings),"
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/views/SensorDetailView.kt"
-            line="124"
+            line="132"
             column="17"/>
     </issue>
 
@@ -657,7 +624,7 @@
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/sensor/SensorDetailViewModel.kt"
-            line="385"
+            line="415"
             column="38"/>
     </issue>
 
@@ -1209,7 +1176,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidget.kt"
-            line="318"
+            line="300"
             column="21"/>
     </issue>
 
@@ -1220,7 +1187,7 @@
         errorLine2="                                ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="152"
+            line="153"
             column="33"/>
     </issue>
 
@@ -1231,7 +1198,7 @@
         errorLine2="                                                          ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
-            line="420"
+            line="421"
             column="59"/>
     </issue>
 
@@ -1264,7 +1231,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/compose/InfoNotification.kt"
-            line="23"
+            line="24"
             column="1"/>
     </issue>
 
@@ -1275,7 +1242,7 @@
         errorLine2="^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/settings/shortcuts/legacy/views/ManageShortcutsView.kt"
-            line="91"
+            line="92"
             column="1"/>
     </issue>
 
@@ -1319,7 +1286,7 @@
         errorLine2="~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/util/compose/entity/EntityPicker.kt"
-            line="239"
+            line="243"
             column="1"/>
     </issue>
 
@@ -1363,7 +1330,7 @@
         errorLine2="~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/widgets/todo/TodoGlanceAppWidget.kt"
-            line="95"
+            line="125"
             column="1"/>
     </issue>
 
@@ -1409,17 +1376,6 @@
             file="src/main/res/layout/widget_media_controls.xml"
             line="55"
             column="14"/>
-    </issue>
-
-    <issue
-        id="SetTextI18n"
-        message="Number formatting does not take into account locale settings. Consider using `String.format` instead."
-        errorLine1="                binding.textSize.setText(templateWidget.textSize.toInt().toString())"
-        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/widgets/template/TemplateWidgetConfigureActivity.kt"
-            line="97"
-            column="42"/>
     </issue>
 
 </issues>

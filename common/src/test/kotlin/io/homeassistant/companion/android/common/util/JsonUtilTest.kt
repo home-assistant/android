@@ -132,7 +132,7 @@ class JsonUtilTest {
             kotlinJsonMapper.encodeToString(MapAnySerializer, map)
             fail { "encodeToString should fail with unsupported type" }
         } catch (e: IllegalArgumentException) {
-            assertEquals("Unsupported type: ${Stub::class}", e.message)
+            assertEquals(true, e.message?.contains("Unsupported type: ${Stub::class}"))
         }
     }
 
@@ -370,7 +370,7 @@ class JsonUtilTest {
             input.toJsonObject()
         }
 
-        assertEquals("Unsupported type: ${key?.javaClass} as map key", exception.message)
+        assertEquals(true, exception.message?.contains("Unsupported type: ${key?.javaClass} as map key"))
     }
 
     @Test

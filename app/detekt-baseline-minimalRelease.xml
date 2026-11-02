@@ -87,8 +87,7 @@
     <ID>InjectDispatcher:EntityPicker.kt:Default</ID>
     <ID>InjectDispatcher:FrontendDownloadManager.kt:FrontendDownloadManager$IO</ID>
     <ID>InjectDispatcher:FrontendEntityAddToManager.kt:FrontendEntityAddToManager$Default</ID>
-    <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService$IO</ID>
-    <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService.&lt;no name provided&gt;$IO</ID>
+    <ID>InjectDispatcher:HaMediaSession.kt:HaMediaSession$IO</ID>
     <ID>InjectDispatcher:HaShortcutManager.kt:HaShortcutManager$IO</ID>
     <ID>InjectDispatcher:HomeAssistantApplication.kt:HomeAssistantApplication$IO</ID>
     <ID>InjectDispatcher:IconDialogGrid.kt:Default</ID>
@@ -178,7 +177,6 @@
     <ID>LongMethod:TemplateWidget.kt:TemplateWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun tileClicked</ID>
-    <ID>LongMethod:TodoWidgetConfigureActivity.kt:@Composable private fun TodoWidgetConfigureView</ID>
     <ID>LongMethod:WebsocketManager.kt:WebsocketManager$private suspend fun createNotification: Boolean</ID>
     <ID>LongMethod:WebsocketSettingView.kt:@Composable fun WebsocketSettingView</ID>
     <ID>LongMethod:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$override fun onBindViewHolder</ID>
@@ -315,8 +313,6 @@
     <ID>NestedBlockDepth:MessagingManager.kt:MessagingManager$private suspend fun notifyMissingPermission</ID>
     <ID>NestedBlockDepth:OnSwipeListener.kt:OnSwipeListener$override fun onTouch: Boolean</ID>
     <ID>NestedBlockDepth:TilePreferenceActivity.kt:TilePreferenceActivity$override fun onCreate</ID>
-    <ID>NoNameShadowing:EntityPickerFilter.kt:{ add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.AREA_NAME)) }</ID>
-    <ID>NoNameShadowing:EntityPickerFilter.kt:{ add(SearchField(it.lowercase(), FuzzySearchConfig.Weights.DEVICE_NAME)) }</ID>
     <ID>NoNameShadowing:FrontendConnectionErrorScreen.kt:url</ID>
     <ID>NoNameShadowing:HAWebView.kt:modifier</ID>
     <ID>NoNameShadowing:ManageTilesViewModel.kt:ManageTilesViewModel$context</ID>
@@ -335,7 +331,6 @@
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$private suspend fun getPendingDaoEntity: StaticWidgetEntity?</ID>
     <ID>ReturnCount:EntityWidgetConfigureViewModel.kt:EntityWidgetConfigureViewModel$suspend fun updateWidgetConfiguration: Boolean</ID>
     <ID>ReturnCount:FrontendGestureManager.kt:FrontendGestureManager$private suspend fun switchServerBy: GestureResult</ID>
-    <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun buildUrl: UrlLoadResult</ID>
     <ID>ReturnCount:FrontendUrlManager.kt:FrontendUrlManager$private suspend fun shouldSetSecurityLevel: Boolean</ID>
     <ID>ReturnCount:GeocodeSensorManager.kt:GeocodeSensorManager$private suspend fun updateGeocodedLocation</ID>
     <ID>ReturnCount:HomeAssistantSearcher.kt:private fun NsdServiceInfo.toHomeAssistantInstance: HomeAssistantInstance?</ID>
@@ -390,6 +385,9 @@
     <ID>TooManyFunctions:FakePlayer.kt:FakePlayer : Player</ID>
     <ID>TooManyFunctions:FrontendScreen.kt:io.homeassistant.companion.android.frontend.FrontendScreen.kt</ID>
     <ID>TooManyFunctions:FrontendViewModel.kt:FrontendViewModel : ViewModelFrontendConnectionErrorStateProvider</ID>
+    <ID>TooManyFunctions:HaMediaSession.kt:HaMediaSession</ID>
+    <ID>TooManyFunctions:HaRemoteMediaPlayer.kt:HaRemoteMediaPlayer : SimpleBasePlayer</ID>
+    <ID>TooManyFunctions:HaRemoteMediaPlayer.kt:HaRemoteMediaPlayer$CommandCallback</ID>
     <ID>TooManyFunctions:HealthConnectSensorManager.kt:HealthConnectSensorManager : SensorManager</ID>
     <ID>TooManyFunctions:LaunchViewModel.kt:LaunchViewModel : ViewModel</ID>
     <ID>TooManyFunctions:ManageTilesViewModel.kt:ManageTilesViewModel : ViewModel</ID>
@@ -452,7 +450,6 @@
     <ID>UnsafeCallOnNullableType:SensorDetailViewModel.kt:SensorDetailViewModel$state["id"]!!</ID>
     <ID>UnsafeCallOnNullableType:SensorSettingsViewModel.kt:SensorSettingsViewModel$searchQuery!!</ID>
     <ID>UnsafeCallOnNullableType:SettingsFragment.kt:SettingsFragment$serverAuth!!</ID>
-    <ID>UnsafeCallOnNullableType:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$selectedEntityId!!</ID>
     <ID>UnsafeCallOnNullableType:WebsocketManager.kt:WebsocketManager$applicationContext.getSystemService&lt;NotificationManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$actions[actionText]!!</ID>
     <ID>UnsafeCallOnNullableType:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$actions[actionText]!!.actionData.fields.getValue(fieldKey).values!!</ID>
@@ -472,13 +469,11 @@
     <ID>UnusedParameter:LocationSensorManager.kt:LocationSensorManager.Companion$updateInterval: Int</ID>
     <ID>UnusedParameter:QuestSensorManager.kt:QuestSensorManager$applicationContext: Context</ID>
     <ID>UnusedParameter:SettingsWearDetection.kt:SettingsWearDetection$context: Context</ID>
-    <ID>UnusedPrivateProperty:ConnectionViewModel.kt:ConnectionViewModel$private val fileChooserManager: FileChooserManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val nsdManager: NsdManager</ID>
     <ID>UnusedPrivateProperty:HomeAssistantSearcher.kt:HomeAssistantSearcherImpl$private val wifiManager: WifiManager?</ID>
     <ID>UnusedPrivateProperty:LaunchViewModel.kt:LaunchViewModel$private val prefsRepository: PrefsRepository</ID>
     <ID>UnusedPrivateProperty:SensorDetailViewModel.kt:SensorDetailViewModel$private val managers: Set&lt;@JvmSuppressWildcards SensorManager&gt;</ID>
     <ID>UnusedPrivateProperty:SettingsPresenterImpl.kt:SettingsPresenterImpl$private val settingsDao: SettingsDao</ID>
-    <ID>UnusedPrivateProperty:TodoWidgetConfigureViewModel.kt:TodoWidgetConfigureViewModel$private val entitiesForDisplayManager: EntitiesForDisplayManager</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$server?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverManager.getServer(selectedServerId)?.friendlyName ?: ""</ID>
     <ID>UseOrEmpty:AssistViewModel.kt:AssistViewModel$serverPipelines?.pipelines ?: emptyList()</ID>

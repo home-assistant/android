@@ -3,6 +3,10 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.CrosshairsGps
+import io.github.timoptr.mdiicons.generated.MapMarkerMultiple
+import io.github.timoptr.mdiicons.generated.MapMarkerRadius
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -38,7 +42,7 @@ class LocationSensorManager @Inject constructor(
             "",
             commonR.string.basic_sensor_name_location_background,
             commonR.string.sensor_description_location_background,
-            "mdi:map-marker-multiple",
+            Mdi.MapMarkerMultiple,
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
 
@@ -48,7 +52,7 @@ class LocationSensorManager @Inject constructor(
             "",
             commonR.string.basic_sensor_name_location_zone,
             commonR.string.sensor_description_location_zone,
-            "mdi:map-marker-radius",
+            Mdi.MapMarkerRadius,
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
 
@@ -58,7 +62,7 @@ class LocationSensorManager @Inject constructor(
             "",
             commonR.string.basic_sensor_name_location_accurate,
             commonR.string.sensor_description_location_accurate,
-            "mdi:crosshairs-gps",
+            Mdi.CrosshairsGps,
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
         )
 

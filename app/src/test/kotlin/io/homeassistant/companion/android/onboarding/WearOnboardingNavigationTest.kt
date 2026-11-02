@@ -130,6 +130,8 @@ internal class WearOnboardingNavigationTest {
         every { errorFlow } returns MutableStateFlow(null)
         every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
         every { pendingFileChooser } returns MutableStateFlow(null)
+        every { pendingPermissionRequest } returns MutableStateFlow(null)
+        every { webViewDebugEnabled } returns MutableStateFlow(false)
     }
 
     private val selectedUri = mockk<Uri>()

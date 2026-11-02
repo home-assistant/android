@@ -10,8 +10,15 @@ name: Update Screenshots
 on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # Never cancel a screenshot push in flight
+
+permissions: {}
+
 jobs:
   update_screenshots:
+    name: Update Screenshots
     runs-on: ubuntu-latest
     permissions:
       contents: write # To push to the current branch

@@ -5,10 +5,17 @@ on:
   issues:
     types: [opened]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: false # Never cancel while an issue is being closed
+
+permissions: {}
+
 jobs:
   check-authorization:
+    name: Check authorization
     permissions:
-      issues: write
+      issues: write # To comment on, close and label Task issues from unauthorized users
     runs-on: ubuntu-latest
     # Only run if this is a Task issue type (from the issue form)
     if: github.repository == 'home-assistant/android' && github.event.issue.type.name == 'Task'

@@ -243,7 +243,9 @@ class TemplateWidgetConfigureScreenTest {
                 onNodeWithText(activity.getString(commonR.string.widget_text_color_label), substring = true)
                     .performScrollTo()
                     .performClick()
-                onNodeWithText(activity.getString(commonR.string.widget_text_color_black))
+                // The unset default follows the system theme (BLACK in the light test environment),
+                // so pick WHITE to guarantee a change that fires the callback.
+                onNodeWithText(activity.getString(commonR.string.widget_text_color_white))
                     .performClick()
                 assertTrue(textColor != null)
             }

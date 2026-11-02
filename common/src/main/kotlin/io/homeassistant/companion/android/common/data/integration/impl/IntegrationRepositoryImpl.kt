@@ -203,7 +203,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         }
     }
 
-    override suspend fun getRegistration(): DeviceRegistration {
+    private suspend fun getRegistration(): DeviceRegistration {
         return DeviceRegistration(
             localStorage.getString(PREF_APP_VERSION)?.let { AppVersion.from(rawVersion = it) },
             server().deviceName,
@@ -329,7 +329,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun getSessionTimeOut(): Int = localStorage.getInt("${serverId}_$PREF_SESSION_TIMEOUT") ?: 0
 
-    override suspend fun setSessionExpireMillis(value: Long) =
+    private suspend fun setSessionExpireMillis(value: Long) =
         localStorage.putLong("${serverId}_$PREF_SESSION_EXPIRE", value)
 
     private suspend fun getSessionExpireMillis(): Long = localStorage.getLong("${serverId}_$PREF_SESSION_EXPIRE") ?: 0
@@ -601,7 +601,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             },
             sensorRegistration.type,
             sensorRegistration.icon,
-            sensorRegistration.attributes,
+            // Attributes are shared by all servers, a server where the sensor is disabled must not receive them
+            if (sensorRegistration.disabled) emptyMap() else sensorRegistration.attributes,
             sensorRegistration.name,
             when (sensorRegistration.deviceClass) {
                 "atmospheric_pressure" -> if (canRegisterDeviceClassAtmosphericPressure) {

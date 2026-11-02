@@ -97,6 +97,31 @@ class WearDnsTest {
     }
 
     @Test
+    fun `Given a hostname when mobile request throws a non IO exception then fails with UnknownHostException`() {
+        // given
+        val systemException = UnknownHostException()
+        dns.results["homeassistant.local"] = Result.failure(systemException)
+
+        capabilityClient.capabilities[CAPABILITY_DNS_VIA_MOBILE] = setOf("1234")
+        val cause = IllegalStateException("4000: TARGET_NODE_NOT_CONNECTED")
+        messageClient.onRequest = { throw cause }
+
+        try {
+            // when
+            wearDns.lookup("homeassistant.local")
+            fail { "Lookup should throw" }
+        } catch (exception: UnknownHostException) {
+            // then
+            assertEquals(
+                "Unable to resolve homeassistant.local via mobile: 4000: TARGET_NODE_NOT_CONNECTED",
+                exception.message,
+            )
+            assertEquals(cause, exception.cause)
+            assertEquals(systemException, exception.suppressed.single())
+        }
+    }
+
+    @Test
     fun `Given a cached hostname when making DNS lookup then returns cached results`() {
         // given
         clock.time = Instant.fromEpochSeconds(1757959158)

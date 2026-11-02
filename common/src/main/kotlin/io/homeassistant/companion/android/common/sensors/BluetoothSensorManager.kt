@@ -6,6 +6,9 @@ import android.content.Context
 import android.os.Build
 import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Bluetooth
+import io.github.timoptr.mdiicons.generated.BluetoothOff
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.bluetooth.BluetoothDevice
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
@@ -93,7 +96,7 @@ class BluetoothSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_bluetooth,
             commonR.string.sensor_description_bluetooth_connection,
-            "mdi:bluetooth",
+            Mdi.Bluetooth,
             unitOfMeasurement = "connection(s)",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -105,7 +108,7 @@ class BluetoothSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_bluetooth_state,
             commonR.string.sensor_description_bluetooth_state,
-            "mdi:bluetooth",
+            Mdi.Bluetooth,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -116,7 +119,7 @@ class BluetoothSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_bluetooth_ble_emitter,
             commonR.string.sensor_description_bluetooth_ble_emitter,
-            "mdi:bluetooth",
+            Mdi.Bluetooth,
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -157,7 +160,7 @@ class BluetoothSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_bluetooth_ble_beacon_monitor,
             commonR.string.sensor_description_bluetooth_ble_beacon_monitor,
-            "mdi:bluetooth",
+            Mdi.Bluetooth,
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
@@ -340,7 +343,7 @@ class BluetoothSensorManager @Inject constructor(
         if (!isEnabled(bluetoothState)) {
             return
         }
-        val icon = if (isBtOn()) "mdi:bluetooth" else "mdi:bluetooth-off"
+        val icon = if (isBtOn()) Mdi.Bluetooth else Mdi.BluetoothOff
         onSensorUpdated(
             bluetoothState,
             isBtOn(),
@@ -473,7 +476,7 @@ class BluetoothSensorManager @Inject constructor(
         val lastState =
             sensorRepository.get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN
         val state = if (isBtOn()) bleTransmitterDevice.state else "Bluetooth is turned off"
-        val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
+        val icon = if (bleTransmitterDevice.transmitting) Mdi.Bluetooth else Mdi.BluetoothOff
         onSensorUpdated(
             bleTransmitter,
             if (state != "") state else lastState,
@@ -496,7 +499,7 @@ class BluetoothSensorManager @Inject constructor(
                 return@launch
             }
 
-            val icon = if (monitoringManager.isMonitoring()) "mdi:bluetooth" else "mdi:bluetooth-off"
+            val icon = if (monitoringManager.isMonitoring()) Mdi.Bluetooth else Mdi.BluetoothOff
 
             val state = if (!BluetoothUtils.isOn(
                     applicationContext,

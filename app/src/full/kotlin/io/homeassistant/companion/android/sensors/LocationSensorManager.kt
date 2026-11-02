@@ -21,6 +21,11 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.CrosshairsGps
+import io.github.timoptr.mdiicons.generated.MapMarkerMultiple
+import io.github.timoptr.mdiicons.generated.MapMarkerRadius
+import io.github.timoptr.mdiicons.generated.Timer
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -45,6 +50,7 @@ import io.homeassistant.companion.android.database.sensor.toSensorWithAttributes
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+import io.homeassistant.companion.android.util.sensitive
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -112,7 +118,7 @@ class LocationSensorManager @Inject constructor(
             "",
             commonR.string.basic_sensor_name_location_background,
             commonR.string.sensor_description_location_background,
-            "mdi:map-marker-multiple",
+            Mdi.MapMarkerMultiple,
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
             settings = listOf(
                 Setting.Options(
@@ -136,7 +142,7 @@ class LocationSensorManager @Inject constructor(
             "",
             commonR.string.basic_sensor_name_location_zone,
             commonR.string.sensor_description_location_zone,
-            "mdi:map-marker-radius",
+            Mdi.MapMarkerRadius,
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
             settings = listOf(
                 Setting.Number(SETTING_ACCURACY, DEFAULT_MINIMUM_ACCURACY),
@@ -149,7 +155,7 @@ class LocationSensorManager @Inject constructor(
             "",
             commonR.string.basic_sensor_name_location_accurate,
             commonR.string.sensor_description_location_accurate,
-            "mdi:crosshairs-gps",
+            Mdi.CrosshairsGps,
             updateType = SensorManager.BasicSensor.UpdateType.LOCATION,
             settings = listOf(
                 Setting.Number(SETTING_ACCURACY, DEFAULT_MINIMUM_ACCURACY),
@@ -164,7 +170,7 @@ class LocationSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_high_accuracy_mode,
             commonR.string.sensor_description_high_accuracy_mode,
-            "mdi:crosshairs-gps",
+            Mdi.CrosshairsGps,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -175,7 +181,7 @@ class LocationSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_high_accuracy_interval,
             commonR.string.sensor_description_high_accuracy_interval,
-            "mdi:timer",
+            Mdi.Timer,
             unitOfMeasurement = "seconds",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -252,7 +258,7 @@ class LocationSensorManager @Inject constructor(
             when (intent.action) {
                 Intent.ACTION_BOOT_COMPLETED,
                 ACTION_REQUEST_LOCATION_UPDATES,
-                -> setupLocationTracking()
+                -> refreshLocationTrackingSetup()
 
                 ACTION_PROCESS_LOCATION,
                 ACTION_PROCESS_HIGH_ACCURACY_LOCATION,
@@ -303,7 +309,8 @@ class LocationSensorManager @Inject constructor(
             ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
     }
 
-    private suspend fun setupLocationTracking() {
+    /** Starts, stops or restarts background and zone location updates to match the current settings and permissions. */
+    private suspend fun refreshLocationTrackingSetup() {
         if (!checkPermission(backgroundLocation.id)) {
             Timber.w("Not starting location reporting because of permissions.")
             return
@@ -314,11 +321,6 @@ class LocationSensorManager @Inject constructor(
         val zoneServers = getEnabledServers(zoneLocation)
 
         try {
-            if (!backgroundEnabled && !zoneEnabled) {
-                removeAllLocationUpdateRequests()
-                isBackgroundLocationSetup = false
-                isZoneLocationSetup = false
-            }
             if (!zoneEnabled && isZoneLocationSetup) {
                 removeGeofenceUpdateRequests()
                 isZoneLocationSetup = false
@@ -327,6 +329,13 @@ class LocationSensorManager @Inject constructor(
                 removeBackgroundUpdateRequests()
                 stopHighAccuracyService()
                 isBackgroundLocationSetup = false
+            }
+            // Runs last so the branches above can stop the high accuracy service before the flags
+            // are cleared here.
+            if (!backgroundEnabled && !zoneEnabled) {
+                removeAllLocationUpdateRequests()
+                isBackgroundLocationSetup = false
+                isZoneLocationSetup = false
             }
             if (zoneEnabled && !isZoneLocationSetup) {
                 isZoneLocationSetup = true
@@ -742,7 +751,9 @@ class LocationSensorManager @Inject constructor(
                     LocationUpdateTrigger.BACKGROUND_LOCATION
                 }
             if (location.accuracy > minAccuracy) {
-                Timber.w("Location accuracy didn't meet requirements, disregarding: $location")
+                Timber.w(
+                    "Location accuracy didn't meet requirements, disregarding: ${sensitive { location.toString() }}",
+                )
                 logLocationUpdate(location, null, null, trigger, LocationHistoryItemResult.SKIPPED_ACCURACY)
             } else {
                 HighAccuracyLocationService.updateNotificationAddress(applicationContext, location)
@@ -871,10 +882,12 @@ class LocationSensorManager @Inject constructor(
 
     private suspend fun sendLocationUpdate(location: Location, serverId: Int, trigger: LocationUpdateTrigger?) {
         Timber.d(
-            "Last Location: " +
-                "\nCoords:(${location.latitude}, ${location.longitude})" +
-                "\nAccuracy: ${location.accuracy}" +
-                "\nBearing: ${location.bearing}",
+            """
+                Last Location:
+                Coords:${sensitive { "(${location.latitude}, ${location.longitude})" }}
+                Accuracy: ${location.accuracy}
+                Bearing: ${location.bearing}
+            """.trimIndent(),
         )
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
@@ -1224,8 +1237,9 @@ class LocationSensorManager @Inject constructor(
                         override fun onLocationResult(locationResult: LocationResult) {
                             numberCalls++
                             Timber.d(
-
-                                "Got single accurate location update: ${locationResult.lastLocation}",
+                                "Got single accurate location update: ${sensitive {
+                                    locationResult.lastLocation.toString()
+                                }}",
                             )
                             val location = locationResult.lastLocation
                             if (location == null) {
@@ -1328,9 +1342,7 @@ class LocationSensorManager @Inject constructor(
     }
 
     override suspend fun requestSensorUpdate() {
-        if (isEnabled(zoneLocation) || isEnabled(backgroundLocation)) {
-            setupLocationTracking()
-        }
+        refreshLocationTrackingSetup()
         cleanupLocationHistory()
         if (getToggleSetting(singleAccurateLocation, SETTING_INCLUDE_SENSOR_UPDATE)) {
             if (isEnabled(singleAccurateLocation)) {

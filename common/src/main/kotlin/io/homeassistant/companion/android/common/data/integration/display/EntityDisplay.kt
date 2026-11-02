@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.integration.FanControls
 import io.homeassistant.companion.android.common.data.integration.FriendlyState
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains
 import io.homeassistant.companion.android.common.data.integration.LightControls
+import io.homeassistant.companion.android.common.data.integration.MediaPlayback
 import io.homeassistant.companion.android.common.data.integration.MediaPlayerControls
 import io.homeassistant.companion.android.common.data.integration.NumberControls
 import io.homeassistant.companion.android.common.data.integration.VacuumControls
@@ -33,6 +34,7 @@ import io.homeassistant.companion.android.common.data.integration.getFanSteps
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.getLightBrightness
 import io.homeassistant.companion.android.common.data.integration.getLightColor
+import io.homeassistant.companion.android.common.data.integration.getMediaPlayback
 import io.homeassistant.companion.android.common.data.integration.getMediaPlayerControls
 import io.homeassistant.companion.android.common.data.integration.getNumberControls
 import io.homeassistant.companion.android.common.data.integration.getStatelessIcon
@@ -40,7 +42,6 @@ import io.homeassistant.companion.android.common.data.integration.getVacuumContr
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
-import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import java.time.LocalDateTime
 
 private const val CATEGORY_CONFIG = "config"
@@ -112,8 +113,11 @@ interface EntityDisplay {
     /** Value range of the entity, null when it is not a number one. */
     val numberControls: NumberControls?
 
-    /** Volume control of the entity, null when it is not a media player. */
+    /** Controls of the entity, null when it is not a media player. */
     val mediaPlayerControls: MediaPlayerControls?
+
+    /** What the entity is currently playing, null when it is not a media player. */
+    val mediaPlayback: MediaPlayback?
 
     /** Controls of the entity, null when it is not a cover. */
     val coverControls: CoverControls?
@@ -167,6 +171,7 @@ data class EntityDisplayWithoutContext(
     override val climateControls: ClimateControls? = null,
     override val numberControls: NumberControls? = null,
     override val mediaPlayerControls: MediaPlayerControls? = null,
+    override val mediaPlayback: MediaPlayback? = null,
     override val coverControls: CoverControls? = null,
     override val vacuumControls: VacuumControls? = null,
     override val cameraControls: CameraControls? = null,
@@ -210,6 +215,7 @@ data class EntityDisplayWithoutContext(
         climateControls = entity.getClimateControls(),
         numberControls = entity.getNumberControls(),
         mediaPlayerControls = entity.getMediaPlayerControls(),
+        mediaPlayback = entity.getMediaPlayback(),
         coverControls = entity.getCoverControls(),
         vacuumControls = entity.getVacuumControls(),
         cameraControls = entity.getCameraControls(),
@@ -239,7 +245,7 @@ data class EntityDisplayWithoutContext(
             if (domain != IntegrationDomains.LIGHT_DOMAIN) return null
 
             return LightControls(
-                brightness = if (supportsLightBrightness()) getLightBrightness() else null,
+                brightness = getLightBrightness(),
                 colorTemperature = getColorTemperature(),
             )
         }
@@ -265,16 +271,25 @@ data class EntityDisplayWithContext(
     val areaName: String? = null,
     val floorName: String? = null,
     val deviceName: String? = null,
+    val parentDeviceName: String? = null,
+    /**
+     * Names of the devices owning the entity that are left out of its naming context, because the
+     * entity or a nearer device has an area of its own. They still identify the entity, for example
+     * in a search.
+     */
+    val omittedOwnerNames: List<String> = emptyList(),
 ) : EntityDisplay by item {
 
     /**
-     * Formatted subtitle combining area and device name, adapting the separator to the
-     * layout direction. Null if the item has neither, or when it would just repeat [name].
+     * Formatted subtitle combining area, parent device and device name, adapting the separator to
+     * the layout direction. The device name is left out when the entity is named after it. Null if
+     * the item has none, or when it would just repeat [name].
      */
-    fun subtitle(layoutDirection: LayoutDirection): String? = listOfNotNull(areaName, deviceName)
-        .takeIf { it.isNotEmpty() }
-        ?.joinToString(entitySubtitleSeparator(layoutDirection))
-        ?.takeIf { it != name }
+    fun subtitle(layoutDirection: LayoutDirection): String? =
+        listOfNotNull(areaName, parentDeviceName, deviceName?.takeIf { it != name })
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString(entitySubtitleSeparator(layoutDirection))
+            ?.takeIf { it != name }
 
     /** [subtitle] resolved against the layout direction the composition is in. */
     @Composable

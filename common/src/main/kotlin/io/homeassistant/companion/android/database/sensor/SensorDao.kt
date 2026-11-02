@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.database.sensor
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Transaction
-import androidx.room.Upsert
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.Transaction
+import androidx.room3.Upsert
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -168,6 +168,10 @@ internal interface SensorDao {
                         ?.copy(enabled = enabled, lastSentState = null, lastSentIcon = null)
                         ?: Sensor(sensorId, serverId, enabled, state = "")
                     upsert(sensor)
+                    // Attributes are shared by all servers, drop them once no server uses the sensor
+                    if (!enabled && get(sensorId).none { it.enabled }) {
+                        clearAttributes(sensorId)
+                    }
                 }
             }.awaitAll()
         }

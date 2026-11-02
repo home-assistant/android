@@ -43,31 +43,48 @@ internal class ChangelogScreenTest {
     private var closeClicked = false
     private val clickedActions = mutableListOf<ChangelogAction>()
 
-    private fun uiState(action: ChangelogAction? = null) = ChangelogUiState(
+    private fun uiState(
+        action: ChangelogAction? = null,
+        currentPlatform: ChangelogPlatform = ChangelogPlatform.APP,
+        platforms: Set<ChangelogPlatform> = setOf(ChangelogPlatform.APP, ChangelogPlatform.WEAR),
+        actionRequiresPlatform: Boolean = false,
+    ) = ChangelogUiState(
         versionName = VERSION_NAME,
         releaseUrl = RELEASE_URL,
-        currentPlatform = ChangelogPlatform.APP,
+        currentPlatform = currentPlatform,
         sections = listOf(
             ChangelogSection(
                 category = ChangelogCategory.NEW,
                 entries = listOf(
                     ChangelogEntry(
                         contentRes = commonR.string.changelog_entry_bug_fixes,
-                        platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.WEAR),
+                        platforms = platforms,
                         action = action,
+                        actionRequiresPlatform = actionRequiresPlatform,
                     ),
                 ),
             ),
         ),
     )
 
-    private fun setContent(action: ChangelogAction? = null) {
+    private fun setContent(
+        action: ChangelogAction? = null,
+        currentPlatform: ChangelogPlatform = ChangelogPlatform.APP,
+        platforms: Set<ChangelogPlatform> = setOf(ChangelogPlatform.APP, ChangelogPlatform.WEAR),
+        actionRequiresPlatform: Boolean = false,
+    ) {
         composeTestRule.setContent {
             ChangelogScreenContent(
-                uiState = uiState(action),
+                uiState = uiState(action, currentPlatform, platforms, actionRequiresPlatform),
                 onCloseClick = { closeClicked = true },
                 onActionClick = { clickedActions += it },
             )
+        }
+    }
+
+    private fun tapEntry() {
+        composeTestRule.apply {
+            onNodeWithText(stringResource(commonR.string.changelog_entry_bug_fixes)).performClick()
         }
     }
 
@@ -95,7 +112,7 @@ internal class ChangelogScreenTest {
         val action = ChangelogAction.OpenUrl(ACTION_URL)
         setContent(action = action)
 
-        composeTestRule.apply { onNodeWithText(stringResource(commonR.string.changelog_entry_bug_fixes)).performClick() }
+        tapEntry()
 
         assertEquals(listOf<ChangelogAction>(action), clickedActions)
     }
@@ -104,9 +121,53 @@ internal class ChangelogScreenTest {
     fun `Given entry without action when tapping it then nothing happens`() {
         setContent()
 
-        composeTestRule.apply { onNodeWithText(stringResource(commonR.string.changelog_entry_bug_fixes)).performClick() }
+        tapEntry()
 
         assertTrue(clickedActions.isEmpty())
+    }
+
+    @Test
+    fun `Given platform-restricted action when current platform is unsupported then tapping does nothing`() {
+        setContent(
+            action = ChangelogAction.OpenUrl(ACTION_URL),
+            currentPlatform = ChangelogPlatform.AUTOMOTIVE,
+            platforms = setOf(ChangelogPlatform.APP),
+            actionRequiresPlatform = true,
+        )
+
+        tapEntry()
+
+        assertTrue(clickedActions.isEmpty())
+    }
+
+    @Test
+    fun `Given platform-restricted action when current platform is supported then tapping invokes it`() {
+        val action = ChangelogAction.OpenUrl(ACTION_URL)
+        setContent(
+            action = action,
+            currentPlatform = ChangelogPlatform.APP,
+            platforms = setOf(ChangelogPlatform.APP),
+            actionRequiresPlatform = true,
+        )
+
+        tapEntry()
+
+        assertEquals(listOf<ChangelogAction>(action), clickedActions)
+    }
+
+    @Test
+    fun `Given unrestricted action when current platform is unsupported then tapping still invokes it`() {
+        val action = ChangelogAction.OpenUrl(ACTION_URL)
+        setContent(
+            action = action,
+            currentPlatform = ChangelogPlatform.AUTOMOTIVE,
+            platforms = setOf(ChangelogPlatform.APP),
+            actionRequiresPlatform = false,
+        )
+
+        tapEntry()
+
+        assertEquals(listOf<ChangelogAction>(action), clickedActions)
     }
 
     @Test

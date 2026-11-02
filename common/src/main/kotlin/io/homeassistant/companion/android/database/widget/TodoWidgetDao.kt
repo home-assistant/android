@@ -1,15 +1,12 @@
 package io.homeassistant.companion.android.database.widget
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.TypeConverters
-import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-@TypeConverters(TodoLastUpdateDataConverter::class)
 interface TodoWidgetDao : WidgetDao<TodoWidgetEntity> {
 
     @Query("SELECT * FROM todo_widget WHERE id = :id")

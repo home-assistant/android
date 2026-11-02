@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayEntry
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.FloorRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.NextNamePart
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
 import javax.inject.Inject
@@ -115,13 +116,31 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     }.flowOn(Dispatchers.Default)
 
     /**
-     * Observes the display state of the entities matching [filter]: a new
-     * [EntityDisplayState.Loaded] is emitted whenever an entity state change or an area,
-     * device, or entity registry update changes the resolved items, so each emission is the
-     * current display truth (including the state-dependent [EntityDisplayWithoutContext.icon] and
-     * [EntityDisplayWithoutContext.state]). Updates that leave the items unchanged are skipped. Since
-     * emissions are complete snapshots, slow consumers can safely `conflate()` the flow and
-     * only render the latest one.
+     * Observes the display state of [entityIds]: a new [EntityDisplayState.Loaded] is emitted
+     * whenever one of their state changes or an area, device, or entity registry update changes the
+     * resolved items, so each emission is the current display truth (including the state-dependent
+     * [EntityDisplayWithoutContext.icon] and [EntityDisplayWithoutContext.state]). Updates that
+     * leave the items unchanged are skipped. Since emissions are complete snapshots, slow consumers
+     * can safely `conflate()` the flow and only render the latest one.
+     *
+     * The flow completes with [EntityDisplayState.Error] when the entities cannot be
+     * retrieved, and completes after the initial [EntityDisplayState.Loaded] when no update
+     * subscription is available (for example when the websocket connection is unavailable).
+     */
+    fun observeInContext(serverId: Int, entityIds: List<String>): Flow<EntityDisplayState<EntityDisplayWithContext>> =
+        observeInContext(serverId, subscribedEntityIds = entityIds) { it.entityId in entityIds }
+
+    /**
+     * Observes the display state of the entities matching [filter]: a new [EntityDisplayState.Loaded]
+     * is emitted whenever an entity state change or an area, device, or entity registry update
+     * changes the resolved items, so each emission is the current display truth (including the
+     * state-dependent [EntityDisplayWithoutContext.icon] and [EntityDisplayWithoutContext.state]).
+     * Updates that leave the items unchanged are skipped. Since emissions are complete snapshots,
+     * slow consumers can safely `conflate()` the flow and only render the latest one.
+     *
+     * The state changes of every entity of the server are followed, so entities that start matching
+     * [filter] are added to the items. Prefer the overload taking the entity ids when they are
+     * known, so that only their state changes are subscribed to.
      *
      * The flow completes with [EntityDisplayState.Error] when the entities cannot be
      * retrieved, and completes after the initial [EntityDisplayState.Loaded] when no update
@@ -130,6 +149,17 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     fun observeInContext(
         serverId: Int,
         filter: (Entity) -> Boolean = { true },
+    ): Flow<EntityDisplayState<EntityDisplayWithContext>> =
+        observeInContext(serverId, subscribedEntityIds = null, filter)
+
+    /**
+     * Subscribes to the state changes of [subscribedEntityIds], or of every entity of the server
+     * when null, keeping the entities matching [filter].
+     */
+    private fun observeInContext(
+        serverId: Int,
+        subscribedEntityIds: List<String>?,
+        filter: (Entity) -> Boolean,
     ): Flow<EntityDisplayState<EntityDisplayWithContext>> = flow {
         val initial = loadEntities(serverId) ?: return@flow
 
@@ -140,7 +170,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         var lastItems = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
         emit(EntityDisplayState.Loaded(lastItems))
 
-        observeContextEvents(serverId, webSocketRepository).collect { event ->
+        observeContextEvents(serverId, webSocketRepository, subscribedEntityIds).collect { event ->
             when (event) {
                 is ObserveEvent.EntityEvent.StateChanged -> with(event.entity) {
                     if (filter(this)) entities[entityId] = this else entities.remove(entityId)
@@ -207,15 +237,17 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     }
 
     /**
-     * Merges the entity state changes and the registry update events of the server into a
-     * single [ObserveEvent] flow. Subscriptions that cannot be established are skipped, so the
-     * flow is empty when the server supports none.
+     * Merges the state changes of [entityIds], or of every entity of the server when it is null,
+     * and the registry update events of the server into a single [ObserveEvent] flow.
+     * Subscriptions that cannot be established are skipped, so the flow is empty when the server
+     * supports none.
      */
     private suspend fun observeContextEvents(
         serverId: Int,
         webSocketRepository: WebSocketRepository?,
+        entityIds: List<String>?,
     ): Flow<ObserveEvent> = listOfNotNull(
-        stateChanges(serverId, entityIds = null),
+        stateChanges(serverId, entityIds),
         webSocketRepository?.areaRegistryChanges(),
         webSocketRepository?.deviceRegistryChanges(),
         webSocketRepository?.entityRegistryChanges(),
@@ -282,10 +314,11 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      *   entity id
      * - icon: the custom icon of the registry entry (`ic`), the icon derived from the entity
      *   state attributes or its domain
-     * - device name: the name given by the user to the device of the entity, the name
-     *   provided by its integration
+     * - device and parent device names: the name given by the user to the device, the name
+     *   provided by its integration, only while they are part of the naming context (see
+     *   [namingContext])
      * - area: the area assigned to the entity itself, the area of the device the entity
-     *   belongs to
+     *   belongs to, the area of the parent device of a child device
      * - floor: the floor of the resolved area, so a device-inherited area also resolves its
      *   floor
      * - hidden: the `hb` flag (display), a non null `hidden_by` (classic)
@@ -303,14 +336,50 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         val classicEntry = snapshot.entries.classicEntry(entity.entityId)
 
         val device = (displayEntry?.deviceId ?: classicEntry?.deviceId)?.let { snapshot.devices[it] }
-        val areaId = displayEntry?.areaId ?: classicEntry?.areaId ?: device?.areaId
+        val parentDevice = device?.parentDeviceId?.let { snapshot.devices[it] }
+        val areaId = displayEntry?.areaId ?: classicEntry?.areaId ?: device?.areaId ?: parentDevice?.areaId
         val area = areaId?.let { snapshot.areas[it] }
         val floor = area?.floorId?.let { snapshot.floors[it] }
+        val context = namingContext(
+            entityNextNamePart = displayEntry?.nextNamePart ?: classicEntry?.nextNamePart,
+            device = device,
+            parentDevice = parentDevice,
+        )
         EntityDisplayWithContext(
             item = snapshot.entries.itemFor(entity),
             areaName = area?.name,
             floorName = floor?.name,
-            deviceName = device?.nameByUser ?: device?.name,
+            deviceName = context.deviceName,
+            parentDeviceName = context.parentDeviceName,
+            omittedOwnerNames = context.omittedOwnerNames,
+        )
+    }
+
+    /**
+     * Splits the devices owning an entity between its naming context and the omitted owners: walking
+     * up from the entity, owners are part of the context until the first node with an area of its
+     * own, whose `next_name_part` is then `area`. Servers that don't send `next_name_part` (before
+     * 2026.10) keep every owner in the context.
+     */
+    private fun namingContext(
+        entityNextNamePart: NextNamePart?,
+        device: DeviceRegistryResponse?,
+        parentDevice: DeviceRegistryResponse?,
+    ): NamingContext {
+        // The entity points to its device, unless the entity has an area of its own
+        val deviceInContext = entityNextNamePart.pointsTo(NextNamePart.Device)
+        // The device points to its parent, unless the device has an area of its own. The walk stops at
+        // the first owner out of the context, so the parent is out whenever the device is.
+        val parentInContext = deviceInContext && device?.nextNamePart.pointsTo(NextNamePart.ParentDevice)
+        val deviceName = device?.displayName
+        val parentDeviceName = parentDevice?.displayName
+        return NamingContext(
+            deviceName = deviceName.takeIf { deviceInContext },
+            parentDeviceName = parentDeviceName.takeIf { parentInContext },
+            omittedOwnerNames = listOfNotNull(
+                deviceName.takeUnless { deviceInContext },
+                parentDeviceName.takeUnless { parentInContext },
+            ),
         )
     }
 
@@ -469,6 +538,26 @@ private suspend fun <T> orNull(name: String, call: suspend () -> T?): T? = try {
     Timber.e(e, "Couldn't get $name")
     null
 }
+
+/** Name of the device to display: the one given by the user, the one provided by its integration. */
+private val DeviceRegistryResponse.displayName: String?
+    get() = nameByUser ?: name
+
+/** Whether this next name part points to [owner], keeping it in the naming context. */
+private fun NextNamePart?.pointsTo(owner: NextNamePart): Boolean = when (this) {
+    // Servers before 2026.10 don't send it, every owner stays in the naming context
+    null -> true
+    // The entry has an area of its own, or a part the app doesn't know: the walk stops here
+    NextNamePart.Area, is NextNamePart.Unknown -> false
+    NextNamePart.Device, NextNamePart.ParentDevice -> this == owner
+}
+
+/** Device names of an entity split between its naming context and the omitted owners. */
+private data class NamingContext(
+    val deviceName: String?,
+    val parentDeviceName: String?,
+    val omittedOwnerNames: List<String>,
+)
 
 /**
  * Registry data fetched once per resolution, indexed by id for the merge.

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util.compose.entity
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
@@ -501,6 +502,9 @@ private fun LoadingPlaceholder(modifier: Modifier = Modifier) {
     }
 }
 
+// Suppressing ComposeModifierReused: modifier/placeholderModifier are intentionally different,
+// and should not be passed to every branch
+@SuppressLint("ComposeModifierReused")
 @Composable
 private fun LoadedEntityList(
     entities: Collection<EntityDisplay>,

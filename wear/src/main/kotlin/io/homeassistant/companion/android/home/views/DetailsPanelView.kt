@@ -119,7 +119,8 @@ fun DetailsPanelView(
                     FanSpeedSlider(fanControls, onFanSpeedChanged, isToastEnabled, isHapticEnabled)
                 }
             }
-            entity.lightControls?.brightness?.let { brightness ->
+            // The brightness is only adjustable while the light is on
+            entity.lightControls?.brightness?.takeIf { entity.isActive }?.let { brightness ->
                 item {
                     BrightnessSlider(brightness, onBrightnessChanged, isToastEnabled, isHapticEnabled)
                 }

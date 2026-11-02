@@ -27,8 +27,6 @@ ALLOWED_LICENSES = {
 EXCEPTED_LIBRARIES = [
     # Chromium publishes a BSD-style license but only as a URL
     "org.chromium.net:*",
-    # https://github.com/Dimezis/BlurView/issues/259
-    "com.github.Dimezis:BlurView",
 ]
 
 

@@ -299,4 +299,16 @@ class HAAppTest {
             )
         }
     }
+
+    @Test
+    fun `Given SetHomeNetworkRoute from FrontendRoute when clicking back then show FrontendRoute`() {
+        testApp(FrontendRoute()) {
+            navController.navigateToSetHomeNetworkRoute(42)
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<SetHomeNetworkRoute>() == true)
+
+            onNodeWithContentDescription(stringResource(R.string.navigate_up)).performClick()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
+        }
+    }
 }

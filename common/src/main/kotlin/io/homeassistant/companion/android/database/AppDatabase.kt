@@ -1,13 +1,16 @@
 package io.homeassistant.companion.android.database
 
-import androidx.room.AutoMigration
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
+import androidx.annotation.VisibleForTesting
+import androidx.room3.AutoMigration
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.Database
+import androidx.room3.RoomDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.location.LocationHistoryDao
 import io.homeassistant.companion.android.database.location.LocationHistoryItem
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlsConfig
+import io.homeassistant.companion.android.database.mediacontrol.MediaControlsDao
 import io.homeassistant.companion.android.database.migration.Migration27to28
 import io.homeassistant.companion.android.database.migration.Migration36to37
 import io.homeassistant.companion.android.database.migration.Migration52to53
@@ -16,15 +19,15 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.sensor.Attribute
-import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
+import io.homeassistant.companion.android.database.sensor.EntriesColumnTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
-import io.homeassistant.companion.android.database.sensor.SensorSettingTypeConverter
+import io.homeassistant.companion.android.database.sensor.SensorSettingColumnTypeConverter
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerDao
-import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
-import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
+import io.homeassistant.companion.android.database.settings.LocalNotificationSettingColumnTypeConverter
+import io.homeassistant.companion.android.database.settings.LocalSensorSettingColumnTypeConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.CameraTile
@@ -49,8 +52,12 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
-import io.homeassistant.companion.android.database.widget.WidgetBackgroundTypeConverter
-import io.homeassistant.companion.android.database.widget.WidgetTapActionConverter
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundColumnTypeConverter
+import io.homeassistant.companion.android.database.widget.WidgetTapActionColumnTypeConverter
+import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
+
+@VisibleForTesting
+const val DATABASE_VERSION = 54
 
 @Database(
     entities = [
@@ -74,8 +81,9 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         EntityStateComplications::class,
         Server::class,
         Setting::class,
+        MediaControlsConfig::class,
     ],
-    version = 53,
+    version = DATABASE_VERSION,
     autoMigrations = [
         AutoMigration(from = 24, to = 25),
         AutoMigration(from = 25, to = 26),
@@ -104,15 +112,17 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionConvert
         AutoMigration(from = 50, to = 51),
         AutoMigration(from = 51, to = 52),
         AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
+        AutoMigration(from = 53, to = 54),
     ],
 )
-@TypeConverters(
-    LocalNotificationSettingConverter::class,
-    LocalSensorSettingConverter::class,
-    EntriesTypeConverter::class,
-    SensorSettingTypeConverter::class,
-    WidgetBackgroundTypeConverter::class,
-    WidgetTapActionConverter::class,
+@ColumnTypeConverters(
+    LocalNotificationSettingColumnTypeConverter::class,
+    LocalSensorSettingColumnTypeConverter::class,
+    EntriesColumnTypeConverter::class,
+    SensorSettingColumnTypeConverter::class,
+    WidgetBackgroundColumnTypeConverter::class,
+    WidgetTapActionColumnTypeConverter::class,
+    TodoLastUpdateDataConverter::class,
 )
 internal abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
@@ -133,4 +143,5 @@ internal abstract class AppDatabase : RoomDatabase() {
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao
+    abstract fun mediaControlDao(): MediaControlsDao
 }

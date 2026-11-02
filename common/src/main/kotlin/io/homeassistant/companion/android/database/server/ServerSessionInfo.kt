@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.database.server
 
 import android.os.Parcelable
-import androidx.room.ColumnInfo
+import androidx.room3.ColumnInfo
 import kotlinx.parcelize.Parcelize
 
 @Parcelize

@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.Context
 import android.nfc.NfcAdapter
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.NfcVariant
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
@@ -21,7 +23,7 @@ class NfcSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_nfc_state,
             commonR.string.sensor_description_nfc_state,
-            "mdi:nfc-variant",
+            Mdi.NfcVariant,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
