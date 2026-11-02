@@ -1,19 +1,29 @@
 package io.homeassistant.companion.android.sensors
 
+import android.app.Notification
 import android.content.Context
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 
 private const val SETTING_ALLOW_LIST = "notification_allow_list"
 private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
+
+// Hidden Notification.FLAG_AUTOGROUP_SUMMARY system API
+private const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
+
+// Flags Android sets on the summaries it creates when auto-grouping an app's notifications
+private const val SYSTEM_AUTOGROUP_SUMMARY_FLAGS =
+    FLAG_AUTOGROUP_SUMMARY or Notification.FLAG_GROUP_SUMMARY or Notification.FLAG_LOCAL_ONLY
 
 class NotificationListenerSensorManagerTest {
 
@@ -56,7 +66,37 @@ class NotificationListenerSensorManagerTest {
         }
     }
 
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("groupSummaryCases")
+    fun `Given notification when checking for system generated group summary then only Android auto-group summaries match`(
+        description: String,
+        group: String?,
+        flags: Int,
+        expected: Boolean,
+    ) {
+        val notification = mockk<Notification> {
+            every { this@mockk.group } returns group
+        }.apply { this.flags = flags }
+
+        assertEquals(expected, notification.isSystemGeneratedGroupSummary(), description)
+    }
+
     companion object {
+        @JvmStatic
+        fun groupSummaryCases() = listOf(
+            Arguments.of("Plain app notification", null, Notification.FLAG_AUTO_CANCEL, false),
+            Arguments.of("App defined group summary", "app_group", Notification.FLAG_GROUP_SUMMARY, false),
+            Arguments.of("Child of an app defined group", "app_group", Notification.FLAG_AUTO_CANCEL, false),
+            Arguments.of("ranker_group auto-group summary", "ranker_group", SYSTEM_AUTOGROUP_SUMMARY_FLAGS, true),
+            Arguments.of("ranker_group key without auto-group flag", "ranker_group", 0, true),
+            Arguments.of(
+                "Sectioned Aggregate auto-group summary (Android 16+)",
+                "0|com.example|g:Aggregate_AlertingSection",
+                SYSTEM_AUTOGROUP_SUMMARY_FLAGS or Notification.FLAG_AUTO_CANCEL,
+                true,
+            ),
+        )
+
         @JvmStatic
         fun sensorIds() = listOf(
             NotificationListenerSensorManager.lastNotification.id,

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
+import android.app.Notification
 import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
@@ -157,7 +158,7 @@ class NotificationListenerSensorManager @Inject constructor(
                 return@launch
             }
 
-            if (sbn.notification.group == "ranker_group") {
+            if (sbn.notification.isSystemGeneratedGroupSummary()) {
                 return@launch
             }
 
@@ -197,6 +198,10 @@ class NotificationListenerSensorManager @Inject constructor(
 
         sensorWorkerScope.launch {
             if (!shouldProcessNotification(lastRemovedNotification, sbn.packageName)) {
+                return@launch
+            }
+
+            if (sbn.notification.isSystemGeneratedGroupSummary()) {
                 return@launch
             }
 
@@ -400,3 +405,23 @@ class NotificationListenerSensorManager @Inject constructor(
         }
     }
 }
+
+/**
+ * Group key of the summary that Android creates when it auto-groups an app's notifications without sections.
+ */
+private const val LEGACY_AUTOGROUP_KEY = "ranker_group"
+
+/**
+ * Mirrors the hidden `Notification.FLAG_AUTOGROUP_SUMMARY` system API. Android sets it on every summary it
+ * creates when auto-grouping an app's notifications, including the `Aggregate_*` groups of Android 16+.
+ */
+private const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
+
+/**
+ * Whether this notification is a group summary that Android generated on behalf of the app.
+ *
+ * Such summaries carry no content of their own and are posted right after the real notification, so reporting
+ * them would replace the real notification data with an empty one.
+ */
+internal fun Notification.isSystemGeneratedGroupSummary(): Boolean =
+    group == LEGACY_AUTOGROUP_KEY || (flags and FLAG_AUTOGROUP_SUMMARY) != 0
