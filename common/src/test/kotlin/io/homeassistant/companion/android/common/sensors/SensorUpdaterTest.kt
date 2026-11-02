@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.app.NotificationManager
 import android.content.Context
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.FlaskEmpty
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
@@ -31,7 +33,7 @@ class SensorUpdaterTest {
     private val basicSensor = SensorManager.BasicSensor(
         id = "test_sensor",
         type = "sensor",
-        statelessIcon = "mdi:test",
+        statelessIcon = Mdi.FlaskEmpty,
     )
 
     private fun updater(

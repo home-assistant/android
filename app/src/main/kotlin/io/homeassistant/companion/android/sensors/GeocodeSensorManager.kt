@@ -8,6 +8,8 @@ import android.location.Location
 import android.os.Build
 import androidx.annotation.VisibleForTesting
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Map
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -68,7 +70,7 @@ class GeocodeSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_geolocation,
             commonR.string.sensor_description_geocoded_location,
-            "mdi:map",
+            Mdi.Map,
             settings = listOf(
                 Setting.Number(SETTING_ACCURACY, DEFAULT_MINIMUM_ACCURACY),
                 Setting.Toggle(SETTINGS_INCLUDE_LOCATION, default = false),

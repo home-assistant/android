@@ -117,6 +117,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
         every { pendingFileChooser } returns MutableStateFlow(null)
         every { pendingPermissionRequest } returns MutableStateFlow(null)
+        every { webViewDebugEnabled } returns MutableStateFlow(false)
     }
 
     @Test

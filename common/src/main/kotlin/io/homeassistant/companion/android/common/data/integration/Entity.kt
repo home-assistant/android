@@ -362,7 +362,7 @@ data class FanControls(val speed: EntityPosition, val steps: Int)
 @Immutable
 data class ColorTemperatureControl(val current: Float, val min: Float, val max: Float, val isKelvin: Boolean)
 
-/** Controls of a light entity, each null when the light does not support it. */
+/** Controls of a light entity, null for the ones it doesn't support. A light off has a [brightness] of 0. */
 @Immutable
 data class LightControls(val brightness: EntityPosition?, val colorTemperature: ColorTemperatureControl?)
 
@@ -422,6 +422,7 @@ data class MediaPlayerControls(
     val supportsPreviousTrack: Boolean = false,
     val supportsNextTrack: Boolean = false,
     val supportsVolumeSet: Boolean = false,
+    val supportsVolumeStep: Boolean = false,
     val supportsVolumeMute: Boolean = false,
     val supportsShuffleSet: Boolean = false,
     val supportsRepeatSet: Boolean = false,
@@ -488,6 +489,7 @@ object EntityExt {
     const val MEDIA_PLAYER_SUPPORT_VOLUME_MUTE = 8
     const val MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK = 16
     const val MEDIA_PLAYER_SUPPORT_NEXT_TRACK = 32
+    const val MEDIA_PLAYER_SUPPORT_VOLUME_STEP = 1024
     const val MEDIA_PLAYER_SUPPORT_STOP = 4096
     const val MEDIA_PLAYER_SUPPORT_PLAY = 16384
     const val MEDIA_PLAYER_SUPPORT_SHUFFLE_SET = 32768
@@ -690,29 +692,28 @@ fun Entity.supportsLightBrightness(): Boolean {
     }
 }
 
+/**
+ * Brightness of the light as a percentage, null when it doesn't support brightness. The value is 0
+ * while the light is off, like the brightness slider of the frontend.
+ */
 fun Entity.getLightBrightness(): EntityPosition? {
     // https://github.com/home-assistant/frontend/blob/dev/src/dialogs/more-info/controls/more-info-light.ts#L90
     return try {
         if (!supportsLightBrightness()) return null
 
-        when (state) {
-            "on" -> {
-                val minValue = 0f
-                val maxValue = 100f
-                val currentValue =
-                    floatAttributeOrNull("brightness")?.div(255f)
-                        ?.times(100)
-                        ?: 0f
-
-                EntityPosition(
-                    value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
-                    min = minValue,
-                    max = maxValue,
-                )
-            }
-
-            else -> null
+        val minValue = 0f
+        val maxValue = 100f
+        val currentValue = if (state == "on") {
+            floatAttributeOrNull("brightness")?.div(255f)?.times(100) ?: 0f
+        } else {
+            0f
         }
+
+        EntityPosition(
+            value = currentValue.coerceAtLeast(minValue).coerceAtMost(maxValue),
+            min = minValue,
+            max = maxValue,
+        )
     } catch (e: Exception) {
         Timber.tag(EntityExt.TAG).e(e, "Unable to get getLightBrightness")
         null
@@ -827,6 +828,7 @@ fun Entity.getMediaPlayerControls(): MediaPlayerControls? {
         supportsPreviousTrack = supportsPreviousTrack(),
         supportsNextTrack = supportsNextTrack(),
         supportsVolumeSet = supportsVolumeSet(),
+        supportsVolumeStep = supportsVolumeStep(),
         supportsVolumeMute = supportsVolumeMute(),
         supportsShuffleSet = supportsShuffleSet(),
         supportsRepeatSet = supportsRepeatSet(),
@@ -910,6 +912,9 @@ fun Entity.getLightColor(): Int? {
 
 fun Entity.supportsVolumeSet(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
     supportsFeature(EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_SET)
+
+fun Entity.supportsVolumeStep(): Boolean = domain == MEDIA_PLAYER_DOMAIN &&
+    supportsFeature(EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_STEP)
 
 fun Entity.getVolumeLevel(): EntityPosition? {
     return try {

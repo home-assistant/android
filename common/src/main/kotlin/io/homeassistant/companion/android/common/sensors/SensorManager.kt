@@ -8,12 +8,14 @@ import android.os.Build
 import android.os.Process.myPid
 import android.os.Process.myUid
 import androidx.core.content.getSystemService
+import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.AnySerializer
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.Locale
@@ -48,7 +50,7 @@ interface SensorManager {
         val type: String,
         val name: Int = commonR.string.sensor,
         val descriptionId: Int = commonR.string.sensor_description_none,
-        val statelessIcon: String = "",
+        val statelessIcon: MdiIcon,
         val deviceClass: String? = null,
         val unitOfMeasurement: String? = null,
         val docsLink: String? = null,
@@ -317,7 +319,7 @@ interface SensorManager {
     suspend fun onSensorUpdated(
         basicSensor: BasicSensor,
         state: Any,
-        mdiIcon: String,
+        mdiIcon: MdiIcon,
         attributes: Map<String, Any?>,
         forceUpdate: Boolean = false,
     ) = withContext(Dispatchers.Default) {
@@ -335,7 +337,7 @@ interface SensorManager {
                     else -> throw IllegalArgumentException("Unknown Sensor State Type")
                 },
                 type = basicSensor.type,
-                icon = mdiIcon,
+                icon = mdiIcon.mdiName,
                 name = basicSensor.name.toString(),
                 deviceClass = basicSensor.deviceClass,
                 unitOfMeasurement = basicSensor.unitOfMeasurement,

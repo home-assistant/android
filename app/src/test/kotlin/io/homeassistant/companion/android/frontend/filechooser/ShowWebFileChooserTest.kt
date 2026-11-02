@@ -31,7 +31,8 @@ class ShowWebFileChooserTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val contract = ShowWebFileChooser()
-    private val outputUri = Uri.parse("content://provider/capture.jpg")
+    private val photoOutput = CaptureOutput(CaptureKind.Photo, Uri.parse("content://provider/capture.jpg"))
+    private val videoOutput = CaptureOutput(CaptureKind.Video, Uri.parse("content://provider/capture.mp4"))
 
     @Test
     fun `Given no accept types when creating intent then any openable file can be picked`() = runTest {
@@ -153,23 +154,26 @@ class ShowWebFileChooserTest {
     }
 
     @Test
-    fun `Given direct camera capture when creating intent then the camera writes to the output uri`() = runTest {
-        val intent = createIntent(FakeFileChooserParams(), CameraCapture.Direct(outputUri))
-
-        assertCaptureIntent(intent)
+    fun `Given direct camera capture when creating intent then the camera app writes to the output uri`() = runTest {
+        assertCaptureIntent(createIntent(FakeFileChooserParams(), CameraCapture.Direct(photoOutput)), photoOutput)
+        assertCaptureIntent(createIntent(FakeFileChooserParams(), CameraCapture.Direct(videoOutput)), videoOutput)
     }
 
     @Test
-    fun `Given offered camera capture when creating intent then a chooser shows the picker and the camera`() = runTest {
-        val intent = createIntent(FakeFileChooserParams(acceptTypes = arrayOf("image/*")), CameraCapture.Offered(outputUri))
+    fun `Given offered camera capture when creating intent then a chooser shows the picker and each camera app`() = runTest {
+        val intent = createIntent(
+            FakeFileChooserParams(acceptTypes = arrayOf("image/*")),
+            CameraCapture.Offered(listOf(photoOutput, videoOutput)),
+        )
 
         assertEquals(Intent.ACTION_CHOOSER, intent.action)
         val pickerIntent = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_INTENT, Intent::class.java)
         assertEquals(Intent.ACTION_GET_CONTENT, pickerIntent?.action)
         assertArrayEquals(arrayOf("image/*"), pickerIntent?.getStringArrayExtra(Intent.EXTRA_MIME_TYPES))
         val initialIntents = IntentCompat.getParcelableArrayExtra(intent, Intent.EXTRA_INITIAL_INTENTS, Intent::class.java)
-        assertEquals(1, initialIntents?.size)
-        assertCaptureIntent(initialIntents!!.single() as Intent)
+        assertEquals(2, initialIntents?.size)
+        assertCaptureIntent(initialIntents!![0] as Intent, photoOutput)
+        assertCaptureIntent(initialIntents[1] as Intent, videoOutput)
     }
 
     @Test
@@ -216,10 +220,14 @@ class ShowWebFileChooserTest {
         return contract.createIntent(context, FileChooserInput(params, mimeTypes.toPickerMimeTypes(), cameraCapture))
     }
 
-    private fun assertCaptureIntent(intent: Intent) {
-        assertEquals(MediaStore.ACTION_IMAGE_CAPTURE, intent.action)
-        assertEquals(outputUri, IntentCompat.getParcelableExtra(intent, MediaStore.EXTRA_OUTPUT, Uri::class.java))
-        assertEquals(outputUri, intent.clipData?.getItemAt(0)?.uri)
+    private fun assertCaptureIntent(intent: Intent, output: CaptureOutput) {
+        val expectedAction = when (output.kind) {
+            CaptureKind.Photo -> MediaStore.ACTION_IMAGE_CAPTURE
+            CaptureKind.Video -> MediaStore.ACTION_VIDEO_CAPTURE
+        }
+        assertEquals(expectedAction, intent.action)
+        assertEquals(output.uri, IntentCompat.getParcelableExtra(intent, MediaStore.EXTRA_OUTPUT, Uri::class.java))
+        assertEquals(output.uri, intent.clipData?.getItemAt(0)?.uri)
         assertTrue(intent.flags and Intent.FLAG_GRANT_WRITE_URI_PERMISSION != 0)
         assertTrue(intent.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION != 0)
     }

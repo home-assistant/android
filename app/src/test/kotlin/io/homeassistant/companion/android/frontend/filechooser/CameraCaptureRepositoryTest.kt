@@ -41,7 +41,7 @@ class CameraCaptureRepositoryTest {
     fun `Given capture file created when deleting it then the file is removed`() = runTest {
         val repository = CameraCaptureRepository(context, clock, StandardTestDispatcher(testScheduler))
 
-        val uri = repository.createImageFile()
+        val uri = repository.createFile(CaptureKind.Photo)
         val file = captureFile(uri)
 
         assertEquals(context.fileProviderAuthority, uri.authority)
@@ -55,8 +55,8 @@ class CameraCaptureRepositoryTest {
     @Test
     fun `Given old and recent captures when deleting stale then only the old capture is removed`() = runTest {
         val repository = CameraCaptureRepository(context, clock, StandardTestDispatcher(testScheduler))
-        val oldFile = captureFile(repository.createImageFile())
-        val recentFile = captureFile(repository.createImageFile())
+        val oldFile = captureFile(repository.createFile(CaptureKind.Photo))
+        val recentFile = captureFile(repository.createFile(CaptureKind.Photo))
         oldFile.setLastModified((clock.now() - 2.days).toEpochMilliseconds())
         recentFile.setLastModified((clock.now() - 1.hours).toEpochMilliseconds())
 
@@ -64,6 +64,26 @@ class CameraCaptureRepositoryTest {
 
         assertFalse(oldFile.exists())
         assertTrue(recentFile.exists())
+    }
+
+    @Test
+    fun `Given a capture kind when creating a file then it uses the matching extension`() = runTest {
+        val repository = CameraCaptureRepository(context, clock, StandardTestDispatcher(testScheduler))
+
+        assertTrue(repository.createFile(CaptureKind.Photo).lastPathSegment!!.endsWith(".jpg"))
+        assertTrue(repository.createFile(CaptureKind.Video).lastPathSegment!!.endsWith(".mp4"))
+    }
+
+    @Test
+    fun `Given capture file when written then it has content`() = runTest {
+        val repository = CameraCaptureRepository(context, clock, StandardTestDispatcher(testScheduler))
+        val uri = repository.createFile(CaptureKind.Video)
+
+        assertFalse(repository.hasContent(uri))
+
+        captureFile(uri).writeBytes(byteArrayOf(1, 2, 3))
+
+        assertTrue(repository.hasContent(uri))
     }
 
     @Test

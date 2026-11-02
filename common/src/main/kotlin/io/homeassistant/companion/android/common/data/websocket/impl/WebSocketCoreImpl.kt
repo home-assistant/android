@@ -920,7 +920,8 @@ internal class WebSocketCoreImpl(
         if (activeMessage == null) {
             Timber.d("Received event for unknown subscription id= $subscriptionId, unsubscribing")
             subscriptionId?.let {
-                unsubscribeEvents(subscriptionId)
+                // Launch a new job to avoid stalling the inbound message queue
+                wsScope.launch { unsubscribeEvents(subscriptionId) }
             }
             return
         }

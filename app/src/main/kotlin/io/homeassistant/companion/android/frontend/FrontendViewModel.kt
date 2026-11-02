@@ -387,6 +387,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         emitAll(prefsRepository.autoPlayVideoFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
+    /** Whether the WebView is debuggable per the developer setting, null until the pref is read. */
+    val webViewDebugEnabled: StateFlow<Boolean?> = flow {
+        emitAll(prefsRepository.webViewDebugFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+
     /**
      * The user's "Screen orientation" preference.
      *
@@ -947,6 +952,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is FrontendHandlerEvent.StartMatterCommissioning -> {
                 viewModelScope.launch { matterThreadHandler.onStartMatterCommissioning() }
+            }
+
+            is FrontendHandlerEvent.StartMatterSharing -> {
+                viewModelScope.launch {
+                    matterThreadHandler.onStartMatterSharing(messageId = result.messageId, payload = result.payload)
+                }
             }
 
             is FrontendHandlerEvent.ImportThreadCredentials -> {

@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
  * The command and its initial fields are available since Home Assistant 2023.3
  * (https://github.com/home-assistant/core/pull/87787).
  *
- * See https://developers.home-assistant.io/docs/api/websocket/#fetching-entity-registry-for-display
+ * See https://contributors.home-assistant.io/core/internals/websocket-api/#list-entities-for-display
  */
 @Serializable
 data class EntityRegistryDisplayResponse(

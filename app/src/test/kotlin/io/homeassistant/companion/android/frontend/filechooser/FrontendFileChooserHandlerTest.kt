@@ -33,10 +33,15 @@ import org.junit.jupiter.api.assertNotNull
 @OptIn(ExperimentalCoroutinesApi::class)
 class FrontendFileChooserHandlerTest {
 
-    private val outputUri = mockk<Uri>()
+    private val photoUri = mockk<Uri>()
+    private val videoUri = mockk<Uri>()
+    private val photoOutput = CaptureOutput(CaptureKind.Photo, photoUri)
+    private val videoOutput = CaptureOutput(CaptureKind.Video, videoUri)
     private val cameraCaptureRepository = mockk<CameraCaptureRepository>(relaxed = true) {
         every { hasCamera } returns true
-        coEvery { createImageFile() } returns outputUri
+        coEvery { createFile(CaptureKind.Photo) } returns photoUri
+        coEvery { createFile(CaptureKind.Video) } returns videoUri
+        coEvery { hasContent(photoUri) } returns true
     }
     private val permissionManager = mockk<PermissionManager> {
         coEvery { checkCameraPermission() } returns true
@@ -132,7 +137,7 @@ class FrontendFileChooserHandlerTest {
         outcome.cancel()
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { cameraCaptureRepository.delete(outputUri) }
+        coVerify(exactly = 1) { cameraCaptureRepository.delete(photoUri) }
         assertNull(handler.pendingFileChooser.value)
     }
 
@@ -144,7 +149,7 @@ class FrontendFileChooserHandlerTest {
 
         coVerifyOrder {
             cameraCaptureRepository.deleteStale()
-            cameraCaptureRepository.createImageFile()
+            cameraCaptureRepository.createFile(CaptureKind.Photo)
         }
     }
 
@@ -155,14 +160,16 @@ class FrontendFileChooserHandlerTest {
             handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "*/*"), captureEnabled = true))
         }
 
-        assertEquals(CameraCapture.Offered(outputUri), awaitPick(handler).input.cameraCapture)
+        assertEquals(CameraCapture.Offered(listOf(photoOutput)), awaitPick(handler).input.cameraCapture)
     }
 
     @Test
-    fun `Given images accepted when saving or picking a folder then camera is not involved`() = runTest {
+    fun `Given images or videos accepted when saving or picking a folder then camera is not involved`() = runTest {
         val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
         listOf(FileChooserParams.MODE_SAVE, FileChooserParams.MODE_OPEN_FOLDER).forEach { mode ->
-            async { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*"), mode = mode, captureEnabled = true)) }
+            async {
+                handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "video/*"), mode = mode, captureEnabled = true))
+            }
 
             val pending = awaitPick(handler)
             assertNull(pending.input.cameraCapture, "Camera involved for mode $mode")
@@ -183,7 +190,7 @@ class FrontendFileChooserHandlerTest {
             pending.onResult(FileChooserResult.Cancelled)
             advanceUntilIdle()
         }
-        coVerify(exactly = 0) { cameraCaptureRepository.createImageFile() }
+        coVerify(exactly = 0) { cameraCaptureRepository.createFile(any()) }
     }
 
     @Test
@@ -193,7 +200,7 @@ class FrontendFileChooserHandlerTest {
             handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/png", "image/jpeg", "image/gif")))
         }
 
-        assertEquals(CameraCapture.Offered(outputUri), awaitPick(handler).input.cameraCapture)
+        assertEquals(CameraCapture.Offered(listOf(photoOutput)), awaitPick(handler).input.cameraCapture)
     }
 
     @Test
@@ -201,7 +208,7 @@ class FrontendFileChooserHandlerTest {
         val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
         backgroundScope.launch { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/png", "image/jpeg"), captureEnabled = true)) }
 
-        assertEquals(CameraCapture.Direct(outputUri), awaitPick(handler).input.cameraCapture)
+        assertEquals(CameraCapture.Direct(photoOutput), awaitPick(handler).input.cameraCapture)
     }
 
     @Test
@@ -209,7 +216,7 @@ class FrontendFileChooserHandlerTest {
         val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
         backgroundScope.launch { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "application/pdf"), captureEnabled = true)) }
 
-        assertEquals(CameraCapture.Offered(outputUri), awaitPick(handler).input.cameraCapture)
+        assertEquals(CameraCapture.Offered(listOf(photoOutput)), awaitPick(handler).input.cameraCapture)
     }
 
     @Test
@@ -225,7 +232,7 @@ class FrontendFileChooserHandlerTest {
     @Test
     fun `Given capture file creation fails when picking images then only the file picker is shown`() = runTest {
         val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
-        coEvery { cameraCaptureRepository.createImageFile() } throws IOException("disk full")
+        coEvery { cameraCaptureRepository.createFile(any()) } throws IOException("disk full")
 
         backgroundScope.launch { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*"), captureEnabled = true)) }
 
@@ -240,7 +247,7 @@ class FrontendFileChooserHandlerTest {
         backgroundScope.launch { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*"), captureEnabled = true)) }
 
         assertNull(awaitPick(handler).input.cameraCapture)
-        coVerify(exactly = 0) { cameraCaptureRepository.createImageFile() }
+        coVerify(exactly = 0) { cameraCaptureRepository.createFile(any()) }
     }
 
     @Test
@@ -261,7 +268,7 @@ class FrontendFileChooserHandlerTest {
         awaitPick(handler).onResult(FileChooserResult.Captured)
         advanceUntilIdle()
 
-        assertArrayEquals(arrayOf(outputUri), outcome.await())
+        assertArrayEquals(arrayOf(photoUri), outcome.await())
         coVerify(exactly = 0) { cameraCaptureRepository.delete(any()) }
     }
 
@@ -269,10 +276,10 @@ class FrontendFileChooserHandlerTest {
     fun `Given camera used when camera returns the capture uri then it is returned and kept`() = runTest {
         val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
         val outcome = async { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*"), captureEnabled = true)) }
-        awaitPick(handler).onResult(FileChooserResult.Selected(listOf(outputUri)))
+        awaitPick(handler).onResult(FileChooserResult.Selected(listOf(photoUri)))
         advanceUntilIdle()
 
-        assertArrayEquals(arrayOf(outputUri), outcome.await())
+        assertArrayEquals(arrayOf(photoUri), outcome.await())
         coVerify(exactly = 0) { cameraCaptureRepository.delete(any()) }
     }
 
@@ -285,7 +292,71 @@ class FrontendFileChooserHandlerTest {
             advanceUntilIdle()
         }
 
-        coVerify(exactly = 2) { cameraCaptureRepository.delete(outputUri) }
+        coVerify(exactly = 2) { cameraCaptureRepository.delete(photoUri) }
+    }
+
+    @Test
+    fun `Given videos accepted when picking then recording is offered or opened directly with capture`() = runTest {
+        val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
+        listOf(false to CameraCapture.Offered(listOf(videoOutput)), true to CameraCapture.Direct(videoOutput))
+            .forEach { (captureEnabled, expected) ->
+                async { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("video/*"), captureEnabled = captureEnabled)) }
+
+                val pending = awaitPick(handler)
+                assertEquals(expected, pending.input.cameraCapture, "Unexpected capture with capture=$captureEnabled")
+                pending.onResult(FileChooserResult.Cancelled)
+                advanceUntilIdle()
+            }
+    }
+
+    @Test
+    fun `Given images and videos accepted with capture when picking then both are offered`() = runTest {
+        val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
+        backgroundScope.launch {
+            handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "video/*"), captureEnabled = true))
+        }
+
+        assertEquals(CameraCapture.Offered(listOf(photoOutput, videoOutput)), awaitPick(handler).input.cameraCapture)
+    }
+
+    @Test
+    fun `Given photo and video offered when video recorded then the video is returned and the photo file deleted`() = runTest {
+        val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
+        coEvery { cameraCaptureRepository.hasContent(photoUri) } returns false
+        coEvery { cameraCaptureRepository.hasContent(videoUri) } returns true
+
+        val outcome = async { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "video/*"))) }
+        awaitPick(handler).onResult(FileChooserResult.Captured)
+        advanceUntilIdle()
+
+        assertArrayEquals(arrayOf(videoUri), outcome.await())
+        coVerify(exactly = 1) { cameraCaptureRepository.delete(photoUri) }
+        coVerify(exactly = 0) { cameraCaptureRepository.delete(videoUri) }
+    }
+
+    @Test
+    fun `Given camera used when completed without any content then null is returned and files deleted`() = runTest {
+        val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
+        coEvery { cameraCaptureRepository.hasContent(any()) } returns false
+
+        val outcome = async { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "video/*"))) }
+        awaitPick(handler).onResult(FileChooserResult.Captured)
+        advanceUntilIdle()
+
+        assertNull(outcome.await())
+        coVerify(exactly = 1) { cameraCaptureRepository.delete(photoUri) }
+        coVerify(exactly = 1) { cameraCaptureRepository.delete(videoUri) }
+    }
+
+    @Test
+    fun `Given video file creation fails after photo file when picking then photo file is deleted`() = runTest {
+        val handler = FrontendFileChooserHandler(cameraCaptureRepository, permissionManager, StandardTestDispatcher(testScheduler))
+        coEvery { cameraCaptureRepository.createFile(CaptureKind.Video) } throws IOException("disk full")
+
+        backgroundScope.launch { handler.pickFiles(FakeFileChooserParams(acceptTypes = arrayOf("image/*", "video/*"))) }
+
+        assertNull(awaitPick(handler).input.cameraCapture)
+        coVerify(exactly = 1) { cameraCaptureRepository.delete(photoUri) }
     }
 
     @Test

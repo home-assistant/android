@@ -149,6 +149,7 @@ internal fun FrontendScreen(
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
+    val webViewDebugEnabled by viewModel.webViewDebugEnabled.collectAsStateWithLifecycle()
     val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
     val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val improvScanRequested by viewModel.improvScanRequested.collectAsStateWithLifecycle()
@@ -210,6 +211,7 @@ internal fun FrontendScreen(
         onBarcodeScanned = viewModel::onBarcodeScanned,
         onBarcodeCancelled = viewModel::onBarcodeCancelled,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
+        webViewDebugEnabled = webViewDebugEnabled,
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
         onPipReadinessChanged = onPipReadinessChanged,
@@ -239,6 +241,7 @@ internal fun FrontendScreenContent(
     onErrorAction: (ErrorActionIntent) -> Unit = {},
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
+    webViewDebugEnabled: Boolean? = null,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
     keepScreenOnEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
@@ -306,6 +309,7 @@ internal fun FrontendScreenContent(
             onDownloadRequested = onDownloadRequested,
             onGesture = onGesture,
             autoPlayVideoEnabled = autoPlayVideoEnabled,
+            webViewDebugEnabled = webViewDebugEnabled,
         )
 
         PipEligibleOverlays(
@@ -593,6 +597,7 @@ private fun SafeHAWebView(
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
     autoPlayVideoEnabled: Boolean,
+    webViewDebugEnabled: Boolean?,
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
@@ -645,6 +650,7 @@ private fun SafeHAWebView(
                     )
                 },
                 onWebViewCreationFailed = onWebViewCreationFailed,
+                debuggingEnabled = webViewDebugEnabled,
             )
 
             // Right safe area
@@ -968,6 +974,7 @@ private fun FrontendBarcodeOverlay(
     )
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenLoadingPreview() {
@@ -994,6 +1001,7 @@ private fun FrontendScreenLoadingPreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenErrorPreview() {
@@ -1025,6 +1033,7 @@ private fun FrontendScreenErrorPreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenInsecurePreview() {
@@ -1052,6 +1061,7 @@ private fun FrontendScreenInsecurePreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenSecurityLevelRequiredPreview() {

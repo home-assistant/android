@@ -4,13 +4,20 @@ on: # yamllint disable-line rule:truthy
   workflow_dispatch:
   schedule:
     - cron: "30 3 1 * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # Never cancel a tag push in flight
+
+permissions: {}
+
 jobs:
   tag:
     name: Tag Monthly Release
     runs-on: ubuntu-latest
     if: github.repository == 'home-assistant/android'
     permissions:
-      contents: write
+      contents: write # To push the monthly calendar version tag
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

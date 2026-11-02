@@ -17,7 +17,7 @@ import kotlinx.serialization.json.encodeToJsonElement
  * These messages are serialized to JSON and evaluated in the WebView to communicate
  * with the Home Assistant frontend.
  *
- * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus">External bus documentation</a>
+ * @see <a href="https://contributors.home-assistant.io/frontend/reference/external-bus/">External bus documentation</a>
  */
 @Serializable
 sealed interface OutgoingExternalBusMessage {
@@ -49,6 +49,20 @@ object SuccessResultMessage {
     }
 }
 
+object ErrorResultMessage {
+    /** The frontend branches on [code] and shows its own text; [message] is for the log. */
+    operator fun invoke(id: Int?, code: String, message: String): OutgoingExternalBusMessage {
+        return ResultMessage(
+            id = id,
+            success = false,
+            error = frontendExternalBusJson.encodeToJsonElement(ResultError(code = code, message = message)),
+        )
+    }
+
+    @Serializable
+    private data class ResultError(val code: String, val message: String)
+}
+
 object ConfigResultMessage {
     /**
      * Creates a config response with app capabilities.
@@ -59,6 +73,7 @@ object ConfigResultMessage {
         id: Int?,
         hasNfc: Boolean,
         canCommissionMatter: Boolean,
+        canShareMatterDevice: Boolean,
         canExportThread: Boolean,
         hasBarCodeScanner: Int,
         canSetupImprov: Boolean,
@@ -70,6 +85,7 @@ object ConfigResultMessage {
                 ConfigResult.create(
                     hasNfc,
                     canCommissionMatter,
+                    canShareMatterDevice,
                     canExportThread,
                     hasBarCodeScanner,
                     canSetupImprov,
@@ -101,11 +117,13 @@ object ConfigResultMessage {
         val hasAssistSettings: Boolean = true,
         val hasSplashscreen: Boolean = true,
         val hasMatterStatusReport: Boolean = true,
+        val canShareMatterDeviceToOtherApps: Boolean,
     ) {
         companion object {
             fun create(
                 hasNfc: Boolean,
                 canCommissionMatter: Boolean,
+                canShareMatterDevice: Boolean,
                 canExportThread: Boolean,
                 hasBarCodeScanner: Int,
                 canSetupImprov: Boolean,
@@ -113,6 +131,7 @@ object ConfigResultMessage {
             ) = ConfigResult(
                 canWriteTag = hasNfc,
                 canCommissionMatter = canCommissionMatter,
+                canShareMatterDeviceToOtherApps = canShareMatterDevice,
                 canImportThreadCredentials = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
                 canSetupImprov = canSetupImprov,

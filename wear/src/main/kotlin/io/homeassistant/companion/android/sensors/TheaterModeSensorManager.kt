@@ -4,6 +4,9 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.MovieOpen
+import io.github.timoptr.mdiicons.generated.MovieOpenOff
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -26,7 +29,7 @@ class TheaterModeSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.sensor_name_theater_mode,
             commonR.string.sensor_description_theater_mode,
-            "mdi:movie-open",
+            Mdi.MovieOpen,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.WORKER,
         )
@@ -75,7 +78,7 @@ class TheaterModeSensorManager @Inject constructor(
         onSensorUpdated(
             theaterMode,
             state,
-            if (!state) "mdi:movie-open-off" else theaterMode.statelessIcon,
+            if (!state) Mdi.MovieOpenOff else theaterMode.statelessIcon,
             mapOf(),
         )
     }

@@ -7,6 +7,14 @@ import android.provider.Settings
 import android.view.Display
 import android.view.Surface
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Brightness6
+import io.github.timoptr.mdiicons.generated.BrightnessAuto
+import io.github.timoptr.mdiicons.generated.CellphoneOff
+import io.github.timoptr.mdiicons.generated.CropSquare
+import io.github.timoptr.mdiicons.generated.PhoneRotateLandscape
+import io.github.timoptr.mdiicons.generated.PhoneRotatePortrait
+import io.github.timoptr.mdiicons.generated.ScreenRotation
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -27,7 +35,7 @@ class DisplaySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_screen_brightness,
             commonR.string.sensor_description_screen_brightness,
-            statelessIcon = "mdi:brightness-6",
+            statelessIcon = Mdi.Brightness6,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-brightness-sensor",
         )
 
@@ -37,7 +45,7 @@ class DisplaySensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_screen_off_timeout,
             commonR.string.sensor_description_screen_off_timeout,
-            "mdi:cellphone-off",
+            Mdi.CellphoneOff,
             unitOfMeasurement = "ms",
             deviceClass = "duration",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-off-timeout-sensor",
@@ -49,7 +57,7 @@ class DisplaySensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_screen_orientation,
             commonR.string.sensor_description_screen_orientation,
-            "mdi:screen-rotation",
+            Mdi.ScreenRotation,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-orientation-sensor",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -60,7 +68,7 @@ class DisplaySensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_screen_rotation,
             commonR.string.sensor_description_screen_rotation,
-            "mdi:screen-rotation",
+            Mdi.ScreenRotation,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#screen-rotation-sensor",
             unitOfMeasurement = "°",
         )
@@ -107,7 +115,7 @@ class DisplaySensorManager @Inject constructor(
             Timber.e(e, "Unable to get screen brightness settings")
         }
 
-        val icon = if (auto) "mdi:brightness-auto" else screenBrightness.statelessIcon
+        val icon = if (auto) Mdi.BrightnessAuto else screenBrightness.statelessIcon
         onSensorUpdated(
             screenBrightness,
             brightness,
@@ -155,9 +163,9 @@ class DisplaySensorManager @Inject constructor(
         }
 
         val icon = when (orientation) {
-            "portrait" -> "mdi:phone-rotate-portrait"
-            "landscape" -> "mdi:phone-rotate-landscape"
-            "square" -> "mdi:crop-square"
+            "portrait" -> Mdi.PhoneRotatePortrait
+            "landscape" -> Mdi.PhoneRotateLandscape
+            "square" -> Mdi.CropSquare
             else -> screenOrientation.statelessIcon
         }
 

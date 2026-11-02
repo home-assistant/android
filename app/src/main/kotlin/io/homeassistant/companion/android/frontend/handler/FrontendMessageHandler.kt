@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovCo
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDeviceMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSettingsMessage
@@ -294,6 +295,11 @@ class FrontendMessageHandler @Inject constructor(
                 FrontendHandlerEvent.StartMatterCommissioning
             }
 
+            is MatterShareDeviceMessage -> {
+                Timber.d("matter/share_device received with id: ${message.id}")
+                FrontendHandlerEvent.StartMatterSharing(messageId = message.id, payload = message.payload)
+            }
+
             is ThreadImportCredentialsMessage -> {
                 Timber.d("thread/import_credentials received with id: ${message.id}")
                 FrontendHandlerEvent.ImportThreadCredentials
@@ -309,6 +315,7 @@ class FrontendMessageHandler @Inject constructor(
     private suspend fun sendConfigResponse(messageId: Int?) {
         val hasNfc = packageManager.hasSystemFeature(PackageManager.FEATURE_NFC)
         val canCommissionMatter = matterManager.appSupportsCommissioning()
+        val canShareMatterDevice = matterManager.appSupportsSharing()
         val canExportThread = threadManager.appSupportsThread()
         val hasBarCodeScanner = if (
             packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) && !isAutomotive
@@ -322,6 +329,7 @@ class FrontendMessageHandler @Inject constructor(
             id = messageId,
             hasNfc = hasNfc,
             canCommissionMatter = canCommissionMatter,
+            canShareMatterDevice = canShareMatterDevice,
             canExportThread = canExportThread,
             hasBarCodeScanner = hasBarCodeScanner,
             canSetupImprov = bluetoothCapabilities.hasBluetoothLe(),

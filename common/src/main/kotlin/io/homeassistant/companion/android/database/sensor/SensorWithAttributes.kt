@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.database.sensor
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.mdiName
 
 data class SensorWithAttributes(val sensor: Sensor, val attributes: List<Attribute>) {
     fun toSensorRegistration(basicSensor: SensorManager.BasicSensor): SensorRegistration<Any> {
@@ -39,7 +40,7 @@ data class SensorWithAttributes(val sensor: Sensor, val attributes: List<Attribu
             sensor.serverId,
             state,
             sensor.type.ifBlank { basicSensor.type },
-            sensor.icon.ifBlank { basicSensor.statelessIcon },
+            sensor.icon.ifBlank { basicSensor.statelessIcon.mdiName },
             attributes,
             sensor.name,
             sensor.deviceClass?.ifBlank { null } ?: basicSensor.deviceClass,

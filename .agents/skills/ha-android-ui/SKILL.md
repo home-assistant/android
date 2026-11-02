@@ -7,7 +7,7 @@ description: Home Assistant Android UI guidance. Use when building or reviewing 
 
 Use this skill when creating or changing screens, ViewModels, navigation, or widgets.
 
-The screen pattern is documented in depth at https://developers.home-assistant.io/docs/android/ui_architecture.
+The screen pattern is documented in depth at https://contributors.home-assistant.io/companion/android/ui-architecture/.
 
 ## Compose Only
 
