@@ -16,6 +16,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -171,19 +173,33 @@ private suspend fun createMicroWakeWord(context: Context, modelConfig: MicroWake
             featureStepSizeMs = modelConfig.micro.featureStepSize,
             probabilityCutoff = modelConfig.micro.probabilityCutoff,
             slidingWindowSize = modelConfig.micro.slidingWindowSize,
-        ).also(::warmUp)
+        ).warmedUp()
     }
 
 /**
  * A freshly created engine needs a few seconds of audio to settle its front end (noise estimate),
  * during which speech is missed. The listener is recreated every time Assist closes, so feed the
  * engine a few seconds of low-level background noise, faster than real time, before the real audio.
+ *
+ * Cancellation is checked between chunks. If the warm-up does not complete, the engine is closed
+ * because the caller never receives it and could not release its native resources.
  */
 @VisibleForTesting
-internal fun warmUp(microWakeWord: MicroWakeWord) {
+internal suspend fun MicroWakeWord.warmedUp(): MicroWakeWord {
+    try {
+        warmUp(this)
+    } catch (e: Throwable) {
+        close()
+        throw e
+    }
+    return this
+}
+
+private suspend fun warmUp(microWakeWord: MicroWakeWord) {
     val noise = Random(WARM_UP_SEED)
     val chunk = ShortArray(WARM_UP_CHUNK_SAMPLES)
     repeat(WARM_UP_CHUNKS) {
+        currentCoroutineContext().ensureActive()
         for (i in chunk.indices) {
             chunk[i] = (noise.nextGaussian() * WARM_UP_NOISE_STDDEV).toInt().toShort()
         }
