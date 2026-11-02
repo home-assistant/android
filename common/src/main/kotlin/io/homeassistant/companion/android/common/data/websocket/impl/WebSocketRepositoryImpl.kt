@@ -445,7 +445,7 @@ class WebSocketRepositoryImpl internal constructor(
      */
     private suspend fun updateServerWithUser(user: CurrentUserResponse) {
         webSocketCore.server()?.let { server ->
-            val userIdChanged = server.user.id == user.id
+            val userIdChanged = server.user.id != user.id
             serverManager.updateServer(
                 server.copy(
                     user = ServerUserInfo(
