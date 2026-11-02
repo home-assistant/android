@@ -21,11 +21,11 @@ import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 /**
- * Upper bound on how long the chime may delay listening. The bundled chime lasts about one second,
- * so this only guards against a player that never reports completion.
+ * Upper bound on how long the chime may delay listening, guarding against a player that never reports
+ * completion. The bundled chime lasts about one second, so this leaves some headroom over its duration.
  */
 @VisibleForTesting
-internal val CHIME_TIMEOUT = 3.seconds
+internal val CHIME_TIMEOUT = 1.5.seconds
 
 /**
  * Plays the chime telling the user that Assist is ready to listen.
