@@ -30,7 +30,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="290"
+            line="285"
             column="28"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="334"
+            line="328"
             column="28"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="342"
+            line="336"
             column="46"/>
     </issue>
 
@@ -69,7 +69,7 @@
 
     <issue
         id="NewApi"
-        message="Call requires API level 29 (current min is 23): `android.telephony.TelephonyManager#isDataRoamingEnabled`"
+        message="Call requires API level 29 (current min is 24): `android.telephony.TelephonyManager#isDataRoamingEnabled`"
         errorLine1="                    telephonyManager.isDataRoamingEnabled"
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -80,7 +80,7 @@
 
     <issue
         id="NewApi"
-        message="Call requires API level 26 (current min is 23): `android.telephony.TelephonyManager#isDataEnabled`"
+        message="Call requires API level 26 (current min is 24): `android.telephony.TelephonyManager#isDataEnabled`"
         errorLine1="                    telephonyManager.isDataEnabled"
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location

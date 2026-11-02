@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -32,7 +31,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.datasource.DataSource
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.initializePlayer
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
@@ -108,27 +106,15 @@ private fun HAMediaPlayer(
         player = null
     }
 
-    if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-        // Initialize/release in onStart()/onStop() only because in a multi-window environment multiple
-        // apps can be visible at the same time. The apps that are out-of-focus are paused, but video
-        // playback should continue.
-        LifecycleStartEffect(Unit) {
-            lifecycleOwner.lifecycleScope.launch {
-                player = initializePlayer(context, dataSourceFactory)
-            }
-            onStopOrDispose {
-                releasePlayer()
-            }
+    // Initialize/release in onStart()/onStop() only because in a multi-window environment multiple
+    // apps can be visible at the same time. The apps that are out-of-focus are paused, but video
+    // playback should continue.
+    LifecycleStartEffect(Unit) {
+        lifecycleOwner.lifecycleScope.launch {
+            player = initializePlayer(context, dataSourceFactory)
         }
-    } else {
-        // Call to onStop() is not guaranteed, hence we release the Player in onPause() instead
-        LifecycleResumeEffect(Unit) {
-            lifecycleOwner.lifecycleScope.launch {
-                player = initializePlayer(context, dataSourceFactory)
-            }
-            onPauseOrDispose {
-                releasePlayer()
-            }
+        onStopOrDispose {
+            releasePlayer()
         }
     }
 
