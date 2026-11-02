@@ -25,6 +25,7 @@ jobs:
   maestro:
     name: "Maestro onboarding"
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     timeout-minutes: 30
     environment: ui-test
     permissions:
