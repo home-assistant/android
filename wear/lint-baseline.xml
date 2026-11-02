@@ -85,7 +85,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/home/views/DetailsPanelView.kt"
-            line="201"
+            line="202"
             column="21"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/home/views/DetailsPanelView.kt"
-            line="255"
+            line="256"
             column="21"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/home/views/DetailsPanelView.kt"
-            line="317"
+            line="318"
             column="21"/>
     </issue>
 

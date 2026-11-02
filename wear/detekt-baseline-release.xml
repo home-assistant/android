@@ -113,8 +113,6 @@
     <ID>ReturnCount:EntityStateDataSourceService.kt:EntityStateDataSourceService$override suspend fun onComplicationRequest: ComplicationData?</ID>
     <ID>SpreadOperator:WearToggleChip.kt:WearToggleChip$(*checkedColorStops)</ID>
     <ID>SpreadOperator:WearToggleChip.kt:WearToggleChip$(*disabledCheckedColorStops)</ID>
-    <ID>SuspendFunWithFlowReturnType:HomePresenter.kt:HomePresenter$suspend</ID>
-    <ID>SuspendFunWithFlowReturnType:HomePresenterImpl.kt:HomePresenterImpl$suspend</ID>
     <ID>SwallowedException:MobileAppIntegrationPresenterImpl.kt:MobileAppIntegrationPresenterImpl$e: Exception</ID>
     <ID>ThrowsCount:WearDns.kt:WearDns$private suspend fun attemptLookupViaMobile: List&lt;InetAddress&gt;</ID>
     <ID>TooManyFunctions:ConversationViewModel.kt:ConversationViewModel : AssistViewModelBase</ID>
