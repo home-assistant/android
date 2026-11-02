@@ -3,5 +3,6 @@
      Kept in a dedicated file so the per-release content is easy to spot and can be managed.
      Escaped inline HTML (like &lt;b&gt;) is rendered as styling. -->
 <resources>
-    <string name="changelog_entry_bug_fixes">Bug fixes and dependency updates everywhere</string>
+    <string name="changelog_entry_bug_fixes">Small bug fixes and dependency updates everywhere</string>
+    <string name="changelog_entry_fix_media_player_widget">Media player widgets better adjust to what is supported by the player, like play/stop instead of play/pause</string>
 </resources>

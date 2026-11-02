@@ -15,6 +15,10 @@ internal val currentChangelog = Changelog(
     improved = listOf(),
     fixed = listOf(
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_fix_media_player_widget,
+            platforms = setOf(ChangelogPlatform.APP),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_bug_fixes,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE, ChangelogPlatform.WEAR),
         ),
