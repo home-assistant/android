@@ -229,6 +229,7 @@ navigation-test = { module = "androidx.navigation:navigation-testing", version.r
 okhttp-android = { module = "com.squareup.okhttp3:okhttp-android" }
 okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp" }
 okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor" }
+okhttp-tls = { module = "com.squareup.okhttp3:okhttp-tls" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 mdi-icons = { module = "io.github.timoptr:mdi-icons", version.ref = "mdi-icons" }
 media3-datasource-cronet = { module = "androidx.media3:media3-datasource-cronet", version.ref = "media3" }

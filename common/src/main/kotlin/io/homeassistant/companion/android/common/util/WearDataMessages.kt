@@ -10,6 +10,7 @@ object WearDataMessages {
     const val KEY_SUCCESS = "success"
     const val KEY_UPDATE_TIME = "UpdateTime"
 
+    const val KEY_TLS_SERVER_TRUST_ANCHOR = "TLSServerTrustAnchorData"
     const val CONFIG_IS_AUTHENTICATED = "isAuthenticated"
     const val CONFIG_SERVER_ID = "serverId"
     const val CONFIG_SERVER_EXTERNAL_URL = "serverExternalUrl"
