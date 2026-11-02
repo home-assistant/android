@@ -81,11 +81,25 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
         }
     }
 
+    /**
+     * Returns the picture path for the corresponding `person` entity, if known, or `null`
+     * if no person entity could be found or no picture is set.
+     *
+     * If the server is unavailable, a cached path may be returned.
+     */
     private suspend fun findPersonPicturePath(serverId: Int, userId: String): String? {
         val entities = serverManager.integrationRepository(serverId).getEntities().orEmpty()
-        return entities
-            .firstOrNull { it.isPersonOf(userId) }
-            ?.attributes?.get(ATTRIBUTE_ENTITY_PICTURE) as? String
+        return if (entities.isEmpty()) { // Read stored path
+            serverManager.getServer(serverId)?.user?.picturePath
+        } else {
+            // Read current path, and store in database
+            val path = entities.firstOrNull { it.isPersonOf(userId) }
+                ?.attributes?.get(ATTRIBUTE_ENTITY_PICTURE) as? String
+            serverManager.getServer(serverId)?.let { server ->
+                serverManager.updateServer(server.copy(user = server.user.copy(picturePath = path)))
+            }
+            path
+        }
     }
 
     private suspend fun String.toAbsoluteUrl(serverId: Int): String? {
