@@ -115,6 +115,44 @@ class WakeWordListenerTest {
 
             assertEquals(2, factoryCallCount, "Factory should be called again for second start")
         }
+
+        @Test
+        fun `Given listener not started then it is not listening`() = runTest {
+            val listener = createListener()
+
+            assertFalse(listener.isListening)
+        }
+
+        @Test
+        fun `Given start called then it is listening until stop is called`() = runTest {
+            val listener = createListener()
+
+            listener.start(backgroundScope, testModelConfig, testScheduler)
+            runCurrent()
+            assertTrue(listener.isListening)
+
+            listener.stop()
+            runCurrent()
+            assertFalse(listener.isListening)
+        }
+
+        @Test
+        fun `Given recorder stays silent then it is not listening anymore until audio arrives`() = runTest {
+            var now = 0L
+            val listener = createListener().apply { currentTimeMillis = { now } }
+
+            listener.start(backgroundScope, testModelConfig, testScheduler)
+            runCurrent()
+            now = AUDIO_STALL_TIMEOUT_MS
+            assertTrue(listener.isListening, "Still within the grace period")
+
+            now = AUDIO_STALL_TIMEOUT_MS + 1
+            assertFalse(listener.isListening, "The recorder never delivered audio")
+
+            audioFlow.emit(ShortArray(160))
+            runCurrent()
+            assertTrue(listener.isListening, "Audio arrived again")
+        }
     }
 
     @Nested
