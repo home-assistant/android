@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineSttEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineTtsEnd
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
-import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.PlaybackState
 import io.homeassistant.companion.android.common.util.VOICE_SAMPLE_RATE
 import io.homeassistant.companion.android.common.util.toAudioBytes
@@ -26,9 +25,12 @@ import io.homeassistant.companion.android.util.UrlUtil
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
@@ -58,11 +60,20 @@ sealed interface AssistEvent {
     data object PlaybackFinished : AssistEvent
 }
 
+/**
+ * Upper bound for the audio sent in a single binary frame (1s at [VOICE_SAMPLE_RATE], 16-bit mono).
+ * Queued chunks are batched into one frame up to this size so a slow send never has to be
+ * repeated once per 10ms chunk.
+ */
+@VisibleForTesting
+internal const val MAX_AUDIO_FRAME_BYTES = VOICE_SAMPLE_RATE * 2
+
 abstract class AssistViewModelBase(
     protected val serverManager: ServerManager,
     protected val audioStrategy: AssistAudioStrategy,
     private val audioUrlPlayer: AudioUrlPlayer,
     application: Application,
+    private val audioDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : AndroidViewModel(application) {
 
     companion object {
@@ -85,16 +96,16 @@ abstract class AssistViewModelBase(
     protected var recorderProactive = false
 
     /**
-     * Parent job managing the audio recording pipeline. Contains both the producer
-     * (collecting from [AssistAudioStrategy.audioData]) and consumer (forwarding to server).
-     * Joining this job ensures all buffered audio has been sent before cleanup.
+     * Consumer job forwarding buffered audio to the server. It completes once [producerJob]
+     * has finished and every buffered chunk has been sent, so joining it ensures all recorded
+     * audio reached the server.
      */
     private var recorderJob: Job? = null
 
     /**
-     * Child job that collects audio data from [AssistAudioStrategy.audioData] and
-     * buffers them in a channel. Cancelled separately from [recorderJob] to stop
-     * collecting while still allowing the consumer to drain buffered data.
+     * Producer job collecting audio data from [AssistAudioStrategy.audioData] into a channel.
+     * Cancelled separately from [recorderJob] to stop collecting while still allowing the
+     * consumer to drain buffered data.
      */
     private var producerJob: Job? = null
 
@@ -197,7 +208,7 @@ abstract class AssistViewModelBase(
                     )
 
                     AssistPipelineEventType.RUN_END -> {
-                        stopRecording()
+                        stopRecording(sendRecorded = false)
                         job?.cancel()
                         onEvent(AssistEvent.PipelineEnded)
                     }
@@ -255,7 +266,8 @@ abstract class AssistViewModelBase(
     }
 
     private fun handleSttEnd(data: AssistPipelineSttEnd?, onEvent: (AssistEvent) -> Unit) {
-        stopRecording()
+        // The server has finished transcribing: anything still queued is useless to it
+        stopRecording(sendRecorded = false)
         data?.sttOutput?.get("text")?.let { text ->
             onEvent(AssistEvent.Message.Input(text as String))
         }
@@ -306,12 +318,12 @@ abstract class AssistViewModelBase(
         if (data?.isDuplicatedWakeWord == true) {
             Timber.d("Duplicate wake-up detected, dismissing Assist")
             onEvent(AssistEvent.Dismiss)
-            stopRecording()
+            stopRecording(sendRecorded = false)
             return true
         }
         val errorMessage = data?.message ?: return false
         onEvent(AssistEvent.Message.Error(errorMessage))
-        stopRecording()
+        stopRecording(sendRecorded = false)
         return true
     }
 
@@ -324,39 +336,36 @@ abstract class AssistViewModelBase(
      *
      * Collects from [audioStrategy]'s [AssistAudioStrategy.audioData] flow, converts
      * each [ShortArray] chunk to bytes via [toAudioBytes], and sends them to the server.
+     * Chunks queued while a send is in progress are batched into the next frame, so
+     * throughput adapts to the connection instead of paying one round trip per chunk.
      */
     @VisibleForTesting(otherwise = PROTECTED)
     fun setupRecorder(onError: (Throwable) -> Unit) {
         Timber.d("Setting up recorder")
-        sttReady = CompletableDeferred()
+        val sttReadyDeferred = CompletableDeferred<Int>()
+        sttReady = sttReadyDeferred
+        val serverId = selectedServerId
+        val audioChannel = Channel<ByteArray>(Channel.UNLIMITED)
 
-        recorderJob = viewModelScope.launch {
-            val audioChannel = Channel<ByteArray>(Channel.UNLIMITED)
-
-            producerJob = launch {
-                audioStrategy.audioData().catch {
-                    Timber.e(it, "Error collecting audio data")
-                    onError(it)
-                }.collect { samples ->
-                    audioChannel.send(samples.toAudioBytes())
-                }
-            }.apply {
-                invokeOnCompletion {
-                    audioChannel.close()
-                }
+        producerJob = viewModelScope.launch(audioDispatcher) {
+            audioStrategy.audioData().catch {
+                Timber.e(it, "Error collecting audio data")
+                onError(it)
+            }.collect { samples ->
+                audioChannel.send(samples.toAudioBytes())
             }
-
-            // Consumer: wait for STT to be ready, then forward all buffered and new data
-            val handlerId = sttReady?.await() ?: run {
-                FailFast.fail { "sttReady not set" }
-                producerJob?.cancel()
+        }.apply {
+            invokeOnCompletion {
                 audioChannel.close()
-                return@launch
             }
+        }
 
+        // Consumer: wait for STT to be ready, then forward all buffered and new data
+        recorderJob = viewModelScope.launch(audioDispatcher) {
+            val handlerId = sttReadyDeferred.await()
             try {
                 for (data in audioChannel) {
-                    serverManager.webSocketRepository(selectedServerId).sendVoiceData(handlerId, data)
+                    serverManager.webSocketRepository(serverId).sendVoiceData(handlerId, audioChannel.drainInto(data))
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -365,6 +374,29 @@ abstract class AssistViewModelBase(
                 onError(e)
             }
         }
+    }
+
+    /**
+     * Returns [first] followed by every chunk already queued in this channel, concatenated into
+     * one frame of at most [MAX_AUDIO_FRAME_BYTES]. Never suspends.
+     */
+    private fun ReceiveChannel<ByteArray>.drainInto(first: ByteArray): ByteArray {
+        val pending = mutableListOf(first)
+        var size = first.size
+        while (size < MAX_AUDIO_FRAME_BYTES) {
+            val next = tryReceive().getOrNull() ?: break
+            pending += next
+            size += next.size
+        }
+        if (pending.size == 1) return first
+
+        val frame = ByteArray(size)
+        var offset = 0
+        for (chunk in pending) {
+            chunk.copyInto(frame, offset)
+            offset += chunk.size
+        }
+        return frame
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -417,6 +449,8 @@ abstract class AssistViewModelBase(
     }
 
     private fun clearRecorderState() {
+        producerJob?.cancel()
+        producerJob = null
         recorderJob?.cancel()
         recorderJob = null
         sttReady = null
