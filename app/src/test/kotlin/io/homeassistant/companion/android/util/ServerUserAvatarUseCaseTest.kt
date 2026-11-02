@@ -8,6 +8,8 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import coil3.request.ImageResult
 import coil3.request.allowHardware
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -103,13 +105,16 @@ class ServerUserAvatarUseCaseTest {
     }
 
     @Test
-    fun `Given no person entity matches the user when getUserAvatar then returns null`() = runTest {
+    fun `Given no person entity matches the user when getUserAvatar then stores and returns null`() = runTest {
         coEvery { serverManager.getServer(1) } returns server(id = 1, userId = "uid-1", userPicturePath = null)
         coEvery { serverManager.integrationRepository(1) } returns mockk<IntegrationRepository> {
             coEvery { getEntities() } returns listOf(personEntity(userId = "someone-else", picture = "/picture.png"))
         }
+        val serverSlot = slot<Server>()
+        coEvery { serverManager.updateServer(capture(serverSlot)) } just Runs
 
         assertNull(useCase.getUserAvatar(1))
+        assertNull(serverSlot.captured.user.picturePath)
     }
 
     @Test
@@ -259,6 +264,34 @@ class ServerUserAvatarUseCaseTest {
         assertNull(useCase.getUserAvatar(1))
         coVerify(exactly = 0) { serverManager.updateServer(any()) }
         verify { diskCache.openSnapshot(avatarCacheKey(serverId = 1, picturePath = picture)) }
+    }
+
+    @Test
+    fun `Given the server is offline and auth is expired when getUserAvatar then the cache is queried by the cache key`() = runTest {
+        val picture = "/api/image/serve/abc"
+        givenServerWithPersonPicture(serverId = 1, picture = picture, previousPicture = picture)
+        // When offline, we have an url but the websocket returns null and Retrofit throws
+        coEvery { serverManager.connectionStateProvider(1) } returns mockk {
+            every { urlFlow() } returns flowOf(UrlState.HasUrl(URL("http://homeassistant.local:8123/")))
+            coEvery { canSafelySendCredentials(any()) } returns true
+        }
+        coEvery { serverManager.integrationRepository(1) } returns mockk {
+            coEvery { getEntities() } returns emptyList()
+        }
+        val authRepo = mockk<AuthenticationRepository> {
+            coEvery { buildBearerToken() } throws AuthorizationException()
+        }
+        coEvery { serverManager.authenticationRepository(1) } returns authRepo
+        val memoryCache = mockk<MemoryCache>()
+        every { memoryCache.get(any()) } returns null
+        every { imageLoader.memoryCache } returns memoryCache
+        every { imageLoader.diskCache } returns null
+
+        assertNull(useCase.getUserAvatar(1))
+        coVerify(exactly = 0) { serverManager.updateServer(any()) }
+        coVerify { authRepo.buildBearerToken() }
+        verify { memoryCache.get(MemoryCache.Key(avatarCacheKey(serverId = 1, picturePath = picture))) }
+        coVerify(exactly = 0) { imageLoader.execute(any()) }
     }
 
     @Test

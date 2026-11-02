@@ -13,6 +13,7 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.isPersonOf
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
@@ -69,7 +70,7 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
             val cacheKey = avatarCacheKey(serverId = serverId, picturePath = picturePath)
             val url = picturePath.toAbsoluteUrl(serverId = serverId)
             if (url != null && serverManager.connectionStateProvider(serverId).canSafelySendCredentials(url)) {
-                downloadAvatar(serverId = serverId, url = url, cacheKey = cacheKey)
+                downloadAvatar(serverId = serverId, url = url, cacheKey = cacheKey) ?: cachedAvatar(cacheKey)
             } else {
                 cachedAvatar(cacheKey)
             }
@@ -113,17 +114,24 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
         return "$baseUrl$this"
     }
 
+    /** Download an avatar, returning the avatar or `null` in case of expected failures. */
     private suspend fun downloadAvatar(serverId: Int, url: String, cacheKey: String): Bitmap? {
-        val token = serverManager.authenticationRepository(serverId).buildBearerToken()
-        val request = ImageRequest.Builder(context)
-            .data(url)
-            .memoryCacheKey(cacheKey)
-            .diskCacheKey(cacheKey)
-            .httpHeaders(NetworkHeaders.Builder().add(HEADER_AUTHORIZATION, token).build())
-            // We turn the bitmap into a software bitmap so it can be drawn by Compose in any context.
-            .allowHardware(false)
-            .build()
-        return imageLoader.execute(request).image?.toBitmap()
+        return try {
+            val token = serverManager.authenticationRepository(serverId).buildBearerToken()
+            val request = ImageRequest.Builder(context)
+                .data(url)
+                .memoryCacheKey(cacheKey)
+                .diskCacheKey(cacheKey)
+                .httpHeaders(NetworkHeaders.Builder().add(HEADER_AUTHORIZATION, token).build())
+                // We turn the bitmap into a software bitmap so it can be drawn by Compose in any context.
+                .allowHardware(false)
+                .build()
+            imageLoader.execute(request).image?.toBitmap()
+        } catch (e: AuthorizationException) {
+            Timber.w(e, "Could not download avatar for serverId=$serverId, fallback")
+            null
+        }
+        // In case of other exceptions, propagate up without fallback
     }
 
     /**
