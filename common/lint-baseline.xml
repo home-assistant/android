@@ -30,7 +30,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="290"
+            line="285"
             column="28"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="334"
+            line="328"
             column="28"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="342"
+            line="336"
             column="46"/>
     </issue>
 
