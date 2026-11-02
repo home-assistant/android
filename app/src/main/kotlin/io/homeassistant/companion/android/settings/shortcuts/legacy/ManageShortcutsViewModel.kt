@@ -139,7 +139,8 @@ internal class ManageShortcutsViewModel @Inject constructor(
         )
 
         if (dynamicSlotIndex(shortcutId) != null) {
-            ShortcutManagerCompat.addDynamicShortcuts(app, listOf(shortcut))
+            // Reclaim a slot from lower-priority conversation shortcuts if the shared quota is full.
+            ShortcutManagerCompat.pushDynamicShortcut(app, shortcut)
             updateDynamicShortcuts()
         } else {
             var isNewPinned = true
