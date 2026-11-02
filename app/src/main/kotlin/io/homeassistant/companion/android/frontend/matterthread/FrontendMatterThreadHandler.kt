@@ -133,7 +133,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             when (val result = matterManager.prepareDeviceSharing(payload)) {
                 is MatterManager.CommissioningResult.Ready -> {
                     awaitingIntentResult = true
-                    _events.emit(Event.LaunchIntent(result.intentSender))
+                    _events.send(Event.LaunchIntent(result.intentSender))
                 }
 
                 is MatterManager.CommissioningResult.Error -> {
