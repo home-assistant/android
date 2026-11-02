@@ -88,6 +88,7 @@ class ManualSetupPresenterImpl @Inject constructor(
                         url,
                         code,
                         null,
+                        codeVerifier.value,
                     ),
                 ) { "Registration failed" }
             } catch (e: Exception) {
