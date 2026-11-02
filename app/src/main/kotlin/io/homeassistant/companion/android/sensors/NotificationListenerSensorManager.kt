@@ -423,5 +423,5 @@ private const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
  * Such summaries carry no content of their own and are posted right after the real notification, so reporting
  * them would replace the real notification data with an empty one.
  */
-internal fun Notification.isSystemGeneratedGroupSummary(): Boolean =
+private fun Notification.isSystemGeneratedGroupSummary(): Boolean =
     group == LEGACY_AUTOGROUP_KEY || (flags and FLAG_AUTOGROUP_SUMMARY) != 0
