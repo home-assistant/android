@@ -180,6 +180,42 @@ class AssistVoiceInteractionServiceTest {
     }
 
     @Test
+    fun `Given overlapping RESUME_LISTENING actions then restart the listener only once`() = runTest {
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+        var listening = false
+        every { wakeWordListener.isListening } answers { listening }
+        coEvery { wakeWordListener.start(any(), any()) } answers { listening = true }
+
+        sendAction(ACTION_RESUME_LISTENING)
+        sendAction(ACTION_RESUME_LISTENING)
+        sendAction(ACTION_RESUME_LISTENING)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { wakeWordListener.start(any(), any()) }
+    }
+
+    @Test
+    fun `Given RESUME_LISTENING then STOP_LISTENING then RESUME_LISTENING then listen again`() = runTest {
+        coEvery { assistConfigManager.isWakeWordEnabled() } returns true
+        coEvery { assistConfigManager.getSelectedWakeWordModel() } returns microWakeWordModelConfigs[0]
+        var listening = false
+        every { wakeWordListener.isListening } answers { listening }
+        coEvery { wakeWordListener.start(any(), any()) } answers { listening = true }
+        coEvery { wakeWordListener.stop() } answers { listening = false }
+
+        sendAction(ACTION_RESUME_LISTENING)
+        advanceUntilIdle()
+        sendAction(ACTION_STOP_LISTENING)
+        advanceUntilIdle()
+        sendAction(ACTION_RESUME_LISTENING)
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { wakeWordListener.start(any(), any()) }
+        assertTrue(listening)
+    }
+
+    @Test
     fun `Given null intent when onStartCommand then do nothing`() = runTest {
         service.onStartCommand(null, 0, 1)
         advanceUntilIdle()
