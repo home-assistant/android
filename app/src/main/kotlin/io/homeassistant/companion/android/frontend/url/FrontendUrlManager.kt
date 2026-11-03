@@ -83,7 +83,6 @@ class FrontendUrlManager @Inject constructor(
         var targetConsumed = false
         var lastBaseUrl: String? = null
         serverManager.connectionStateProvider(actualServerId).urlFlow().collect { urlState ->
-            // Compared as strings because URL.equals resolves host names over the network.
             val currentBaseUrl = (urlState as? UrlState.HasUrl)?.url?.toString()
             // Only true from the second HasUrl emission onwards; the first emission establishes
             // lastBaseUrl and is therefore not considered a change.
