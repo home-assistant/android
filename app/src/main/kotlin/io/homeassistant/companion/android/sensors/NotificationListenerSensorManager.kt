@@ -12,6 +12,7 @@ import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -35,6 +36,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+
+/**
+ * Mirrors the hidden `Notification.FLAG_AUTOGROUP_SUMMARY` system API. Android sets it on every summary it
+ * creates when auto-grouping an app's notifications since auto-grouping was introduced in API 24, both for the
+ * `ranker_group` group and the `Aggregate_*` groups of Android 16+.
+ *
+ * Defined in [Notification.java](https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base/core/java/android/app/Notification.java;l=708;drc=1cdfff555f4a21f71ccc978290e2e212e2f8b168).
+ */
+@VisibleForTesting
+internal const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
 
 /**
  * Sensor manager for the notification sensors. Owns the basic sensors, availability, permission and
@@ -362,6 +373,14 @@ class NotificationListenerSensorManager @Inject constructor(
 
     private data class NotificationSettings(val allowPackages: List<String>, val disableAllowListRequirement: Boolean)
 
+    /**
+     * Whether this notification is a group summary that Android generated on behalf of the app.
+     *
+     * Such summaries carry no content of their own and are posted right after the real notification, so reporting
+     * them would replace the real notification data with an empty one.
+     */
+    private fun Notification.isSystemGeneratedGroupSummary(): Boolean = (flags and FLAG_AUTOGROUP_SUMMARY) != 0
+
     private fun getPlaybackState(state: Int?): String {
         return mediaStates.getOrDefault(state ?: PlaybackState.STATE_NONE, STATE_UNKNOWN)
     }
@@ -405,23 +424,3 @@ class NotificationListenerSensorManager @Inject constructor(
         }
     }
 }
-
-/**
- * Group key of the summary that Android creates when it auto-groups an app's notifications without sections.
- */
-private const val LEGACY_AUTOGROUP_KEY = "ranker_group"
-
-/**
- * Mirrors the hidden `Notification.FLAG_AUTOGROUP_SUMMARY` system API. Android sets it on every summary it
- * creates when auto-grouping an app's notifications, including the `Aggregate_*` groups of Android 16+.
- */
-private const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
-
-/**
- * Whether this notification is a group summary that Android generated on behalf of the app.
- *
- * Such summaries carry no content of their own and are posted right after the real notification, so reporting
- * them would replace the real notification data with an empty one.
- */
-private fun Notification.isSystemGeneratedGroupSummary(): Boolean =
-    group == LEGACY_AUTOGROUP_KEY || (flags and FLAG_AUTOGROUP_SUMMARY) != 0

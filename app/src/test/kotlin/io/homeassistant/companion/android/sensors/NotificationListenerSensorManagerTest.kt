@@ -37,9 +37,6 @@ import org.junit.jupiter.params.provider.MethodSource
 private const val SETTING_ALLOW_LIST = "notification_allow_list"
 private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
 
-// Hidden Notification.FLAG_AUTOGROUP_SUMMARY system API
-private const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
-
 // Flags Android sets on the summaries it creates when auto-grouping an app's notifications
 private const val SYSTEM_AUTOGROUP_SUMMARY_FLAGS =
     FLAG_AUTOGROUP_SUMMARY or Notification.FLAG_GROUP_SUMMARY or Notification.FLAG_LOCAL_ONLY
@@ -153,11 +150,11 @@ class NotificationListenerSensorManagerTest {
             Arguments.of(named("App defined group summary", "app_group"), Notification.FLAG_GROUP_SUMMARY, true),
             Arguments.of(named("Child of an app defined group", "app_group"), Notification.FLAG_AUTO_CANCEL, true),
             Arguments.of(
-                named("ranker_group auto-group summary", "ranker_group"),
-                SYSTEM_AUTOGROUP_SUMMARY_FLAGS,
-                false,
+                named("App defined group summary named ranker_group", "ranker_group"),
+                Notification.FLAG_GROUP_SUMMARY,
+                true,
             ),
-            Arguments.of(named("ranker_group key without auto-group flag", "ranker_group"), 0, false),
+            Arguments.of(named("ranker_group auto-group summary", "ranker_group"), SYSTEM_AUTOGROUP_SUMMARY_FLAGS, false),
             Arguments.of(
                 named(
                     "Sectioned Aggregate auto-group summary (Android 16+)",
