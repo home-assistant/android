@@ -444,14 +444,16 @@ class WebSocketRepositoryImpl internal constructor(
      * name and admin status.
      */
     private suspend fun updateServerWithUser(user: CurrentUserResponse) {
-        webSocketCore.server()?.let {
+        webSocketCore.server()?.let { server ->
+            val userIdChanged = server.user.id != user.id
             serverManager.updateServer(
-                it.copy(
+                server.copy(
                     user = ServerUserInfo(
                         id = user.id,
                         name = user.name,
                         isOwner = user.isOwner,
                         isAdmin = user.isAdmin,
+                        picturePath = if (userIdChanged) null else server.user.picturePath,
                     ),
                 ),
             )
