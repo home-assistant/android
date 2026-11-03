@@ -173,10 +173,17 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
             load(entityIdsByDomain[domain].orEmpty())
 
         override suspend fun load(entityIds: List<String>): List<EntityDisplayWithoutContext>? =
-            withContext(Dispatchers.Default) {
-                val repository = serverManager.integrationRepositoryOrNull(serverId) ?: return@withContext null
-                orNull("entities") { repository.getEntities(entityIds) }?.map { registryEntries.itemFor(it) }
-            }
+            loadEntitiesById(serverId, entityIds, registryEntries)
+    }
+
+    /** Fetches the states of [entityIds] only, null when they can't be retrieved. */
+    private suspend fun loadEntitiesById(
+        serverId: Int,
+        entityIds: List<String>,
+        registryEntries: EntityRegistryEntries,
+    ): List<EntityDisplayWithoutContext>? = withContext(Dispatchers.Default) {
+        val repository = serverManager.integrationRepositoryOrNull(serverId) ?: return@withContext null
+        orNull("entities") { repository.getEntities(entityIds) }?.map { registryEntries.itemFor(it) }
     }
 
     /**
@@ -193,7 +200,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * can tell their last snapshot is no longer kept current.
      */
     fun observeInContext(serverId: Int, entityIds: List<String>): Flow<EntityDisplayState<EntityDisplayWithContext>> =
-        observeInContext(serverId, subscribedEntityIds = entityIds) { it.entityId in entityIds }
+        observeContext(serverId, domains = null, subscribedEntityIds = entityIds) { it.entityId in entityIds }
 
     /**
      * Observes the display state of the entities matching [filter]: a new [EntityDisplayState.Loaded]
@@ -216,27 +223,54 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         serverId: Int,
         filter: (Entity) -> Boolean = { true },
     ): Flow<EntityDisplayState<EntityDisplayWithContext>> =
-        observeInContext(serverId, subscribedEntityIds = null, filter)
+        observeContext(serverId, domains = null, subscribedEntityIds = null, filter = filter)
 
     /**
-     * Subscribes to the state changes of [subscribedEntityIds], or of every entity of the server
-     * when null, keeping the entities matching [filter].
+     * Variant of [observeInContext] limited to the entities of [domains], for constrained devices.
+     *
+     * Servers with up to [FULL_FETCH_MAX_ENTITIES] entities in their registry, or whose registry
+     * can't be retrieved, have every state fetched and followed, then filtered, like
+     * [observeInContext] does. Above that, downloading and following every state can run a watch
+     * out of memory, so the entity registry tells which entities belong to [domains] and only their
+     * states are fetched and followed. Entities without a registry entry (no unique id) and
+     * entities added to the registry once observing started aren't followed then.
      */
-    private fun observeInContext(
+    fun observeDomainsInContext(
         serverId: Int,
+        domains: Set<String>,
+    ): Flow<EntityDisplayState<EntityDisplayWithContext>> =
+        observeContext(serverId, domains = domains, subscribedEntityIds = null) { it.domain in domains }
+
+    /**
+     * Follows the entities matching [filter]. The state changes of [subscribedEntityIds] are
+     * followed when given; otherwise those of the entities of [domains] on servers above
+     * [FULL_FETCH_MAX_ENTITIES], or of every entity of the server.
+     */
+    private fun observeContext(
+        serverId: Int,
+        domains: Set<String>?,
         subscribedEntityIds: List<String>?,
         filter: (Entity) -> Boolean,
     ): Flow<EntityDisplayState<EntityDisplayWithContext>> = flow {
-        val initial = loadEntities(serverId) ?: return@flow
-
-        val entities = initial.filter(filter).associateByTo(LinkedHashMap()) { it.entityId }
+        emit(EntityDisplayState.Loading)
+        if (!hasRegisteredServer()) return@flow
 
         val webSocketRepository = serverManager.webSocketRepositoryOrNull(serverId)
         var snapshot = fetchRegistrySnapshot(webSocketRepository)
+        val domainEntityIds = snapshot.entries.largeServerEntityIdsOf(domains)
+        val followedEntityIds = subscribedEntityIds ?: domainEntityIds
+
+        val initial = fetchInitialEntities(serverId, domainEntityIds)
+        if (initial == null) {
+            emit(EntityDisplayState.Error)
+            return@flow
+        }
+
+        val entities = initial.filter(filter).associateByTo(LinkedHashMap()) { it.entityId }
         var lastItems = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
         emit(EntityDisplayState.Loaded(lastItems))
 
-        observeContextEvents(serverId, webSocketRepository, subscribedEntityIds).collect { event ->
+        observeContextEvents(serverId, webSocketRepository, followedEntityIds).collect { event ->
             when (event) {
                 is ObserveEvent.EntityEvent.StateChanged -> with(event.entity) {
                     if (filter(this)) entities[entityId] = this else entities.remove(entityId)
@@ -331,7 +365,10 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * is null, and null when it cannot be established.
      */
     private suspend fun stateChanges(serverId: Int, entityIds: List<String>?): Flow<ObserveEvent.EntityEvent>? {
-        val integrationRepository = serverManager.integrationRepositoryOrNull(serverId) ?: return null
+        val integrationRepository = serverManager.integrationRepositoryOrNull(serverId)
+            // An empty filter would subscribe to every entity of the server
+            ?.takeUnless { entityIds?.isEmpty() == true }
+            ?: return null
         val updates = orNull("entity updates") {
             if (entityIds == null) {
                 integrationRepository.getEntityUpdates()
@@ -473,6 +510,23 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         return entities
     }
 
+    /**
+     * Ids of the entities of [domains] when the registry lists more than [FULL_FETCH_MAX_ENTITIES]
+     * entities, null otherwise: small servers keep fetching and following every state, which also
+     * covers the entities without a registry entry.
+     */
+    private fun EntityRegistryEntries.largeServerEntityIdsOf(domains: Set<String>?): List<String>? = domains
+        ?.takeIf { (entityIds()?.size ?: 0) > FULL_FETCH_MAX_ENTITIES }
+        ?.let { entityIdsOf(it) }
+
+    /** Fetches [entityIds], or every entity of the server when null, null when they can't be retrieved. */
+    private suspend fun fetchInitialEntities(serverId: Int, entityIds: List<String>?): List<Entity>? {
+        val repository = serverManager.integrationRepositoryOrNull(serverId) ?: return null
+        return orNull("entities") {
+            if (entityIds == null) repository.getEntities() else repository.getEntities(entityIds)
+        }
+    }
+
     private suspend fun fetchRegistrySnapshot(webSocketRepository: WebSocketRepository?): RegistrySnapshot =
         coroutineScope {
             if (webSocketRepository == null) return@coroutineScope RegistrySnapshot()
@@ -539,6 +593,10 @@ private class EntityRegistryEntries(
 
     /** Ids of the entities in the registry, or null when no registry could be retrieved. */
     fun entityIds(): Collection<String>? = displayEntries?.keys ?: classicEntries?.keys
+
+    /** Sorted ids of the entities of [domains] in the registry, or null when no registry could be retrieved. */
+    fun entityIdsOf(domains: Set<String>): List<String>? =
+        entityIds()?.filter { it.substringBefore('.') in domains }?.sorted()
 
     /**
      * Name to display for [entity]: the name of its registry entry, its `friendly_name` state

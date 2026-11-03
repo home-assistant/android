@@ -1047,6 +1047,78 @@ class EntitiesForDisplayManagerTest {
             }
 
             @Test
+            fun `Given a large registry when observing domains then only the registry entities of these domains are fetched and followed`() = runTest {
+                givenObservedRegistry("sensor.power", "switch.fan", "light.bed")
+                val ids = listOf("light.bed", "switch.fan")
+                coEvery { integrationRepository.getEntities(ids) } returns
+                    listOf(entity("light.bed", "Bed Light"), entity("switch.fan", "Fan"))
+                coEvery { integrationRepository.getEntityUpdates(ids) } returns entityUpdates
+
+                manager.observeDomainsInContext(serverId, setOf("light", "switch")).test {
+                    assertEquals(listOf("light.bed", "switch.fan"), awaitInitialLoad().map { it.entityId })
+                    entityUpdates.awaitSubscribed()
+
+                    entityUpdates.emit(entity("switch.fan", "Ceiling Fan"))
+
+                    assertEquals("Ceiling Fan", awaitLoaded().single { it.entityId == "switch.fan" }.name)
+                    cancelAndIgnoreRemainingEvents()
+                }
+
+                coVerify(exactly = 0) { integrationRepository.getEntities() }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+            }
+
+            @Test
+            fun `Given a large registry without entities of the domains when observing then no state subscription is made`() = runTest {
+                givenObservedRegistry()
+                coEvery { integrationRepository.getEntities(emptyList()) } returns emptyList()
+
+                manager.observeDomainsInContext(serverId, setOf("light")).test {
+                    assertEquals(emptyList<EntityDisplayWithContext>(), awaitInitialLoad())
+                    cancelAndIgnoreRemainingEvents()
+                }
+
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates(any()) }
+            }
+
+            @Test
+            fun `Given a small registry when observing domains then every state is fetched and followed, entities without registry entry included`() = runTest {
+                givenObservedRegistry("light.bed", large = false)
+                coEvery { integrationRepository.getEntities() } returns
+                    listOf(entity("light.bed", "Bed Light"), entity("light.yaml_only", "YAML Light"), entity("sensor.power", "Power"))
+
+                manager.observeDomainsInContext(serverId, setOf("light")).test {
+                    assertEquals(listOf("light.bed", "light.yaml_only"), awaitInitialLoad().map { it.entityId })
+                    cancelAndIgnoreRemainingEvents()
+                }
+
+                coVerify(exactly = 1) { integrationRepository.getEntityUpdates() }
+                coVerify(exactly = 0) { integrationRepository.getEntities(any()) }
+            }
+
+            /** Registry holding [entityIds], padded with other entities when [large] to go over [FULL_FETCH_MAX_ENTITIES]. */
+            private fun givenObservedRegistry(vararg entityIds: String, large: Boolean = true) {
+                val padding = if (large) List(FULL_FETCH_MAX_ENTITIES + 1) { "zz_padding.entity_$it" } else emptyList()
+                coEvery { webSocketRepository.getEntityRegistryDisplay() } returns EntityRegistryDisplayResponse(
+                    entities = (entityIds.toList() + padding).map { EntityRegistryDisplayEntry(entityId = it) },
+                )
+            }
+
+            @Test
+            fun `Given no entity registry when observing domains then every state is fetched and filtered`() = runTest {
+                coEvery { webSocketRepository.getEntityRegistryDisplay() } returns null
+                coEvery { webSocketRepository.getEntityRegistry() } returns null
+                coEvery { integrationRepository.getEntities() } returns
+                    listOf(entity("light.bed", "Bed Light"), entity("sensor.power", "Power"))
+
+                manager.observeDomainsInContext(serverId, setOf("light")).test {
+                    assertEquals(listOf("light.bed"), awaitInitialLoad().map { it.entityId })
+                    cancelAndIgnoreRemainingEvents()
+                }
+            }
+
+            @Test
             fun `Given a new entity when observing then it is appended to the items`() = runTest {
                 manager.observeInContext(serverId).test {
                     awaitInitialLoad()
@@ -1186,7 +1258,7 @@ class EntitiesForDisplayManagerTest {
 
     /** Registry holding [entityIds], padded with other entities when [large] to go over [FULL_FETCH_MAX_ENTITIES]. */
     private fun givenRegistryEntities(vararg entityIds: String, large: Boolean = true) {
-        val padding = if (large) List(FULL_FETCH_MAX_ENTITIES) { "zz_padding.entity_$it" } else emptyList()
+        val padding = if (large) List(FULL_FETCH_MAX_ENTITIES + 1) { "zz_padding.entity_$it" } else emptyList()
         coEvery { webSocketRepository.getEntityRegistryDisplay() } returns EntityRegistryDisplayResponse(
             entities = (entityIds.toList() + padding).map { EntityRegistryDisplayEntry(entityId = it) },
         )

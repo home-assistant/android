@@ -372,30 +372,38 @@ class IntegrationRepositoryImplTest {
         }
 
         @Test
-        fun `Given a states fetch when collecting entity updates for ids then only the subscribed entities are kept`() = runTest {
+        fun `Given a collector joining after the initial states when collecting entity updates for ids then only the changed entity is fetched`() = runTest {
             coEvery { webSocketRepository.getCompressedStateAndChanges(listOf(entityId)) } returns flowOf(
                 changedEvent("off"),
+                changedEvent("on"),
             )
-            coEvery { webSocketRepository.getStates() } returns listOf(
-                EntityResponse(
-                    entityId = entityId,
-                    state = "off",
-                    attributes = emptyMap(),
-                    lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
-                    lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
-                ),
-                EntityResponse(
-                    entityId = "light.other",
-                    state = "on",
-                    attributes = emptyMap(),
-                    lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
-                    lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
-                ),
+            val spyRepository = spyk(repository)
+            coEvery { spyRepository.getEntity(entityId) } returns Entity(
+                entityId = entityId,
+                state = "off",
+                attributes = emptyMap(),
+                lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
             )
 
-            val updates = checkNotNull(repository.getEntityUpdates(listOf(entityId))).toList()
+            val updates = checkNotNull(spyRepository.getEntityUpdates(listOf(entityId))).toList()
 
-            assertEquals(listOf(entityId), updates.map { it.entityId })
+            // The fetched state already holds the first diff, the second one applies to it
+            assertEquals(listOf("off", "on"), updates.map { it.state })
+            coVerify(exactly = 1) { spyRepository.getEntity(entityId) }
+            coVerify(exactly = 0) { webSocketRepository.getStates() }
+        }
+
+        @Test
+        fun `Given the state of a joining collector can't be fetched when collecting entity updates for ids then the diff is dropped`() = runTest {
+            coEvery { webSocketRepository.getCompressedStateAndChanges(listOf(entityId)) } returns flowOf(changedEvent("off"))
+            val spyRepository = spyk(repository)
+            coEvery { spyRepository.getEntity(entityId) } throws IllegalStateException("offline")
+
+            val updates = checkNotNull(spyRepository.getEntityUpdates(listOf(entityId))).toList()
+
+            assertTrue(updates.isEmpty())
+            coVerify(exactly = 0) { webSocketRepository.getStates() }
         }
 
         @Test
