@@ -16,7 +16,8 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
-private const val MORE_INFO_ENTITY_ID_QUERY_PARAM = "more-info-entity-id"
+/** Query parameter opening the more-info dialog of the given entity (Home Assistant 2025.6+). */
+internal const val MORE_INFO_ENTITY_ID_QUERY_PARAM = "more-info-entity-id"
 
 /**
  * Manages URL resolution and security checks for the frontend.
@@ -48,13 +49,21 @@ class FrontendUrlManager @Inject constructor(
      * Retrieve URL for server. Returns a Flow that emits URL updates when connection state changes.
      *
      * The target is only applied to the first emission to handle deep links.
-     * Subsequent emissions (e.g., when switching between internal/external URLs) load only the base URL.
+     * When a subsequent emission changes the base URL (e.g., switching between internal/external
+     * URLs on the same server), the relative URL reported by [currentRelativeUrl] is applied to
+     * the new base so the user stays on the same page; otherwise only the base URL is loaded.
      *
      * @param serverId The server ID to use (can be [ServerManager.SERVER_ID_ACTIVE])
      * @param target The frontend destination to open on the initial URL (e.g., a deep link)
+     * @param currentRelativeUrl Provides the relative URL (path + query + fragment) currently shown
+     *        in the WebView, or `null` for the dashboard root
      * @return Flow of [UrlLoadResult] that emits when URL state changes
      */
-    fun serverUrlFlow(serverId: Int, target: FrontendTarget): Flow<UrlLoadResult> = flow {
+    fun serverUrlFlow(
+        serverId: Int,
+        target: FrontendTarget,
+        currentRelativeUrl: () -> String? = { null },
+    ): Flow<UrlLoadResult> = flow {
         val server = serverManager.getServer(serverId)
         if (server == null) {
             Timber.e("Server not found for id: $serverId")
@@ -72,8 +81,23 @@ class FrontendUrlManager @Inject constructor(
         serverManager.activateServer(actualServerId)
 
         var targetConsumed = false
+        var lastBaseUrl: String? = null
         serverManager.connectionStateProvider(actualServerId).urlFlow().collect { urlState ->
-            val currentTarget = if (targetConsumed) FrontendTarget.Default else target
+            // Compared as strings because URL.equals resolves host names over the network.
+            val currentBaseUrl = (urlState as? UrlState.HasUrl)?.url?.toString()
+            // Only true from the second HasUrl emission onwards; the first emission establishes
+            // lastBaseUrl and is therefore not considered a change.
+            val baseUrlChanged = currentBaseUrl != null && lastBaseUrl != null && lastBaseUrl != currentBaseUrl
+            if (currentBaseUrl != null) lastBaseUrl = currentBaseUrl
+
+            val currentTarget = when {
+                !targetConsumed -> target
+                // On internal/external URL switches on the same server, preserve the relative URL
+                // currently shown so the user stays on the exact same page, including filtered views
+                // like history with date ranges. A null relative URL (dashboard root) maps to Default.
+                baseUrlChanged -> FrontendTarget.fromRawPath(currentRelativeUrl())
+                else -> FrontendTarget.Default
+            }
 
             val result = handleUrlState(
                 serverId = actualServerId,
