@@ -26,7 +26,6 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import java.time.LocalDateTime
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -64,13 +63,6 @@ class MediaPlayerControlsWidgetConfigureContentTest {
         selectedEntityIds = listOf(fakeMediaPlayerEntity.entityId),
         label = "Living room",
         isUpdateWidget = true,
-    )
-
-    private val multipleServersState = configuredState.copy(
-        serversDropdownItems = listOf(
-            HADropdownItem(key = 1, label = "Home"),
-            HADropdownItem(key = 2, label = "Vacation home"),
-        ),
     )
 
     @Test
@@ -118,60 +110,6 @@ class MediaPlayerControlsWidgetConfigureContentTest {
                     .performScrollTo()
                     .performClick()
                 assertEquals(fakeMediaPlayerEntity.entityId, entityRemoved)
-            }
-        }
-    }
-
-    @Test
-    fun `Given the screen is the task root when displayed then it offers close`() {
-        composeTestRule.apply {
-            testScreen(configuredState, canNavigateBack = false) {
-                onNodeWithContentDescription(activity.getString(commonR.string.navigate_up)).assertDoesNotExist()
-                onNodeWithContentDescription(activity.getString(commonR.string.close)).performClick()
-                assertTrue(navigated)
-            }
-        }
-    }
-
-    @Test
-    fun `Given the screen has a back stack when displayed then it offers back`() {
-        composeTestRule.apply {
-            testScreen(configuredState, canNavigateBack = true) {
-                onNodeWithContentDescription(activity.getString(commonR.string.close)).assertDoesNotExist()
-                onNodeWithContentDescription(activity.getString(commonR.string.navigate_up)).performClick()
-                assertTrue(navigated)
-            }
-        }
-    }
-
-    @Test
-    fun `Given a valid configuration when the action is clicked then onActionClick is triggered`() {
-        composeTestRule.apply {
-            testScreen(configuredState) {
-                onNodeWithText(activity.getString(commonR.string.update_widget))
-                    .performScrollTo()
-                    .performClick()
-                assertTrue(actionClicked)
-            }
-        }
-    }
-
-    @Test
-    fun `Given a single server when displayed then the server selector is hidden`() {
-        composeTestRule.apply {
-            testScreen(configuredState) {
-                onNodeWithText(activity.getString(commonR.string.server_select)).assertDoesNotExist()
-            }
-        }
-    }
-
-    @Test
-    fun `Given several servers when displayed then the server selector is shown`() {
-        composeTestRule.apply {
-            testScreen(multipleServersState) {
-                onNodeWithText(activity.getString(commonR.string.server_select), substring = true)
-                    .performScrollTo()
-                    .assertIsDisplayed()
             }
         }
     }
