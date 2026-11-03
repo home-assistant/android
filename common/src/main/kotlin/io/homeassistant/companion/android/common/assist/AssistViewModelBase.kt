@@ -338,9 +338,12 @@ abstract class AssistViewModelBase(
      * each [ShortArray] chunk to bytes via [toAudioBytes], and sends them to the server.
      * Chunks queued while a send is in progress are batched into the next frame, so
      * throughput adapts to the connection instead of paying one round trip per chunk.
+     *
+     * @param onError called when capturing or sending audio fails
+     * @param beforeRecording runs before audio capture starts. Stopping the recording cancels it.
      */
     @VisibleForTesting(otherwise = PROTECTED)
-    fun setupRecorder(onError: (Throwable) -> Unit) {
+    fun setupRecorder(onError: (Throwable) -> Unit, beforeRecording: suspend () -> Unit = {}) {
         Timber.d("Setting up recorder")
         val sttReadyDeferred = CompletableDeferred<Int>()
         sttReady = sttReadyDeferred
@@ -348,6 +351,7 @@ abstract class AssistViewModelBase(
         val audioChannel = Channel<ByteArray>(Channel.UNLIMITED)
 
         producerJob = viewModelScope.launch(audioDispatcher) {
+            beforeRecording()
             audioStrategy.audioData().catch {
                 Timber.e(it, "Error collecting audio data")
                 onError(it)

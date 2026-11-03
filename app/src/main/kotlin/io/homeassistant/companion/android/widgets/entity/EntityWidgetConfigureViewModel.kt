@@ -28,28 +28,30 @@ import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
+import io.homeassistant.companion.android.widgets.configure.WidgetConfigureViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @HiltViewModel(assistedFactory = EntityWidgetConfigureViewModel.Factory::class)
-class EntityWidgetConfigureViewModel @AssistedInject constructor(
+internal class EntityWidgetConfigureViewModel @AssistedInject constructor(
     private val staticWidgetDao: StaticWidgetDao,
     private val serverManager: ServerManager,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
     @Assisted private val widgetId: Int,
     @Assisted preselectedEntityId: String?,
-) : ViewModel() {
+) : ViewModel(),
+    WidgetConfigureViewModel<EntityWidgetConfigureState> {
 
     private val _state = MutableStateFlow(
         EntityWidgetConfigureState(
@@ -62,12 +64,12 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
             },
         ),
     )
-    internal val state: StateFlow<EntityWidgetConfigureState> = _state.asStateFlow()
+    override val state: StateFlow<EntityWidgetConfigureState> = _state.asStateFlow()
 
-    private val _errors = MutableSharedFlow<Int>(replay = 1)
+    private val _errors = Channel<Int>(Channel.BUFFERED)
 
     /** Errors to surface to the user, as string resources. */
-    val errors = _errors.asSharedFlow()
+    override val errors = _errors.receiveAsFlow()
 
     private var labelFromEntity = false
     private var loadEntitiesJob: Job? = null
@@ -182,12 +184,12 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
     suspend fun updateWidgetConfiguration(): Boolean {
         if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             Timber.e("Cannot save the widget configuration, the widget ID is invalid")
-            _errors.emit(commonR.string.widget_update_error)
+            _errors.send(commonR.string.widget_update_error)
             return false
         }
         val widget = getPendingDaoEntity()
         if (widget == null) {
-            _errors.emit(commonR.string.widget_update_error)
+            _errors.send(commonR.string.widget_update_error)
             return false
         }
 
@@ -212,7 +214,7 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
     suspend fun requestWidgetCreation(context: Context): Boolean {
         if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
-            _errors.emit(commonR.string.widget_creation_error)
+            _errors.send(commonR.string.widget_creation_error)
             return false
         }
 
@@ -225,13 +227,13 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
         }
         if (!pinningSupported) {
             Timber.e("Cannot pin the widget, the launcher does not support it")
-            _errors.emit(commonR.string.widget_creation_error)
+            _errors.send(commonR.string.widget_creation_error)
             return false
         }
 
         val widget = getPendingDaoEntity()
         if (widget == null) {
-            _errors.emit(commonR.string.widget_creation_error)
+            _errors.send(commonR.string.widget_creation_error)
             return false
         }
 
@@ -259,7 +261,7 @@ class EntityWidgetConfigureViewModel @AssistedInject constructor(
 
         if (!requestAccepted) {
             Timber.e("The launcher rejected the widget pin request")
-            _errors.emit(commonR.string.widget_creation_error)
+            _errors.send(commonR.string.widget_creation_error)
         }
         return requestAccepted
     }
