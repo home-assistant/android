@@ -62,7 +62,7 @@ class FrontendUrlManager @Inject constructor(
     fun serverUrlFlow(
         serverId: Int,
         target: FrontendTarget,
-        currentRelativeUrl: () -> String? = { null },
+        currentRelativeUrl: () -> String?,
     ): Flow<UrlLoadResult> = flow {
         val server = serverManager.getServer(serverId)
         if (server == null) {
