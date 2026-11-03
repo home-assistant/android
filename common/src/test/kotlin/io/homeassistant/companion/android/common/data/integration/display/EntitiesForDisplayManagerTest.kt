@@ -29,6 +29,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import java.time.LocalDateTime
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
@@ -1206,5 +1208,46 @@ class EntitiesForDisplayManagerTest {
                 coVerify(exactly = 0) { webSocketRepository.getEntityRegistryUpdates() }
             }
         }
+    }
+
+    @Test
+    fun `Given repeated snapshots when the registry is fresh then it is fetched once`() = runTest {
+        val timeSource = TestTimeSource()
+        manager = EntitiesForDisplayManager(serverManager, timeSource)
+        givenRegistryName("Bed")
+
+        repeat(3) { manager.snapshot(serverId, listOf("light.bed")).awaitLoadedOrNull() }
+        timeSource += REGISTRY_CACHE_DURATION - 1.seconds
+        val items = manager.snapshot(serverId, listOf("light.bed")).awaitLoadedOrNull()?.entities.orEmpty()
+
+        assertEquals(listOf("Bed"), items.map { it.name })
+        coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay() }
+    }
+
+    @Test
+    fun `Given a snapshot when the cached registry expired then it is fetched again`() = runTest {
+        val timeSource = TestTimeSource()
+        manager = EntitiesForDisplayManager(serverManager, timeSource)
+        givenRegistryName("Bed")
+        manager.snapshot(serverId, listOf("light.bed")).awaitLoadedOrNull()
+
+        timeSource += REGISTRY_CACHE_DURATION
+        givenRegistryName("Bedroom")
+        val items = manager.snapshot(serverId, listOf("light.bed")).awaitLoadedOrNull()?.entities.orEmpty()
+
+        assertEquals(listOf("Bedroom"), items.map { it.name })
+        coVerify(exactly = 2) { webSocketRepository.getEntityRegistryDisplay() }
+    }
+
+    @Test
+    fun `Given the registry can't be fetched when snapshotting then the next snapshot retries`() = runTest {
+        coEvery { webSocketRepository.getEntityRegistryDisplay() } returns null
+        coEvery { webSocketRepository.getEntityRegistry() } returns null
+        manager.snapshot(serverId, listOf("light.bed")).awaitLoadedOrNull()
+
+        givenRegistryName("Bed")
+        val items = manager.snapshot(serverId, listOf("light.bed")).awaitLoadedOrNull()?.entities.orEmpty()
+
+        assertEquals(listOf("Bed"), items.map { it.name })
     }
 }
