@@ -6,18 +6,16 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import android.os.RemoteException
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetEntity
+import io.homeassistant.companion.android.util.isWidgetPinningSupported
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
@@ -32,6 +30,13 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+/**
+ * Request code of the widget-created broadcast. Fixed so a re-request reuses the same [PendingIntent]
+ * instead of registering a new one per attempt; the Intent differs per widget provider, so it cannot
+ * collide across widgets.
+ */
+private const val PIN_WIDGET_REQUEST_CODE = 0
 
 /**
  * Shared behavior of every widget configuration ViewModel: exposing the [state] and [errors],
@@ -80,7 +85,7 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
 
     /**
      * Persists the current configuration.
-     * 
+     *
      * @return `true` if the widget was successfully saved, `false` otherwise. If `false`,
      * [errors] will emit an error message.
      */
@@ -117,22 +122,16 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
 
     /**
      * Asks the launcher to pin the configured widget and suspends until it is added.
-     * 
+     *
      * @return `true` if the widget was successfully pinned, `false` otherwise. If `false`,
      * [errors] will emit an error message.
      */
     suspend fun requestWidgetCreation(context: Context): Boolean {
-        // A single when keeps this under detekt's ReturnCount limit instead of a guard clause each.
-        val widget = when {
-            !SdkVersion.isAtLeast(Build.VERSION_CODES.O) -> {
-                Timber.e("Cannot pin the widget, pinning requires API ${Build.VERSION_CODES.O}")
-                null
-            }
-            !isPinningSupported(context) -> {
-                Timber.e("Cannot pin the widget, the launcher does not support it")
-                null
-            }
-            else -> buildPendingEntity(context)
+        val widget = if (context.isWidgetPinningSupported()) {
+            buildPendingEntity(context)
+        } else {
+            Timber.e("Cannot pin the widget, this device does not support pinning")
+            null
         }
         if (widget == null) {
             sendError(commonR.string.widget_creation_error)
@@ -178,16 +177,25 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
         return AppWidgetManager.getInstance(context).requestPinAppWidget(
             ComponentName(context, widgetProviderClass),
             null,
-            PendingIntent.getBroadcast(
-                context,
-                System.currentTimeMillis().toInt(),
-                Intent(context, widgetProviderClass).apply {
-                    action = ACTION_APPWIDGET_CREATED
-                    putExtra(EXTRA_WIDGET_ENTITY, widget)
-                },
-                // The PendingIntent must be mutable so the system injects the EXTRA_APPWIDGET_ID of the created widget
-                PendingIntent.FLAG_MUTABLE,
-            ),
+            widgetCreatedBroadcast(context, widget),
+        )
+    }
+
+    /**
+     * The broadcast the launcher sends to [widgetProviderClass] once [widget] is pinned, carrying the
+     * configuration to persist.
+     */
+    protected fun widgetCreatedBroadcast(context: Context, widget: E): PendingIntent {
+        return PendingIntent.getBroadcast(
+            context,
+            PIN_WIDGET_REQUEST_CODE,
+            Intent(context, widgetProviderClass).apply {
+                action = ACTION_APPWIDGET_CREATED
+                putExtra(EXTRA_WIDGET_ENTITY, widget)
+            },
+            // FLAG_MUTABLE: the system injects the EXTRA_APPWIDGET_ID of the created widget.
+            // FLAG_UPDATE_CURRENT: a re-request after reconfiguring replaces the extras of the previous one.
+            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
     }
 
@@ -225,12 +233,4 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
 
         reload()
     }
-}
-
-@SuppressLint("NewApi") // Callers guard on the API level before reaching this.
-private fun isPinningSupported(context: Context): Boolean = try {
-    AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported
-} catch (e: RemoteException) {
-    Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
-    false
 }

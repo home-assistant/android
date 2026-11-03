@@ -195,15 +195,15 @@ internal class EntityWidgetConfigureViewModel @AssistedInject constructor(
         val entity = current.selectedEntity?.takeIf {
             current.isActionEnabled && serverManager.getServer(current.selectedServerId) != null
         }
-        if (entity == null) {
-            Timber.e("Cannot build the widget, the current configuration is invalid")
-        }
 
-        return entity?.let {
+        return if (entity == null) {
+            Timber.e("Cannot build the widget, the current configuration is invalid")
+            null
+        } else {
             StaticWidgetEntity(
                 id = widgetId,
                 serverId = current.selectedServerId,
-                entityId = it.entityId,
+                entityId = entity.entityId,
                 attributeIds = current.selectedAttributeIds.takeIf { ids -> ids.isNotEmpty() }?.joinToString(","),
                 label = current.label,
                 textSize = current.textSizeOrDefault,

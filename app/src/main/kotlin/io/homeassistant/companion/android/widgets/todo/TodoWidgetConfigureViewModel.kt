@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.widgets.todo
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -18,8 +16,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
-import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.configure.BaseEntityWidgetConfigureViewModel
 import io.homeassistant.companion.android.widgets.configure.WidgetTextColor
 import kotlinx.coroutines.CancellationException
@@ -114,16 +110,7 @@ internal class TodoWidgetConfigureViewModel @AssistedInject constructor(
     override suspend fun requestPin(context: Context, widget: TodoWidgetEntity): Boolean {
         return GlanceAppWidgetManager(context).requestPinGlanceAppWidget(
             receiver = TodoWidget::class.java,
-            successCallback = PendingIntent.getBroadcast(
-                context,
-                System.currentTimeMillis().toInt(),
-                Intent(context, TodoWidget::class.java).apply {
-                    action = ACTION_APPWIDGET_CREATED
-                    putExtra(EXTRA_WIDGET_ENTITY, widget)
-                },
-                // The PendingIntent must be mutable so the system injects the EXTRA_APPWIDGET_ID of the created widget
-                PendingIntent.FLAG_MUTABLE,
-            ),
+            successCallback = widgetCreatedBroadcast(context, widget),
         )
     }
 

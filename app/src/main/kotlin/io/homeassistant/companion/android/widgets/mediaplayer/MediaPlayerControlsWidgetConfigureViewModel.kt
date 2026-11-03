@@ -1,11 +1,6 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
-import android.annotation.SuppressLint
-import android.app.PendingIntent
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -17,17 +12,8 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
-import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
-import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.configure.BaseEntityWidgetConfigureViewModel
 import timber.log.Timber
-
-/**
- * Stable request code for the widget-creation broadcast [PendingIntent]. A fixed value (combined with
- * [PendingIntent.FLAG_UPDATE_CURRENT]) keeps the pending intent deterministic and testable while making
- * sure a reconfigured request replaces the previously registered extras.
- */
-private const val PIN_WIDGET_REQUEST_CODE = 0
 
 @HiltViewModel(assistedFactory = MediaPlayerControlsWidgetConfigureViewModel.Factory::class)
 internal class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject constructor(
@@ -135,29 +121,6 @@ internal class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject const
                 backgroundType = current.selectedBackgroundType,
             )
         }
-    }
-
-    /**
-     * Uses a fixed request code and [PendingIntent.FLAG_UPDATE_CURRENT] so a reconfigured request
-     * replaces the previously registered extras (see [PIN_WIDGET_REQUEST_CODE]).
-     */
-    @SuppressLint("NewApi") // Guarded by requestWidgetCreation before this is reached.
-    override suspend fun requestPin(context: Context, widget: MediaPlayerControlsWidgetEntity): Boolean {
-        return AppWidgetManager.getInstance(context).requestPinAppWidget(
-            ComponentName(context, MediaPlayerControlsWidget::class.java),
-            null,
-            PendingIntent.getBroadcast(
-                context,
-                PIN_WIDGET_REQUEST_CODE,
-                Intent(context, MediaPlayerControlsWidget::class.java).apply {
-                    action = ACTION_APPWIDGET_CREATED
-                    putExtra(EXTRA_WIDGET_ENTITY, widget)
-                },
-                // FLAG_MUTABLE: the system injects the created EXTRA_APPWIDGET_ID.
-                // FLAG_UPDATE_CURRENT: refresh the extras when the screen is reconfigured and re-requested.
-                PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-            ),
-        )
     }
 
     @AssistedFactory
