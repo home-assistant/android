@@ -27,8 +27,6 @@ ALLOWED_LICENSES = {
 EXCEPTED_LIBRARIES = [
     # Chromium publishes a BSD-style license but only as a URL
     "org.chromium.net:*",
-    # https://github.com/Dimezis/BlurView/issues/259
-    "com.github.Dimezis:BlurView",
     # Assist listening chime, a CC-BY-4.0 media asset bundled with attribution (not a code dependency)
     # https://github.com/esphome/home-assistant-voice-pe/blob/dev/sounds/LICENSE.md
     "esphome:home-assistant-voice-pe:sounds",

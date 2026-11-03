@@ -87,8 +87,6 @@
     <ID>InjectDispatcher:EntityPicker.kt:Default</ID>
     <ID>InjectDispatcher:FrontendDownloadManager.kt:FrontendDownloadManager$IO</ID>
     <ID>InjectDispatcher:FrontendEntityAddToManager.kt:FrontendEntityAddToManager$Default</ID>
-    <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService$IO</ID>
-    <ID>InjectDispatcher:HaControlsProviderService.kt:HaControlsProviderService.&lt;no name provided&gt;$IO</ID>
     <ID>InjectDispatcher:HaMediaSession.kt:HaMediaSession$IO</ID>
     <ID>InjectDispatcher:HaShortcutManager.kt:HaShortcutManager$IO</ID>
     <ID>InjectDispatcher:HomeAssistantApplication.kt:HomeAssistantApplication$IO</ID>

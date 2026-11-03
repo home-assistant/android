@@ -141,6 +141,9 @@ interface PrefsRepository {
 
     suspend fun isWebViewDebugEnabled(): Boolean
 
+    /** Emits the current "WebView debug" preference immediately on collection, then on every change. */
+    suspend fun webViewDebugFlow(): Flow<Boolean>
+
     suspend fun setWebViewDebugEnabled(enabled: Boolean)
 
     suspend fun isCrashReporting(): Boolean

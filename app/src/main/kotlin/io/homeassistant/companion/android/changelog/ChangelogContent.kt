@@ -2,9 +2,6 @@ package io.homeassistant.companion.android.changelog
 
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
-import io.homeassistant.companion.android.sensors.DynamicColorSensorManager
-import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
-import io.homeassistant.companion.android.settings.SettingsActivity
 
 /**
  * The changelog content of the current release, with the displayed strings in the dedicated
@@ -15,93 +12,20 @@ import io.homeassistant.companion.android.settings.SettingsActivity
  * result.
  */
 internal val currentChangelog = Changelog(
-    new = listOf(
+    new = listOf(),
+    improved = listOf(),
+    fixed = listOf(
         ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_assistant_volume_sensor,
-            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE, ChangelogPlatform.WEAR),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_assistant_volume_command,
-            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_health_connect_sleep_stages,
+            contentRes = commonR.string.changelog_entry_fix_media_player_widget,
             platforms = setOf(ChangelogPlatform.APP),
-            action = ChangelogAction.OpenSettings(
-                SettingsActivity.Deeplink.Sensor(HealthConnectSensorManager.sleepDuration.id),
+            ChangelogEntry(
+                contentRes = commonR.string.changelog_entry_assist_listening_chime,
+                platforms = setOf(ChangelogPlatform.APP),
+                action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
+                actionRequiresPlatform = true,
             ),
-            actionRequiresPlatform = true,
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_gesture_action,
-            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
-            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.Gestures),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_tonal_palette_sensor,
-            platforms = setOf(ChangelogPlatform.APP),
-            action = ChangelogAction.OpenSettings(
-                SettingsActivity.Deeplink.Sensor(DynamicColorSensorManager.tonalPaletteSensor.id),
-            ),
-            actionRequiresPlatform = true,
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_native_media_controls,
-            platforms = setOf(ChangelogPlatform.APP),
-            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.MediaControls),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_assist_listening_chime,
-            platforms = setOf(ChangelogPlatform.APP),
-            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
-            actionRequiresPlatform = true,
-        ),
-    ),
-    improved = listOf(
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_health_connect,
-            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_assist,
-            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
-            action = ChangelogAction.OpenAssist,
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_entity_widgets,
-            platforms = setOf(ChangelogPlatform.APP),
-            action = ChangelogAction.OpenWidgetConfig(WidgetType.Entity),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_media_player_widgets,
-            platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenWidgetConfig(WidgetType.MediaPlayer),
         ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_template_widgets,
-            platforms = setOf(ChangelogPlatform.APP),
-            action = ChangelogAction.OpenWidgetConfig(WidgetType.Template),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_todo_widgets,
-            platforms = setOf(ChangelogPlatform.APP),
-            action = ChangelogAction.OpenWidgetConfig(WidgetType.Todo),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_tiles,
-            platforms = setOf(ChangelogPlatform.APP),
-            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.QSTile()),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_matter_commissioning,
-            platforms = setOf(ChangelogPlatform.APP),
-        ),
-        ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_file_picker,
-            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
-        ),
-    ),
-    fixed = listOf(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_bug_fixes,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE, ChangelogPlatform.WEAR),

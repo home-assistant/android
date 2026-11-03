@@ -116,13 +116,31 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     }.flowOn(Dispatchers.Default)
 
     /**
-     * Observes the display state of the entities matching [filter]: a new
-     * [EntityDisplayState.Loaded] is emitted whenever an entity state change or an area,
-     * device, or entity registry update changes the resolved items, so each emission is the
-     * current display truth (including the state-dependent [EntityDisplayWithoutContext.icon] and
-     * [EntityDisplayWithoutContext.state]). Updates that leave the items unchanged are skipped. Since
-     * emissions are complete snapshots, slow consumers can safely `conflate()` the flow and
-     * only render the latest one.
+     * Observes the display state of [entityIds]: a new [EntityDisplayState.Loaded] is emitted
+     * whenever one of their state changes or an area, device, or entity registry update changes the
+     * resolved items, so each emission is the current display truth (including the state-dependent
+     * [EntityDisplayWithoutContext.icon] and [EntityDisplayWithoutContext.state]). Updates that
+     * leave the items unchanged are skipped. Since emissions are complete snapshots, slow consumers
+     * can safely `conflate()` the flow and only render the latest one.
+     *
+     * The flow completes with [EntityDisplayState.Error] when the entities cannot be
+     * retrieved, and completes after the initial [EntityDisplayState.Loaded] when no update
+     * subscription is available (for example when the websocket connection is unavailable).
+     */
+    fun observeInContext(serverId: Int, entityIds: List<String>): Flow<EntityDisplayState<EntityDisplayWithContext>> =
+        observeInContext(serverId, subscribedEntityIds = entityIds) { it.entityId in entityIds }
+
+    /**
+     * Observes the display state of the entities matching [filter]: a new [EntityDisplayState.Loaded]
+     * is emitted whenever an entity state change or an area, device, or entity registry update
+     * changes the resolved items, so each emission is the current display truth (including the
+     * state-dependent [EntityDisplayWithoutContext.icon] and [EntityDisplayWithoutContext.state]).
+     * Updates that leave the items unchanged are skipped. Since emissions are complete snapshots,
+     * slow consumers can safely `conflate()` the flow and only render the latest one.
+     *
+     * The state changes of every entity of the server are followed, so entities that start matching
+     * [filter] are added to the items. Prefer the overload taking the entity ids when they are
+     * known, so that only their state changes are subscribed to.
      *
      * The flow completes with [EntityDisplayState.Error] when the entities cannot be
      * retrieved, and completes after the initial [EntityDisplayState.Loaded] when no update
@@ -131,6 +149,17 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     fun observeInContext(
         serverId: Int,
         filter: (Entity) -> Boolean = { true },
+    ): Flow<EntityDisplayState<EntityDisplayWithContext>> =
+        observeInContext(serverId, subscribedEntityIds = null, filter)
+
+    /**
+     * Subscribes to the state changes of [subscribedEntityIds], or of every entity of the server
+     * when null, keeping the entities matching [filter].
+     */
+    private fun observeInContext(
+        serverId: Int,
+        subscribedEntityIds: List<String>?,
+        filter: (Entity) -> Boolean,
     ): Flow<EntityDisplayState<EntityDisplayWithContext>> = flow {
         val initial = loadEntities(serverId) ?: return@flow
 
@@ -141,7 +170,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         var lastItems = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
         emit(EntityDisplayState.Loaded(lastItems))
 
-        observeContextEvents(serverId, webSocketRepository).collect { event ->
+        observeContextEvents(serverId, webSocketRepository, subscribedEntityIds).collect { event ->
             when (event) {
                 is ObserveEvent.EntityEvent.StateChanged -> with(event.entity) {
                     if (filter(this)) entities[entityId] = this else entities.remove(entityId)
@@ -208,15 +237,17 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     }
 
     /**
-     * Merges the entity state changes and the registry update events of the server into a
-     * single [ObserveEvent] flow. Subscriptions that cannot be established are skipped, so the
-     * flow is empty when the server supports none.
+     * Merges the state changes of [entityIds], or of every entity of the server when it is null,
+     * and the registry update events of the server into a single [ObserveEvent] flow.
+     * Subscriptions that cannot be established are skipped, so the flow is empty when the server
+     * supports none.
      */
     private suspend fun observeContextEvents(
         serverId: Int,
         webSocketRepository: WebSocketRepository?,
+        entityIds: List<String>?,
     ): Flow<ObserveEvent> = listOfNotNull(
-        stateChanges(serverId, entityIds = null),
+        stateChanges(serverId, entityIds),
         webSocketRepository?.areaRegistryChanges(),
         webSocketRepository?.deviceRegistryChanges(),
         webSocketRepository?.entityRegistryChanges(),
