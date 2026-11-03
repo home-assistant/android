@@ -81,6 +81,7 @@
             matchPackageNames: [
                 'org.jetbrains.kotlin:{/,}**',
                 'org.jetbrains.kotlin.{/,}**',
+                'com.google.devtools.ksp{/,}**'
             ],
         },
         {
@@ -94,14 +95,6 @@
             matchPackageNames: [
                 'org.jetbrains.kotlinx:{/,}**',
                 'org.jetbrains.kotlinx.{/,}**',
-            ],
-        },
-        {
-            groupName: 'org.jetbrains.kotlin.*',
-            matchPackageNames: [
-                'org.jetbrains.kotlin:{/,}**',
-                'org.jetbrains.kotlin.{/,}**',
-                'com.google.devtools.ksp{/,}**',
             ],
         },
         {
