@@ -608,7 +608,7 @@ private fun SafeHAWebView(
     val backgroundColor = contentState?.backgroundColor ?: fallbackColor
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // The top status bar guardrail is retained for legacy servers (< 2026.2) where the frontend does not handle safe areas.
+        // The top status bar guardrail is retained for legacy servers (< 2026.10) where the frontend does not handle safe areas.
         if (!serverHandleInsets) {
             statusBarColor.Overlay(
                 modifier = Modifier
