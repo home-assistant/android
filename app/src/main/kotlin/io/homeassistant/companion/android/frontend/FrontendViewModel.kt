@@ -877,7 +877,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                     // external_auth is re-added by the URL manager; more-info-entity-id is a
                     // one-shot deep-link parameter that must not reopen the dialog after a switch.
                     lastVisitedUrl?.toUri()?.toRelativeUrl(
-                        excludeParams = setOf(EXTERNAL_AUTH_QUERY_PARAM, MORE_INFO_ENTITY_ID_QUERY_PARAM),
+                        excludeParams = setOf(EXTERNAL_AUTH_QUERY_PARAM),
                     )
                 },
             ).collect { result ->
