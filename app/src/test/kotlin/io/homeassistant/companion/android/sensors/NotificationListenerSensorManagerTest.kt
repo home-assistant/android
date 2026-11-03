@@ -14,22 +14,22 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
-import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Named.named
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
@@ -44,18 +44,9 @@ private const val SYSTEM_AUTOGROUP_SUMMARY_FLAGS =
 private const val APP_PACKAGE = "io.homeassistant.companion.android"
 private const val SOURCE_PACKAGE = "com.example"
 private const val NOTIFICATION_TEXT = "Your order has arrived"
-private const val FOLLOW_UP_TEXT = "Thanks for your order"
 private const val SERVER_ID = 1
 
-// Reported notifications reach the repository from Dispatchers.Default
-private const val REPORT_TIMEOUT_MS = 5_000L
-
-@OptIn(ExperimentalCoroutinesApi::class)
 class NotificationListenerSensorManagerTest {
-
-    @JvmField
-    @RegisterExtension
-    val mainDispatcherExtension = MainDispatcherJUnit5Extension(UnconfinedTestDispatcher())
 
     private val context = mockk<Context>(relaxed = true) {
         every { packageName } returns APP_PACKAGE
@@ -63,11 +54,6 @@ class NotificationListenerSensorManagerTest {
     private val sensorRepository: SensorRepository = mockk(relaxed = true) {
         coEvery { this@mockk.get(any<String>()) } returns emptyList()
     }
-    private val manager = NotificationListenerSensorManager(
-        context,
-        sensorRepository,
-        mockk<ServerManager>(relaxed = true),
-    )
 
     @BeforeEach
     fun setUp() {
@@ -105,7 +91,7 @@ class NotificationListenerSensorManagerTest {
 
     @Test
     fun `Given notification refresh when requested then settings are not persisted`() = runTest {
-        manager.requestSensorUpdate()
+        createManager(this).requestSensorUpdate()
 
         coVerify(exactly = 0) {
             sensorRepository.updateSettingValue(any(), any(), any())
@@ -119,11 +105,11 @@ class NotificationListenerSensorManagerTest {
         group: String?,
         flags: Int,
         reported: Boolean,
-    ) {
+    ) = runTest {
         enableNotificationSensor(NotificationListenerSensorManager.lastNotification)
 
-        manager.onNotificationPosted(statusBarNotification(group, flags, NOTIFICATION_TEXT), emptyArray())
-        manager.onNotificationPosted(followUpNotification(), emptyArray())
+        createManager(this).onNotificationPosted(statusBarNotification(group, flags), emptyArray())
+        awaitLaunchedWork()
 
         verifyNotificationReported(NotificationListenerSensorManager.lastNotification, reported)
     }
@@ -134,11 +120,11 @@ class NotificationListenerSensorManagerTest {
         group: String?,
         flags: Int,
         reported: Boolean,
-    ) {
+    ) = runTest {
         enableNotificationSensor(NotificationListenerSensorManager.lastRemovedNotification)
 
-        manager.onNotificationRemoved(statusBarNotification(group, flags, NOTIFICATION_TEXT), emptyArray())
-        manager.onNotificationRemoved(followUpNotification(), emptyArray())
+        createManager(this).onNotificationRemoved(statusBarNotification(group, flags), emptyArray())
+        awaitLaunchedWork()
 
         verifyNotificationReported(NotificationListenerSensorManager.lastRemovedNotification, reported)
     }
@@ -172,6 +158,22 @@ class NotificationListenerSensorManagerTest {
         )
     }
 
+    private fun createManager(sensorWorkerScope: CoroutineScope) = NotificationListenerSensorManager(
+        context,
+        sensorRepository,
+        mockk<ServerManager>(relaxed = true),
+        sensorWorkerScope,
+    )
+
+    /**
+     * Waits for the work the notification callbacks launch in the test scope. Part of it switches to
+     * `Dispatchers.Default` (`mappedBundle` and `SensorManager.onSensorUpdated`), which the test scheduler can't
+     * advance, so the launched jobs are joined instead.
+     */
+    private suspend fun TestScope.awaitLaunchedWork() {
+        this.coroutineContext.job.children.toList().joinAll()
+    }
+
     private fun enableNotificationSensor(sensor: SensorManager.BasicSensor) {
         coEvery { sensorRepository.get(sensor.id) } returns listOf(
             Sensor(id = sensor.id, serverId = SERVER_ID, enabled = true, state = ""),
@@ -182,13 +184,11 @@ class NotificationListenerSensorManagerTest {
         )
     }
 
-    private fun followUpNotification() = statusBarNotification(group = null, flags = 0, text = FOLLOW_UP_TEXT)
-
-    private fun statusBarNotification(group: String?, flags: Int, text: String): StatusBarNotification {
+    private fun statusBarNotification(group: String?, flags: Int): StatusBarNotification {
         val extras = mockk<Bundle> {
             every { keySet() } returns setOf(Notification.EXTRA_TEXT)
             @Suppress("DEPRECATION")
-            every { this@mockk.get(Notification.EXTRA_TEXT) } returns text
+            every { this@mockk.get(Notification.EXTRA_TEXT) } returns NOTIFICATION_TEXT
         }
         val notification = mockk<Notification>(relaxed = true) {
             every { this@mockk.group } returns group
@@ -202,20 +202,9 @@ class NotificationListenerSensorManagerTest {
         }
     }
 
-    /**
-     * Reports run asynchronously, so a skipped notification can't be asserted right away. The follow-up notification
-     * goes through the same pipeline after the one under test: once it is reported, so would the first one have been.
-     */
     private fun verifyNotificationReported(sensor: SensorManager.BasicSensor, reported: Boolean) {
-        coVerify(timeout = REPORT_TIMEOUT_MS) {
-            sensorRepository.update(match { it.id == sensor.id && it.state == FOLLOW_UP_TEXT })
-        }
-        if (reported) {
-            coVerify(timeout = REPORT_TIMEOUT_MS) {
-                sensorRepository.update(match { it.id == sensor.id && it.state == NOTIFICATION_TEXT })
-            }
-        } else {
-            coVerify(exactly = 0) { sensorRepository.update(match { it.state == NOTIFICATION_TEXT }) }
+        coVerify(exactly = if (reported) 1 else 0) {
+            sensorRepository.update(match { it.id == sensor.id && it.state == NOTIFICATION_TEXT })
         }
     }
 

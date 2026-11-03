@@ -32,7 +32,9 @@ import io.homeassistant.companion.android.common.util.isAutomotive
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -52,11 +54,20 @@ internal const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
  * reporting logic.
  */
 @Singleton
-class NotificationListenerSensorManager @Inject constructor(
-    @ApplicationContext override val applicationContext: Context,
+class NotificationListenerSensorManager @VisibleForTesting internal constructor(
+    override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
     override val serverManager: ServerManager,
+    override val sensorWorkerScope: CoroutineScope,
 ) : SensorManager {
+
+    @Inject
+    constructor(
+        @ApplicationContext applicationContext: Context,
+        sensorRepository: SensorRepository,
+        serverManager: ServerManager,
+    ) : this(applicationContext, sensorRepository, serverManager, CoroutineScope(Dispatchers.Main + SupervisorJob()))
+
     companion object {
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
