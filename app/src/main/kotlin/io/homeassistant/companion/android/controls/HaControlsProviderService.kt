@@ -35,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -248,134 +249,111 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
         webSocketScope: CoroutineScope,
         subscriber: Flow.Subscriber<in Control>,
     ) {
-        val serverCount = serverManager.servers().size
         val server = serverManager.getServer(serverId)
-
-        // Server name should only be specified if there's more than one server, as controls being split by structure (or the area names appended with the server name)
-        // is done based on the presence of a server name.
-        var serverName: String? = null
-        if (server != null && serverCount > 1) {
-            serverName = server.friendlyName
-        }
-
-        val splitMultiServersIntoStructures = splitMultiServersIntoStructures()
-        val entityIds = controlIds.map { it.toEntityId(serverId) }
+        val publisher = ControlPublisher(
+            subscriber = subscriber,
+            serverId = serverId,
+            controlIds = controlIds,
+            serverName = server?.friendlyName?.takeIf { serverManager.servers().size > 1 },
+            baseUrl = server?.let {
+                serverManager.connectionStateProvider(
+                    serverId,
+                ).urlFlow().firstUrlOrNull()?.toString()?.removeSuffix("/")
+            }.orEmpty(),
+            splitMultiServersIntoStructures = splitMultiServersIntoStructures(),
+        )
 
         if (server == null) {
-            entityIds.forEachIndexed { index, entityId ->
-                domainToHaControl["ha_failed"]?.createControl(
-                    applicationContext,
-                    failedItem(entityId, notFound = false),
-                    HaControlInfo(
-                        systemId = controlIds[index],
-                        entityId = entityId,
-                        serverId = serverId,
-                    ),
-                )?.let { control -> subscriber.onNext(control) }
-            }
-            return
-        }
-
-        val baseUrl =
-            serverManager.connectionStateProvider(serverId).urlFlow().firstUrlOrNull()?.toString()?.removeSuffix("/")
-                ?: ""
-
-        webSocketScope.launch {
-            var sentInitial = false
-            // Each snapshot is complete, so only the items that differ from the last sent ones are
-            // sent again: re-sending them all would make the system redraw every control
-            var sentItems = emptyMap<String, EntityDisplayWithContext>()
-            entitiesForDisplayManager.observeInContext(serverId, entityIds)
-                .collect { state ->
-                    when (state) {
-                        EntityDisplayState.Loading -> Unit
-
-                        EntityDisplayState.Error -> entityIds.forEachIndexed { index, entityId ->
-                            sendControl(
-                                subscriber = subscriber,
-                                item = failedItem(entityId, notFound = false),
-                                systemId = controlIds[index],
-                                serverId = serverId,
-                                serverName = serverName,
-                                baseUrl = baseUrl,
-                                splitMultiServersIntoStructures = splitMultiServersIntoStructures,
-                                failed = true,
-                            )
-                        }
-
-                        is EntityDisplayState.Loaded -> {
-                            if (!sentInitial) {
-                                // All requested entities are in the first resolution
-                                sentInitial = true
-                                (entityIds - state.entitiesById.keys).forEach { missingEntity ->
-                                    Timber.e("Unable to get $missingEntity from Home Assistant, not resolved.")
-                                    sendControl(
-                                        subscriber = subscriber,
-                                        item = failedItem(missingEntity, notFound = true),
-                                        systemId = controlIds[entityIds.indexOf(missingEntity)],
-                                        serverId = serverId,
-                                        serverName = serverName,
-                                        baseUrl = baseUrl,
-                                        splitMultiServersIntoStructures = splitMultiServersIntoStructures,
-                                        failed = true,
-                                    )
-                                }
-                            }
-                            val changedItems = state.entities.filter { sentItems[it.entityId] != it }
-                            sentItems = state.entitiesById
-                            Timber.d("Sending ${changedItems.size} of ${state.entities.size} entities to subscriber")
-                            changedItems.forEach { item ->
-                                sendControl(
-                                    subscriber = subscriber,
-                                    item = item,
-                                    systemId = controlIds[entityIds.indexOf(item.entityId)],
-                                    serverId = serverId,
-                                    serverName = serverName,
-                                    baseUrl = baseUrl,
-                                    splitMultiServersIntoStructures = splitMultiServersIntoStructures,
-                                )
-                            }
-                        }
-                    }
-                }
+            publisher.sendFailedControls()
+        } else {
+            webSocketScope.launch { publisher.publishUpdates() }
         }
     }
 
-    private suspend fun sendControl(
-        subscriber: Flow.Subscriber<in Control>,
-        item: EntityDisplayWithContext,
-        systemId: String,
-        serverId: Int,
-        serverName: String?,
-        baseUrl: String,
-        splitMultiServersIntoStructures: Boolean,
-        failed: Boolean = false,
+    /**
+     * Publishes the controls of [controlIds] of one server to [subscriber], as they display or fail.
+     * Its state is confined to the coroutine running [publishUpdates].
+     */
+    private inner class ControlPublisher(
+        private val subscriber: Flow.Subscriber<in Control>,
+        private val serverId: Int,
+        controlIds: List<String>,
+        private val serverName: String?,
+        private val baseUrl: String,
+        private val splitMultiServersIntoStructures: Boolean,
     ) {
-        val info = HaControlInfo(
-            systemId = systemId,
-            entityId = item.entityId,
-            serverId = serverId,
-            serverName = serverName,
-            authRequired = entityRequiresAuth(item.entityId, serverId),
-            baseUrl = baseUrl,
-            splitMultiServerIntoStructure = splitMultiServersIntoStructures,
-        )
-        val control = try {
-            domainToHaControl[if (failed) "ha_failed" else item.domain]?.createControl(
-                applicationContext,
-                item,
-                info,
-            )
-        } catch (e: Exception) {
-            Timber.e(e, "Unable to create control for ${item.domain} entity, sending error entity")
-            domainToHaControl["ha_failed"]?.createControl(
-                applicationContext,
-                failedItem(item.entityId, notFound = false),
-                info,
-            )
+        private val systemIdByEntityId = controlIds.associateBy { it.toEntityId(serverId) }
+        private val entityIds = systemIdByEntityId.keys.toList()
+        private var sentInitial = false
+
+        // Each snapshot is complete, so only the items that differ from the last sent ones are
+        // sent again: re-sending them all would make the system redraw every control
+        private var sentItems = emptyMap<String, EntityDisplayWithContext>()
+
+        /** Follows the entities, failing the controls once they can no longer be followed. */
+        suspend fun publishUpdates() {
+            entitiesForDisplayManager.observeInContext(serverId, entityIds)
+                .onCompletion { cause ->
+                    // Completing after a snapshot means the entities can no longer be followed: the
+                    // controls are failed rather than left on a stale state the system would act on
+                    if (cause == null && sentInitial) sendFailedControls()
+                }
+                .collect { state ->
+                    when (state) {
+                        EntityDisplayState.Loading -> Unit
+                        EntityDisplayState.Error -> sendFailedControls()
+                        is EntityDisplayState.Loaded -> publishSnapshot(state)
+                    }
+                }
         }
-        if (control != null) {
-            subscriber.onNext(control)
+
+        /** Sends every control as failed. */
+        suspend fun sendFailedControls() {
+            entityIds.forEach { sendControl(failedItem(it, notFound = false), failed = true) }
+        }
+
+        private suspend fun publishSnapshot(state: EntityDisplayState.Loaded<EntityDisplayWithContext>) {
+            if (!sentInitial) {
+                sentInitial = true
+                // All requested entities are in the first resolution
+                (entityIds - state.entitiesById.keys).forEach { missingEntity ->
+                    Timber.e("Unable to get $missingEntity from Home Assistant, not resolved.")
+                    sendControl(failedItem(missingEntity, notFound = true), failed = true)
+                }
+            }
+            val changedItems = state.entities.filter { sentItems[it.entityId] != it }
+            sentItems = state.entitiesById
+            Timber.d("Sending ${changedItems.size} of ${state.entities.size} entities to subscriber")
+            changedItems.forEach { sendControl(it) }
+        }
+
+        private suspend fun sendControl(item: EntityDisplayWithContext, failed: Boolean = false) {
+            val info = HaControlInfo(
+                systemId = systemIdByEntityId.getValue(item.entityId),
+                entityId = item.entityId,
+                serverId = serverId,
+                serverName = serverName,
+                authRequired = entityRequiresAuth(item.entityId, serverId),
+                baseUrl = baseUrl,
+                splitMultiServerIntoStructure = splitMultiServersIntoStructures,
+            )
+            val control = try {
+                domainToHaControl[if (failed) "ha_failed" else item.domain]?.createControl(
+                    applicationContext,
+                    item,
+                    info,
+                )
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to create control for ${item.domain} entity, sending error entity")
+                domainToHaControl["ha_failed"]?.createControl(
+                    applicationContext,
+                    failedItem(item.entityId, notFound = false),
+                    info,
+                )
+            }
+            if (control != null) {
+                subscriber.onNext(control)
+            }
         }
     }
 
