@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -116,6 +117,67 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         val registryEntries = serverManager.webSocketRepositoryOrNull(serverId).fetchEntityRegistryEntries()
         emit(EntityDisplayState.Loaded(entities.map { registryEntries.itemFor(it) }))
     }.flowOn(Dispatchers.Default)
+
+    /**
+     * Prepares browsing the entities of the server one domain at a time, for entity pickers on
+     * constrained devices.
+     *
+     * Servers with up to [FULL_FETCH_MAX_ENTITIES] entities in their registry, or whose registry
+     * can't be retrieved, have every state fetched at once, which lists every entity. Above that,
+     * downloading every state can run a watch out of memory, so the domains come from the entity
+     * registry alone and [EntityBrowser.load] only fetches the states of the entities it is asked
+     * for. Entities without a registry entry (no unique id) aren't listed then, though they still
+     * resolve when loaded by id.
+     *
+     * Returns null when no server is registered or the entities can't be retrieved.
+     */
+    suspend fun browse(serverId: Int): EntityBrowser? = withContext(Dispatchers.Default) {
+        if (!serverManager.isRegistered()) return@withContext null
+        val webSocketRepository = serverManager.webSocketRepositoryOrNull(serverId) ?: return@withContext null
+        val registryEntries = webSocketRepository.fetchEntityRegistryEntries()
+        val entityIds = registryEntries.entityIds()
+        if (entityIds == null || entityIds.size <= FULL_FETCH_MAX_ENTITIES) {
+            val repository = serverManager.integrationRepositoryOrNull(serverId) ?: return@withContext null
+            val entities = orNull("entities") { repository.getEntities() } ?: return@withContext null
+            return@withContext LoadedEntityBrowser(entities, registryEntries)
+        }
+        RegistryEntityBrowser(
+            serverId = serverId,
+            entityIdsByDomain = entityIds.sorted().groupBy { it.substringBefore('.') }.toSortedMap(),
+            registryEntries = registryEntries,
+        )
+    }
+
+    /** Browser over entities fetched at once, see [browse]. */
+    private class LoadedEntityBrowser(entities: List<Entity>, private val registryEntries: EntityRegistryEntries) :
+        EntityBrowser {
+        private val entitiesById = entities.sortedBy { it.entityId }.associateBy { it.entityId }
+
+        override val domains: List<String> = entitiesById.values.map { it.domain }.distinct().sorted()
+
+        override suspend fun load(domain: String): List<EntityDisplayWithoutContext> =
+            entitiesById.values.filter { it.domain == domain }.map { registryEntries.itemFor(it) }
+
+        override suspend fun load(entityIds: List<String>): List<EntityDisplayWithoutContext> =
+            entityIds.mapNotNull { entitiesById[it] }.map { registryEntries.itemFor(it) }
+    }
+
+    private inner class RegistryEntityBrowser(
+        private val serverId: Int,
+        private val entityIdsByDomain: Map<String, List<String>>,
+        private val registryEntries: EntityRegistryEntries,
+    ) : EntityBrowser {
+        override val domains: List<String> = entityIdsByDomain.keys.toList()
+
+        override suspend fun load(domain: String): List<EntityDisplayWithoutContext>? =
+            load(entityIdsByDomain[domain].orEmpty())
+
+        override suspend fun load(entityIds: List<String>): List<EntityDisplayWithoutContext>? =
+            withContext(Dispatchers.Default) {
+                val repository = serverManager.integrationRepositoryOrNull(serverId) ?: return@withContext null
+                orNull("entities") { repository.getEntities(entityIds) }?.map { registryEntries.itemFor(it) }
+            }
+    }
 
     /**
      * Observes the display state of [entityIds]: a new [EntityDisplayState.Loaded] is emitted
@@ -475,6 +537,9 @@ private class EntityRegistryEntries(
     /** Classic entry of [entityId], for the callers needing what only it holds (area, device). */
     fun classicEntry(entityId: String): EntityRegistryResponse? = classicEntries?.get(entityId)
 
+    /** Ids of the entities in the registry, or null when no registry could be retrieved. */
+    fun entityIds(): Collection<String>? = displayEntries?.keys ?: classicEntries?.keys
+
     /**
      * Name to display for [entity]: the name of its registry entry, its `friendly_name` state
      * attribute, or its id. This is the single place where the app decides how an entity is named,
@@ -579,3 +644,30 @@ private data class RegistrySnapshot(
     val areas: Map<String, AreaRegistryResponse> = emptyMap(),
     val floors: Map<String, FloorRegistryResponse> = emptyMap(),
 )
+
+/**
+ * Largest entity registry for which [EntitiesForDisplayManager.browse] fetches every state at once.
+ * Every state of a server this size weighs about a megabyte at most, which a watch handles; above
+ * it, the full download can run a watch out of memory.
+ */
+internal const val FULL_FETCH_MAX_ENTITIES = 2000
+
+/**
+ * Browses the entities of a server one domain at a time, see [EntitiesForDisplayManager.browse].
+ */
+interface EntityBrowser {
+    /** Domains having at least one entity in the registry, sorted. */
+    val domains: List<String>
+
+    /**
+     * Resolves the entities of [domain] sorted by entity id, omitting the ones without a state, or
+     * null when their states can't be retrieved.
+     */
+    suspend fun load(domain: String): List<EntityDisplayWithoutContext>?
+
+    /**
+     * Resolves [entityIds] whatever their domain, in the requested order and omitting the ones
+     * without a state, or null when their states can't be retrieved.
+     */
+    suspend fun load(entityIds: List<String>): List<EntityDisplayWithoutContext>?
+}
