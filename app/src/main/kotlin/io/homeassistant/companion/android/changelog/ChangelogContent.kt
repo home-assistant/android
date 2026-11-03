@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.changelog
 
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
+import io.homeassistant.companion.android.settings.SettingsActivity
 
 /**
  * The changelog content of the current release, with the displayed strings in the dedicated
@@ -12,18 +13,19 @@ import io.homeassistant.companion.android.frontend.navigation.WidgetType
  * result.
  */
 internal val currentChangelog = Changelog(
-    new = listOf(),
+    new = listOf(
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_assist_listening_chime,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
+            actionRequiresPlatform = true,
+        ),
+    ),
     improved = listOf(),
     fixed = listOf(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_fix_media_player_widget,
             platforms = setOf(ChangelogPlatform.APP),
-            ChangelogEntry(
-                contentRes = commonR.string.changelog_entry_assist_listening_chime,
-                platforms = setOf(ChangelogPlatform.APP),
-                action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
-                actionRequiresPlatform = true,
-            ),
             action = ChangelogAction.OpenWidgetConfig(WidgetType.MediaPlayer),
         ),
         ChangelogEntry(
