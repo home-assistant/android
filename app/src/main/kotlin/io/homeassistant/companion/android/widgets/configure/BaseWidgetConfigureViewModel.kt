@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * Shared behaviour of every widget configuration ViewModel: exposing the [state] and [errors],
+ * Shared behavior of every widget configuration ViewModel: exposing the [state] and [errors],
  * observing the available servers, restoring an existing widget, switching servers, and saving,
  * creating or updating the widget.
  */
@@ -51,7 +51,6 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
 
     private val _errors = Channel<Int>(Channel.BUFFERED)
 
-    /** Errors to surface to the user, as string resources. */
     final override val errors = _errors.receiveAsFlow()
 
     /** The widget provider, used to build the pin request and the update broadcast. */
@@ -80,8 +79,10 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
     }
 
     /**
-     * Persists the current configuration, reporting through [errors] and returning false when it
-     * cannot be saved.
+     * Persists the current configuration.
+     * 
+     * @return `true` if the widget was successfully saved, `false` otherwise. If `false`,
+     * [errors] will emit an error message.
      */
     suspend fun updateWidgetConfiguration(context: Context): Boolean {
         val widget = if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
@@ -100,7 +101,11 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
         }
     }
 
-    /** Asks the already placed widgets to redraw with the configuration that was just saved. */
+    /**
+     * Asks the already placed widgets to redraw with the configuration that was just saved.
+     * The default requests a classic app-widget update; Glance-based widgets should override
+     * this (and [requestPin]) to use the Glance APIs instead.
+     */
     // `open` only so Glance widgets can override it; make final once every widget uses Glance.
     open fun updateWidget(context: Context) {
         context.sendBroadcast(
@@ -111,8 +116,10 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
     }
 
     /**
-     * Asks the launcher to pin the configured widget and suspends until it is added, reporting
-     * through [errors] and returning false when the widget cannot be requested at all.
+     * Asks the launcher to pin the configured widget and suspends until it is added.
+     * 
+     * @return `true` if the widget was successfully pinned, `false` otherwise. If `false`,
+     * [errors] will emit an error message.
      */
     suspend fun requestWidgetCreation(context: Context): Boolean {
         // A single when keeps this under detekt's ReturnCount limit instead of a guard clause each.
@@ -162,7 +169,7 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
 
     /**
      * Asks the launcher to pin [widget]. The default requests a classic app-widget pin; Glance-based
-     * widgets override this (and [updateWidget]) to use the Glance APIs instead.
+     * widgets should override this (and [updateWidget]) to use the Glance APIs instead.
      *
      * Only called after [requestWidgetCreation] has checked the API level and launcher support.
      */
@@ -197,7 +204,8 @@ internal abstract class BaseWidgetConfigureViewModel<S : WidgetConfigureState<S>
     protected abstract fun reload()
 
     /**
-     * Restores the configuration of an existing widget, or falls back to the active server for a new one.
+     * Restores the configuration of an existing widget, or falls back to the active server for a new one,
+     * and then loads any state loaded by [reload].
      */
     private suspend fun restoreConfiguration() {
         // A preselected ("add a widget for this entity") launch never carries a widget id, so a valid

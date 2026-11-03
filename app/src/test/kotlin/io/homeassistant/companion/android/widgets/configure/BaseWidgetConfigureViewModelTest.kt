@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 /**
- * Tests the behaviour shared by every widget configuration ViewModel through a minimal fake
+ * Tests the behavior shared by every widget configuration ViewModel through a minimal fake
  * subclass, so the concrete ViewModel tests only have to cover what is specific to their widget.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -324,7 +324,7 @@ private data class FakeConfigureState(
 
 /**
  * Smallest concrete [BaseWidgetConfigureViewModel]: it records [reloadCount] and lets a test choose
- * the entity to build and whether the pin request is accepted, so the shared behaviour can be driven.
+ * the entity to build and whether the pin request is accepted, so the shared behavior can be driven.
  */
 private class FakeWidgetConfigureViewModel(
     serverManager: ServerManager,

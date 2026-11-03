@@ -109,7 +109,7 @@ internal class TodoWidgetConfigureViewModel @AssistedInject constructor(
         }
     }
 
-    /** To-do widgets are Glance widgets, so pin and update go through the Glance APIs. */
+    // To-do widgets are Glance widgets, so pin and update go through the Glance APIs.
     @SuppressLint("NewApi") // Guarded by requestWidgetCreation before this is reached.
     override suspend fun requestPin(context: Context, widget: TodoWidgetEntity): Boolean {
         return GlanceAppWidgetManager(context).requestPinGlanceAppWidget(

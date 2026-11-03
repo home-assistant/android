@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 /**
- * Tests the entity-loading behaviour shared by entity-based configuration ViewModels through a
+ * Tests the entity-loading behavior shared by entity-based configuration ViewModels through a
  * minimal fake subclass, so the concrete ViewModel tests only cover what is specific to their widget.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
