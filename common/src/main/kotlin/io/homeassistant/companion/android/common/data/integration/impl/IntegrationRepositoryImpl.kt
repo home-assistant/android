@@ -53,11 +53,14 @@ import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
 import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl
@@ -90,6 +93,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         // Note: _not_ server-specific
         private const val PREF_PUSH_TOKEN = "push_token"
+
+        /** How long the state of the entities asked to [getEntities] can take to arrive. */
+        private val ENTITIES_INITIAL_STATES_TIMEOUT = 30.seconds
 
         // Note: _not_ server-specific
         private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids"
@@ -495,6 +501,32 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             serverManager.authenticationRepository(serverId).buildBearerToken(),
         )
         return response
+    }
+
+    override suspend fun getEntities(entityIds: List<String>): List<Entity>? {
+        if (entityIds.isEmpty()) return emptyList()
+        if (!supportsCompressedStateChanges()) {
+            val wanted = entityIds.toSet()
+            return getEntities()?.filter { it.entityId in wanted }
+        }
+        // The subscription starts with the full state of every requested entity, filtered server
+        // side, which is all we need here
+        val initialStates = withTimeoutOrNull(ENTITIES_INITIAL_STATES_TIMEOUT) {
+            webSocketRepository().getCompressedStateAndChanges(entityIds)?.firstOrNull { it.added != null }?.added
+        } ?: run {
+            Timber.w("Unable to fetch the states of ${entityIds.size} entities")
+            return null
+        }
+        return entityIds.mapNotNull { entityId ->
+            initialStates[entityId]?.let { state ->
+                try {
+                    state.toEntity(entityId)
+                } catch (e: IllegalStateException) {
+                    Timber.w(e, "Invalid state for $entityId")
+                    null
+                }
+            }
+        }
     }
 
     override suspend fun getEntityUpdates(): Flow<Entity>? {

@@ -46,6 +46,13 @@ interface IntegrationRepository {
 
     suspend fun getEntities(): List<Entity>?
     suspend fun getEntity(entityId: String): Entity?
+
+    /**
+     * Fetches the current state of [entityIds] in a single request, in the requested order and
+     * omitting the ones the server doesn't know, without downloading every state of the server
+     * when it supports filtered subscriptions (2022.4). Returns null when they can't be retrieved.
+     */
+    suspend fun getEntities(entityIds: List<String>): List<Entity>?
     suspend fun getEntityUpdates(): Flow<Entity>?
     suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>?
 

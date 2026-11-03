@@ -77,6 +77,9 @@ fun LoadConfigView(complicationConfigViewModel: ComplicationConfigViewModel, onA
                         swipeDismissableNavController.navigateUp()
                     },
                     allowNone = false,
+                    favoriteEntities = state.favoriteEntities,
+                    failedDomains = state.failedDomains,
+                    onDomainExpanded = complicationConfigViewModel::onDomainExpanded,
                 )
             }
         }

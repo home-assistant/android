@@ -425,5 +425,44 @@ class IntegrationRepositoryImplTest {
             assertEquals(entity, updates.single())
             coVerify(exactly = 0) { webSocketRepository.getCompressedStateAndChanges() }
         }
+
+        @Test
+        fun `Given ids when getting entities then their initial states come from one filtered subscription in the requested order`() = runTest {
+            val ids = listOf("sensor.b", "sensor.missing", "sensor.a")
+            coEvery { webSocketRepository.getCompressedStateAndChanges(ids) } returns flowOf(
+                CompressedStateChangedEvent(
+                    added = mapOf("sensor.a" to compressedState("1"), "sensor.b" to compressedState("2")),
+                ),
+            )
+
+            val entities = repository.getEntities(ids)
+
+            assertEquals(listOf("sensor.b" to "2", "sensor.a" to "1"), entities?.map { it.entityId to it.state })
+            coVerify(exactly = 0) { webSocketRepository.getStates() }
+        }
+
+        @Test
+        fun `Given the subscription ends without states when getting entities then null is returned`() = runTest {
+            coEvery { webSocketRepository.getCompressedStateAndChanges(listOf(entityId)) } returns flowOf()
+
+            assertNull(repository.getEntities(listOf(entityId)))
+            coVerify(exactly = 0) { webSocketRepository.getStates() }
+        }
+
+        @Test
+        fun `Given no ids when getting entities then nothing is fetched`() = runTest {
+            assertEquals(emptyList<Entity>(), repository.getEntities(emptyList()))
+            coVerify(exactly = 0) { webSocketRepository.getCompressedStateAndChanges(any()) }
+        }
+
+        @Test
+        fun `Given an older server when getting entities then all states are fetched and filtered`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+            givenCurrentStatesFetchReturns("on")
+
+            val entities = repository.getEntities(listOf(entityId, "light.other"))
+
+            assertEquals(listOf(entityId), entities?.map { it.entityId })
+        }
     }
 }
