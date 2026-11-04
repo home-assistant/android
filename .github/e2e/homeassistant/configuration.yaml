@@ -7,12 +7,3 @@ logger:
     homeassistant.components.http: debug
     homeassistant.components.mobile_app: debug
     homeassistant.components.websocket_api: debug
-
-# The mTLS E2E flow reaches Home Assistant through the nginx proxy started by
-# the E2E workflow on the same host; without this the forwarded headers it sets
-# are rejected with a 400.
-http:
-  use_x_forwarded_for: true
-  trusted_proxies:
-    - 127.0.0.1
-    - ::1

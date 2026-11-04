@@ -22,8 +22,11 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        # No X-Forwarded-* headers on purpose: Home Assistant rejects them unless
+        # trusted_proxies is configured, and the http YAML block that would do so
+        # is deprecated (it is applied as a pending config that auto-reverts with
+        # a restart five minutes later). Without them Home Assistant simply sees
+        # the proxy as a local client, which is all this flow needs.
         proxy_read_timeout 300s;
     }
 }

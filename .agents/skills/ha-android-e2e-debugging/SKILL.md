@@ -61,7 +61,7 @@ jq -c '{version, mobile_app: (.components | index("mobile_app") != null)}' e2e-a
 jq -r '.[0].Config.Image' e2e-artifacts/homeassistant-container.json
 ```
 
-`mtls-proxy.log` says whether a request reached nginx at all and what it answered: a `400` is a request without the client certificate, a `502` is Home Assistant unreachable from the proxy. A failure in the workflow's `Verify mTLS proxy` step is the runner setup (proxy, certificates, `trusted_proxies`), not the app.
+`mtls-proxy.log` says whether a request reached nginx at all and what it answered: a `400` is a request without the client certificate, a `502` is Home Assistant unreachable from the proxy. A failure in the workflow's `Verify mTLS proxy` step is the runner setup (proxy or certificates), not the app.
 
 Read the errors around the failure time, and confirm `mobile_app` is loaded: the workflow verifies it at startup, but a later integration failure can still break onboarding. An error that the same grep also finds in `e2e-artifacts-last-green/homeassistant.log` did not break this run. The `frontend.js.*` logger name carries the frontend build date, useful for the next step.
 

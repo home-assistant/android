@@ -130,6 +130,8 @@ jobs:
             -v "$GITHUB_WORKSPACE/.github/e2e/mtls/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro" \
             nginx:stable-alpine
 
+      # Fails here, on the runner, when the proxy is broken, rather than later
+      # inside a shard.
       - name: Verify mTLS proxy
         env:
           MTLS_DIR: ${{ steps.mtls.outputs.dir }}
@@ -150,7 +152,7 @@ jobs:
             exit 1
           fi
 
-          # With it, Home Assistant must answer through the proxy (trusted_proxies).
+          # With it, Home Assistant must answer through the proxy.
           curl -sSf --cacert "$MTLS_DIR/ca.pem" \
             --cert "$MTLS_DIR/client.pem" --key "$MTLS_DIR/client.key" \
             --resolve "$RESOLVE" \
