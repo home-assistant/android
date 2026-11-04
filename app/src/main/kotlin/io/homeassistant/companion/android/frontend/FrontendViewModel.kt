@@ -1246,6 +1246,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         return serverManager.getServer(serverId)?.version?.isAtLeast(2026, 2, 0) == true
     }
 
+    private suspend fun serverHandlesTopInsets(serverId: Int): Boolean {
+        return serverManager.getServer(serverId)?.version?.isAtLeast(minYear = 2026, minMonth = 10) == true
+    }
+
     /**
      * Whether the frontend may still complete its external-bus handshake: while [FrontendViewState.Loading],
      * or showing an [FrontendConnectionError.ExternalBusTimeout] error, since the WebView keeps loading
@@ -1287,12 +1291,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun showContent() {
         val wasAwaitingConnection = _viewState.value.isAwaitingConnection()
         val serverHandleInsets = serverHandlesInsets(_viewState.value.serverId)
+        val serverHandleTopInsets = serverHandlesTopInsets(_viewState.value.serverId)
         _viewState.update { currentState ->
             if (currentState.isAwaitingConnection()) {
                 FrontendViewState.Content(
                     serverId = currentState.serverId,
                     url = currentState.url,
                     serverHandleInsets = serverHandleInsets,
+                    serverHandleTopInsets = serverHandleTopInsets,
                 )
             } else {
                 currentState
