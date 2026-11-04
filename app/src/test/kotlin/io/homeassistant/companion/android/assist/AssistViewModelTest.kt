@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -128,6 +129,8 @@ class AssistViewModelTest {
             chimeUseCase = chimeUseCase,
             application = application,
             initialAudioStrategy = audioStrategy,
+            // Shares the scheduler of the main test dispatcher so runCurrent() also runs the audio coroutines.
+            audioDispatcher = StandardTestDispatcher(),
         )
     }
 
