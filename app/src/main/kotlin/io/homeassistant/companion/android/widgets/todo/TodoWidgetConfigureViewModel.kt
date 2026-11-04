@@ -27,29 +27,31 @@ import io.homeassistant.companion.android.database.widget.TodoWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
-import io.homeassistant.companion.android.widgets.WidgetTextColor
+import io.homeassistant.companion.android.widgets.configure.WidgetConfigureViewModel
+import io.homeassistant.companion.android.widgets.configure.WidgetTextColor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @HiltViewModel(assistedFactory = TodoWidgetConfigureViewModel.Factory::class)
-class TodoWidgetConfigureViewModel @AssistedInject constructor(
+internal class TodoWidgetConfigureViewModel @AssistedInject constructor(
     private val todoWidgetDao: TodoWidgetDao,
     private val serverManager: ServerManager,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
     @Assisted private val widgetId: Int,
     @Assisted preselectedEntityId: String?,
-) : ViewModel() {
+) : ViewModel(),
+    WidgetConfigureViewModel<TodoWidgetConfigureState> {
 
     private val _state = MutableStateFlow(
         TodoWidgetConfigureState(
@@ -62,12 +64,12 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
             },
         ),
     )
-    internal val state: StateFlow<TodoWidgetConfigureState> = _state.asStateFlow()
+    override val state: StateFlow<TodoWidgetConfigureState> = _state.asStateFlow()
 
-    private val _errors = MutableSharedFlow<Int>(replay = 1)
+    private val _errors = Channel<Int>(Channel.BUFFERED)
 
     /** Errors to surface to the user, as string resources. */
-    val errors = _errors.asSharedFlow()
+    override val errors = _errors.receiveAsFlow()
 
     private var loadEntitiesJob: Job? = null
 
@@ -123,7 +125,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
         }
 
         if (widget == null) {
-            _errors.emit(commonR.string.widget_update_error)
+            _errors.send(commonR.string.widget_update_error)
         } else {
             todoWidgetDao.add(widget)
         }
@@ -157,7 +159,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
             else -> getPendingDaoEntity(context)
         }
         if (widget == null) {
-            _errors.emit(commonR.string.widget_creation_error)
+            _errors.send(commonR.string.widget_creation_error)
             return false
         }
 
@@ -185,7 +187,7 @@ class TodoWidgetConfigureViewModel @AssistedInject constructor(
 
         if (!requestAccepted) {
             Timber.e("The launcher rejected the widget pin request")
-            _errors.emit(commonR.string.widget_creation_error)
+            _errors.send(commonR.string.widget_creation_error)
         }
         return requestAccepted
     }

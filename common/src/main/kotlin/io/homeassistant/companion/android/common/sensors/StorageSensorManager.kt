@@ -4,6 +4,9 @@ import android.content.Context
 import android.os.Environment
 import android.os.StatFs
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Harddisk
+import io.github.timoptr.mdiicons.generated.MicroSd
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.io.File
@@ -26,7 +29,7 @@ class StorageSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_internal_storage,
             commonR.string.sensor_description_internal_storage,
-            "mdi:harddisk",
+            Mdi.Harddisk,
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -38,7 +41,7 @@ class StorageSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_external_storage,
             commonR.string.sensor_description_external_storage,
-            "mdi:micro-sd",
+            Mdi.MicroSd,
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,

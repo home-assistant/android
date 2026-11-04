@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.widgets.configure.WidgetConfigureState
 
 /**
  * Complete UI state for the Media Player Controls widget configuration screen.
@@ -17,8 +18,8 @@ import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
  */
 @Stable
 internal data class MediaPlayerControlsWidgetConfigureState(
-    val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
-    val serversDropdownItems: List<HADropdownItem<Int>> = emptyList(),
+    override val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
+    override val serversDropdownItems: List<HADropdownItem<Int>> = emptyList(),
     val selectedEntityIds: List<String> = emptyList(),
     val entityDisplayState: EntityDisplayState<EntityDisplayWithContext> = EntityDisplayState.Loading,
     val label: String = "",
@@ -28,11 +29,8 @@ internal data class MediaPlayerControlsWidgetConfigureState(
     val showSource: Boolean = true,
     val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
     val dynamicColorAvailable: Boolean = false,
-    val isUpdateWidget: Boolean = false,
-) {
-    val showServerSelector = serversDropdownItems.size > 1 ||
-        serversDropdownItems.none { it.key == selectedServerId }
-
+    override val isUpdateWidget: Boolean = false,
+) : WidgetConfigureState {
     val showConfiguration = selectedEntityIds.isNotEmpty()
 
     val selectedEntities = (entityDisplayState as? EntityDisplayState.Loaded)?.let { state ->
@@ -45,7 +43,7 @@ internal data class MediaPlayerControlsWidgetConfigureState(
         entityDisplayState
     }
 
-    val isActionEnabled = selectedEntities.isNotEmpty()
+    override val isActionEnabled = selectedEntities.isNotEmpty()
 
     fun changeServer(serverId: Int): MediaPlayerControlsWidgetConfigureState = copy(
         selectedServerId = serverId,

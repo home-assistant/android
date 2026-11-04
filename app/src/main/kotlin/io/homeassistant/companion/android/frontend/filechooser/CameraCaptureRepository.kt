@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend.filechooser
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.annotation.VisibleForTesting
 import androidx.core.content.FileProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,13 +21,12 @@ import kotlinx.coroutines.withContext
 @VisibleForTesting
 const val CAPTURE_DIRECTORY = "file_chooser_captures"
 private const val CAPTURE_PREFIX = "capture_"
-private const val IMAGE_SUFFIX = ".jpg"
 
-/** Long enough that the page has submitted or dropped a photo it was handed. */
+/** Long enough that the page has submitted or dropped a photo or video it was handed. */
 private val CAPTURE_MAX_AGE = 1.days
 
 /**
- * Creates the files a camera app writes photos to.
+ * Creates the files a camera app writes photos and videos to.
  *
  * Files live in the app cache, so the system can reclaim them, and are shared through the app
  * `FileProvider`.
@@ -44,20 +44,28 @@ internal class CameraCaptureRepository @VisibleForTesting constructor(
     val hasCamera: Boolean
         get() = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
 
-    /** Creates an empty image file and returns its content URI. */
-    suspend fun createImageFile(): Uri = withContext(backgroundDispatcher) {
+    /** Creates an empty file for the [kind] of media and returns its content URI. */
+    suspend fun createFile(kind: CaptureKind): Uri = withContext(backgroundDispatcher) {
         val directory = File(context.cacheDir, CAPTURE_DIRECTORY).apply { mkdirs() }
-        val file = File.createTempFile(CAPTURE_PREFIX, IMAGE_SUFFIX, directory)
+        val file = File.createTempFile(CAPTURE_PREFIX, kind.suffix, directory)
         FileProvider.getUriForFile(context, context.fileProviderAuthority, file)
     }
 
-    /** Deletes a file created by [createImageFile]. */
+    /** `true` when a camera app wrote to the file at [uri], created by [createFile]. */
+    suspend fun hasContent(uri: Uri): Boolean = withContext(backgroundDispatcher) {
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { cursor ->
+            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+            cursor.moveToFirst() && sizeIndex >= 0 && !cursor.isNull(sizeIndex) && cursor.getLong(sizeIndex) > 0
+        } == true
+    }
+
+    /** Deletes a file created by [createFile]. */
     suspend fun delete(uri: Uri) {
         withContext(backgroundDispatcher) { context.contentResolver.delete(uri, null, null) }
     }
 
     /**
-     * Deletes files created by [createImageFile] more than a day ago. Recent files are kept, as a
+     * Deletes files created by [createFile] more than a day ago. Recent files are kept, as a
      * camera may still write to them or the page may still have to upload them.
      */
     suspend fun deleteStale() {

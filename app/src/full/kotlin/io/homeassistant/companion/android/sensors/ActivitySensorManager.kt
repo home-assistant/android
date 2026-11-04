@@ -12,6 +12,17 @@ import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Bike
+import io.github.timoptr.mdiicons.generated.Car
+import io.github.timoptr.mdiicons.generated.HumanMale
+import io.github.timoptr.mdiicons.generated.PhoneRotatePortrait
+import io.github.timoptr.mdiicons.generated.ProgressQuestion
+import io.github.timoptr.mdiicons.generated.Run
+import io.github.timoptr.mdiicons.generated.ShoePrint
+import io.github.timoptr.mdiicons.generated.Sleep
+import io.github.timoptr.mdiicons.generated.Walk
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.LIGHT_DOMAIN
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -54,7 +65,7 @@ class ActivitySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_activity,
             commonR.string.sensor_description_detected_activity,
-            "mdi:walk",
+            Mdi.Walk,
             deviceClass = "enum",
         )
 
@@ -64,7 +75,7 @@ class ActivitySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_sleep_confidence,
             commonR.string.sensor_description_sleep_confidence,
-            "mdi:sleep",
+            Mdi.Sleep,
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
@@ -76,7 +87,7 @@ class ActivitySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_sleep_segment,
             commonR.string.sensor_description_sleep_segment,
-            "mdi:sleep",
+            Mdi.Sleep,
             unitOfMeasurement = "ms",
             deviceClass = "duration",
             updateType = SensorManager.BasicSensor.UpdateType.CUSTOM,
@@ -299,16 +310,16 @@ class ActivitySensorManager @Inject constructor(
         }
     }
 
-    private fun getSensorIcon(activity: String): String {
+    private fun getSensorIcon(activity: String): MdiIcon {
         return when (activity) {
-            "in_vehicle" -> "mdi:car"
-            "on_bicycle" -> "mdi:bike"
-            "on_foot" -> "mdi:shoe-print"
-            "still" -> "mdi:human-male"
-            "tilting" -> "mdi:phone-rotate-portrait"
-            "walking" -> "mdi:walk"
-            "running" -> "mdi:run"
-            else -> "mdi:progress-question"
+            "in_vehicle" -> Mdi.Car
+            "on_bicycle" -> Mdi.Bike
+            "on_foot" -> Mdi.ShoePrint
+            "still" -> Mdi.HumanMale
+            "tilting" -> Mdi.PhoneRotatePortrait
+            "walking" -> Mdi.Walk
+            "running" -> Mdi.Run
+            else -> Mdi.ProgressQuestion
         }
     }
 }

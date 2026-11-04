@@ -87,7 +87,7 @@ enum class ButtonSize(internal val value: Dp) {
  * Displays an accent button, typically used for the most prominent call to action on a screen.
  * The button's appearance is determined by the [variant] and the current theme.
  *
- * [Design Website](https://design.home-assistant.io/#components/ha-button)
+ * [Design Website](https://contributors.home-assistant.io/design/components/button/)
  *
  * @param text The text label displayed on the button.
  * @param onClick The lambda function to be executed when the button is clicked.
@@ -134,7 +134,7 @@ fun HAAccentButton(
  * Displays a filled button, which is a standard button.
  * The button's appearance is determined by the [variant] and the current theme.
  *
- * [Design Website](https://design.home-assistant.io/#components/ha-button)
+ * [Design Website](https://contributors.home-assistant.io/design/components/button/)
  *
  * @param text The text label displayed on the button.
  * @param onClick The lambda function to be executed when the button is clicked.
@@ -184,7 +184,7 @@ fun HAFilledButton(
  * Material buttons only support clicks, so this replicates their appearance with a [Surface] and
  * [Modifier.combinedClickable] to also support long clicks.
  *
- * [Design Website](https://design.home-assistant.io/#components/ha-button)
+ * [Design Website](https://contributors.home-assistant.io/design/components/button/)
  *
  * @param text The text label displayed on the button.
  * @param onClick The lambda function to be executed when the button is clicked.

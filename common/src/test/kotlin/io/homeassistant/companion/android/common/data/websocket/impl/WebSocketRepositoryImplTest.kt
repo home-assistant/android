@@ -7,13 +7,16 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.util.VOICE_SAMPLE_RATE
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import io.mockk.CapturingSlot
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.unmockkAll
@@ -45,6 +48,76 @@ class WebSocketRepositoryImplTest {
     @AfterEach
     fun tearDown() {
         unmockkAll()
+    }
+
+    @Nested
+    inner class CurrentUser {
+
+        /** Mock a user response JSON as returned by the websocket. */
+        private fun mockUserResponse(userId: String = "1") {
+            val response = """
+                {
+                  "id": "$userId",
+                  "name": "Anna",
+                  "is_owner": true,
+                  "is_admin": true,
+                  "credentials": [
+                    {
+                      "auth_provider_type": "homeassistant",
+                      "auth_provider_id": null
+                    }
+                  ],
+                  "mfa_modules": [
+                    {
+                      "id": "totp",
+                      "name": "Authenticator app",
+                      "enabled": true
+                    }
+                  ]
+                }
+            """.trimIndent().toJsonObjectOrNull()
+            coEvery { webSocketCore.sendMessage(mapOf("type" to "auth/current_user")) } returns MessageSocketResponse(
+                id = 1,
+                success = true,
+                result = response,
+            )
+        }
+
+        /** Create a user info object for the server matching the data in [mockUserResponse]. */
+        private fun userInfo(userId: String = "1", picturePath: String? = null): ServerUserInfo = ServerUserInfo(id = userId, name = "Anna", isOwner = true, isAdmin = true, picturePath = picturePath)
+
+        @Test
+        fun `Given user info when getting current user then info is persisted`() = runTest {
+            mockUserResponse()
+            val server = createServer()
+            coEvery { webSocketCore.server() } returns server
+            val serverSlot = slot<Server>()
+            coEvery { serverManager.updateServer(capture(serverSlot)) } just Runs
+
+            repository.getCurrentUser()
+            assertEquals(userInfo(), serverSlot.captured.user)
+        }
+
+        @Test
+        fun `Given different user info when getting current user then picture path is cleared`() = runTest {
+            val server = createServer(user = userInfo(picturePath = "/person.anna/picture.jpeg"))
+            coEvery { webSocketCore.server() } returns server
+            val serverSlot = slot<Server>()
+            coEvery { serverManager.updateServer(capture(serverSlot)) } just Runs
+
+            mockUserResponse(userId = "2")
+
+            repository.getCurrentUser()
+            assertEquals(userInfo(userId = "2", picturePath = null), serverSlot.captured.user)
+        }
+
+        @Test
+        fun `Given no user info when getting current user then info is not updated`() = runTest {
+            coEvery { webSocketCore.sendMessage(mapOf("type" to "auth/current_user")) } returns null
+
+            repository.getCurrentUser()
+            coVerify(exactly = 0) { serverManager.updateServer(any()) }
+        }
     }
 
     @Nested
@@ -292,7 +365,7 @@ class WebSocketRepositoryImplTest {
         }
     }
 
-    private fun createServer(deviceRegistryId: String? = null, version: String? = null): Server {
+    private fun createServer(deviceRegistryId: String? = null, version: String? = null, user: ServerUserInfo? = null): Server {
         return Server(
             id = 1,
             _name = "Test Server",
@@ -302,7 +375,7 @@ class WebSocketRepositoryImplTest {
                 externalUrl = "https://example.com",
             ),
             session = ServerSessionInfo(),
-            user = ServerUserInfo(),
+            user = user ?: ServerUserInfo(),
         )
     }
 }

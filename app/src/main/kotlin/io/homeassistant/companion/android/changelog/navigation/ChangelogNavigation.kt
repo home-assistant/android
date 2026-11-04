@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -11,12 +12,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import io.homeassistant.companion.android.assist.AssistActivity
-import io.homeassistant.companion.android.changelog.ChangelogAction
 import io.homeassistant.companion.android.changelog.ChangelogShowViewModel
+import io.homeassistant.companion.android.changelog.perform
 import io.homeassistant.companion.android.changelog.ui.ChangelogScreen
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
-import io.homeassistant.companion.android.settings.navigation.navigateToSettings
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
@@ -31,26 +30,21 @@ internal fun NavController.navigateToChangelog(navOptions: NavOptions? = null) {
  * Registers the changelog destination, displaying the changes of the app version currently
  * running. Opening the destination marks the changelog as seen.
  *
- * @param onOpenUrl Invoked with the URL of a [ChangelogAction.OpenUrl] the user tapped.
+ * @param onShowSnackbar Reports that an action of a changelog entry could not be performed.
  */
-internal fun NavGraphBuilder.changelogScreen(navController: NavController, onOpenUrl: suspend (String) -> Unit) {
+internal fun NavGraphBuilder.changelogScreen(
+    navController: NavController,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+) {
     composable<ChangelogRoute> {
         val coroutineScope = rememberCoroutineScope()
+        val context = LocalContext.current
         ChangelogScreen(
             viewModel = hiltViewModel(),
             onCloseClick = { navController.popBackStack() },
             onActionClick = { action ->
-                when (action) {
-                    is ChangelogAction.OpenUrl -> coroutineScope.launch { onOpenUrl(action.url) }
-                    is ChangelogAction.OpenSettings -> navController.navigateToSettings(action.deeplink)
-                    is ChangelogAction.OpenWidgetConfig -> navController.context.startActivity(
-                        action.widgetType.toConfigureIntent(navController.context),
-                    )
-                    ChangelogAction.OpenAssist -> navController.context.startActivity(
-                        AssistActivity.newInstance(
-                            navController.context,
-                        ),
-                    )
+                coroutineScope.launch {
+                    action.perform(context, onShowSnackbar)
                 }
             },
         )

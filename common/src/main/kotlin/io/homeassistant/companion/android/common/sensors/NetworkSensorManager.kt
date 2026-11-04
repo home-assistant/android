@@ -11,12 +11,25 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AccessPoint
+import io.github.timoptr.mdiicons.generated.AccessPointOff
+import io.github.timoptr.mdiicons.generated.Bluetooth
+import io.github.timoptr.mdiicons.generated.Ethernet
+import io.github.timoptr.mdiicons.generated.Ip
+import io.github.timoptr.mdiicons.generated.Network
+import io.github.timoptr.mdiicons.generated.SignalCellular3
+import io.github.timoptr.mdiicons.generated.Usb
+import io.github.timoptr.mdiicons.generated.Wifi
+import io.github.timoptr.mdiicons.generated.WifiOff
+import io.github.timoptr.mdiicons.generated.WifiStrength3
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.getStringOrElse
 import io.homeassistant.companion.android.common.util.toJsonObjectOrNull
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -48,7 +61,7 @@ class NetworkSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_hotspot_state,
             commonR.string.sensor_description_hotspot,
-            "mdi:access-point",
+            Mdi.AccessPoint,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -59,7 +72,7 @@ class NetworkSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_wifi,
             commonR.string.sensor_description_wifi_connection,
-            "mdi:wifi",
+            Mdi.Wifi,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -70,7 +83,7 @@ class NetworkSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_wifi_bssid,
             commonR.string.sensor_description_wifi_bssid,
-            "mdi:wifi",
+            Mdi.Wifi,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             settings = listOf(
@@ -84,7 +97,7 @@ class NetworkSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_wifi_ip,
             commonR.string.sensor_description_wifi_ip,
-            "mdi:ip",
+            Mdi.Ip,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -95,7 +108,7 @@ class NetworkSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_wifi_link_speed,
             commonR.string.sensor_description_wifi_link_speed,
-            "mdi:wifi-strength-3",
+            Mdi.WifiStrength3,
             unitOfMeasurement = "Mbps",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -107,7 +120,7 @@ class NetworkSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_wifi_state,
             commonR.string.sensor_description_wifi_state,
-            "mdi:wifi",
+            Mdi.Wifi,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -118,7 +131,7 @@ class NetworkSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_wifi_frequency,
             commonR.string.sensor_description_wifi_frequency,
-            "mdi:wifi",
+            Mdi.Wifi,
             unitOfMeasurement = "MHz",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -131,7 +144,7 @@ class NetworkSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_wifi_signal,
             commonR.string.sensor_description_wifi_signal,
-            "mdi:wifi-strength-3",
+            Mdi.WifiStrength3,
             deviceClass = "signal_strength",
             unitOfMeasurement = "dBm",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -144,7 +157,7 @@ class NetworkSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_public_ip,
             commonR.string.sensor_description_public_ip,
-            "mdi:ip",
+            Mdi.Ip,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -155,7 +168,7 @@ class NetworkSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_ip6_addresses,
             commonR.string.sensor_description_ip6_addresses,
-            "mdi:ip",
+            Mdi.Ip,
             unitOfMeasurement = "address(es)",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -168,7 +181,7 @@ class NetworkSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_network_type,
             commonR.string.sensor_description_network_type,
-            "mdi:network",
+            Mdi.Network,
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#network-type-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -264,7 +277,7 @@ class NetworkSensorManager @Inject constructor(
         val method: Method = wifiManager.javaClass.getDeclaredMethod("isWifiApEnabled")
         method.isAccessible = true
         val enabled = method.invoke(wifiManager) as Boolean
-        val icon = if (enabled) "mdi:access-point" else "mdi:access-point-off"
+        val icon = if (enabled) Mdi.AccessPoint else Mdi.AccessPointOff
         onSensorUpdated(
             hotspotState,
             enabled,
@@ -298,7 +311,7 @@ class NetworkSensorManager @Inject constructor(
             }
         }
 
-        val icon = if (connected) "mdi:wifi" else "mdi:wifi-off"
+        val icon = if (connected) Mdi.Wifi else Mdi.WifiOff
 
         val attributes = conInfo?.let {
             mapOf("is_hidden" to conInfo.hiddenSSID)
@@ -346,7 +359,7 @@ class NetworkSensorManager @Inject constructor(
             }
         }
 
-        val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
+        val icon = if (bssid != "<not connected>") Mdi.Wifi else Mdi.WifiOff
         onSensorUpdated(
             bssidState,
             bssid,
@@ -449,11 +462,12 @@ class NetworkSensorManager @Inject constructor(
             signalStrength = WifiManager.calculateSignalLevel(rssi, 4)
         }
 
-        val icon = "mdi:wifi-strength-" + when (signalStrength) {
+        val iconName = "mdi:wifi-strength-" + when (signalStrength) {
             -1 -> "off"
             0 -> "outline"
             else -> signalStrength
         }
+        val icon = Mdi.fromHaName(iconName) ?: wifiLinkSpeed.statelessIcon
 
         onSensorUpdated(
             wifiLinkSpeed,
@@ -476,7 +490,7 @@ class NetworkSensorManager @Inject constructor(
 
             wifiEnabled = wifiManager.isWifiEnabled
         }
-        val icon = if (wifiEnabled) "mdi:wifi" else "mdi:wifi-off"
+        val icon = if (wifiEnabled) Mdi.Wifi else Mdi.WifiOff
 
         onSensorUpdated(
             wifiState,
@@ -532,11 +546,12 @@ class NetworkSensorManager @Inject constructor(
             signalStrength = WifiManager.calculateSignalLevel(rssi, 4)
         }
 
-        val icon = "mdi:wifi-strength-" + when (signalStrength) {
+        val iconName = "mdi:wifi-strength-" + when (signalStrength) {
             -1 -> "off"
             0 -> "outline"
             else -> signalStrength
         }
+        val icon = Mdi.fromHaName(iconName) ?: wifiSignalStrength.statelessIcon
 
         onSensorUpdated(
             wifiSignalStrength,
@@ -624,12 +639,12 @@ class NetworkSensorManager @Inject constructor(
         }
 
         val icon = when (networkCapability) {
-            "bluetooth" -> "mdi:bluetooth"
-            "cellular" -> "mdi:signal-cellular-3"
-            "ethernet" -> "mdi:ethernet"
-            "usb" -> "mdi:usb"
-            "wifi", "wifi_aware" -> "mdi:wifi"
-            else -> "mdi:network"
+            "bluetooth" -> Mdi.Bluetooth
+            "cellular" -> Mdi.SignalCellular3
+            "ethernet" -> Mdi.Ethernet
+            "usb" -> Mdi.Usb
+            "wifi", "wifi_aware" -> Mdi.Wifi
+            else -> Mdi.Network
         }
 
         onSensorUpdated(
