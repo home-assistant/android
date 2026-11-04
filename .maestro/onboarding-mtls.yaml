@@ -1,0 +1,101 @@
+# yamllint disable rule:document-start
+appId: io.homeassistant.companion.android.debug
+---
+# Onboarding through a reverse proxy that requires a client certificate (mTLS).
+# Proves two paths: the onboarding WebView asking for the certificate through the
+# system chooser (TLSWebViewClient), and the registration and WebSocket presenting
+# it through OkHttp (TLSHelper).
+#
+# Precondition: the system certificate installer is in the foreground on the
+# client .p12 (the E2E workflow opens it with `am start` before this flow).
+# Environment: HOME_ASSISTANT_URL (https, mTLS), HOME_ASSISTANT_USERNAME,
+# HOME_ASSISTANT_PASSWORD, MTLS_P12_PASSWORD, MTLS_CERT_ALIAS.
+
+# Certificate installer. Two layouts over the supported API range (from the AOSP
+# CertInstaller sources): Android 10 goes from the password straight to "Name
+# the certificate" with field credential_name; Android 11+ first asks "Choose a
+# certificate type" (user certificate preselected) and names the field
+# certificate_name. The password dialog is identical on both.
+- extendedWaitUntil:
+    visible: "Extract certificate"
+    timeout: 15000
+- tapOn:
+    id: "com.android.certinstaller:id/credential_password"
+- inputText: ${MTLS_P12_PASSWORD}
+- hideKeyboard
+- tapOn:
+    text: "OK"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: '(?i)^(Choose a certificate type|Name th(is|e) certificate)$'
+    timeout: 15000
+- runFlow:
+    when:
+      visible: "Choose a certificate type"
+    commands:
+      - tapOn:
+          text: '(?i)VPN.*app user certificate'
+          retryTapIfNoChange: true
+      - tapOn:
+          text: "OK"
+          retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: '(?i)^Name th(is|e) certificate$'
+    timeout: 15000
+- tapOn:
+    id: "com.android.certinstaller:id/(certificate|credential)_name"
+- eraseText
+- inputText: ${MTLS_CERT_ALIAS}
+- hideKeyboard
+- tapOn:
+    text: "OK"
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    notVisible: '(?i)^Name th(is|e) certificate$'
+    timeout: 10000
+
+# Same start as onboarding.yaml, with the mTLS URL.
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+
+- tapOn:
+    text: '(?s)Connect to my Home.*Assistant server'
+    retryTapIfNoChange: true
+
+- tapOn:
+    text: "Don.t allow"
+    optional: true
+    retryTapIfNoChange: true
+
+- tapOn:
+    text: "Enter address manually"
+    retryTapIfNoChange: true
+
+- assertVisible:
+    text: '(?s)What is your Home.*Assistant address.*'
+- tapOn: "http://homeassistant.local"
+- inputText: ${HOME_ASSISTANT_URL}
+- hideKeyboard
+- tapOn:
+    text: "Connect"
+    retryTapIfNoChange: true
+
+# The proxy refuses the first request without a certificate, so the WebView asks
+# for one through the system chooser before anything renders.
+- extendedWaitUntil:
+    visible: ${MTLS_CERT_ALIAS}
+    timeout: 60000
+- tapOn:
+    text: ${MTLS_CERT_ALIAS}
+    retryTapIfNoChange: true
+- tapOn:
+    text: "Select"
+    optional: true
+    retryTapIfNoChange: true
+
+- runFlow: subflows/login.yaml
+- runFlow: subflows/post-login.yaml

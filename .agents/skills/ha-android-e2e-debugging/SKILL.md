@@ -5,7 +5,7 @@ description: Home Assistant Android end-to-end (Maestro) failure triage. Use whe
 
 # HA Android E2E Debugging
 
-The `E2E` workflow (`.github/workflows/e2e.yml`) runs the `.maestro/onboarding.yaml` flow every night at 05:00 UTC. It starts a Home Assistant container (the `dev` image unless the run overrides it), boots one emulator per API level from 29 up to `androidSdk-target`, installs `app-full-debug.apk` on each, and shards the same flow across all of them. Every shard talks to that one container.
+The `E2E` workflow (`.github/workflows/e2e.yml`) runs two Maestro flows every night at 05:00 UTC. It starts a Home Assistant container (the `dev` image unless the run overrides it) and an nginx mTLS reverse proxy in front of it on port 8443 (`.github/e2e/mtls/`), boots one emulator per API level from 29 up to `androidSdk-target`, installs `app-full-debug.apk` on each, and shards each flow across all of them: `.maestro/onboarding.yaml` over plain http, then `.maestro/onboarding-mtls.yaml`, which first drives the system certificate installer and the certificate chooser, through the proxy. Both share the steps in `.maestro/subflows/`. Every shard talks to that one container. The mTLS flow only runs when the plain flow passed, so a failed run has exactly one failing flow.
 
 Read the sources in section 2 in order and stop at the first one that explains the failure, then always write the report in section 3. Once a source explains it, skip the rest.
 
@@ -18,6 +18,8 @@ gh run download <run-id> --name e2e-artifacts --dir e2e-artifacts
 | Path | Content |
 | --- | --- |
 | `maestro-results/<timestamp>/onboarding-shard-<N>/` | One directory per shard: `commands.json` trace, `logs/maestro.log`, `logs/device-logcat.txt`, and `screenshots/step-*.png` with `screen-hierarchy/step-*.json` captured at each tap and at the failure |
+| `maestro-results/<timestamp>/onboarding-mtls-shard-<N>/` | The same for the mTLS flow; the directory name says which flow a failure belongs to |
+| `mtls-proxy.log` | Timestamped nginx log: one line per request the emulators made through the proxy, with its status |
 | `logcat-api<N>-<serial>.txt` | Full device logcat, one file per emulator, named by API level |
 | `homeassistant.log` | Timestamped container log |
 | `homeassistant-config.json` | `/api/config` response: Home Assistant `version`, loaded `components` |
@@ -31,7 +33,7 @@ Find the failed command and its shard in one pass:
 
 ```bash
 jq -c 'to_entries[] | select(.value.metadata.status == "FAILED") | {shard: input_filename, step: (.key + 1), command: .value.command, error: .value.metadata.error.message}' \
-  e2e-artifacts/maestro-results/*/onboarding-shard-*/commands.json
+  e2e-artifacts/maestro-results/*/onboarding*-shard-*/commands.json
 ```
 
 `step` is the zero-padded number in that shard's `screenshots/step-<step>-*.png` and `screen-hierarchy/step-<step>-*.json`; open both. An element visible in the screenshot but absent from the hierarchy never reached the accessibility tree; a broken screen shows in the screenshot itself.
@@ -47,6 +49,8 @@ grep -nE 'io\.homeassistant|chromium|WebSocket|okhttp' e2e-artifacts/logcat-api<
 
 Look for a crash or ANR at the failure timestamp, TLS or DNS errors reaching `homeassistant.internal`, WebSocket disconnects, and `chromium` renderer errors.
 
+For an `onboarding-mtls` shard: `CERTIFICATE_REQUIRED`, `ExternalAuthSsl`, or a `400` on `:8443` means the app did not present the client certificate; a chooser screenshot without the `e2eclient` row means the certificate installer did not finish on that API level (its dialogs are the first steps of the flow, so look at their screenshots), not that the app is broken.
+
 ### 2.3 Home Assistant logs
 
 Only when 2.1 and 2.2 explain nothing.
@@ -56,6 +60,8 @@ grep -nE ' (ERROR|WARNING) ' e2e-artifacts/homeassistant.log | tail -40
 jq -c '{version, mobile_app: (.components | index("mobile_app") != null)}' e2e-artifacts/homeassistant-config.json
 jq -r '.[0].Config.Image' e2e-artifacts/homeassistant-container.json
 ```
+
+`mtls-proxy.log` says whether a request reached nginx at all and what it answered: a `400` is a request without the client certificate, a `502` is Home Assistant unreachable from the proxy. A failure in the workflow's `Verify mTLS proxy` step is the runner setup (proxy, certificates, `trusted_proxies`), not the app.
 
 Read the errors around the failure time, and confirm `mobile_app` is loaded: the workflow verifies it at startup, but a later integration failure can still break onboarding. An error that the same grep also finds in `e2e-artifacts-last-green/homeassistant.log` did not break this run. The `frontend.js.*` logger name carries the frontend build date, useful for the next step.
 

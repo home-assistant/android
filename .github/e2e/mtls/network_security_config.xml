@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+Replaces app/src/main/res/xml/network_security_config.xml in a debug build made with
+-PdebugExtraResDir pointing at the directory generate-certs.sh produced. The base config is
+the same; the debug-overrides block adds the per-run E2E CA, which Android only honors in
+debuggable builds.
+-->
+<network-security-config>
+    <!-- We need to allow clear traffic for those who don't have SSL setup. -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <!-- Trust preinstalled CAs -->
+            <certificates src="system"/>
+            <!-- Additionally trust user added CAs -->
+            <certificates src="user"/>
+        </trust-anchors>
+    </base-config>
+    <debug-overrides>
+        <trust-anchors>
+            <!-- The E2E CA generated for this run by generate-certs.sh -->
+            <certificates src="@raw/e2e_ca"/>
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>
