@@ -16,9 +16,20 @@ DEVICE_PATH=/storage/emulated/0/Download/client.p12
 
 $ADB -s "$SERIAL" shell am force-stop com.android.certinstaller
 $ADB -s "$SERIAL" push "$P12" "$DEVICE_PATH" >/dev/null 2>&1
-$ADB -s "$SERIAL" shell content call --uri content://media/ --method scan_file --arg "$DEVICE_PATH" >/dev/null
-MEDIA_ID=$($ADB -s "$SERIAL" shell content query --uri content://media/external/downloads \
-  --projection _id --where "\"_display_name='client.p12'\"" | sed -n 's/.*_id=\([0-9]*\).*/\1/p' | head -1)
+# Android 11+ takes the path as the call argument; Android 10 expects it as a Uri
+# extra the content command cannot pass and throws, so fall back to the scan
+# broadcast it still honours. Both scans are asynchronous, hence the polling.
+$ADB -s "$SERIAL" shell content call --uri content://media/ --method scan_file --arg "$DEVICE_PATH" >/dev/null 2>&1 || true
+MEDIA_ID=""
+for ATTEMPT in $(seq 1 20); do
+  MEDIA_ID=$($ADB -s "$SERIAL" shell content query --uri content://media/external/downloads \
+    --projection _id --where "\"_display_name='client.p12'\"" 2>/dev/null | sed -n 's/.*_id=\([0-9]*\).*/\1/p' | head -1)
+  [ -n "$MEDIA_ID" ] && break
+  if [ "$ATTEMPT" -eq 1 ]; then
+    $ADB -s "$SERIAL" shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d "file://$DEVICE_PATH" >/dev/null 2>&1 || true
+  fi
+  sleep 1
+done
 if [ -z "$MEDIA_ID" ]; then
   echo "client.p12 did not show up in MediaStore on $SERIAL" >&2
   exit 1
