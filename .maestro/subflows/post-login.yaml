@@ -1,0 +1,108 @@
+# yamllint disable rule:document-start
+appId: io.homeassistant.companion.android.debug
+---
+# Shared by onboarding.yaml and onboarding-mtls.yaml: from the device name screen
+# to the Companion app settings, proving the registration and the WebSocket work.
+
+- extendedWaitUntil:
+    visible: "How would you like to name this device?"
+    timeout: 60000
+
+- tapOn:
+    text: "Save"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: "Got it"
+    timeout: 30000
+
+- tapOn:
+    text: "Got it"
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible: "Use this device's location for automations"
+    timeout: 15000
+
+- tapOn:
+    text: "Do not share my location"
+    retryTapIfNoChange: true
+
+# The remote connection screen only exists for a plain-http server; an https one
+# (onboarding-mtls.yaml) goes straight to the frontend, so wait for either and
+# only then run the screen's steps when it is the one showing.
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^(Let us help secure your remote connection|Overview|More details|Do not allow)$'
+    timeout: 60000
+- runFlow:
+    when:
+      visible: "Let us help secure your remote connection"
+    commands:
+      - tapOn:
+          text: "Less secure: Do not allow this app to know when you're home"
+          retryTapIfNoChange: true
+      - tapOn:
+          text: "Next"
+          retryTapIfNoChange: true
+      - extendedWaitUntil:
+          notVisible: "Let us help secure your remote connection"
+          timeout: 10000
+
+# The notification permission prompt can cover the frontend once it loads
+# (API 33+): its modal sheet also prunes the accessibility tree behind it, so
+# wait for either the frontend or the sheet, dismiss the sheet if present, and
+# only then assert on the frontend.
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^(Overview|More details|Do not allow)$'
+    timeout: 60000
+- tapOn:
+    text: "Do not allow"
+    optional: true
+    retryTapIfNoChange: true
+
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^Overview$'
+    timeout: 60000
+
+# The toggle is in the tree before the frontend handles input, so a tap right
+# after "Overview" appears can be lost: retry until the sidebar entries show.
+- repeat:
+    times: 3
+    while:
+      notVisible:
+        text: '(?i)^Settings$'
+    commands:
+      - tapOn:
+          text: '(?i)^Sidebar toggle$'
+          retryTapIfNoChange: true
+      - waitForAnimationToEnd:
+          timeout: 2500
+      - extendedWaitUntil:
+          visible:
+            text: '(?i)^Settings$'
+          timeout: 5000
+          optional: true
+- assertVisible:
+    text: '(?i)^Settings$'
+- tapOn:
+    text: '(?i)^Settings$'
+    retryTapIfNoChange: true
+- waitForAnimationToEnd:
+    timeout: 2500
+
+# scrollUntilVisible instead of a plain wait: on older bundled WebViews (seen on API 30) the
+# accessibility tree can miss the row even though it is rendered, and scrolling forces the
+# WebView to re-serialize it. No-op when the row is already in the tree.
+- scrollUntilVisible:
+    element:
+      text: '(?is).*Companion app.*'
+    timeout: 60000
+- tapOn:
+    text: '(?is).*Companion app.*'
+    retryTapIfNoChange: true
+- extendedWaitUntil:
+    visible: "Servers & devices"
+    timeout: 10000

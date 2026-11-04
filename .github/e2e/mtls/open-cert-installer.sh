@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Opens the system certificate installer on a client .p12 so a Maestro flow can
+# finish the install (onboarding-mtls.yaml types the password and the name).
+#
+# The file goes through MediaStore: adb's shell user may grant a media URI to the
+# installer, while a documents URI is refused and file:// paths under Download or
+# the installer's own external directory fail with EACCES under scoped storage.
+#
+# Usage: open-cert-installer.sh <adb-serial> <client.p12>
+set -euo pipefail
+
+SERIAL="${1:?usage: open-cert-installer.sh <adb-serial> <client.p12>}"
+P12="${2:?usage: open-cert-installer.sh <adb-serial> <client.p12>}"
+ADB="${ADB:-adb}"
+DEVICE_PATH=/storage/emulated/0/Download/client.p12
+
+$ADB -s "$SERIAL" shell am force-stop com.android.certinstaller
+$ADB -s "$SERIAL" push "$P12" "$DEVICE_PATH" >/dev/null 2>&1
+$ADB -s "$SERIAL" shell content call --uri content://media/ --method scan_file --arg "$DEVICE_PATH" >/dev/null
+MEDIA_ID=$($ADB -s "$SERIAL" shell content query --uri content://media/external/downloads \
+  --projection _id --where "\"_display_name='client.p12'\"" | sed -n 's/.*_id=\([0-9]*\).*/\1/p' | head -1)
+if [ -z "$MEDIA_ID" ]; then
+  echo "client.p12 did not show up in MediaStore on $SERIAL" >&2
+  exit 1
+fi
+$ADB -s "$SERIAL" shell am start -a android.intent.action.VIEW -t application/x-pkcs12 \
+  -d "content://media/external/downloads/$MEDIA_ID" --grant-read-uri-permission >/dev/null
+echo "Certificate installer opened on $SERIAL"
