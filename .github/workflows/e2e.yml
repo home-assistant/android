@@ -235,6 +235,23 @@ jobs:
             wait "$PID"
           done
 
+      # --shard-all runs the flow on every connected device in parallel.
+      - name: Run Maestro onboarding flow
+        env:
+          HOME_ASSISTANT_URL: ${{ env.E2E_HOME_ASSISTANT_URL }}
+          HOME_ASSISTANT_USERNAME: ${{ env.E2E_HOME_ASSISTANT_USERNAME }}
+          HOME_ASSISTANT_PASSWORD: ${{ env.E2E_HOME_ASSISTANT_PASSWORD }}
+        run: |
+          export PATH="$PATH:$HOME/.maestro/bin"
+
+          maestro test \
+            --shard-all "$(grep -c . devices.txt)" \
+            --test-output-dir maestro-results \
+            -e HOME_ASSISTANT_URL="$HOME_ASSISTANT_URL" \
+            -e HOME_ASSISTANT_USERNAME="$HOME_ASSISTANT_USERNAME" \
+            -e HOME_ASSISTANT_PASSWORD="$HOME_ASSISTANT_PASSWORD" \
+            .maestro/onboarding.yaml
+
       # The mTLS flow starts by driving the certificate installer, so the installer
       # must be the foreground window when that flow begins.
       - name: Open the certificate installer
@@ -252,9 +269,6 @@ jobs:
             wait "$PID"
           done
 
-      # --shard-all runs the flow on every connected device in parallel. The mTLS
-      # flow goes first while it is the one being stabilized; the plain flow is
-      # skipped when it fails.
       - name: Run Maestro mTLS onboarding flow
         env:
           HOME_ASSISTANT_URL: ${{ env.E2E_MTLS_URL }}
@@ -274,22 +288,6 @@ jobs:
             -e MTLS_P12_PASSWORD="$MTLS_P12_PASSWORD" \
             -e MTLS_CERT_ALIAS="$MTLS_CERT_ALIAS" \
             .maestro/onboarding-mtls.yaml
-
-      - name: Run Maestro onboarding flow
-        env:
-          HOME_ASSISTANT_URL: ${{ env.E2E_HOME_ASSISTANT_URL }}
-          HOME_ASSISTANT_USERNAME: ${{ env.E2E_HOME_ASSISTANT_USERNAME }}
-          HOME_ASSISTANT_PASSWORD: ${{ env.E2E_HOME_ASSISTANT_PASSWORD }}
-        run: |
-          export PATH="$PATH:$HOME/.maestro/bin"
-
-          maestro test \
-            --shard-all "$(grep -c . devices.txt)" \
-            --test-output-dir maestro-results \
-            -e HOME_ASSISTANT_URL="$HOME_ASSISTANT_URL" \
-            -e HOME_ASSISTANT_USERNAME="$HOME_ASSISTANT_USERNAME" \
-            -e HOME_ASSISTANT_PASSWORD="$HOME_ASSISTANT_PASSWORD" \
-            .maestro/onboarding.yaml
 
       - name: Capture Android logs
         if: always() && steps.device.outputs.serials != ''
