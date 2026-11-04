@@ -23,9 +23,7 @@ OUT=/tmp/mtls
 # emulator's address for the machine running it.
 .github/e2e/mtls/generate-certs.sh "$OUT" "DNS:homeassistant.internal,IP:10.0.2.2"
 
-# Home Assistant on :8123 with the configuration in ../homeassistant. Under Docker Desktop
-# the proxy's requests come from the bridge gateway, so add its range (e.g. 192.168.65.0/24)
-# to trusted_proxies in your local copy. Then the proxy:
+# Home Assistant on :8123 with the configuration in ../homeassistant, then the proxy:
 docker run -d --name e2e-mtls-proxy -p 8443:8443 \
   -e E2E_MTLS_UPSTREAM=host.docker.internal:8123 \
   -v "$OUT:/etc/nginx/certs:ro" \
