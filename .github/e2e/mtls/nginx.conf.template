@@ -10,9 +10,7 @@ server {
     ssl_certificate /etc/nginx/certs/server.pem;
     ssl_certificate_key /etc/nginx/certs/server.key;
 
-    # "on" rather than "optional": every request, including the first GET the
-    # onboarding WebView makes, must carry the client certificate. That is
-    # what makes the WebView ask for one before anything renders.
+    # "on" rather than "optional": every request must carry the client certificate.
     ssl_client_certificate /etc/nginx/certs/ca.pem;
     ssl_verify_client on;
 

@@ -8,8 +8,6 @@
 #   res/xml, res/raw        debug resources that make the app trust ca.pem,
 #                           picked up with -PdebugExtraResDir=<out-dir>/res
 #
-# Nothing here is committed: the workflow regenerates everything on each run.
-#
 # Usage: generate-certs.sh <out-dir> [<san-list>]
 #   san-list defaults to DNS:homeassistant.internal; a local run against an
 #   emulator adds IP:10.0.2.2.
