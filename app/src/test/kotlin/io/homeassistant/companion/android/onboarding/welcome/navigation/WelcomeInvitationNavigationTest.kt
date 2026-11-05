@@ -57,7 +57,7 @@ internal class WelcomeInvitationNavigationTest : BaseOnboardingNavigationTest() 
     }
 
     @Test
-    fun `Given WelcomeInvitation when tapping accept twice quickly then Connection is shown once`() {
+    fun `Given WelcomeInvitation when clicking accept twice quickly then Connection is shown only once`() {
         testNavigation(urlToOnboard = INVITATION_URL, fromInvitation = true) {
             onNodeWithText(stringResource(commonR.string.welcome_invitation_accept))
                 .performScrollTo()
@@ -65,6 +65,7 @@ internal class WelcomeInvitationNavigationTest : BaseOnboardingNavigationTest() 
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
 
+            // A single back press returning to WelcomeInvitation proves Connection was only pushed once
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeInvitationRoute>() == true)

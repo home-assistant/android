@@ -48,7 +48,7 @@ internal class LocalFirstNavigationTest : BaseOnboardingNavigationTest() {
     }
 
     @Test
-    fun `Given LocalFirst when tapping next twice quickly then LocationSharing is shown once`() {
+    fun `Given LocalFirst when clicking next twice quickly then LocationSharing is shown only once`() {
         testNavigation {
             navController.navigateToLocalFirst(42, true)
 
@@ -58,6 +58,8 @@ internal class LocalFirstNavigationTest : BaseOnboardingNavigationTest() {
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<LocationSharingRoute>() == true)
 
+            // A single back press leaving LocationSharing proves it was only pushed once, the stack still
+            // contains Welcome since we never opened NameYourDevice
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)

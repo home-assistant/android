@@ -193,7 +193,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
     }
 
     @Test
-    fun `Given ServerDiscovery when tapping manual setup then back twice quickly then each navigates once`() {
+    fun `Given ServerDiscovery when clicking manual setup then back twice quickly then each navigates only once`() {
         testNavigation {
             mockCheckPermission(true)
             navController.navigateToServerDiscovery()
@@ -204,6 +204,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
+            // A single back press returning to ServerDiscovery proves ManualServer was only pushed once
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)

@@ -95,7 +95,7 @@ internal class NameYourDeviceNavigationTest : BaseOnboardingNavigationTest() {
     }
 
     @Test
-    fun `Given NameYourDevice when tapping back twice quickly then show Welcome`() {
+    fun `Given NameYourDevice when clicking back twice quickly then show Welcome`() {
         testNavigation {
             navController.navigateToNameYourDevice("http://dummy.local", "code")
 

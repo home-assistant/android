@@ -334,7 +334,7 @@ internal class WearOnboardingNavigationTest {
     }
 
     @Test
-    fun `Given NameYourWearDevice with mTLS required when tapping save then back twice quickly then each navigates once`() {
+    fun `Given NameYourWearDevice with mTLS required when clicking save then back twice quickly then each navigates only once`() {
         testNavigation("http://ha") {
             navController.navigateToNameYourWearDevice("wear", "http://ha.local", "super_code", true)
 
@@ -342,6 +342,7 @@ internal class WearOnboardingNavigationTest {
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WearMTLSRoute>() == true)
 
+            // A single back press returning to NameYourWearDevice proves WearMTLS was only pushed once
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)

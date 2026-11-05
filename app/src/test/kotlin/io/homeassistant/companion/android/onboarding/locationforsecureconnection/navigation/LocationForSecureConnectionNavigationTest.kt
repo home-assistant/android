@@ -101,7 +101,7 @@ internal class LocationForSecureConnectionNavigationTest : BaseOnboardingNavigat
     }
 
     @Test
-    fun `Given SetHomeNetwork when tapping back twice quickly then show LocationForSecureConnection`() {
+    fun `Given SetHomeNetwork when clicking back twice quickly then show LocationForSecureConnection`() {
         testNavigation {
             navController.navigateToLocationForSecureConnection(42)
             goToSetHomeNetwork()

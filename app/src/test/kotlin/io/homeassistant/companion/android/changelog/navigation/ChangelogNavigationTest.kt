@@ -133,7 +133,7 @@ internal class ChangelogNavigationTest {
     }
 
     @Test
-    fun `Given changelog displayed when tapping got it twice quickly then returns to frontend`() = runTest {
+    fun `Given changelog displayed when clicking got it twice quickly then returns to frontend`() = runTest {
         seedLastSeenVersionCode(BuildConfig.VERSION_CODE - 1)
 
         setContent()

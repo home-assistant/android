@@ -31,13 +31,14 @@ import org.robolectric.annotation.Config
 internal class WelcomeNavigationTest : BaseOnboardingNavigationTest() {
 
     @Test
-    fun `Given Welcome when tapping connect twice quickly then ServerDiscovery is shown once`() {
+    fun `Given Welcome when clicking connect twice quickly then ServerDiscovery is shown only once`() {
         testNavigation {
             mockCheckPermission(true)
             onNodeWithText(stringResource(commonR.string.welcome_connect_to_ha)).performTwoQuickClicks()
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
 
+            // A single back press returning to Welcome proves ServerDiscovery was only pushed once
             activity.onBackPressedDispatcher.onBackPressed()
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)

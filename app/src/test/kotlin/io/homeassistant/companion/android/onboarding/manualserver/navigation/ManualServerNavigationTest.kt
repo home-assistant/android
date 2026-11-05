@@ -17,7 +17,6 @@ import io.homeassistant.companion.android.onboarding.BaseOnboardingNavigationTes
 import io.homeassistant.companion.android.onboarding.URL_GETTING_STARTED_DOCUMENTATION
 import io.homeassistant.companion.android.onboarding.connection.CONNECTION_SCREEN_TAG
 import io.homeassistant.companion.android.onboarding.connection.navigation.ConnectionRoute
-import io.homeassistant.companion.android.onboarding.manualserver.navigation.navigateToManualServer
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.ServerDiscoveryRoute
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.testing.unit.stringResource
@@ -39,7 +38,7 @@ import org.robolectric.annotation.Config
 internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
 
     @Test
-    fun `Given ManualServer when tapping connect then back twice quickly then each navigates once`() {
+    fun `Given ManualServer when clicking connect then back twice quickly then each navigates only once`() {
         testNavigation {
             mockCheckPermission(true)
             navController.navigateToServerDiscovery()
@@ -54,6 +53,7 @@ internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
 
+            // A single back press returning to ManualServer proves Connection was only pushed once
             composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)

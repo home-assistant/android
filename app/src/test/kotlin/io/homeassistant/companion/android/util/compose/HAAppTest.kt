@@ -301,7 +301,7 @@ class HAAppTest {
     }
 
     @Test
-    fun `Given SetHomeNetworkRoute from FrontendRoute when tapping back twice quickly then show FrontendRoute`() {
+    fun `Given SetHomeNetworkRoute from FrontendRoute when clicking back twice quickly then show FrontendRoute`() {
         testApp(FrontendRoute()) {
             navController.navigateToSetHomeNetworkRoute(42)
 
