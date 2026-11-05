@@ -21,7 +21,12 @@ internal val currentChangelog = Changelog(
             actionRequiresPlatform = true,
         ),
     ),
-    improved = listOf(),
+    improved = listOf(
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_health_connect_active_calories_total,
+            platforms = setOf(ChangelogPlatform.APP),
+        ),
+    ),
     fixed = listOf(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_fix_media_player_widget,
