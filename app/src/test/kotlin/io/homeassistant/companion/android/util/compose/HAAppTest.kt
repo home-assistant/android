@@ -303,6 +303,18 @@ class HAAppTest {
     }
 
     @Test
+    fun `Given SetHomeNetworkRoute from FrontendRoute when clicking back twice quickly then show FrontendRoute`() {
+        testApp(FrontendRoute()) {
+            navController.navigateToSetHomeNetworkRoute(42)
+
+            onNodeWithContentDescription(stringResource(R.string.navigate_up)).performTwoQuickClicks()
+            waitForIdle()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<FrontendRoute>() == true)
+        }
+    }
+
+    @Test
     fun `Given SetHomeNetworkRoute from FrontendRoute when clicking back then show FrontendRoute`() {
         testApp(FrontendRoute()) {
             navController.navigateToSetHomeNetworkRoute(42)

@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.
 import io.homeassistant.companion.android.onboarding.serverdiscovery.navigation.navigateToServerDiscovery
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import io.mockk.coVerify
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
@@ -35,6 +36,33 @@ import org.robolectric.annotation.Config
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
 internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
+
+    @Test
+    fun `Given ManualServer when clicking connect then back twice quickly then each navigates only once`() {
+        testNavigation {
+            mockCheckPermission(true)
+            navController.navigateToServerDiscovery()
+            navController.navigateToManualServer()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
+
+            onNodeWithText("http://homeassistant.local").performTextInput("http://ha.local")
+            onNodeWithText(stringResource(commonR.string.connect))
+                .performScrollTo()
+                .performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+
+            // A single back press returning to ManualServer proves Connection was only pushed once
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+        }
+    }
 
     @Test
     fun `Given enter manual address when setting url and clicking connect then show ConnectScreen then back goes to ManualServer`() {
