@@ -148,8 +148,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
             LinkDestination.Webview(targetOnServer(target) { servers.firstOrNull() }, ServerManager.SERVER_ID_ACTIVE)
         } else {
             // The user still has to pick one of these servers, so there is no single origin to validate
-            // an absolute URL against: drop it to the default page, it would otherwise open externally
-            // whenever the picked server does not match it. A relative path works on any server.
+            // against (server is `null`).
             LinkDestination.ServerPicker(targetOnServer(target) { null }, servers)
         }
     }
