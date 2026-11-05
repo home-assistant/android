@@ -135,7 +135,6 @@ jobs:
       - name: Verify mTLS proxy
         env:
           MTLS_DIR: ${{ steps.mtls.outputs.dir }}
-          HOME_ASSISTANT_TOKEN: ${{ steps.homeassistant.outputs.token }}
         run: |
           RESOLVE="${E2E_HOME_ASSISTANT_HOST}:8443:127.0.0.1"
           for _ in $(seq 1 30); do
@@ -143,10 +142,10 @@ jobs:
             sleep 1
           done
 
-          # Without the client certificate the proxy itself must answer 400: with the
-          # token, anything proxied would be a 200, so the status is unambiguous.
+          # The manifest needs no authentication, so anything proxied would be a 200.
+          # Without the client certificate the proxy itself must answer 400.
           STATUS=$(curl -s -o /dev/null -w '%{http_code}' --cacert "$MTLS_DIR/ca.pem" --resolve "$RESOLVE" \
-            -H "Authorization: Bearer $HOME_ASSISTANT_TOKEN" "$E2E_MTLS_URL/api/config")
+            "$E2E_MTLS_URL/manifest.json")
           if [ "$STATUS" != "400" ]; then
             echo "::error::Expected 400 from the proxy without a client certificate, got $STATUS"
             exit 1
@@ -156,8 +155,7 @@ jobs:
           curl -sSf --cacert "$MTLS_DIR/ca.pem" \
             --cert "$MTLS_DIR/client.pem" --key "$MTLS_DIR/client.key" \
             --resolve "$RESOLVE" \
-            -H "Authorization: Bearer $HOME_ASSISTANT_TOKEN" \
-            "$E2E_MTLS_URL/api/config" | jq -e '.state == "RUNNING"' >/dev/null
+            "$E2E_MTLS_URL/manifest.json" | jq -e '.name == "Home Assistant"' >/dev/null
 
       - uses: emulator-wtf/actions/configure-credentials@ea9ab3501ee2b780179a15e7584ffdbd15a5c744 # v1.2.5
         with:

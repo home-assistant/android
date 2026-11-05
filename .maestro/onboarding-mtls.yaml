@@ -57,32 +57,7 @@ appId: io.homeassistant.companion.android.debug
     timeout: 10000
 
 # Same start as onboarding.yaml, with the mTLS URL.
-- launchApp:
-    clearState: true
-    permissions:
-      all: allow
-
-- tapOn:
-    text: '(?s)Connect to my Home.*Assistant server'
-    retryTapIfNoChange: true
-
-- tapOn:
-    text: "Don.t allow"
-    optional: true
-    retryTapIfNoChange: true
-
-- tapOn:
-    text: "Enter address manually"
-    retryTapIfNoChange: true
-
-- assertVisible:
-    text: '(?s)What is your Home.*Assistant address.*'
-- tapOn: "http://homeassistant.local"
-- inputText: ${HOME_ASSISTANT_URL}
-- hideKeyboard
-- tapOn:
-    text: "Connect"
-    retryTapIfNoChange: true
+- runFlow: subflows/enter-address.yaml
 
 # The proxy refuses the first request without a certificate, so the WebView asks
 # for one through the system chooser before anything renders.

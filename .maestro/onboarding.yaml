@@ -1,42 +1,8 @@
 # yamllint disable rule:document-start
 appId: io.homeassistant.companion.android.debug
 ---
-# The steps after the Connect button live in subflows/ shared with onboarding-mtls.yaml.
-# subflows/ is a subdirectory so Maestro never runs them as flows of their own.
-# Granting all permissions upfront keeps the flow deterministic across API
-# levels: otherwise system permission dialogs (nearby devices, notifications)
-# cover the UI at API-level-dependent moments.
-- launchApp:
-    clearState: true
-    permissions:
-      all: allow
-
-- tapOn:
-    text: '(?s)Connect to my Home.*Assistant server'
-    retryTapIfNoChange: true
-
-# On API 33+ the discovery screen triggers the NEARBY_WIFI_DEVICES system
-# dialog, which Maestro's launchApp permissions do not cover. The regex
-# tolerates the typographic apostrophe in "Don't allow".
-- tapOn:
-    text: "Don.t allow"
-    optional: true
-    retryTapIfNoChange: true
-
-- tapOn:
-    text: "Enter address manually"
-    retryTapIfNoChange: true
-
-- assertVisible:
-    text: '(?s)What is your Home.*Assistant address.*'
-- tapOn: "http://homeassistant.local"
-- inputText: ${HOME_ASSISTANT_URL}
-# Dismiss the keyboard and Gboard's first-run tooltip, which can cover the
-# Connect button.
-- hideKeyboard
-- tapOn:
-    text: "Connect"
-    retryTapIfNoChange: true
-
+# Every step lives in subflows/ shared with onboarding-mtls.yaml. subflows/ is a
+# subdirectory so Maestro never runs them as flows of their own.
+- runFlow: subflows/enter-address.yaml
 - runFlow: subflows/login.yaml
 - runFlow: subflows/post-login.yaml
