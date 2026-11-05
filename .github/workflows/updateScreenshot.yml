@@ -33,7 +33,7 @@ jobs:
           mock-google-services: "true"
 
       - name: Update Screenshots
-        run: ./gradlew updateDebugScreenshotTest updateFullDebugScreenshotTest
+        run: ./gradlew updateDebugScreenshotTestDefaultTestSuite updateFullDebugScreenshotTestDefaultTestSuite
 
       - name: Commit and push changes
         run: |
