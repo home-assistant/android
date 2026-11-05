@@ -89,6 +89,7 @@
             matchPackageNames: [
                 'org.jetbrains.kotlin:{/,}**',
                 'org.jetbrains.kotlin.{/,}**',
+                'com.google.devtools.ksp{/,}**'
             ],
         },
         {
@@ -105,27 +106,18 @@
             ],
         },
         {
-            groupName: 'org.jetbrains.kotlin.*',
-            matchPackageNames: [
-                '/org.jetbrains.kotlin.*/',
-                '/com.google.devtools.ksp/',
-                '/androidx.compose.compiler:compiler/',
-            ],
-        },
-        {
             groupName: 'androidx.compose.*',
             matchPackageNames: [
                 '!androidx.compose.compiler{/,}**',
                 '!androidx.wear.compose{/,}**',
-                'androidx.navigation:navigation-compose{/,}**',
                 'androidx.compose{/,}**',
+                'org.jetbrains.compose{/,}**',
             ],
         },
         {
             groupName: 'androidx.*',
             matchPackageNames: [
                 '!androidx.compose{/,}**',
-                '!androidx.navigation:navigation-compose{/,}**',
                 '!androidx.wear.compose{/,}**',
                 '!androidx.webkit{/,}**',
                 'androidx.{/,}**',

@@ -30,6 +30,10 @@ import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
+private const val EXTRA_FROM_SYSTEM_ASSISTANT = "from_system_assistant"
+private val SYSTEM_ASSISTANT_ACTIONS =
+    listOf(Intent.ACTION_ASSIST, "android.intent.action.VOICE_ASSIST", Intent.ACTION_VOICE_COMMAND)
+
 @AndroidEntryPoint
 class AssistActivity : BaseActivity() {
 
@@ -64,6 +68,7 @@ class AssistActivity : BaseActivity() {
             startListening: Boolean = true,
             fromFrontend: Boolean = true,
             wakeWordPhrase: String? = null,
+            fromSystemAssistant: Boolean = false,
         ): Intent {
             return Intent(context, AssistActivity::class.java).apply {
                 putExtra(EXTRA_SERVER, serverId)
@@ -71,6 +76,7 @@ class AssistActivity : BaseActivity() {
                 putExtra(EXTRA_START_LISTENING, startListening)
                 putExtra(EXTRA_FROM_FRONTEND, fromFrontend)
                 putExtra(EXTRA_FROM_WAKE_WORD_PHRASE, wakeWordPhrase)
+                putExtra(EXTRA_FROM_SYSTEM_ASSISTANT, fromSystemAssistant)
             }
         }
     }
@@ -112,7 +118,7 @@ class AssistActivity : BaseActivity() {
                 } else {
                     null
                 },
-                wakeWordPhrase = intent.getStringExtra(EXTRA_FROM_WAKE_WORD_PHRASE),
+                launchTrigger = getLaunchTrigger(),
             )
         }
 
@@ -154,7 +160,7 @@ class AssistActivity : BaseActivity() {
                     },
                     onChangeInput = viewModel::onChangeInput,
                     onTextInput = viewModel::onTextInput,
-                    onMicrophoneInput = viewModel::onMicrophoneInput,
+                    onMicrophoneInput = { viewModel.onMicrophoneInput(AssistTrigger.ScreenUi) },
                     onHide = { finish() },
                 )
             }
@@ -186,7 +192,7 @@ class AssistActivity : BaseActivity() {
         this.intent = intent
 
         val isLocked = getSystemService<KeyguardManager>()?.isKeyguardLocked ?: false
-        viewModel.onNewIntent(intent, contextIsLocked == isLocked)
+        viewModel.onNewIntent(intent, contextIsLocked == isLocked, getLaunchTrigger())
         updateShowWhenLocked(isLocked)
     }
 
@@ -213,6 +219,22 @@ class AssistActivity : BaseActivity() {
         }
     }
 
+    private fun getLaunchTrigger(): AssistTrigger {
+        val wakeWordPhrase = intent.getStringExtra(EXTRA_FROM_WAKE_WORD_PHRASE)
+        return when {
+            wakeWordPhrase != null -> AssistTrigger.WakeWord(wakeWordPhrase)
+            intent.isSystemAssistantLaunch() -> AssistTrigger.SystemAssistant
+            else -> AssistTrigger.ScreenUi
+        }
+    }
+
     private fun hasRecordingPermission() =
         ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 }
+
+/**
+ * Whether Android launched the app as the device assistant (a gesture, button, headset, or voice
+ * command), rather than from a screen interface or the app's own wake word.
+ */
+internal fun Intent.isSystemAssistantLaunch(): Boolean =
+    getBooleanExtra(EXTRA_FROM_SYSTEM_ASSISTANT, false) || action in SYSTEM_ASSISTANT_ACTIONS

@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class)
@@ -165,6 +167,35 @@ class AssistSettingsViewModelTest {
 
             assertEquals(expectedIntent, result)
             verify { defaultAssistantManager.getSetDefaultAssistantIntent() }
+        }
+    }
+
+    @Nested
+    inner class ListeningChimeTest {
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given chime preference when initialized then load it in state`(enabled: Boolean) = runTest {
+            coEvery { assistConfigManager.isListeningChimeEnabled() } returns enabled
+
+            viewModel = createViewModel()
+            runCurrent()
+
+            assertEquals(enabled, viewModel.uiState.value.isListeningChimeEnabled)
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given chime toggled when onToggleListeningChime then save and update state`(enabled: Boolean) = runTest {
+            coEvery { assistConfigManager.isListeningChimeEnabled() } returns !enabled
+            viewModel = createViewModel()
+            runCurrent()
+
+            viewModel.onToggleListeningChime(enabled)
+            runCurrent()
+
+            assertEquals(enabled, viewModel.uiState.value.isListeningChimeEnabled)
+            coVerify { assistConfigManager.setListeningChimeEnabled(enabled) }
         }
     }
 

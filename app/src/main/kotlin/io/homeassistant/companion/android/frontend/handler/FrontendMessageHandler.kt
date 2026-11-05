@@ -49,10 +49,11 @@ import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.serialization.json.JsonElement
 import timber.log.Timber
 
@@ -85,7 +86,7 @@ class FrontendMessageHandler @Inject constructor(
 ) : FrontendJsHandler,
     FrontendBusObserver {
 
-    private val jsCallbackEvents = MutableSharedFlow<FrontendHandlerEvent>(extraBufferCapacity = 1)
+    private val jsCallbackEvents = Channel<FrontendHandlerEvent>(Channel.BUFFERED)
 
     /**
      * Called when the frontend requests authentication.
@@ -107,7 +108,7 @@ class FrontendMessageHandler @Inject constructor(
 
             is ExternalAuthResult.Failed -> {
                 externalBusRepository.evaluateScript(result.callbackScript)
-                result.error?.let { jsCallbackEvents.tryEmit(FrontendHandlerEvent.AuthError(it)) }
+                result.error?.let { jsCallbackEvents.send(FrontendHandlerEvent.AuthError(it)) }
             }
         }
     }
@@ -148,7 +149,7 @@ class FrontendMessageHandler @Inject constructor(
         val incomingResults = externalBusRepository.incomingMessages().map { message ->
             handleMessage(message)
         }
-        return merge(incomingResults, jsCallbackEvents)
+        return merge(incomingResults, jsCallbackEvents.receiveAsFlow())
     }
 
     override fun webViewActions(): Flow<WebViewAction> = externalBusRepository.webViewActions()

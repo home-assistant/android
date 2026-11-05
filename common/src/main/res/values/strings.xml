@@ -1056,9 +1056,12 @@
     <string name="widget_media_fastforward_button">Fast forward</string>
     <string name="widget_media_image_description">Media playing preview image</string>
     <string name="widget_media_next_track_button">Next track</string>
+    <string name="widget_media_pause_button">Pause</string>
+    <string name="widget_media_play_button">Play</string>
     <string name="widget_media_player_description">Media player widget</string>
     <string name="widget_media_playpause_button">Play/pause</string>
     <string name="widget_media_prev_track_button">Previous track</string>
+    <string name="widget_media_stop_button">Stop</string>
     <string name="widget_media_volume_down_button">Volume down</string>
     <string name="widget_media_volume_up_button">Volume up</string>
     <string name="widget_media_rewind_button">Rewind</string>
@@ -1278,6 +1281,7 @@
     <string name="assist_default_assistant_disabled">Home Assistant is not your default assistant</string>
     <string name="assist_set_default">Set as default</string>
     <string name="assist_summary">Configure Assist for this device</string>
+    <string name="assist_listening_chime_enable">Play wake sound</string>
     <string name="assist_wake_word_title">Wake word</string>
     <string name="assist_wake_word_enable">Enable wake word detection</string>
     <string name="assist_wake_word_model">Wake word</string>

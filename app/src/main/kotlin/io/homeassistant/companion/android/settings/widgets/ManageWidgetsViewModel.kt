@@ -1,26 +1,21 @@
 package io.homeassistant.companion.android.settings.widgets
 
 import android.app.Application
-import android.appwidget.AppWidgetManager
-import android.os.Build
-import android.os.RemoteException
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
+import io.homeassistant.companion.android.util.isWidgetPinningSupported
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @HiltViewModel
 class ManageWidgetsViewModel @Inject constructor(
@@ -43,23 +38,7 @@ class ManageWidgetsViewModel @Inject constructor(
     val mediaWidgetList = mediaPlayerControlsWidgetDao.getAllFlow().collectAsState()
     val templateWidgetList = templateWidgetDao.getAllFlow().collectAsState()
     val todoWidgetList = todoWidgetDao.getAllFlow().collectAsState()
-    val supportsAddingWidgets: Boolean
-
-    init {
-        supportsAddingWidgets = checkSupportsAddingWidgets()
-    }
-
-    private fun checkSupportsAddingWidgets(): Boolean {
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-            val appWidgetManager = getApplication<Application>().getSystemService<AppWidgetManager>()
-            try {
-                return appWidgetManager?.isRequestPinAppWidgetSupported ?: false
-            } catch (e: RemoteException) {
-                Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
-            }
-        }
-        return false
-    }
+    val supportsAddingWidgets: Boolean = application.isWidgetPinningSupported()
 
     /**
      * Convert a Flow into a State object that updates until the view model is cleared.
