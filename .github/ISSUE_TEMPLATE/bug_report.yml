@@ -115,7 +115,7 @@ body:
       placeholder: core-
       description: |
         Can be found in:
-        [Settings ⇒ System ⇒ Repairs ⇒ Three Dots in Upper Right ⇒ System information][system-health].
+        [Settings ⇒ About][system-health].
 
         [![Open your Home Assistant instance and show the system information.][system-health-badge]][system-health]
 
