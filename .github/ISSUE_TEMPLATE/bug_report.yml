@@ -99,18 +99,6 @@ body:
         Can be found in the app: Settings ⇒ Companion app ⇒ Application version.
         If the app does not open: Android Settings ⇒ Apps ⇒ Home Assistant.
         Keep the `-full` or `-minimal` suffix. For Wear OS issues, list both the watch and the phone.
-  - type: dropdown
-    id: install_source
-    validations:
-      required: true
-    attributes:
-      label: Where did you install the app from?
-      options:
-        - Google Play Store
-        - Google Play Store (beta program)
-        - F-Droid
-        - GitHub release
-        - Other
   - type: input
     id: last_working_app_version
     attributes:
