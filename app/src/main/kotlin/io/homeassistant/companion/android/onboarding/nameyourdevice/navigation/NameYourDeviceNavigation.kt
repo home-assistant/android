@@ -15,10 +15,15 @@ import io.homeassistant.companion.android.onboarding.nameyourdevice.NameYourDevi
 import kotlinx.serialization.Serializable
 
 @Serializable
-internal data class NameYourDeviceRoute(val url: String, val authCode: String)
+internal data class NameYourDeviceRoute(val url: String, val authCode: String, val internalUrl: String? = null)
 
-internal fun NavController.navigateToNameYourDevice(url: String, authCode: String, navOptions: NavOptions? = null) {
-    navigate(route = NameYourDeviceRoute(url, authCode), navOptions)
+internal fun NavController.navigateToNameYourDevice(
+    url: String,
+    authCode: String,
+    navOptions: NavOptions? = null,
+    internalUrl: String? = null,
+) {
+    navigate(route = NameYourDeviceRoute(url, authCode, internalUrl), navOptions)
 }
 
 internal fun NavGraphBuilder.nameYourDeviceScreen(

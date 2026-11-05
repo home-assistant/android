@@ -254,19 +254,20 @@ class HomeAssistantSearcherImplTest {
         nullValues = ["null"],
         value = [
             // external_url is preferred when present, even if internal_url is also set
-            "http://external:8123,http://internal:8123,http://external:8123",
+            "http://external:8123,http://internal:8123,http://external:8123,http://internal:8123",
             // external_url alone is used
-            "http://external:8123,null,http://external:8123",
+            "http://external:8123,null,http://external:8123,null",
             // internal_url is used as a fallback when external_url is missing
-            "null,http://internal:8123,http://internal:8123",
+            "null,http://internal:8123,http://internal:8123,http://internal:8123",
             // internal_url is used as a fallback when external_url is empty
-            ",http://internal:8123,http://internal:8123",
+            ",http://internal:8123,http://internal:8123,http://internal:8123",
         ],
     )
-    fun `Given external and internal url attributes when discoveredInstanceFlow is called then external url is preferred`(
+    fun `Given external and internal url attributes when discoveredInstanceFlow is called then external url is preferred and internal url is kept`(
         externalUrl: String?,
         internalUrl: String?,
         expectedUrl: String,
+        expectedInternalUrl: String?,
     ) = runTest {
         val discoveryListener = slot<NsdManager.DiscoveryListener>()
         val resolveListener = slot<NsdManager.ResolveListener>()
@@ -278,7 +279,9 @@ class HomeAssistantSearcherImplTest {
             discoveryListener.captured.onServiceFound(serviceInfo)
             resolveListener.captured.onServiceResolved(serviceInfo)
 
-            assertEquals(URL(expectedUrl), awaitItem().url)
+            val instance = awaitItem()
+            assertEquals(URL(expectedUrl), instance.url)
+            assertEquals(expectedInternalUrl?.let { URL(it) }, instance.internalUrl)
             expectNoEvents()
         }
 

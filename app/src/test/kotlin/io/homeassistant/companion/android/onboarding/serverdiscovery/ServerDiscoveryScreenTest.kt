@@ -153,7 +153,7 @@ class ServerDiscoveryScreenTest {
                 ServerDiscoveryScreen(
                     discoveryState = state,
                     onBackClick = { backClicked = true },
-                    onConnectClick = { connectClickedWithUrl = it },
+                    onConnectClick = { connectClickedWithUrl = it.url },
                     onDismissOneServerFound = {
                         // We don't know how to test dismiss of the modal
                     },

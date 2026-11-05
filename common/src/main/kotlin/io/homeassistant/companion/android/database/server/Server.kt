@@ -37,6 +37,7 @@ data class Server(
                 _name = "",
                 connection = ServerConnectionInfo(
                     externalUrl = temporaryServer.externalUrl,
+                    internalUrl = temporaryServer.internalUrl,
                     allowInsecureConnection = temporaryServer.allowInsecureConnection,
                 ),
                 session = temporaryServer.session,
@@ -57,4 +58,5 @@ data class TemporaryServer(
     val externalUrl: String,
     val session: ServerSessionInfo,
     val allowInsecureConnection: Boolean?,
+    val internalUrl: String? = null,
 ) : Parcelable
