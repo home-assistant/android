@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Validate screenshots" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Screenshots update" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -10,16 +10,19 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="validateDebugScreenshotTest" />
-          <option value="validateFullDebugScreenshotTest" />
+          <option value="updateDebugScreenshotTestDefaultTestSuite" />
+          <option value="updateFullDebugScreenshotTestDefaultTestSuite" />
         </list>
       </option>
       <option name="vmOptions" />
     </ExternalSystemSettings>
     <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
     <DebugAllEnabled>false</DebugAllEnabled>
     <RunAsTest>false</RunAsTest>
+    <GradleProfilingDisabled>false</GradleProfilingDisabled>
+    <GradleCoverageDisabled>false</GradleCoverageDisabled>
     <method v="2" />
   </configuration>
 </component>
