@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Co
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.mockk.Runs
@@ -431,6 +432,43 @@ class IntegrationRepositoryImplTest {
             val changes = checkNotNull(repository.getEntityChanges(null)).toList()
 
             assertEquals(listOf(EntityChange.Removed(entityId)), changes)
+        }
+
+        @Test
+        fun `Given an older server and an admin when collecting entity changes for ids then a state trigger without new state is a removal`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+            every { server.user.isAdmin } returns true
+            val entity = Entity(
+                entityId = entityId,
+                state = "on",
+                attributes = emptyMap(),
+                lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+            )
+            coEvery { webSocketRepository.getStateChanges(listOf(entityId)) } returns flowOf(
+                TriggerEvent(platform = "state", entityId = entityId, toState = entity),
+                TriggerEvent(platform = "state", entityId = entityId, fromState = entity),
+            )
+
+            val changes = checkNotNull(repository.getEntityChanges(listOf(entityId))).toList()
+
+            assertEquals(listOf(EntityChange.StateChanged(entity), EntityChange.Removed(entityId)), changes)
+        }
+
+        @Test
+        fun `Given an older server and a non admin when collecting entity changes for ids then only the removal of a subscribed entity is emitted`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+            every { server.user.isAdmin } returns false
+            coEvery { webSocketRepository.getStateChanges() } returns flowOf(
+                StateChangedEvent("light.other", newState = null),
+                StateChangedEvent(entityId, newState = null),
+            )
+
+            val changes = checkNotNull(repository.getEntityChanges(listOf(entityId))).toList()
+
+            assertEquals(listOf(EntityChange.Removed(entityId)), changes)
+            // The state trigger requires admin rights
+            coVerify(exactly = 0) { webSocketRepository.getStateChanges(any()) }
         }
 
         @Test
