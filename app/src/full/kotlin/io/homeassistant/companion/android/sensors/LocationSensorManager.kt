@@ -1142,8 +1142,10 @@ class LocationSensorManager @Inject constructor(
         zone: Entity,
         triggerRange: Int = 0,
     ): Boolean {
-        val coordinates = zone.getCoordinates() ?: return false
-        val radius = (zone.attributes["radius"] as? Number)?.toFloat() ?: return false
+        val coordinates = zone.getCoordinates()
+        val radius = (zone.attributes["radius"] as? Number)?.toFloat()
+        if (coordinates == null || radius == null) return false
+
         val postRequestId = if (triggerRange > 0) "_expanded" else ""
         geofencingRequestBuilder
             .addGeofence(
