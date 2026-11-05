@@ -75,7 +75,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
                     finish()
                 }
             } else {
-                if (viewModel.updateWidgetConfiguration()) {
+                if (viewModel.updateWidgetConfiguration(this@TemplateWidgetConfigureActivity)) {
                     viewModel.updateWidget(this@TemplateWidgetConfigureActivity)
                     setResult(
                         RESULT_OK,
