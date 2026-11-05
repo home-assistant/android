@@ -169,7 +169,8 @@ body:
       description: |
         Reproduce the problem, then open Settings ⇒ Companion app ⇒ Troubleshooting ⇒ Show and share logs
         right away and attach the exported file here. Please attach the file instead of pasting an excerpt.
-        If the app crashed, the same screen also offers the log of the recent crash.
+        If the app crashed, also select the **Recent crash** tab on the same screen and share that log separately.
+        Only crashes from the past 12 hours are shown, and sharing exports only the selected tab.
 
         - Wear OS: we need the logcat output of the watch.
         - Android Auto: the logs can be retrieved from the connected phone.
