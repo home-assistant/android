@@ -1095,19 +1095,29 @@ class LocationSensorManager @Inject constructor(
         getEnabledServers(zoneLocation).map { serverId ->
             ioScope.async {
                 val configuredZones = getZones(serverId, forceRefresh = true)
-                configuredZones.forEach { zone ->
-                    if (addGeofenceToBuilder(geofencingRequestBuilder, serverId, zone)) {
-                        geofenceCount++
-                    }
-                    if (geofenceCount >= 100) {
-                        return@async
-                    }
-                    if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains("${serverId}_${zone.entityId}")) {
-                        if (addGeofenceToBuilder(geofencingRequestBuilder, serverId, zone, highAccuracyTriggerRange)) {
+                run addZonesForServer@{
+                    configuredZones.forEach { zone ->
+                        if (addGeofenceToBuilder(geofencingRequestBuilder, serverId, zone)) {
                             geofenceCount++
                         }
                         if (geofenceCount >= 100) {
-                            return@async
+                            return@addZonesForServer
+                        }
+                        if (highAccuracyTriggerRange > 0 &&
+                            highAccuracyZones.contains("${serverId}_${zone.entityId}")
+                        ) {
+                            if (addGeofenceToBuilder(
+                                    geofencingRequestBuilder,
+                                    serverId,
+                                    zone,
+                                    highAccuracyTriggerRange,
+                                )
+                            ) {
+                                geofenceCount++
+                            }
+                            if (geofenceCount >= 100) {
+                                return@addZonesForServer
+                            }
                         }
                     }
                 }
