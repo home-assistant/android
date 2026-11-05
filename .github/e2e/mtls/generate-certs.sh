@@ -47,10 +47,7 @@ openssl req -newkey rsa:2048 -nodes \
 openssl x509 -req -in client.csr -CA ca.pem -CAkey ca.key -CAcreateserial \
   -days "$VALIDITY_DAYS" -copy_extensions copy -out client.pem
 
-# SHA1/3DES rather than the PBES2/AES default: the Android certificate
-# installer parses it on every API level the E2E workflow runs on.
 openssl pkcs12 -export \
-  -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg sha1 \
   -inkey client.key -in client.pem -name "$CERT_ALIAS" \
   -passout "pass:$P12_PASSWORD" -out client.p12
 
