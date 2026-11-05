@@ -1,0 +1,194 @@
+name: Bug report
+description: Report a bug in the Android, Wear OS, Android Auto or Android Automotive app.
+type: Bug
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If you have a feature or enhancement request, please [request it here instead][fr].
+
+        Before you continue:
+        - Update to the latest version of the app and of Home Assistant, and check that the problem is still there.
+        - Check the [troubleshooting documentation][troubleshooting].
+        - Search the [existing issues][issues], including closed ones, to avoid duplicates.
+
+        Remove or mask sensitive values (tokens, URLs, IP addresses, location) before submitting.
+
+        [fr]: https://github.com/home-assistant/feature-requests/discussions/new?category=android
+        [troubleshooting]: https://companion.home-assistant.io/docs/troubleshooting/faqs/
+        [issues]: https://github.com/home-assistant/android/issues?q=is%3Aissue
+  - type: dropdown
+    id: browser
+    validations:
+      required: true
+    attributes:
+      label: Does the issue also happen in a browser on the same device?
+      description: |
+        Open your Home Assistant URL in Chrome on the same device and try to reproduce the problem.
+        Native app features such as notifications, sensors, location, widgets, tiles, shortcuts,
+        Wear OS or Android Auto cannot be tested in a browser.
+      options:
+        - "No"
+        - "Yes"
+        - Not applicable (native app feature)
+  - type: markdown
+    attributes:
+      value: |
+        > [!WARNING]
+        > If you answered **Yes**, the issue is most likely in the Home Assistant frontend and this is the wrong repository.
+        > Please [open it in the frontend repository][frontend-issue] instead.
+
+        [frontend-issue]: https://github.com/home-assistant/frontend/issues/new?labels=bug&template=bug_report.yml
+  - type: textarea
+    id: problem
+    validations:
+      required: true
+    attributes:
+      label: The problem
+      description: >-
+        Describe the issue you are experiencing. Tell us what you were trying to do and what happened.
+        Provide a clear and concise description of what the problem is.
+  - type: markdown
+    attributes:
+      value: |
+        ## Environment
+  - type: dropdown
+    id: platform
+    validations:
+      required: true
+    attributes:
+      label: Which device type has the issue?
+      description: Select every device type where you see the bug.
+      multiple: true
+      options:
+        - Phone or tablet
+        - Wear OS
+        - Android Auto
+        - Android Automotive
+        - Other (TV, wall panel, headset, ...)
+  - type: input
+    id: device_model
+    validations:
+      required: true
+    attributes:
+      label: Which device model are you using?
+      placeholder: Google Pixel 9
+      description: >
+        For Wear OS issues, list both the watch and the phone.
+  - type: input
+    id: os_version
+    validations:
+      required: true
+    attributes:
+      label: Which Android version is the device running?
+      placeholder: Android 16
+      description: >
+        Can be found in: Android Settings ⇒ About phone ⇒ Android version.
+        Mention the manufacturer skin or custom ROM if there is one (One UI, HyperOS, GrapheneOS, ...).
+        For Wear OS issues, list both the watch and the phone.
+  - type: input
+    id: app_version
+    validations:
+      required: true
+    attributes:
+      label: What version of the app has the issue?
+      placeholder: 2026.10.1-full
+      description: >
+        Can be found in the app: Settings ⇒ Companion app ⇒ Application version.
+        If the app does not open: Android Settings ⇒ Apps ⇒ Home Assistant.
+        Keep the `-full` or `-minimal` suffix. For Wear OS issues, list both the watch and the phone.
+  - type: dropdown
+    id: install_source
+    validations:
+      required: true
+    attributes:
+      label: Where did you install the app from?
+      options:
+        - Google Play Store
+        - Google Play Store (beta program)
+        - F-Droid
+        - GitHub release
+        - Other
+  - type: input
+    id: last_working_app_version
+    attributes:
+      label: What was the last working version of the app?
+      placeholder: 2026.8.4-full
+      description: >
+        If known, otherwise leave blank.
+  - type: input
+    id: core_version
+    validations:
+      required: true
+    attributes:
+      label: What version of Home Assistant Core are you running?
+      placeholder: core-
+      description: |
+        Can be found in:
+        [Settings ⇒ System ⇒ Repairs ⇒ Three Dots in Upper Right ⇒ System information][system-health].
+
+        [![Open your Home Assistant instance and show the system information.][system-health-badge]][system-health]
+
+        [system-health]: https://my.home-assistant.io/redirect/system_health/
+        [system-health-badge]: https://my.home-assistant.io/badges/system_health.svg
+  - type: markdown
+    attributes:
+      value: |
+        ## Details
+  - type: textarea
+    id: reproduction
+    validations:
+      required: true
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: textarea
+    id: expected
+    validations:
+      required: true
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+  - type: textarea
+    id: yaml
+    attributes:
+      label: Notification or automation YAML
+      description: >
+        If the issue is related to notifications or to an automation, include the YAML that triggers it.
+        This will be automatically formatted into code, so no need for backticks.
+      render: yaml
+  - type: textarea
+    id: logs
+    attributes:
+      label: Companion app logs
+      description: |
+        Reproduce the problem, then open Settings ⇒ Companion app ⇒ Troubleshooting ⇒ Show and share logs
+        right away and attach the exported file here. Please attach the file instead of pasting an excerpt.
+        If the app crashed, the same screen also offers the log of the recent crash.
+
+        - Wear OS: we need the logcat output of the watch.
+        - Android Auto: the logs can be retrieved from the connected phone.
+        - Mention the time at which the problem happened so we can find it in the logs.
+
+        Logs can contain sensitive data such as your Home Assistant URL or location, review them before attaching.
+        See the [documentation][logs-docs] for more details.
+
+        [logs-docs]: https://companion.home-assistant.io/docs/troubleshooting/faqs/#android-crash-logs
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or video
+      description: If applicable, add screenshots or a screen recording to help explain the problem.
+  - type: textarea
+    id: additional_information
+    attributes:
+      label: Additional information
+      description: >
+        Anything else that can help us, for example how the app reaches Home Assistant
+        (Home Assistant Cloud, VPN, reverse proxy, client certificate), whether multiple servers are configured,
+        the battery optimization setting of the app, or the Android System WebView version for dashboard issues.
