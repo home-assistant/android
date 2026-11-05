@@ -61,6 +61,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 @Singleton
@@ -725,6 +727,7 @@ class LocationSensorManager @Inject constructor(
             val intent = getLocationUpdateIntent(true)
             val geofencingRequest = createGeofencingRequest()
             if (geofencingRequest != null) {
+                Timber.d("Adding ${geofencingRequest.geofences.count()} geofences for zones")
                 geofencingClient?.addGeofences(
                     geofencingRequest,
                     intent,
@@ -1092,31 +1095,35 @@ class LocationSensorManager @Inject constructor(
         val highAccuracyZones = getHighAccuracyModeZones(false)
 
         var geofenceCount = 0
+        val geofenceMutex = Mutex()
         getEnabledServers(zoneLocation).map { serverId ->
             ioScope.async {
                 val configuredZones = getZones(serverId, forceRefresh = true)
                 run addZonesForServer@{
                     configuredZones.forEach { zone ->
-                        if (addGeofenceToBuilder(geofencingRequestBuilder, serverId, zone)) {
-                            geofenceCount++
+                        geofenceMutex.withLock {
+                            if (geofenceCount >= 100) return@addZonesForServer
+
+                            if (addGeofenceToBuilder(geofencingRequestBuilder, serverId, zone)) {
+                                geofenceCount++
+                            }
                         }
-                        if (geofenceCount >= 100) {
-                            return@addZonesForServer
-                        }
+
                         if (highAccuracyTriggerRange > 0 &&
                             highAccuracyZones.contains("${serverId}_${zone.entityId}")
                         ) {
-                            if (addGeofenceToBuilder(
-                                    geofencingRequestBuilder,
-                                    serverId,
-                                    zone,
-                                    highAccuracyTriggerRange,
-                                )
-                            ) {
-                                geofenceCount++
-                            }
-                            if (geofenceCount >= 100) {
-                                return@addZonesForServer
+                            geofenceMutex.withLock {
+                                if (geofenceCount >= 100) return@addZonesForServer
+
+                                if (addGeofenceToBuilder(
+                                        geofencingRequestBuilder,
+                                        serverId,
+                                        zone,
+                                        highAccuracyTriggerRange,
+                                    )
+                                ) {
+                                    geofenceCount++
+                                }
                             }
                         }
                     }
