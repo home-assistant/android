@@ -2,7 +2,8 @@
 appId: io.homeassistant.companion.android.debug
 ---
 # Shared by onboarding.yaml and onboarding-mtls.yaml: from the device name screen
-# to the Companion app settings, proving the registration and the WebSocket work.
+# to the Companion app settings. The frontend rendering covers the registration and
+# the WebView's WebSocket; the Assist round trip covers the app's own WebSocket.
 
 - extendedWaitUntil:
     visible: "How would you like to name this device?"
@@ -66,6 +67,51 @@ appId: io.homeassistant.companion.android.debug
     visible:
       text: '(?i)^Overview$'
     timeout: 60000
+
+# Assist is the only screen here that runs on the app's own WebSocket (OkHttp),
+# not the WebView's: it fetches the config and the pipelines and runs the request
+# over it, with no REST fallback. On a phone the frontend keeps the Assist action
+# in the dashboard overflow menu, and opening it hands over to the native sheet.
+# "What time is it?" is answered by Home Assistant itself with the server clock
+# as "10:42 AM", so that reply proves the socket went through (the status bar
+# clock has no AM/PM, so it cannot match). A broken socket shows "Assist couldn't
+# reach Home Assistant" or "Oops, an error has occurred" instead.
+# Same lost-tap caveat as the sidebar toggle below, hence the retry.
+- repeat:
+    times: 3
+    while:
+      notVisible:
+        text: '(?i)^Assist\s*$'
+    commands:
+      - tapOn:
+          text: '(?i)^Open dashboard menu$'
+          retryTapIfNoChange: true
+      - extendedWaitUntil:
+          visible:
+            text: '(?i)^Assist\s*$'
+          timeout: 5000
+          optional: true
+- tapOn:
+    text: '(?i)^Assist\s*$'
+    retryTapIfNoChange: true
+# "How can I assist?" shows before the pipeline is loaded; the input row, with
+# its "Send text" button, only once it is, and the field then takes focus on
+# its own.
+- extendedWaitUntil:
+    visible: "Send text"
+    timeout: 30000
+- inputText: "What time is it?"
+- tapOn: "Send text"
+- extendedWaitUntil:
+    visible:
+      text: '(?i)^\d{1,2}:\d{2} (AM|PM)$'
+    timeout: 30000
+# Back with the keyboard up only hides the keyboard.
+- hideKeyboard
+- pressKey: Back
+- extendedWaitUntil:
+    notVisible: "How can I assist?"
+    timeout: 10000
 
 # The toggle is in the tree before the frontend handles input, so a tap right
 # after "Overview" appears can be lost: retry until the sidebar entries show.
