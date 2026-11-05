@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Update
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
@@ -27,7 +29,7 @@ class LastUpdateManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_last_update,
             commonR.string.sensor_description_last_update,
-            "mdi:update",
+            Mdi.Update,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             settings = listOf(

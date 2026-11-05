@@ -168,6 +168,10 @@ internal interface SensorDao {
                         ?.copy(enabled = enabled, lastSentState = null, lastSentIcon = null)
                         ?: Sensor(sensorId, serverId, enabled, state = "")
                     upsert(sensor)
+                    // Attributes are shared by all servers, drop them once no server uses the sensor
+                    if (!enabled && get(sensorId).none { it.enabled }) {
+                        clearAttributes(sensorId)
+                    }
                 }
             }.awaitAll()
         }

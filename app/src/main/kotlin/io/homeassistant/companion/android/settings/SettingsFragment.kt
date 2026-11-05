@@ -46,6 +46,7 @@ import io.homeassistant.companion.android.settings.developer.DeveloperSettingsFr
 import io.homeassistant.companion.android.settings.gestures.GesturesFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.license.LicensesFragment
+import io.homeassistant.companion.android.settings.mediacontrols.MediaControlsSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
@@ -230,17 +231,27 @@ class SettingsFragment(
                 }
             }
 
-            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                findPreference<PreferenceCategory>("quick_settings")?.let {
-                    it.isVisible = true
+            findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(R.id.content, ManageTilesFragment::class.java, null)
+                    addToBackStack(getString(commonR.string.tiles))
                 }
-                findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
-                    parentFragmentManager.commit {
-                        replace(R.id.content, ManageTilesFragment::class.java, null)
-                        addToBackStack(getString(commonR.string.tiles))
-                    }
-                    return@setOnPreferenceClickListener true
+                return@setOnPreferenceClickListener true
+            }
+
+            findPreference<PreferenceCategory>("media_controls")?.let {
+                it.isVisible = !isAutomotive && !QuestUtil.isQuest
+            }
+            findPreference<Preference>("manage_media_controls")?.setOnPreferenceClickListener {
+                parentFragmentManager.commit {
+                    replace(
+                        R.id.content,
+                        MediaControlsSettingsFragment::class.java,
+                        null,
+                    )
+                    addToBackStack(getString(commonR.string.media_controls))
                 }
+                return@setOnPreferenceClickListener true
             }
 
             if (!isAutomotive && SdkVersion.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {

@@ -471,6 +471,44 @@ class EntityPickerTest {
     }
 
     @Test
+    fun `Given a search matching a parent device or an omitted owner when rendered then their entities are listed`() {
+        val childDeviceEntities = listOf(
+            EntityDisplayWithContext(
+                item = EntityDisplayWithoutContext(entityId = "switch.freezer", name = "Freezer", icon = Mdi.Fan),
+                areaName = "Kitchen",
+                deviceName = "Outlet 1",
+                parentDeviceName = "Power strip",
+            ),
+            EntityDisplayWithContext(
+                item = EntityDisplayWithoutContext(entityId = "switch.garden", name = "Garden lamp", icon = Mdi.Fan),
+                areaName = "Garden",
+                omittedOwnerNames = listOf("Outlet 2", "Power strip"),
+            ),
+        )
+        setExpandedEntityPickerContent(
+            displayState = EntityDisplayState.Loaded(createTestEntities() + childDeviceEntities),
+        )
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.entity_picker_add_entity))
+            .assertIsDisplayed()
+            .performClick()
+
+        waitForInitialEntityLoad()
+
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.search))
+            .assertIsDisplayed()
+            .performTextInput("power strip")
+
+        advanceTimeAndWaitForIdle()
+
+        composeTestRule.onNodeWithText("Freezer").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Garden lamp").assertIsDisplayed()
+        composeTestRule.onNode(hasText("Ceiling Fan")).assertDoesNotExist()
+    }
+
+    @Test
     fun `Given listed hidden and visible entities when rendered then only the hidden one has the hidden content description`() {
         setExpandedEntityPickerContent(
             displayState = EntityDisplayState.Loaded(createTestEntities() + createHiddenTestEntity()),

@@ -4,6 +4,12 @@ import android.content.Context
 import android.os.PowerManager
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.BatteryPlus
+import io.github.timoptr.mdiicons.generated.Cellphone
+import io.github.timoptr.mdiicons.generated.CellphoneOff
+import io.github.timoptr.mdiicons.generated.Sleep
+import io.github.timoptr.mdiicons.generated.SleepOff
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
@@ -16,15 +22,13 @@ class PowerSensorManager @Inject constructor(
     override val serverManager: ServerManager,
 ) : SensorManager {
     companion object {
-        private const val PACKAGE_NAME = "io.homeassistant.companion.android"
-
         @ProvidesSensor
         val interactiveDevice = SensorManager.BasicSensor(
             "is_interactive",
             "binary_sensor",
             commonR.string.basic_sensor_name_interactive,
             commonR.string.sensor_description_interactive,
-            "mdi:cellphone",
+            Mdi.Cellphone,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#interactive-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -36,7 +40,7 @@ class PowerSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_doze,
             commonR.string.sensor_description_doze,
-            "mdi:sleep",
+            Mdi.Sleep,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#doze-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -48,7 +52,7 @@ class PowerSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_power_save,
             commonR.string.sensor_description_power_save,
-            "mdi:battery-plus",
+            Mdi.BatteryPlus,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#power-save-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -79,7 +83,7 @@ class PowerSensorManager @Inject constructor(
         }
 
         val interactiveState = powerManager.isInteractive
-        val icon = if (interactiveState) "mdi:cellphone" else "mdi:cellphone-off"
+        val icon = if (interactiveState) Mdi.Cellphone else Mdi.CellphoneOff
 
         onSensorUpdated(
             interactiveDevice,
@@ -95,7 +99,7 @@ class PowerSensorManager @Inject constructor(
         }
 
         val dozeState = powerManager.isDeviceIdleMode
-        val icon = if (dozeState) "mdi:sleep" else "mdi:sleep-off"
+        val icon = if (dozeState) Mdi.Sleep else Mdi.SleepOff
 
         onSensorUpdated(
             doze,
@@ -103,7 +107,7 @@ class PowerSensorManager @Inject constructor(
             icon,
             mapOf(
                 "ignoring_battery_optimizations" to powerManager.isIgnoringBatteryOptimizations(
-                    PACKAGE_NAME,
+                    applicationContext.packageName,
                 ),
             ),
         )

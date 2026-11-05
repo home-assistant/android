@@ -8,12 +8,27 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Battery
+import io.github.timoptr.mdiicons.generated.BatteryAlert
+import io.github.timoptr.mdiicons.generated.BatteryCharging
+import io.github.timoptr.mdiicons.generated.BatteryChargingWireless
+import io.github.timoptr.mdiicons.generated.BatteryClock
+import io.github.timoptr.mdiicons.generated.BatteryHeartVariant
+import io.github.timoptr.mdiicons.generated.BatteryMinus
+import io.github.timoptr.mdiicons.generated.BatteryPlus
+import io.github.timoptr.mdiicons.generated.BatterySync
+import io.github.timoptr.mdiicons.generated.BatteryUnknown
+import io.github.timoptr.mdiicons.generated.PowerPlug
+import io.github.timoptr.mdiicons.generated.PowerPlugOff
+import io.github.timoptr.mdiicons.generated.UsbPort
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.fromHaName
 import java.math.RoundingMode
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,7 +54,7 @@ class BatterySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_battery_level,
             commonR.string.sensor_description_battery_level,
-            "mdi:battery",
+            Mdi.Battery,
             deviceClass = "battery",
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -53,7 +68,7 @@ class BatterySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_battery_state,
             commonR.string.sensor_description_battery_state,
-            "mdi:battery-charging",
+            Mdi.BatteryCharging,
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -66,7 +81,7 @@ class BatterySensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_charging,
             commonR.string.sensor_description_charging,
-            "mdi:power-plug",
+            Mdi.PowerPlug,
             deviceClass = "plug",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -78,7 +93,7 @@ class BatterySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_charger_type,
             commonR.string.sensor_description_charger_type,
-            "mdi:power-plug",
+            Mdi.PowerPlug,
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -91,7 +106,7 @@ class BatterySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_battery_health,
             commonR.string.sensor_description_battery_health,
-            "mdi:battery-heart-variant",
+            Mdi.BatteryHeartVariant,
             deviceClass = "enum",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -102,7 +117,7 @@ class BatterySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_battery_temperature,
             commonR.string.sensor_description_battery_temperature,
-            "mdi:battery",
+            Mdi.Battery,
             deviceClass = "temperature",
             unitOfMeasurement = "°C",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -115,7 +130,7 @@ class BatterySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_battery_power,
             commonR.string.sensor_description_battery_power,
-            "mdi:battery-plus",
+            Mdi.BatteryPlus,
             "power",
             unitOfMeasurement = "W",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -132,7 +147,7 @@ class BatterySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_remaining_charge_time,
             commonR.string.sensor_description_remaining_charge_time,
-            "mdi:battery-clock",
+            Mdi.BatteryClock,
             "duration",
             unitOfMeasurement = "min",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
@@ -144,7 +159,7 @@ class BatterySensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_battery_cycles,
             commonR.string.sensor_description_battery_cycles,
-            "mdi:battery-sync",
+            Mdi.BatterySync,
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
@@ -242,7 +257,7 @@ class BatterySensorManager @Inject constructor(
             else -> "mdi:battery"
         }
         val roundedPercentage = (percentage / 10) * 10
-        val icon = when (percentage) {
+        val iconName = when (percentage) {
             in 0..100 -> baseIcon + when (percentage) {
                 in 0..9 -> "-outline"
                 100 -> ""
@@ -250,6 +265,7 @@ class BatterySensorManager @Inject constructor(
             }
             else -> "mdi:battery-unknown"
         }
+        val icon = Mdi.fromHaName(iconName) ?: batteryLevel.statelessIcon
 
         onSensorUpdated(
             batteryLevel,
@@ -267,11 +283,11 @@ class BatterySensorManager @Inject constructor(
         val chargingStatus = getChargingStatus(intent)
 
         val icon = when (chargingStatus) {
-            "charging" -> "mdi:battery-plus"
-            "discharging" -> "mdi:battery-minus"
-            "full" -> "mdi:battery-charging"
-            "not_charging" -> "mdi:battery"
-            else -> "mdi:battery-unknown"
+            "charging" -> Mdi.BatteryPlus
+            "discharging" -> Mdi.BatteryMinus
+            "full" -> Mdi.BatteryCharging
+            "not_charging" -> Mdi.Battery
+            else -> Mdi.BatteryUnknown
         }
         onSensorUpdated(
             batteryState,
@@ -290,7 +306,7 @@ class BatterySensorManager @Inject constructor(
 
         val isCharging = getIsCharging(intent)
 
-        val icon = if (isCharging) "mdi:power-plug" else "mdi:power-plug-off"
+        val icon = if (isCharging) Mdi.PowerPlug else Mdi.PowerPlugOff
         onSensorUpdated(
             isChargingState,
             isCharging,
@@ -307,10 +323,10 @@ class BatterySensorManager @Inject constructor(
         val chargerType = getChargerType(intent)
 
         val icon = when (chargerType) {
-            "ac" -> "mdi:power-plug"
-            "usb" -> "mdi:usb-port"
-            "wireless" -> "mdi:battery-charging-wireless"
-            else -> "mdi:battery"
+            "ac" -> Mdi.PowerPlug
+            "usb" -> Mdi.UsbPort
+            "wireless" -> Mdi.BatteryChargingWireless
+            else -> Mdi.Battery
         }
         onSensorUpdated(
             chargerTypeState,
@@ -330,8 +346,8 @@ class BatterySensorManager @Inject constructor(
         val batteryHealth = getBatteryHealth(intent)
 
         val icon = when (batteryHealth) {
-            "good" -> "mdi:battery-heart-variant"
-            else -> "mdi:battery-alert"
+            "good" -> Mdi.BatteryHeartVariant
+            else -> Mdi.BatteryAlert
         }
         onSensorUpdated(
             batteryHealthState,
@@ -372,7 +388,7 @@ class BatterySensorManager @Inject constructor(
             Timber.w("Invalid voltage/current for battery power: $voltage/$current")
         } else {
             wattage = voltage * current
-            if (wattage <= 0) icon = "mdi:battery-minus"
+            if (wattage <= 0) icon = Mdi.BatteryMinus
         }
 
         onSensorUpdated(

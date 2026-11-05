@@ -145,6 +145,20 @@ internal class PermissionManager @Inject constructor(
     }
 
     /**
+     * Ensures the app has the camera permission to launch a camera app.
+     *
+     * @return `true` immediately when it has permission, otherwise enqueues a [PermissionRequest.Camera],
+     *          suspends until the user responds, and returns whether they granted it.
+     */
+    suspend fun checkCameraPermission(): Boolean {
+        if (permissionChecker.hasPermission(Manifest.permission.CAMERA)) return true
+
+        return queue.awaitResult { onResult ->
+            PermissionRequest.Camera(onResult = onResult)
+        }
+    }
+
+    /**
      * Drives the full permission flow for the Improv Wi-Fi onboarding session.
      *
      * Returns `true` immediately when every permission in [requiredPermissions] is already
@@ -297,15 +311,15 @@ internal class PermissionManager @Inject constructor(
 
         return shouldAskNotificationPermission ?: true
     }
+}
 
-    private fun mapToAndroidPermission(webViewResource: String): String? {
-        return when (webViewResource) {
-            WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE -> android.Manifest.permission.CAMERA
-            WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE -> android.Manifest.permission.RECORD_AUDIO
-            else -> {
-                Timber.w("Unknown WebView permission resource: $webViewResource")
-                null
-            }
+private fun mapToAndroidPermission(webViewResource: String): String? {
+    return when (webViewResource) {
+        WebViewPermissionRequest.RESOURCE_VIDEO_CAPTURE -> Manifest.permission.CAMERA
+        WebViewPermissionRequest.RESOURCE_AUDIO_CAPTURE -> Manifest.permission.RECORD_AUDIO
+        else -> {
+            Timber.w("Unknown WebView permission resource: $webViewResource")
+            null
         }
     }
 }

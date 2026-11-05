@@ -1,16 +1,22 @@
 package io.homeassistant.companion.android.util
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.ContextWrapper
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.os.RemoteException
 import android.util.TypedValue
 import androidx.activity.ComponentActivity
 import androidx.annotation.ColorRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.util.SdkVersion
+import timber.log.Timber
+
+/** Must match the `FileProvider` authorities in `AndroidManifest.xml` (`${applicationId}.provider`). */
+private const val FILE_PROVIDER_AUTHORITY_SUFFIX = ".provider"
 
 fun Context.getAttribute(attr: Int, fallbackAttr: Int): Int {
     val value = TypedValue()
@@ -36,8 +42,23 @@ fun Context.hasActiveConnection(): Boolean {
     }
 }
 
+/** @return `true` if the launcher lets the app pin a widget, which needs API 26 and launcher support. */
+fun Context.isWidgetPinningSupported(): Boolean {
+    return SdkVersion.isAtLeast(Build.VERSION_CODES.O) &&
+        try {
+            AppWidgetManager.getInstance(this).isRequestPinAppWidgetSupported
+        } catch (e: RemoteException) {
+            Timber.e(e, "Unable to read isRequestPinAppWidgetSupported")
+            false
+        }
+}
+
 fun Context.getActivity(): ComponentActivity? = when (this) {
     is ComponentActivity -> this
     is ContextWrapper -> baseContext.getActivity()
     else -> null
 }
+
+/** Authority of the app `FileProvider`, to share app files through content URIs. */
+val Context.fileProviderAuthority: String
+    get() = packageName + FILE_PROVIDER_AUTHORITY_SUFFIX

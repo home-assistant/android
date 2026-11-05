@@ -69,11 +69,12 @@ import io.homeassistant.companion.android.common.notifications.parseVibrationPat
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
-import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.getActiveNotificationGroup
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.parseExternalIntentUri
@@ -98,6 +99,7 @@ import io.homeassistant.companion.android.settings.assist.DefaultAssistantManage
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.fileProviderAuthority
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -377,12 +379,13 @@ class MessagingManager @Inject constructor(
                 }
 
                 jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL &&
-                    !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
+                    !jsonData[NotificationData.CHANNEL].isNullOrBlank() &&
+                    allowCommands -> {
                     Timber.d("Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
                     removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
                 }
 
-                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS && allowCommands -> {
                     textToSpeechClient.speakText(jsonData)
                 }
 
@@ -646,7 +649,7 @@ class MessagingManager @Inject constructor(
                 }
 
                 else -> {
-                    Timber.d("Creating notification with following data: $jsonData")
+                    Timber.d("Creating notification with following data: ${sensitive { jsonData.toString() }}")
                     sendNotification(jsonData, notificationId, now)
                 }
             }
@@ -724,8 +727,12 @@ class MessagingManager @Inject constructor(
                     if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty()) {
                         intent.setClassName(packageName, className)
                     }
-                    Timber.d("Sending broadcast intent")
-                    context.sendBroadcast(intent)
+                    if (intent.reachesOwnNonExportedReceiver()) {
+                        FailFast.fail { "Blocked broadcast intent to a non-exported component of the app" }
+                    } else {
+                        Timber.d("Sending broadcast intent")
+                        context.sendBroadcast(intent)
+                    }
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to send broadcast intent please check command format")
                     Handler(Looper.getMainLooper()).post {
@@ -1049,12 +1056,10 @@ class MessagingManager @Inject constructor(
             group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
-            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
-                if (notification != null && notification.isGroup) {
-                    previousGroup = NotificationData.GROUP_PREFIX + notification.tag
-                    previousGroupId = previousGroup.hashCode()
-                }
+            val activeGroup = notificationManagerCompat.getActiveNotificationGroup(tag, messageId)
+            if (activeGroup != null) {
+                previousGroup = activeGroup
+                previousGroupId = previousGroup.hashCode()
             }
         }
 
@@ -1152,12 +1157,10 @@ class MessagingManager @Inject constructor(
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
-                if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                    val countdown = notificationWhen > System.currentTimeMillis()
-                    // Without this builder.setChronometerCountDown throws a null reference exception
-                    builder.addExtras(Bundle())
-                    builder.setChronometerCountDown(countdown)
-                }
+                val countdown = notificationWhen > System.currentTimeMillis()
+                // Without this builder.setChronometerCountDown throws a null reference exception
+                builder.addExtras(Bundle())
+                builder.setChronometerCountDown(countdown)
             }
         } catch (e: Exception) {
             Timber.e(e, "Error while handling chronometer notification")
@@ -1426,14 +1429,20 @@ class MessagingManager @Inject constructor(
 
             // delete previous images that are no longer needed
             val imageCutoff = LocalDateTime.now().minusDays(2)
-            context.externalCacheDir?.listFiles()?.filter { file ->
-                file.absolutePath.endsWith("_animated_notification.gif") &&
+            val imageCacheFolderPath = context.externalCacheDir?.absolutePath?.plus("/animated_notification_image")
+            imageCacheFolderPath?.let { path ->
+                val cacheFolder = File(path)
+                // Create folder, if it does not yet exist
+                cacheFolder.mkdir()
+                // Clean up stale images
+                cacheFolder.listFiles()?.filter { file ->
                     imageCutoff.isAfter(
                         LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()),
                     )
-            }?.forEach { expired -> expired.delete() }
+                }?.forEach { expired -> expired.delete() }
+            }
 
-            val file = File(context.externalCacheDir, "${System.currentTimeMillis()}_animated_notification.gif")
+            val file = File(imageCacheFolderPath, "${System.currentTimeMillis()}_animated_notification.gif")
             try {
                 val request = Request.Builder().apply {
                     url(url)
@@ -1449,7 +1458,7 @@ class MessagingManager @Inject constructor(
             } catch (e: Exception) {
                 Timber.e(e, "Couldn't download image for notification")
             }
-            return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+            return@withContext FileProvider.getUriForFile(context, context.fileProviderAuthority, file)
         }
 
     private suspend fun handleVideo(builder: NotificationCompat.Builder, data: Map<String, String>) {
@@ -1782,15 +1791,13 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleReplyHistory(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-            val replies = data.entries
-                .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
-                .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
-            if (replies.any()) {
-                val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
-                builder.setRemoteInputHistory(history)
-                builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
-            }
+        val replies = data.entries
+            .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
+            .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
+        if (replies.any()) {
+            val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
+            builder.setRemoteInputHistory(history)
+            builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
         }
     }
 
@@ -1962,6 +1969,16 @@ class MessagingManager @Inject constructor(
         )
     }
 
+    private fun Intent.reachesOwnNonExportedActivity(): Boolean {
+        val target = resolveActivityInfo(context.packageManager, 0) ?: return false
+        return target.packageName == context.packageName && !target.exported
+    }
+
+    private fun Intent.reachesOwnNonExportedReceiver(): Boolean =
+        context.packageManager.queryBroadcastReceivers(this, 0).any {
+            it.activityInfo.packageName == context.packageName && !it.activityInfo.exported
+        }
+
     private fun processActivityCommand(data: Map<String, String>) {
         try {
             val packageName = data[INTENT_PACKAGE_NAME]
@@ -1981,6 +1998,12 @@ class MessagingManager @Inject constructor(
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             if (!packageName.isNullOrEmpty()) {
                 intent.setPackage(packageName)
+            }
+            if (intent.reachesOwnNonExportedActivity()) {
+                FailFast.fail { "Blocked activity intent to a non-exported component of the app" }
+                return
+            }
+            if (!packageName.isNullOrEmpty()) {
                 context.startActivity(intent)
             } else if (intent.resolveActivity(context.packageManager) != null) {
                 context.startActivity(intent)

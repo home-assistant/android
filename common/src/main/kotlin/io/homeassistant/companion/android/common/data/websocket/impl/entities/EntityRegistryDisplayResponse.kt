@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
  * The command and its initial fields are available since Home Assistant 2023.3
  * (https://github.com/home-assistant/core/pull/87787).
  *
- * See https://developers.home-assistant.io/docs/api/websocket/#fetching-entity-registry-for-display
+ * See https://contributors.home-assistant.io/core/internals/websocket-api/#list-entities-for-display
  */
 @Serializable
 data class EntityRegistryDisplayResponse(
@@ -32,6 +32,8 @@ data class EntityRegistryDisplayEntry(
     @SerialName("pl") val platform: String? = null,
     @SerialName("ai") val areaId: String? = null,
     @SerialName("di") val deviceId: String? = null,
+    /** Next owner of the entity naming context, only sent when set. */
+    @SerialName("np") val nextNamePart: NextNamePart? = null,
     /**
      * Label ids assigned to the entity, only sent when not empty. Available since
      * Home Assistant 2024.3 (https://github.com/home-assistant/core/pull/110821).

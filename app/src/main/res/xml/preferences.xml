@@ -156,6 +156,16 @@
             android:summary="@string/aa_favorites_summary" />
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="media_controls"
+        android:title="@string/media_controls"
+        app:isPreferenceVisible="false">
+        <Preference
+            android:key="manage_media_controls"
+            android:icon="@drawable/ic_play_circle_outline"
+            android:title="@string/media_controls"
+            android:summary="@string/media_controls_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:key="device_controls"
         android:title="@string/controls_setting_category"
         app:isPreferenceVisible="false">
@@ -167,8 +177,7 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:key="quick_settings"
-        android:title="@string/quick_settings"
-        app:isPreferenceVisible="false">
+        android:title="@string/quick_settings">
         <Preference
             android:key="manage_tiles"
             android:icon="@drawable/ic_tile"

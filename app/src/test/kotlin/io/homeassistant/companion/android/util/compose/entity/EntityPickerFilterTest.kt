@@ -25,6 +25,8 @@ class EntityPickerFilterTest {
         name: String,
         areaName: String? = null,
         deviceName: String? = null,
+        parentDeviceName: String? = null,
+        omittedOwnerNames: List<String> = emptyList(),
         isHidden: Boolean = false,
     ) = EntityDisplayWithContext(
         item = EntityDisplayWithoutContext(
@@ -35,9 +37,11 @@ class EntityPickerFilterTest {
         ),
         areaName = areaName,
         deviceName = deviceName,
+        parentDeviceName = parentDeviceName,
+        omittedOwnerNames = omittedOwnerNames,
     )
 
-    // Test helper to create EntityWithSearchFields
+    // Test helper to create EntityWithSearchFields, mirroring the weights used in production.
     private fun createEntityWithSearchFields(entity: EntityDisplayWithContext): EntityWithSearchFields {
         val sortingKey = entity.name.lowercase()
         return EntityWithSearchFields(
@@ -46,6 +50,9 @@ class EntityPickerFilterTest {
             searchableFields = buildList {
                 add(SearchField(sortingKey, 8))
                 entity.deviceName?.let { add(SearchField(it.lowercase(), 7)) }
+                listOfNotNull(entity.parentDeviceName)
+                    .plus(entity.omittedOwnerNames)
+                    .forEach { add(SearchField(it.lowercase(), 6)) }
                 entity.areaName?.let { add(SearchField(it.lowercase(), 6)) }
                 add(SearchField(entity.domain.lowercase(), 6))
                 add(SearchField(entity.entityId.lowercase(), 3))
@@ -465,6 +472,49 @@ class EntityPickerFilterTest {
         assertEquals(1, result.size)
         val entity = assertInstanceOf(EntityDisplayWithContext::class.java, result[0])
         assertEquals("Smart Bulb Pro", entity.deviceName)
+    }
+
+    @Test
+    fun `Given a query matching a parent device or an omitted owner when filtering then returns those entities`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(
+                createTestEntity(
+                    "switch.freezer",
+                    name = "Freezer",
+                    deviceName = "Outlet 1",
+                    parentDeviceName = "Power strip",
+                ),
+            ),
+            createEntityWithSearchFields(
+                createTestEntity(
+                    "switch.garden",
+                    name = "Garden lamp",
+                    omittedOwnerNames = listOf("Outlet 2", "Power strip"),
+                ),
+            ),
+            createEntityWithSearchFields(createTestEntity("fan.ceiling", name = "Ceiling Fan")),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "power strip")
+
+        assertEquals(setOf("Freezer", "Garden lamp"), result.map { it.name }.toSet())
+    }
+
+    @Test
+    fun `Given a query matching one entity's device and another's parent device when filtering then the own device ranks first`() = runTest {
+        val entities = listOf(
+            createEntityWithSearchFields(
+                createTestEntity("switch.lamp", name = "Lamp", parentDeviceName = "Power outlet"),
+            ),
+            createEntityWithSearchFields(
+                createTestEntity("switch.freezer", name = "Freezer", deviceName = "Smart outlet"),
+            ),
+        )
+
+        val result = filterAndSortEntitiesOptimized(entities, "outlet")
+
+        // The entity's own device name outweighs a parent device name, matching the frontend.
+        assertEquals(listOf("Freezer", "Lamp"), result.map { it.name })
     }
 
     @Test

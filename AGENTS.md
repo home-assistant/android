@@ -2,7 +2,7 @@
 
 You are helping develop the Home Assistant Companion for Android, the official Android app for the Home Assistant home automation platform. The app centers around a WebView for Home Assistant's frontend, enhanced with native features like background sensors, notifications, widgets, Wear OS, and Android Automotive. The project is entirely written in Kotlin and must stay that way.
 
-Detailed developer documentation lives at https://developers.home-assistant.io/docs/android (sources at https://github.com/home-assistant/developers.home-assistant).
+Detailed developer documentation lives at https://contributors.home-assistant.io/companion/android/ (sources at https://github.com/home-assistant/contributors.home-assistant.io).
 
 ## Essential Commands
 
