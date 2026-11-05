@@ -376,6 +376,7 @@ class EntityTest {
                             EntityExt.MEDIA_PLAYER_SUPPORT_SEEK or
                             EntityExt.MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK or
                             EntityExt.MEDIA_PLAYER_SUPPORT_NEXT_TRACK or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_STEP or
                             EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE or
                             EntityExt.MEDIA_PLAYER_SUPPORT_SHUFFLE_SET or
                             EntityExt.MEDIA_PLAYER_SUPPORT_REPEAT_SET
@@ -390,6 +391,7 @@ class EntityTest {
             assertTrue(controls.supportsSeek)
             assertTrue(controls.supportsPreviousTrack)
             assertTrue(controls.supportsNextTrack)
+            assertTrue(controls.supportsVolumeStep)
             assertTrue(controls.supportsVolumeMute)
             assertTrue(controls.supportsShuffleSet)
             assertTrue(controls.supportsRepeatSet)

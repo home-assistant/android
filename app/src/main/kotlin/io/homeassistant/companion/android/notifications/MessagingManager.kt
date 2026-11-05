@@ -1056,12 +1056,10 @@ class MessagingManager @Inject constructor(
             group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
-            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                val activeGroup = notificationManagerCompat.getActiveNotificationGroup(tag, messageId)
-                if (activeGroup != null) {
-                    previousGroup = activeGroup
-                    previousGroupId = previousGroup.hashCode()
-                }
+            val activeGroup = notificationManagerCompat.getActiveNotificationGroup(tag, messageId)
+            if (activeGroup != null) {
+                previousGroup = activeGroup
+                previousGroupId = previousGroup.hashCode()
             }
         }
 
@@ -1159,12 +1157,10 @@ class MessagingManager @Inject constructor(
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
-                if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                    val countdown = notificationWhen > System.currentTimeMillis()
-                    // Without this builder.setChronometerCountDown throws a null reference exception
-                    builder.addExtras(Bundle())
-                    builder.setChronometerCountDown(countdown)
-                }
+                val countdown = notificationWhen > System.currentTimeMillis()
+                // Without this builder.setChronometerCountDown throws a null reference exception
+                builder.addExtras(Bundle())
+                builder.setChronometerCountDown(countdown)
             }
         } catch (e: Exception) {
             Timber.e(e, "Error while handling chronometer notification")
@@ -1795,15 +1791,13 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleReplyHistory(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-            val replies = data.entries
-                .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
-                .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
-            if (replies.any()) {
-                val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
-                builder.setRemoteInputHistory(history)
-                builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
-            }
+        val replies = data.entries
+            .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
+            .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
+        if (replies.any()) {
+            val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
+            builder.setRemoteInputHistory(history)
+            builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
         }
     }
 
