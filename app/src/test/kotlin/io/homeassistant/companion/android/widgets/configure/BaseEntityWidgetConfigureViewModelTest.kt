@@ -88,7 +88,7 @@ class BaseEntityWidgetConfigureViewModelTest {
     fun `Given an entity filter when entities are loaded then it is forwarded to the manager`() = runTest {
         val filterSlot = slot<(Entity) -> Boolean>()
         every { entitiesForDisplayManager.snapshotInContext(any(), capture(filterSlot)) } returns
-            flowOf(displayStateOf(light.toDisplayItem()))
+            flowOf(displayStateOf(light.toDisplayItem(), switch.toDisplayItem()))
 
         createViewModel(entityFilter = { it.domain == "light" })
         advanceUntilIdle()
