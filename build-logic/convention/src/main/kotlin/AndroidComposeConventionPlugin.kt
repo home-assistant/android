@@ -10,6 +10,15 @@ private const val SCREENSHOT_TEST_SUITE = "screenshotTest"
 private const val SCREENSHOT_IMAGE_DIFFERENCE_THRESHOLD = 0.00025f // 0.025%
 private const val SCREENSHOT_DEFAULT_TARGET_VARIANT = "debug"
 
+// Screenshot test worker memory grows with test count. Increase as needed.
+// Tracking: https://issuetracker.google.com/issues/469819154
+private const val SCREENSHOT_TEST_MAX_HEAP_SIZE = "3g"
+
+// Most of the worker's footprint is layoutlib's native bitmaps, which sit outside
+// maxHeapSize and are only released when the JVM exits. Restarting the worker every
+// N test classes caps that growth; without it the app module reaches ~15GB on CI.
+private const val SCREENSHOT_TEST_FORK_EVERY = 10L
+
 /**
  * A convention plugin that applies common configurations to Android Compose modules.
  *
@@ -32,6 +41,13 @@ class AndroidComposeConventionPlugin : Plugin<Project> {
                     dependencies {
                         implementation.add(libs.compose.uiTooling)
                         implementation.add(libs.screenshot.validation.api)
+                    }
+                }
+
+                testOptions.customSuites.named(SCREENSHOT_TEST_SUITE) {
+                    configureTestTasks {
+                        maxHeapSize = SCREENSHOT_TEST_MAX_HEAP_SIZE
+                        forkEvery = SCREENSHOT_TEST_FORK_EVERY
                     }
                 }
             }
