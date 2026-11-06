@@ -17,7 +17,11 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ne
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
 import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -28,6 +32,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 /**
@@ -46,7 +52,16 @@ import timber.log.Timber
  * The `observe`/`snapshot` variants resolve from the entity registry only; the `*InContext`
  * variants also resolve the area, floor and device registries into an [EntityDisplayWithContext].
  */
-class EntitiesForDisplayManager @Inject constructor(private val serverManager: ServerManager) {
+@Singleton
+class EntitiesForDisplayManager internal constructor(
+    private val serverManager: ServerManager,
+    private val timeSource: TimeSource,
+) {
+    @Inject
+    constructor(serverManager: ServerManager) : this(serverManager, TimeSource.Monotonic)
+
+    private val registryCacheMutex = Mutex()
+    private val registryCache = mutableMapOf<Int, Pair<TimeMark, EntityRegistryEntries>>()
 
     /**
      * Observes [entityIds] with their display information, or every entity of the server when it is
@@ -101,19 +116,27 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * The flow emits [EntityDisplayState.Loading], then [EntityDisplayState.Error] when none of the
      * entities can be retrieved, otherwise a single [EntityDisplayState.Loaded] holding the entities
      * that could be retrieved, in the requested order.
+     *
+     * Each entity is fetched on its own instead of fetching all the states of the server, as the
+     * callers (Wear OS complications and tiles) only ask for a handful of entities and run on
+     * constrained devices where downloading every state can take long enough to fail.
+     *
+     * The entity registry is shared between calls for [REGISTRY_CACHE_DURATION]: the callers (Wear
+     * OS complications and tiles) run every time the watch screen turns on, and the registry of a
+     * larger server weighs about a megabyte, too much to download and parse that often on a watch.
      */
     fun snapshot(serverId: Int, entityIds: List<String>): Flow<EntityDisplayState<EntityDisplayWithoutContext>> = flow {
         emit(EntityDisplayState.Loading)
 
         if (!hasRegisteredServer()) return@flow
 
-        val entities = fetchEntities(serverId, entityIds)
+        val entities = fetchEntitiesById(serverId, entityIds)
         if (entities.isEmpty()) {
             emit(EntityDisplayState.Error)
             return@flow
         }
 
-        val registryEntries = serverManager.webSocketRepositoryOrNull(serverId).fetchEntityRegistryEntries()
+        val registryEntries = cachedEntityRegistryEntries(serverId)
         emit(EntityDisplayState.Loaded(entities.map { registryEntries.itemFor(it) }))
     }.flowOn(Dispatchers.Default)
 
@@ -242,6 +265,19 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 
         val entitiesById = entities.associateBy { it.entityId }
         return entityIds.mapNotNull { entitiesById[it] }
+    }
+
+    /**
+     * Fetches each of [entityIds] on its own, concurrently, keeping the requested order and
+     * omitting the ones that can't be retrieved.
+     */
+    private suspend fun fetchEntitiesById(serverId: Int, entityIds: List<String>): List<Entity> {
+        val repository = serverManager.integrationRepositoryOrNull(serverId) ?: return emptyList()
+        return coroutineScope {
+            entityIds
+                .map { entityId -> async { orNull("entity $entityId") { repository.getEntity(entityId) } } }
+                .mapNotNull { it.await() }
+        }
     }
 
     /**
@@ -411,6 +447,20 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         return entities
     }
 
+    /**
+     * Entity registry of the server, fetched at most once per [REGISTRY_CACHE_DURATION] however many
+     * callers ask for it concurrently. A registry that couldn't be retrieved isn't kept.
+     */
+    private suspend fun cachedEntityRegistryEntries(serverId: Int): EntityRegistryEntries =
+        registryCacheMutex.withLock {
+            registryCache[serverId]
+                ?.takeIf { (fetchedAt, _) -> fetchedAt.elapsedNow() < REGISTRY_CACHE_DURATION }
+                ?.second
+                ?: serverManager.webSocketRepositoryOrNull(serverId).fetchEntityRegistryEntries().also { entries ->
+                    if (entries.entityIds() != null) registryCache[serverId] = timeSource.markNow() to entries
+                }
+        }
+
     private suspend fun fetchRegistrySnapshot(webSocketRepository: WebSocketRepository?): RegistrySnapshot =
         coroutineScope {
             if (webSocketRepository == null) return@coroutineScope RegistrySnapshot()
@@ -474,6 +524,9 @@ private class EntityRegistryEntries(
 
     /** Classic entry of [entityId], for the callers needing what only it holds (area, device). */
     fun classicEntry(entityId: String): EntityRegistryResponse? = classicEntries?.get(entityId)
+
+    /** Ids of the entities in the registry, or null when no registry could be retrieved. */
+    fun entityIds(): Collection<String>? = displayEntries?.keys ?: classicEntries?.keys
 
     /**
      * Name to display for [entity]: the name of its registry entry, its `friendly_name` state
@@ -579,3 +632,6 @@ private data class RegistrySnapshot(
     val areas: Map<String, AreaRegistryResponse> = emptyMap(),
     val floors: Map<String, FloorRegistryResponse> = emptyMap(),
 )
+
+/** How long [EntitiesForDisplayManager.snapshot] reuses the entity registry it fetched. */
+internal val REGISTRY_CACHE_DURATION = 15.minutes
