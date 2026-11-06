@@ -66,6 +66,17 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         }
         private val ACTION_EXTRA_KEYS = listOf("uri", "behavior", "authenticationRequired")
 
+        /**
+         * Returns whether the worker is running, in which case it holds the foreground service
+         * that WorkManager shares between all the workers.
+         */
+        suspend fun isRunning(context: Context): Boolean {
+            return WorkManager.getInstance(context)
+                .getWorkInfosForUniqueWork(UNIQUE_WORK_NAME)
+                .await()
+                .any { it.state == WorkInfo.State.RUNNING }
+        }
+
         suspend fun start(context: Context) {
             val websocketNotifications =
                 PeriodicWorkRequestBuilder<WebsocketManager>(15, TimeUnit.MINUTES)

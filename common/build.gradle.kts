@@ -48,7 +48,6 @@ dependencies {
     ksp(project(":provides-sensor-processor"))
 
     api(libs.androidx.work.runtime.ktx)
-    implementation(libs.androidx.concurrent.ktx)
 
     // TODO should not expose retrofit outside of common https://github.com/home-assistant/android/issues/5421
     api(platform(libs.retrofit.bom))
@@ -65,6 +64,8 @@ dependencies {
 
     androidTestImplementation(libs.bundles.androidx.test)
     androidTestImplementation(libs.androidx.room.testing)
+
+    testImplementation(libs.androidx.work.testing)
 
     // This fix an issue: provided Metadata instance has version 2.1.0, while maximum supported version is 2.0.0. To support newer versions, update the kotlinx-metadata-jvm library
     lintChecks(libs.androidx.runtime.lint)

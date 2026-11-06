@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
-import androidx.concurrent.futures.await
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import androidx.work.Constraints
@@ -14,7 +13,6 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.hilt.EntryPoint
@@ -31,6 +29,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/**
+ * Tells whether another worker already holds the foreground service that WorkManager shares
+ * between all the workers.
+ *
+ * Which workers hold it is app-specific, so each app module provides its own implementation through Hilt.
+ */
+fun interface WorkerForegroundStateProvider {
+    suspend fun isAlreadyInForeground(): Boolean
+}
+
 class SensorWorker(private val context: Context, workerParams: WorkerParameters) :
     CoroutineWorker(context, workerParams) {
 
@@ -42,14 +50,12 @@ class SensorWorker(private val context: Context, workerParams: WorkerParameters)
         fun lastUpdateManager(): LastUpdateManager
         fun sensorRepository(): SensorRepository
         fun sensorUpdater(): SensorUpdater
+        fun workerForegroundStateProvider(): WorkerForegroundStateProvider
     }
 
     companion object {
         private const val TAG = "SensorWorker"
         private const val NOTIFICATION_ID = 42
-
-        // WARNING: Use the tag from WebsocketManager in :app
-        private const val WEBSOCKET_MANAGER_TAG = "WebSocketManager"
 
         fun start(context: Context) {
             val constraints = Constraints.Builder()
@@ -74,6 +80,7 @@ class SensorWorker(private val context: Context, workerParams: WorkerParameters)
         val checkLocalNetworkPermission = entryPoint.checkLocalNetworkPermission()
         val lastUpdateManager = entryPoint.lastUpdateManager()
         val sensorUpdater = entryPoint.sensorUpdater()
+        val workerForegroundStateProvider = entryPoint.workerForegroundStateProvider()
 
         val enabledSensorCount = sensorRepository.getEnabledCount()
         if (
@@ -86,26 +93,13 @@ class SensorWorker(private val context: Context, workerParams: WorkerParameters)
                 Timber.d("Skipping sensor update: ACCESS_LOCAL_NETWORK permission missing")
                 return@withContext Result.success()
             }
-            createNotificationChannel()
-            val notification = NotificationCompat.Builder(applicationContext, CHANNEL_SENSOR_WORKER)
-                .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
-                .setContentTitle(context.getString(commonR.string.updating_sensors))
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .build()
-
-            val foregroundInfo = ForegroundInfo(
-                NOTIFICATION_ID,
-                notification,
-                determineForegroundServiceType(),
-            )
-            try {
-                setForeground(foregroundInfo)
-                Timber.d("Updating all Sensors in foreground.")
-            } catch (e: IllegalStateException) {
-                // On Android 12+ we might encounter a ForegroundServiceStartNotAllowedException
-                // depending on battery settings and trigger. Because the service also works in the
-                // background, ignore it and continue (doesn't need to be logged as an exception).
-                Timber.d(e, "Updating all Sensors in background.")
+            if (workerForegroundStateProvider.isAlreadyInForeground()) {
+                // WorkManager shares one foreground service between all workers. Adding the time limited dataSync
+                // type to it gets the worker holding it stopped by the system once the limit is reached.
+                // https://github.com/home-assistant/android/issues/7761
+                Timber.d("Updating all Sensors within the foreground service already running.")
+            } else {
+                startForeground()
             }
 
             val lastUpdateSensor = sensorRepository.get(LastUpdateManager.lastUpdate.id)
@@ -123,26 +117,32 @@ class SensorWorker(private val context: Context, workerParams: WorkerParameters)
         Result.success()
     }
 
-    private suspend fun determineForegroundServiceType(): Int {
-        return if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
-//            if (isWebSocketManagerRunning()) {
-//                ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
-//            } else {
-//                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-//            }
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
-        } else if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-        } else {
-            0
-        }.apply { Timber.d("Using Foreground type: $this for updating sensor") }
-    }
+    private suspend fun startForeground() {
+        createNotificationChannel()
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_SENSOR_WORKER)
+            .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
+            .setContentTitle(context.getString(commonR.string.updating_sensors))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
 
-    private suspend fun isWebSocketManagerRunning(): Boolean {
-        return WorkManager.getInstance(applicationContext)
-            .getWorkInfosByTag(WEBSOCKET_MANAGER_TAG)
-            .await()
-            .any { it.state == WorkInfo.State.RUNNING }
+        val foregroundInfo = ForegroundInfo(
+            NOTIFICATION_ID,
+            notification,
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            } else {
+                0
+            },
+        )
+        try {
+            setForeground(foregroundInfo)
+            Timber.d("Updating all Sensors in foreground.")
+        } catch (e: IllegalStateException) {
+            // On Android 12+ we might encounter a ForegroundServiceStartNotAllowedException
+            // depending on battery settings and trigger. Because the service also works in the
+            // background, ignore it and continue (doesn't need to be logged as an exception).
+            Timber.d(e, "Updating all Sensors in background.")
+        }
     }
 
     private fun createNotificationChannel() {
