@@ -77,9 +77,12 @@ class CheckTLSClientAuthNeededUseCase @Inject constructor(
     private fun X509Certificate.subjectAlternativeNamesOrNull(): Collection<List<*>>? = try {
         subjectAlternativeNames
     } catch (e: CertificateParsingException) {
-        // The subject and the host are deliberately kept out of the log: neither belongs in a
-        // crash report, and the exception message can carry both.
-        Timber.w(e, "Unable to read the client certificate SANs, falling back to the Common Name")
+        // Only the exception type is logged: the message can carry the certificate subject and the
+        // host, and neither belongs in a crash report.
+        Timber.w(
+            "Unable to read the client certificate SANs (${e.javaClass.simpleName}), " +
+                "falling back to the Common Name",
+        )
         null
     }
 
