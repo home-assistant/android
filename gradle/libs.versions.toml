@@ -81,7 +81,7 @@ robolectric = "4.17" # Check if robolectric supports a more recent version of th
 robolectric-target-sdk = "37"
 room = "3.0.3"
 runtimeLint = "1.12.1"
-screenshot = "0.0.1-alpha15" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
+screenshot = "0.0.1-alpha17" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
 sentry-android = "8.62.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
@@ -112,7 +112,6 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
-screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 
 # Plugins defined by this project in `:build-logic:convention` module.
 homeassistant-android-application = { id = "homeassistant.android.application" }
@@ -129,7 +128,6 @@ activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activ
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycle" }
-compose-screenshot-gradle-plugin = { group = "com.android.compose.screenshot", name = "screenshot-test-gradle-plugin", version.ref = "screenshot" }
 androidx-concurrent-ktx = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version.ref = "androidxConcurrent" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material = { module = "androidx.glance:glance-material", version.ref = "glance" }
