@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.common.compose.theme
 
+import android.content.pm.ApplicationInfo
+import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -7,7 +9,13 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 
 /**
  * A custom theme built on top of [androidx.compose.material3.MaterialTheme] with Home Assistant colors.
@@ -50,13 +58,37 @@ fun HATheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () 
  * Small wrapper around [HATheme] for previews/screenshot tests which:
  * - applies the theme
  * - adds a container with a background color around the content
+ * - applies the layout direction of the preview locale
  */
 @Composable
 fun HAThemeForPreview(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
-    HATheme {
-        Box(
-            modifier = modifier.background(LocalHAColorScheme.current.colorSurfaceDefault),
-            content = content,
-        )
+    CompositionLocalProvider(LocalLayoutDirection provides previewLayoutDirection()) {
+        HATheme {
+            Box(
+                modifier = modifier.background(LocalHAColorScheme.current.colorSurfaceDefault),
+                content = content,
+            )
+        }
+    }
+}
+
+/**
+ * Layout direction of the preview locale.
+ *
+ * Patch for the preview renderer, which never flags RTL support, so views resolve to LTR whatever
+ * the locale. Flagging it here lets popups follow the direction too.
+ * To remove once https://issuetracker.google.com/issues/582414066 is fixed.
+ */
+@Composable
+@ReadOnlyComposable
+private fun previewLayoutDirection(): LayoutDirection {
+    if (LocalInspectionMode.current) {
+        val applicationInfo = LocalContext.current.applicationInfo
+        applicationInfo.flags = applicationInfo.flags or ApplicationInfo.FLAG_SUPPORTS_RTL
+    }
+    return if (LocalConfiguration.current.layoutDirection == View.LAYOUT_DIRECTION_RTL) {
+        LayoutDirection.Rtl
+    } else {
+        LayoutDirection.Ltr
     }
 }
