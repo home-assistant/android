@@ -3,6 +3,7 @@ package io.homeassistant.companion.android
 import android.app.Application
 import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
@@ -11,19 +12,29 @@ import android.nfc.NfcAdapter
 import android.os.Build
 import android.os.PowerManager
 import androidx.core.content.ContextCompat
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.network.NetworkClient
+import coil3.network.NetworkFetcher
+import coil3.network.NetworkRequest
+import coil3.network.NetworkResponse
+import coil3.network.okhttp.asNetworkClient
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.complications.ComplicationReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.tiles.RefreshIntervalMigration
 import javax.inject.Inject
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import timber.log.Timber
 
 @HiltAndroidApp
@@ -33,9 +44,18 @@ open class HomeAssistantApplication : Application() {
     @Inject
     lateinit var refreshIntervalMigration: RefreshIntervalMigration
 
+    @Inject
+    lateinit var okHttpClientProvider: SuspendProvider<OkHttpClient>
+
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
         Timber.plant(Timber.DebugTree())
+        val networkClient = CompletableDeferred<NetworkClient>()
+        // Register the image loader as early as possible, before anything (e.g. a tile) can request
+        // an image: the first Coil access creates the singleton, and if its default loader is created
+        // first, initializeCoil() crashes when it calls setSafe().
+        initializeCoil { networkClient.await() }
+
         super.onCreate()
 
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.S) &&
@@ -48,6 +68,10 @@ open class HomeAssistantApplication : Application() {
         Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $SdkVersion")
 
         configureComposeDiagnosticStackTrace(isDebug = BuildConfig.DEBUG)
+
+        ioScope.launch {
+            networkClient.complete(okHttpClientProvider().asNetworkClient())
+        }
 
         ioScope.launch {
             refreshIntervalMigration.migrate()
@@ -182,4 +206,19 @@ open class HomeAssistantApplication : Application() {
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
     }
+}
+
+private fun Context.initializeCoil(networkClient: suspend () -> NetworkClient) {
+    SingletonImageLoader.setSafe {
+        ImageLoader.Builder(this)
+            .components { add(NetworkFetcher.Factory(networkClient = { deferredNetworkClient { networkClient() } })) }
+            .build()
+    }
+}
+
+private fun deferredNetworkClient(client: suspend () -> NetworkClient): NetworkClient = object : NetworkClient {
+    override suspend fun <T> executeRequest(
+        request: NetworkRequest,
+        block: suspend (response: NetworkResponse) -> T,
+    ): T = client().executeRequest(request, block)
 }

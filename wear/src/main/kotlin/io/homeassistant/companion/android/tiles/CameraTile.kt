@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import androidx.core.graphics.scale
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.CONTENT_SCALE_MODE_FIT
@@ -15,6 +13,15 @@ import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
+import coil3.imageLoader
+import coil3.request.CachePolicy
+import coil3.request.ErrorResult
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.size.Precision
+import coil3.size.Scale
+import coil3.toBitmap
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -22,14 +29,15 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
-import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.util.UrlUtil
 import java.io.ByteArrayOutputStream
+import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,8 +46,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -51,6 +57,9 @@ class CameraTile : TileService() {
         const val DEFAULT_REFRESH_INTERVAL = 3600L // 1 hour, matching phone widget
 
         private const val RESOURCE_SNAPSHOT = "snapshot"
+
+        private const val ATTRIBUTE_ENTITY_PICTURE = "entity_picture"
+        private const val SNAPSHOT_JPEG_QUALITY = 100
     }
 
     private val serviceJob = Job()
@@ -61,9 +70,6 @@ class CameraTile : TileService() {
 
     @Inject
     lateinit var wearPrefsRepository: WearPrefsRepository
-
-    @Inject
-    lateinit var okHttpClientProvider: SuspendProvider<OkHttpClient>
 
     @Inject
     lateinit var cameraTileDao: CameraTileDao
@@ -114,74 +120,7 @@ class CameraTile : TileService() {
 
     override fun onTileResourcesRequest(requestParams: RequestBuilders.ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
-            var imageWidth = 0
-            var imageHeight = 0
-            val imageData = if (serverManager.isRegistered()) {
-                val tileId = requestParams.tileId
-                val tileConfig = cameraTileDao.get(tileId)
-
-                try {
-                    val entity = tileConfig?.entityId?.let {
-                        serverManager.integrationRepository().getEntity(it)
-                    }
-                    val picture = entity?.attributes?.get("entity_picture")?.toString()
-                    val urlState = serverManager.connectionStateProvider().urlFlow().first()
-                    val baseUrl = if (urlState is UrlState.HasUrl) {
-                        urlState.url
-                    } else {
-                        null
-                    }
-                    val url = UrlUtil.handle(baseUrl, picture ?: "")
-                    if (picture != null && url != null) {
-                        var byteArray: ByteArray?
-                        val maxWidth =
-                            requestParams.deviceConfiguration.screenWidthDp *
-                                requestParams.deviceConfiguration.screenDensity
-                        val maxHeight =
-                            requestParams.deviceConfiguration.screenHeightDp *
-                                requestParams.deviceConfiguration.screenDensity
-                        withContext(Dispatchers.IO) {
-                            val response = okHttpClientProvider().newCall(Request.Builder().url(url).build()).execute()
-                            byteArray = response.body.byteStream().readBytes()
-                            var bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-                            if (bitmap.width > maxWidth || bitmap.height > maxHeight) {
-                                Timber.d(
-                                    "Scaling camera snapshot to fit screen (${bitmap.width}x${bitmap.height} to ${maxWidth.toInt()}x${maxHeight.toInt()} max)",
-                                )
-                                val currentRatio = (bitmap.width.toFloat() / bitmap.height.toFloat())
-                                val screenRatio = (
-                                    requestParams.deviceConfiguration.screenWidthDp.toFloat() /
-                                        requestParams.deviceConfiguration.screenHeightDp.toFloat()
-                                    )
-                                imageWidth = maxWidth.toInt()
-                                imageHeight = maxHeight.toInt()
-                                if (currentRatio > screenRatio) {
-                                    imageWidth = (maxHeight * currentRatio).toInt()
-                                } else {
-                                    imageHeight = (maxWidth / currentRatio).toInt()
-                                }
-                                bitmap = bitmap.scale(imageWidth, imageHeight)
-                                ByteArrayOutputStream().use { stream ->
-                                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                                    byteArray = stream.toByteArray()
-                                }
-                            } else {
-                                imageWidth = bitmap.width
-                                imageHeight = bitmap.height
-                            }
-                            response.close()
-                        }
-                        byteArray
-                    } else {
-                        null
-                    }
-                } catch (e: Exception) {
-                    Timber.e(e, "Unable to fetch entity ${tileConfig?.entityId}")
-                    null
-                }
-            } else {
-                null
-            }
+            val snapshot = if (serverManager.isRegistered()) loadSnapshot(requestParams) else null
 
             val builder = Resources.Builder()
                 .setVersion(requestParams.version)
@@ -194,15 +133,15 @@ class CameraTile : TileService() {
                                 .build(),
                         ).build(),
                 )
-            if (imageData != null) {
+            if (snapshot != null) {
                 builder.addIdToImageMapping(
                     RESOURCE_SNAPSHOT,
                     ImageResource.Builder()
                         .setInlineResource(
                             InlineImageResource.Builder()
-                                .setData(imageData)
-                                .setWidthPx(imageWidth)
-                                .setHeightPx(imageHeight)
+                                .setData(snapshot.data)
+                                .setWidthPx(snapshot.width)
+                                .setHeightPx(snapshot.height)
                                 .setFormat(ResourceBuilders.IMAGE_FORMAT_UNDEFINED)
                                 .build(),
                         )
@@ -241,6 +180,66 @@ class CameraTile : TileService() {
         serviceScope.cancel()
     }
 
+    private suspend fun loadSnapshot(requestParams: RequestBuilders.ResourcesRequest): Snapshot? {
+        val tileConfig = cameraTileDao.get(requestParams.tileId)
+        return try {
+            val entity = tileConfig?.entityId?.let {
+                serverManager.integrationRepository().getEntity(it)
+            }
+            val picture = entity?.attributes?.get(ATTRIBUTE_ENTITY_PICTURE)?.toString()
+            val urlState = serverManager.connectionStateProvider().urlFlow().first()
+            val baseUrl = if (urlState is UrlState.HasUrl) {
+                urlState.url
+            } else {
+                null
+            }
+            val url = UrlUtil.handle(baseUrl, picture ?: "")
+            if (picture != null && url != null) {
+                val deviceConfiguration = requestParams.deviceConfiguration
+                downloadSnapshot(
+                    url = url,
+                    maxWidth = (deviceConfiguration.screenWidthDp * deviceConfiguration.screenDensity).toInt(),
+                    maxHeight = (deviceConfiguration.screenHeightDp * deviceConfiguration.screenDensity).toInt(),
+                )
+            } else {
+                null
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Unable to fetch entity ${tileConfig?.entityId}")
+            null
+        }
+    }
+
+    private suspend fun downloadSnapshot(url: URL, maxWidth: Int, maxHeight: Int): Snapshot? {
+        val request = ImageRequest.Builder(this)
+            .data(url.toString())
+            // The bitmap is compressed to be sent to the tile renderer, which needs it software-backed
+            .allowHardware(false)
+            // The snapshot URL is stable while its content changes, always fetch it
+            .memoryCachePolicy(CachePolicy.DISABLED)
+            .diskCachePolicy(CachePolicy.DISABLED)
+            // Downscale snapshots larger than the screen, without upscaling smaller ones
+            .size(maxWidth, maxHeight)
+            .scale(Scale.FIT)
+            .precision(Precision.INEXACT)
+            .build()
+        return when (val result = imageLoader.execute(request)) {
+            is SuccessResult -> result.image.toBitmap().toSnapshot()
+
+            is ErrorResult -> {
+                Timber.e(result.throwable, "Unable to download camera snapshot")
+                null
+            }
+        }
+    }
+
+    private fun Bitmap.toSnapshot(): Snapshot = ByteArrayOutputStream().use { stream ->
+        compress(Bitmap.CompressFormat.JPEG, SNAPSHOT_JPEG_QUALITY, stream)
+        Snapshot(data = stream.toByteArray(), width = width, height = height)
+    }
+
     private fun timeline(width: Int, height: Int): Timeline = Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
             // Camera image
@@ -259,3 +258,6 @@ class CameraTile : TileService() {
         }.build(),
     )
 }
+
+/** A camera snapshot encoded as JPEG along with its size in pixels. */
+private class Snapshot(val data: ByteArray, val width: Int, val height: Int)
