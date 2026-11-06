@@ -76,6 +76,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 
+private const val STATUS_BAR_HEIGHT_PX = 48
+private const val NAVIGATION_BAR_HEIGHT_PX = 24
+
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 @HiltAndroidTest
@@ -1176,6 +1179,3 @@ private class FakeConnectionErrorStateProvider(
         MutableStateFlow(ConnectivityCheckState())
     override fun runConnectivityChecks() = Unit
 }
-
-private const val STATUS_BAR_HEIGHT_PX = 48
-private const val NAVIGATION_BAR_HEIGHT_PX = 24
