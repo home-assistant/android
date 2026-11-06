@@ -73,7 +73,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                     "minimalImplementation"(libs.media3.datasource.cronet) {
                         exclude(group = "com.google.android.gms", module = "play-services-cronet")
                     }
-                    "minimalImplementation"(libs.cronet.embedded)
+                    "minimalImplementation"(libs.cronet.bundled)
 
                     "implementation"(libs.compose.animation)
                     "implementation"(libs.compose.material)

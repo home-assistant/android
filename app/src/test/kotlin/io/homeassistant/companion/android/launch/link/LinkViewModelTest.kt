@@ -52,7 +52,7 @@ class LinkViewModelTest {
     }
 
     @Test
-    fun `Given Webview destination when onLinkReceived then NavigateToWebView event is emitted`() = runTest {
+    fun `Given Webview destination when onLinkReceived then NavigateToWebView event is sent`() = runTest {
         coEvery { linkHandler.handleLink(any()) } returns LinkDestination.Webview(FrontendTarget.Path("/lovelace"), serverId = 3)
 
         val viewModel = createViewModel()
@@ -63,7 +63,7 @@ class LinkViewModelTest {
     }
 
     @Test
-    fun `Given Onboarding destination when onLinkReceived then OpenInvitation event is emitted`() = runTest {
+    fun `Given Onboarding destination when onLinkReceived then OpenInvitation event is sent`() = runTest {
         coEvery { linkHandler.handleLink(any()) } returns LinkDestination.Onboarding("http://homeassistant.local:8123")
 
         val viewModel = createViewModel()
@@ -74,7 +74,7 @@ class LinkViewModelTest {
     }
 
     @Test
-    fun `Given NoDestination when onLinkReceived then Finish event is emitted`() = runTest {
+    fun `Given NoDestination when onLinkReceived then Finish event is sent`() = runTest {
         coEvery { linkHandler.handleLink(any()) } returns LinkDestination.NoDestination
 
         val viewModel = createViewModel()
@@ -85,7 +85,7 @@ class LinkViewModelTest {
     }
 
     @Test
-    fun `Given a null uri when onLinkReceived then FailFast triggers and a Finish event is emitted`() = runTest {
+    fun `Given a null uri when onLinkReceived then FailFast triggers and a Finish event is sent`() = runTest {
         var failFastTriggered = false
         FailFast.setHandler { _, _ -> failFastTriggered = true }
 
@@ -119,7 +119,7 @@ class LinkViewModelTest {
     }
 
     @Test
-    fun `Given no ChoosingServer state when onServerSelected then no event is emitted`() = runTest {
+    fun `Given no ChoosingServer state when onServerSelected then no event is sent`() = runTest {
         val viewModel = createViewModel()
         viewModel.navigationEvents.test {
             viewModel.onServerSelected(serverId = 2)
@@ -128,7 +128,7 @@ class LinkViewModelTest {
     }
 
     @Test
-    fun `When onServerChooserDismissed then Finish event is emitted`() = runTest {
+    fun `When onServerChooserDismissed then Finish event is sent`() = runTest {
         val viewModel = createViewModel()
         viewModel.navigationEvents.test {
             viewModel.onServerChooserDismissed()

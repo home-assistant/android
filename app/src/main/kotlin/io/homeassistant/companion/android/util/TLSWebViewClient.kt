@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -22,12 +23,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-/*
- * [TLSWebViewClient] is on the onboarding module for convenience, since we don't have yet
- * a place to share components between app modules. Common is shared with wear and
- * we don't want the webview code in the wear app.
- */
-
+@SuppressLint("MissingOnRenderProcessGone")
 open class TLSWebViewClient(
     private val keyChainRepository: KeyChainRepository,
     private val clientCertProvider: ClientCertProvider,

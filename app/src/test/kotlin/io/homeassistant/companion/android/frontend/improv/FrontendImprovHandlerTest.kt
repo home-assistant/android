@@ -377,7 +377,7 @@ class FrontendImprovHandlerTest {
     }
 
     @Test
-    fun `Given onDismissed with provisioned domain on old HA then emits ReloadAtPath event`() = runTest {
+    fun `Given onDismissed with provisioned domain on old HA then sends ReloadAtPath event`() = runTest {
         coEvery { serverManager.getServer(1) } returns mockk(relaxed = true) {
             every { version } returns HomeAssistantVersion(year = 2025, month = 5, release = 0)
         }

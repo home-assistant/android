@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.widgets.entity
 
+import android.content.Context
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
@@ -42,6 +42,7 @@ class EntityWidgetConfigureViewModelTest {
     private val dao = mockk<StaticWidgetDao>(relaxUnitFun = true)
     private val integrationRepository = mockk<IntegrationRepository>()
     private val serverManager = mockk<ServerManager>()
+    private val widgetContext = mockk<Context>(relaxed = true)
     private val entitiesForDisplayManager = mockk<EntitiesForDisplayManager>()
 
     private val widgetId = 42
@@ -90,17 +91,6 @@ class EntityWidgetConfigureViewModelTest {
     }
 
     @Test
-    fun `Given servers when created then they are exposed as dropdown items`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertEquals(
-            listOf(HADropdownItem(key = serverId, label = "Home")),
-            viewModel.state.value.serversDropdownItems,
-        )
-    }
-
-    @Test
     fun `Given a selected entity when attributes are loaded then they are sorted and exposed`() = runTest {
         val viewModel = createViewModel(entity.entityId)
         advanceUntilIdle()
@@ -123,7 +113,7 @@ class EntityWidgetConfigureViewModelTest {
         viewModel.onTextColorSelected(BLACK_HEX)
         advanceUntilIdle()
 
-        assertTrue(viewModel.updateWidgetConfiguration())
+        assertTrue(viewModel.updateWidgetConfiguration(widgetContext))
 
         coVerify {
             dao.add(

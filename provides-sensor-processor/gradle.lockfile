@@ -2,14 +2,14 @@
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
 # To regenerate this file, run: ./gradlew :provides-sensor-processor:dependencies --write-locks
-ch.qos.logback:logback-classic:1.6.5=ktlint
-ch.qos.logback:logback-core:1.6.5=ktlint
+ch.qos.logback:logback-classic:1.6.6=ktlint
+ch.qos.logback:logback-core:1.6.6=ktlint
 com.github.ajalt.clikt:clikt-jvm:5.0.2=ktlint
 com.github.ajalt.clikt:clikt:5.0.2=ktlint
 com.github.ben-manes.caffeine:caffeine:2.9.3=detekt
-com.google.devtools.ksp:symbol-processing-aa-embeddable:2.3.12=testCompileClasspath,testRuntimeClasspath
-com.google.devtools.ksp:symbol-processing-api:2.3.12=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
-com.google.devtools.ksp:symbol-processing-common-deps:2.3.12=testCompileClasspath,testRuntimeClasspath
+com.google.devtools.ksp:symbol-processing-aa-embeddable:2.3.13=testCompileClasspath,testRuntimeClasspath
+com.google.devtools.ksp:symbol-processing-api:2.3.13=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+com.google.devtools.ksp:symbol-processing-common-deps:2.3.13=testCompileClasspath,testRuntimeClasspath
 com.google.errorprone:error_prone_annotations:2.10.0=detekt
 com.pinterest.ktlint:ktlint-cli-reporter-baseline:1.5.0=ktlint,ktlintBaselineReporter
 com.pinterest.ktlint:ktlint-cli-reporter-checkstyle:1.5.0=ktlint

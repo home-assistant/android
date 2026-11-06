@@ -313,6 +313,33 @@ class EntityTest {
         }
 
         @Test
+        fun `Given a light on when getting the brightness then it is its level`() {
+            val entity = createEntity(
+                state = "on",
+                attributes = mapOf("supported_color_modes" to listOf("brightness"), "brightness" to 255),
+            )
+
+            assertEquals(EntityPosition(value = 100f, min = 0f, max = 100f), entity.getLightBrightness())
+        }
+
+        @Test
+        fun `Given a dimmable light off when getting the brightness then it is zero`() {
+            val entity = createEntity(
+                state = "off",
+                attributes = mapOf("supported_color_modes" to listOf("brightness"), "brightness" to 255),
+            )
+
+            assertEquals(EntityPosition(value = 0f, min = 0f, max = 100f), entity.getLightBrightness())
+        }
+
+        @Test
+        fun `Given a light without brightness support when getting the brightness then it is null`() {
+            val entity = createEntity(state = "on", attributes = mapOf("supported_color_modes" to listOf("onoff")))
+
+            assertNull(entity.getLightBrightness())
+        }
+
+        @Test
         fun `Given a media player supporting volume when getting media player controls then volume is resolved`() {
             val entity = createEntity(
                 entityId = "media_player.tv",
@@ -349,6 +376,7 @@ class EntityTest {
                             EntityExt.MEDIA_PLAYER_SUPPORT_SEEK or
                             EntityExt.MEDIA_PLAYER_SUPPORT_PREVIOUS_TRACK or
                             EntityExt.MEDIA_PLAYER_SUPPORT_NEXT_TRACK or
+                            EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_STEP or
                             EntityExt.MEDIA_PLAYER_SUPPORT_VOLUME_MUTE or
                             EntityExt.MEDIA_PLAYER_SUPPORT_SHUFFLE_SET or
                             EntityExt.MEDIA_PLAYER_SUPPORT_REPEAT_SET
@@ -363,6 +391,7 @@ class EntityTest {
             assertTrue(controls.supportsSeek)
             assertTrue(controls.supportsPreviousTrack)
             assertTrue(controls.supportsNextTrack)
+            assertTrue(controls.supportsVolumeStep)
             assertTrue(controls.supportsVolumeMute)
             assertTrue(controls.supportsShuffleSet)
             assertTrue(controls.supportsRepeatSet)
