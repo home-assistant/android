@@ -71,6 +71,10 @@ internal interface WebSocketCore {
      * @param data a key/value map of additional data to be included in the subscription message, for
      *             example the `event_type` + value when subscribing with `subscribe_events`
      * @param timeout timeout until the subscription is ended after the flow is no longer collected
+     * @param shareExisting whether an existing identical subscription is returned. Its flow doesn't replay
+     *             the events already delivered, so callers needing the first event of the
+     *             subscription (like the initial states of `subscribe_entities`) pass false to get a
+     *             subscription of their own
      * @return a Flow that will emit messages delivered to this subscription, or `null` if an error
      *         occurred
      */
@@ -78,6 +82,7 @@ internal interface WebSocketCore {
         type: String,
         data: Map<String, Any?> = mapOf(),
         timeout: kotlin.time.Duration = kotlin.time.Duration.ZERO,
+        shareExisting: Boolean = true,
     ): Flow<T>?
 
     fun shutdown()

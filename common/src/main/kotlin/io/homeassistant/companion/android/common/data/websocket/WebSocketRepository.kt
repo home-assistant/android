@@ -60,6 +60,13 @@ interface WebSocketRepository {
     suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>?
     suspend fun getCompressedStateAndChanges(): Flow<CompressedStateChangedEvent>?
     suspend fun getCompressedStateAndChanges(entityIds: List<String>): Flow<CompressedStateChangedEvent>?
+
+    /**
+     * Like [getCompressedStateAndChanges] for [entityIds], on a subscription of its own: its first
+     * event always holds the current state of the entities, even when another caller already follows
+     * the same ones (a shared subscription doesn't replay that first event).
+     */
+    suspend fun getCompressedStateAndChangesFromStart(entityIds: List<String>): Flow<CompressedStateChangedEvent>?
     suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>?
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?

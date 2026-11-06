@@ -270,15 +270,17 @@ class MainViewModel @Inject constructor(
      * with their display information. Emissions are complete snapshots, so each one replaces the
      * state of the screen.
      *
-     * Collected on [Dispatchers.Default]: an emission walks every entity of the server, and
-     * regroups them when [groupingKey] changed, which is too much work for the main thread the
-     * caller collects from.
+     * Only the entities of these domains are downloaded and followed, not every entity of the
+     * server: other domains (sensors above all) can hold thousands of entities whose states change
+     * constantly, which a watch can't afford.
+     *
+     * Collected on [Dispatchers.Default]: an emission walks every observed entity, and regroups
+     * them when [groupingKey] changed, which is too much work for the main thread the caller
+     * collects from.
      */
     suspend fun observeEntities() = withContext(Dispatchers.Default) {
         entitiesForDisplayManager
-            .observeInContext(ServerManager.SERVER_ID_ACTIVE) {
-                it.domain in supportedDomains() || it.domain in tileDomains
-            }
+            .observeDomainsInContext(ServerManager.SERVER_ID_ACTIVE, (supportedDomains() + tileDomains).toSet())
             .collect { state ->
                 if (state !is EntityDisplayState.Loaded) return@collect
 

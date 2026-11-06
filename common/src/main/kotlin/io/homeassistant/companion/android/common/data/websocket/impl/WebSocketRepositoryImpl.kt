@@ -312,6 +312,14 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getCompressedStateAndChanges(entityIds: List<String>): Flow<CompressedStateChangedEvent>? =
         webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES, mapOf("entity_ids" to entityIds))
 
+    override suspend fun getCompressedStateAndChangesFromStart(
+        entityIds: List<String>,
+    ): Flow<CompressedStateChangedEvent>? = webSocketCore.subscribeTo(
+        SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+        mapOf("entity_ids" to entityIds),
+        shareExisting = false,
+    )
+
     override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? =
         subscribeToEventsForType(EVENT_AREA_REGISTRY_UPDATED)
 

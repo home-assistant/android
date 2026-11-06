@@ -1194,6 +1194,55 @@ class WebSocketCoreImplTest {
         }
 
         @Test
+        fun `Given an existing subscription When subscribing to the same one without sharing Then a new subscription is made and each unsubscribes its own id`() = runTest {
+            // We need a dedicated scope with unconfined dispatcher that we can control to properly close the flows
+            val subscriptionScope = TestScope(UnconfinedTestDispatcher())
+            setupServer(backgroundScope = subscriptionScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            // Messages sent by subscribeTo to request for events, then by the unsubscribes
+            (2L..5L).forEach { mockResultSuccessForId(it) }
+
+            turbineScope {
+                val sharedFlow = checkNotNull(
+                    webSocketCore.subscribeTo<StateChangedEvent>(
+                        SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                        mapOf("event_type" to "state_changed"),
+                    ),
+                ).testIn(this, name = "Shared flow")
+                val ownFlow = checkNotNull(
+                    webSocketCore.subscribeTo<StateChangedEvent>(
+                        SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                        mapOf("event_type" to "state_changed"),
+                        shareExisting = false,
+                    ),
+                ).testIn(this, name = "Own flow")
+
+                assertEquals(2, webSocketCore.activeMessages.size)
+                verify(exactly = 2) { mockConnection.send(match<String> { it.contains("subscribe_events") && !it.contains("unsubscribe") }) }
+
+                // Each subscription only receives the events of its own id
+                webSocketListener.onMessage(mockConnection, """{"id":3, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""")
+                assertEquals("light.bed_light", ownFlow.awaitItem().entityId)
+                sharedFlow.expectNoEvents()
+
+                ownFlow.cancel()
+                testScheduler.advanceUntilIdle()
+                verify(exactly = 1) { mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":3""") }) }
+                verify(exactly = 0) { mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") }) }
+
+                // The shared subscription keeps receiving its events
+                webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:28.265429+00:00", "data": {"entity_id":"light.kitchen"}}}""")
+                assertEquals("light.kitchen", sharedFlow.awaitItem().entityId)
+
+                sharedFlow.cancel()
+                testScheduler.advanceUntilIdle()
+                verify(exactly = 1) { mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") }) }
+            }
+        }
+
+        @Test
         fun `Given an unknown event received When listening for messages Then it unsubscribes from the event`() = runTest {
             // The unsubscribes message is sent from the background so we need to control it
             val customScope = TestScope(UnconfinedTestDispatcher())

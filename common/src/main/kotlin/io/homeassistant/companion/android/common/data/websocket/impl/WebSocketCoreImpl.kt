@@ -665,6 +665,7 @@ internal class WebSocketCoreImpl(
         type: String,
         data: Map<String, Any?>,
         timeout: kotlin.time.Duration,
+        shareExisting: Boolean,
     ): Flow<T>? {
         val subscribeMessage = buildMap {
             put("type", type)
@@ -673,7 +674,7 @@ internal class WebSocketCoreImpl(
 
         return eventSubscriptionMutex.withLock<Flow<T>?> {
             ( // Check for existing subscription before creating a new one
-                findSubscription(subscribeMessage)?.second?.eventFlow
+                findSubscription(subscribeMessage)?.second?.eventFlow?.takeIf { shareExisting }
                     ?: createSubscriptionFlow<T>(subscribeMessage, timeout)
                 ) as? Flow<T>
         }
@@ -804,7 +805,9 @@ internal class WebSocketCoreImpl(
             awaitClose {
                 wsScope.launch {
                     eventSubscriptionMutex.withLock {
-                        findSubscription(subscribeMessage)?.let { (subscriptionId, subscription) ->
+                        // Found by channel rather than by message: identical subscriptions that
+                        // aren't shared each end their own
+                        findSubscription(channel)?.let { (subscriptionId, subscription) ->
                             Timber.d("Unsubscribing from ${sensitive { subscribeMessage.toString() }}")
                             // Unsubscribe must happen before removing from activeMessages to ensure
                             // the server acknowledges before we stop handling events for this subscription
@@ -842,7 +845,7 @@ internal class WebSocketCoreImpl(
         )
         if (response == null || response.success != true) {
             Timber.e("Unable to subscribe to ${sensitive { subscribeMessage.toString() }}")
-            findSubscription(subscribeMessage)?.let { (subscriptionId, _) -> activeMessages.remove(subscriptionId) }
+            findSubscription(channel)?.let { (subscriptionId, _) -> activeMessages.remove(subscriptionId) }
             return null
         } else {
             return flow
@@ -855,6 +858,12 @@ internal class WebSocketCoreImpl(
      * Resubscription attempts are tracked as [ActiveMessage.Reconnecting] and never match, so one
      * logical subscription always has exactly one matching entry.
      */
+    /** Subscription delivering its events to [onEvent], the channel created for it. */
+    private fun findSubscription(onEvent: Channel<*>): Pair<Long, ActiveMessage.Subscription>? =
+        activeMessages.firstNotNullOfOrNull { (id, message) ->
+            (message as? ActiveMessage.Subscription)?.takeIf { it.onEvent === onEvent }?.let { id to it }
+        }
+
     private fun findSubscription(subscribeMessage: Map<String, Any?>): Pair<Long, ActiveMessage.Subscription>? {
         return activeMessages.firstNotNullOfOrNull { (id, message) ->
             if (message is ActiveMessage.Subscription && message.request.message == subscribeMessage) {
