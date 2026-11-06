@@ -169,6 +169,11 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 _isLoadingFlow.update { false }
                 updateEffectiveBaseUrl(url)
             },
+            onClientCertRequested = { host, port ->
+                // Remember the endpoint while it is known to need mTLS: a later connection can
+                // resume this TLS session without a new CertificateRequest.
+                viewModelScope.launch { prefsRepository.rememberClientCertRequestedEndpoint(host, port) }
+            },
         )
     }
 
@@ -271,9 +276,10 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                             url = effectiveUrl.value,
                             authCode = code,
                             // The WebView may have resumed a TLS session without a
-                            // CertificateRequest, so also check the loaded certificate chain.
+                            // CertificateRequest, so also consult what was recorded for this
+                            // endpoint and, failing that, the loaded certificate chain.
                             requiredMTLS = isTLSClientAuthNeeded ||
-                                checkTLSClientAuthNeededUseCase(rawHttpUrl?.host),
+                                checkTLSClientAuthNeededUseCase(effectiveUrl.value.toHttpUrlOrNull()),
                         ),
                     )
                 }

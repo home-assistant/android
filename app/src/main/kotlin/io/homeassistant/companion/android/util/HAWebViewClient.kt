@@ -69,6 +69,8 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
      * @param onSubresourceSslError Optional callback when an SSL error occurs on a resource other than
      *        the main URL being loaded. Receives the URL of the failing resource. The frontend itself
      *        is unaffected, so this is a notice rather than a connection error.
+     * @param onClientCertRequested Optional callback when the server asks for a client certificate,
+     *        receiving its host and port so the endpoint can be remembered for later connections.
      */
     suspend fun create(
         currentUrlFlow: StateFlow<String?>,
@@ -86,6 +88,7 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
         )? = null,
         onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
         onSubresourceSslError: ((url: String?) -> Unit)? = null,
+        onClientCertRequested: ((host: String, port: Int) -> Unit)? = null,
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
@@ -98,6 +101,7 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
             onReceivedHttpAuthRequest = onReceivedHttpAuthRequest,
             onCanGoBackChanged = onCanGoBackChanged,
             onSubresourceSslError = onSubresourceSslError,
+            onClientCertRequested = onClientCertRequested,
         )
     }
 }
@@ -121,7 +125,8 @@ class HAWebViewClient internal constructor(
     )?,
     private val onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
     private val onSubresourceSslError: ((url: String?) -> Unit)? = null,
-) : TLSWebViewClient(keyChainRepository, clientCertProvider) {
+    onClientCertRequested: ((host: String, port: Int) -> Unit)? = null,
+) : TLSWebViewClient(keyChainRepository, clientCertProvider, onClientCertRequested) {
 
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
     private var lastResourceUrl: String? = null

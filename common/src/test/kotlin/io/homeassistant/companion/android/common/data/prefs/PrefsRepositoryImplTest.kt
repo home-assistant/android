@@ -446,4 +446,58 @@ class PrefsRepositoryImplTest {
             coVerify { localStorage.putInt(key, currentVersionCode) }
         }
     }
+
+    @Nested
+    inner class ClientCertEndpoints {
+        @Test
+        fun `Given no recorded endpoints when checking then returns false`() = runTest {
+            coEvery { localStorage.getStringSet("client_cert_endpoints") } returns null
+
+            assertFalse(repository.hasClientCertBeenRequested("homeassistant.local", 8123))
+        }
+
+        @Test
+        fun `Given a recorded endpoint when checking it then returns true`() = runTest {
+            coEvery { localStorage.getStringSet("client_cert_endpoints") } returns
+                setOf("homeassistant.local:8123")
+
+            assertTrue(repository.hasClientCertBeenRequested("homeassistant.local", 8123))
+            assertFalse(repository.hasClientCertBeenRequested("homeassistant.local", 8443))
+            assertFalse(repository.hasClientCertBeenRequested("other.local", 8123))
+        }
+
+        @Test
+        fun `Given a host in a different case when checking then it matches`() = runTest {
+            coEvery { localStorage.getStringSet("client_cert_endpoints") } returns
+                setOf("homeassistant.local:8123")
+
+            assertTrue(repository.hasClientCertBeenRequested("HomeAssistant.Local", 8123))
+        }
+
+        @Test
+        fun `Given a new endpoint when remembering then it is added to the stored set`() = runTest {
+            coEvery { localStorage.getStringSet("client_cert_endpoints") } returns
+                setOf("other.local:8123")
+            coEvery { localStorage.putStringSet(any(), any()) } returns Unit
+
+            repository.rememberClientCertRequestedEndpoint("homeassistant.local", 8123)
+
+            coVerify(exactly = 1) {
+                localStorage.putStringSet(
+                    "client_cert_endpoints",
+                    setOf("other.local:8123", "homeassistant.local:8123"),
+                )
+            }
+        }
+
+        @Test
+        fun `Given an already recorded endpoint when remembering again then storage is not written`() = runTest {
+            coEvery { localStorage.getStringSet("client_cert_endpoints") } returns
+                setOf("homeassistant.local:8123")
+
+            repository.rememberClientCertRequestedEndpoint("homeassistant.local", 8123)
+
+            coVerify(exactly = 0) { localStorage.putStringSet(any(), any()) }
+        }
+    }
 }

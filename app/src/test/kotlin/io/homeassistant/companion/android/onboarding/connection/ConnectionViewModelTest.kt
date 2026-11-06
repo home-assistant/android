@@ -26,14 +26,18 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.homeassistant.companion.android.util.CheckTLSClientAuthNeededUseCase
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.verify
 import java.net.URL
 import java.security.cert.X509Certificate
+import java.util.stream.Stream
+import javax.security.auth.x500.X500Principal
 import kotlin.reflect.KClass
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -54,6 +58,7 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 
 /**
@@ -67,7 +72,6 @@ import org.junit.jupiter.params.provider.ValueSource
 class ConnectionViewModelTest {
 
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
-    private val checkTLSClientAuthNeededUseCase = CheckTLSClientAuthNeededUseCase(keyChainRepository)
     private val clientCertProvider = object : ClientCertProvider {
         override val certificate: ClientCertificate? = null
     }
@@ -79,6 +83,7 @@ class ConnectionViewModelTest {
                 onCrash = any(),
                 onUrlIntercepted = any(),
                 onPageFinished = any(),
+                onClientCertRequested = any(),
             )
         } coAnswers {
             HAWebViewClient(
@@ -90,6 +95,7 @@ class ConnectionViewModelTest {
                 onUrlIntercepted = arg(3),
                 onPageFinished = arg(4),
                 onReceivedHttpAuthRequest = arg(5),
+                onClientCertRequested = arg(6),
             )
         }
     }
@@ -97,7 +103,10 @@ class ConnectionViewModelTest {
     private val permissionManager: PermissionManager = mockk(relaxed = true)
     private val prefsRepository: PrefsRepository = mockk {
         coEvery { webViewDebugFlow() } returns flowOf(false)
+        coEvery { hasClientCertBeenRequested(any(), any()) } returns false
+        coEvery { rememberClientCertRequestedEndpoint(any(), any()) } just Runs
     }
+    private val checkTLSClientAuthNeededUseCase = CheckTLSClientAuthNeededUseCase(keyChainRepository, prefsRepository)
     private val fileChooserHandler = FrontendFileChooserHandler(
         cameraCaptureRepository = mockk(relaxed = true),
         permissionManager = permissionManager,
@@ -848,77 +857,118 @@ class ConnectionViewModelTest {
         assertNull(viewModel.pendingFileChooser.value)
     }
 
-    @Test
-    fun `Given cert in memory covering the target host and client flag false when auth completes then Authenticated emits requiredMTLS true`() = runTest {
-        // Session resumption case: no CertificateRequest fires, so the client flag stays false,
-        // but the loaded certificate chain covers the host the user connected to.
-        val cert = mockk<X509Certificate> {
-            every { subjectAlternativeNames } returns listOf(listOf(2, "homeassistant.local"))
+    /**
+     * Cases covering how mTLS is decided when the WebView completes authentication.
+     *
+     * [observedEndpoint] stands for an endpoint already seen answering with a `CertificateRequest`,
+     * which is the signal that survives TLS session resumption; [certSan] is the SAN (or, when
+     * [certCommonName] is set, the subject CN) of the loaded client identity.
+     */
+    companion object {
+        data class MtlsCase(
+            val description: String,
+            val url: String,
+            val clientFlag: Boolean,
+            val observedEndpoint: Pair<String, Int>?,
+            val certSan: String?,
+            val certCommonName: String?,
+            val expected: Boolean,
+        ) {
+            override fun toString(): String = description
         }
-        val provider = mockk<ClientCertProvider> {
-            every { certificate } returns ClientCertificate(mockk(), arrayOf(cert))
-        }
-        coEvery { keyChainRepository.getClientCertProvider() } returns provider
-        val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
-        val viewModel = ConnectionViewModel(
-            "http://homeassistant.local:8123",
-            webViewClientFactory,
-            connectivityCheckRepository,
-            fileChooserHandler,
-
-            permissionManager,
-
-            CheckTLSClientAuthNeededUseCase(keyChainRepository),
+        @JvmStatic
+        fun mtlsCases() = Stream.of(
+            MtlsCase(
+                description = "session resumed, endpoint observed earlier, client identity unrelated to the host",
+                url = "https://homeassistant.local:8123",
+                clientFlag = false,
+                observedEndpoint = "homeassistant.local" to 8123,
+                certSan = null,
+                certCommonName = "phone",
+                expected = true,
+            ),
+            MtlsCase(
+                description = "session resumed, nothing observed, loaded cert covers the host",
+                url = "https://homeassistant.local:8123",
+                clientFlag = false,
+                observedEndpoint = null,
+                certSan = "homeassistant.local",
+                certCommonName = null,
+                expected = true,
+            ),
+            MtlsCase(
+                description = "session resumed, nothing observed, loaded cert is for another host",
+                url = "https://homeassistant.local:8123",
+                clientFlag = false,
+                observedEndpoint = null,
+                certSan = "other-server.example.com",
+                certCommonName = null,
+                expected = false,
+            ),
+            MtlsCase(
+                description = "WebView saw the CertificateRequest itself",
+                url = "https://homeassistant.local:8123",
+                clientFlag = true,
+                observedEndpoint = null,
+                certSan = null,
+                certCommonName = null,
+                expected = true,
+            ),
+            MtlsCase(
+                description = "plain http, loaded cert covers the host, so no client auth is possible",
+                url = "http://homeassistant.local:8123",
+                clientFlag = false,
+                observedEndpoint = null,
+                certSan = "homeassistant.local",
+                certCommonName = null,
+                expected = false,
+            ),
+            MtlsCase(
+                description = "observed on another port of the same host",
+                url = "https://homeassistant.local:8443",
+                clientFlag = false,
+                observedEndpoint = "homeassistant.local" to 8123,
+                certSan = null,
+                certCommonName = "phone",
+                expected = false,
+            ),
         )
-
-        turbineScope {
-            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
-            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
-
-            assertNull(errorFlow.awaitItem())
-
-            viewModel.getWebViewClient().isTLSClientAuthNeeded = false
-
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
-                null,
-                stringUri,
-            )
-
-            assertTrue(result)
-            val event = navigationEventsFlow.awaitItem()
-            assertTrue(event is ConnectionNavigationEvent.Authenticated)
-            assertEquals(authCode, (event as ConnectionNavigationEvent.Authenticated).authCode)
-            assertEquals("http://homeassistant.local:8123", event.url)
-            assertTrue(event.requiredMTLS)
-            errorFlow.expectNoEvents()
-        }
     }
 
-    @Test
-    fun `Given cert in memory not covering the target host and client flag false when auth completes then Authenticated emits requiredMTLS false`() = runTest {
-        // Multiple servers where only one requires mTLS: the loaded cert is for another host,
-        // so the check must not mark this connection as requiring a client certificate.
-        val cert = mockk<X509Certificate> {
-            every { subjectAlternativeNames } returns listOf(listOf(2, "other-server.example.com"))
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("mtlsCases")
+    fun `Given an onboarding auth callback when it completes then requiredMTLS follows the observed endpoint and loaded cert`(
+        case: MtlsCase,
+    ) = runTest {
+        // loaded client identity
+        val cert = if (case.certSan == null && case.certCommonName == null) {
+            null
+        } else {
+            mockk<X509Certificate> {
+                every { subjectAlternativeNames } returns case.certSan?.let { listOf(listOf(2, it)) }
+                every { subjectX500Principal } returns X500Principal("CN=${case.certCommonName ?: "unset"}")
+            }
         }
         val provider = mockk<ClientCertProvider> {
-            every { certificate } returns ClientCertificate(mockk(), arrayOf(cert))
+            every { certificate } returns cert?.let { ClientCertificate(mockk(), arrayOf(it)) }
         }
         coEvery { keyChainRepository.getClientCertProvider() } returns provider
-        val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        coEvery { prefsRepository.hasClientCertBeenRequested(any(), any()) } returns false
+        case.observedEndpoint?.let { (host, port) ->
+            coEvery { prefsRepository.hasClientCertBeenRequested(host, port) } returns true
+        }
 
+        val authCode = "test_auth_code"
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
         val viewModel = ConnectionViewModel(
-            "http://homeassistant.local:8123",
+            case.url,
             webViewClientFactory,
             connectivityCheckRepository,
             fileChooserHandler,
-
             permissionManager,
-
-            CheckTLSClientAuthNeededUseCase(keyChainRepository),
+            prefsRepository,
+            checkTLSClientAuthNeededUseCase,
         )
 
         turbineScope {
@@ -927,65 +977,14 @@ class ConnectionViewModelTest {
 
             assertNull(errorFlow.awaitItem())
 
-            viewModel.getWebViewClient().isTLSClientAuthNeeded = false
+            viewModel.getWebViewClient().isTLSClientAuthNeeded = case.clientFlag
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
-                null,
-                stringUri,
-            )
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
             assertTrue(event is ConnectionNavigationEvent.Authenticated)
-            assertEquals(authCode, (event as ConnectionNavigationEvent.Authenticated).authCode)
-            assertEquals("http://homeassistant.local:8123", event.url)
-            assertFalse(event.requiredMTLS)
-            errorFlow.expectNoEvents()
-        }
-    }
-
-    @Test
-    fun `Given cert in memory covering the target host and client flag true when auth completes then Authenticated emits requiredMTLS true`() = runTest {
-        val cert = mockk<X509Certificate> {
-            every { subjectAlternativeNames } returns listOf(listOf(2, "homeassistant.local"))
-        }
-        val provider = mockk<ClientCertProvider> {
-            every { certificate } returns ClientCertificate(mockk(), arrayOf(cert))
-        }
-        coEvery { keyChainRepository.getClientCertProvider() } returns provider
-        val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
-
-        val viewModel = ConnectionViewModel(
-            "http://homeassistant.local:8123",
-            webViewClientFactory,
-            connectivityCheckRepository,
-            fileChooserHandler,
-
-            permissionManager,
-
-            CheckTLSClientAuthNeededUseCase(keyChainRepository),
-        )
-
-        turbineScope {
-            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
-            val errorFlow = viewModel.errorFlow.testIn(backgroundScope)
-
-            assertNull(errorFlow.awaitItem())
-
-            viewModel.getWebViewClient().isTLSClientAuthNeeded = true
-
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
-                null,
-                stringUri,
-            )
-
-            assertTrue(result)
-            val event = navigationEventsFlow.awaitItem()
-            assertTrue(event is ConnectionNavigationEvent.Authenticated)
-            assertEquals(authCode, (event as ConnectionNavigationEvent.Authenticated).authCode)
-            assertEquals("http://homeassistant.local:8123", event.url)
-            assertTrue(event.requiredMTLS)
+            assertEquals(case.expected, (event as ConnectionNavigationEvent.Authenticated).requiredMTLS, case.description)
             errorFlow.expectNoEvents()
         }
     }
