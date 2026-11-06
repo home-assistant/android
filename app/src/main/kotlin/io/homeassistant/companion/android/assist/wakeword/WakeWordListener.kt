@@ -28,13 +28,22 @@ import timber.log.Timber
 @VisibleForTesting
 internal const val POST_DETECTION_COOLDOWN_CHUNKS = 200
 
-/** Warm-up of a new engine: 4s (400 chunks of 160 samples at 16kHz) of background noise. */
+/**
+ * Warm-up of a new engine: 4s (400 chunks of 160 samples at 16kHz) of low background noise.
+ * The microWakeWord feature generator needs 1 to 2s of background audio to prime its denoising
+ * filter, so without it a wake word spoken right after the engine starts is often missed.
+ */
 @VisibleForTesting
 internal const val WARM_UP_CHUNKS = 400
 
+/** Samples per warm-up chunk: 10ms at 16kHz. */
 @VisibleForTesting
 internal const val WARM_UP_CHUNK_SAMPLES = 160
+
+/** Standard deviation of the Gaussian noise, in 16-bit sample units: quiet, far below speech level. */
 private const val WARM_UP_NOISE_STDDEV = 25.0
+
+/** Fixed seed so the warm-up noise is the same on every start (reproducible, testable). */
 private const val WARM_UP_SEED = 42L
 
 /**
