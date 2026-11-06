@@ -68,6 +68,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import androidx.compose.ui.test.assertTopPositionInRootIsEqualTo
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.Insets
+import androidx.core.util.TypedValueCompat.pxToDp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -1059,6 +1066,104 @@ class FrontendScreenTest {
             node.assertDoesNotExist()
         }
     }
+
+    @Test
+    fun `Given a server handling top insets when system bars are present then top inset is reported and webview is drawn behind the status bar`() {
+        val reportedInsets = mutableListOf<SafeAreaInsets>()
+        composeTestRule.apply {
+            setFrontendScreenWithSystemBars(
+                viewState = { contentState(serverHandleTopInsets = true) },
+                onSafeAreaInsetsChanged = { reportedInsets += it },
+            )
+
+            runOnIdle { assertEquals(safeAreaInsets(topPx = STATUS_BAR_HEIGHT_PX), reportedInsets.last()) }
+            onNodeWithTag(HA_WEBVIEW_TAG).assertTopPositionInRootIsEqualTo(0.dp)
+        }
+    }
+
+    @Test
+    fun `Given a server not handling top insets when system bars are present then top inset is reported as zero and webview is drawn below the status bar`() {
+        val reportedInsets = mutableListOf<SafeAreaInsets>()
+        composeTestRule.apply {
+            setFrontendScreenWithSystemBars(
+                viewState = { contentState(serverHandleTopInsets = false) },
+                onSafeAreaInsetsChanged = { reportedInsets += it },
+            )
+
+            runOnIdle { assertEquals(safeAreaInsets(topPx = 0), reportedInsets.last()) }
+            onNodeWithTag(HA_WEBVIEW_TAG).assertTopPositionInRootIsEqualTo(toDp(STATUS_BAR_HEIGHT_PX).dp)
+        }
+    }
+
+    @Test
+    fun `Given loading with system bars present when content of a server handling top insets is shown then top inset is reported`() {
+        val viewState = mutableStateOf<FrontendViewState>(
+            FrontendViewState.Loading(serverId = 1, url = "https://example.com"),
+        )
+        val reportedInsets = mutableListOf<SafeAreaInsets>()
+        composeTestRule.apply {
+            setFrontendScreenWithSystemBars(
+                viewState = { viewState.value },
+                onSafeAreaInsetsChanged = { reportedInsets += it },
+            )
+            runOnIdle { assertEquals(safeAreaInsets(topPx = 0), reportedInsets.last()) }
+
+            viewState.value = contentState(serverHandleTopInsets = true)
+
+            runOnIdle { assertEquals(safeAreaInsets(topPx = STATUS_BAR_HEIGHT_PX), reportedInsets.last()) }
+        }
+    }
+
+    private fun contentState(serverHandleTopInsets: Boolean) = FrontendViewState.Content(
+        serverId = 1,
+        url = "https://example.com",
+        serverHandleInsets = true,
+        serverHandleTopInsets = serverHandleTopInsets,
+    )
+
+    /** The insets expected from the system bars of [setFrontendScreenWithSystemBars], with the given top. */
+    private fun safeAreaInsets(topPx: Int) = SafeAreaInsets(
+        top = toDp(topPx),
+        bottom = toDp(NAVIGATION_BAR_HEIGHT_PX),
+        left = 0f,
+        right = 0f,
+    )
+
+    private fun toDp(px: Int): Float = pxToDp(px.toFloat(), composeTestRule.activity.resources.displayMetrics)
+
+    /**
+     * Renders [FrontendScreenContent] and dispatches a status bar and a navigation bar to the window,
+     * since Robolectric reports no system bars on its own.
+     */
+    private fun AndroidComposeTestRule<ActivityScenarioRule<HiltComponentActivity>, HiltComponentActivity>.setFrontendScreenWithSystemBars(
+        viewState: () -> FrontendViewState,
+        onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
+    ) {
+        setContent {
+            FrontendScreenContent(
+                viewState = viewState(),
+                getWebViewClient = { WebViewClient() },
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+                onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
+            )
+        }
+        val systemBars = WindowInsetsCompat.Builder()
+            .setInsets(WindowInsetsCompat.Type.statusBars(), Insets.of(0, STATUS_BAR_HEIGHT_PX, 0, 0))
+            .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, 0, 0, NAVIGATION_BAR_HEIGHT_PX))
+            .build()
+        runOnUiThread { ViewCompat.dispatchApplyWindowInsets(activity.window.decorView, systemBars) }
+    }
 }
 
 private class FakeConnectionErrorStateProvider(
@@ -1071,3 +1176,6 @@ private class FakeConnectionErrorStateProvider(
         MutableStateFlow(ConnectivityCheckState())
     override fun runConnectivityChecks() = Unit
 }
+
+private const val STATUS_BAR_HEIGHT_PX = 48
+private const val NAVIGATION_BAR_HEIGHT_PX = 24
