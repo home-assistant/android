@@ -1952,6 +1952,54 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given a server supporting top insets when connected then content handles top insets`() = runTest {
+            val messageFlow = connectedMessageFlow()
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://example.com",
+                name = "test",
+                haVersion = HomeAssistantVersion(year = 2026, month = 10, release = 0),
+                serverId = serverId,
+            )
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                completeConnect(this@runTest, themeColors = null)
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertTrue(state.serverHandleTopInsets)
+        }
+
+        @Test
+        fun `Given a server without top insets support when connected then content does not handle top insets`() = runTest {
+            val messageFlow = connectedMessageFlow()
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = "https://example.com",
+                name = "test",
+                haVersion = HomeAssistantVersion(year = 2026, month = 9, release = 0),
+                serverId = serverId,
+            )
+            val viewModel = createViewModel()
+
+            viewModel.webViewActions.test {
+                advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
+                messageFlow.emit(FrontendHandlerEvent.Connected)
+                advanceUntilIdle()
+
+                completeConnect(this@runTest, themeColors = null)
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+            assertFalse(state.serverHandleTopInsets)
+        }
+
+        @Test
         fun `Given a server handling insets when safe area insets change then they are applied to the frontend`() = runTest {
             val messageFlow = connectedMessageFlow()
             coEvery { serverManager.getServer(serverId) } returns mockServer(

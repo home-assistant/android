@@ -240,17 +240,17 @@ jobs:
       - name: Validate Screenshot Previews - app
         uses: $/.github/actions/monitor-resources
         with:
-          run: ./gradlew :app:validateFullDebugScreenshotTest
+          run: ./gradlew :app:testFullDebugScreenshotTestDefaultTestSuite
 
       - name: Validate Screenshot Previews - wear
         uses: $/.github/actions/monitor-resources
         with:
-          run: ./gradlew :wear:validateDebugScreenshotTest
+          run: ./gradlew :wear:testDebugScreenshotTestDefaultTestSuite
 
       - name: Validate Screenshot Previews - common
         uses: $/.github/actions/monitor-resources
         with:
-          run: ./gradlew :common:validateDebugScreenshotTest
+          run: ./gradlew :common:testDebugScreenshotTestDefaultTestSuite
 
       - uses: $/.github/actions/upload-test-results
         if: always()
