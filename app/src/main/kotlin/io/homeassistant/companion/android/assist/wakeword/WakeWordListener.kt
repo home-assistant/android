@@ -40,7 +40,7 @@ internal const val WARM_UP_CHUNKS = 400
 @VisibleForTesting
 internal const val WARM_UP_CHUNK_SAMPLES = 160
 
-/** Standard deviation of the Gaussian noise, in 16-bit sample units: quiet, far below speech level. */
+/** Standard deviation of the Gaussian noise, in 16-bit sample units (quiet, far below speech). */
 private const val WARM_UP_NOISE_STDDEV = 25.0
 
 /** Fixed seed so the warm-up noise is the same on every start (reproducible, testable). */
