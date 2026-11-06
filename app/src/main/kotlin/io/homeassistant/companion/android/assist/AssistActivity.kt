@@ -181,10 +181,11 @@ class AssistActivity : BaseActivity() {
 
     override fun onStop() {
         super.onStop()
-        // Tapping outside (or any other way of hiding the screen) only stops the activity: without
-        // finishing it, its own wake word listener and pipeline keep running invisibly, swallow the
-        // next wake word, and the background listener is never resumed. Keep the activity while the
-        // microphone permission is still being requested, since that dialog also stops it.
+        // Dismissals that bypass the sheet (Home, app switch, recents, screen lock) only stop the
+        // activity: without finishing it, its own wake word listener and pipeline keep running
+        // invisibly, swallow the next wake word, and the background listener is never resumed.
+        // Keep the activity while the microphone permission is still being requested, since that
+        // dialog also stops it.
         if (!isChangingConfigurations && !isFinishing && hasRecordingPermission()) {
             finish()
         }
