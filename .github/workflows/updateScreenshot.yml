@@ -33,7 +33,9 @@ jobs:
           mock-google-services: "true"
 
       - name: Update Screenshots
-        run: ./gradlew updateDebugScreenshotTestDefaultTestSuite updateFullDebugScreenshotTestDefaultTestSuite
+        uses: $/.github/actions/monitor-resources
+        with:
+          run: ./gradlew updateDebugScreenshotTestDefaultTestSuite updateFullDebugScreenshotTestDefaultTestSuite
 
       - name: Commit and push changes
         run: |
