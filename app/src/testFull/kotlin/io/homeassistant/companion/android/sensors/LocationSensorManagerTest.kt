@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
+import io.homeassistant.companion.android.location.SingleAccurateLocationService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -41,5 +42,21 @@ class LocationSensorManagerTest {
             ),
             LocationSensorManager.singleAccurateLocation.settings,
         )
+    }
+
+    @Test
+    fun `Given a request in the foreground service when building it then it ends with the service`() {
+        val request = LocationSensorManager.createSingleAccurateLocationRequest(inForegroundService = true)
+
+        assertEquals(SingleAccurateLocationService.MAX_DURATION.inWholeMilliseconds, request.durationMillis)
+        assertEquals(0L, request.maxUpdateAgeMillis)
+    }
+
+    @Test
+    fun `Given a request without the foreground service when building it then it keeps running until updates arrive`() {
+        val request = LocationSensorManager.createSingleAccurateLocationRequest(inForegroundService = false)
+
+        assertEquals(Long.MAX_VALUE, request.durationMillis)
+        assertEquals(5, request.maxUpdates)
     }
 }

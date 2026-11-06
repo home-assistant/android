@@ -47,6 +47,12 @@
             android:foregroundServiceType="location"/>
 
         <service
+            android:name=".location.SingleAccurateLocationService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location"/>
+
+        <service
             android:name=".matter.MatterCommissioningService"
             android:exported="true"
             tools:ignore="ExportedService">
