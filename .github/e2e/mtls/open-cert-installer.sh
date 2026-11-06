@@ -12,7 +12,7 @@ set -euo pipefail
 USAGE="usage: open-cert-installer.sh <adb-serial> <client.p12> <client_legacy.p12>"
 SERIAL="${1:?$USAGE}"
 P12="${2:?$USAGE}"
-P12_LEGACY="${3:?$USAGE}"
+P12_LEGACY="${3:-$(dirname "$P12")/client_legacy.p12}"
 ADB="${ADB:-adb}"
 DEVICE_PATH=/storage/emulated/0/Download/client.p12
 # Up to this API level the installer cannot read OpenSSL 3's default PKCS12
