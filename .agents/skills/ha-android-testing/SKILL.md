@@ -9,12 +9,14 @@ Use this skill when writing, changing, or reviewing tests.
 
 ```bash
 ./gradlew test                          # Unit tests (:common:test for one module)
-./gradlew validateDebugScreenshotTest   # Screenshot tests
+./gradlew testDebugScreenshotTestDefaultTestSuite testFullDebugScreenshotTestDefaultTestSuite   # Screenshot tests
 ```
 
-After an intentional UI change, update the reference screenshots (stored under `src/screenshotTestFullDebug/reference` in `:app`, `src/screenshotTestDebug/reference` in `:common` and `:wear`) with `./gradlew updateDebugScreenshotTest updateFullDebugScreenshotTest`. Rendering differs subtly between hosts, so if CI still fails on thresholds, a maintainer triggers the `Update Screenshots` workflow to regenerate them on the CI host — don't chase pixel diffs locally.
+After an intentional UI change, update the reference screenshots (stored under `src/screenshotTestDefaultFullDebug/reference` in `:app`, `src/screenshotTestDefaultDebug/reference` in `:common` and `:wear`) with `./gradlew updateDebugScreenshotTestDefaultTestSuite updateFullDebugScreenshotTestDefaultTestSuite`. Rendering differs subtly between hosts, so if CI still fails on thresholds, a maintainer triggers the `Update Screenshots` workflow to regenerate them on the CI host — don't chase pixel diffs locally.
 
-Don't run a validate task after an update run: the update will update the screenshots from the code you just built, so validation can only confirm that or resurface the subtle host differences in rendering. Check that the images were updated and have changed instead, that is what tells you the change is right. Validate only when you have not regenerated, to find out if a change unintentionally changed the UI.
+Don't run the test task after an update run: the update will update the screenshots from the code you just built, so validation can only confirm that or resurface the subtle host differences in rendering. Check that the images were updated and have changed instead, that is what tells you the change is right. Validate only when you have not regenerated, to find out if a change unintentionally changed the UI. A failed run writes its report to `build/reports/tests/<task name>/index.html` and the rendered and diff images to `build/intermediates/<variant>/<task name>/results/`.
+
+Screenshot tests go in `src/screenshotTest` of the module, the only source set the suite compiles (no flavor or build type variation). The suite runs against `fullDebug` in `:app` and `debug` in `:common` and `:wear`.
 
 ### Known false positive
 
