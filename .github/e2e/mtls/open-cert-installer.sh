@@ -6,16 +6,31 @@
 # installer, while a documents URI is refused and file:// paths under Download or
 # the installer's own external directory fail with EACCES under scoped storage.
 #
-# Usage: open-cert-installer.sh <adb-serial> <client.p12>
+# Usage: open-cert-installer.sh <adb-serial> <client.p12> <client_legacy.p12>
 set -euo pipefail
 
-SERIAL="${1:?usage: open-cert-installer.sh <adb-serial> <client.p12>}"
-P12="${2:?usage: open-cert-installer.sh <adb-serial> <client.p12>}"
+USAGE="usage: open-cert-installer.sh <adb-serial> <client.p12> <client_legacy.p12>"
+SERIAL="${1:?$USAGE}"
+P12="${2:?$USAGE}"
+P12_LEGACY="${3:?$USAGE}"
 ADB="${ADB:-adb}"
 DEVICE_PATH=/storage/emulated/0/Download/client.p12
+# Up to this API level the installer cannot read OpenSSL 3's default PKCS12
+# algorithms and needs the legacy container.
+LEGACY_P12_MAX_API=32
+
+API_LEVEL=$($ADB -s "$SERIAL" shell getprop ro.build.version.sdk | tr -d '\r')
+if ! [[ "$API_LEVEL" =~ ^[0-9]+$ ]]; then
+  echo "Could not read the API level of $SERIAL (got '$API_LEVEL')" >&2
+  exit 1
+fi
+if [ "$API_LEVEL" -le "$LEGACY_P12_MAX_API" ]; then
+  P12="$P12_LEGACY"
+fi
 
 $ADB -s "$SERIAL" shell am force-stop com.android.certinstaller
 $ADB -s "$SERIAL" push "$P12" "$DEVICE_PATH" >/dev/null 2>&1
+
 # Android 11+ takes the path as the call argument; Android 10 expects it as a Uri
 # extra the content command cannot pass and throws, so fall back to the scan
 # broadcast it still honours. Both scans are asynchronous, hence the polling.
