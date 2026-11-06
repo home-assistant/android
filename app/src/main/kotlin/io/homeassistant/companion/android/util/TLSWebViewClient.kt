@@ -27,6 +27,7 @@ import timber.log.Timber
 open class TLSWebViewClient(
     private val keyChainRepository: KeyChainRepository,
     private val clientCertProvider: ClientCertProvider,
+    private val onClientCertRequested: ((host: String, port: Int) -> Unit)? = null,
 ) : WebViewClient() {
     var isTLSClientAuthNeeded = false
         @VisibleForTesting set
@@ -50,6 +51,9 @@ open class TLSWebViewClient(
         Timber.d("onReceivedClientCertRequest invoked looking for cert in local storage or ask the user for it")
         // Let the WebViewClient know the endpoint requires TLS Client Auth
         isTLSClientAuthNeeded = true
+        // Remember the endpoint: a later connection can resume this TLS session without a new
+        // CertificateRequest, so this record is the only reliable evidence that mTLS is in use.
+        request.host?.let { host -> onClientCertRequested?.invoke(host, request.port) }
 
         val activity = getActivity(view.context)
         if (activity == null) {

@@ -154,6 +154,16 @@ interface PrefsRepository {
 
     suspend fun getKeyAlias(): String?
 
+    /**
+     * Remembers that the HTTPS endpoint [host]:[port] answered with a TLS client-certificate
+     * request, so a later connection to the same endpoint can rely on it even when the WebView
+     * resumes a TLS session and no new request is issued.
+     */
+    suspend fun rememberClientCertRequestedEndpoint(host: String, port: Int)
+
+    /** Returns `true` when a TLS client-certificate request was previously observed for [host]:[port]. */
+    suspend fun hasClientCertBeenRequested(host: String, port: Int): Boolean
+
     suspend fun getIgnoredSuggestions(): List<String>
 
     suspend fun setIgnoredSuggestions(ignored: List<String>)
