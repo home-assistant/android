@@ -505,8 +505,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun getEntities(entityIds: List<String>): List<Entity>? = when {
         entityIds.isEmpty() -> emptyList()
-        !supportsCompressedStateChanges() -> entityIds.toSet().let { wanted ->
-            getEntities()?.filter { it.entityId in wanted }
+        // Keep the requested order, like the compressed state path does
+        !supportsCompressedStateChanges() -> getEntities()?.associateBy { it.entityId }?.let { entitiesById ->
+            entityIds.mapNotNull { entitiesById[it] }
         }
         else -> getEntitiesFromInitialStates(entityIds)
     }

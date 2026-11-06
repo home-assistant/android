@@ -149,18 +149,25 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     }
 
     /** Browser over entities fetched at once, see [browse]. */
-    private class LoadedEntityBrowser(entities: List<Entity>, private val registryEntries: EntityRegistryEntries) :
-        EntityBrowser {
+    private inner class LoadedEntityBrowser(
+        entities: List<Entity>,
+        private val registryEntries: EntityRegistryEntries,
+    ) : EntityBrowser {
         private val entitiesById = entities.sortedBy { it.entityId }.associateBy { it.entityId }
 
         override val domains: List<String> = entitiesById.values.map { it.domain }.distinct().sorted()
 
-        override suspend fun load(domain: String): List<EntityDisplayWithoutContext> =
+        override suspend fun load(domain: String): List<EntityDisplayWithoutContext> = onDefault {
             entitiesById.values.filter { it.domain == domain }.map { registryEntries.itemFor(it) }
+        }
 
-        override suspend fun load(entityIds: List<String>): List<EntityDisplayWithoutContext> =
+        override suspend fun load(entityIds: List<String>): List<EntityDisplayWithoutContext> = onDefault {
             entityIds.mapNotNull { entitiesById[it] }.map { registryEntries.itemFor(it) }
+        }
     }
+
+    /** Resolves display items off the caller's thread, like the rest of this class. */
+    private suspend fun <T> onDefault(block: suspend () -> T): T = withContext(Dispatchers.Default) { block() }
 
     private inner class RegistryEntityBrowser(
         private val serverId: Int,

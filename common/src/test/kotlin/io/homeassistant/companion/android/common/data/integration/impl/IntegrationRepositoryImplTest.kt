@@ -472,5 +472,23 @@ class IntegrationRepositoryImplTest {
 
             assertEquals(listOf(entityId), entities?.map { it.entityId })
         }
+
+        @Test
+        fun `Given an older server when getting entities then the requested order is kept`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+            coEvery { webSocketRepository.getStates() } returns listOf("light.a", "switch.b").map {
+                EntityResponse(
+                    entityId = it,
+                    state = "on",
+                    attributes = emptyMap(),
+                    lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                    lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                )
+            }
+
+            val entities = repository.getEntities(listOf("switch.b", "light.a"))
+
+            assertEquals(listOf("switch.b", "light.a"), entities?.map { it.entityId })
+        }
     }
 }
