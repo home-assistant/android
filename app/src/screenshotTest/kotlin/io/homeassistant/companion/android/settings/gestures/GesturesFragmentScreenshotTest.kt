@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.gestures
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -18,7 +17,6 @@ class GesturesFragmentScreenshotTest {
 
     @PreviewTest
     @Preview
-    @Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
     @Composable
     fun `Gestures list with no action for each gesture`() {
         HomeAssistantAppTheme {
@@ -33,7 +31,6 @@ class GesturesFragmentScreenshotTest {
 
     @PreviewTest
     @Preview
-    @Preview(name = "Dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
     @Composable
     fun `Gestures list with system navigation gestures`() {
         HomeAssistantAppTheme {

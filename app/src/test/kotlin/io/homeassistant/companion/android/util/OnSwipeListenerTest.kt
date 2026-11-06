@@ -23,6 +23,7 @@ private const val DOWN_TIME_MILLIS = 1_000L
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
+// Advance delayed pointer-count updates explicitly while injecting touch events.
 @LooperMode(LooperMode.Mode.PAUSED)
 class OnSwipeListenerTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()

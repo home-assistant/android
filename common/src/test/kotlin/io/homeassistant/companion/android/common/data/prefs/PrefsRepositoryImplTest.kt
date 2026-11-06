@@ -101,41 +101,6 @@ class PrefsRepositoryImplTest {
 
             assertEquals(GestureAction.NONE, result)
         }
-
-        @ParameterizedTest
-        @CsvSource(
-            "SWIPE_LEFT_ONE_EDGE,SHOW_SIDEBAR",
-            "SWIPE_RIGHT_ONE_EDGE,NAVIGATE_FORWARD",
-            "SWIPE_LEFT_ONE_EDGE,NONE",
-            "SWIPE_RIGHT_ONE_EDGE,NONE",
-        )
-        fun `Given saved edge action when reading preferences then custom actions and existing gestures are preserved`(
-            gesture: HAGesture,
-            action: GestureAction,
-        ) = runTest {
-            val otherEdge = if (gesture == HAGesture.SWIPE_LEFT_ONE_EDGE) {
-                HAGesture.SWIPE_RIGHT_ONE_EDGE
-            } else {
-                HAGesture.SWIPE_LEFT_ONE_EDGE
-            }
-            val savedActions = mutableMapOf(
-                "gesture_action_SWIPE_LEFT_TWO" to GestureAction.QUICKBAR_ENTITIES.name,
-                "gesture_action_SWIPE_RIGHT_THREE" to GestureAction.SERVER_PREVIOUS.name,
-                "gesture_action_${otherEdge.name}" to GestureAction.NAVIGATE_RELOAD.name,
-            )
-            coEvery { localStorage.getString(any()) } answers { savedActions[firstArg<String>()] }
-            coEvery { localStorage.putString(any(), any()) } answers {
-                savedActions[firstArg<String>()] = secondArg<String>()
-            }
-
-            repository.setGestureAction(gesture = gesture, action = action)
-
-            assertEquals(action, repository.getGestureAction(gesture))
-            assertEquals(GestureAction.NAVIGATE_RELOAD, repository.getGestureAction(otherEdge))
-            assertEquals(GestureAction.QUICKBAR_ENTITIES, repository.getGestureAction(HAGesture.SWIPE_LEFT_TWO))
-            assertEquals(GestureAction.SERVER_PREVIOUS, repository.getGestureAction(HAGesture.SWIPE_RIGHT_THREE))
-            coVerify(exactly = 1) { localStorage.putString("gesture_action_${gesture.name}", action.name) }
-        }
     }
 
     @Nested

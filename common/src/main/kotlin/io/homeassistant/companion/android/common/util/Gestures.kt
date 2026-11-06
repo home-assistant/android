@@ -137,7 +137,8 @@ enum class HAGesture(
     companion object {
         /**
          * Returns the supported swipe gesture, or `null`.
-         * One-pointer swipes must first be validated as inward edge swipes.
+         * Gestures with [GesturePointers.ONE] pointers should be validated as inward edge swipes
+         * before being used.
          */
         fun fromSwipeListener(direction: GestureDirection, pointers: Int): HAGesture? =
             entries.firstOrNull { it.direction == direction && it.pointers.asInt == pointers }

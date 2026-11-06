@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.frontend.gesture
 
+import android.os.Build
 import android.os.Looper
 import android.view.InputDevice
 import android.view.MotionEvent
@@ -55,7 +56,7 @@ class FrontendSwipeListenerTest {
     }
 
     @Test
-    fun `Given both edges reserved for system gestures when swiping then no edge action is reported`() {
+    fun `Given both edges reserved for system gestures when released then no edge action is reported`() {
         withRootInsets({ systemGestureInsets(left = 24, right = 24) }) {
             swipe(startX = 8f, endX = 200f)
             swipe(startX = 992f, endX = 800f)
@@ -65,9 +66,9 @@ class FrontendSwipeListenerTest {
     }
 
     @Test
-    @Config(sdk = [28])
+    @Config(sdk = [Build.VERSION_CODES.P])
     @Suppress("DEPRECATION")
-    fun `Given legacy landscape navigation bar when swiping then both edge actions remain available`() {
+    fun `Given legacy landscape navigation bar when released then both edge actions remain available`() {
         val insets = WindowInsetsCompat.Builder()
             .setSystemWindowInsets(Insets.of(0, 0, 48, 0))
             .build()
@@ -86,7 +87,7 @@ class FrontendSwipeListenerTest {
     }
 
     @Test
-    fun `Given modern landscape button navigation bar when swiping then both edge actions remain available`() {
+    fun `Given modern landscape button navigation bar when released then both edge actions remain available`() {
         val navigationBar = Insets.of(0, 0, 48, 0)
         val insets = WindowInsetsCompat.Builder()
             .setInsets(WindowInsetsCompat.Type.systemGestures(), navigationBar)
@@ -105,7 +106,7 @@ class FrontendSwipeListenerTest {
     }
 
     @Test
-    fun `Given only left edge reserved when swiping then only right edge action is reported`() {
+    fun `Given only left edge reserved when released then only right edge action is reported`() {
         withRootInsets({ systemGestureInsets(left = 24, right = 0) }) {
             swipe(startX = 8f, endX = 200f)
             swipe(startX = 992f, endX = 800f)
@@ -115,7 +116,7 @@ class FrontendSwipeListenerTest {
     }
 
     @Test
-    fun `Given only right edge reserved when swiping then only left edge action is reported`() {
+    fun `Given only right edge reserved when released then only left edge action is reported`() {
         withRootInsets({ systemGestureInsets(left = 0, right = 24) }) {
             swipe(startX = 8f, endX = 200f)
             swipe(startX = 992f, endX = 800f)
@@ -180,8 +181,14 @@ class FrontendSwipeListenerTest {
     }
 
     @Test
-    fun `Given vertical or diagonal swipes at an edge when released then no action is reported`() {
+    fun `Given a vertical swipe at an edge when released then no action is reported`() {
         swipe(startX = 8f, endX = 8f, endY = 600f)
+
+        assertTrue(gestures.isEmpty())
+    }
+
+    @Test
+    fun `Given diagonal swipes at either edge when released then no action is reported`() {
         swipe(startX = 8f, endX = 120f, endY = 600f)
         swipe(startX = 992f, endX = 880f, endY = 200f)
 
@@ -189,9 +196,21 @@ class FrontendSwipeListenerTest {
     }
 
     @Test
-    fun `Given taps short swipes or slow drags at an edge when released then no action is reported`() {
+    fun `Given a tap at an edge when released then no action is reported`() {
         swipe(startX = 8f, endX = 8f)
+
+        assertTrue(gestures.isEmpty())
+    }
+
+    @Test
+    fun `Given a short swipe at an edge when released then no action is reported`() {
         swipe(startX = 8f, endX = 40f)
+
+        assertTrue(gestures.isEmpty())
+    }
+
+    @Test
+    fun `Given a slow drag at an edge when released then no action is reported`() {
         swipe(startX = 8f, endX = 200f, durationMillis = 10_000)
 
         assertTrue(gestures.isEmpty())
@@ -243,12 +262,12 @@ class FrontendSwipeListenerTest {
 
     @Test
     @Config(qualifiers = "xhdpi")
-    fun `Given a high density screen when swiping then distances are measured in dp`() {
+    fun `Given a high density screen when released then edge and travel limits scale with density`() {
         swipe(startX = 25f, endX = 200f)
         swipe(startX = 8f, endX = 40f)
         assertTrue(gestures.isEmpty())
 
-        swipe(startX = 8f, endX = 200f)
+        swipe(startX = 16f, endX = 200f)
 
         assertEquals(listOf(DetectedGesture(GestureDirection.RIGHT, 1)), gestures)
     }
