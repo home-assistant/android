@@ -60,6 +60,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -516,7 +517,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         // The subscription starts with the full state of every requested entity, filtered server
         // side, which is all we need here
         val initialStates = withTimeoutOrNull(ENTITIES_INITIAL_STATES_TIMEOUT) {
-            webSocketRepository().getCompressedStateAndChanges(entityIds)?.firstOrNull { it.added != null }?.added
+            webSocketRepository().getCompressedStateAndChangesFromStart(entityIds)?.firstOrNull {
+                it.added != null
+            }?.added
         }
         if (initialStates == null) {
             Timber.w("Unable to fetch the states of ${entityIds.size} entities")
@@ -543,6 +546,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 ?.map { it.newState!! }
         }
     }
+
+    override suspend fun getEntitiesAndUpdates(entityIds: List<String>): Flow<List<Entity>>? =
+        if (supportsCompressedStateChanges()) {
+            webSocketRepository().getCompressedStateAndChangesFromStart(entityIds)?.toEntityBatches(entityIds.toSet())
+        } else {
+            null
+        }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
         return if (supportsCompressedStateChanges()) {
@@ -576,14 +586,19 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
      * state of the server only to follow a few entities is too much for constrained devices, so a
      * diff for an entity without a known state fetches that entity alone over HTTP instead.
      */
-    private fun Flow<CompressedStateChangedEvent>.toEntityUpdates(entityIds: Set<String>? = null): Flow<Entity> = flow {
+    private fun Flow<CompressedStateChangedEvent>.toEntityUpdates(entityIds: Set<String>? = null): Flow<Entity> =
+        toEntityBatches(entityIds).transform { batch -> batch.forEach { emit(it) } }
+
+    /** Like [toEntityUpdates], emitting the entities resolved from each event together. */
+    private fun Flow<CompressedStateChangedEvent>.toEntityBatches(entityIds: Set<String>?): Flow<List<Entity>> = flow {
         val entities = mutableMapOf<String, Entity>()
         if (entityIds == null) entities.seedCurrentStates()
         collect { event ->
+            val batch = mutableListOf<Entity>()
             event.added?.forEach { (entityId, state) ->
                 val entity = state.toEntity(entityId)
                 entities[entityId] = entity
-                emit(entity)
+                batch += entity
             }
             event.changed?.forEach { (entityId, diff) ->
                 val entity = entities[entityId]?.applyCompressedStateDiff(diff)
@@ -591,7 +606,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                     ?: entityIds?.let { fetchMissedState(entityId) }
                 if (entity != null) {
                     entities[entityId] = entity
-                    emit(entity)
+                    batch += entity
                 } else {
                     // The entity converges again on its next full state event.
                     Timber.w("Dropping state diff for $entityId without a known state")
@@ -600,6 +615,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             event.removed?.forEach { entityId ->
                 entities.remove(entityId)
             }
+            emit(batch)
         }
     }
 

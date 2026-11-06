@@ -1047,9 +1047,37 @@ class EntitiesForDisplayManagerTest {
             }
 
             @Test
-            fun `Given a large registry when observing domains then only the registry entities of these domains are fetched and followed`() = runTest {
+            fun `Given a large registry when observing domains then the entities of these domains are loaded and followed on one subscription`() = runTest {
                 givenObservedRegistry("sensor.power", "switch.fan", "light.bed")
                 val ids = listOf("light.bed", "switch.fan")
+                val batches = MutableSharedFlow<List<Entity>>()
+                coEvery { integrationRepository.getEntitiesAndUpdates(ids) } returns batches
+
+                manager.observeDomainsInContext(serverId, setOf("light", "switch")).test {
+                    assertEquals(EntityDisplayState.Loading, awaitItem())
+                    batches.awaitSubscribed()
+                    // The server sends the starting states in any order
+                    batches.emit(listOf(entity("switch.fan", "Fan"), entity("light.bed", "Bed Light")))
+                    assertEquals(listOf("light.bed", "switch.fan"), awaitLoaded().map { it.entityId })
+
+                    batches.emit(listOf(entity("switch.fan", "Ceiling Fan")))
+
+                    assertEquals("Ceiling Fan", awaitLoaded().single { it.entityId == "switch.fan" }.name)
+                    cancelAndIgnoreRemainingEvents()
+                }
+
+                coVerify(exactly = 1) { integrationRepository.getEntitiesAndUpdates(ids) }
+                coVerify(exactly = 0) { integrationRepository.getEntities() }
+                coVerify(exactly = 0) { integrationRepository.getEntities(any()) }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates(any()) }
+            }
+
+            @Test
+            fun `Given a large registry on a server without filtered subscriptions when observing domains then the entities of these domains are fetched then followed`() = runTest {
+                givenObservedRegistry("sensor.power", "switch.fan", "light.bed")
+                val ids = listOf("light.bed", "switch.fan")
+                coEvery { integrationRepository.getEntitiesAndUpdates(ids) } returns null
                 coEvery { integrationRepository.getEntities(ids) } returns
                     listOf(entity("light.bed", "Bed Light"), entity("switch.fan", "Fan"))
                 coEvery { integrationRepository.getEntityUpdates(ids) } returns entityUpdates
@@ -1071,13 +1099,13 @@ class EntitiesForDisplayManagerTest {
             @Test
             fun `Given a large registry without entities of the domains when observing then no state subscription is made`() = runTest {
                 givenObservedRegistry()
-                coEvery { integrationRepository.getEntities(emptyList()) } returns emptyList()
 
                 manager.observeDomainsInContext(serverId, setOf("light")).test {
                     assertEquals(emptyList<EntityDisplayWithContext>(), awaitInitialLoad())
                     cancelAndIgnoreRemainingEvents()
                 }
 
+                coVerify(exactly = 0) { integrationRepository.getEntitiesAndUpdates(any()) }
                 coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
                 coVerify(exactly = 0) { integrationRepository.getEntityUpdates(any()) }
             }

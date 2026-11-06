@@ -53,6 +53,14 @@ interface IntegrationRepository {
      * when it supports filtered subscriptions (2022.4). Returns null when they can't be retrieved.
      */
     suspend fun getEntities(entityIds: List<String>): List<Entity>?
+
+    /**
+     * Follows [entityIds] on a single subscription: the first emission holds their current states,
+     * omitting the ones the server doesn't know, and each next one the entities whose state changed.
+     * The states are downloaded once, and no change can be missed between the two. Returns null when
+     * the server doesn't support filtered subscriptions (2022.4) or the subscription can't be made.
+     */
+    suspend fun getEntitiesAndUpdates(entityIds: List<String>): Flow<List<Entity>>?
     suspend fun getEntityUpdates(): Flow<Entity>?
     suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>?
 

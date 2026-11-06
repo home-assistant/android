@@ -437,7 +437,7 @@ class IntegrationRepositoryImplTest {
         @Test
         fun `Given ids when getting entities then their initial states come from one filtered subscription in the requested order`() = runTest {
             val ids = listOf("sensor.b", "sensor.missing", "sensor.a")
-            coEvery { webSocketRepository.getCompressedStateAndChanges(ids) } returns flowOf(
+            coEvery { webSocketRepository.getCompressedStateAndChangesFromStart(ids) } returns flowOf(
                 CompressedStateChangedEvent(
                     added = mapOf("sensor.a" to compressedState("1"), "sensor.b" to compressedState("2")),
                 ),
@@ -451,7 +451,7 @@ class IntegrationRepositoryImplTest {
 
         @Test
         fun `Given the subscription ends without states when getting entities then null is returned`() = runTest {
-            coEvery { webSocketRepository.getCompressedStateAndChanges(listOf(entityId)) } returns flowOf()
+            coEvery { webSocketRepository.getCompressedStateAndChangesFromStart(listOf(entityId)) } returns flowOf()
 
             assertNull(repository.getEntities(listOf(entityId)))
             coVerify(exactly = 0) { webSocketRepository.getStates() }
@@ -460,7 +460,35 @@ class IntegrationRepositoryImplTest {
         @Test
         fun `Given no ids when getting entities then nothing is fetched`() = runTest {
             assertEquals(emptyList<Entity>(), repository.getEntities(emptyList()))
+            coVerify(exactly = 0) { webSocketRepository.getCompressedStateAndChangesFromStart(any()) }
+        }
+
+        @Test
+        fun `Given ids when getting entities and updates then the initial states and each change arrive as batches of one subscription`() = runTest {
+            val ids = listOf("sensor.a", "sensor.b")
+            coEvery { webSocketRepository.getCompressedStateAndChangesFromStart(ids) } returns flowOf(
+                CompressedStateChangedEvent(
+                    added = mapOf("sensor.a" to compressedState("1"), "sensor.b" to compressedState("2")),
+                ),
+                CompressedStateChangedEvent(
+                    changed = mapOf("sensor.b" to CompressedStateDiff(plus = compressedState("3"))),
+                ),
+            )
+
+            val batches = checkNotNull(repository.getEntitiesAndUpdates(ids)).toList()
+
+            assertEquals(
+                listOf(listOf("sensor.a" to "1", "sensor.b" to "2"), listOf("sensor.b" to "3")),
+                batches.map { batch -> batch.map { it.entityId to it.state } },
+            )
             coVerify(exactly = 0) { webSocketRepository.getCompressedStateAndChanges(any()) }
+        }
+
+        @Test
+        fun `Given an older server when getting entities and updates then null is returned`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+
+            assertNull(repository.getEntitiesAndUpdates(listOf(entityId)))
         }
 
         @Test

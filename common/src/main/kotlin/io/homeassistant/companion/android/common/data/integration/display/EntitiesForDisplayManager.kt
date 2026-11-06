@@ -18,17 +18,23 @@ import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.produceIn
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 /**
@@ -265,37 +271,38 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         val webSocketRepository = serverManager.webSocketRepositoryOrNull(serverId)
         var snapshot = fetchRegistrySnapshot(webSocketRepository)
         val domainEntityIds = snapshot.entries.largeServerEntityIdsOf(domains)
-        val followedEntityIds = subscribedEntityIds ?: domainEntityIds
 
-        val initial = fetchInitialEntities(serverId, domainEntityIds)
-        if (initial == null) {
-            emit(EntityDisplayState.Error)
-            return@flow
-        }
-
-        val entities = initial.filter(filter).associateByTo(LinkedHashMap()) { it.entityId }
-        var lastItems = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
-        emit(EntityDisplayState.Loaded(lastItems))
-
-        observeContextEvents(serverId, webSocketRepository, followedEntityIds).collect { event ->
-            when (event) {
-                is ObserveEvent.EntityEvent.StateChanged -> with(event.entity) {
-                    if (filter(this)) entities[entityId] = this else entities.remove(entityId)
-                }
-                ObserveEvent.AreaRegistryChanged -> webSocketRepository?.let {
-                    snapshot = snapshot.copy(areas = it.fetchAreas(), floors = it.fetchFloors())
-                }
-                ObserveEvent.DeviceRegistryChanged -> webSocketRepository?.let {
-                    snapshot = snapshot.copy(devices = it.fetchDevices())
-                }
-                ObserveEvent.EntityEvent.EntityRegistryChanged -> webSocketRepository?.let {
-                    snapshot = snapshot.withEntityEntries(it)
-                }
+        coroutineScope {
+            val source = openEntitySource(serverId, domainEntityIds, subscribedEntityIds)
+            if (source == null) {
+                emit(EntityDisplayState.Error)
+                return@coroutineScope
             }
-            val items = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
-            if (items != lastItems) {
-                lastItems = items
-                emit(EntityDisplayState.Loaded(items))
+
+            val entities = source.initial.filter(filter).associateByTo(LinkedHashMap()) { it.entityId }
+            var lastItems = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
+            emit(EntityDisplayState.Loaded(lastItems))
+
+            observeContextEvents(webSocketRepository, source.stateChanges).collect { event ->
+                when (event) {
+                    is ObserveEvent.EntityEvent.StateChanged -> with(event.entity) {
+                        if (filter(this)) entities[entityId] = this else entities.remove(entityId)
+                    }
+                    ObserveEvent.AreaRegistryChanged -> webSocketRepository?.let {
+                        snapshot = snapshot.copy(areas = it.fetchAreas(), floors = it.fetchFloors())
+                    }
+                    ObserveEvent.DeviceRegistryChanged -> webSocketRepository?.let {
+                        snapshot = snapshot.copy(devices = it.fetchDevices())
+                    }
+                    ObserveEvent.EntityEvent.EntityRegistryChanged -> webSocketRepository?.let {
+                        snapshot = snapshot.withEntityEntries(it)
+                    }
+                }
+                val items = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
+                if (items != lastItems) {
+                    lastItems = items
+                    emit(EntityDisplayState.Loaded(items))
+                }
             }
         }
     }.flowOn(Dispatchers.Default)
@@ -347,18 +354,69 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         return entityIds.mapNotNull { entitiesById[it] }
     }
 
+    /** Starting states of the observed entities, and their state changes when they can be followed. */
+    private class EntitySource(val initial: List<Entity>, val stateChanges: Flow<ObserveEvent.EntityEvent>?)
+
     /**
-     * Merges the state changes of [entityIds], or of every entity of the server when it is null,
-     * and the registry update events of the server into a single [ObserveEvent] flow. The flow is
-     * empty when the state changes cannot be subscribed to, since the registry updates alone cannot
-     * keep the entities current; a registry subscription that cannot be established is skipped.
+     * Opens the entities to observe. The entities of [domainEntityIds] come from a single
+     * subscription when the server supports it, see [followFromStart]. Otherwise the starting
+     * states are fetched, then the state changes of [subscribedEntityIds], of [domainEntityIds], or
+     * of every entity of the server when both are null, are followed. Null when the starting states
+     * can't be retrieved.
+     */
+    private suspend fun CoroutineScope.openEntitySource(
+        serverId: Int,
+        domainEntityIds: List<String>?,
+        subscribedEntityIds: List<String>?,
+    ): EntitySource? = domainEntityIds
+        ?.let { entityIds ->
+            // An empty filter would subscribe to every entity of the server
+            if (entityIds.isEmpty()) {
+                EntitySource(
+                    emptyList(),
+                    stateChanges = null,
+                )
+            } else {
+                followFromStart(serverId, entityIds)
+            }
+        }
+        ?: fetchInitialEntities(serverId, domainEntityIds)?.let { initial ->
+            EntitySource(initial, stateChanges(serverId, subscribedEntityIds ?: domainEntityIds))
+        }
+
+    /**
+     * Follows [entityIds] on a single subscription whose first emission holds their starting states,
+     * so they are downloaded once and no change is missed between loading and following them. Null
+     * when the server doesn't support it or the starting states don't arrive.
+     */
+    private suspend fun CoroutineScope.followFromStart(serverId: Int, entityIds: List<String>): EntitySource? {
+        val batches = serverManager.integrationRepositoryOrNull(serverId)
+            ?.let { repository -> orNull("entity states") { repository.getEntitiesAndUpdates(entityIds) } }
+            ?.produceIn(this)
+        val initial = batches?.let { withTimeoutOrNull(INITIAL_STATES_TIMEOUT) { it.receiveCatching().getOrNull() } }
+        if (batches == null || initial == null) {
+            batches?.cancel()
+            return null
+        }
+        val order = entityIds.withIndex().associate { (index, entityId) -> entityId to index }
+        return EntitySource(
+            initial = initial.sortedBy { order[it.entityId] ?: Int.MAX_VALUE },
+            stateChanges = batches.consumeAsFlow().transform { batch ->
+                batch.forEach { emit(ObserveEvent.EntityEvent.StateChanged(it)) }
+            },
+        )
+    }
+
+    /**
+     * Merges [stateChanges] and the registry update events of the server into a single
+     * [ObserveEvent] flow. The flow is empty without [stateChanges], since the registry updates alone
+     * cannot keep the entities current; a registry subscription that cannot be established is skipped.
      */
     private suspend fun observeContextEvents(
-        serverId: Int,
         webSocketRepository: WebSocketRepository?,
-        entityIds: List<String>?,
+        stateChanges: Flow<ObserveEvent.EntityEvent>?,
     ): Flow<ObserveEvent> {
-        val stateChanges = stateChanges(serverId, entityIds) ?: return emptyFlow()
+        if (stateChanges == null) return emptyFlow()
         return listOfNotNull(
             stateChanges,
             webSocketRepository?.areaRegistryChanges(),
@@ -716,6 +774,9 @@ private data class RegistrySnapshot(
  * it, the full download can run a watch out of memory.
  */
 internal const val FULL_FETCH_MAX_ENTITIES = 2000
+
+/** How long the starting states of a subscription are waited for, see [EntitiesForDisplayManager.observeDomainsInContext]. */
+private val INITIAL_STATES_TIMEOUT = 30.seconds
 
 /**
  * Browses the entities of a server one domain at a time, see [EntitiesForDisplayManager.browse].
