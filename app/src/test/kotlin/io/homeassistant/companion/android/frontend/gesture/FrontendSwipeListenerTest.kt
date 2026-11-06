@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.frontend.gesture
 
+import android.app.Activity
 import android.os.Build
 import android.os.Looper
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
+import android.widget.FrameLayout
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -15,12 +17,13 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import java.util.concurrent.TimeUnit
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
@@ -77,7 +80,7 @@ class FrontendSwipeListenerTest {
 
         withRootInsets({ insets }) {
             swipe(startX = 8f, endX = 200f)
-            swipe(startX = 992f, endX = 800f)
+            swipe(startX = 944f, endX = 800f)
 
             assertEquals(
                 listOf(DetectedGesture(GestureDirection.RIGHT, 1), DetectedGesture(GestureDirection.LEFT, 1)),
@@ -96,12 +99,61 @@ class FrontendSwipeListenerTest {
 
         withRootInsets({ insets }) {
             swipe(startX = 8f, endX = 200f)
-            swipe(startX = 992f, endX = 800f)
+            swipe(startX = 944f, endX = 800f)
 
             assertEquals(
                 listOf(DetectedGesture(GestureDirection.RIGHT, 1), DetectedGesture(GestureDirection.LEFT, 1)),
                 gestures,
             )
+        }
+    }
+
+    @Test
+    fun `Given a left landscape navigation bar when swiping beside it then only touchable edge swipes are reported`() {
+        val navigationBar = Insets.of(48, 0, 0, 0)
+        val insets = WindowInsetsCompat.Builder()
+            .setInsets(WindowInsetsCompat.Type.systemGestures(), navigationBar)
+            .setInsets(WindowInsetsCompat.Type.tappableElement(), navigationBar)
+            .build()
+
+        withRootInsets({ insets }) {
+            swipe(startX = 8f, endX = 200f)
+            swipe(startX = 73f, endX = 200f)
+            assertTrue(gestures.isEmpty())
+
+            swipe(startX = 56f, endX = 200f)
+            assertEquals(listOf(DetectedGesture(GestureDirection.RIGHT, 1)), gestures)
+        }
+    }
+
+    @Test
+    fun `Given a parent already insets the view beside a navigation bar when swiping then edge offsets are not applied twice`() {
+        val controller = Robolectric.buildActivity(Activity::class.java).setup()
+        val root = FrameLayout(view.context)
+        root.addView(view)
+        try {
+            controller.get().setContentView(root)
+            controller.get().window.decorView.layout(0, 0, 1000, 800)
+            root.layout(0, 0, 1000, 800)
+            for (navigationBar in listOf(Insets.of(48, 0, 0, 0), Insets.of(0, 0, 48, 0))) {
+                val insets = WindowInsetsCompat.Builder()
+                    .setInsets(WindowInsetsCompat.Type.systemGestures(), navigationBar)
+                    .setInsets(WindowInsetsCompat.Type.tappableElement(), navigationBar)
+                    .build()
+                view.layout(navigationBar.left, 0, 1000 - navigationBar.right, 800)
+
+                withRootInsets({ insets }) {
+                    swipe(startX = 8f, endX = 200f)
+                    swipe(startX = 944f, endX = 800f)
+                    assertEquals(
+                        listOf(DetectedGesture(GestureDirection.RIGHT, 1), DetectedGesture(GestureDirection.LEFT, 1)),
+                        gestures,
+                    )
+                }
+                gestures.clear()
+            }
+        } finally {
+            controller.pause().stop().destroy()
         }
     }
 
@@ -133,8 +185,12 @@ class FrontendSwipeListenerTest {
             swipe(startX = 992f, endX = 800f)
             assertTrue(gestures.isEmpty())
 
-            insets = systemGestureInsets(left = 0, right = 0)
+            insets = systemGestureInsets(left = 0, right = 24)
             swipe(startX = 8f, endX = 200f)
+            swipe(startX = 992f, endX = 800f)
+            assertEquals(listOf(DetectedGesture(GestureDirection.RIGHT, 1)), gestures)
+
+            insets = systemGestureInsets(left = 0, right = 0)
             swipe(startX = 992f, endX = 800f)
             val recognized = listOf(
                 DetectedGesture(GestureDirection.RIGHT, 1),

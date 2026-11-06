@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.gestures
 
+import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.GesturePointers
@@ -12,6 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -41,13 +43,15 @@ class GesturesViewModelTest {
     }
 
     @Test
-    fun `Given no inset information when settings are created then only multi finger gestures are available`() = runTest {
+    fun `Given no inset information when settings are created then availability remains unresolved`() = runTest {
         val viewModel = GesturesViewModel(prefsRepository)
 
-        assertEquals(multiFingerGestures, viewModel.availableGestures)
-        advanceUntilIdle()
+        viewModel.availableGestures.test {
+            assertNull(awaitItem())
+            advanceUntilIdle()
+            expectNoEvents()
+        }
 
-        assertEquals(multiFingerGestures, viewModel.availableGestures)
         assertEquals(GestureAction.QUICKBAR_DEFAULT, viewModel.gestureActions[HAGesture.SWIPE_LEFT_ONE_EDGE])
         assertEquals(GestureAction.NAVIGATE_DASHBOARD, viewModel.gestureActions[HAGesture.SWIPE_RIGHT_ONE_EDGE])
         coVerify(exactly = 0) { prefsRepository.setGestureAction(any(), any()) }
@@ -69,18 +73,22 @@ class GesturesViewModelTest {
         val viewModel = GesturesViewModel(prefsRepository)
         advanceUntilIdle()
 
-        viewModel.updateGestureAvailability(
-            leftEdgeReserved = leftEdgeReserved,
-            rightEdgeReserved = rightEdgeReserved,
-        )
+        viewModel.availableGestures.test {
+            assertNull(awaitItem())
+            viewModel.updateGestureAvailability(
+                leftEdgeReserved = leftEdgeReserved,
+                rightEdgeReserved = rightEdgeReserved,
+            )
+            val availableGestures = requireNotNull(awaitItem())
 
-        assertEquals(swipeLeftAvailable, HAGesture.SWIPE_LEFT_ONE_EDGE in viewModel.availableGestures)
-        assertEquals(swipeRightAvailable, HAGesture.SWIPE_RIGHT_ONE_EDGE in viewModel.availableGestures)
-        assertEquals(multiFingerGestures, viewModel.availableGestures.filter { it.pointers != GesturePointers.ONE })
-        assertEquals(
-            multiFingerGestures.size + listOf(swipeLeftAvailable, swipeRightAvailable).count { it },
-            viewModel.availableGestures.size,
-        )
+            assertEquals(swipeLeftAvailable, HAGesture.SWIPE_LEFT_ONE_EDGE in availableGestures)
+            assertEquals(swipeRightAvailable, HAGesture.SWIPE_RIGHT_ONE_EDGE in availableGestures)
+            assertEquals(multiFingerGestures, availableGestures.filter { it.pointers != GesturePointers.ONE })
+            assertEquals(
+                multiFingerGestures.size + listOf(swipeLeftAvailable, swipeRightAvailable).count { it },
+                availableGestures.size,
+            )
+        }
         coVerify(exactly = 0) { prefsRepository.setGestureAction(any(), any()) }
     }
 
@@ -88,20 +96,26 @@ class GesturesViewModelTest {
     fun `Given a customized edge action when navigation mode changes then its saved action survives hiding and restoring the gesture`() = runTest {
         val viewModel = GesturesViewModel(prefsRepository)
         advanceUntilIdle()
-        viewModel.updateGestureAvailability(leftEdgeReserved = false, rightEdgeReserved = false)
-        viewModel.setGestureAction(HAGesture.SWIPE_LEFT_ONE_EDGE, GestureAction.SHOW_SIDEBAR)
-        advanceUntilIdle()
-        val customizedActions = viewModel.gestureActions.toMap()
+        viewModel.availableGestures.test {
+            assertNull(awaitItem())
+            viewModel.updateGestureAvailability(leftEdgeReserved = false, rightEdgeReserved = false)
+            assertEquals(HAGesture.entries.toList(), awaitItem())
+            viewModel.setGestureAction(HAGesture.SWIPE_LEFT_ONE_EDGE, GestureAction.SHOW_SIDEBAR)
+            advanceUntilIdle()
+            val customizedActions = viewModel.gestureActions.toMap()
 
-        viewModel.updateGestureAvailability(leftEdgeReserved = true, rightEdgeReserved = true)
-        assertEquals(multiFingerGestures, viewModel.availableGestures)
-        assertEquals(customizedActions, viewModel.gestureActions.toMap())
-        viewModel.updateGestureAvailability(leftEdgeReserved = true, rightEdgeReserved = false)
-        viewModel.updateGestureAvailability(leftEdgeReserved = false, rightEdgeReserved = true)
-        viewModel.updateGestureAvailability(leftEdgeReserved = false, rightEdgeReserved = false)
+            viewModel.updateGestureAvailability(leftEdgeReserved = true, rightEdgeReserved = true)
+            assertEquals(multiFingerGestures, awaitItem())
+            assertEquals(customizedActions, viewModel.gestureActions.toMap())
+            viewModel.updateGestureAvailability(leftEdgeReserved = true, rightEdgeReserved = false)
+            assertEquals(HAGesture.entries.filterNot { it == HAGesture.SWIPE_RIGHT_ONE_EDGE }, awaitItem())
+            viewModel.updateGestureAvailability(leftEdgeReserved = false, rightEdgeReserved = true)
+            assertEquals(HAGesture.entries.filterNot { it == HAGesture.SWIPE_LEFT_ONE_EDGE }, awaitItem())
+            viewModel.updateGestureAvailability(leftEdgeReserved = false, rightEdgeReserved = false)
+            assertEquals(HAGesture.entries.toList(), awaitItem())
 
-        assertEquals(HAGesture.entries.toList(), viewModel.availableGestures)
-        assertEquals(customizedActions, viewModel.gestureActions.toMap())
+            assertEquals(customizedActions, viewModel.gestureActions.toMap())
+        }
         assertEquals(GestureAction.SHOW_SIDEBAR, savedActions[HAGesture.SWIPE_LEFT_ONE_EDGE])
         assertEquals(GestureAction.NAVIGATE_DASHBOARD, savedActions[HAGesture.SWIPE_RIGHT_ONE_EDGE])
         assertEquals(GestureAction.SERVER_PREVIOUS, savedActions[HAGesture.SWIPE_LEFT_THREE])

@@ -16,9 +16,9 @@ import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import kotlinx.serialization.Serializable
 
-@Serializable internal data object GesturesRoute
+@Serializable private class GesturesRoute
 
-@Serializable internal data class ActionsRoute(val gesture: HAGesture)
+@Serializable private data class ActionsRoute(val gesture: HAGesture)
 
 /**
  * Main Composable for gesture settings, allowing navigation to:
@@ -26,7 +26,7 @@ import kotlinx.serialization.Serializable
  *  - Gesture actions (when a gesture is selected, to change the action for it)
  *
  *  @param gestureActions User settings (gestures and the current action)
- *  @param availableGestures Gestures supported by the current system navigation configuration
+ *  @param availableGestures Supported gestures, or `null` until system navigation availability is resolved
  *  @param onSetAction Called when the action for a gesture should be changed
  *  @param onToolbarTitleChanged Called when the screen changes, to update the
  *         Activity's Toolbar title
@@ -34,7 +34,7 @@ import kotlinx.serialization.Serializable
 @Composable
 fun GesturesScreen(
     gestureActions: Map<HAGesture, GestureAction>,
-    availableGestures: List<HAGesture>,
+    availableGestures: List<HAGesture>?,
     onSetAction: (HAGesture, GestureAction) -> Unit,
     onToolbarTitleChanged: (String) -> Unit,
 ) {
@@ -42,7 +42,7 @@ fun GesturesScreen(
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = GesturesRoute,
+        startDestination = GesturesRoute(),
         // The apps' settings fragments do not have a transition. Compose Navigation forces a transition when
         // using predictive back linked to swipe progress, so we cannot set this to no transition as the UI
         // will look broken otherwise. To make the difference between fragments and Compose less jarring,
@@ -53,7 +53,7 @@ fun GesturesScreen(
         composable<GesturesRoute> {
             GesturesListView(
                 gestureActions = gestureActions,
-                availableGestures = availableGestures,
+                availableGestures = availableGestures.orEmpty(),
                 onGestureClicked = { gesture ->
                     navController.navigate(ActionsRoute(gesture))
                 },
@@ -61,16 +61,16 @@ fun GesturesScreen(
         }
         composable<ActionsRoute> { backStackEntry ->
             val action: ActionsRoute = backStackEntry.toRoute()
-            if (action.gesture !in availableGestures) {
+            if (availableGestures != null && action.gesture !in availableGestures) {
                 LaunchedEffect(action.gesture) {
-                    navController.popBackStack(route = GesturesRoute, inclusive = false)
+                    navController.popBackStack(route = GesturesRoute(), inclusive = false)
                 }
-            } else {
+            } else if (availableGestures != null) {
                 GestureActionsView(
                     selectedAction = gestureActions.getOrDefault(action.gesture, GestureAction.NONE),
                     onActionClicked = { newAction ->
                         onSetAction(action.gesture, newAction)
-                        navController.popBackStack(route = GesturesRoute, inclusive = false)
+                        navController.popBackStack(route = GesturesRoute(), inclusive = false)
                     },
                 )
             }

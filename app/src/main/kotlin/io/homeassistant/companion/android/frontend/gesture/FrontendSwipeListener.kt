@@ -3,10 +3,12 @@ package io.homeassistant.companion.android.frontend.gesture
 import android.annotation.SuppressLint
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.util.OnSwipeListener
+import io.homeassistant.companion.android.util.isEdgeReservedForSystemGestures
 import kotlin.math.abs
 
 /** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
@@ -61,23 +63,41 @@ internal class FrontendSwipeListener(private val view: View, private val onGestu
             return false
         }
 
-        val edgeWidth = EDGE_WIDTH_DP * density
-        return !isEdgeReserved(direction) &&
-            when (direction) {
-                GestureDirection.RIGHT -> start.x <= edgeWidth && distanceX > 0
-                GestureDirection.LEFT ->
-                    start.x >= view.width - edgeWidth && distanceX < 0
-                GestureDirection.UP, GestureDirection.DOWN -> false
-            }
+        val movesInward = when (direction) {
+            GestureDirection.RIGHT -> distanceX > 0
+            GestureDirection.LEFT -> distanceX < 0
+            GestureDirection.UP, GestureDirection.DOWN -> false
+        }
+        return movesInward && startsAtAvailableEdge(start.x, direction)
     }
 
-    private fun isEdgeReserved(direction: GestureDirection): Boolean {
-        val windowInsets = ViewCompat.getRootWindowInsets(view) ?: return false
-        val systemGestures = windowInsets.getInsets(WindowInsetsCompat.Type.systemGestures())
-        val tappableElements = windowInsets.getInsets(WindowInsetsCompat.Type.tappableElement())
+    private fun startsAtAvailableEdge(startX: Float, direction: GestureDirection): Boolean {
+        val edgeWidth = EDGE_WIDTH_DP * density
+        val windowInsets = ViewCompat.getRootWindowInsets(view)
+        val systemGestures = windowInsets?.getInsets(WindowInsetsCompat.Type.systemGestures()) ?: Insets.NONE
+        val tappableElements = windowInsets?.getInsets(WindowInsetsCompat.Type.tappableElement()) ?: Insets.NONE
+        // Account for insets already applied by the parent when locating the window's touchable edges.
+        val root = view.rootView
+        val rootLocation = IntArray(2).also(root::getLocationInWindow)
+        val viewLocation = IntArray(2).also(view::getLocationInWindow)
+        val offsetX = viewLocation[0] - rootLocation[0]
+        val leftEdge = (tappableElements.left - offsetX).coerceAtLeast(0).toFloat()
+        val rightEdge = (root.width - tappableElements.right - offsetX).coerceAtMost(view.width).toFloat()
+        if (startX !in leftEdge..rightEdge) return false
+
         return when (direction) {
-            GestureDirection.RIGHT -> systemGestures.left > tappableElements.left
-            GestureDirection.LEFT -> systemGestures.right > tappableElements.right
+            GestureDirection.RIGHT ->
+                !isEdgeReservedForSystemGestures(
+                    systemGestureInset = systemGestures.left,
+                    tappableElementInset = tappableElements.left,
+                ) &&
+                    startX <= leftEdge + edgeWidth
+            GestureDirection.LEFT ->
+                !isEdgeReservedForSystemGestures(
+                    systemGestureInset = systemGestures.right,
+                    tappableElementInset = tappableElements.right,
+                ) &&
+                    startX >= rightEdge - edgeWidth
             GestureDirection.UP, GestureDirection.DOWN -> false
         }
     }

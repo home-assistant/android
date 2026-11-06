@@ -1,11 +1,13 @@
 package io.homeassistant.companion.android.settings.gestures.views
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -21,10 +23,10 @@ import io.homeassistant.companion.android.common.util.GesturePointers
 import io.homeassistant.companion.android.common.util.HAGesture
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -40,7 +42,7 @@ class GesturesScreenTest {
     @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<HiltComponentActivity>()
 
-    private val availableGestures = mutableStateOf<List<HAGesture>>(HAGesture.entries)
+    private val availableGestures = mutableStateOf<List<HAGesture>?>(HAGesture.entries)
     private val gestureActions = mutableStateMapOf<HAGesture, GestureAction>().apply {
         putAll(HAGesture.entries.associateWith { GestureAction.NONE })
         this[HAGesture.SWIPE_LEFT_ONE_EDGE] = GestureAction.QUICKBAR_DEFAULT
@@ -56,7 +58,7 @@ class GesturesScreenTest {
             HomeAssistantAppTheme {
                 GesturesListView(
                     gestureActions = gestureActions,
-                    availableGestures = availableGestures.value,
+                    availableGestures = availableGestures.value.orEmpty(),
                     onGestureClicked = {},
                 )
             }
@@ -85,7 +87,7 @@ class GesturesScreenTest {
 
     @Test
     fun `Given a visible edge gesture when opening going back and selecting an action then navigation and callback target stay correct`() {
-        setScreenContent()
+        composeTestRule.setContent { ScreenContent() }
         awaitToolbarTitle(commonR.string.gestures)
         edgeRow(GestureAction.QUICKBAR_DEFAULT).performClick()
         awaitToolbarTitle(HAGesture.SWIPE_LEFT_ONE_EDGE.fullDescription)
@@ -109,7 +111,7 @@ class GesturesScreenTest {
 
     @Test
     fun `Given an open edge action when availability changes then only an unavailable selected gesture returns to the list`() {
-        setScreenContent()
+        composeTestRule.setContent { ScreenContent() }
         edgeRow(GestureAction.QUICKBAR_DEFAULT).performClick()
         awaitToolbarTitle(HAGesture.SWIPE_LEFT_ONE_EDGE.fullDescription)
 
@@ -134,19 +136,36 @@ class GesturesScreenTest {
         assertTrue(savedActions.isEmpty())
     }
 
-    private fun setScreenContent() {
-        composeTestRule.setContent {
-            HomeAssistantAppTheme {
-                GesturesScreen(
-                    gestureActions = gestureActions,
-                    availableGestures = availableGestures.value,
-                    onSetAction = { gesture, action ->
-                        savedActions.add(SavedAction(gesture, action))
-                        gestureActions[gesture] = action
-                    },
-                    onToolbarTitleChanged = { toolbarTitle = it },
-                )
-            }
+    @Test
+    fun `Given a restored edge action when availability is unresolved then wait without discarding its destination`() {
+        val restorationTester = StateRestorationTester(composeTestRule)
+        restorationTester.setContent { ScreenContent() }
+        edgeRow(GestureAction.QUICKBAR_DEFAULT).performClick()
+        awaitToolbarTitle(HAGesture.SWIPE_LEFT_ONE_EDGE.fullDescription)
+
+        composeTestRule.runOnIdle { availableGestures.value = null }
+        restorationTester.emulateSavedInstanceStateRestore()
+        awaitToolbarTitle(HAGesture.SWIPE_LEFT_ONE_EDGE.fullDescription)
+        composeTestRule.runOnIdle { availableGestures.value = HAGesture.entries }
+
+        awaitToolbarTitle(HAGesture.SWIPE_LEFT_ONE_EDGE.fullDescription)
+        composeTestRule.onNodeWithText(composeTestRule.stringResource(GestureAction.QUICKBAR_DEFAULT.description))
+            .assertIsSelected()
+        assertTrue(savedActions.isEmpty())
+    }
+
+    @Composable
+    private fun ScreenContent() {
+        HomeAssistantAppTheme {
+            GesturesScreen(
+                gestureActions = gestureActions,
+                availableGestures = availableGestures.value,
+                onSetAction = { gesture, action ->
+                    savedActions.add(SavedAction(gesture, action))
+                    gestureActions[gesture] = action
+                },
+                onToolbarTitleChanged = { toolbarTitle = it },
+            )
         }
     }
 
