@@ -18,7 +18,7 @@ permissions: {}
 
 env:
   # renovate: datasource=pypi depName=uv
-  UV_VERSION: "0.13.6"
+  UV_VERSION: "0.13.7"
   # renovate: datasource=pypi depName=zizmor
   ZIZMOR_VERSION: "1.32.0"
 
