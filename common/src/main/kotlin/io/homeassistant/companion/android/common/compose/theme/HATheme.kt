@@ -77,8 +77,8 @@ fun HAThemeForPreview(modifier: Modifier = Modifier, content: @Composable BoxSco
  *
  * Patch for the preview renderer, which never flags RTL support, so views resolve to LTR whatever
  * the locale. Flagging it here lets popups follow the direction too.
- * TODO: To remove once https://issuetracker.google.com/issues/582414066 is fixed.
  */
+// TODO remove once https://issuetracker.google.com/issues/582414066 is fixed.
 @Composable
 @ReadOnlyComposable
 private fun previewLayoutDirection(): LayoutDirection {
