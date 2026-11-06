@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Screenshots tests" type="GradleRunConfiguration" factoryName="Gradle">
+  <configuration default="false" name="Screenshot tests update" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -10,8 +10,8 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="testDebugScreenshotTestDefaultTestSuite" />
-          <option value="testFullDebugScreenshotTestDefaultTestSuite" />
+          <option value="updateDebugScreenshotTestDefaultTestSuite" />
+          <option value="updateFullDebugScreenshotTestDefaultTestSuite" />
         </list>
       </option>
       <option name="vmOptions" />
