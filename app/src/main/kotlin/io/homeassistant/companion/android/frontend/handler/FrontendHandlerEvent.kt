@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.frontend.download.DownloadResult
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.externalbus.incoming.HapticType
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
+import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamType
 import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 
 /**
@@ -192,4 +193,17 @@ sealed interface FrontendHandlerEvent {
      * When null, the action is unimplemented and should be ignored.
      */
     data class EntityAddToExecuted(val event: FrontendEvent?) : FrontendHandlerEvent
+
+    /**
+     * Frontend requested a WebRTC session for an entity (`webrtc/stream/start`).
+     *
+     * @param messageId correlation id from the incoming message, carried into the reply
+     * @param streamType the requested stream type
+     * @param entityId the camera entity to stream to
+     */
+    data class StartWebRtcStream(val messageId: Int?, val streamType: WebRtcStreamType, val entityId: String) :
+        FrontendHandlerEvent
+
+    /** Frontend asked to stop a WebRTC session (`webrtc/stream/stop`). */
+    data class StopWebRtcStream(val sessionId: String) : FrontendHandlerEvent
 }
