@@ -260,7 +260,7 @@ jobs:
           export ADB="$ANDROID_HOME/platform-tools/adb"
           PIDS=""
           for SERIAL in $SERIALS; do
-            .github/e2e/mtls/open-cert-installer.sh "$SERIAL" "$MTLS_DIR/client.p12" &
+            .github/e2e/mtls/open-cert-installer.sh "$SERIAL" "$MTLS_DIR/client.p12" "$MTLS_DIR/client_legacy.p12" &
             PIDS="$PIDS $!"
           done
           for PID in $PIDS; do
