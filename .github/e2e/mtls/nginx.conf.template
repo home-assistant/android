@@ -1,0 +1,30 @@
+# mTLS reverse proxy in front of the E2E Home Assistant. Mounted as
+# /etc/nginx/templates/default.conf.template, the nginx image renders it with
+# envsubst into conf.d, inside its own http block (hence only a server block
+# here, and the access log on stdout comes from the image's defaults).
+# E2E_MTLS_UPSTREAM is the host:port of Home Assistant; the certificates come
+# from generate-certs.sh, mounted at /etc/nginx/certs.
+server {
+    listen 8443 ssl;
+
+    ssl_certificate /etc/nginx/certs/server.pem;
+    ssl_certificate_key /etc/nginx/certs/server.key;
+
+    # "on" rather than "optional": every request must carry the client certificate.
+    ssl_client_certificate /etc/nginx/certs/ca.pem;
+    ssl_verify_client on;
+
+    location / {
+        proxy_pass http://${E2E_MTLS_UPSTREAM};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        # No X-Forwarded-* headers on purpose: Home Assistant rejects them unless
+        # trusted_proxies is configured, and the http YAML block that would do so
+        # is deprecated (it is applied as a pending config that auto-reverts with
+        # a restart five minutes later). Without them Home Assistant simply sees
+        # the proxy as a local client, which is all this flow needs.
+        proxy_read_timeout 300s;
+    }
+}
