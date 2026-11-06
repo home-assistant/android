@@ -8,7 +8,7 @@ class UpdateLocationRequestTest {
     @Test
     fun `Given a valid UpdateLocationRequest when serializing it then it creates a valid JSON`() {
         assertEquals(
-            """{"gps":[1.0,2.0],"gps_accuracy":0,"location_name":"Test Location","in_zones":["home","work"],"speed":1,"altitude":2,"course":3,"vertical_accuracy":4}""",
+            """{"gps":[1.0,2.0],"gps_accuracy":0,"location_name":"Test Location","in_zones":["home","work"],"speed":1,"altitude":2,"course":3,"vertical_accuracy":4,"location_time":"2026-09-26T12:42:55.123Z"}""",
             kotlinJsonMapper.encodeToString(
                 UpdateLocationRequest(
                     gps = listOf(1.0, 2.0),
@@ -19,6 +19,7 @@ class UpdateLocationRequestTest {
                     altitude = 2,
                     course = 3,
                     verticalAccuracy = 4,
+                    locationTime = "2026-09-26T12:42:55.123Z",
                 ),
             ),
         )
@@ -42,8 +43,9 @@ class UpdateLocationRequestTest {
                 altitude = 2,
                 course = 3,
                 verticalAccuracy = 4,
+                locationTime = "2026-09-26T12:42:55.123Z",
             ),
-            kotlinJsonMapper.decodeFromString<UpdateLocationRequest>("""{"gps":[1.0,2.0],"gps_accuracy":0,"location_name":"Test Location","in_zones":["home","work"],"speed":1,"altitude":2,"course":3,"vertical_accuracy":4}"""),
+            kotlinJsonMapper.decodeFromString<UpdateLocationRequest>("""{"gps":[1.0,2.0],"gps_accuracy":0,"location_name":"Test Location","in_zones":["home","work"],"speed":1,"altitude":2,"course":3,"vertical_accuracy":4,"location_time":"2026-09-26T12:42:55.123Z"}"""),
         )
         assertEquals(
             UpdateLocationRequest(),
