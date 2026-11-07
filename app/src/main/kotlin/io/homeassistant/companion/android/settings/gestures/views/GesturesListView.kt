@@ -23,11 +23,13 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
  * gesture calls [onGestureClicked] with the gesture.
  *
  * @param gestureActions User settings (gestures and the current action)
+ * @param availableGestures Gestures supported by the current system navigation configuration
  * @param onGestureClicked Called when a gesture is selected
  */
 @Composable
 fun GesturesListView(
     gestureActions: Map<HAGesture, GestureAction>,
+    availableGestures: List<HAGesture>,
     onGestureClicked: (HAGesture) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -42,7 +44,7 @@ fun GesturesListView(
             )
         }
 
-        val gesturesGrouped = HAGesture.entries.groupBy { it.direction }
+        val gesturesGrouped = availableGestures.groupBy { it.direction }
         gesturesGrouped.forEach { (direction, gestures) ->
             item {
                 SettingsSubheader(stringResource(direction.description))
@@ -65,6 +67,7 @@ fun GesturesListView(
 private fun PreviewGesturesListView() {
     GesturesListView(
         gestureActions = HAGesture.entries.associateWith { GestureAction.NONE },
+        availableGestures = HAGesture.entries,
         onGestureClicked = { _ -> },
     )
 }

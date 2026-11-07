@@ -326,12 +326,15 @@
     <string name="gestures_direction_up">Swipe up</string>
     <string name="gesture_name_swipe_down_two">Swipe down using two fingers</string>
     <string name="gesture_name_swipe_down_three">Swipe down using three fingers</string>
+    <string name="gesture_name_swipe_left_one_edge">Swipe left from the right edge using one finger</string>
     <string name="gesture_name_swipe_left_two">Swipe left using two fingers</string>
     <string name="gesture_name_swipe_left_three">Swipe left using three fingers</string>
+    <string name="gesture_name_swipe_right_one_edge">Swipe right from the left edge using one finger</string>
     <string name="gesture_name_swipe_right_two">Swipe right using two fingers</string>
     <string name="gesture_name_swipe_right_three">Swipe right using three fingers</string>
     <string name="gesture_name_swipe_up_two">Swipe up using two fingers</string>
     <string name="gesture_name_swipe_up_three">Swipe up using three fingers</string>
+    <string name="gestures_pointers_one">Using one finger from the edge</string>
     <string name="gestures_pointers_two">Using two fingers</string>
     <string name="gestures_pointers_three">Using three fingers</string>
     <string name="get_help">Get help</string>
