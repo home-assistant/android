@@ -157,13 +157,13 @@ jobs:
             --resolve "$RESOLVE" \
             "$E2E_MTLS_URL/manifest.json" | jq -e '.name == "Home Assistant"' >/dev/null
 
-      - uses: emulator-wtf/actions/configure-credentials@ea9ab3501ee2b780179a15e7584ffdbd15a5c744 # v1.2.5
+      - uses: emulator-wtf/actions/configure-credentials@0d2c74736a40b078ff88fabb2bf76f0ab8c5d18c # v1.2.6
         with:
           oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
 
       - name: Start emulators
         id: emulator
-        uses: emulator-wtf/actions/use-emulator@ea9ab3501ee2b780179a15e7584ffdbd15a5c744 # v1.2.5
+        uses: emulator-wtf/actions/use-emulator@0d2c74736a40b078ff88fabb2bf76f0ab8c5d18c # v1.2.6
         with:
           devices: ${{ steps.devices.outputs.list }}
           egress-tunnel: true
