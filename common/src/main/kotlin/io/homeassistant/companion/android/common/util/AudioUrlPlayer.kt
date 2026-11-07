@@ -67,7 +67,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(
      * player happen on the main thread.
      *
      * The Flow emits [PlaybackState] changes and completes if an error occurs or the upstream ends.
-     * If the [audioManager] is null or the current volume of [STREAM_MUSIC] is 0,
+     * If the [audioManager] is null or the current volume of the volume stream to be used is 0,
      * the Flow completes immediately without playing.
      *
      * The player is properly released once the flow is canceled.
