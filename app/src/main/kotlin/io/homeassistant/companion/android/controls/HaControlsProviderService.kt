@@ -321,6 +321,10 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
                     sendControl(failedItem(missingEntity, notFound = true), failed = true)
                 }
             }
+            (sentItems.keys - state.entitiesById.keys).forEach { removedEntity ->
+                Timber.w("$removedEntity was removed from Home Assistant")
+                sendControl(failedItem(removedEntity, notFound = true), failed = true)
+            }
             val changedItems = state.entities.filter { sentItems[it.entityId] != it }
             sentItems = state.entitiesById
             Timber.d("Sending ${changedItems.size} of ${state.entities.size} entities to subscriber")
