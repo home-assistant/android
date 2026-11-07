@@ -3,16 +3,33 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.HealthConnectFeatures
+import androidx.health.connect.client.aggregate.AggregationResult
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.metadata.DataOrigin
+import androidx.health.connect.client.request.AggregateRequest
+import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.units.Energy
+import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
+import io.homeassistant.companion.android.database.sensor.Attribute
+import io.homeassistant.companion.android.database.sensor.Sensor
+import io.mockk.CapturingSlot
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.slot
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -24,7 +41,8 @@ class HealthConnectSensorManagerTest {
         every { applicationContext } returns this
     }
 
-    private val sensorManager = HealthConnectSensorManager(context, mockk(), mockk())
+    private val sensorRepository = mockk<SensorRepository>(relaxed = true)
+    private val sensorManager = HealthConnectSensorManager(context, sensorRepository, mockk())
     private val healthConnectClient = mockk<HealthConnectClient>(relaxed = true)
 
     @BeforeEach
@@ -266,5 +284,77 @@ class HealthConnectSensorManagerTest {
             ),
             result.stageEndTimes,
         )
+    }
+
+    @Test
+    fun `Given active calories from several sources when updating then publishes the aggregated daily total`() = runTest {
+        val sensorSlot = slot<Sensor>()
+        val attributesSlot = slot<List<Attribute>>()
+        givenActiveCaloriesSensorEnabled(sensorSlot, attributesSlot)
+        coEvery { healthConnectClient.aggregate(any<AggregateRequest>()) } returns
+            aggregationResult(
+                energy = Energy.kilocalories(437.6),
+                origins = setOf("com.android.healthconnect.phone", "com.garmin.android.apps.connectmobile"),
+            )
+
+        sensorManager.requestSensorUpdate()
+
+        assertEquals("437.60", sensorSlot.captured.state)
+        assertEquals(SensorManager.STATE_CLASS_TOTAL_INCREASING, sensorSlot.captured.stateClass)
+        val attributes = attributesSlot.captured.associateBy { it.name }
+        assertNotNull(attributes["sources"])
+        assertTrue(attributes.getValue("sources").value.contains("com.garmin.android.apps.connectmobile"))
+        assertFalse(attributes.containsKey("source"), "Only the aggregate 'sources' attribute is expected")
+        // The total must come from an aggregation and never from reading a single (newest) record.
+        coVerify(exactly = 0) {
+            healthConnectClient.readRecords(any<ReadRecordsRequest<ActiveCaloriesBurnedRecord>>())
+        }
+    }
+
+    @Test
+    fun `Given no active calories recorded today when updating then publishes zero`() = runTest {
+        val sensorSlot = slot<Sensor>()
+        givenActiveCaloriesSensorEnabled(sensorSlot, slot())
+        coEvery { healthConnectClient.aggregate(any<AggregateRequest>()) } returns
+            aggregationResult(energy = null, origins = emptySet())
+
+        sensorManager.requestSensorUpdate()
+
+        assertEquals("0.00", sensorSlot.captured.state)
+    }
+
+    @Test
+    fun `Given the aggregation fails when updating active calories then the previous state is kept`() = runTest {
+        givenActiveCaloriesSensorEnabled(slot(), slot())
+        coEvery { healthConnectClient.aggregate(any<AggregateRequest>()) } throws IllegalStateException("boom")
+
+        sensorManager.requestSensorUpdate()
+
+        coVerify(exactly = 0) { sensorRepository.update(any()) }
+    }
+
+    /**
+     * Enables only the active calories sensor, with the Health Connect read permission granted, and captures what
+     * is persisted when the sensor is updated.
+     */
+    private fun givenActiveCaloriesSensorEnabled(
+        sensorSlot: CapturingSlot<Sensor>,
+        attributesSlot: CapturingSlot<List<Attribute>>,
+    ) {
+        val sensorId = HealthConnectSensorManager.activeCaloriesBurned.id
+        every {
+            healthConnectClient.features.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND)
+        } returns HealthConnectFeatures.FEATURE_STATUS_UNAVAILABLE
+        coEvery { healthConnectClient.permissionController.getGrantedPermissions() } returns
+            setOf(HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class))
+        coEvery { sensorRepository.get(sensorId) } returns
+            listOf(Sensor(id = sensorId, serverId = 0, enabled = true, state = ""))
+        coEvery { sensorRepository.update(capture(sensorSlot)) } returns Unit
+        coEvery { sensorRepository.replaceAllAttributes(sensorId, capture(attributesSlot)) } returns Unit
+    }
+
+    private fun aggregationResult(energy: Energy?, origins: Set<String>) = mockk<AggregationResult> {
+        every { get(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL) } returns energy
+        every { dataOrigins } returns origins.map { DataOrigin(it) }.toSet()
     }
 }
