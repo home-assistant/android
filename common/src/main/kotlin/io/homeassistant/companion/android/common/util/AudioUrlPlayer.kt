@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.common.util
 
 import android.content.Context
 import android.media.AudioManager
+import android.media.AudioManager.STREAM_ASSISTANT
 import android.media.AudioManager.STREAM_MUSIC
+import android.os.Build
 import androidx.annotation.OptIn
 import androidx.annotation.VisibleForTesting
 import androidx.media.AudioAttributesCompat
@@ -76,7 +78,7 @@ class AudioUrlPlayer @VisibleForTesting constructor(
      */
     @OptIn(UnstableApi::class)
     fun playAudio(url: String, isAssistant: Boolean = true): Flow<PlaybackState> = callbackFlow {
-        if (!canPlayMusic()) {
+        if (!canPlayMusic(isAssistant)) {
             close()
             return@callbackFlow
         }
@@ -145,9 +147,14 @@ class AudioUrlPlayer @VisibleForTesting constructor(
         }
     }.flowOn(Dispatchers.Main)
 
-    private fun canPlayMusic(): Boolean {
+    private fun canPlayMusic(isAssistant: Boolean): Boolean {
         return try {
-            audioManager != null && audioManager.getStreamVolume(STREAM_MUSIC) != 0
+            val streamVolume = if (isAssistant && SdkVersion.isAtLeast(Build.VERSION_CODES.CINNAMON_BUN)) {
+                audioManager?.getStreamVolume(STREAM_ASSISTANT)
+            } else {
+                audioManager?.getStreamVolume(STREAM_MUSIC)
+            }
+            audioManager != null && streamVolume != null && streamVolume != 0
         } catch (e: RuntimeException) {
             Timber.e(e, "Couldn't get stream volume")
             true

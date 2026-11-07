@@ -30,6 +30,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
+private const val ANDROID_17_SDK = 37
+private const val PRE_ANDROID_17_SDK = 36
+
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class AudioUrlPlayerTest {
     private lateinit var audioManager: AudioManager
@@ -40,6 +43,7 @@ class AudioUrlPlayerTest {
     fun setUp() {
         audioManager = mockk(relaxed = true)
         exoPlayer = mockk(relaxed = true)
+        SdkVersion.sdkInt = ANDROID_17_SDK
 
         player = AudioUrlPlayer(audioManager) { block ->
             exoPlayer.apply { block() }
@@ -50,6 +54,7 @@ class AudioUrlPlayerTest {
     @AfterEach
     fun tearDown() {
         unmockkAll()
+        SdkVersion.resetSdkInt()
     }
 
     @Test
