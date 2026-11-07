@@ -44,6 +44,20 @@ class LocalStorageImpl(sharedPreferences: suspend () -> SharedPreferences) : Loc
         withContext(Dispatchers.IO) { sharedPreferences().edit { putString(key, value) } }
     }
 
+    /**
+     * Applies every entry within a single [SharedPreferences.Editor], so the keys are committed
+     * together and no reader can see only part of them.
+     */
+    override suspend fun putStrings(values: Map<String, String?>) {
+        withContext(Dispatchers.IO) {
+            sharedPreferences().edit {
+                values.forEach { (key, value) ->
+                    value?.let { putString(key, it) } ?: remove(key)
+                }
+            }
+        }
+    }
+
     override suspend fun getString(key: String): String? {
         return withContext(Dispatchers.IO) { sharedPreferences().getString(key, null) }
     }

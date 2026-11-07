@@ -6,6 +6,16 @@ interface LocalStorage {
 
     suspend fun putString(key: String, value: String?)
 
+    /**
+     * Applies [values] as one state: a non-null value is stored for its key, a `null` value removes
+     * its key, and keys that are not part of [values] stay untouched.
+     *
+     * Use this for keys that only make sense together. An implementation has to apply all of them
+     * as one indivisible change, so that neither a reader nor a process death can observe or keep
+     * one of them without the others. Calling [putString] per entry does not satisfy that.
+     */
+    suspend fun putStrings(values: Map<String, String?>)
+
     suspend fun getString(key: String): String?
 
     suspend fun putLong(key: String, value: Long?)
