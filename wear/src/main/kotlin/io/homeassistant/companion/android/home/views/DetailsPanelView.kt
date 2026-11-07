@@ -61,6 +61,8 @@ fun DetailsPanelView(
     onFanSpeedChanged: (Float) -> Unit,
     onBrightnessChanged: (Float) -> Unit,
     onColorTempChanged: (Float, Boolean) -> Unit,
+    onColorChanged: (Int) -> Unit,
+    onNavigateToColorPicker: () -> Unit,
     isToastEnabled: Boolean,
     isHapticEnabled: Boolean,
 ) {
@@ -128,6 +130,14 @@ fun DetailsPanelView(
             entity.lightControls?.colorTemperature?.let { colorTemperature ->
                 item {
                     ColorTempSlider(colorTemperature, onColorTempChanged, isToastEnabled, isHapticEnabled)
+                }
+            }
+            if (entity.lightControls?.supportsRgb == true) {
+                item {
+                    ListHeader(R.string.color)
+                }
+                item {
+                    ColorPicker(onColorChanged, onNavigateToColorPicker, isToastEnabled, isHapticEnabled)
                 }
             }
 
@@ -383,6 +393,8 @@ private fun PreviewDetailsPaneViewEntityFanOn() {
             onFanSpeedChanged = {},
             onBrightnessChanged = {},
             onColorTempChanged = { _, _ -> },
+            onColorChanged = {},
+            onNavigateToColorPicker = {},
             isToastEnabled = false,
             isHapticEnabled = false,
         )
@@ -399,6 +411,8 @@ private fun PreviewDetailsPaneViewEntityLightOn() {
             onFanSpeedChanged = {},
             onBrightnessChanged = {},
             onColorTempChanged = { _, _ -> },
+            onColorChanged = {},
+            onNavigateToColorPicker = {},
             isToastEnabled = false,
             isHapticEnabled = false,
         )
@@ -415,6 +429,8 @@ private fun PreviewDetailsPaneViewEntityLightOff() {
             onFanSpeedChanged = {},
             onBrightnessChanged = {},
             onColorTempChanged = { _, _ -> },
+            onColorChanged = {},
+            onNavigateToColorPicker = {},
             isToastEnabled = false,
             isHapticEnabled = false,
         )
