@@ -2,9 +2,9 @@ package io.homeassistant.companion.android.widgets.button
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.color.DynamicColors
@@ -24,7 +24,6 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
-import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import io.homeassistant.companion.android.widgets.common.ActionFieldBinder
 import javax.inject.Inject
@@ -127,10 +126,11 @@ class ButtonWidgetViewModel @Inject constructor(
     }
 
     fun updateWidget(context: Context) {
-        val intent = Intent(context, ButtonWidget::class.java).apply {
-            action = BaseWidgetProvider.UPDATE_WIDGETS
+        val appContext = context.applicationContext
+        viewModelScope.launch {
+            val glanceId = GlanceAppWidgetManager(appContext).getGlanceIdBy(widgetId)
+            ButtonGlanceAppWidget().update(appContext, glanceId)
         }
-        context.sendBroadcast(intent)
     }
 
     private suspend fun maybeLoadPreviousState(widgetId: Int) {
@@ -398,18 +398,20 @@ class ButtonWidgetViewModel @Inject constructor(
     suspend fun requestWidgetCreation(context: Context) {
         // We drop the first value since we only care about knowing when the widget is actually added
         buttonWidgetDao.getWidgetCountFlow().drop(1).onStart {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val componentName = ComponentName(context, ButtonWidget::class.java)
-            val successCallback = PendingIntent.getBroadcast(
-                context,
-                System.currentTimeMillis().toInt(),
-                Intent(context, ButtonWidget::class.java).apply {
-                    action = ACTION_APPWIDGET_CREATED
-                    putExtra(EXTRA_WIDGET_ENTITY, getPendingDaoEntity())
-                },
-                PendingIntent.FLAG_MUTABLE,
-            )
-            appWidgetManager.requestPinAppWidget(componentName, null, successCallback)
+            GlanceAppWidgetManager(context)
+                .requestPinGlanceAppWidget(
+                    ButtonWidget::class.java,
+                    successCallback = PendingIntent.getBroadcast(
+                        context,
+                        System.currentTimeMillis().toInt(),
+                        Intent(context, ButtonWidget::class.java).apply {
+                            action = ACTION_APPWIDGET_CREATED
+                            putExtra(EXTRA_WIDGET_ENTITY, getPendingDaoEntity())
+                        },
+                        // We need the PendingIntent to be mutable so the system inject the EXTRA_APPWIDGET_ID of the created widget
+                        PendingIntent.FLAG_MUTABLE,
+                    ),
+                )
         }.first()
     }
 
