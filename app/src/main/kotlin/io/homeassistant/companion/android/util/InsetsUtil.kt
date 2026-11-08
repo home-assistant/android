@@ -18,6 +18,10 @@ import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.core.view.updatePadding
 import androidx.preference.PreferenceFragmentCompat
 
+/** Whether an edge's gesture inset extends beyond tappable system controls such as navigation buttons. */
+internal fun isEdgeReservedForSystemGestures(systemGestureInset: Int, tappableElementInset: Int): Boolean =
+    systemGestureInset > tappableElementInset
+
 operator fun PaddingValues.plus(that: PaddingValues): PaddingValues = object : PaddingValues {
     override fun calculateBottomPadding(): Dp = this@plus.calculateBottomPadding() + that.calculateBottomPadding()
 
