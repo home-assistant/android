@@ -12,7 +12,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
@@ -87,6 +86,7 @@ import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
+import io.homeassistant.companion.android.notifications.callscreen.CallScreenManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeSetting
@@ -125,7 +125,7 @@ import okhttp3.Request
 import okio.sink
 import timber.log.Timber
 
-class MessagingManager @Inject constructor(
+class MessagingManager @Inject internal constructor(
     @ApplicationContext val context: Context,
     private val okHttpClientProvider: SuspendProvider<OkHttpClient>,
     private val serverManager: ServerManager,
@@ -139,6 +139,8 @@ class MessagingManager @Inject constructor(
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
     private val bluetoothSensorManager: BluetoothSensorManager,
+    private val imageDownloader: NotificationImageDownloader,
+    private val callScreenManager: CallScreenManager,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -376,6 +378,7 @@ class MessagingManager @Inject constructor(
                 jsonData[NotificationData.MESSAGE] == NotificationData.CLEAR_NOTIFICATION &&
                     !jsonData["tag"].isNullOrBlank() -> {
                     clearNotification(context, jsonData["tag"]!!)
+                    callScreenManager.endByTag(jsonData["tag"]!!)
                 }
 
                 jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL &&
@@ -650,10 +653,26 @@ class MessagingManager @Inject constructor(
 
                 else -> {
                     Timber.d("Creating notification with following data: ${sensitive { jsonData.toString() }}")
-                    sendNotification(jsonData, notificationId, now)
+                    if (!tryRingCallScreen(jsonData, notificationId)) {
+                        sendNotification(jsonData, notificationId, now)
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Ring the call screen if [data] describes one.
+     *
+     * @return `true` if the call screen took over the notification, `false` if a regular notification
+     * must be posted instead
+     */
+    private suspend fun tryRingCallScreen(data: Map<String, String>, notificationId: Long): Boolean {
+        val config = callScreenManager.parseConfig(data, notificationId) ?: return false
+        val uriIntents = (config.buttons + config.menuItems)
+            .filter { it.key == URI && !it.uri.isNullOrBlank() }
+            .associate { it.index to createOpenUriPendingIntent(it.uri!!, data) }
+        return callScreenManager.tryRing(config, uriIntents)
     }
 
     private fun requestAccurateLocationUpdate() {
@@ -1343,17 +1362,8 @@ class MessagingManager @Inject constructor(
     private suspend fun handleLargeIcon(builder: NotificationCompat.Builder, data: Map<String, String>) {
         val iconUrl = data[ICON_URL]
         if (!iconUrl.isNullOrBlank()) {
-            val dataIcon = iconUrl.trim().replace(" ", "%20")
-            val serverId = data[THIS_SERVER_ID]!!.toInt()
-            val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
-            if (urlState is UrlState.HasUrl) {
-                val url = UrlUtil.handle(urlState.url, dataIcon)
-                val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataIcon))
-                if (bitmap != null) {
-                    builder.setLargeIcon(bitmap)
-                }
-            } else {
-                Timber.w("Not fetching icon since URL is unavailable")
+            imageDownloader.downloadServerImage(data[THIS_SERVER_ID]!!.toInt(), iconUrl)?.let {
+                builder.setLargeIcon(it)
             }
         }
     }
@@ -1366,7 +1376,7 @@ class MessagingManager @Inject constructor(
             val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
             if (urlState is UrlState.HasUrl) {
                 val url = UrlUtil.handle(urlState.url, dataImage)
-                val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))
+                val bitmap = imageDownloader.download(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))
                 if (bitmap != null) {
                     builder
                         .setLargeIcon(bitmap)
@@ -1391,31 +1401,6 @@ class MessagingManager @Inject constructor(
                 Timber.w("Not fetching image since URL is unavailable")
             }
         }
-    }
-
-    private suspend fun getImageBitmap(serverId: Int, url: URL?, requiresAuth: Boolean = false): Bitmap? = withContext(
-        Dispatchers.IO,
-    ) {
-        if (url == null) {
-            return@withContext null
-        }
-
-        var image: Bitmap? = null
-        try {
-            val request = Request.Builder().apply {
-                url(url)
-                if (requiresAuth) {
-                    addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
-                }
-            }.build()
-
-            okHttpClientProvider().newCall(request).execute().use {
-                image = BitmapFactory.decodeStream(it.body.byteStream())
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "Couldn't download image for notification")
-        }
-        return@withContext image
     }
 
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)

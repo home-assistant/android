@@ -46,13 +46,16 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Tr
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toHexString
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.WebSocketListener
 
 private val matterTimeout = 2.minutes
@@ -412,6 +415,22 @@ class WebSocketRepositoryImpl internal constructor(
         val result = (response?.result as? JsonObject)?.get("datasets")
         return if (response?.success == true && result != null) {
             kotlinJsonMapper.decodeFromJsonElement(result)
+        } else {
+            null
+        }
+    }
+
+    override suspend fun signPath(path: String, expires: Duration): String? {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "auth/sign_path",
+                "path" to path,
+                "expires" to expires.inWholeSeconds,
+            ),
+        )
+
+        return if (response?.success == true) {
+            (response.result as? JsonObject)?.get("path")?.jsonPrimitive?.contentOrNull
         } else {
             null
         }

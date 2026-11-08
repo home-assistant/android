@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Th
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import javax.inject.Inject
 import javax.inject.Provider
+import kotlin.time.Duration
 import kotlinx.coroutines.flow.Flow
 
 interface WebSocketRepository {
@@ -83,6 +84,15 @@ interface WebSocketRepository {
      * did not return a response.
      */
     suspend fun commissionMatterDeviceOnNetwork(pin: Long, ip: String): MatterCommissionResponse?
+
+    /**
+     * Ask the server to sign a path so it can be requested without an `Authorization` header
+     * (e.g. to open a WebSocket on a custom integration endpoint).
+     * @param path server relative path to sign, e.g. `/api/webrtc/ws`
+     * @param expires validity of the signature
+     * @return the signed path including the `authSig` query parameter, or `null` on failure
+     */
+    suspend fun signPath(path: String, expires: Duration): String?
 
     /**
      * Return a list of all Thread datasets known to the server.

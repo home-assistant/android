@@ -27,6 +27,7 @@ val threadPolicyIgnoredViolationRules = listOf(
     IgnoreMiuiTurboSchedMonitorDiskRead,
     IgnoreChromiumKeyStoreDiskWrite,
     IgnoreAppCompatPersistLocalesDiskReadWrite,
+    IgnoreMediaProviderCheckUriPermissionDiskRead,
 )
 
 /**
@@ -306,5 +307,25 @@ private data object IgnoreChromiumKeyStoreDiskWrite : IgnoreViolationRule {
             violation.stackTrace.any {
                 it.fileName?.startsWith("chromium-") == true
             }
+    }
+}
+
+/**
+ * Ignore a [DiskReadViolation] propagated back through Binder from the platform's `MediaProvider`.
+ *
+ * Creating the ringing channel of the call screen notification sets the default ringtone as its sound,
+ * and the system checks the URI permission through `MediaProvider.checkUriPermission`, which reads its
+ * database on its Binder thread. StrictMode propagates that violation to the calling app. The disk read
+ * is in platform code and beyond application control.
+ */
+private data object IgnoreMediaProviderCheckUriPermissionDiskRead : IgnoreViolationRule {
+    @RequiresApi(Build.VERSION_CODES.P)
+    override fun shouldIgnore(violation: Violation): Boolean {
+        if (violation !is DiskReadViolation) return false
+
+        return violation.stackTrace.any {
+            it.className == "com.android.providers.media.MediaProvider" &&
+                it.methodName == "checkUriPermission"
+        }
     }
 }

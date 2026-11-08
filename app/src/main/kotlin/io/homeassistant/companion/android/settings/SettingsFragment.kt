@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings
 
+import android.app.NotificationManager
 import android.app.UiModeManager
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -282,6 +283,13 @@ class SettingsFragment(
                 }
             }
 
+            findPreference<Preference>("call_screen_full_screen")?.let {
+                it.setOnPreferenceClickListener {
+                    openFullScreenIntentSettings()
+                    return@setOnPreferenceClickListener true
+                }
+            }
+
             findPreference<Preference>("notification_channels")?.let { pref ->
                 pref.setOnPreferenceClickListener {
                     parentFragmentManager.commit {
@@ -543,6 +551,10 @@ class SettingsFragment(
         findPreference<Preference>("notification_permission")?.let {
             it.isVisible = !notificationsEnabled
         }
+        findPreference<Preference>("call_screen_full_screen")?.let {
+            it.isVisible = SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) &&
+                requireContext().getSystemService<NotificationManager>()?.canUseFullScreenIntent() == false
+        }
         findPreference<Preference>("notification_channels")?.let {
             val uiManager = requireContext().getSystemService<UiModeManager>()
             it.isVisible =
@@ -566,6 +578,17 @@ class SettingsFragment(
             }
         }
         return true
+    }
+
+    private fun openFullScreenIntentSettings() {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
+            requestNotificationPermissionResult.launch(
+                Intent(
+                    Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                    "package:${requireContext().packageName}".toUri(),
+                ),
+            )
+        }
     }
 
     private fun openNotificationSettings() {

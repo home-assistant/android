@@ -48,6 +48,7 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions"/>
@@ -1079,6 +1080,27 @@
             android:name=".notifications.NotificationActionReceiver"
             android:enabled="true"
             android:exported="false" />
+
+        <receiver
+            android:name=".notifications.callscreen.CallScreenReceiver"
+            android:exported="false" />
+
+        <service
+            android:name=".notifications.callscreen.CallScreenService"
+            android:exported="false"
+            android:foregroundServiceType="microphone|mediaPlayback" />
+
+        <activity
+            android:name=".notifications.callscreen.CallScreenActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity="io.homeassistant.companion.android.callscreen"
+            android:excludeFromRecents="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@style/Theme.HomeAssistant"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            tools:targetApi="o_mr1" />
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

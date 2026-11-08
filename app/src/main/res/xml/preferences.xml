@@ -113,6 +113,12 @@
             app:isPreferenceVisible="false"
             android:icon="@drawable/ic_notification_off" />
         <Preference
+            android:key="call_screen_full_screen"
+            android:title="@string/call_screen_full_screen_permission"
+            android:summary="@string/call_screen_full_screen_permission_summary"
+            app:isPreferenceVisible="false"
+            android:icon="@drawable/ic_notification_off" />
+        <Preference
             android:key="notification_channels"
             android:title="@string/notification_channels"
             android:summary="@string/notification_channels_summary"
