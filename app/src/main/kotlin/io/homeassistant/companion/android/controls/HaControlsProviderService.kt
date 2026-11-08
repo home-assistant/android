@@ -151,6 +151,8 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
                                         item,
                                         info,
                                     )
+                                } catch (e: CancellationException) {
+                                    throw e
                                 } catch (e: Exception) {
                                     Timber.e(e, "Unable to create control for ${item.domain} entity, skipping")
                                     null
@@ -343,6 +345,8 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
                     item,
                     info,
                 )
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Unable to create control for ${item.domain} entity, sending error entity")
                 domainToHaControl["ha_failed"]?.createControl(

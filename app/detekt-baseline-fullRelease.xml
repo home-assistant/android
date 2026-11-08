@@ -37,7 +37,6 @@
     <ID>CyclomaticComplexMethod:FrontendMessageHandler.kt:FrontendMessageHandler$private suspend fun handleMessage: FrontendHandlerEvent</ID>
     <ID>CyclomaticComplexMethod:FrontendNavigation.kt:@Composable @VisibleForTesting internal fun FrontendEventHandler</ID>
     <ID>CyclomaticComplexMethod:FrontendViewModel.kt:FrontendViewModel$private suspend fun handleMessageResult</ID>
-    <ID>CyclomaticComplexMethod:HaControl.kt:HaControl$@SuppressLint("ResourceType") fun createControl: Control</ID>
     <ID>CyclomaticComplexMethod:HealthConnectSensorManager.kt:HealthConnectSensorManager$override suspend fun requestSensorUpdate</ID>
     <ID>CyclomaticComplexMethod:HomeAssistantApplication.kt:HomeAssistantApplication$override fun onCreate</ID>
     <ID>CyclomaticComplexMethod:LocationSensorManager.kt:LocationSensorManager$private suspend fun handleGeoUpdate</ID>
