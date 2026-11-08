@@ -65,6 +65,28 @@ class LocationForSecureConnectionViewModelTest {
     }
 
     @Test
+    fun `Given server updated after creation When allowInsecureConnection is invoked Then the stored server is updated`() = runTest {
+        val createdServer = createServer()
+        val storedServer = createdServer.copy(
+            connection = createdServer.connection.copy(internalUrl = "http://homeassistant.local:8123"),
+        )
+        coEvery { serverManager.getServer(serverId) } returnsMany listOf(createdServer, storedServer)
+
+        val viewModel = createViewModel()
+        viewModel.allowInsecureConnection.test {
+            awaitItem()
+            awaitComplete()
+        }
+
+        viewModel.allowInsecureConnection(false)
+
+        val serverSlot = slot<Server>()
+        coVerify { serverManager.updateServer(capture(serverSlot)) }
+        assertEquals(storedServer.connection.internalUrl, serverSlot.captured.connection.internalUrl)
+        assertEquals(false, serverSlot.captured.connection.allowInsecureConnection)
+    }
+
+    @Test
     fun `Given server throws exception When allowInsecureConnection is called Then exception is caught`() = runTest {
         val allow = true
         val exception = RuntimeException("Test repository exception")
@@ -99,6 +121,25 @@ class LocationForSecureConnectionViewModelTest {
 
         coVerify {
             serverManager.getServer(serverId)
+        }
+    }
+
+    @Test
+    fun `Given server updated after creation When allowInsecureConnection is collected again Then emits the stored value`() = runTest {
+        coEvery { serverManager.getServer(serverId) } returnsMany listOf(
+            createServer(allowInsecureConnection = null),
+            createServer(allowInsecureConnection = false),
+        )
+
+        val viewModel = createViewModel()
+
+        viewModel.allowInsecureConnection.test {
+            assertNull(awaitItem())
+            awaitComplete()
+        }
+        viewModel.allowInsecureConnection.test {
+            assertEquals(false, awaitItem())
+            awaitComplete()
         }
     }
 

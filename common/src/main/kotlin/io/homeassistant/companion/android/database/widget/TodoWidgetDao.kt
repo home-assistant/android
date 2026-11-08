@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface TodoWidgetDao : WidgetDao<TodoWidgetEntity> {
 
     @Query("SELECT * FROM todo_widget WHERE id = :id")
-    suspend fun get(id: Int): TodoWidgetEntity?
+    override suspend fun get(id: Int): TodoWidgetEntity?
 
     @Query("SELECT * FROM todo_widget WHERE id = :id")
     fun getFlow(id: Int): Flow<TodoWidgetEntity?>

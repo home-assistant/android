@@ -1,0 +1,29 @@
+# yamllint disable rule:document-start
+appId: io.homeassistant.companion.android.debug
+---
+# Shared by onboarding.yaml and onboarding-mtls.yaml: from the frontend login page
+# to the authorization. Expects HOME_ASSISTANT_USERNAME and HOME_ASSISTANT_PASSWORD
+# from the parent flow.
+
+# Generous timeouts from here on: all shards load the frontend from the single
+# Home Assistant container at the same time, so pages appear much slower than
+# on a lone device.
+#
+# The login page is detected through "Forgot password?" instead of the
+# "Log in" button: API 30's WebView (Chromium 83) exposes the frontend's
+# buttons without their shadow-DOM labels, so the button text is not matchable
+# there. Same reason for submitting with Enter below instead of tapping it.
+- extendedWaitUntil:
+    visible: "Forgot password?"
+    timeout: 60000
+
+- tapOn: "Username"
+- inputText: ${HOME_ASSISTANT_USERNAME}
+- tapOn: "Password"
+- inputText: ${HOME_ASSISTANT_PASSWORD}
+- hideKeyboard
+# Submits the login form from the focused password field.
+- pressKey: Enter
+- tapOn:
+    text: "Authorize"
+    optional: true

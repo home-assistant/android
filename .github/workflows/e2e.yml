@@ -19,17 +19,19 @@ concurrency:
 permissions:
   contents: read
 
-# Runs the Maestro onboarding flow against a real Home Assistant instance on
-# one emulator per supported API level.
+# Runs the Maestro onboarding flows against a real Home Assistant instance on
+# one emulator per supported API level: plain http, then through an mTLS
+# reverse proxy (see .github/e2e/mtls/README.md).
 jobs:
   maestro:
     name: "Maestro onboarding"
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    if: github.repository == 'home-assistant/android'
+    timeout-minutes: 40
     environment: ui-test
     permissions:
-      contents: read
-      id-token: write
+      contents: read # To check out the repository
+      id-token: write # To authenticate to emulator.wtf through OIDC
     env:
       E2E_FORWARD_IP: 172.16.0.2
       E2E_HOME_ASSISTANT_VERSION: ${{ inputs.home-assistant-version || 'dev' }}
@@ -41,7 +43,10 @@ jobs:
       E2E_HOME_ASSISTANT_URL: http://homeassistant.internal:8123
       E2E_HOME_ASSISTANT_USERNAME: citest
       E2E_HOME_ASSISTANT_PASSWORD: "h7jk99&U"
-      MAESTRO_VERSION: 2.11.0
+      E2E_MTLS_URL: https://homeassistant.internal:8443
+      E2E_MTLS_P12_PASSWORD: e2ep12pass
+      E2E_MTLS_CERT_ALIAS: e2eclient
+      MAESTRO_VERSION: 2.12.1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -52,9 +57,17 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      # StrictMode is disabled.
+      - name: Generate mTLS certificates
+        id: mtls
+        run: |
+          bash .github/e2e/mtls/generate-certs.sh "$RUNNER_TEMP/mtls"
+          echo "dir=$RUNNER_TEMP/mtls" >> "$GITHUB_OUTPUT"
+
+      # StrictMode is disabled. debugExtraResDir builds the per-run CA
       - name: Assemble app fullDebug
-        run: ./gradlew :app:assembleFullDebug -PnoStrictMode -Pabis=x86_64
+        env:
+          MTLS_DIR: ${{ steps.mtls.outputs.dir }}
+        run: ./gradlew :app:assembleFullDebug -PnoStrictMode -Pabis=x86_64 -PdebugExtraResDir="$MTLS_DIR/res"
 
       - name: Install Maestro CLI
         run: |
@@ -90,7 +103,7 @@ jobs:
 
       - name: Start Home Assistant
         id: homeassistant
-        uses: ludeeus/setup-homeassistant@0b231c620b4e539246793b5f309d88ae25eb86d3 # main
+        uses: ludeeus/setup-homeassistant@c63463d8e5e22093a8e4c4ea1e6f3c72a4dc0e04 # zizmor: ignore[stale-action-refs] # main
         with:
           tag: ${{ env.E2E_HOME_ASSISTANT_VERSION }}
           config-dir: .github/e2e/homeassistant
@@ -107,20 +120,57 @@ jobs:
 
           jq -e '.components | index("mobile_app") != null' homeassistant-config.json >/dev/null
 
-      - uses: emulator-wtf/actions/configure-credentials@8ebd78518fdcffab32d868226ec882f1be6dcb50 # v1.2.1
+      - name: Start mTLS proxy
+        env:
+          MTLS_DIR: ${{ steps.mtls.outputs.dir }}
+        run: |
+          docker run -d --network=host --name e2e-mtls-proxy \
+            -e E2E_MTLS_UPSTREAM=127.0.0.1:8123 \
+            -v "$MTLS_DIR:/etc/nginx/certs:ro" \
+            -v "$GITHUB_WORKSPACE/.github/e2e/mtls/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro" \
+            nginx:stable-alpine
+
+      # Fails here, on the runner, when the proxy is broken, rather than later
+      # inside a shard.
+      - name: Verify mTLS proxy
+        env:
+          MTLS_DIR: ${{ steps.mtls.outputs.dir }}
+        run: |
+          RESOLVE="${E2E_HOME_ASSISTANT_HOST}:8443:127.0.0.1"
+          for _ in $(seq 1 30); do
+            curl -s --cacert "$MTLS_DIR/ca.pem" --resolve "$RESOLVE" "$E2E_MTLS_URL/" >/dev/null 2>&1 && break
+            sleep 1
+          done
+
+          # The manifest needs no authentication, so anything proxied would be a 200.
+          # Without the client certificate the proxy itself must answer 400.
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' --cacert "$MTLS_DIR/ca.pem" --resolve "$RESOLVE" \
+            "$E2E_MTLS_URL/manifest.json")
+          if [ "$STATUS" != "400" ]; then
+            echo "::error::Expected 400 from the proxy without a client certificate, got $STATUS"
+            exit 1
+          fi
+
+          # With it, Home Assistant must answer through the proxy.
+          curl -sSf --cacert "$MTLS_DIR/ca.pem" \
+            --cert "$MTLS_DIR/client.pem" --key "$MTLS_DIR/client.key" \
+            --resolve "$RESOLVE" \
+            "$E2E_MTLS_URL/manifest.json" | jq -e '.name == "Home Assistant"' >/dev/null
+
+      - uses: emulator-wtf/actions/configure-credentials@0d2c74736a40b078ff88fabb2bf76f0ab8c5d18c # v1.2.6
         with:
           oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
 
       - name: Start emulators
         id: emulator
-        uses: emulator-wtf/actions/use-emulator@8ebd78518fdcffab32d868226ec882f1be6dcb50 # v1.2.1
+        uses: emulator-wtf/actions/use-emulator@0d2c74736a40b078ff88fabb2bf76f0ab8c5d18c # v1.2.6
         with:
           devices: ${{ steps.devices.outputs.list }}
           egress-tunnel: true
           egress-localhost-fwd-ip: ${{ env.E2E_FORWARD_IP }}
           dns-override: |
             ${{ env.E2E_HOME_ASSISTANT_HOST }}=${{ env.E2E_FORWARD_IP }}
-          max-time-limit: 15m
+          max-time-limit: 20m
 
       - name: Wait for emulators
         id: device
@@ -128,7 +178,7 @@ jobs:
           ADB="$ANDROID_HOME/platform-tools/adb"
           EXPECTED=$(grep -c . devices.txt)
 
-          # Up to 3 minutes; a slower start would not leave enough of the 15m session for the flows.
+          # Up to 3 minutes; a slower start would not leave enough of the 20m session for the flows.
           for _ in $(seq 1 36); do
             SERIALS=$($ADB devices | awk 'NR > 1 && $2 == "device" { print $1 }')
             if [ "$(echo "$SERIALS" | grep -c .)" -eq "$EXPECTED" ]; then
@@ -159,6 +209,12 @@ jobs:
               $ADB devices
               exit 1
             fi
+          done
+
+          # Two onboardings per device overflow the default logcat buffer, and the
+          # "Capture Android logs" step runs after both.
+          for SERIAL in $SERIALS; do
+            $ADB -s "$SERIAL" logcat -G 32M
           done
 
           echo "serials=$(echo $SERIALS | xargs)" >> "$GITHUB_OUTPUT"
@@ -194,6 +250,43 @@ jobs:
             -e HOME_ASSISTANT_PASSWORD="$HOME_ASSISTANT_PASSWORD" \
             .maestro/onboarding.yaml
 
+      # The mTLS flow starts by driving the certificate installer, so the installer
+      # must be the foreground window when that flow begins.
+      - name: Open the certificate installer
+        env:
+          SERIALS: ${{ steps.device.outputs.serials }}
+          MTLS_DIR: ${{ steps.mtls.outputs.dir }}
+        run: |
+          export ADB="$ANDROID_HOME/platform-tools/adb"
+          PIDS=""
+          for SERIAL in $SERIALS; do
+            .github/e2e/mtls/open-cert-installer.sh "$SERIAL" "$MTLS_DIR/client.p12" "$MTLS_DIR/client_legacy.p12" &
+            PIDS="$PIDS $!"
+          done
+          for PID in $PIDS; do
+            wait "$PID"
+          done
+
+      - name: Run Maestro mTLS onboarding flow
+        env:
+          HOME_ASSISTANT_URL: ${{ env.E2E_MTLS_URL }}
+          HOME_ASSISTANT_USERNAME: ${{ env.E2E_HOME_ASSISTANT_USERNAME }}
+          HOME_ASSISTANT_PASSWORD: ${{ env.E2E_HOME_ASSISTANT_PASSWORD }}
+          MTLS_P12_PASSWORD: ${{ env.E2E_MTLS_P12_PASSWORD }}
+          MTLS_CERT_ALIAS: ${{ env.E2E_MTLS_CERT_ALIAS }}
+        run: |
+          export PATH="$PATH:$HOME/.maestro/bin"
+
+          maestro test \
+            --shard-all "$(grep -c . devices.txt)" \
+            --test-output-dir maestro-results \
+            -e HOME_ASSISTANT_URL="$HOME_ASSISTANT_URL" \
+            -e HOME_ASSISTANT_USERNAME="$HOME_ASSISTANT_USERNAME" \
+            -e HOME_ASSISTANT_PASSWORD="$HOME_ASSISTANT_PASSWORD" \
+            -e MTLS_P12_PASSWORD="$MTLS_P12_PASSWORD" \
+            -e MTLS_CERT_ALIAS="$MTLS_CERT_ALIAS" \
+            .maestro/onboarding-mtls.yaml
+
       - name: Capture Android logs
         if: always() && steps.device.outputs.serials != ''
         env:
@@ -214,6 +307,10 @@ jobs:
           STEPS_HOMEASSISTANT_OUTPUTS_CONTAINERNAME: ${{ steps.homeassistant.outputs.containername }}
         run: docker logs --timestamps "${STEPS_HOMEASSISTANT_OUTPUTS_CONTAINERNAME}" > homeassistant.log 2>&1
 
+      - name: Capture mTLS proxy logs
+        if: always()
+        run: docker logs --timestamps e2e-mtls-proxy > mtls-proxy.log 2>&1 || true
+
       - name: Capture Home Assistant container details
         if: always() && steps.homeassistant.outputs.containername != ''
         env:
@@ -230,6 +327,7 @@ jobs:
             homeassistant-config.json
             homeassistant.log
             homeassistant-container.json
+            mtls-proxy.log
             logcat-*.txt
             maestro-results
 
@@ -243,7 +341,7 @@ jobs:
     if: failure() && github.repository == 'home-assistant/android'
     runs-on: ubuntu-latest
     permissions:
-      actions: write
+      actions: write # To dispatch the E2E failure triage workflow
     steps:
       - name: Dispatch triage
         env:
@@ -259,7 +357,7 @@ jobs:
     if: success() && github.repository == 'home-assistant/android'
     runs-on: ubuntu-latest
     permissions:
-      issues: write
+      issues: write # To comment on and close the open e2e-failure issues
     steps:
       - name: Close open E2E failure issues
         env:

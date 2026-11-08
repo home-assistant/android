@@ -326,12 +326,15 @@
     <string name="gestures_direction_up">Swipe up</string>
     <string name="gesture_name_swipe_down_two">Swipe down using two fingers</string>
     <string name="gesture_name_swipe_down_three">Swipe down using three fingers</string>
+    <string name="gesture_name_swipe_left_one_edge">Swipe left from the right edge using one finger</string>
     <string name="gesture_name_swipe_left_two">Swipe left using two fingers</string>
     <string name="gesture_name_swipe_left_three">Swipe left using three fingers</string>
+    <string name="gesture_name_swipe_right_one_edge">Swipe right from the left edge using one finger</string>
     <string name="gesture_name_swipe_right_two">Swipe right using two fingers</string>
     <string name="gesture_name_swipe_right_three">Swipe right using three fingers</string>
     <string name="gesture_name_swipe_up_two">Swipe up using two fingers</string>
     <string name="gesture_name_swipe_up_three">Swipe up using three fingers</string>
+    <string name="gestures_pointers_one">Using one finger from the edge</string>
     <string name="gestures_pointers_two">Using two fingers</string>
     <string name="gestures_pointers_three">Using three fingers</string>
     <string name="get_help">Get help</string>
@@ -1053,9 +1056,12 @@
     <string name="widget_media_fastforward_button">Fast forward</string>
     <string name="widget_media_image_description">Media playing preview image</string>
     <string name="widget_media_next_track_button">Next track</string>
+    <string name="widget_media_pause_button">Pause</string>
+    <string name="widget_media_play_button">Play</string>
     <string name="widget_media_player_description">Media player widget</string>
     <string name="widget_media_playpause_button">Play/pause</string>
     <string name="widget_media_prev_track_button">Previous track</string>
+    <string name="widget_media_stop_button">Stop</string>
     <string name="widget_media_volume_down_button">Volume down</string>
     <string name="widget_media_volume_up_button">Volume up</string>
     <string name="widget_media_rewind_button">Rewind</string>
@@ -1275,6 +1281,7 @@
     <string name="assist_default_assistant_disabled">Home Assistant is not your default assistant</string>
     <string name="assist_set_default">Set as default</string>
     <string name="assist_summary">Configure Assist for this device</string>
+    <string name="assist_listening_chime_enable">Play wake sound</string>
     <string name="assist_wake_word_title">Wake word</string>
     <string name="assist_wake_word_enable">Enable wake word detection</string>
     <string name="assist_wake_word_model">Wake word</string>

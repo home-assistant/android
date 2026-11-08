@@ -63,6 +63,7 @@ import io.homeassistant.companion.android.testing.unit.seedFakeAndroidId
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -131,6 +132,7 @@ internal class WearOnboardingNavigationTest {
         every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
         every { pendingFileChooser } returns MutableStateFlow(null)
         every { pendingPermissionRequest } returns MutableStateFlow(null)
+        every { webViewDebugEnabled } returns MutableStateFlow(false)
     }
 
     private val selectedUri = mockk<Uri>()
@@ -328,6 +330,28 @@ internal class WearOnboardingNavigationTest {
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)
 
             onNodeWithText(newDeviceName).performScrollTo().assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given NameYourWearDevice with mTLS required when clicking save then back twice quickly then each navigates only once`() {
+        testNavigation("http://ha") {
+            navController.navigateToNameYourWearDevice("wear", "http://ha.local", "super_code", true)
+
+            onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WearMTLSRoute>() == true)
+
+            // A single back press returning to NameYourWearDevice proves WearMTLS was only pushed once
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)
+
+            onNodeWithText(stringResource(commonR.string.name_your_device_save)).performScrollTo().performClick()
+            waitForIdle()
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<NameYourWearDeviceRoute>() == true)
         }
     }
 

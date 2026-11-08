@@ -1,0 +1,15 @@
+{
+  "uniqueId": "esphome:home-assistant-voice-pe:sounds",
+  "developers": [
+    {
+      "name": "Clayton Charles Tapp"
+    }
+  ],
+  "artifactVersion": "",
+  "description": "Wake word sound from the Home Assistant Voice Preview Edition, used as the Assist listening chime.",
+  "name": "Home Assistant Voice PE sounds",
+  "website": "https://github.com/esphome/home-assistant-voice-pe/tree/dev/sounds",
+  "licenses": [
+    "CC-BY-4.0"
+  ]
+}

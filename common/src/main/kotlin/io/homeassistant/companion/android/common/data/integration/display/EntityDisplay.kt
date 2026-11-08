@@ -42,7 +42,6 @@ import io.homeassistant.companion.android.common.data.integration.getVacuumContr
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.isExecuting
 import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
-import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import java.time.LocalDateTime
 
 private const val CATEGORY_CONFIG = "config"
@@ -246,7 +245,7 @@ data class EntityDisplayWithoutContext(
             if (domain != IntegrationDomains.LIGHT_DOMAIN) return null
 
             return LightControls(
-                brightness = if (supportsLightBrightness()) getLightBrightness() else null,
+                brightness = getLightBrightness(),
                 colorTemperature = getColorTemperature(),
             )
         }

@@ -40,6 +40,8 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovCo
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDeviceMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -105,6 +107,7 @@ class FrontendMessageHandlerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_NFC) } returns false
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
         every { matterManager.appSupportsCommissioning() } returns false
+        every { matterManager.appSupportsSharing() } returns false
         every { threadManager.appSupportsThread() } returns false
         every { externalBusRepository.webViewActions() } returns emptyFlow()
 
@@ -190,6 +193,7 @@ class FrontendMessageHandlerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_NFC) } returns true
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
         every { matterManager.appSupportsCommissioning() } returns true
+        every { matterManager.appSupportsSharing() } returns true
         every { threadManager.appSupportsThread() } returns true
 
         val testHandler = FrontendMessageHandler(
@@ -220,6 +224,7 @@ class FrontendMessageHandlerTest {
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(true, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(true, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
+        assertEquals(true, configResult["canShareMatterDeviceToOtherApps"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(true, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(1, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
         assertEquals(true, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())
@@ -261,6 +266,7 @@ class FrontendMessageHandlerTest {
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(false, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
+        assertEquals(false, configResult["canShareMatterDeviceToOtherApps"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(0, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
         assertEquals(false, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())
@@ -386,6 +392,21 @@ class FrontendMessageHandlerTest {
 
         handler.messageResults().test {
             assertInstanceOf(FrontendHandlerEvent.StartMatterCommissioning::class.java, awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given Matter share_device message when messageResults then emits StartMatterSharing`() = runTest {
+        val payload = MatterShareDevicePayload(passcode = 20202021, discriminator = 3840, remainingSeconds = 250)
+        val message = MatterShareDeviceMessage(id = 62, payload = payload)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            assertEquals(
+                FrontendHandlerEvent.StartMatterSharing(messageId = 62, payload = payload),
+                awaitItem(),
+            )
             expectNoEvents()
         }
     }
@@ -581,7 +602,30 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given failed auth with error when getExternalAuth then evaluates callback and emits AuthError`() = runTest {
+    fun `Given two failed auths before collecting when collecting messageResults then both AuthErrors are delivered`() = runTest {
+        val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
+        val error = FrontendConnectionError.AuthRevoked(
+            message = commonR.string.error_connection_failed,
+            errorDetails = "Auth failed",
+            rawErrorType = "ExternalAuthFailed",
+        )
+        coEvery { sessionManager.getExternalAuth(1, authPayload) } returns
+            ExternalAuthResult.Failed(callbackScript = "externalAuthSetToken(false)", error = error)
+        coEvery { externalBusRepository.evaluateScript("externalAuthSetToken(false)") } returns null
+        every { externalBusRepository.incomingMessages() } returns emptyFlow()
+
+        handler.getExternalAuth(authPayload, serverId = 1)
+        handler.getExternalAuth(authPayload, serverId = 1)
+
+        handler.messageResults().test {
+            assertEquals(FrontendHandlerEvent.AuthError(error), awaitItem())
+            assertEquals(FrontendHandlerEvent.AuthError(error), awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given failed auth with error when getExternalAuth then evaluates callback and sends AuthError`() = runTest {
         val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
         val error = FrontendConnectionError.AuthRevoked(
             message = commonR.string.error_connection_failed,
