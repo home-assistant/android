@@ -30,10 +30,11 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
- * Tells whether another worker already holds the foreground service that WorkManager shares
- * between all the workers.
+ * Tells whether a long-running worker holds the foreground service that WorkManager shares between
+ * all the workers, in which case [SensorWorker] must not add its time limited type to it.
  *
- * Which workers hold it is app-specific, so each app module provides its own implementation through Hilt.
+ * This is not about any worker in foreground, only the ones that have to outlive that time limit.
+ * Which ones is app-specific, so each app module provides its own implementation through Hilt.
  */
 fun interface WorkerForegroundStateProvider {
     suspend fun isAlreadyInForeground(): Boolean

@@ -59,7 +59,7 @@ object ApplicationModule {
     @Singleton
     fun clock(): Clock = Clock.System
 
-    // No worker keeps a foreground service running on Wear OS.
+    // No app specific worker keeps a foreground service running on Wear OS.
     @Provides
     fun providesWorkerForegroundStateProvider(): WorkerForegroundStateProvider = WorkerForegroundStateProvider { false }
 }
