@@ -1380,10 +1380,11 @@ class MessagingManager @Inject constructor(
             val dataImage = imageUrl.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
+            val sdkSupportsAnimatedImages = SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
             if (urlState is UrlState.HasUrl) {
                 val url = UrlUtil.handle(urlState.url, dataImage)
                 // The downloaded file is only needed for animated images
-                val diskCachePolicy = if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
+                val diskCachePolicy = if (sdkSupportsAnimatedImages) {
                     CachePolicy.WRITE_ONLY
                 } else {
                     CachePolicy.DISABLED
@@ -1395,7 +1396,7 @@ class MessagingManager @Inject constructor(
                         .setLargeIcon(bitmap)
                         .setStyle(
                             NotificationCompat.BigPictureStyle().also { style ->
-                                if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
+                                if (sdkSupportsAnimatedImages) {
                                     saveTempAnimatedImage(image.diskCacheKey)?.let { filePath ->
                                         style.bigPicture(Icon.createWithContentUri(filePath))
                                     } ?: run { style.bigPicture(bitmap) }
