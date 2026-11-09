@@ -670,8 +670,14 @@ class MessagingManager @Inject internal constructor(
     private suspend fun tryRingCallScreen(data: Map<String, String>, notificationId: Long): Boolean {
         val config = callScreenManager.parseConfig(data, notificationId) ?: return false
         val uriIntents = (config.buttons + config.menuItems)
-            .filter { it.key == URI && !it.uri.isNullOrBlank() }
-            .associate { it.index to createOpenUriPendingIntent(it.uri!!, data) }
+            .filter { it.key == URI }
+            .mapNotNull { action ->
+                action.uri?.takeIf { it.isNotBlank() }?.let {
+                    action.index to
+                        createOpenUriPendingIntent(it, data)
+                }
+            }
+            .toMap()
         return callScreenManager.tryRing(config, uriIntents)
     }
 

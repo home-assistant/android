@@ -21,7 +21,7 @@ private const val PROXIMITY_WAKE_LOCK_TAG = "HomeAssistant:CallScreenProximity"
  * or the earpiece. Must be used from the main thread.
  */
 @Singleton
-internal class CallAudioRouter @Inject constructor(@ApplicationContext private val context: Context) {
+internal class CallAudioRouter @Inject constructor(@ApplicationContext context: Context) {
 
     private val audioManager: AudioManager? = context.getSystemService()
     private val powerManager: PowerManager? = context.getSystemService()

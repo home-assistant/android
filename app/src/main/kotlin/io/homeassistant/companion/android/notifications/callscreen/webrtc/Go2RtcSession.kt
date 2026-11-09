@@ -212,6 +212,7 @@ internal class Go2RtcSession(
         }
     }
 
+    @Suppress("TooManyFunctions") // PeerConnection.Observer has many callbacks, most unused
     private inner class PeerObserver : PeerConnection.Observer {
         override fun onIceCandidate(candidate: IceCandidate?) {
             candidate?.let { webSocket?.send(encodeCandidate(it.sdp)) }
@@ -256,7 +257,7 @@ internal class Go2RtcSession(
     }
 }
 
-private abstract class SdpResultObserver : SdpObserver {
+private open class SdpResultObserver : SdpObserver {
     override fun onCreateSuccess(sdp: SessionDescription?) = Unit
     override fun onCreateFailure(error: String?) = Unit
     override fun onSetSuccess() = Unit

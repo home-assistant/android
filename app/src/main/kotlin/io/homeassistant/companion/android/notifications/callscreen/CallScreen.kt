@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // one composable per UI part of a single screen
+
 package io.homeassistant.companion.android.notifications.callscreen
 
 import android.graphics.Bitmap
@@ -62,6 +64,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.util.fromHaName
+import java.util.Locale
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -76,6 +79,8 @@ private val OVERLAY_TEXT = Color.White
 private val OVERLAY_SCRIM = Color.Black.copy(alpha = 0.6f)
 private val CALL_BUTTON_SIZE = HADimens.SPACE16
 private const val SECONDS_PER_MINUTE = 60
+private const val SCRIM_FADE_END = 0.3f
+private const val SCRIM_FADE_START = 0.7f
 
 /** Call UI of the call screen notification, backed by [viewModel]. */
 @Composable
@@ -183,8 +188,8 @@ private fun Scrims() {
         modifier = Modifier.fillMaxSize().background(
             Brush.verticalGradient(
                 0f to OVERLAY_SCRIM,
-                0.3f to Color.Transparent,
-                0.7f to Color.Transparent,
+                SCRIM_FADE_END to Color.Transparent,
+                SCRIM_FADE_START to Color.Transparent,
                 1f to OVERLAY_SCRIM,
             ),
         ),
@@ -236,7 +241,7 @@ private fun elapsedText(connectedAt: Instant, now: () -> Instant): String {
         }
     }
     val seconds = (current - connectedAt).inWholeSeconds.coerceAtLeast(0)
-    return "%02d:%02d".format(seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE)
+    return "%02d:%02d".format(Locale.getDefault(), seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE)
 }
 
 @Composable

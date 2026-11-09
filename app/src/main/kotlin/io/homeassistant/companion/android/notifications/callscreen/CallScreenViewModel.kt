@@ -38,6 +38,7 @@ internal data class CallScreenUiState(
 
 /** Exposes the call of [CallScreenManager] to the call UI and forwards the user intents to it. */
 @HiltViewModel
+@Suppress("TooManyFunctions") // forwards every user intent of the call UI
 internal class CallScreenViewModel @Inject constructor(
     private val manager: CallScreenManager,
     private val clock: Clock,

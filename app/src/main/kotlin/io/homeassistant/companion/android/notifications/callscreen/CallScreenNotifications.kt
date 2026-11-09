@@ -57,6 +57,7 @@ internal class CallScreenNotifications @Inject constructor(@ApplicationContext p
      *
      * @param name channel name from the payload, the default call channel when `null`
      */
+    @Suppress("ReturnCount")
     fun ensureRingChannel(name: String?): String {
         val id = name?.let { createChannelID(it) } ?: CHANNEL_CALL_SCREEN
         if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) return id

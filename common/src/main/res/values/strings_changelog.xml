@@ -6,4 +6,5 @@
     <string name="changelog_entry_bug_fixes">Small bug fixes and dependency updates everywhere</string>
     <string name="changelog_entry_fix_media_player_widget">Media player widgets better adjust to what is supported by the player, like play/stop instead of play/pause</string>
     <string name="changelog_entry_assist_listening_chime">Added a &lt;b&gt;sound when Assist starts listening&lt;/b&gt;</string>
+    <string name="changelog_entry_call_screen">Added &lt;b&gt;call screen notifications&lt;/b&gt; that ring like an incoming call and let you answer doorbells with live video and two-way audio</string>
 </resources>

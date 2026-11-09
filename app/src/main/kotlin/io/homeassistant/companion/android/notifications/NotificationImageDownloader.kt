@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.notifications
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
@@ -9,6 +10,7 @@ import io.homeassistant.companion.android.util.UrlUtil
 import java.net.URL
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -21,10 +23,15 @@ import timber.log.Timber
  * the image is served by Home Assistant itself.
  */
 @Singleton
-class NotificationImageDownloader @Inject constructor(
+class NotificationImageDownloader @VisibleForTesting constructor(
     private val okHttpClientProvider: SuspendProvider<OkHttpClient>,
     private val serverManager: ServerManager,
+    private val backgroundDispatcher: CoroutineDispatcher,
 ) {
+
+    @Inject
+    constructor(okHttpClientProvider: SuspendProvider<OkHttpClient>, serverManager: ServerManager) :
+        this(okHttpClientProvider, serverManager, Dispatchers.IO)
 
     /**
      * Download and decode the image at [url].
@@ -33,7 +40,7 @@ class NotificationImageDownloader @Inject constructor(
      * @return the decoded bitmap or `null` if [url] is `null` or the download failed
      */
     suspend fun download(serverId: Int, url: URL?, requiresAuth: Boolean = false): Bitmap? = withContext(
-        Dispatchers.IO,
+        backgroundDispatcher,
     ) {
         if (url == null) {
             return@withContext null

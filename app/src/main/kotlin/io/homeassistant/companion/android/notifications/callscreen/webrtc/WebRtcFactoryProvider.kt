@@ -1,9 +1,11 @@
 package io.homeassistant.companion.android.notifications.callscreen.webrtc
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.webrtc.DefaultVideoDecoderFactory
@@ -17,7 +19,13 @@ import org.webrtc.audio.JavaAudioDeviceModule
  * [PeerConnectionFactory], both created lazily so the native library is only loaded for call screens.
  */
 @Singleton
-internal class WebRtcFactoryProvider @Inject constructor(@ApplicationContext private val context: Context) {
+internal class WebRtcFactoryProvider @VisibleForTesting constructor(
+    private val context: Context,
+    private val backgroundDispatcher: CoroutineDispatcher,
+) {
+
+    @Inject
+    constructor(@ApplicationContext context: Context) : this(context, Dispatchers.Default)
 
     /** EGL context shared between the video decoder and the renderers. */
     val eglBase: EglBase by lazy { EglBase.create() }
@@ -41,5 +49,5 @@ internal class WebRtcFactoryProvider @Inject constructor(@ApplicationContext pri
      * Factory used to build every [org.webrtc.PeerConnection] of the app. The first call loads the native
      * library from disk, so it is done off the main thread.
      */
-    suspend fun factory(): PeerConnectionFactory = withContext(Dispatchers.Default) { lazyFactory }
+    suspend fun factory(): PeerConnectionFactory = withContext(backgroundDispatcher) { lazyFactory }
 }

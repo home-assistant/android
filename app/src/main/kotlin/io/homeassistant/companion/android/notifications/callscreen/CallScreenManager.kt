@@ -126,6 +126,7 @@ private class CallRuntime(val person: Person, val intents: RingingIntents, val u
  * events sent to Home Assistant. Everything runs on the main thread.
  */
 @Singleton
+@Suppress("TooManyFunctions", "LongParameterList") // single owner of the call lifecycle, all injected
 internal class CallScreenManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val serverManager: ServerManager,
@@ -217,6 +218,7 @@ internal class CallScreenManager @Inject constructor(
 
     /** Stop ringtone and vibration but keep the call, no-op if the call is not ringing or already silenced. */
     @MainThread
+    @Suppress("ReturnCount")
     fun silence() {
         val call = _activeCall.value ?: return
         val current = runtime ?: return
@@ -227,6 +229,7 @@ internal class CallScreenManager @Inject constructor(
 
     /** Answer the ringing call: send the answer event, start the foreground service and open the stream. */
     @MainThread
+    @Suppress("ReturnCount")
     fun answer() {
         val call = _activeCall.value ?: return
         val current = runtime ?: return
@@ -300,6 +303,7 @@ internal class CallScreenManager @Inject constructor(
 
     /** Show the live stream behind the ringing UI. Called when the call UI becomes visible. */
     @MainThread
+    @Suppress("ReturnCount")
     fun startPreview() {
         val call = _activeCall.value ?: return
         val current = runtime ?: return
@@ -339,6 +343,7 @@ internal class CallScreenManager @Inject constructor(
 
     /** Build the foreground notification of the connected call, `null` if there is no call. */
     @MainThread
+    @Suppress("ReturnCount")
     fun buildOngoingNotification(): Notification? {
         val call = _activeCall.value ?: return null
         val current = runtime ?: return null
@@ -457,6 +462,7 @@ internal class CallScreenManager @Inject constructor(
     }
 
     /** Sign the endpoint and start negotiating [session], `false` if the stream can't be reached. */
+    @Suppress("ReturnCount")
     private suspend fun connect(session: Go2RtcSession, config: CallScreenConfig, media: Set<CallMedia>): Boolean {
         val source = config.stream ?: return false
         val signedPath = serverManager.webSocketRepository(config.serverId)

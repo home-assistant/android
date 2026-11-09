@@ -51,6 +51,7 @@ internal fun buildGo2RtcWsUrl(baseUrl: URL, signedPath: String, source: Go2RtcSo
 private fun String.urlEncoded(): String = URLEncoder.encode(this, Charsets.UTF_8.name())
 
 /** Parse a go2rtc text frame, `null` for malformed frames and unknown message types. */
+@Suppress("ReturnCount")
 internal fun parseGo2RtcMessage(text: String): Go2RtcMessage? {
     val obj: JsonObject = try {
         Json.parseToJsonElement(text).jsonObject
