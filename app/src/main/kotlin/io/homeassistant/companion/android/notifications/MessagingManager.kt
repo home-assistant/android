@@ -52,6 +52,7 @@ import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.allowHardware
+import coil3.size.Size
 import coil3.toBitmap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.BuildConfig
@@ -313,6 +314,7 @@ class MessagingManager @Inject constructor(
         private const val MIME_TYPE_GIF = "image/gif"
         private const val ANIMATED_IMAGE_FOLDER = "animated_notification_image"
         private val ANIMATED_IMAGE_MAX_AGE = 2.days
+        private const val MAX_NOTIFICATION_IMAGE_SIZE_PX = 1024
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1364,7 +1366,15 @@ class MessagingManager @Inject constructor(
             val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
             if (urlState is UrlState.HasUrl) {
                 val url = UrlUtil.handle(urlState.url, dataIcon)
-                val bitmap = loadImage(serverId, url, !UrlUtil.isAbsoluteUrl(dataIcon))?.image?.toBitmap()
+                val iconSize = context.resources.getDimensionPixelSize(
+                    android.R.dimen.notification_large_icon_width,
+                )
+                val bitmap = loadImage(
+                    serverId,
+                    url,
+                    !UrlUtil.isAbsoluteUrl(dataIcon),
+                    Size(iconSize, iconSize),
+                )?.image?.toBitmap()
                 if (bitmap != null) {
                     builder.setLargeIcon(bitmap)
                 }
@@ -1389,7 +1399,13 @@ class MessagingManager @Inject constructor(
                 } else {
                     CachePolicy.DISABLED
                 }
-                val image = loadImage(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage), diskCachePolicy)
+                val image = loadImage(
+                    serverId,
+                    url,
+                    !UrlUtil.isAbsoluteUrl(dataImage),
+                    bigPictureTargetSize(),
+                    diskCachePolicy,
+                )
                 if (image != null) {
                     val bitmap = image.image.toBitmap()
                     builder
@@ -1414,8 +1430,27 @@ class MessagingManager @Inject constructor(
     }
 
     /**
+     * Target size for a notification big picture. Vector images (e.g. SVGs) are rasterized at this
+     * resolution and large raster images are downscaled to it, keeping the result crisp while
+     * bounding the memory used by the decoded bitmap.
+     *
+     * The display width gives a crisp result since the big picture spans the notification width; it
+     * is capped by [MAX_NOTIFICATION_IMAGE_SIZE_PX] so large or high-density screens don't produce
+     * excessively large bitmaps.
+     */
+    private fun bigPictureTargetSize(): Size {
+        val dimension = context.resources.displayMetrics.widthPixels
+            .coerceIn(1, MAX_NOTIFICATION_IMAGE_SIZE_PX)
+        return Size(dimension, dimension)
+    }
+
+    /**
      * Downloads the image at [url], sending the server credentials when [requiresAuth] is set.
      * Returns `null` when the image cannot be loaded.
+     *
+     * [targetSize] bounds the decoded bitmap. It is required so that vector images (e.g. SVGs) are
+     * rasterized at a resolution matching where the notification displays them instead of their
+     * small intrinsic size, and so that large raster images are downscaled to a reasonable size.
      *
      * Use [CachePolicy.WRITE_ONLY] as [diskCachePolicy] to access the downloaded file afterwards.
      */
@@ -1423,6 +1458,7 @@ class MessagingManager @Inject constructor(
         serverId: Int,
         url: URL?,
         requiresAuth: Boolean,
+        targetSize: Size,
         diskCachePolicy: CachePolicy = CachePolicy.DISABLED,
     ): SuccessResult? {
         url ?: return null
@@ -1435,6 +1471,7 @@ class MessagingManager @Inject constructor(
                         httpHeaders(NetworkHeaders.Builder().add(HEADER_AUTHORIZATION, token).build())
                     }
                 }
+                .size(targetSize)
                 // The bitmap is sent to the system UI, keep it software-backed
                 .allowHardware(false)
                 // A URL can serve a new image for each notification (e.g. a camera snapshot), so never
