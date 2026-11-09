@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
@@ -57,8 +58,6 @@ class CameraTile : TileService() {
         const val DEFAULT_REFRESH_INTERVAL = 3600L // 1 hour, matching phone widget
 
         private const val RESOURCE_SNAPSHOT = "snapshot"
-
-        private const val ATTRIBUTE_ENTITY_PICTURE = "entity_picture"
         private const val SNAPSHOT_JPEG_QUALITY = 100
     }
 
@@ -186,7 +185,7 @@ class CameraTile : TileService() {
             val entity = tileConfig?.entityId?.let {
                 serverManager.integrationRepository().getEntity(it)
             }
-            val picture = entity?.attributes?.get(ATTRIBUTE_ENTITY_PICTURE)?.toString()
+            val picture = entity?.entityPicturePath()
             val urlState = serverManager.connectionStateProvider().urlFlow().first()
             val baseUrl = if (urlState is UrlState.HasUrl) {
                 urlState.url
