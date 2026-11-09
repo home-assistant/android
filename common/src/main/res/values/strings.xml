@@ -91,6 +91,7 @@
     <string name="basic_sensor_name_device_secure">Device secure</string>
     <string name="basic_sensor_name_doze">Doze mode</string>
     <string name="basic_sensor_name_external_storage">External storage</string>
+    <string name="basic_sensor_name_foldable_screen">Foldable screen</string>
     <string name="basic_sensor_name_geolocation">Geocoded location</string>
     <string name="basic_sensor_name_headset_mounted">In use</string>
     <string name="basic_sensor_name_high_accuracy_mode">High accuracy mode</string>
@@ -1205,6 +1206,8 @@
     <string name="sensor_name_tonal_palette_sensor">Tonal palette</string>
     <string name="sensor_description_tonal_palette_sensor">The name of the dynamic color palette theme currently in use</string>
     <string name="sensor_name_dynamic_color">Dynamic color</string>
+    <string name="sensor_name_foldable">Foldable sensors</string>
+    <string name="sensor_description_foldable_screen">Whether the screen of the foldable device is open. Updates as soon as the device is folded or unfolded.</string>
     <string name="basic_sensor_name_screen_brightness">Screen brightness</string>
     <string name="sensor_description_screen_brightness">The current screen brightness on the device, an attribute also indicates if auto-brightness is enabled</string>
     <string name="sensor_name_display_sensors">Display sensors</string>

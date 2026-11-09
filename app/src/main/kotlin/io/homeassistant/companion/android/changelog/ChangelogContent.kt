@@ -25,6 +25,10 @@ internal val currentChangelog = Changelog(
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
             actionRequiresPlatform = true,
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_foldable_screen_sensor,
+            platforms = setOf(ChangelogPlatform.APP),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(
