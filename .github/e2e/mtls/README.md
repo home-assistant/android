@@ -7,7 +7,7 @@ How the test works, how to run it locally and how to debug a failure is document
 
 | File | Role |
 | --- | --- |
-| `generate-certs.sh <out-dir> [<san-list>]` | Writes the CA, server and client certificates, `client.p12` and the `res/` directory for the build. |
+| `generate-certs.sh <out-dir> [<san-list>]` | Writes the CA, server and client certificates, `client.p12`, `client_legacy.p12` and the `res/` directory for the build. |
 | `network_security_config.xml` | The app's config plus a `debug-overrides` trust anchor for the run's CA, copied into `res/xml` by the script and built in with `-PdebugExtraResDir`. |
 | `nginx.conf.template` | The proxy, rendered by the nginx image from `E2E_MTLS_UPSTREAM`. |
-| `open-cert-installer.sh <serial> <client.p12>` | Opens the system certificate installer on the `.p12` through MediaStore. |
+| `open-cert-installer.sh <serial> <client.p12> <client_legacy.p12>` | Opens the system certificate installer through MediaStore on the `.p12` matching the device's API level. |

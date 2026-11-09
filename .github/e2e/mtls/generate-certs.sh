@@ -5,6 +5,7 @@
 #   server.pem / server.key served by the nginx proxy, SAN from $2
 #   client.pem / client.key the client certificate the app must present
 #   client.p12              the same client certificate, installed on the emulator
+#   client_legacy.p12       client.p12 with the legacy algorithms, for API 32 and below
 #   res/xml, res/raw        debug resources that make the app trust ca.pem,
 #                           picked up with -PdebugExtraResDir=<out-dir>/res
 #
@@ -13,8 +14,8 @@
 #   emulator adds IP:10.0.2.2.
 #
 # Environment:
-#   E2E_MTLS_P12_PASSWORD  password of client.p12 (default e2ep12pass)
-#   E2E_MTLS_CERT_ALIAS    friendly name of the p12 entry, shown by Android
+#   E2E_MTLS_P12_PASSWORD  password of both .p12 files (default e2ep12pass)
+#   E2E_MTLS_CERT_ALIAS    friendly name of the p12 entries, shown by Android
 #                          as the certificate name (default e2eclient)
 set -euo pipefail
 
@@ -50,6 +51,11 @@ openssl x509 -req -in client.csr -CA ca.pem -CAkey ca.key -CAcreateserial \
 openssl pkcs12 -export \
   -inkey client.key -in client.pem -name "$CERT_ALIAS" \
   -passout "pass:$P12_PASSWORD" -out client.p12
+
+# The installer up to API 32 cannot read the default algorithms above.
+openssl pkcs12 -export -legacy \
+  -inkey client.key -in client.pem -name "$CERT_ALIAS" \
+  -passout "pass:$P12_PASSWORD" -out client_legacy.p12
 
 rm -f server.csr client.csr ca.srl
 
