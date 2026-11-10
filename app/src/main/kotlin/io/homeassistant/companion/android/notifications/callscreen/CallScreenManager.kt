@@ -15,6 +15,7 @@ import androidx.annotation.StringRes
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
 import androidx.core.content.ContextCompat
+import coil3.size.Size
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -66,6 +67,8 @@ private const val REQUEST_DECLINE = -3
 private const val REQUEST_HANG_UP = -4
 private val SIGNED_PATH_VALIDITY = 30.seconds
 private val POSTER_DOWNLOAD_TIMEOUT = 3.seconds
+private const val POSTER_SIZE_PX = 1024
+private val POSTER_SIZE = Size(POSTER_SIZE_PX, POSTER_SIZE_PX)
 
 /** Why the call is shown as not working while still open. */
 internal sealed interface CallFailure {
@@ -357,7 +360,7 @@ internal class CallScreenManager @Inject constructor(
 
     private suspend fun loadPoster(config: CallScreenConfig): Bitmap? {
         val path = (config.background as? CallBackground.Image)?.path ?: config.poster ?: return null
-        return withTimeoutOrNull(POSTER_DOWNLOAD_TIMEOUT) { imageDownloader.downloadServerImage(config.serverId, path) }
+        return withTimeoutOrNull(POSTER_DOWNLOAD_TIMEOUT) { imageDownloader.downloadServerImage(config.serverId, path, POSTER_SIZE) }
     }
 
     @Suppress("ReturnCount")

@@ -29,16 +29,13 @@ internal class FakePlayer(
     val playing: Boolean = false,
 ) : Player {
     override fun getApplicationLooper(): Looper {
-        TODO("Not yet implemented")
+        return Looper.getMainLooper()
     }
 
-    override fun addListener(listener: Player.Listener) {
-        TODO("Not yet implemented")
-    }
+    // The fake never changes state, so listeners are never notified
+    override fun addListener(listener: Player.Listener) {}
 
-    override fun removeListener(listener: Player.Listener) {
-        TODO("Not yet implemented")
-    }
+    override fun removeListener(listener: Player.Listener) {}
 
     override fun setMediaItems(mediaItems: List<MediaItem>) {
         TODO("Not yet implemented")
@@ -418,41 +415,24 @@ internal class FakePlayer(
         TODO("Not yet implemented")
     }
 
-    override fun clearVideoSurface() {
-        TODO("Not yet implemented")
-    }
+    // The fake has no video output, so attaching or clearing a surface does nothing
+    override fun clearVideoSurface() {}
 
-    override fun clearVideoSurface(surface: Surface?) {
-        TODO("Not yet implemented")
-    }
+    override fun clearVideoSurface(surface: Surface?) {}
 
-    override fun setVideoSurface(surface: Surface?) {
-        TODO("Not yet implemented")
-    }
+    override fun setVideoSurface(surface: Surface?) {}
 
-    override fun setVideoSurfaceHolder(surfaceHolder: SurfaceHolder?) {
-        TODO("Not yet implemented")
-    }
+    override fun setVideoSurfaceHolder(surfaceHolder: SurfaceHolder?) {}
 
-    override fun clearVideoSurfaceHolder(surfaceHolder: SurfaceHolder?) {
-        TODO("Not yet implemented")
-    }
+    override fun clearVideoSurfaceHolder(surfaceHolder: SurfaceHolder?) {}
 
-    override fun setVideoSurfaceView(surfaceView: SurfaceView?) {
-        TODO("Not yet implemented")
-    }
+    override fun setVideoSurfaceView(surfaceView: SurfaceView?) {}
 
-    override fun clearVideoSurfaceView(surfaceView: SurfaceView?) {
-        TODO("Not yet implemented")
-    }
+    override fun clearVideoSurfaceView(surfaceView: SurfaceView?) {}
 
-    override fun setVideoTextureView(textureView: TextureView?) {
-        TODO("Not yet implemented")
-    }
+    override fun setVideoTextureView(textureView: TextureView?) {}
 
-    override fun clearVideoTextureView(textureView: TextureView?) {
-        TODO("Not yet implemented")
-    }
+    override fun clearVideoTextureView(textureView: TextureView?) {}
 
     override fun getVideoSize(): VideoSize {
         return VideoSize.UNKNOWN

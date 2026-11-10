@@ -60,6 +60,7 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.settings.qs.TileId
+import io.homeassistant.companion.android.settings.qs.TileSlotItem
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.icondialog.IconDialog
@@ -419,8 +420,13 @@ private fun LabeledSwitchRowPreview() {
     }
 }
 
+// Explicit slots: the default ones load the tile services, which the preview renderer cannot do
 private val previewState = ManageTilesState(
     selectedTileId = TileId("tile_1"),
+    tileSlotItems = listOf(
+        TileSlotItem(id = TileId("tile_1"), nameRes = commonR.string.tile_1, label = null),
+        TileSlotItem(id = TileId("tile_2"), nameRes = commonR.string.tile_2, label = null),
+    ),
     selectedServerId = 0,
     tileLabel = "",
     tileSubtitle = "",

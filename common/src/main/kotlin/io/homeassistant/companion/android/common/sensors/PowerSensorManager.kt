@@ -22,8 +22,6 @@ class PowerSensorManager @Inject constructor(
     override val serverManager: ServerManager,
 ) : SensorManager {
     companion object {
-        private const val PACKAGE_NAME = "io.homeassistant.companion.android"
-
         @ProvidesSensor
         val interactiveDevice = SensorManager.BasicSensor(
             "is_interactive",
@@ -109,7 +107,7 @@ class PowerSensorManager @Inject constructor(
             icon,
             mapOf(
                 "ignoring_battery_optimizations" to powerManager.isIgnoringBatteryOptimizations(
-                    PACKAGE_NAME,
+                    applicationContext.packageName,
                 ),
             ),
         )

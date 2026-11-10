@@ -9,6 +9,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -204,15 +205,15 @@ class VoiceAudioRecorderTest {
                             chunk2.size
                         }
 
-                        else -> {
-                            chunk2.copyInto(buffer)
-                            chunk2.size
-                        }
+                        // The read loop never suspends: on the test dispatcher it has to end by itself
+                        else -> AudioRecord.ERROR
                     }
                 }
             }
             val voiceAudioRecorder = VoiceAudioRecorder(
                 audioRecordFactory = { recorder },
+                recorderDispatcher = StandardTestDispatcher(testScheduler),
+                sharingScope = backgroundScope,
             )
 
             val flow = voiceAudioRecorder.audioData()
