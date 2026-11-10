@@ -26,7 +26,7 @@ internal val currentChangelog = Changelog(
             actionRequiresPlatform = true,
         ),
         ChangelogEntry(
-            contentRes = commonR.string.changelog_entry_foldable_screen_sensor,
+            contentRes = commonR.string.changelog_entry_hinge_status_sensor,
             platforms = setOf(ChangelogPlatform.APP),
         ),
     ),

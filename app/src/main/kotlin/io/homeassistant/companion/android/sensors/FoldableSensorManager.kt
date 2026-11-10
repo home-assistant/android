@@ -14,7 +14,9 @@ import androidx.window.layout.WindowInfoTracker
 import androidx.window.layout.WindowLayoutInfo
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.timoptr.mdiicons.Mdi
-import io.github.timoptr.mdiicons.generated.BookOpenBlankVariant
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.BookOpenOutline
+import io.github.timoptr.mdiicons.generated.BookOpenPageVariantOutline
 import io.github.timoptr.mdiicons.generated.Cellphone
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -36,12 +38,23 @@ import timber.log.Timber
 private val FOLD_STATE_TIMEOUT = 5.seconds
 
 /**
- * Reports whether the screen of a foldable device is open.
+ * The position of the hinge of a foldable device, reported as the state of the hinge status sensor.
+ *
+ * @property state The sensor state, shared with the iOS app so both report the same values.
+ */
+sealed class HingeStatus(val state: String, val icon: MdiIcon) {
+    data object Closed : HingeStatus("closed", Mdi.Cellphone)
+    data object PartiallyOpen : HingeStatus("partially_open", Mdi.BookOpenOutline)
+    data object FullyOpen : HingeStatus("fully_open", Mdi.BookOpenPageVariantOutline)
+}
+
+/**
+ * Reports whether a foldable device is closed, partially open or fully open.
  *
  * The state comes from the window layout of the default display rather than from the hinge angle
  * sensor: the system stops delivering sensor events to apps in the background, while it keeps
  * delivering window layout changes. The inner screen is the only one crossed by a fold, so the
- * device is open exactly when the layout reports a [FoldingFeature].
+ * layout reports a [FoldingFeature] exactly when the device is open, and its state tells how far.
  */
 @Singleton
 class FoldableSensorManager @VisibleForTesting internal constructor(
@@ -71,20 +84,19 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
 
     companion object {
         @ProvidesSensor
-        val foldableScreen = SensorManager.BasicSensor(
-            "foldable_screen",
-            "binary_sensor",
-            commonR.string.basic_sensor_name_foldable_screen,
-            commonR.string.sensor_description_foldable_screen,
-            Mdi.BookOpenBlankVariant,
-            deviceClass = "opening",
+        val hingeStatus = SensorManager.BasicSensor(
+            "hinge_status",
+            "sensor",
+            commonR.string.basic_sensor_name_hinge_status,
+            commonR.string.sensor_description_hinge_status,
+            Mdi.BookOpenPageVariantOutline,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
-    private val isScreenOpen: Flow<Boolean> by lazy {
+    private val hingeStatusFlow: Flow<HingeStatus> by lazy {
         windowLayoutInfo()
-            .map { layoutInfo -> layoutInfo.displayFeatures.any { it is FoldingFeature } }
+            .map { layoutInfo -> layoutInfo.toHingeStatus() }
             .distinctUntilChanged()
     }
 
@@ -92,7 +104,7 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
         get() = commonR.string.sensor_name_foldable
 
     override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
-        return listOf(foldableScreen)
+        return listOf(hingeStatus)
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -106,22 +118,17 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
     }
 
     override suspend fun requestSensorUpdate() {
-        if (!hasSensor() || !isEnabled(foldableScreen)) {
+        if (!hasSensor() || !isEnabled(hingeStatus)) {
             return
         }
 
-        val isOpen = withTimeoutOrNull(FOLD_STATE_TIMEOUT) { isScreenOpen.firstOrNull() }
-        if (isOpen == null) {
-            Timber.w("Fold state not reported, skipping update")
+        val status = withTimeoutOrNull(FOLD_STATE_TIMEOUT) { hingeStatusFlow.firstOrNull() }
+        if (status == null) {
+            Timber.w("Hinge status not reported, skipping update")
             return
         }
 
-        onSensorUpdated(
-            foldableScreen,
-            isOpen,
-            if (isOpen) Mdi.BookOpenBlankVariant else Mdi.Cellphone,
-            mapOf(),
-        )
+        onSensorUpdated(hingeStatus, status.state, status.icon, mapOf())
     }
 
     /**
@@ -134,12 +141,21 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
             return
         }
 
-        isScreenOpen.collect { isOpen ->
-            Timber.d("Foldable screen open: $isOpen")
-            if (isEnabled(foldableScreen)) {
-                SensorReceiver.updateSensor(applicationContext, foldableScreen.id)
+        hingeStatusFlow.collect { status ->
+            Timber.d("Hinge status: ${status.state}")
+            if (isEnabled(hingeStatus)) {
+                SensorReceiver.updateSensor(applicationContext, hingeStatus.id)
             }
         }
+    }
+}
+
+/** Closed without a fold on the screen, otherwise as open as the fold reports. */
+private fun WindowLayoutInfo.toHingeStatus(): HingeStatus {
+    val fold = displayFeatures.filterIsInstance<FoldingFeature>().firstOrNull() ?: return HingeStatus.Closed
+    return when (fold.state) {
+        FoldingFeature.State.HALF_OPENED -> HingeStatus.PartiallyOpen
+        else -> HingeStatus.FullyOpen
     }
 }
 

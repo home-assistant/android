@@ -6,7 +6,8 @@ import android.os.Build
 import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowLayoutInfo
 import io.github.timoptr.mdiicons.Mdi
-import io.github.timoptr.mdiicons.generated.BookOpenBlankVariant
+import io.github.timoptr.mdiicons.generated.BookOpenOutline
+import io.github.timoptr.mdiicons.generated.BookOpenPageVariantOutline
 import io.github.timoptr.mdiicons.generated.Cellphone
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
@@ -39,12 +40,13 @@ import org.junit.jupiter.api.Test
 
 class FoldableSensorManagerTest {
 
-    private val sensorId = FoldableSensorManager.foldableScreen.id
+    private val sensorId = FoldableSensorManager.hingeStatus.id
     private val context = mockk<Context>()
     private val packageManager = mockk<PackageManager>()
     private val sensorRepository = mockk<SensorRepository>()
     private val serverManager = mockk<ServerManager>()
-    private val openLayout = WindowLayoutInfo(listOf(mockk<FoldingFeature>()))
+    private val fullyOpenLayout = layoutWithFold(FoldingFeature.State.FLAT)
+    private val partiallyOpenLayout = layoutWithFold(FoldingFeature.State.HALF_OPENED)
     private val closedLayout = WindowLayoutInfo(emptyList())
 
     @BeforeEach
@@ -81,20 +83,29 @@ class FoldableSensorManagerTest {
     }
 
     @Test
-    fun `Given a fold in the window layout when request update then screen is open`() = runTest {
-        createManager(flowOf(openLayout)).requestSensorUpdate()
+    fun `Given a flat fold in the window layout when request update then hinge is fully open`() = runTest {
+        createManager(flowOf(fullyOpenLayout)).requestSensorUpdate()
 
         val sensor = updatedSensor()
-        assertEquals("true", sensor.state)
-        assertEquals(Mdi.BookOpenBlankVariant.mdiName, sensor.icon)
+        assertEquals("fully_open", sensor.state)
+        assertEquals(Mdi.BookOpenPageVariantOutline.mdiName, sensor.icon)
     }
 
     @Test
-    fun `Given no fold in the window layout when request update then screen is closed`() = runTest {
+    fun `Given a half opened fold in the window layout when request update then hinge is partially open`() = runTest {
+        createManager(flowOf(partiallyOpenLayout)).requestSensorUpdate()
+
+        val sensor = updatedSensor()
+        assertEquals("partially_open", sensor.state)
+        assertEquals(Mdi.BookOpenOutline.mdiName, sensor.icon)
+    }
+
+    @Test
+    fun `Given no fold in the window layout when request update then hinge is closed`() = runTest {
         createManager(flowOf(closedLayout)).requestSensorUpdate()
 
         val sensor = updatedSensor()
-        assertEquals("false", sensor.state)
+        assertEquals("closed", sensor.state)
         assertEquals(Mdi.Cellphone.mdiName, sensor.icon)
     }
 
@@ -102,7 +113,7 @@ class FoldableSensorManagerTest {
     fun `Given disabled sensor when request update then does not update state`() = runTest {
         setSensorEnabled(false)
 
-        createManager(flowOf(openLayout)).requestSensorUpdate()
+        createManager(flowOf(fullyOpenLayout)).requestSensorUpdate()
 
         coVerify(exactly = 0) { sensorRepository.update(any()) }
     }
@@ -122,17 +133,17 @@ class FoldableSensorManagerTest {
     }
 
     @Test
-    fun `Given enabled sensor when fold state changes then requests a sensor update for each change`() = runTest {
-        createManager(flowOf(openLayout, openLayout, closedLayout)).updateOnFoldChange()
+    fun `Given enabled sensor when hinge status changes then requests a sensor update for each change`() = runTest {
+        createManager(flowOf(fullyOpenLayout, fullyOpenLayout, partiallyOpenLayout, closedLayout)).updateOnFoldChange()
 
-        verify(exactly = 2) { SensorReceiver.updateSensor(context, sensorId) }
+        verify(exactly = 3) { SensorReceiver.updateSensor(context, sensorId) }
     }
 
     @Test
-    fun `Given disabled sensor when fold state changes then does not request a sensor update`() = runTest {
+    fun `Given disabled sensor when hinge status changes then does not request a sensor update`() = runTest {
         setSensorEnabled(false)
 
-        createManager(flowOf(openLayout, closedLayout)).updateOnFoldChange()
+        createManager(flowOf(fullyOpenLayout, closedLayout)).updateOnFoldChange()
 
         verify(exactly = 0) { SensorReceiver.updateSensor(any(), any()) }
     }
@@ -152,6 +163,12 @@ class FoldableSensorManagerTest {
         serverManager = serverManager,
         windowLayoutInfo = { windowLayoutInfo },
     )
+
+    private fun layoutWithFold(state: FoldingFeature.State): WindowLayoutInfo {
+        val fold = mockk<FoldingFeature>()
+        every { fold.state } returns state
+        return WindowLayoutInfo(listOf(fold))
+    }
 
     private fun setHasHingeAngleSensor(hasSensor: Boolean) {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE) } returns hasSensor
