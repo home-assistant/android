@@ -37,6 +37,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Fl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.PanelResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
@@ -81,6 +82,17 @@ class WebSocketRepositoryImpl internal constructor(
         )
 
         return mapResponse(socketResponse)
+    }
+
+    override suspend fun getPanels(): List<PanelResponse>? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "get_panels",
+            ),
+        )
+
+        // The result is keyed by panel, each panel repeats its key as url_path
+        return mapResponse<Map<String, PanelResponse>>(socketResponse)?.values?.toList()
     }
 
     override suspend fun getTodos(entityId: String): GetTodosResponse? {
