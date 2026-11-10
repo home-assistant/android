@@ -18,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -199,6 +200,38 @@ class SensorUpdaterTest {
         val sensorUpdateCaptured = mutableListOf<Sensor>()
         coVerify { sensorRepository.update(capture(sensorUpdateCaptured)) }
         assertTrue(sensorUpdateCaptured.any { it.enabled && it.registered == true })
+    }
+
+    @Test
+    fun `Given a registered sensor with a changed state when updateSensor runs then its state is sent and recorded`() = runTest {
+        val sensor = enabledRegisteredSensor().copy(state = "on")
+        val integrationRepository = stubbedIntegrationRepository()
+        coEvery { integrationRepository.updateSensors(any()) } returns true
+        coEvery { sensorRepository.getFull(basicSensor.id) } returns mapOf(sensor to emptyList())
+
+        updater(registeredServerManager(integrationRepository), setOf(sensorManager(hasPermission = true)))
+            .updateSensor(basicSensor.id)
+
+        coVerify(exactly = 1) { integrationRepository.updateSensors(any()) }
+        coVerify(exactly = 1) { sensorRepository.updateLastSentStateAndIcon(basicSensor.id, serverId, "on", any()) }
+    }
+
+    @Test
+    fun `Given the server rejects a single sensor update then the sensor is marked for registration again`() = runTest {
+        val sensor = enabledRegisteredSensor().copy(state = "on")
+        val integrationRepository = stubbedIntegrationRepository()
+        coEvery { integrationRepository.updateSensors(any()) } returns false
+        coEvery { sensorRepository.getFull(basicSensor.id) } returns mapOf(sensor to emptyList())
+
+        updater(registeredServerManager(integrationRepository), setOf(sensorManager(hasPermission = true)))
+            .updateSensor(basicSensor.id)
+
+        val updated = slot<Sensor>()
+        coVerify(exactly = 0) { sensorRepository.updateLastSentStateAndIcon(any(), any(), any(), any()) }
+        coVerify(exactly = 1) { sensorRepository.update(capture(updated)) }
+        assertNull(updated.captured.registered)
+        assertNull(updated.captured.lastSentState)
+        assertNull(updated.captured.lastSentIcon)
     }
 
     private fun registeredServerManager(integrationRepository: IntegrationRepository) = mockk<ServerManager> {

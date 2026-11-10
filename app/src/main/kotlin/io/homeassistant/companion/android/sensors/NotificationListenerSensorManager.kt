@@ -266,6 +266,7 @@ class NotificationListenerSensorManager @Inject constructor(
                     activeNotificationCount.statelessIcon,
                     attrs,
                 )
+                SensorReceiver.updateSensor(applicationContext, activeNotificationCount.id)
             } catch (e: Exception) {
                 Timber.e(e, "Unable to update active notifications")
             }

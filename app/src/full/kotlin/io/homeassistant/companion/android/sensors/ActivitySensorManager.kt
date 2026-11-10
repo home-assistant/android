@@ -188,6 +188,9 @@ class ActivitySensorManager @Inject constructor(
                         "status" to getSleepSegmentStatus(sleepSegmentEvent.last().status),
                     ),
                 )
+
+                // Send the update immediately
+                SensorReceiver.updateSensor(applicationContext, sleepSegment.id)
             }
         }
     }

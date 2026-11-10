@@ -132,7 +132,8 @@ class SensorUpdater @VisibleForTesting internal constructor(
 
     /**
      * Updates a single sensor identified by [sensorId] and pushes its new state to every server it
-     * is registered and enabled on. No-op when no manager owns the sensor.
+     * is registered and enabled on. No-op when no manager owns the sensor. A server that rejects the
+     * update gets the sensor registered again on the next [updateSensors].
      */
     suspend fun updateSensor(sensorId: String) {
         val sensorManager = managers.firstOrNull {
@@ -155,15 +156,22 @@ class SensorUpdater @VisibleForTesting internal constructor(
             }.forEach { fullSensor ->
                 launch {
                     try {
-                        serverManager.integrationRepository(
+                        val accepted = serverManager.integrationRepository(
                             fullSensor.sensor.serverId,
                         ).updateSensors(listOf(fullSensor.toSensorRegistration(basicSensor)))
-                        sensorRepository.updateLastSentStateAndIcon(
-                            basicSensor.id,
-                            fullSensor.sensor.serverId,
-                            fullSensor.sensor.state,
-                            fullSensor.sensor.icon,
-                        )
+                        if (accepted) {
+                            sensorRepository.updateLastSentStateAndIcon(
+                                basicSensor.id,
+                                fullSensor.sensor.serverId,
+                                fullSensor.sensor.state,
+                                fullSensor.sensor.icon,
+                            )
+                        } else {
+                            // The server does not know the sensor anymore, the next full update registers it again
+                            sensorRepository.update(
+                                fullSensor.sensor.copy(registered = null, lastSentState = null, lastSentIcon = null),
+                            )
+                        }
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
