@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 
 @OptIn(EvaluateJavascriptUsage::class)
 class FrontendGestureManagerTest {
@@ -52,18 +54,20 @@ class FrontendGestureManagerTest {
         coVerify(exactly = 0) { externalBusRepository.send(any()) }
     }
 
-    @Test
-    fun `Given SHOW_SIDEBAR action when handleGesture then sends ShowSidebarMessage`() = runTest {
-        coEvery { prefsRepository.getGestureAction(HAGesture.SWIPE_RIGHT_TWO) } returns GestureAction.SHOW_SIDEBAR
+    @ParameterizedTest
+    @EnumSource(HAGesture::class)
+    fun `Given gesture with SHOW_SIDEBAR action when handleGesture then sends ShowSidebarMessage`(gesture: HAGesture) = runTest {
+        coEvery { prefsRepository.getGestureAction(gesture) } returns GestureAction.SHOW_SIDEBAR
 
         val result = manager.handleGesture(
             serverId = 1,
-            direction = GestureDirection.RIGHT,
-            pointerCount = 2,
+            direction = gesture.direction,
+            pointerCount = gesture.pointers.asInt,
         )
 
         assertEquals(GestureResult.Forwarded, result)
-        coVerify { externalBusRepository.send(ShowSidebarMessage) }
+        coVerify(exactly = 1) { prefsRepository.getGestureAction(gesture) }
+        coVerify(exactly = 1) { externalBusRepository.send(ShowSidebarMessage) }
     }
 
     @Test
@@ -368,12 +372,25 @@ class FrontendGestureManagerTest {
         assertEquals(GestureResult.Ignored, result)
     }
 
+    @ParameterizedTest
+    @EnumSource(GestureDirection::class, names = ["UP", "DOWN"])
+    fun `Given vertical one pointer swipe when handleGesture then returns Ignored`(direction: GestureDirection) = runTest {
+        val result = manager.handleGesture(
+            serverId = 1,
+            direction = direction,
+            pointerCount = 1,
+        )
+
+        assertEquals(GestureResult.Ignored, result)
+        coVerify(exactly = 0) { externalBusRepository.send(any()) }
+    }
+
     @Test
     fun `Given unsupported pointer count when handleGesture then returns Ignored`() = runTest {
         val result = manager.handleGesture(
             serverId = 1,
             direction = GestureDirection.LEFT,
-            pointerCount = 1,
+            pointerCount = 4,
         )
 
         assertEquals(GestureResult.Ignored, result)

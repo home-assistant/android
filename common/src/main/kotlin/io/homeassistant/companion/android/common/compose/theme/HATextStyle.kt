@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.compose.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
@@ -31,6 +32,7 @@ object HATextStyle {
 
     val Headline
         @Composable
+        @ReadOnlyComposable
         get() = TextStyle(
             fontStyle = FontStyle.Normal,
             fontSize = HAFontSize.X4L,
@@ -42,6 +44,7 @@ object HATextStyle {
 
     val HeadlineMedium
         @Composable
+        @ReadOnlyComposable
         get() = TextStyle(
             fontStyle = FontStyle.Normal,
             fontSize = HAFontSize.X3L,
@@ -53,6 +56,7 @@ object HATextStyle {
 
     val Body
         @Composable
+        @ReadOnlyComposable
         get() = TextStyle(
             fontStyle = FontStyle.Normal,
             fontSize = HAFontSize.L,
@@ -65,6 +69,7 @@ object HATextStyle {
 
     val BodyMedium
         @Composable
+        @ReadOnlyComposable
         get() = Body.copy(
             fontSize = HAFontSize.M,
             lineHeight = HAFontSize.XL,
@@ -72,6 +77,7 @@ object HATextStyle {
 
     val UserInput
         @Composable
+        @ReadOnlyComposable
         get() = Body.copy(
             textAlign = TextAlign.Start,
         )
@@ -91,6 +97,7 @@ object HATextStyle {
 
     val Link
         @Composable
+        @ReadOnlyComposable
         get() = TextLinkStyles(
             style = SpanStyle(
                 color = LocalHAColorScheme.current.colorTextLink,

@@ -7,6 +7,8 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.configure.WidgetConfigureState
+import io.homeassistant.companion.android.widgets.configure.defaultWidgetBackgroundType
+import io.homeassistant.companion.android.widgets.configure.dynamicColorAvailable
 
 /**
  * Complete UI state for the Media Player Controls widget configuration screen.
@@ -27,10 +29,10 @@ internal data class MediaPlayerControlsWidgetConfigureState(
     val showSkip: Boolean = true,
     val showSeek: Boolean = true,
     val showSource: Boolean = true,
-    val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
-    val dynamicColorAvailable: Boolean = false,
+    val selectedBackgroundType: WidgetBackgroundType = defaultWidgetBackgroundType(),
+    val dynamicColorAvailable: Boolean = dynamicColorAvailable(),
     override val isUpdateWidget: Boolean = false,
-) : WidgetConfigureState {
+) : WidgetConfigureState<MediaPlayerControlsWidgetConfigureState> {
     val showConfiguration = selectedEntityIds.isNotEmpty()
 
     val selectedEntities = (entityDisplayState as? EntityDisplayState.Loaded)?.let { state ->
@@ -45,7 +47,14 @@ internal data class MediaPlayerControlsWidgetConfigureState(
 
     override val isActionEnabled = selectedEntities.isNotEmpty()
 
-    fun changeServer(serverId: Int): MediaPlayerControlsWidgetConfigureState = copy(
+    override fun withServersDropdownItems(items: List<HADropdownItem<Int>>) = copy(serversDropdownItems = items)
+
+    override fun withSelectedServerId(serverId: Int) = copy(selectedServerId = serverId)
+
+    override fun withBackgroundType(backgroundType: WidgetBackgroundType) =
+        copy(selectedBackgroundType = backgroundType)
+
+    override fun changeServer(serverId: Int): MediaPlayerControlsWidgetConfigureState = copy(
         selectedServerId = serverId,
         selectedEntityIds = emptyList(),
         entityDisplayState = EntityDisplayState.Loading,

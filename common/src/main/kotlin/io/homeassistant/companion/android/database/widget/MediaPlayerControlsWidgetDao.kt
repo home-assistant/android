@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MediaPlayerControlsWidgetDao : WidgetDao<MediaPlayerControlsWidgetEntity> {
     @Query("SELECT * FROM media_player_controls_widgets WHERE id = :id")
-    suspend fun get(id: Int): MediaPlayerControlsWidgetEntity?
+    override suspend fun get(id: Int): MediaPlayerControlsWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     override suspend fun add(entity: MediaPlayerControlsWidgetEntity)

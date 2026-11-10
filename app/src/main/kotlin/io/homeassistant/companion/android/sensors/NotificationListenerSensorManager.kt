@@ -115,7 +115,7 @@ class NotificationListenerSensorManager @VisibleForTesting internal constructor(
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             settings = listOf(
-                Setting.Toggle(SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true),
+                Setting.Toggle(SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = false),
             ),
         )
 
