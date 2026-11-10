@@ -184,25 +184,25 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
      * Sends the registration update to the first URL that answers about the registration itself.
      *
      * A 404 only tells that the URL is not usable (e.g. a broken cloudhook) while the registration
-     * can still be valid, so the remaining URLs are tried first. It is returned when no other URL
-     * gave an answer.
+     * can still be valid, so the remaining URLs are tried first. It is returned when none of them
+     * answered. If one answered with another error (e.g. a 500), the state of the registration is
+     * unknown and the call fails instead.
      */
     private suspend fun callUpdateRegistration(request: IntegrationRequest): Response<ResponseBody> {
         var notFoundResponse: Response<ResponseBody>? = null
+        var hasOtherHttpError = false
         return try {
             tryOnUrls("update_registration") { url ->
                 val response = integrationService.callWebhook(url, request)
-                if (response.code() == HTTP_NOT_FOUND) {
-                    notFoundResponse = response
+                when {
+                    response.isSuccessful || response.code() == HTTP_GONE -> return@tryOnUrls response
+                    response.code() == HTTP_NOT_FOUND -> notFoundResponse = response
+                    else -> hasOtherHttpError = true
                 }
-                if (response.isSuccessful || response.code() == HTTP_GONE) {
-                    response
-                } else {
-                    throw IntegrationException("Error calling webhook", response.code(), response.errorBody())
-                }
+                throw IntegrationException("Error calling webhook", response.code(), response.errorBody())
             }
         } catch (e: IntegrationException) {
-            notFoundResponse ?: throw e
+            notFoundResponse?.takeUnless { hasOtherHttpError } ?: throw e
         }
     }
 
@@ -709,14 +709,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     private suspend fun callWebhookOnUrls(
         request: IntegrationRequest,
-        onSuccess: suspend (response: Response<ResponseBody>) -> Unit = {},
         isValidResponse: (response: Response<ResponseBody>) -> Boolean = { it.isSuccessful },
     ) {
-        val response = tryOnUrls("webhook") { url ->
+        tryOnUrls("webhook") { url ->
             val response = integrationService.callWebhook(url, request)
-            if (isValidResponse(response)) {
-                response
-            } else {
+            if (!isValidResponse(response)) {
                 throw IntegrationException(
                     "Error calling webhook",
                     response.code(),
@@ -724,7 +721,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 )
             }
         }
-        onSuccess(response)
     }
 
     private suspend fun <T> tryOnUrls(requestName: String, action: suspend (HttpUrl) -> T): T =

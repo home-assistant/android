@@ -342,6 +342,29 @@ class IntegrationRepositoryImplTest {
             coVerify { spyRepository.registerDevice(any()) }
         }
 
+        @ParameterizedTest
+        @ValueSource(ints = [429, 500, 503])
+        fun `Given broken cloudhook and another url failing with an HTTP error when updating then throws without trying a new registration`(
+            code: Int,
+        ) = runTest {
+            coEvery { integrationService.callWebhook(externalUrl, any()) } returns
+                Response.error(code, "".toResponseBody())
+            val spyRepository = spyk(repository)
+
+            try {
+                spyRepository.updateRegistration(
+                    DeviceRegistration(deviceName = "New device name"),
+                    allowReregistration = true,
+                )
+                fail("Expected IntegrationException to be thrown")
+            } catch (e: IntegrationException) {
+                assertEquals("All URLs failed for update_registration", e.message)
+            }
+
+            coVerify(exactly = 0) { spyRepository.registerDevice(any()) }
+            coVerify(exactly = 0) { serverManager.updateServer(any()) }
+        }
+
         @Test
         fun `Given no url answering when updating then throws without trying a new registration`() = runTest {
             coEvery { integrationService.callWebhook(cloudhookUrl, any()) } throws IOException("Unreachable")
