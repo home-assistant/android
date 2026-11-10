@@ -38,7 +38,6 @@ import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
-import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -1036,13 +1035,7 @@ class LocationSensorManager @Inject constructor(
 
                 // Update Geocoded Location Sensor
                 if (geocodeIncludeLocation) {
-                    val intent = Intent(applicationContext, SensorReceiver::class.java)
-                    intent.action = SensorReceiverBase.ACTION_UPDATE_SENSOR
-                    intent.putExtra(
-                        SensorReceiverBase.EXTRA_SENSOR_ID,
-                        GeocodeSensorManager.geocodedLocation.id,
-                    )
-                    applicationContext.sendBroadcast(intent)
+                    SensorReceiver.updateSensor(applicationContext, GeocodeSensorManager.geocodedLocation.id)
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Could not update location for $serverId.")

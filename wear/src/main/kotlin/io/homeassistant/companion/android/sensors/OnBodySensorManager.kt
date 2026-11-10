@@ -112,6 +112,6 @@ class OnBodySensorManager @Inject constructor(
         }
 
         // Send update immediately
-        SensorReceiver.updateAllSensors(applicationContext)
+        SensorReceiver.updateSensor(applicationContext, onBodySensor.id)
     }
 }
