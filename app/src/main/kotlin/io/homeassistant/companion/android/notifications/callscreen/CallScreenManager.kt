@@ -360,7 +360,9 @@ internal class CallScreenManager @Inject constructor(
 
     private suspend fun loadPoster(config: CallScreenConfig): Bitmap? {
         val path = (config.background as? CallBackground.Image)?.path ?: config.poster ?: return null
-        return withTimeoutOrNull(POSTER_DOWNLOAD_TIMEOUT) { imageDownloader.downloadServerImage(config.serverId, path, POSTER_SIZE) }
+        return withTimeoutOrNull(POSTER_DOWNLOAD_TIMEOUT) {
+            imageDownloader.downloadServerImage(config.serverId, path, POSTER_SIZE)
+        }
     }
 
     @Suppress("ReturnCount")
