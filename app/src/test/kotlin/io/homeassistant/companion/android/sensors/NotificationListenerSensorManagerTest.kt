@@ -140,7 +140,16 @@ class NotificationListenerSensorManagerTest {
                 Notification.FLAG_GROUP_SUMMARY,
                 true,
             ),
-            Arguments.of(named("ranker_group auto-group summary", "ranker_group"), SYSTEM_AUTOGROUP_SUMMARY_FLAGS, false),
+            Arguments.of(
+                named("ranker_bundle auto-group summary (Android 7)", "ranker_bundle"),
+                SYSTEM_AUTOGROUP_SUMMARY_FLAGS,
+                false,
+            ),
+            Arguments.of(
+                named("ranker_group auto-group summary (Android 8-15)", "ranker_group"),
+                SYSTEM_AUTOGROUP_SUMMARY_FLAGS,
+                false,
+            ),
             Arguments.of(
                 named(
                     "Sectioned Aggregate auto-group summary (Android 16+)",

@@ -34,7 +34,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -44,7 +43,7 @@ import timber.log.Timber
  * creates when auto-grouping an app's notifications since auto-grouping was introduced in API 24, both for the
  * `ranker_group` group and the `Aggregate_*` groups of Android 16+.
  *
- * Defined in [Notification.java](https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base/core/java/android/app/Notification.java;l=708;drc=1cdfff555f4a21f71ccc978290e2e212e2f8b168).
+ * Defined in [Notification.java](https://cs.android.com/android/platform/superproject/main/+/03b7b057c4e76cafc1f96d349adcd60ac0320a5e:frameworks/base/core/java/android/app/Notification.java;l=708).
  */
 @VisibleForTesting
 internal const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
@@ -58,7 +57,7 @@ class NotificationListenerSensorManager @VisibleForTesting internal constructor(
     override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
     override val serverManager: ServerManager,
-    override val sensorWorkerScope: CoroutineScope,
+    private val sensorWorkerScopeOverride: CoroutineScope?,
 ) : SensorManager {
 
     @Inject
@@ -66,7 +65,10 @@ class NotificationListenerSensorManager @VisibleForTesting internal constructor(
         @ApplicationContext applicationContext: Context,
         sensorRepository: SensorRepository,
         serverManager: ServerManager,
-    ) : this(applicationContext, sensorRepository, serverManager, CoroutineScope(Dispatchers.Main + SupervisorJob()))
+    ) : this(applicationContext, sensorRepository, serverManager, sensorWorkerScopeOverride = null)
+
+    override val sensorWorkerScope: CoroutineScope
+        get() = sensorWorkerScopeOverride ?: super.sensorWorkerScope
 
     companion object {
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
