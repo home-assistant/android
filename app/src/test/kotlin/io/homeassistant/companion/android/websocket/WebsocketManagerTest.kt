@@ -258,4 +258,44 @@ class WebsocketManagerTest {
 
         work.cancelAndJoin()
     }
+
+    @Test
+    fun `Given the device registered again when listening for notifications then the collector is restarted with the new webhook ID`() = runTest {
+        mockSetting(WebsocketSetting.ALWAYS)
+        every { context.hasActiveConnection() } returns true
+        coEvery { entryPoint.serverManager.isRegistered() } returns true
+
+        mockkConstructor(NotificationCompat.Builder::class)
+        every { anyConstructed<NotificationCompat.Builder>().build() } returns mockk<Notification>()
+
+        val server = mockk<Server>(relaxed = true)
+        every { server.connection.webhookId } returns "old_webhook_id"
+        coEvery { entryPoint.serverManager.servers() } returns listOf(server)
+        coEvery { entryPoint.serverManager.getServer(any<Int>()) } returns server
+
+        val repository = mockk<WebSocketRepository>(relaxed = true)
+        coEvery { entryPoint.serverManager.webSocketRepository(any()) } returns repository
+        coEvery { repository.getNotifications() } returns MutableSharedFlow<Map<String, Any>>()
+
+        val worker = spyk(TestListenableWorkerBuilder<WebsocketManager>(context).build())
+        coJustRun { worker.setForeground(any()) }
+        worker.dispatcher = StandardTestDispatcher(testScheduler)
+
+        val work = launch { worker.doWork() }
+        testScheduler.runCurrent()
+        coVerify(exactly = 1) { repository.getNotifications() }
+
+        // Same registration, the live collector is kept
+        testScheduler.advanceTimeBy(31_000)
+        testScheduler.runCurrent()
+        coVerify(exactly = 1) { repository.getNotifications() }
+
+        // The subscription is bound to the webhook ID, a new registration needs a new one
+        every { server.connection.webhookId } returns "new_webhook_id"
+        testScheduler.advanceTimeBy(30_000)
+        testScheduler.runCurrent()
+        coVerify(exactly = 2) { repository.getNotifications() }
+
+        work.cancelAndJoin()
+    }
 }

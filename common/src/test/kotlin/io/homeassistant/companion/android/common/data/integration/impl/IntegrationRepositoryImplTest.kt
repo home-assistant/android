@@ -25,6 +25,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.spyk
+import java.io.IOException
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
@@ -280,6 +281,84 @@ class IntegrationRepositoryImplTest {
             )
 
             coVerify { spyRepository.registerDevice(any()) }
+        }
+    }
+
+    @Nested
+    inner class UpdateRegistrationOnSeveralUrlsTests {
+        private val cloudhookUrl = "https://hooks.nabu.casa/cloudhook".toHttpUrl()
+        private val externalUrl = "http://homeassistant:8123/api/webhook/id".toHttpUrl()
+
+        @BeforeEach
+        fun setUpUrls() {
+            coEvery { connectionStateProvider.getApiUrls() } returns listOf(cloudhookUrl, externalUrl)
+            coEvery { localStorage.getString(any()) } returns null
+            coEvery { serverManager.updateServer(any()) } returns Unit
+            coEvery { integrationService.callWebhook(cloudhookUrl, any()) } returns
+                Response.error(404, "".toResponseBody())
+        }
+
+        @Test
+        fun `Given broken cloudhook and valid registration on another url when updating then registration is kept`() = runTest {
+            coEvery { integrationService.callWebhook(externalUrl, any()) } returns
+                Response.success("content".toResponseBody())
+            val spyRepository = spyk(repository)
+
+            spyRepository.updateRegistration(
+                DeviceRegistration(deviceName = "New device name"),
+                allowReregistration = true,
+            )
+
+            coVerify { serverManager.updateServer(any()) }
+            coVerify(exactly = 0) { spyRepository.registerDevice(any()) }
+        }
+
+        @Test
+        fun `Given broken cloudhook and missing config entry on another url when updating then new registration is tried`() = runTest {
+            coEvery { integrationService.callWebhook(externalUrl, any()) } returns
+                Response.error(410, "".toResponseBody())
+            val spyRepository = spyk(repository)
+            coEvery { spyRepository.registerDevice(any()) } just Runs
+
+            spyRepository.updateRegistration(
+                DeviceRegistration(deviceName = "New device name"),
+                allowReregistration = true,
+            )
+
+            coVerify { spyRepository.registerDevice(any()) }
+        }
+
+        @Test
+        fun `Given broken cloudhook and no other url answering when updating then new registration is tried`() = runTest {
+            coEvery { integrationService.callWebhook(externalUrl, any()) } throws IOException("Unreachable")
+            val spyRepository = spyk(repository)
+            coEvery { spyRepository.registerDevice(any()) } just Runs
+
+            spyRepository.updateRegistration(
+                DeviceRegistration(deviceName = "New device name"),
+                allowReregistration = true,
+            )
+
+            coVerify { spyRepository.registerDevice(any()) }
+        }
+
+        @Test
+        fun `Given no url answering when updating then throws without trying a new registration`() = runTest {
+            coEvery { integrationService.callWebhook(cloudhookUrl, any()) } throws IOException("Unreachable")
+            coEvery { integrationService.callWebhook(externalUrl, any()) } throws IOException("Unreachable")
+            val spyRepository = spyk(repository)
+
+            try {
+                spyRepository.updateRegistration(
+                    DeviceRegistration(deviceName = "New device name"),
+                    allowReregistration = true,
+                )
+                fail("Expected IntegrationException to be thrown")
+            } catch (e: IntegrationException) {
+                assertEquals("All URLs failed for update_registration", e.message)
+            }
+
+            coVerify(exactly = 0) { spyRepository.registerDevice(any()) }
         }
     }
 
