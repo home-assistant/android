@@ -37,6 +37,10 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+
+private const val SUPPORTED_WINDOW_EXTENSIONS_VERSION = 2
 
 class FoldableSensorManagerTest {
 
@@ -80,6 +84,12 @@ class FoldableSensorManagerTest {
 
         setHasHingeAngleSensor(true)
         assertTrue(createManager().hasSensor())
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [0, 1])
+    fun `Given window extensions older than version 2 then sensor manager is absent`(extensionsVersion: Int) {
+        assertFalse(createManager(windowExtensionsVersion = extensionsVersion).hasSensor())
     }
 
     @Test
@@ -157,10 +167,14 @@ class FoldableSensorManagerTest {
         verify(exactly = 0) { SensorReceiver.updateSensor(any(), any()) }
     }
 
-    private fun createManager(windowLayoutInfo: Flow<WindowLayoutInfo> = emptyFlow()) = FoldableSensorManager(
+    private fun createManager(
+        windowLayoutInfo: Flow<WindowLayoutInfo> = emptyFlow(),
+        windowExtensionsVersion: Int = SUPPORTED_WINDOW_EXTENSIONS_VERSION,
+    ) = FoldableSensorManager(
         applicationContext = context,
         sensorRepository = sensorRepository,
         serverManager = serverManager,
+        windowExtensionsVersion = windowExtensionsVersion,
         windowLayoutInfo = { windowLayoutInfo },
     )
 

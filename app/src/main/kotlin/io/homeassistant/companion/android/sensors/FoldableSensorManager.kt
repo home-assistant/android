@@ -9,6 +9,7 @@ import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
 import androidx.core.content.getSystemService
+import androidx.window.WindowSdkExtensions
 import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoTracker
 import androidx.window.layout.WindowLayoutInfo
@@ -37,6 +38,9 @@ import timber.log.Timber
 
 private val FOLD_STATE_TIMEOUT = 5.seconds
 
+/** Below this Window SDK extensions version, the window layout of a context that is not an activity is always empty. */
+private const val WINDOW_CONTEXT_MIN_EXTENSIONS_VERSION = 2
+
 /**
  * The position of the hinge of a foldable device, reported as the state of the hinge status sensor.
  *
@@ -61,6 +65,7 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
     override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
     override val serverManager: ServerManager,
+    private val windowExtensionsVersion: Int,
     windowLayoutInfo: () -> Flow<WindowLayoutInfo>,
 ) : SensorManager {
 
@@ -73,6 +78,7 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
         applicationContext = applicationContext,
         sensorRepository = sensorRepository,
         serverManager = serverManager,
+        windowExtensionsVersion = WindowSdkExtensions.getInstance().extensionVersion,
         windowLayoutInfo = {
             if (SdkVersion.isAtLeast(Build.VERSION_CODES.R)) {
                 defaultDisplayWindowLayoutInfo(applicationContext)
@@ -111,9 +117,14 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
         return emptyArray()
     }
 
-    /** Foldable support landed in Android 11, together with the hinge angle sensor that identifies a foldable. */
+    /**
+     * Foldable support landed in Android 11, together with the hinge angle sensor that identifies a foldable.
+     * The device also needs Window SDK extensions recent enough to report the layout without an activity,
+     * otherwise the layout is always empty and the sensor would report closed on an open device.
+     */
     override fun hasSensor(): Boolean {
         return SdkVersion.isAtLeast(Build.VERSION_CODES.R) &&
+            windowExtensionsVersion >= WINDOW_CONTEXT_MIN_EXTENSIONS_VERSION &&
             applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE)
     }
 
