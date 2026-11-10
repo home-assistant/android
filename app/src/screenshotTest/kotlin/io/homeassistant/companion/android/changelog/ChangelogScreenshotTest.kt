@@ -15,10 +15,23 @@ class ChangelogScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
+    fun `Changelog loading`() {
+        HAThemeForPreview {
+            ChangelogScreenContent(
+                uiState = ChangelogUiState.Loading,
+                onCloseClick = {},
+                onActionClick = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
     fun `Changelog with current release content`() {
         HAThemeForPreview {
             ChangelogScreenContent(
-                uiState = ChangelogUiState(
+                uiState = ChangelogUiState.Content(
                     versionName = "20XX.X.X",
                     releaseUrl = "https://github.com/home-assistant/android/releases/tag/2026.7.6",
                     currentPlatform = ChangelogPlatform.APP,
