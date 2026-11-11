@@ -13,6 +13,8 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.toBitmap
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
+import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.integration.isPersonOf
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
@@ -22,15 +24,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-private const val ATTRIBUTE_ENTITY_PICTURE = "entity_picture"
 private const val HEADER_AUTHORIZATION = "Authorization"
 
 /**
  * Cache key for a user avatar.
  *
- * Derived from the stable [serverId] and the server-relative [picturePath] (the `entity_picture`
- * value) rather than the absolute URL: the base URL resolved at download time can be the internal
- * or external address depending on the current network, and keying on it would store the same image
+ * Derived from the stable [serverId] and the server-relative [picturePath] rather than the
+ * absolute URL: the base URL resolved at download time can be the internal or external address
+ * depending on the current network, and keying on it would store the same image
  * twice and re-download it whenever the network changes.
  */
 @VisibleForTesting
@@ -69,7 +70,7 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
             val cacheKey = avatarCacheKey(serverId = serverId, picturePath = picturePath)
             val url = picturePath.toAbsoluteUrl(serverId = serverId)
             if (url != null && serverManager.connectionStateProvider(serverId).canSafelySendCredentials(url)) {
-                downloadAvatar(serverId = serverId, url = url, cacheKey = cacheKey)
+                downloadAvatar(serverId = serverId, url = url, cacheKey = cacheKey) ?: cachedAvatar(cacheKey)
             } else {
                 cachedAvatar(cacheKey)
             }
@@ -81,11 +82,24 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
         }
     }
 
+    /**
+     * Returns the picture path for the corresponding `person` entity, if known, or `null`
+     * if no person entity could be found or no picture is set.
+     *
+     * If the server is unavailable, a cached path may be returned.
+     */
     private suspend fun findPersonPicturePath(serverId: Int, userId: String): String? {
         val entities = serverManager.integrationRepository(serverId).getEntities().orEmpty()
-        return entities
-            .firstOrNull { it.isPersonOf(userId) }
-            ?.attributes?.get(ATTRIBUTE_ENTITY_PICTURE) as? String
+        return if (entities.isEmpty()) { // Read stored path
+            serverManager.getServer(serverId)?.user?.picturePath
+        } else {
+            // Read current path, and store in database
+            val path = entities.firstOrNull { it.isPersonOf(userId) }?.entityPicturePath()
+            serverManager.getServer(serverId)?.let { server ->
+                serverManager.updateServer(server.copy(user = server.user.copy(picturePath = path)))
+            }
+            path
+        }
     }
 
     private suspend fun String.toAbsoluteUrl(serverId: Int): String? {
@@ -99,17 +113,24 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
         return "$baseUrl$this"
     }
 
+    /** Download an avatar, returning the avatar or `null` in case of expected failures. */
     private suspend fun downloadAvatar(serverId: Int, url: String, cacheKey: String): Bitmap? {
-        val token = serverManager.authenticationRepository(serverId).buildBearerToken()
-        val request = ImageRequest.Builder(context)
-            .data(url)
-            .memoryCacheKey(cacheKey)
-            .diskCacheKey(cacheKey)
-            .httpHeaders(NetworkHeaders.Builder().add(HEADER_AUTHORIZATION, token).build())
-            // We turn the bitmap into a software bitmap so it can be drawn by Compose in any context.
-            .allowHardware(false)
-            .build()
-        return imageLoader.execute(request).image?.toBitmap()
+        return try {
+            val token = serverManager.authenticationRepository(serverId).buildBearerToken()
+            val request = ImageRequest.Builder(context)
+                .data(url)
+                .memoryCacheKey(cacheKey)
+                .diskCacheKey(cacheKey)
+                .httpHeaders(NetworkHeaders.Builder().add(HEADER_AUTHORIZATION, token).build())
+                // We turn the bitmap into a software bitmap so it can be drawn by Compose in any context.
+                .allowHardware(false)
+                .build()
+            imageLoader.execute(request).image?.toBitmap()
+        } catch (e: AuthorizationException) {
+            Timber.w(e, "Could not download avatar for serverId=$serverId, fallback")
+            null
+        }
+        // In case of other exceptions, propagate up without fallback
     }
 
     /**

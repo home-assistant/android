@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -51,13 +52,13 @@ internal fun NavGraphBuilder.nameYourWearDeviceScreen(
         // then forwards them to the watch via WearOnboardApp.Output. The watch itself handles
         // server registration, not this device.
         NameYourDeviceScreen(
-            onBackClick = onBackClick,
+            onBackClick = dropUnlessResumed(block = onBackClick),
             onHelpClick = onHelpClick,
             deviceName = deviceName,
             saveClickable = true,
             deviceNameEditable = true,
             onDeviceNameChange = { name -> deviceName = name },
-            onSaveClick = {
+            onSaveClick = dropUnlessResumed {
                 onDeviceNamed(deviceName, route.url, route.authCode, route.requiredMTLS)
             },
         )
