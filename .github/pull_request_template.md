@@ -55,11 +55,8 @@ Select exactly one option that describes AI usage in this contribution:
     documentation or brands, or code that has to be merged together with it.
     List this pull request on theirs too. Mention other pull requests and
     issues, like one this builds on or a revert, in the summary above.
+
+    Add any other information of note below these lines.
 -->
 - This PR fixes or closes issue: fixes #
 - This PR belongs together with: 
-
-## Any other notes
-<!-- 
-    If there is any other information of note, like if this Pull Request is part of a bigger change, please include it here.
--->
