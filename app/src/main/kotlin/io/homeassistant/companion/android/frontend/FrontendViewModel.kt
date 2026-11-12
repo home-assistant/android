@@ -1035,13 +1035,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is UrlLoadResult.ServerNotFound -> {
-                onError(
-                    FrontendConnectionError.Unreachable(
-                        message = commonR.string.error_connection_failed,
-                        errorDetails = "Server not found",
-                        rawErrorType = "ServerNotFound",
-                    ),
-                )
+                onError(unreachableError(errorDetails = "Server not found", rawErrorType = "ServerNotFound"))
             }
 
             is UrlLoadResult.SessionNotConnected -> {
@@ -1069,22 +1063,31 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is UrlLoadResult.NoUrlAvailable -> {
-                onError(
-                    FrontendConnectionError.Unreachable(
-                        message = commonR.string.error_connection_failed,
-                        errorDetails = "No URL available",
-                        rawErrorType = "NoUrlAvailable",
-                    ),
-                )
+                onError(unreachableError(errorDetails = "No URL available", rawErrorType = "NoUrlAvailable"))
             }
 
             is UrlLoadResult.ExternalUrl -> {
-                // Suspends while the screen is busy with a previous event instead of dropping this one
-                _events.send(FrontendEvent.OpenExternalLink(result.url.toUri()))
-                // Load the server without the rejected target, so no later restart can reopen it
-                startLoad(serverId = result.serverId)
+                openOutsideWebView(FrontendEvent.OpenExternalLink(result.url.toUri()), result.serverId)
+            }
+
+            is UrlLoadResult.NonFrontendUrl -> {
+                openOutsideWebView(FrontendEvent.OpenCustomTab(result.url.toUri()), result.serverId)
             }
         }
+    }
+
+    private fun unreachableError(errorDetails: String, rawErrorType: String) = FrontendConnectionError.Unreachable(
+        message = commonR.string.error_connection_failed,
+        errorDetails = errorDetails,
+        rawErrorType = rawErrorType,
+    )
+
+    /** Sends [event] to open a rejected target outside of the WebView, then loads the server without it. */
+    private suspend fun openOutsideWebView(event: FrontendEvent, serverId: Int) {
+        // Suspends while the screen is busy with a previous event instead of dropping this one
+        _events.send(event)
+        // Without the rejected target no later restart can reopen it
+        startLoad(serverId = serverId)
     }
 
     private suspend fun handleDownloadResult(result: DownloadResult) {

@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.util
 
 import android.content.Context
+import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.webkit.WebViewCompat
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.launchAppOrStore
+import io.homeassistant.companion.android.common.util.startActivityOrShowSnackbar
 import timber.log.Timber
 
 /**
@@ -24,4 +27,16 @@ suspend fun Context.updateSystemWebView(onShowSnackbar: suspend (message: String
         return
     }
     launchAppOrStore(webViewPackage, onShowSnackbar)
+}
+
+/**
+ * Opens [uri] in a Custom Tab of the default browser, or in the browser itself when it does not
+ * support Custom Tabs. [onShowSnackbar] surfaces the failure when nothing can open it.
+ */
+suspend fun Context.openCustomTab(uri: Uri, onShowSnackbar: suspend (message: String, action: String?) -> Boolean) {
+    startActivityOrShowSnackbar(
+        intent = CustomTabsIntent.Builder().setShowTitle(true).build().intent.setData(uri),
+        target = uri.toString(),
+        onShowSnackbar = onShowSnackbar,
+    )
 }

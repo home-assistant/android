@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.util.compose
 
+import android.net.Uri
 import androidx.navigation.NavController
 import io.homeassistant.companion.android.common.util.launchAppOrStore
 import io.homeassistant.companion.android.common.util.launchIntentUri
 import io.homeassistant.companion.android.common.util.openSecuritySettings
 import io.homeassistant.companion.android.common.util.openUri
+import io.homeassistant.companion.android.util.openCustomTab
 import io.homeassistant.companion.android.util.updateSystemWebView
 
 suspend fun NavController.navigateToUri(
@@ -12,6 +14,13 @@ suspend fun NavController.navigateToUri(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
 ) {
     context.openUri(uri, onShowSnackbar)
+}
+
+suspend fun NavController.openCustomTab(
+    uri: Uri,
+    onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+) {
+    context.openCustomTab(uri, onShowSnackbar)
 }
 
 suspend fun NavController.launchAppOrStore(

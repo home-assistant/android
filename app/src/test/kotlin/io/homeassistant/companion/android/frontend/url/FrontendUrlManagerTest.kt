@@ -466,7 +466,7 @@ class FrontendUrlManagerTest {
         "https://home.example.com/local/page.html, https://home.example.com/local/page.html",
         "homeassistant://navigate/local/page.html, https://home.example.com/local/page.html",
     )
-    fun `Given target not served by the frontend when serverUrlFlow then returns ExternalUrl`(
+    fun `Given target not served by the frontend when serverUrlFlow then returns NonFrontendUrl`(
         target: String,
         expectedUrl: String,
     ) = runTest {
@@ -474,7 +474,7 @@ class FrontendUrlManagerTest {
         coEvery { classifyServerPath(1, expectedUrl.toHttpUrl()) } returns ServerPathType.NotFrontend
 
         urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Path(target)).test {
-            assertEquals(UrlLoadResult.ExternalUrl(url = expectedUrl, serverId = 1), awaitItem())
+            assertEquals(UrlLoadResult.NonFrontendUrl(url = expectedUrl, serverId = 1), awaitItem())
             awaitComplete()
         }
     }

@@ -113,6 +113,7 @@ internal fun HANavHost(
                 onOpenExternalLink = { uri ->
                     navController.navigateToUri(uri.toString(), onShowSnackbar)
                 },
+                onOpenCustomTab = { uri -> navController.openCustomTab(uri, onShowSnackbar) },
                 onNavigateToSettings = { deepLink ->
                     activity?.let { it.startActivity(SettingsActivity.newInstance(it, deepLink)) }
                 },

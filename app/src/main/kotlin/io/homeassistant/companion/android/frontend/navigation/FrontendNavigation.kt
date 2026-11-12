@@ -64,6 +64,7 @@ internal fun NavController.navigateToFrontend(
  *
  * @param navController The navigation controller
  * @param onOpenExternalLink Callback to open external links (required for V2)
+ * @param onOpenCustomTab Callback to open a link in a Custom Tab
  * @param onNavigateToSettings Callback to navigate to settings
  * @param onOpenLocationSettings Callback to open location settings
  * @param onConfigureHomeNetwork Callback to configure home network (receives serverId)
@@ -79,6 +80,7 @@ internal fun NavController.navigateToFrontend(
 internal fun NavGraphBuilder.frontendScreen(
     navController: NavController,
     onOpenExternalLink: suspend (Uri) -> Unit = {},
+    onOpenCustomTab: suspend (Uri) -> Unit = {},
     onNavigateToSettings: (SettingsActivity.Deeplink?) -> Unit,
     onSecurityLevelHelpClick: suspend () -> Unit,
     onOpenLocationSettings: () -> Unit,
@@ -128,6 +130,7 @@ internal fun NavGraphBuilder.frontendScreen(
                 )
             },
             onOpenExternalLink = onOpenExternalLink,
+            onOpenCustomTab = onOpenCustomTab,
             onShowServerSwitcher = { onShowServerSwitcher(viewModel::switchServer) },
             onNavigateToNfcWrite = { messageId, tagId ->
                 nfcWriteLauncher.launch(WriteNfcTag.Input(tagId = tagId, messageId = messageId))
@@ -178,6 +181,7 @@ internal fun FrontendEventHandler(
     onLaunchMatterThreadIntent: (IntentSender) -> Unit,
     onRequestFullscreen: (Boolean) -> Unit,
     onNavigateToWidgetConfig: (entityId: String, widgetType: WidgetType) -> Unit,
+    onOpenCustomTab: suspend (Uri) -> Unit = {},
     onLaunchApp: suspend (packageName: String) -> Unit = {},
     onLaunchIntent: suspend (intentUri: String) -> Unit = {},
     onOpenSecuritySettings: suspend () -> Unit = {},
@@ -211,6 +215,7 @@ internal fun FrontendEventHandler(
                     onNavigateToAssist(event.serverId, event.pipelineId, event.startListening)
 
                 is FrontendEvent.OpenExternalLink -> onOpenExternalLink(event.uri)
+                is FrontendEvent.OpenCustomTab -> onOpenCustomTab(event.uri)
                 is FrontendEvent.NavigateToDeveloperSettings -> onNavigateToSettings(
                     SettingsActivity.Deeplink.Developer,
                 )
