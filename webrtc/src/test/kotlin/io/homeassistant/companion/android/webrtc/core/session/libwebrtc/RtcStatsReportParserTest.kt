@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 class RtcStatsReportParserTest {
 
     @Test
-    fun `Given a stats report Then the selected pair and inbound video are parsed`() {
+    fun `Given a stats report When parsing to a snapshot Then the selected pair and inbound video are parsed`() {
         val report = RTCStatsReport(
             2_000_000L,
             mapOf(
@@ -63,7 +63,7 @@ class RtcStatsReportParserTest {
     }
 
     @Test
-    fun `Given an empty stats report Then no pair or streams are present`() {
+    fun `Given an empty stats report When parsing to a snapshot Then no pair or streams are present`() {
         val snapshot = RTCStatsReport(0L, emptyMap()).toStatsSnapshot()
 
         assertNull(snapshot.candidatePair)

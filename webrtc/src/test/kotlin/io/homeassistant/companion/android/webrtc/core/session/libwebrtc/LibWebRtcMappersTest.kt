@@ -46,7 +46,7 @@ class LibWebRtcMappersTest {
     inner class ToIceCandidate {
 
         @Test
-        fun `Given a candidate with an sdpMid Then that mid and m-line index are used`() {
+        fun `Given an spdMid When creating a candidate Then that mid and m-line index are used`() {
             val result = IceCandidateInit(candidate = "cand", sdpMid = "audio", sdpMLineIndex = 1).toIceCandidate()
 
             assertEquals("audio", result.sdpMid)
@@ -55,7 +55,7 @@ class LibWebRtcMappersTest {
         }
 
         @Test
-        fun `Given a candidate with an sdpMid but no m-line index Then the index defaults to zero`() {
+        fun `Given an spdMid but no m-line index When creating a candidate Then the index defaults to zero`() {
             val result = IceCandidateInit(candidate = "cand", sdpMid = "video").toIceCandidate()
 
             assertEquals("video", result.sdpMid)
@@ -63,7 +63,7 @@ class LibWebRtcMappersTest {
         }
 
         @Test
-        fun `Given a candidate with only an m-line index Then the mid is left empty so the index resolves it`() {
+        fun `Given only an m-line index When creating a candidate Then the mid is left empty so the index resolves it`() {
             val result = IceCandidateInit(candidate = "cand", sdpMLineIndex = 2).toIceCandidate()
 
             assertEquals("", result.sdpMid)
@@ -71,7 +71,7 @@ class LibWebRtcMappersTest {
         }
 
         @Test
-        fun `Given a candidate with neither mid nor index Then it targets the first m-section`() {
+        fun `Given no mid or index When creating a candidate Then it targets the first m-section`() {
             val result = IceCandidateInit(candidate = "cand").toIceCandidate()
 
             assertEquals("0", result.sdpMid)
@@ -83,7 +83,7 @@ class LibWebRtcMappersTest {
     inner class ToRtcConnectionState {
 
         @Test
-        fun `Given each libwebrtc connection state Then it maps to the matching RtcConnectionState`() {
+        fun `Given each libwebrtc connection state When mapped Then it maps to the matching RtcConnectionState`() {
             assertEquals(RtcConnectionState.NEW, PeerConnection.PeerConnectionState.NEW.toRtcConnectionState())
             assertEquals(RtcConnectionState.CONNECTING, PeerConnection.PeerConnectionState.CONNECTING.toRtcConnectionState())
             assertEquals(RtcConnectionState.CONNECTED, PeerConnection.PeerConnectionState.CONNECTED.toRtcConnectionState())

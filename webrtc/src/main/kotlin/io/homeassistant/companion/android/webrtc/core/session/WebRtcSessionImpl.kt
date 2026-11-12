@@ -328,6 +328,7 @@ internal class WebRtcSessionImpl(
         withContext(NonCancellable) { sessionJob?.cancelAndJoin() }
         scope.cancel()
     }
+
     override fun observeStats(interval: Duration): Flow<RtcStatsSnapshot> = flow {
         var previous: RtcStatsSnapshot? = null
         while (true) {

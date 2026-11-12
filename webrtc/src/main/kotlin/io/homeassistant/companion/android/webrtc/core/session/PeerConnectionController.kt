@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import livekit.org.webrtc.VideoSink
 
 /**
- * Thin facade over one libwebrtc `PeerConnection`, so [WebRtcSession] stays pure Kotlin and can
+ * Interface over one libwebrtc `PeerConnection`, so [WebRtcSession] stays pure Kotlin and can
  * be unit tested without native code.
  *
  * A controller wraps exactly one peer connection: it is created for one negotiation and disposed
