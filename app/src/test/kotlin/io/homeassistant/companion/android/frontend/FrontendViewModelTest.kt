@@ -346,17 +346,20 @@ class FrontendViewModelTest {
             }
         }
 
-        @ParameterizedTest(name = "{0}")
-        @ValueSource(strings = ["Frontend", "Unknown"])
-        fun `Given server url that may be the frontend when intercepted then loads it as a frontend target`(
-            pathType: String,
-        ) = runTest {
+        @Test
+        fun `Given frontend server url when intercepted then loads it as a frontend target`() = runTest {
+            assertLoadedAsFrontendTarget(ServerPathType.Frontend)
+        }
+
+        @Test
+        fun `Given unknown server url when intercepted then loads it as a frontend target`() = runTest {
+            assertLoadedAsFrontendTarget(ServerPathType.Unknown)
+        }
+
+        private suspend fun TestScope.assertLoadedAsFrontendTarget(pathType: ServerPathType) {
             withSameOrigin {
                 val panelUrl = "https://example.com/lovelace/0"
-                coEvery { urlManager.classifyServerUrl(serverId, any()) } returns when (pathType) {
-                    "Frontend" -> ServerPathType.Frontend
-                    else -> ServerPathType.Unknown
-                }
+                coEvery { urlManager.classifyServerUrl(serverId, any()) } returns pathType
                 val (viewModel, intercept) = createViewModelWithUrlInterceptCapture()
                 advanceUntilIdle()
 

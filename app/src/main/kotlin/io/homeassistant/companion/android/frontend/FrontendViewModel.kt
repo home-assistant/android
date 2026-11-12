@@ -1150,8 +1150,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * loaded again as a frontend target.
      */
     private fun interceptServerNavigation(uri: Uri): Boolean {
-        val url = uri.toString().toHttpUrlOrNull() ?: return false
-        if (url.pathSegments.first().isEmpty()) return false
+        val url = uri.toString().toHttpUrlOrNull()
+        if (url == null || url.pathSegments.first().isEmpty()) return false
 
         val serverId = _viewState.value.serverId
         viewModelScope.launch {
