@@ -30,6 +30,15 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
+import java.lang.ref.WeakReference
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -37,6 +46,17 @@ import timber.log.Timber
  * [WebView.pauseTimers]/[WebView.resumeTimers].
  */
 private val webViewTimersManager = WebViewTimersManager()
+
+/**
+ * How long the frontend waits after the page is hidden before it tears down WebRTC camera streams
+ * (`HIDDEN_CLEANUP_DELAY` in `ha-web-rtc-player.ts`). Its cleanup runs on a JavaScript timer, so timers
+ * must keep running at least that long after the last WebView screen stops.
+ */
+private val FRONTEND_HIDDEN_CLEANUP_DELAY: Duration = 60.seconds
+
+/** Delay before pausing the global WebView timers once no WebView screen is started. */
+@VisibleForTesting
+internal val WEBVIEW_TIMERS_PAUSE_DELAY: Duration = FRONTEND_HIDDEN_CLEANUP_DELAY + 10.seconds
 
 const val BLANK_URL = "about:blank"
 
@@ -178,23 +198,32 @@ internal fun WebViewLifecycleEffect(webView: WebView?, manager: WebViewTimersMan
  *
  * Those calls affect every WebView in the process, so a screen must not pause timers while another
  * WebView screen is still visible (activity transitions overlap: the new activity starts before the
- * old one stops). Timers are paused when the last started screen stops and resumed when the first
- * one starts.
+ * old one stops). Timers are resumed when the first screen starts and paused [WEBVIEW_TIMERS_PAUSE_DELAY]
+ * after the last started screen stops, giving the frontend time to run its own hidden-page cleanup
+ * (closing WebRTC streams) before its timers freeze. A screen starting during that delay cancels the pause.
+ *
+ * @param scope The scope running the deferred pause, which must dispatch on the main thread.
  */
 @MainThread
-internal class WebViewTimersManager {
+internal class WebViewTimersManager @VisibleForTesting constructor(private val scope: CoroutineScope) {
+
+    /** Process-wide instance: the scope lives as long as the process. */
+    constructor() : this(CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate))
 
     private var startedWebViews = 0
+    private var pendingPause: Job? = null
 
     /** Registers a started WebView screen, resuming global timers if it is the first one. */
     fun onWebViewStarted(webView: WebView) {
         if (startedWebViews == 0) {
+            pendingPause?.cancel()
+            pendingPause = null
             webView.resumeTimers()
         }
         startedWebViews++
     }
 
-    /** Unregisters a started WebView screen, pausing global timers if it was the last one. */
+    /** Unregisters a started WebView screen, scheduling the global timers pause if it was the last one. */
     fun onWebViewStopped(webView: WebView) {
         if (startedWebViews == 0) {
             FailFast.fail { "onWebViewStopped called without a matching onWebViewStarted" }
@@ -202,7 +231,21 @@ internal class WebViewTimersManager {
         }
         startedWebViews--
         if (startedWebViews == 0) {
-            webView.pauseTimers()
+            schedulePause(WeakReference(webView))
+        }
+    }
+
+    private fun schedulePause(webViewRef: WeakReference<WebView>) {
+        pendingPause = scope.launch {
+            delay(WEBVIEW_TIMERS_PAUSE_DELAY)
+            pendingPause = null
+            val webView = webViewRef.get()
+            if (webView == null) {
+                Timber.d("WebView collected before the timers pause, nothing to pause")
+            } else {
+                Timber.d("Pausing WebView timers")
+                webView.pauseTimers()
+            }
         }
     }
 }
