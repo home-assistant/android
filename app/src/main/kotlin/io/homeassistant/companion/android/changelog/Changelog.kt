@@ -42,6 +42,12 @@ sealed interface ChangelogAction {
     /** Opens the settings on the screen targeted by [deeplink]. */
     data class OpenSettings(val deeplink: SettingsActivity.Deeplink) : ChangelogAction
 
+    /**
+     * Opens the settings of the sensor [sensorId]. The action is only offered on devices whose
+     * sensor manager has the sensor; everywhere else the entry is shown without it.
+     */
+    data class OpenSensor(val sensorId: String) : ChangelogAction
+
     /** Opens the configuration screen of [widgetType] without a preselected entity. */
     data class OpenWidgetConfig(val widgetType: WidgetType) : ChangelogAction
 

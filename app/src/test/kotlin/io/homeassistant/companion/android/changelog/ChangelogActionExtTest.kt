@@ -64,6 +64,17 @@ class ChangelogActionExtTest {
     }
 
     @Test
+    fun `Given OpenSensor when handled then the sensor settings are started`() = runTest {
+        every {
+            SettingsActivity.newInstance(context, SettingsActivity.Deeplink.Sensor("hinge_status"))
+        } returns intent
+
+        ChangelogAction.OpenSensor("hinge_status").perform(context, onShowSnackbar)
+
+        verify { context.startActivity(intent) }
+    }
+
+    @Test
     fun `Given OpenWidgetConfig when handled then the widget configuration is started`() = runTest {
         val widgetType = mockk<WidgetType> {
             every { toConfigureIntent(context, null) } returns intent
