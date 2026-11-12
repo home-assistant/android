@@ -6,6 +6,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
@@ -67,7 +69,8 @@ class FrontendEntityAddToManager @VisibleForTesting constructor(
      * The available actions depend on the entity's domain. For example, media player entities
      * will include both the general entity widget and a specialized media player widget option.
      * Vehicle-related entities will include Android Auto favorites. Camera and image entities
-     * will include camera widget options.
+     * will include camera widget options. Entities with a default press action will include button
+     * widget options.
      *
      * @param entityId The entity ID to get available actions for (for example, "light.living_room")
      * @return List of actions that can be performed for this entity. Returns an empty list if the
@@ -88,17 +91,7 @@ class FrontendEntityAddToManager @VisibleForTesting constructor(
             val actions = mutableListOf<EntityAddToAction>()
 
             if (!isAutomotive && !isQuest) {
-                actions.add(EntityAddToAction.EntityWidget)
-
-                if (entity.domain == MEDIA_PLAYER_DOMAIN) {
-                    actions.add(EntityAddToAction.MediaPlayerWidget)
-                }
-                if (entity.domain == TODO_DOMAIN) {
-                    actions.add(EntityAddToAction.TodoWidget)
-                }
-                if (entity.domain == CAMERA_DOMAIN || entity.domain == IMAGE_DOMAIN) {
-                    actions.add(EntityAddToAction.CameraWidget)
-                }
+                actions.addAll(widgetActionsFor(entity))
             }
 
             if (isVehicleDomain(entity) && (isFullFlavor || isAutomotive)) {
@@ -129,6 +122,8 @@ class FrontendEntityAddToManager @VisibleForTesting constructor(
                 FrontendEvent.NavigateToWidgetConfig(entityId, WidgetType.Camera)
             is EntityAddToAction.TodoWidget ->
                 FrontendEvent.NavigateToWidgetConfig(entityId, WidgetType.Todo)
+            is EntityAddToAction.ButtonWidget ->
+                FrontendEvent.NavigateToWidgetConfig(entityId, WidgetType.Button)
             is EntityAddToAction.Shortcut,
             is EntityAddToAction.Tile,
             is EntityAddToAction.Watch,
@@ -149,5 +144,14 @@ class FrontendEntityAddToManager @VisibleForTesting constructor(
         } else {
             FailFast.fail { "Server is null when adding auto favorite" }
         }
+    }
+
+    /** Returns the home screen widgets that can show [entity], with the general entity widget first. */
+    private fun widgetActionsFor(entity: Entity): List<EntityAddToAction> = buildList {
+        add(EntityAddToAction.EntityWidget)
+        if (entity.domain == MEDIA_PLAYER_DOMAIN) add(EntityAddToAction.MediaPlayerWidget)
+        if (entity.domain == TODO_DOMAIN) add(EntityAddToAction.TodoWidget)
+        if (entity.domain == CAMERA_DOMAIN || entity.domain == IMAGE_DOMAIN) add(EntityAddToAction.CameraWidget)
+        if (entity.domain in EntityExt.APP_PRESS_ACTION_DOMAINS) add(EntityAddToAction.ButtonWidget)
     }
 }
