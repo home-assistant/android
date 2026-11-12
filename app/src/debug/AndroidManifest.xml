@@ -40,7 +40,7 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation"
             tools:ignore="UnusedAttribute" />
 
-        <activity android:name=".developer.WebRtcDebugActivity"
+        <activity android:name=".developer.webrtc.WebRtcDebugActivity"
             android:label="WebRTC camera player"
             android:exported="false" />
 

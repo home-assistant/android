@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.developer
+package io.homeassistant.companion.android.developer.webrtc
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -13,8 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.compose.theme.HATheme
-import io.homeassistant.companion.android.developer.webrtc.WebRtcDebug
-import io.homeassistant.companion.android.developer.webrtc.WebRtcDebugViewModel
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 
 /**

@@ -15,9 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,9 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
+import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
+import io.homeassistant.companion.android.common.compose.composable.HASwitch
+import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.webrtc.compose.WebRtcVideo
 import io.homeassistant.companion.android.webrtc.core.ConnectionState
@@ -86,8 +86,8 @@ fun WebRtcDebug(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(HADimens.SPACE4),
+        verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
     ) {
         if (state.showServerSelector) {
             HADropdownMenu(
@@ -123,7 +123,7 @@ fun WebRtcDebug(
 
 @Composable
 private fun MediaOptionsSwitches(options: MediaOptions, enabled: Boolean, onChange: (MediaOptions) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE3)) {
         StreamSwitch(
             label = "Receive video",
             checked = options.videoIn,
@@ -147,13 +147,9 @@ private fun MediaOptionsSwitches(options: MediaOptions, enabled: Boolean, onChan
 
 @Composable
 private fun SessionControls(canStart: Boolean, canStop: Boolean, onStart: () -> Unit, onStop: () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = onStart, enabled = canStart) {
-            Text("Start")
-        }
-        Button(onClick = onStop, enabled = canStop) {
-            Text("Stop")
-        }
+    Row(horizontalArrangement = Arrangement.spacedBy(HADimens.SPACE2)) {
+        HAPlainButton("Start", onClick = onStart, enabled = canStart)
+        HAPlainButton("Stop", onClick = onStop, enabled = canStop)
     }
 }
 
@@ -169,7 +165,7 @@ private fun CameraVideo(video: VideoReceiver, state: ConnectionState) {
             Text(
                 text = failure.toDebugLabel(),
                 color = Color.White,
-                style = MaterialTheme.typography.bodyMedium,
+                style = HATextStyle.BodyMedium,
                 modifier = Modifier.align(Alignment.Center),
             )
         },
@@ -186,14 +182,14 @@ private fun StreamSwitch(label: String, checked: Boolean, enabled: Boolean, onCh
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyMedium)
-        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
+        Text(text = label, style = HATextStyle.BodyMedium)
+        HASwitch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
 
 @Composable
 private fun DebugInfoPanel(connectionState: ConnectionState, micState: MicState, stats: RtcStatsSnapshot) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(HADimens.SPACE1)) {
         DebugLine("State", connectionState.toDebugLabel())
         DebugLine("Mic", micState.toDebugLabel())
         stats.toDebugLines().forEach { (label, value) -> DebugLine(label, value) }
@@ -202,7 +198,7 @@ private fun DebugInfoPanel(connectionState: ConnectionState, micState: MicState,
 
 @Composable
 private fun DebugLine(label: String, value: String) {
-    Text(text = "$label: $value", style = MaterialTheme.typography.bodyMedium)
+    Text(text = "$label: $value", style = HATextStyle.BodyMedium)
 }
 
 private fun Context.hasRecordAudioPermission(): Boolean =
