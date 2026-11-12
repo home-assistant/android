@@ -65,7 +65,6 @@ class NotificationListenerSensorManagerTest {
     @AfterEach
     fun tearDown() {
         unmockkStatic(NotificationManagerCompat::class)
-        SdkVersion.resetSdkInt()
     }
 
     @ParameterizedTest
