@@ -51,6 +51,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
+import io.homeassistant.companion.android.frontend.url.ServerPathType
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
@@ -270,7 +271,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             onFrontendError = ::onError,
             onCrash = ::onRetry,
             onPageFinished = ::onPageFinished,
-            onUrlIntercepted = { uri, _ -> onUrlIntercepted(uri) },
+            onUrlIntercepted = { uri, _, isForMainFrame -> onUrlIntercepted(uri, isForMainFrame) },
             onReceivedHttpAuthRequest = { handler, host, resource, realm ->
                 viewModelScope.launch {
                     if (httpAuthHandler.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
@@ -1111,12 +1112,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * Handles a URL the WebView is about to load.
      *
      * Custom schemes (`app://`, `intent:`) and URLs that do not match the current server origin are
-     * routed to the host through [FrontendEvent]s, while same-origin URLs are left for the WebView.
-     * The origin comparison uses scheme, host and port (see [hasSameOrigin]).
+     * routed to the host through [FrontendEvent]s. Same-origin URLs are left for the WebView when
+     * they are loaded in an iframe, a main frame navigation is only left for it on the frontend
+     * (see [interceptServerNavigation]). The origin comparison uses scheme, host and port
+     * (see [hasSameOrigin]).
      *
      * @return `true` when the URL was intercepted (the host will handle it), `false` to let the WebView load it.
      */
-    private fun onUrlIntercepted(uri: Uri): Boolean {
+    private fun onUrlIntercepted(uri: Uri, isForMainFrame: Boolean): Boolean {
         val rawUrl = uri.toString()
         return when {
             rawUrl.startsWith(APP_PREFIX) -> {
@@ -1129,13 +1132,38 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 true
             }
 
-            uri.hasSameOrigin(urlFlow.value) -> false
+            uri.hasSameOrigin(urlFlow.value) -> isForMainFrame && interceptServerNavigation(uri)
 
             else -> {
                 _events.trySend(FrontendEvent.OpenExternalLink(uri))
                 true
             }
         }
+    }
+
+    /**
+     * Intercepts a main frame navigation to [uri], on the server origin, unless it targets the
+     * root, which is always the frontend.
+     *
+     * The page of the main frame has access to the JavaScript bridge, so any other path is
+     * classified first: what is not the frontend is opened outside of the WebView, the rest is
+     * loaded again as a frontend target.
+     */
+    private fun interceptServerNavigation(uri: Uri): Boolean {
+        val url = uri.toString().toHttpUrlOrNull() ?: return false
+        if (url.pathSegments.first().isEmpty()) return false
+
+        val serverId = _viewState.value.serverId
+        viewModelScope.launch {
+            when (urlManager.classifyServerUrl(serverId = serverId, url = url)) {
+                ServerPathType.NotFrontend -> _events.send(FrontendEvent.OpenCustomTab(uri))
+
+                ServerPathType.Frontend, ServerPathType.Unknown -> {
+                    startLoad(serverId = serverId, target = FrontendTarget.Path(uri.toString()))
+                }
+            }
+        }
+        return true
     }
 
     /**

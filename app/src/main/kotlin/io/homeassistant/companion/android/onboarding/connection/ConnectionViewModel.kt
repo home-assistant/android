@@ -160,7 +160,9 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         webViewClientFactory.create(
             currentUrlFlow = urlFlow,
             onFrontendError = ::onError,
-            onUrlIntercepted = ::interceptRedirectIfRequired,
+            onUrlIntercepted = { uri, isTLSClientAuthNeeded, _ ->
+                interceptRedirectIfRequired(uri, isTLSClientAuthNeeded)
+            },
             onPageFinished = { url ->
                 _isLoadingFlow.update { false }
                 updateEffectiveBaseUrl(url)

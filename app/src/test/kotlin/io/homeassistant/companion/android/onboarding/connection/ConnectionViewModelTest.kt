@@ -588,6 +588,7 @@ class ConnectionViewModelTest {
             every { getQueryParameter("code") } returns authCode
         }
         return mockk<WebResourceRequest> {
+            every { isForMainFrame } returns true
             every { url } returns uri
         }
     }
@@ -631,6 +632,7 @@ class ConnectionViewModelTest {
         assertNotNull(authUrl)
 
         val request = mockk<WebResourceRequest> {
+            every { isForMainFrame } returns true
             every { url } returns mockk<Uri> {
                 every { this@mockk.toString() } returns authUrl
             }
