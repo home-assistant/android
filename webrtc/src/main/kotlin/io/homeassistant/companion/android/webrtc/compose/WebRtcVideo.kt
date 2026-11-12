@@ -88,6 +88,9 @@ fun WebRtcVideo(
 /**
  * Implementation of [WebRtcVideo] with an injectable renderer so the sink lifecycle and the
  * overlays can be tested without the native libwebrtc renderer.
+ *
+ * @param initialFirstFrameRendered whether a frame is considered rendered from the start, for
+ * screenshot tests that capture a single composition
  */
 @VisibleForTesting
 @Composable
@@ -100,9 +103,10 @@ internal fun <R> WebRtcVideoContent(
     modifier: Modifier = Modifier,
     connectingContent: @Composable BoxScope.() -> Unit = {},
     failedContent: @Composable BoxScope.(SessionFailure) -> Unit = {},
+    initialFirstFrameRendered: Boolean = false,
 ) where R : View, R : VideoSink {
     key(video) {
-        var firstFrameRendered by remember { mutableStateOf(false) }
+        var firstFrameRendered by remember { mutableStateOf(initialFirstFrameRendered) }
         var renderer by remember { mutableStateOf<R?>(null) }
 
         Box(modifier = modifier.background(Color.Black)) {
@@ -149,8 +153,9 @@ internal fun <R> WebRtcVideoContent(
     }
 }
 
+@VisibleForTesting
 @Composable
-private fun BoxScope.DefaultConnectingContent() {
+internal fun BoxScope.DefaultConnectingContent() {
     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 }
 
