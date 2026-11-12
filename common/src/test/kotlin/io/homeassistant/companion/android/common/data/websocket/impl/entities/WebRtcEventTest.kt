@@ -98,7 +98,7 @@ class WebRtcEventTest {
     }
 
     @Test
-    fun `Given a client config with a single url string When decoding Then urls is normalized to a list`() {
+    fun `Given a client config with a single url string When decoding Then url is normalized to a list`() {
         val config = decode<CameraWebRtcClientConfigResponse>(
             """{"configuration": {"iceServers": [{"urls": "stun:stun.home-assistant.io:80"}]}}""",
         )
@@ -107,6 +107,30 @@ class WebRtcEventTest {
             CameraWebRtcClientConfigResponse(
                 configuration = WebRtcConfiguration(
                     iceServers = listOf(WebRtcIceServer(urls = listOf("stun:stun.home-assistant.io:80"))),
+                ),
+            ),
+            config,
+        )
+    }
+
+    @Test
+    fun `Given a client config with a list of urls When decoding Then all urls are kept in order`() {
+        val config = decode<CameraWebRtcClientConfigResponse>(
+            """
+            {"configuration": {"iceServers": [
+                {"urls": ["stun:stun.home-assistant.io:80", "stun:stun.home-assistant.io:3478"]}
+            ]}}
+            """.trimIndent(),
+        )
+
+        assertEquals(
+            CameraWebRtcClientConfigResponse(
+                configuration = WebRtcConfiguration(
+                    iceServers = listOf(
+                        WebRtcIceServer(
+                            urls = listOf("stun:stun.home-assistant.io:80", "stun:stun.home-assistant.io:3478"),
+                        ),
+                    ),
                 ),
             ),
             config,
