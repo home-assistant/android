@@ -303,7 +303,7 @@ class HealthServicesSensorManager @Inject constructor(
                     val sensorData = sensorRepository.get(userActivityState.id)
 
                     if (sensorData.any { it.state != it.lastSentState } || forceUpdate) {
-                        SensorReceiver.updateAllSensors(applicationContext)
+                        SensorReceiver.updateSensor(applicationContext, userActivityState.id)
                     }
                 }
             }

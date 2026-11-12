@@ -170,7 +170,7 @@ class ActivitySensorManager @Inject constructor(
                 )
 
                 // Send the update immediately
-                SensorReceiver.updateAllSensors(applicationContext)
+                SensorReceiver.updateSensor(applicationContext, sleepConfidence.id)
             }
         }
         if (SleepSegmentEvent.hasEvents(intent) && isEnabled(sleepSegment)) {
@@ -188,6 +188,9 @@ class ActivitySensorManager @Inject constructor(
                         "status" to getSleepSegmentStatus(sleepSegmentEvent.last().status),
                     ),
                 )
+
+                // Send the update immediately
+                SensorReceiver.updateSensor(applicationContext, sleepSegment.id)
             }
         }
     }

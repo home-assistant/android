@@ -108,10 +108,9 @@ class OnBodySensorManager @Inject constructor(
                     if (state) onBodySensor.statelessIcon else Mdi.AccountOff,
                     mapOf(),
                 )
+                // Send update immediately, once the new state is stored
+                SensorReceiver.updateSensor(applicationContext, onBodySensor.id)
             }
         }
-
-        // Send update immediately
-        SensorReceiver.updateAllSensors(applicationContext)
     }
 }
