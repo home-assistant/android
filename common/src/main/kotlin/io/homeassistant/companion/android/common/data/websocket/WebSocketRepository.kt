@@ -181,10 +181,9 @@ interface WebSocketRepository {
      * signaling events for this session.
      *
      * The subscription lifetime is the session lifetime: when the returned Flow is no longer
-     * collected the subscription is cancelled with `unsubscribe_events`, which closes the WebRTC
-     * session on the server (there is no dedicated close command). The server also closes the
-     * session when the connection is lost, so the Flow then completes instead of replaying the
-     * offer on the next connection.
+     * collected the subscription is cancelled and closes the WebRTC session on the server
+     * (there is no dedicated close command). The server also closes the session when the
+     * connection is lost and does not reconnect automatically.
      *
      * @return a Flow that will emit all [WebRtcEvent]s for the session, or `null` if the
      * subscription could not be started.

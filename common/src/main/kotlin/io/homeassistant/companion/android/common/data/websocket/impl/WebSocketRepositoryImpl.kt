@@ -496,8 +496,6 @@ class WebSocketRepositoryImpl internal constructor(
                 "type" to "camera/webrtc/candidate",
                 "entity_id" to entityId,
                 "session_id" to sessionId,
-                // Pre-encoded with the WebRTC mapper to keep the camelCase keys, the message
-                // serializer passes JsonElement values through untouched
                 "candidate" to webRtcJsonMapper.encodeToJsonElement(candidate),
             ),
         )

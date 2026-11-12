@@ -10,8 +10,8 @@ import kotlinx.serialization.json.JsonTransformingSerializer
 /**
  * Response for the `camera/webrtc/get_client_config` WebSocket command.
  *
- * The keys are camelCase on the wire (they mirror the W3C `RTCConfiguration` dictionary), so this
- * class must be deserialized with [webRtcJsonMapper] and not the shared snake_case mapper.
+ * The keys for this response are camelCase on the wire so this class must be deserialized with
+ * [webRtcJsonMapper] and not the shared snake_case mapper.
  *
  * @property configuration the `RTCConfiguration` to create the peer connection with
  * @property dataChannel label of a data channel the client should open, used by some WebRTC
@@ -31,7 +31,7 @@ data class CameraWebRtcClientConfigResponse(
 data class WebRtcConfiguration(val iceServers: List<WebRtcIceServer> = emptyList())
 
 /**
- * A single `RTCIceServer` entry (STUN or TURN server) of an `RTCConfiguration`.
+ * A single `RTCIceServer` entry (STUN or TURN server) of a [WebRtcConfiguration] sent by Home Assistant Core.
  */
 @Serializable
 data class WebRtcIceServer(
