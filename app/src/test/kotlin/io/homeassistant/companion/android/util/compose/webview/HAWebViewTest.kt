@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.lifecycle.Lifecycle
+import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -18,6 +19,7 @@ import io.mockk.runs
 import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
+import java.lang.ref.WeakReference
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -27,6 +29,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -127,7 +130,7 @@ class HAWebViewTest {
         val timersManager = WebViewTimersManager(backgroundScope)
         timersManager.onWebViewStarted(webView)
 
-        timersManager.onWebViewStopped(webView)
+        timersManager.onWebViewStopped()
         runCurrent()
         verify(exactly = 0) { webView.pauseTimers() }
 
@@ -147,7 +150,7 @@ class HAWebViewTest {
         timersManager.onWebViewStarted(webView)
         timersManager.onWebViewStarted(otherWebView)
 
-        timersManager.onWebViewStopped(webView)
+        timersManager.onWebViewStopped()
         advancePauseDelay()
 
         verify(exactly = 0) { webView.pauseTimers() }
@@ -162,7 +165,7 @@ class HAWebViewTest {
 
         // Android starts the new activity before stopping the old one (B.onStart before A.onStop).
         timersManager.onWebViewStarted(newWebView)
-        timersManager.onWebViewStopped(webView)
+        timersManager.onWebViewStopped()
         advancePauseDelay()
 
         verify(exactly = 0) { webView.pauseTimers() }
@@ -173,7 +176,7 @@ class HAWebViewTest {
     fun `Given a stopped WebView when a WebView starts within the delay then the pause is cancelled and timers resume`() = runTest {
         val timersManager = WebViewTimersManager(backgroundScope)
         timersManager.onWebViewStarted(webView)
-        timersManager.onWebViewStopped(webView)
+        timersManager.onWebViewStopped()
         advanceTimeBy(WEBVIEW_TIMERS_PAUSE_DELAY / 2)
 
         timersManager.onWebViewStarted(webView)
@@ -187,11 +190,11 @@ class HAWebViewTest {
     fun `Given a WebView restarted during the delay when it stops again then timers pause once after the new delay`() = runTest {
         val timersManager = WebViewTimersManager(backgroundScope)
         timersManager.onWebViewStarted(webView)
-        timersManager.onWebViewStopped(webView)
+        timersManager.onWebViewStopped()
         advanceTimeBy(WEBVIEW_TIMERS_PAUSE_DELAY / 2)
         timersManager.onWebViewStarted(webView)
 
-        timersManager.onWebViewStopped(webView)
+        timersManager.onWebViewStopped()
         advanceTimeBy(WEBVIEW_TIMERS_PAUSE_DELAY / 2)
         runCurrent()
         verify(exactly = 0) { webView.pauseTimers() }
@@ -207,11 +210,44 @@ class HAWebViewTest {
         var failFastTriggered = false
         FailFast.setHandler { _, _ -> failFastTriggered = true }
 
-        timersManager.onWebViewStopped(webView)
+        timersManager.onWebViewStopped()
         advancePauseDelay()
 
         assertTrue(failFastTriggered)
         verify(exactly = 0) { webView.pauseTimers() }
+    }
+
+    @Test
+    fun `Given the last stopped WebView collected during the delay when it elapses then a surviving WebView pauses timers`() = runTest {
+        val timersManager = WebViewTimersManager(backgroundScope)
+        timersManager.onWebViewStarted(webView)
+        val collectedRef = startAndStopTransientWebView(timersManager)
+        timersManager.onWebViewStopped()
+        awaitCollected(collectedRef)
+
+        advancePauseDelay()
+
+        verify(exactly = 1) { webView.pauseTimers() }
+    }
+
+    /**
+     * Starts and stops a second WebView while [webView] is still started, returning only a weak
+     * reference so the instance can be collected once this function returns. A real Robolectric
+     * WebView is used because MockK keeps its mocks reachable.
+     */
+    private fun startAndStopTransientWebView(timersManager: WebViewTimersManager): WeakReference<WebView> {
+        val transient = WebView(ApplicationProvider.getApplicationContext())
+        timersManager.onWebViewStarted(transient)
+        timersManager.onWebViewStopped()
+        return WeakReference(transient)
+    }
+
+    private fun awaitCollected(ref: WeakReference<*>) {
+        repeat(GC_ATTEMPTS) {
+            if (ref.get() == null) return
+            System.gc()
+        }
+        fail("The WebView was not collected, the test cannot exercise the collected branch")
     }
 
     private fun TestScope.advancePauseDelay() {
@@ -237,7 +273,7 @@ class HAWebViewTest {
         composeTestRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
         verifyOrder {
             webView.onPause()
-            manager.onWebViewStopped(webView)
+            manager.onWebViewStopped()
         }
 
         composeTestRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
@@ -261,7 +297,7 @@ class HAWebViewTest {
         composeTestRule.waitForIdle()
         verifyOrder {
             webView.onPause()
-            manager.onWebViewStopped(webView)
+            manager.onWebViewStopped()
         }
     }
 
@@ -277,3 +313,5 @@ class HAWebViewTest {
 
     // endregion
 }
+
+private const val GC_ATTEMPTS = 20

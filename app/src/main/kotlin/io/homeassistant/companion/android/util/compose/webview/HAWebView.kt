@@ -186,7 +186,7 @@ internal fun WebViewLifecycleEffect(webView: WebView?, manager: WebViewTimersMan
             onStopOrDispose {
                 Timber.d("Webview stopped")
                 webView.onPause()
-                manager.onWebViewStopped(webView)
+                manager.onWebViewStopped()
             }
         }
     }
@@ -202,6 +202,9 @@ internal fun WebViewLifecycleEffect(webView: WebView?, manager: WebViewTimersMan
  * after the last started screen stops, giving the frontend time to run its own hidden-page cleanup
  * (closing WebRTC streams) before its timers freeze. A screen starting during that delay cancels the pause.
  *
+ * WebViews are only tracked weakly so the manager never keeps a disposed screen alive; the deferred pause
+ * runs on whichever tracked WebView is still alive, since the call is process-wide anyway.
+ *
  * @param scope The scope running the deferred pause, which must dispatch on the main thread.
  */
 @MainThread
@@ -211,10 +214,12 @@ internal class WebViewTimersManager @VisibleForTesting constructor(private val s
     constructor() : this(CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate))
 
     private var startedWebViews = 0
+    private val trackedWebViews = mutableListOf<WeakReference<WebView>>()
     private var pendingPause: Job? = null
 
     /** Registers a started WebView screen, resuming global timers if it is the first one. */
     fun onWebViewStarted(webView: WebView) {
+        track(webView)
         if (startedWebViews == 0) {
             pendingPause?.cancel()
             pendingPause = null
@@ -224,24 +229,31 @@ internal class WebViewTimersManager @VisibleForTesting constructor(private val s
     }
 
     /** Unregisters a started WebView screen, scheduling the global timers pause if it was the last one. */
-    fun onWebViewStopped(webView: WebView) {
+    fun onWebViewStopped() {
         if (startedWebViews == 0) {
             FailFast.fail { "onWebViewStopped called without a matching onWebViewStarted" }
             return
         }
         startedWebViews--
         if (startedWebViews == 0) {
-            schedulePause(WeakReference(webView))
+            schedulePause()
         }
     }
 
-    private fun schedulePause(webViewRef: WeakReference<WebView>) {
+    private fun track(webView: WebView) {
+        trackedWebViews.removeAll { it.get() == null }
+        if (trackedWebViews.none { it.get() === webView }) {
+            trackedWebViews += WeakReference(webView)
+        }
+    }
+
+    private fun schedulePause() {
         pendingPause = scope.launch {
             delay(WEBVIEW_TIMERS_PAUSE_DELAY)
             pendingPause = null
-            val webView = webViewRef.get()
+            val webView = trackedWebViews.firstNotNullOfOrNull { it.get() }
             if (webView == null) {
-                Timber.d("WebView collected before the timers pause, nothing to pause")
+                Timber.d("Every WebView was collected before the timers pause, nothing to pause")
             } else {
                 Timber.d("Pausing WebView timers")
                 webView.pauseTimers()
