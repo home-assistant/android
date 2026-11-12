@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.changelog
 
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.AppVersion
@@ -9,18 +10,32 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 
 private const val CURRENT_VERSION_CODE = 42
+private const val SENSOR_ID = "test_sensor"
+
+private val sensorEntry = ChangelogEntry(
+    contentRes = commonR.string.changelog_entry_bug_fixes,
+    platforms = setOf(ChangelogPlatform.APP),
+    action = ChangelogAction.OpenSensor(SENSOR_ID),
+)
+private val plainEntry = ChangelogEntry(
+    contentRes = commonR.string.changelog_entry_bug_fixes,
+    platforms = setOf(ChangelogPlatform.APP),
+)
+
+/** A fixed changelog so release-note edits never change what these tests exercise. */
+private val changelog = Changelog(new = listOf(sensorEntry), fixed = listOf(plainEntry))
 
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class ChangelogViewModelTest {
@@ -61,35 +76,43 @@ class ChangelogViewModelTest {
         val state = resolvedState(createViewModel(isAutomotive = platform == ChangelogPlatform.AUTOMOTIVE))
 
         assertEquals(platform, state.currentPlatform)
-        assertEquals(currentChangelog.toSections(), state.sections)
+        assertEquals(changelog.toSections(), state.sections)
     }
 
     @Test
-    fun `Given device without the sensor when reading state then sensor actions are dropped`() = runTest {
+    fun `Given device without the sensor when reading state then the sensor entry loses its action`() = runTest {
         val state = resolvedState(createViewModel(sensorManagers = setOf(sensorManager(hasSensor = false))))
 
-        assertTrue(currentChangelog.toSections().sensorActions().isNotEmpty())
-        assertEquals(emptyList<ChangelogAction.OpenSensor>(), state.sections.sensorActions())
+        assertEquals(
+            Changelog(new = listOf(sensorEntry.copy(action = null)), fixed = listOf(plainEntry)).toSections(),
+            state.sections,
+        )
     }
 
     @Test
-    fun `Given device with the sensor when reading state then sensor actions are kept`() = runTest {
+    fun `Given device with the sensor when reading state then the sensor entry keeps its action`() = runTest {
         val state = resolvedState(createViewModel(sensorManagers = setOf(sensorManager(hasSensor = true))))
 
-        assertEquals(currentChangelog.toSections().sensorActions(), state.sections.sensorActions())
+        assertEquals(changelog.toSections(), state.sections)
     }
 
-    private fun createViewModel(
+    private fun TestScope.createViewModel(
         isAutomotive: Boolean = false,
         appVersion: AppVersion = AppVersion("2026.7.6-${BuildConfig.FLAVOR}", CURRENT_VERSION_CODE),
         sensorManagers: Set<SensorManager> = setOf(sensorManager(hasSensor = true)),
-    ) = ChangelogViewModel(prefsRepository, isAutomotive, appVersion, sensorManagers)
+    ) = ChangelogViewModel(
+        prefsRepository = prefsRepository,
+        isAutomotive = isAutomotive,
+        appVersion = appVersion,
+        sensorManagers = sensorManagers,
+        changelog = changelog,
+        backgroundDispatcher = StandardTestDispatcher(testScheduler),
+    )
 
-    /** A manager owning every sensor targeted by the authored changelog, present on the device or not. */
+    /** A manager owning the sensor targeted by the fixture changelog, present on the device or not. */
     private fun sensorManager(hasSensor: Boolean) = mockk<SensorManager> {
         every { hasSensor() } returns hasSensor
-        coEvery { getAvailableSensors() } returns currentChangelog.toSections().sensorActions()
-            .map { action -> mockk<SensorManager.BasicSensor> { every { id } returns action.sensorId } }
+        coEvery { getAvailableSensors() } returns listOf(mockk { every { id } returns SENSOR_ID })
     }
 
     /** The content once the view model resolved it, after letting the test scheduler run. */
@@ -97,8 +120,4 @@ class ChangelogViewModelTest {
         advanceUntilIdle()
         return assertInstanceOf(ChangelogUiState.Content::class.java, viewModel.uiState.value)
     }
-
-    private fun List<ChangelogSection>.sensorActions() = flatMap { it.entries }
-        .map { it.action }
-        .filterIsInstance<ChangelogAction.OpenSensor>()
 }
