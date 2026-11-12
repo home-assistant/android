@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.webrtc.core
 
 /**
- * Media directions to negotiate for a WebRTC session, chosen before the session is opened.
+ * Media options to negotiate for a WebRTC session, chosen before the session is opened.
  *
  * @property videoIn negotiate a receive-only video transceiver (incoming video)
  * @property audioIn receive the remote audio (incoming audio)

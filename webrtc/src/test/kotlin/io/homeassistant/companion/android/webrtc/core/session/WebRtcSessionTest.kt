@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
 import io.homeassistant.companion.android.webrtc.core.signaling.SignalingEvent
 import io.homeassistant.companion.android.webrtc.core.signaling.SignalingResult
 import io.homeassistant.companion.android.webrtc.core.signaling.WebRtcSessionId
+import io.homeassistant.companion.android.webrtc.fakes.FakePeerConnectionControllerFactory
+import io.homeassistant.companion.android.webrtc.fakes.FakeSignalingClient
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
@@ -235,7 +237,7 @@ class WebRtcSessionTest {
     }
 
     @Test
-    fun `Given a lost connection When the grace period expires Then the session renegotiates`() = runTest {
+    fun `Given a lost connection When the grace period expires Then the session reconnects`() = runTest {
         val session = createSession()
         startConnectedSession(session)
 
@@ -252,7 +254,7 @@ class WebRtcSessionTest {
     }
 
     @Test
-    fun `Given a transient disconnection When it recovers within the grace period Then nothing is renegotiated`() = runTest {
+    fun `Given a transient disconnection When it recovers within the grace period Then the session does not reconnect`() = runTest {
         val session = createSession()
         startConnectedSession(session)
 
@@ -287,7 +289,7 @@ class WebRtcSessionTest {
     }
 
     @Test
-    fun `Given a server closed subscription When streaming Then the session renegotiates`() = runTest {
+    fun `Given a server closed subscription When streaming Then the session reconnects`() = runTest {
         val session = createSession()
         startConnectedSession(session)
 

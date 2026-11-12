@@ -75,45 +75,64 @@ internal class LibWebRtcPeerConnectionController(
     private val eventsChannel = Channel<PeerConnectionEvent>(Channel.UNLIMITED)
     override val events: Flow<PeerConnectionEvent> = eventsChannel.receiveAsFlow()
 
-    // Sinks the consumer attached, retained so syncRemoteTracks can bind them once the remote track
-    // arrives. Every access (add/removeVideoSink, syncRemoteTracks, dispose) holds [mutex], so a plain
-    // set is enough: onTrack no longer iterates it off the lock, it only hands the track over.
+    /**
+     * Sinks the consumer attached, retained so syncRemoteTracks can bind them once the remote track
+     * arrives. Every access (add/removeVideoSink, syncRemoteTracks, dispose) holds [mutex], so a plain
+     * set is enough.
+     */
     private val attachedSinks = mutableSetOf<VideoSink>()
 
-    // Flipped once under [mutex] by dispose() and read under the lock by every guarded operation, but
-    // also read lock-free by getStats() before it takes [mutex]. Atomic so that the off-lock read
-    // always observes the flip rather than a stale value.
+    /**
+     * Flipped once under [mutex] by dispose() and read under the lock by every guarded operation, but
+     * also read lock-free by getStats() before it takes [mutex]. Atomic so that the off-lock read
+     * always observes the flip rather than a stale value.
+     */
     private val disposed = AtomicBoolean(false)
 
-    // Serializes every native-touching operation (add/removeVideoSink, syncRemoteTracks, set*Enabled,
-    // addRemoteCandidate, getStats submission) against dispose(), so none of them touches the peer
-    // connection while it is being torn down. The libwebrtc callbacks (onTrack, the stats callback)
-    // stay off this lock so a native callback never blocks on app code: onTrack only publishes the
-    // arrived track and signals, and the stats callback only completes a deferred.
+    /**
+     * Serializes every native-touching operation (add/removeVideoSink, syncRemoteTracks, set*Enabled,
+     * addRemoteCandidate, getStats submission) against dispose(), so none of them touches the peer
+     * connection while it is being torn down. The libwebrtc callbacks must not take this lock, so a
+     * native callback never blocks on app code.
+     */
     private val mutex = Mutex()
 
-    // Runs the track binding triggered by onTrack off the native callback thread and under [mutex],
-    // so it is serialized with add/removeVideoSink and dispose() without the signaling thread ever
-    // blocking on app code. Owned by this controller and cancelled in dispose().
+    /**
+     * Runs the track binding triggered by onTrack off the native callback thread and under [mutex],
+     * so it is serialized with add/removeVideoSink and dispose() without the signaling thread ever
+     * blocking on app code.
+     */
     private val bindingScope = CoroutineScope(SupervisorJob() + dispatcher)
 
-    // In-flight getStats requests, each with its own deferred so concurrent collectors never clobber
-    // one another. Added and drained under [mutex]; dispose() completes any outstanding ones with
-    // EMPTY so a stats poll racing teardown never stalls.
+    /**
+     * In-flight getStats requests, each with its own deferred so concurrent collectors never clobber
+     * one another. Added and drained under [mutex]; dispose() completes any outstanding ones with
+     * EMPTY so a stats poll racing teardown never stalls.
+     */
     private val pendingStats = mutableSetOf<CompletableDeferred<RtcStatsSnapshot>>()
 
-    // The remote tracks, bound to the attached sinks / playback state once they arrive. Written and
-    // read only under [mutex] (bindRemoteTrack, the sink operations, setRemoteAudioEnabled, dispose),
-    // so they need no further synchronization.
+    /**
+     * The remote video track, bound to the attached sinks once it arrives. Should only be used
+     * under [mutex].
+     */
     private var remoteVideoTrack: VideoTrack? = null
+
+    /**
+     * The remote audio track, bound to the playback state once it arrives. Should only be used
+     * under [mutex].
+     */
     private var remoteAudioTrack: AudioTrack? = null
 
-    // Desired remote-audio playback state, written and read under [mutex] and applied to the audio
-    // track by setRemoteAudioEnabled or, for a track that arrives later, by bindRemoteTrack.
+    /**
+     * Desired remote-audio playback state, written and read under [mutex] and applied to the audio
+     * track by setRemoteAudioEnabled or, for a track that arrives later, by bindRemoteTrack.
+     */
     private var remoteAudioEnabled = true
 
-    // libwebrtc's PeerConnection.Observer is a fat SDK interface: only three callbacks carry
-    // behavior, the rest are mandatory no-op overrides, so the function count is inherent here.
+    /**
+     * libwebrtc's PeerConnection.Observer is a fat SDK interface: only three callbacks carry
+     * behavior, the rest are mandatory no-op overrides, so the function count is inherent here.
+     */
     @Suppress("TooManyFunctions")
     private val observer = object : PeerConnection.Observer {
         override fun onIceCandidate(candidate: IceCandidate?) {

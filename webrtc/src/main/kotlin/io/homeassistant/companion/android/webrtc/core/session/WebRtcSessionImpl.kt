@@ -226,11 +226,11 @@ private sealed interface NegotiationEvent {
  * connection is lost the session disposes the peer connection and negotiates a fresh one (up to
  * [MAX_RECONNECT_ATTEMPTS] times) instead of using an ICE restart.
  *
+ * @param eglContext the shared EGL context exposed to renderers
  * @param signalingClient the signaling backend, scoped to the right server and media source
  * @param controllerFactory creates one peer connection per negotiation
  * @param mediaOptions the media directions to negotiate, fixed for the lifetime of the session
  * @param dispatcher the dispatcher the session's coroutines run on; defaults to [Dispatchers.Default].
- * @param eglContext the shared EGL context exposed to renderers
  */
 @Suppress("TooManyFunctions")
 internal class WebRtcSessionImpl(
@@ -290,14 +290,17 @@ internal class WebRtcSessionImpl(
     @Volatile
     private var audioEnabled = true
 
-    // Serializes publishing the freshly negotiated controller and replaying the cached media settings
-    // (sinks, playback, mic) against the capability mutations below, so a user action completed right
-    // after the controller is published is never undone by the replay, and vice versa.
+    /**
+     * Serializes publishing the freshly negotiated controller and replaying the cached media settings
+     * (sinks, playback, mic) against the capability mutations, so a user action completed right
+     * after the controller is published is never undone by the replay, and vice versa.
+     */
     private val controlLock = Mutex()
 
-    // Serializes start/stop/release so [sessionJob] and [released] are only read or written by one
-    // of them at a time (they are touched nowhere else). It does not guard the state flows or the
-    // @Volatile fields above.
+    /**
+     * Serializes start/stop/release so [sessionJob] and [released] are only read or written by one
+     * of them at a time (they are touched nowhere else).
+     */
     private val lifecycleLock = Mutex()
     private var sessionJob: Job? = null
     private var released = false
@@ -436,13 +439,8 @@ internal class WebRtcSessionImpl(
             is SignalingResult.Failure ->
                 return NegotiationOutcome.Failed(SessionFailure.Signaling(result.code, result.message))
         }
-        // Create, publish and replay the cached media settings in one locked step. Creating inside
-        // the lock and assigning this.controller with no suspension in between means a cancellation
-        // (stop/release) can never strand a created-but-unpublished controller that the teardown
-        // finally would fail to dispose. It is also serialized against concurrent capability
-        // mutations, so a toggle the user made meanwhile is not undone (and does not undo this
-        // replay). The microphone is enabled before the offer is created so its capture is already
-        // running when the connection is established, instead of starting a beat late.
+        // Create, publish and replay the cached media settings in one locked step, so the state
+        // cannot get out of sync before the offer is created.
         val controller = controlLock.withLock {
             controllerFactory.create(config, mediaOptions).also { created ->
                 this.controller = created
