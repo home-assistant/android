@@ -141,7 +141,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
 
                         val existingActionData = mutableMapOf<String, Any?>()
                         val addedFields = mutableListOf<String>()
-                        dao.get(appWidgetId)?.let { buttonWidget ->
+                        getSavedWidget()?.let { buttonWidget ->
                             if (
                                 buttonWidget.serverId != selectedServerId ||
                                 "${buttonWidget.domain}.${buttonWidget.service}" != actionText
@@ -205,6 +205,10 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         }
         )
 
+    /** Returns the saved widget being edited. A widget being added has no ID yet, so there's nothing to look up. */
+    private suspend fun getSavedWidget(): ButtonWidgetEntity? =
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) null else dao.get(appWidgetId)
+
     private fun getActionString(action: Action): String {
         return "${action.domain}.${action.action}"
     }
@@ -245,7 +249,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
             ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, backgroundTypeValues)
 
         lifecycleScope.launch {
-            val buttonWidget = dao.get(appWidgetId)
+            val buttonWidget = getSavedWidget()
             if (buttonWidget != null) {
                 val actionText = "${buttonWidget.domain}.${buttonWidget.service}"
                 binding.widgetTextConfigService.setText(actionText)
