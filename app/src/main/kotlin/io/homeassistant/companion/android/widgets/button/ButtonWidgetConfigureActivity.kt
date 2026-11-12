@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.widgets.button
 
 import android.annotation.SuppressLint
 import android.appwidget.AppWidgetManager
+import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.text.Editable
@@ -52,9 +54,27 @@ import timber.log.Timber
 
 private const val ICON_PREVIEW_SIZE_DP = 24
 
+/** Actions to prefill for an entity, most preferred first. */
+private val PREFERRED_DEFAULT_ACTIONS = listOf("press", "toggle", "turn_on")
+
 // TODO Migrate to compose https://github.com/home-assistant/android/issues/6305
 @AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEntity, ButtonWidgetDao>() {
+
+    companion object {
+        /**
+         * Creates the intent that opens this screen to add a new widget to the home screen, for
+         * [entityId] when one is given.
+         */
+        fun newInstance(context: Context, entityId: String? = null): Intent {
+            return Intent(context, ButtonWidgetConfigureActivity::class.java).apply {
+                entityId?.let { putExtra(FOR_ENTITY, it) }
+                putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+        }
+    }
+
     private var actions = mutableMapOf<Int, HashMap<String, Action>>()
     private var entities = mutableMapOf<Int, HashMap<String, Entity>>()
     private var dynamicFields = ArrayList<ActionFieldBinder>()
@@ -71,6 +91,9 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
     private var requestLauncherSetup = false
 
     private var actionAdapter: SingleItemArrayAdapter<Action>? = null
+
+    private var selectedEntity: String? = null
+    private var prefilledAction: String? = null
 
     private val onAddFieldListener = View.OnClickListener {
         val context = this@ButtonWidgetConfigureActivity
@@ -165,7 +188,11 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
                         if (target != false) {
                             dynamicFields.add(
                                 0,
-                                ActionFieldBinder(actionText, "entity_id", existingActionData["entity_id"]),
+                                ActionFieldBinder(
+                                    actionText,
+                                    "entity_id",
+                                    existingActionData["entity_id"] ?: prefilledEntityFor(actionText),
+                                ),
                             )
                         }
 
@@ -228,6 +255,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         val intent = intent
         val extras = intent.extras
         if (extras != null) {
+            selectedEntity = extras.getString(FOR_ENTITY)
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID,
                 AppWidgetManager.INVALID_APPWIDGET_ID,
@@ -317,6 +345,10 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
         binding.widgetTextConfigService.onFocusChangeListener = dropDownOnFocus
 
         lifecycleScope.launch {
+            // Prefilling needs the server before actions finish loading, which may be before setupServerSelect sets it
+            if (selectedEntity != null && selectedServerId == null) {
+                selectedServerId = serverManager.getServer()?.id
+            }
             serverManager.servers().forEach { server ->
                 launch {
                     try {
@@ -390,6 +422,7 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
     }
 
     override fun onServerSelected(serverId: Int) {
+        selectedEntity = null
         binding.widgetTextConfigService.setText("")
         setAdapterActions(serverId)
     }
@@ -460,13 +493,44 @@ class ButtonWidgetConfigureActivity : BaseWidgetConfigureActivity<ButtonWidgetEn
             entities[serverId].orEmpty() as HashMap<String, Entity>,
         )
 
+        prefillDefaultAction(serverId)
         actionTextWatcher.afterTextChanged(binding.widgetTextConfigService.text)
 
         // Update action adapter
         runOnUiThread {
-            actionAdapter?.filter?.filter(binding.widgetTextConfigService.text)
+            val actionText = binding.widgetTextConfigService.text.toString()
+            // Keep the other actions of the domain listed while the box only holds the default we picked
+            val isPrefilled = actionText == prefilledAction
+            actionAdapter?.filter?.filter(if (isPrefilled) "${actionText.substringBefore('.')}." else actionText)
         }
     }
+
+    /**
+     * Fills in a default action for [selectedEntity], because its entity ID field only exists once an action is
+     * set. Does nothing if the action box already has text, so it never overwrites what the user typed.
+     */
+    private fun prefillDefaultAction(serverId: Int) {
+        val entityId = selectedEntity
+        if (entityId == null || prefilledAction != null || binding.widgetTextConfigService.text.isNotEmpty()) return
+        val domain = entityId.substringBefore('.')
+
+        val actionsWithTarget = actions[serverId].orEmpty().values
+            .filter { it.domain == domain && it.actionData.target != false }
+        val defaultAction = PREFERRED_DEFAULT_ACTIONS.firstNotNullOfOrNull { preferred ->
+            actionsWithTarget.find { it.action == preferred }
+        } ?: actionsWithTarget.minByOrNull { it.action } ?: return
+
+        prefilledAction = getActionString(defaultAction)
+        binding.widgetTextConfigService.setText(prefilledAction, false)
+    }
+
+    /**
+     * Returns the entity ID field's value for [actionText], in the format the field uses for saved widgets, when
+     * the action is in the same domain as [selectedEntity].
+     */
+    private fun prefilledEntityFor(actionText: String): String? = selectedEntity
+        ?.takeIf { it.substringBefore('.') == actionText.substringBefore('.') }
+        ?.let { "$it, " }
 
     private fun onIconDialogIconsSelected(selectedIcon: MdiIcon) {
         binding.widgetConfigIconSelector.tag = selectedIcon.mdiName
