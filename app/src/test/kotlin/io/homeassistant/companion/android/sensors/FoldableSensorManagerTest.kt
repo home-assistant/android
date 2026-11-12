@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.mdiName
+import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -27,9 +28,12 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -52,6 +56,7 @@ class FoldableSensorManagerTest {
     private val fullyOpenLayout = layoutWithFold(FoldingFeature.State.FLAT)
     private val partiallyOpenLayout = layoutWithFold(FoldingFeature.State.HALF_OPENED)
     private val closedLayout = WindowLayoutInfo(emptyList())
+    private val sensorRows = MutableStateFlow<Map<Sensor, List<Attribute>>>(emptyMap())
 
     @BeforeEach
     fun setUp() {
@@ -144,7 +149,9 @@ class FoldableSensorManagerTest {
 
     @Test
     fun `Given enabled sensor when hinge status changes then requests a sensor update for each change`() = runTest {
-        createManager(flowOf(fullyOpenLayout, fullyOpenLayout, partiallyOpenLayout, closedLayout)).updateOnFoldChange()
+        val manager = createManager(flowOf(fullyOpenLayout, fullyOpenLayout, partiallyOpenLayout, closedLayout))
+        backgroundScope.launch { manager.updateOnFoldChange() }
+        runCurrent()
 
         verify(exactly = 3) { SensorReceiver.updateSensor(context, sensorId) }
     }
@@ -153,9 +160,65 @@ class FoldableSensorManagerTest {
     fun `Given disabled sensor when hinge status changes then does not request a sensor update`() = runTest {
         setSensorEnabled(false)
 
-        createManager(flowOf(fullyOpenLayout, closedLayout)).updateOnFoldChange()
+        backgroundScope.launch { createManager(flowOf(fullyOpenLayout, closedLayout)).updateOnFoldChange() }
+        runCurrent()
 
         verify(exactly = 0) { SensorReceiver.updateSensor(any(), any()) }
+    }
+
+    @Test
+    fun `Given disabled sensor when observing fold changes then window layout is not observed`() = runTest {
+        setSensorEnabled(false)
+        val layouts = MutableStateFlow(closedLayout)
+
+        backgroundScope.launch { createManager(layouts).updateOnFoldChange() }
+        runCurrent()
+
+        assertEquals(0, layouts.subscriptionCount.value)
+    }
+
+    @Test
+    fun `Given sensor enabled later when observing fold changes then starts observing window layout`() = runTest {
+        setSensorEnabled(false)
+        val layouts = MutableStateFlow(closedLayout)
+        backgroundScope.launch { createManager(layouts).updateOnFoldChange() }
+        runCurrent()
+
+        setSensorEnabled(true)
+        runCurrent()
+        layouts.value = fullyOpenLayout
+        runCurrent()
+
+        assertEquals(1, layouts.subscriptionCount.value)
+        verify(exactly = 2) { SensorReceiver.updateSensor(context, sensorId) }
+    }
+
+    @Test
+    fun `Given sensor disabled while observing fold changes then stops observing window layout`() = runTest {
+        val layouts = MutableStateFlow(closedLayout)
+        backgroundScope.launch { createManager(layouts).updateOnFoldChange() }
+        runCurrent()
+
+        setSensorEnabled(false)
+        runCurrent()
+        layouts.value = fullyOpenLayout
+        runCurrent()
+
+        assertEquals(0, layouts.subscriptionCount.value)
+        verify(exactly = 1) { SensorReceiver.updateSensor(context, sensorId) }
+    }
+
+    @Test
+    fun `Given sensor row rewritten while enabled when observing fold changes then keeps the same observation`() = runTest {
+        val layouts = MutableStateFlow(closedLayout)
+        backgroundScope.launch { createManager(layouts).updateOnFoldChange() }
+        runCurrent()
+
+        setSensorEnabled(true, lastSentState = "closed")
+        runCurrent()
+
+        assertEquals(1, layouts.subscriptionCount.value)
+        verify(exactly = 1) { SensorReceiver.updateSensor(context, sensorId) }
     }
 
     @Test
@@ -188,10 +251,11 @@ class FoldableSensorManagerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE) } returns hasSensor
     }
 
-    private fun setSensorEnabled(enabled: Boolean) {
-        coEvery { sensorRepository.get(sensorId) } returns listOf(
-            Sensor(id = sensorId, serverId = 1, enabled = enabled, state = ""),
-        )
+    private fun setSensorEnabled(enabled: Boolean, lastSentState: String? = null) {
+        val sensor = Sensor(id = sensorId, serverId = 1, enabled = enabled, state = "", lastSentState = lastSentState)
+        coEvery { sensorRepository.get(sensorId) } returns listOf(sensor)
+        sensorRows.value = mapOf(sensor to emptyList())
+        every { sensorRepository.getFullFlow(sensorId) } returns sensorRows
     }
 
     private fun updatedSensor(): Sensor {

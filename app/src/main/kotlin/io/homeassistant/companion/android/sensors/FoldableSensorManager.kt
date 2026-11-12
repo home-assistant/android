@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
@@ -106,6 +107,11 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
             .distinctUntilChanged()
     }
 
+    private val isHingeStatusEnabledFlow: Flow<Boolean> =
+        sensorRepository.getFullFlow(hingeStatus.id)
+            .map { sensors -> sensors.keys.any { it.enabled } }
+            .distinctUntilChanged()
+
     override val name: Int
         get() = commonR.string.sensor_name_foldable
 
@@ -144,20 +150,21 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
 
     /**
      * Requests an update of the sensor each time the device is folded or unfolded, including while
-     * the app is in the background. Suspends until cancelled, or returns immediately when the device
-     * is not a foldable.
+     * the app is in the background. The layout listener is only registered while the sensor is
+     * enabled on at least one server. Suspends until cancelled, or returns immediately when the
+     * device is not a foldable.
      */
     suspend fun updateOnFoldChange() {
         if (!hasSensor()) {
             return
         }
 
-        hingeStatusFlow.collect { status ->
-            Timber.d("Hinge status: ${status.state}")
-            if (isEnabled(hingeStatus)) {
+        isHingeStatusEnabledFlow
+            .flatMapLatest { enabled -> if (enabled) hingeStatusFlow else emptyFlow() }
+            .collect { status ->
+                Timber.d("Hinge status: ${status.state}")
                 SensorReceiver.updateSensor(applicationContext, hingeStatus.id)
             }
-        }
     }
 }
 
