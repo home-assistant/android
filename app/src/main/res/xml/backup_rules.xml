@@ -3,4 +3,6 @@
     <include domain="database" path="." />
     <include domain="sharedpref" path="." />
     <exclude domain="sharedpref" path="session_0.xml" />
+    <!-- Ids of the Home Assistant mode only exist on this device -->
+    <exclude domain="sharedpref" path="home_assistant_mode.xml" />
 </full-backup-content>

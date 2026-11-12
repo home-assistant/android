@@ -30,6 +30,7 @@ import android.view.KeyEvent
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import androidx.biometric.BiometricManager
 import androidx.car.app.notification.CarAppExtender
 import androidx.car.app.notification.CarNotificationManager
@@ -78,6 +79,8 @@ import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.common.sensors.DNDSensorManager
+import io.homeassistant.companion.android.common.sensors.HomeAssistantMode
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -136,6 +139,43 @@ import okhttp3.Request
 import okio.sink
 import timber.log.Timber
 
+/** How the app handles a `command_dnd` value, see [dndCommandHandling]. */
+@VisibleForTesting
+internal sealed interface DndCommandHandling {
+    /** A valid command for this device, applied with Do Not Disturb access. */
+    data object Apply : DndCommandHandling
+
+    /**
+     * A Home Assistant mode command on a device without the mode: ignored, so a command sent to several devices does
+     * not show up as a notification on the ones without it.
+     */
+    data object IgnoreUnsupported : DndCommandHandling
+
+    /** Not a `command_dnd` value: posted as a regular notification, like other invalid commands. */
+    data object Invalid : DndCommandHandling
+}
+
+/** @return how to handle [command], given whether the device supports the Home Assistant mode ([modeSupported]). */
+@VisibleForTesting
+internal fun dndCommandHandling(command: String?, modeSupported: Boolean): DndCommandHandling = when {
+    command in MessagingManager.DND_MODE_COMMANDS && !modeSupported -> DndCommandHandling.IgnoreUnsupported
+    command in MessagingManager.DND_COMMANDS -> DndCommandHandling.Apply
+    else -> DndCommandHandling.Invalid
+}
+
+/**
+ * Turns the Home Assistant mode on for [MessagingManager.DND_MODE_ON] and off for [MessagingManager.DND_MODE_OFF],
+ * logging when it did not change.
+ * Requires Do Not Disturb access.
+ */
+@VisibleForTesting
+internal suspend fun applyHomeAssistantModeCommand(command: String?, dndSensorManager: DNDSensorManager) {
+    val result = dndSensorManager.setHomeAssistantModeActive(command == MessagingManager.DND_MODE_ON)
+    if (result != HomeAssistantMode.ChangeResult.Applied) {
+        Timber.w("The Home Assistant mode did not change for $command: $result")
+    }
+}
+
 class MessagingManager @Inject constructor(
     @ApplicationContext val context: Context,
     private val okHttpClientProvider: SuspendProvider<OkHttpClient>,
@@ -150,6 +190,7 @@ class MessagingManager @Inject constructor(
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
     private val bluetoothSensorManager: BluetoothSensorManager,
+    private val dndSensorManager: DNDSensorManager,
     private val clock: Clock,
 ) {
     companion object {
@@ -223,6 +264,11 @@ class MessagingManager @Inject constructor(
         const val DND_ALL = "off"
         const val DND_NONE = "total_silence"
 
+        // Commands for the Home Assistant mode, see DNDSensorManager.homeAssistantModeSensor
+        const val DND_MODE_ON = "mode_on"
+        const val DND_MODE_OFF = "mode_off"
+        val DND_MODE_COMMANDS = listOf(DND_MODE_ON, DND_MODE_OFF)
+
         // Ringer mode commands
         const val RM_NORMAL = "normal"
         const val RM_SILENT = "silent"
@@ -274,7 +320,12 @@ class MessagingManager @Inject constructor(
             COMMAND_FLASHLIGHT,
             COMMAND_WAKE_WORD_DETECTION,
         )
-        val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
+        val DND_COMMANDS = listOf(
+            DND_ALARMS_ONLY,
+            DND_ALL,
+            DND_NONE,
+            DND_PRIORITY_ONLY,
+        ) + DND_MODE_COMMANDS
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(
             NotificationData.ALARM_STREAM,
@@ -412,13 +463,17 @@ class MessagingManager @Inject constructor(
                     Timber.d("Processing device command")
                     when (jsonData[NotificationData.MESSAGE]) {
                         COMMAND_DND -> {
-                            if (jsonData[NotificationData.COMMAND] in DND_COMMANDS) {
-                                handleDeviceCommands(jsonData)
-                            } else {
-                                Timber.d(
-                                    "Invalid DND command received, posting notification to device",
+                            val command = jsonData[NotificationData.COMMAND]
+                            val modeSupported = dndSensorManager.isHomeAssistantModeSupported()
+                            when (dndCommandHandling(command, modeSupported)) {
+                                DndCommandHandling.Apply -> handleDeviceCommands(jsonData)
+                                DndCommandHandling.IgnoreUnsupported -> Timber.i(
+                                    "Ignoring $command, this device does not support the Home Assistant mode",
                                 )
-                                sendNotification(jsonData)
+                                DndCommandHandling.Invalid -> {
+                                    Timber.d("Invalid DND command received, posting notification to device")
+                                    sendNotification(jsonData)
+                                }
                             }
                         }
 
@@ -715,6 +770,8 @@ class MessagingManager @Inject constructor(
                         DND_PRIORITY_ONLY -> notificationManager?.setInterruptionFilter(
                             NotificationManager.INTERRUPTION_FILTER_PRIORITY,
                         )
+
+                        DND_MODE_ON, DND_MODE_OFF -> applyHomeAssistantModeCommand(command, dndSensorManager)
 
                         else -> Timber.d("Skipping invalid command")
                     }

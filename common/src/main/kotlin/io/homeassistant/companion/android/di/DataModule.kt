@@ -34,6 +34,7 @@ import io.homeassistant.companion.android.common.util.getSharedPreferencesSuspen
 import io.homeassistant.companion.android.common.util.tts.AndroidTextToSpeechEngine
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
+import io.homeassistant.companion.android.di.qualifiers.NamedHomeAssistantModeStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedLegacyChangelogPref
@@ -96,6 +97,15 @@ internal abstract class DataModule {
         fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("integration_0")
         }
+
+        // Excluded from backups and device transfers in the app's backup rules
+        @Provides
+        @NamedHomeAssistantModeStorage
+        @Singleton
+        fun provideHomeAssistantModeLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
+            LocalStorageImpl {
+                appContext.getSharedPreferencesSuspend("home_assistant_mode")
+            }
 
         @Provides
         @NamedThemesStorage

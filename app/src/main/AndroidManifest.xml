@@ -187,6 +187,9 @@
                 <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+                <!-- Only sent for the app's own Home Assistant mode. Not skippable in SensorReceiver, so a removal
+                     of the mode is noticed even while its sensor is disabled -->
+                <action android:name="android.app.action.AUTOMATIC_ZEN_RULE_STATUS_CHANGED" />
                 <action android:name="io.homeassistant.companion.android.UPDATE_SENSORS" />
             </intent-filter>
         </receiver>
@@ -494,6 +497,18 @@
         <activity
             android:name=".webview.WebViewActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".settings.sensor.HomeAssistantModeSettingsActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.app.action.AUTOMATIC_ZEN_RULE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".settings.SettingsActivity"

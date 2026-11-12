@@ -136,6 +136,8 @@ class SensorDetailFragment : Fragment() {
                     activityResultRequest.launch(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 it.permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
                     activityResultRequest.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                it.permissions.any { perm -> perm == Manifest.permission.ACCESS_NOTIFICATION_POLICY } ->
+                    activityResultRequest.launch(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
                 it.permissions.any { perm -> perm.startsWith("android.permission.health") } -> {
                     val healthConnectPermissions = it.permissions.filter { perm ->
                         perm.startsWith("android.permission.health")
