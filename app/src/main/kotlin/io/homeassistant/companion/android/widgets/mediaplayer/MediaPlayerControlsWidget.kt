@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_BUFFERING
 import io.homeassistant.companion.android.common.data.integration.EntityExt.MEDIA_PLAYER_STATE_PLAYING
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.integration.getMediaPlayerControls
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
@@ -248,7 +249,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider<MediaPlayerControlsWidgetEn
                     iconBitmap,
                 )
 
-                val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
+                val entityPictureUrl = entity?.entityPicturePath()
                 val baseUrl = try {
                     serverManager.connectionStateProvider(
                         widget.serverId,

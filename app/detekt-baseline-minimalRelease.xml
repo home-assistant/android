@@ -76,7 +76,6 @@
     <ID>InjectDispatcher:BaseGlanceEntityWidgetReceiver.kt:Default</ID>
     <ID>InjectDispatcher:BaseWidgetProvider.kt:BaseWidgetProvider.Companion$Default</ID>
     <ID>InjectDispatcher:ButtonWidget.kt:ButtonWidget.Companion$Default</ID>
-    <ID>InjectDispatcher:CameraControl.kt:CameraControl$IO</ID>
     <ID>InjectDispatcher:CameraWidget.kt:CameraWidget.Companion$Default</ID>
     <ID>InjectDispatcher:CarSensorManager.kt:CarSensorManager$IO</ID>
     <ID>InjectDispatcher:CheckLocationDisabledUseCase.kt:CheckLocationDisabledUseCase$Default</ID>
