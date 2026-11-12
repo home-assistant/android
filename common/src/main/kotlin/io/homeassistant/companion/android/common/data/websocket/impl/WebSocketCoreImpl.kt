@@ -1092,11 +1092,7 @@ internal class WebSocketCoreImpl(
             }
     }
 
-    /**
-     * Ends every subscription created with [SubscriptionReconnectPolicy.Complete]: closing its
-     * channel completes its Flow, and dropping it from [activeMessages] keeps it out of the
-     * restoration that follows a reconnection.
-     */
+    /** Ends every subscription created with [SubscriptionReconnectPolicy.Complete]. */
     @GuardedBy("connectedMutex")
     private fun completeNonReplayableSubscriptions() {
         activeMessages
