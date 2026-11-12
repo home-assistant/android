@@ -16,6 +16,7 @@ suspend fun NavController.navigateToUri(
     context.openUri(uri, onShowSnackbar)
 }
 
+/** Opens [uri] in a Custom Tab, showing a snackbar through [onShowSnackbar] when nothing can open it. */
 suspend fun NavController.openCustomTab(
     uri: Uri,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
