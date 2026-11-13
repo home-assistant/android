@@ -4,10 +4,14 @@
         <include domain="database" path="." />
         <include domain="sharedpref" path="." />
         <exclude domain="sharedpref" path="session_0.xml" />
+        <!-- Ids of the Home Assistant mode only exist on this device -->
+        <exclude domain="sharedpref" path="home_assistant_mode.xml" />
     </cloud-backup>
     <device-transfer>
         <include domain="database" path="." />
         <include domain="sharedpref" path="." />
         <exclude domain="sharedpref" path="session_0.xml" />
+        <!-- Ids of the Home Assistant mode only exist on this device -->
+        <exclude domain="sharedpref" path="home_assistant_mode.xml" />
     </device-transfer>
 </data-extraction-rules>

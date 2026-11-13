@@ -17,6 +17,14 @@ annotation class NamedSessionStorage
 annotation class NamedIntegrationStorage
 
 /**
+ * Qualifier for [LocalStorage] dependencies of the Home Assistant mode, kept on this device only: the ids it stores
+ * only exist in this device's Android.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class NamedHomeAssistantModeStorage
+
+/**
  * Qualifier for [LocalStorage] dependencies related to application themes.
  */
 @Qualifier

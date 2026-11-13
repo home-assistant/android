@@ -94,6 +94,7 @@
     <string name="basic_sensor_name_geolocation">Geocoded location</string>
     <string name="basic_sensor_name_headset_mounted">In use</string>
     <string name="basic_sensor_name_high_accuracy_mode">High accuracy mode</string>
+    <string name="basic_sensor_name_home_assistant_mode">Home Assistant mode</string>
     <string name="basic_sensor_name_interactive">Interactive</string>
     <string name="basic_sensor_name_internal_storage">Internal storage</string>
     <string name="basic_sensor_name_ip6_addresses">IPv6 addresses</string>
@@ -661,6 +662,7 @@
     <string name="sensor_description_headphone">Whether headphones are plugged into the device</string>
     <string name="sensor_description_headset_mounted">Whether the headset is currently in use</string>
     <string name="sensor_description_high_accuracy_mode">Whether high accuracy mode is active on the device</string>
+    <string name="sensor_description_home_assistant_mode">Reports whether the \"Home Assistant\" mode of your device is on. The mode is added to the Modes of your device when this sensor is enabled, and stays when you disable the sensor until you remove it from your device, which also disables this sensor. Turn it on and off from your device, or from Home Assistant with the command_dnd notification command and mode_on or mode_off (mode_on adds the mode if needed). Requires Do Not Disturb access.</string>
     <string name="sensor_description_hotspot">Whether the Wi-Fi hotspot is enabled</string>
     <string name="sensor_description_interactive">Whether the device is in an interactive state</string>
     <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
