@@ -6,9 +6,12 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
+import io.homeassistant.companion.android.common.data.websocket.SubscriptionReconnectPolicy
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.util.MapAnySerializer
@@ -39,6 +42,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -1086,6 +1090,7 @@ class WebSocketCoreImplTest {
                 onEvent = mockk(),
                 responseDeferred = CompletableDeferred(),
                 request = WebSocketRequest(emptyMap<String, String>()),
+                reconnectPolicy = SubscriptionReconnectPolicy.Resubscribe,
             )
 
             // Message sent by subscribeTo to request for events
@@ -1135,6 +1140,160 @@ class WebSocketCoreImplTest {
                 webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bathroom"}}}""")
                 assertEquals("light.bathroom", awaitItem().entityId)
             }
+        }
+
+        @Test
+        fun `Given a Complete subscription When the collector leaves Then it unsubscribes`() = runTest {
+            // The unsubscribe is sent from the background so we need to control it
+            val subscriptionScope = TestScope(UnconfinedTestDispatcher())
+            setupServer(backgroundScope = subscriptionScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            mockResultSuccessForId(2)
+            // Answer to the unsubscribe sent from the background
+            mockResultSuccessForId(3)
+
+            checkNotNull(
+                webSocketCore.subscribeTo<String>(
+                    "testType",
+                    mapOf("test" to "data"),
+                    reconnectPolicy = SubscriptionReconnectPolicy.Complete,
+                ),
+            ).test {
+                assertEquals(1, webSocketCore.activeMessages.size)
+                cancel()
+                subscriptionScope.advanceUntilIdle()
+            }
+            advanceUntilIdle()
+
+            coVerify {
+                mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") })
+            }
+            assertTrue(webSocketCore.activeMessages.isEmpty())
+        }
+
+        @Test
+        fun `Given a shared subscription When subscribing to the same one with a Complete policy Then it gets a subscription of its own`() = runTest {
+            // The unsubscribe is sent from the background so we need to control it
+            val subscriptionScope = TestScope(UnconfinedTestDispatcher())
+            setupServer(backgroundScope = subscriptionScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            // Shared subscription, the one of its own, then the unsubscribe of the latter
+            mockResultSuccessForId(2)
+            mockResultSuccessForId(3)
+            mockResultSuccessForId(4)
+
+            turbineScope {
+                suspend fun subscribe(reconnectPolicy: SubscriptionReconnectPolicy) = checkNotNull(
+                    webSocketCore.subscribeTo<CompressedStateChangedEvent>(
+                        SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                        mapOf("entity_ids" to listOf("light.bed")),
+                        reconnectPolicy = reconnectPolicy,
+                    ),
+                )
+
+                val shared = subscribe(SubscriptionReconnectPolicy.Resubscribe).testIn(this, name = "shared")
+                val own = subscribe(SubscriptionReconnectPolicy.Complete).testIn(this, name = "own")
+                assertEquals(2, webSocketCore.activeMessages.size)
+
+                // Each subscription only receives the events the server sends for it
+                webSocketListener.onMessage(mockConnection, """{"id":3, "type":"event", "event":{"a":{"light.bed":{"s":"on","lc":1700000000.0}}}}""")
+                assertEquals(setOf("light.bed"), own.awaitItem().added?.keys)
+                shared.expectNoEvents()
+
+                own.cancel()
+                subscriptionScope.advanceUntilIdle()
+                advanceUntilIdle()
+
+                // Only the subscription of its own ended
+                coVerify(exactly = 1) { mockConnection.send(match<String> { it.contains("unsubscribe_events") }) }
+                coVerify {
+                    mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":3""") })
+                }
+                assertEquals(setOf(2L), webSocketCore.activeMessages.keys.toSet())
+
+                shared.cancel()
+            }
+        }
+
+        @Test
+        fun `Given two identical Complete subscriptions When one collector leaves Then the other keeps its own subscription`() = runTest {
+            // The unsubscribe is sent from the background so we need to control it
+            val subscriptionScope = TestScope(UnconfinedTestDispatcher())
+            setupServer(backgroundScope = subscriptionScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            // Both subscriptions, then the unsubscribe of the first one
+            mockResultSuccessForId(2)
+            mockResultSuccessForId(3)
+            mockResultSuccessForId(4)
+
+            turbineScope {
+                suspend fun subscribe() = checkNotNull(
+                    webSocketCore.subscribeTo<CompressedStateChangedEvent>(
+                        SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                        mapOf("entity_ids" to listOf("light.bed")),
+                        reconnectPolicy = SubscriptionReconnectPolicy.Complete,
+                    ),
+                )
+
+                val first = subscribe().testIn(this, name = "first")
+                val second = subscribe().testIn(this, name = "second")
+                assertEquals(2, webSocketCore.activeMessages.size)
+
+                first.cancel()
+                subscriptionScope.advanceUntilIdle()
+                advanceUntilIdle()
+
+                coVerify(exactly = 1) { mockConnection.send(match<String> { it.contains("unsubscribe_events") }) }
+                coVerify {
+                    mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") })
+                }
+                assertEquals(setOf(3L), webSocketCore.activeMessages.keys.toSet())
+
+                // The remaining subscription still receives its events
+                webSocketListener.onMessage(mockConnection, """{"id":3, "type":"event", "event":{"a":{"light.bed":{"s":"on","lc":1700000000.0}}}}""")
+                assertEquals(setOf("light.bed"), second.awaitItem().added?.keys)
+
+                second.cancel()
+            }
+        }
+
+        @Test
+        fun `Given a Complete subscription When only its first event is collected Then it unsubscribes`() = runTest {
+            // The unsubscribe is sent from the background so we need to control it
+            val subscriptionScope = TestScope(UnconfinedTestDispatcher())
+            setupServer(backgroundScope = subscriptionScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            mockResultSuccessForId(2)
+            // Answer to the unsubscribe sent from the background
+            mockResultSuccessForId(3)
+
+            val events = checkNotNull(
+                webSocketCore.subscribeTo<CompressedStateChangedEvent>(
+                    SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                    mapOf("entity_ids" to listOf("light.bed")),
+                    reconnectPolicy = SubscriptionReconnectPolicy.Complete,
+                ),
+            )
+            val initialStates = async { events.first() }
+            runCurrent()
+            webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"a":{"light.bed":{"s":"on","lc":1700000000.0}}}}""")
+
+            assertEquals(setOf("light.bed"), initialStates.await().added?.keys)
+            subscriptionScope.advanceUntilIdle()
+            advanceUntilIdle()
+
+            coVerify {
+                mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") })
+            }
+            assertTrue(webSocketCore.activeMessages.isEmpty())
         }
 
         @Test
@@ -1524,6 +1683,105 @@ class WebSocketCoreImplTest {
                     webSocketCore.activeMessages.any { it.value is ActiveMessage.Subscription },
                     "Subscription should still be tracked after connection loss for reconnection",
                 )
+            }
+        }
+
+        @Test
+        fun `Given a Complete subscription When the connection is lost Then its flow completes and nothing is restored`() = runTest {
+            setupServer(backgroundScope = backgroundScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            mockResultSuccessForId(2)
+            val subscription = checkNotNull(
+                webSocketCore.subscribeTo<StateChangedEvent>(
+                    SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                    mapOf("event_type" to "state_changed"),
+                    reconnectPolicy = SubscriptionReconnectPolicy.Complete,
+                ),
+            )
+            var reconnectAttemptCount = 0
+            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+                reconnectAttemptCount++
+                mockConnection
+            }
+
+            subscription.test {
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":2, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""",
+                )
+                assertEquals("light.bed_light", awaitItem().entityId)
+
+                // The server dropped the session with the connection: the collector is told instead
+                // of the offer being replayed on a new connection
+                closeConnection()
+                advanceUntilIdle()
+                awaitComplete()
+            }
+            advanceUntilIdle()
+
+            assertTrue(webSocketCore.activeMessages.isEmpty())
+            assertEquals(0, reconnectAttemptCount, "A completed subscription must not keep the connection alive")
+        }
+
+        @Test
+        fun `Given a Complete and a Resubscribe subscription When the connection is lost Then only the latter is restored`() = runTest {
+            // Messages are sent from the background so we need to control it
+            val subscriptionScope = TestScope(UnconfinedTestDispatcher())
+            setupServer(backgroundScope = subscriptionScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            mockResultSuccessForId(2)
+            val events = checkNotNull(
+                webSocketCore.subscribeTo<StateChangedEvent>(
+                    SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                    mapOf("event_type" to "state_changed"),
+                ),
+            )
+            mockResultSuccessForId(3)
+            val session = checkNotNull(
+                webSocketCore.subscribeTo<String>(
+                    "testType",
+                    mapOf("test" to "data"),
+                    reconnectPolicy = SubscriptionReconnectPolicy.Complete,
+                ),
+            )
+
+            turbineScope {
+                val eventsFlow = events.testIn(subscriptionScope)
+                val sessionFlow = session.testIn(subscriptionScope)
+                assertEquals(2, webSocketCore.activeMessages.size)
+
+                // Acknowledge the resubscription under whatever id it is sent with
+                var resubscribeId: Long? = null
+                every {
+                    mockConnection.send(match<String> { it.contains(""""type":"$SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS"""") })
+                } answers {
+                    val id = checkNotNull(Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong())
+                    resubscribeId = id
+                    webSocketListener.onMessage(mockConnection, """{"id":$id,"type":"result","success":true,"result":{}}""")
+                    true
+                }
+                closeConnection()
+                advanceUntilIdle()
+                subscriptionScope.advanceUntilIdle()
+                advanceUntilIdle()
+
+                sessionFlow.awaitComplete()
+                val newId = checkNotNull(resubscribeId) { "The event subscription should have been restored" }
+                verify(exactly = 1) {
+                    mockConnection.send(match<String> { it.contains(""""type":"testType"""") })
+                }
+                assertEquals(1, webSocketCore.activeMessages.size)
+
+                webSocketListener.onMessage(
+                    mockConnection,
+                    """{"id":$newId, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"light.bed_light"}}}""",
+                )
+                assertEquals("light.bed_light", eventsFlow.awaitItem().entityId)
+                eventsFlow.cancelAndIgnoreRemainingEvents()
             }
         }
 

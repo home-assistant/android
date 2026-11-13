@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import javax.inject.Provider
+import kotlin.time.Duration
 import kotlinx.coroutines.flow.Flow
 import okhttp3.OkHttpClient
 
@@ -65,24 +66,48 @@ internal interface WebSocketCore {
     /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to
      * new messages. When there are no more listeners, the subscription will automatically be cancelled
-     * using `unsubscribe_events`. If the subscription already exists, the existing Flow is returned.
+     * using `unsubscribe_events`. If the subscription already exists, the existing Flow is returned,
+     * unless [reconnectPolicy] is [SubscriptionReconnectPolicy.Complete], which always starts a
+     * subscription of its own.
      *
      * @param type value for the `type` key in the subscription message, for example `subscribe_events`
      * @param data a key/value map of additional data to be included in the subscription message, for
      *             example the `event_type` + value when subscribing with `subscribe_events`
-     * @param timeout timeout until the subscription is ended after the flow is no longer collected
+     * @param timeout timeout until the subscription is ended after the flow is no longer collected.
+     *                Ignored with [SubscriptionReconnectPolicy.Complete], whose Flow is not shared.
+     * @param reconnectPolicy what happens to the subscription when the connection is lost
      * @return a Flow that will emit messages delivered to this subscription, or `null` if an error
      *         occurred
      */
     suspend fun <T : Any> subscribeTo(
         type: String,
         data: Map<String, Any?> = mapOf(),
-        timeout: kotlin.time.Duration = kotlin.time.Duration.ZERO,
+        timeout: Duration = Duration.ZERO,
+        reconnectPolicy: SubscriptionReconnectPolicy = SubscriptionReconnectPolicy.Resubscribe,
     ): Flow<T>?
 
     fun shutdown()
 
     suspend fun server(): Server?
+}
+
+/** What [WebSocketCore.subscribeTo] does with a subscription when the connection is lost. */
+internal sealed interface SubscriptionReconnectPolicy {
+    /** Subscribe again once reconnected; the Flow keeps emitting across connections. */
+    data object Resubscribe : SubscriptionReconnectPolicy
+
+    /**
+     * Complete the Flow instead of subscribing again: the server dropped the state behind the
+     * subscription with the connection, and replaying the command would create new state the
+     * collector does not expect.
+     *
+     * Such a subscription belongs to its caller, so it is never shared: every call starts a
+     * subscription of its own, even for an identical message, and its Flow is collected once.
+     * For example each `camera/webrtc/offer` opens a WebRTC session on the server that is tied to
+     * one peer connection: a second caller joining it would receive the answer and candidates of
+     * a session it did not negotiate, and the first collector leaving would close it for both.
+     */
+    data object Complete : SubscriptionReconnectPolicy
 }
 
 internal class WebSocketCoreFactory @Inject constructor(
