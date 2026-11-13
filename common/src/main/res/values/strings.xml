@@ -575,6 +575,13 @@
     <string name="password">Password</string>
     <string name="persistent_notification">Persistent notification</string>
     <string name="person">Person</string>
+    <string name="pref_connection_extra_urls">Additional URLs</string>
+    <string name="pref_connection_extra_urls_summary">If the main URL does not respond, these URLs are tried one after the other, from top to bottom.</string>
+    <string name="extra_urls_add">Add URL</string>
+    <string name="extra_urls_duplicate">This URL is already used by this server.</string>
+    <string name="extra_urls_empty">No additional URLs configured.</string>
+    <string name="extra_urls_move_down">Move down</string>
+    <string name="extra_urls_move_up">Move up</string>
     <string name="pref_connection_internal">Internal connection URL</string>
     <string name="pref_connection_title">Connection information</string>
     <string name="pref_connection_url">Home Assistant URL</string>

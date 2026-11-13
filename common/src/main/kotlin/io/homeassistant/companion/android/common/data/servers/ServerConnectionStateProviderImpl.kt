@@ -18,7 +18,10 @@ import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerDao
 import java.net.URL
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -26,7 +29,9 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
 
 internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
@@ -36,6 +41,7 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
     private val wifiHelper: WifiHelper,
     private val networkHelper: NetworkHelper,
     private val networkChangeObserver: NetworkChangeObserver,
+    private val urlReachabilityChecker: UrlReachabilityChecker,
     @Assisted private val serverId: Int,
 ) : ServerConnectionStateProvider {
 
@@ -115,6 +121,11 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
             if (canUseExternalUrl) {
                 connection.externalHttpUrl?.buildWebhookUrl(webhookId)?.let(::add)
             }
+
+            // Extra URLs: tried last, in the order configured by the user
+            connection.extraHttpUrls
+                .filter { isOnHomeNetwork || it.isHttps || allowInsecure }
+                .forEach { add(it.buildWebhookUrl(webhookId)) }
         }
     }
 
@@ -151,7 +162,7 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
         return merge(
             flowOf(Unit), // Used to trigger a getUrl
             observeLocationState(),
-            networkChangeObserver.observerNetworkChange,
+            networkChangeObserver.observerNetworkChange.onEach { urlReachabilityChecker.invalidate() },
             observeConnectionInfoChanges(),
         ).map {
             val connection = connection()
@@ -161,11 +172,14 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
                     !DisabledLocationHandler.isLocationEnabled(
                         context,
                     )
-            val potentialUrl = connection.getUrl(isInternal)
             // Null means the user hasn't configured their insecure connection preference yet.
             // This only applies to users who installed before it became mandatory in onboarding.
             // Default to true to maintain backwards compatibility with their existing setup.
             val allowInsecure = connection.allowInsecureConnection ?: true
+            val potentialUrl = connection.getUrl(isInternal).firstReachableOrSelf(
+                connection = connection,
+                allowHttp = allowInsecure || isInternal(requiresUrl = false),
+            )
 
             if (allowInsecure || potentialUrl?.protocol == "https") {
                 UrlState.HasUrl(potentialUrl)
@@ -177,6 +191,28 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
                 }
             }
         }.distinctUntilChanged()
+    }
+
+    /**
+     * When the user configured extra URLs, probes the preferred URL followed by the external URL and the
+     * extra URLs, in order, and returns the first one that answers. Falls back to the preferred URL when
+     * none answers so the usual connection error is shown. Without extra URLs nothing is probed.
+     *
+     * @param allowHttp whether plain HTTP URLs may be used right now.
+     */
+    private suspend fun URL?.firstReachableOrSelf(connection: ServerConnectionInfo, allowHttp: Boolean): URL? {
+        if (connection.extraHttpUrls.isEmpty()) return this
+        val candidates = buildList {
+            this@firstReachableOrSelf?.toString()?.toHttpUrlOrNull()?.let(::add)
+            connection.externalHttpUrl?.let(::add)
+            addAll(connection.extraHttpUrls)
+        }.distinct().filter { allowHttp || it.isHttps }
+
+        // Probe in parallel so the wait is at most one timeout, then honor the configured priority.
+        val reachable = coroutineScope {
+            candidates.map { async { urlReachabilityChecker.isReachable(it) } }.awaitAll()
+        }
+        return candidates.zip(reachable).firstOrNull { it.second }?.first?.toUrl() ?: this
     }
 
     private fun observeConnectionInfoChanges(): Flow<ServerConnectionInfo> {

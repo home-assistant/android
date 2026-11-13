@@ -37,6 +37,7 @@ import io.homeassistant.companion.android.settings.ConnectionSecurityLevelFragme
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.ssid.SsidFragment
 import io.homeassistant.companion.android.settings.url.ExternalUrlFragment
+import io.homeassistant.companion.android.settings.url.ExtraUrlsFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.util.QuestUtil
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
@@ -162,6 +163,18 @@ class ServerSettingsFragment :
                     Bundle().apply { putInt(ExternalUrlFragment.EXTRA_SERVER, serverId) },
                 )
                 addToBackStack(getString(commonR.string.input_url))
+            }
+            return@setOnPreferenceClickListener true
+        }
+
+        findPreference<Preference>("connection_extra_urls")?.setOnPreferenceClickListener {
+            parentFragmentManager.commit {
+                replace(
+                    R.id.content,
+                    ExtraUrlsFragment::class.java,
+                    Bundle().apply { putInt(ExtraUrlsFragment.EXTRA_SERVER, serverId) },
+                )
+                addToBackStack(getString(commonR.string.pref_connection_extra_urls))
             }
             return@setOnPreferenceClickListener true
         }

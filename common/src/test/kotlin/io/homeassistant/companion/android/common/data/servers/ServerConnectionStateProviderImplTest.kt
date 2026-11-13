@@ -42,6 +42,7 @@ class ServerConnectionStateProviderImplTest {
     private val serverManager: ServerManager = mockk()
     private val serverDao: ServerDao = mockk()
     private val networkChangeObserver: NetworkChangeObserver = mockk(relaxed = true)
+    private val urlReachabilityChecker: UrlReachabilityChecker = mockk(relaxed = true)
     private val locationManager: LocationManager = mockk()
 
     private val serverId = 1
@@ -70,6 +71,7 @@ class ServerConnectionStateProviderImplTest {
         internalVpn: Boolean? = null,
         prioritizeInternal: Boolean = false,
         allowInsecureConnection: Boolean? = null,
+        extraUrls: List<String> = emptyList(),
     ): ServerConnectionStateProviderImpl {
         val connection = ServerConnectionInfo(
             externalUrl = externalUrl,
@@ -83,6 +85,7 @@ class ServerConnectionStateProviderImplTest {
             internalVpn = internalVpn,
             prioritizeInternal = prioritizeInternal,
             allowInsecureConnection = allowInsecureConnection,
+            extraUrls = extraUrls,
         )
         val server = Server(
             id = serverId,
@@ -105,6 +108,7 @@ class ServerConnectionStateProviderImplTest {
             wifiHelper = wifiHelper,
             networkHelper = networkHelper,
             networkChangeObserver = networkChangeObserver,
+            urlReachabilityChecker = urlReachabilityChecker,
             serverId = serverId,
         )
     }
@@ -639,6 +643,104 @@ class ServerConnectionStateProviderImplTest {
 
             assertEquals(1, result.size)
             assertEquals("https://external.example.com/api/webhook/webhook123", result[0].toString())
+        }
+    }
+
+    @Nested
+    inner class ExtraUrls {
+
+        @Test
+        fun `Given extra URLs when calling getApiUrls then they come last in configured order`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                webhookId = "webhook123",
+                extraUrls = listOf("https://vpn.example.com", "https://ddns.example.com:8123"),
+            )
+
+            val result = provider.getApiUrls().map { it.toString() }
+
+            assertEquals(
+                listOf(
+                    "https://external.example.com/api/webhook/webhook123",
+                    "https://vpn.example.com/api/webhook/webhook123",
+                    "https://ddns.example.com:8123/api/webhook/webhook123",
+                ),
+                result,
+            )
+        }
+
+        @Test
+        fun `Given insecure extra URL and insecure not allowed when calling getApiUrls then it is skipped`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                webhookId = "webhook123",
+                allowInsecureConnection = false,
+                extraUrls = listOf("http://plain.example.com", "https://vpn.example.com"),
+            )
+
+            val result = provider.getApiUrls().map { it.toString() }
+
+            assertEquals(
+                listOf(
+                    "https://external.example.com/api/webhook/webhook123",
+                    "https://vpn.example.com/api/webhook/webhook123",
+                ),
+                result,
+            )
+        }
+
+        @Test
+        fun `Given external URL down and extra URL up when collecting urlFlow then emits the extra URL`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                extraUrls = listOf("https://down.example.com", "https://vpn.example.com"),
+            )
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+            coEvery { urlReachabilityChecker.isReachable(any()) } answers {
+                firstArg<okhttp3.HttpUrl>().host == "vpn.example.com"
+            }
+
+            val result = provider.urlFlow().first()
+
+            assertEquals("https://vpn.example.com/", (result as UrlState.HasUrl).url?.toString())
+        }
+
+        @Test
+        fun `Given external URL up when collecting urlFlow then external URL stays preferred`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                extraUrls = listOf("https://vpn.example.com"),
+            )
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+            coEvery { urlReachabilityChecker.isReachable(any()) } returns true
+
+            val result = provider.urlFlow().first()
+
+            assertEquals("https://external.example.com/", (result as UrlState.HasUrl).url?.toString())
+        }
+
+        @Test
+        fun `Given no URL reachable when collecting urlFlow then falls back to preferred URL`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                extraUrls = listOf("https://vpn.example.com"),
+            )
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+            coEvery { urlReachabilityChecker.isReachable(any()) } returns false
+
+            val result = provider.urlFlow().first()
+
+            assertEquals("https://external.example.com/", (result as UrlState.HasUrl).url?.toString())
+        }
+
+        @Test
+        fun `Given no extra URLs when collecting urlFlow then nothing is probed`() = runTest {
+            val provider = createServerConnectionStateProvider(externalUrl = "https://external.example.com")
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+
+            provider.urlFlow().first()
+
+            io.mockk.coVerify(exactly = 0) { urlReachabilityChecker.isReachable(any()) }
         }
     }
 

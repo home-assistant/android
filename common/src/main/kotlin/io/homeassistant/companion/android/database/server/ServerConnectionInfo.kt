@@ -17,6 +17,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
  *
  * @property externalUrl The primary URL used to connect to the server from outside the home network.
  * @property internalUrl Optional URL used when the device is on the home network.
+ * @property extraUrls Additional URLs, in priority order, tried after [externalUrl] when the
+ *   preferred URLs are not reachable (e.g. a VPN address, a dynamic DNS name or a second site).
  * @property cloudUrl Optional Home Assistant Cloud remote UI URL, automatically updated from the server.
  * @property webhookId Unique identifier assigned by Home Assistant during device registration.
  * @property secret Shared secret for webhook authentication, if configured on the server.
@@ -60,6 +62,8 @@ data class ServerConnectionInfo(
     val prioritizeInternal: Boolean = false,
     @ColumnInfo(name = "allow_insecure_connection")
     val allowInsecureConnection: Boolean? = null,
+    @ColumnInfo(name = "extra_urls", defaultValue = "[]")
+    val extraUrls: List<String> = emptyList(),
 ) {
     // Keep the parsing of the URLs from String to HttpUrl to avoid doing it multiple times
     @get:Ignore
@@ -67,6 +71,11 @@ data class ServerConnectionInfo(
 
     @get:Ignore
     internal val internalHttpUrl: HttpUrl? by lazy(LazyThreadSafetyMode.PUBLICATION) { internalUrl?.toHttpUrlOrNull() }
+
+    @get:Ignore
+    internal val extraHttpUrls: List<HttpUrl> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        extraUrls.mapNotNull { it.toHttpUrlOrNull() }
+    }
 
     @get:Ignore
     internal val cloudHttpUrl: HttpUrl? by lazy(LazyThreadSafetyMode.PUBLICATION) { cloudUrl?.toHttpUrlOrNull() }
@@ -83,7 +92,7 @@ data class ServerConnectionInfo(
             internalHttpUrl,
             cloudHttpUrl,
             cloudhookHttpUrl,
-        )
+        ) + extraHttpUrls
     }
 
     @get:Ignore
@@ -92,7 +101,7 @@ data class ServerConnectionInfo(
             externalHttpUrl,
             internalHttpUrl,
             cloudHttpUrl,
-        )
+        ) + extraHttpUrls
     }
 
     /**
@@ -139,7 +148,7 @@ data class ServerConnectionInfo(
         externalUrl,
         internalUrl,
         cloudUrl,
-    ).any { it.startsWith("http://") }
+    ).plus(extraUrls).any { it.startsWith("http://") }
 
     /**
      * Checks if cloud/remote UI URL is configured.

@@ -29,6 +29,11 @@
             android:icon="@drawable/ic_globe"
             android:title="@string/pref_connection_url"/>
         <Preference
+            android:key="connection_extra_urls"
+            android:icon="@drawable/ic_globe"
+            android:title="@string/pref_connection_extra_urls"
+            android:summary="@string/pref_connection_extra_urls_summary"/>
+        <Preference
             android:key="connection_internal_ssids"
             android:icon="@drawable/ic_wifi"
             android:title="@string/pref_connection_homenetwork"/>
