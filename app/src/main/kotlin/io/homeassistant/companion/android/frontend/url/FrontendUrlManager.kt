@@ -33,6 +33,7 @@ private const val MORE_INFO_ENTITY_ID_QUERY_PARAM = "more-info-entity-id"
 class FrontendUrlManager @Inject constructor(
     private val serverManager: ServerManager,
     private val sessionManager: ServerSessionManager,
+    private val classifyServerPath: ClassifyServerPathUseCase,
 ) {
 
     /**
@@ -130,17 +131,45 @@ class FrontendUrlManager @Inject constructor(
                 UrlLoadResult.SecurityLevelRequired(serverId)
             }
 
-            else -> {
-                // Signal the frontend that authentication is provided through the JavaScript bridge
-                val urlWithAuth = url.newBuilder().addQueryParameter(EXTERNAL_AUTH_QUERY_PARAM, "1").build().toString()
-                Timber.d("Loading server URL: ${sensitive(urlWithAuth)}")
-                UrlLoadResult.Success(
-                    url = urlWithAuth,
-                    serverId = serverId,
-                    moreInfoEntityId = resolved.moreInfoEntityIdForJs,
-                )
+            else -> resultForSameOriginUrl(
+                baseUrl = baseUrl,
+                url = url,
+                serverId = serverId,
+                moreInfoEntityIdForJs = resolved.moreInfoEntityIdForJs,
+            )
+        }
+    }
+
+    /**
+     * Builds the result for [url], which is on the server origin. The WebView gives the page
+     * access to the JavaScript bridge, so only the frontend can be loaded in it.
+     */
+    private suspend fun resultForSameOriginUrl(
+        baseUrl: HttpUrl,
+        url: HttpUrl,
+        serverId: Int,
+        moreInfoEntityIdForJs: String?,
+    ): UrlLoadResult {
+        return when (classifyServerPath(serverId = serverId, url = url)) {
+            ServerPathType.Frontend -> frontendUrl(url, serverId, moreInfoEntityIdForJs)
+
+            ServerPathType.NotFrontend -> {
+                Timber.w("Target ${sensitive(url.toString())} is not a frontend page, opening outside the WebView")
+                UrlLoadResult.ExternalUrl(url = url.toString(), serverId = serverId)
+            }
+
+            ServerPathType.Unknown -> {
+                Timber.w("Target ${sensitive(url.toString())} is not a known frontend page, loading the server URL")
+                frontendUrl(baseUrl, serverId, moreInfoEntityIdForJs)
             }
         }
+    }
+
+    private fun frontendUrl(url: HttpUrl, serverId: Int, moreInfoEntityId: String?): UrlLoadResult.Success {
+        // Signal the frontend that authentication is provided through the JavaScript bridge
+        val urlWithAuth = url.newBuilder().addQueryParameter(EXTERNAL_AUTH_QUERY_PARAM, "1").build().toString()
+        Timber.d("Loading server URL: ${sensitive(urlWithAuth)}")
+        return UrlLoadResult.Success(url = urlWithAuth, serverId = serverId, moreInfoEntityId = moreInfoEntityId)
     }
 
     /**

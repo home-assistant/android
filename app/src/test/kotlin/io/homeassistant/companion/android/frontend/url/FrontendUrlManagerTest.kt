@@ -21,6 +21,7 @@ import java.net.URL
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -35,11 +36,13 @@ class FrontendUrlManagerTest {
     private val serverManager: ServerManager = mockk()
     private val sessionManager: ServerSessionManager = mockk()
     private val connectionStateProvider: ServerConnectionStateProvider = mockk()
+    private val classifyServerPath: ClassifyServerPathUseCase = mockk()
     private lateinit var urlManager: FrontendUrlManager
 
     @BeforeEach
     fun setup() {
-        urlManager = FrontendUrlManager(serverManager, sessionManager)
+        coEvery { classifyServerPath(any(), any()) } returns ServerPathType.Frontend
+        urlManager = FrontendUrlManager(serverManager, sessionManager, classifyServerPath)
     }
 
     @Test
@@ -450,6 +453,42 @@ class FrontendUrlManagerTest {
         urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Path(target)).test {
             assertEquals(
                 UrlLoadResult.Success(url = "https://home.example.com/dashboard?external_auth=1", serverId = 1),
+                awaitItem(),
+            )
+            awaitComplete()
+        }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @CsvSource(
+        "/local/video.mp4, https://home.example.com/local/video.mp4",
+        "/media/local/video.mp4?authSig=abc, https://home.example.com/media/local/video.mp4?authSig=abc",
+        "https://home.example.com/local/page.html, https://home.example.com/local/page.html",
+        "homeassistant://navigate/local/page.html, https://home.example.com/local/page.html",
+    )
+    fun `Given target not served by the frontend when serverUrlFlow then returns ExternalUrl`(
+        target: String,
+        expectedUrl: String,
+    ) = runTest {
+        givenConnectedServer(baseUrl = URL("https://home.example.com"))
+        coEvery { classifyServerPath(1, expectedUrl.toHttpUrl()) } returns ServerPathType.NotFrontend
+
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Path(target)).test {
+            assertEquals(UrlLoadResult.ExternalUrl(url = expectedUrl, serverId = 1), awaitItem())
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun `Given target of unknown type when serverUrlFlow then loads the server URL without the path`() = runTest {
+        givenConnectedServer(baseUrl = URL("https://home.example.com"))
+        coEvery {
+            classifyServerPath(1, "https://home.example.com/config/automation".toHttpUrl())
+        } returns ServerPathType.Unknown
+
+        urlManager.serverUrlFlow(serverId = 1, target = FrontendTarget.Path("/config/automation")).test {
+            assertEquals(
+                UrlLoadResult.Success(url = "https://home.example.com/?external_auth=1", serverId = 1),
                 awaitItem(),
             )
             awaitComplete()
