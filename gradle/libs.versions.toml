@@ -267,8 +267,6 @@ wear-protolayout-main = { module = "androidx.wear.protolayout:protolayout", vers
 wear-protolayout-material = { module = "androidx.wear.protolayout:protolayout-material", version.ref = "wear-protolayout" }
 wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", version.ref = "wear-remote-interactions" }
 wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" }
-wear-tiles-tooling = { module = "androidx.wear.tiles:tiles-tooling", version.ref = "wear-tiles" }
-wear-tiles-tooling-preview = { module = "androidx.wear.tiles:tiles-tooling-preview", version.ref = "wear-tiles" }
 wear-tooling = { module = "androidx.wear:wear-tooling-preview", version.ref = "wear-tooling" }
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 webrtc-sdk = { module = "io.github.webrtc-sdk:android-prefixed", version.ref = "webrtcSdk" }

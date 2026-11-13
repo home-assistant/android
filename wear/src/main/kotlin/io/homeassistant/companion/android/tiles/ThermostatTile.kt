@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.tiles
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
@@ -243,7 +244,7 @@ class ThermostatTile : TileService() {
         const val TAP_ACTION_UP = "Up"
         const val TAP_ACTION_DOWN = "Down"
         const val TAP_ACTION_TOGGLE = "Toggle"
-        internal const val RESOURCE_POWER = "power"
+        private const val RESOURCE_POWER = "power"
         private const val BUTTON_SIZE_DP = 40f
         private const val TARGET_TEMPERATURE_SIZE_SP = 30f
         private const val SPACING_DP = 10f
@@ -255,6 +256,7 @@ class ThermostatTile : TileService() {
         private val entityNames = ConcurrentHashMap<Int, Pair<String, String>>()
 
         /** [entityName] is null when the name isn't shown on the tile. */
+        @VisibleForTesting
         internal fun timeline(
             context: Context,
             entity: EntityDisplay,
