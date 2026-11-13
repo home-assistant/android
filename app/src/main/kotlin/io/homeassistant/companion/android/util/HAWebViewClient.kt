@@ -57,7 +57,8 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
      * @param onFrontendError Callback when a WebView error is mapped to a [FrontendConnectionError].
      * @param onCrash Optional callback invoked after WebView crash recovery.
      * @param onUrlIntercepted Optional callback to intercept URL navigation.
-     *        Receives the URI and whether TLS client auth was required.
+     *        Receives the URI, whether TLS client auth was required and whether the navigation
+     *        is for the main frame (as opposed to an iframe).
      *        Return `true` to prevent WebView from loading the URL.
      * @param onPageFinished Optional callback when a page finishes loading, with the final URL
      *        (after any redirects have resolved).
@@ -74,7 +75,7 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
         currentUrlFlow: StateFlow<String?>,
         onFrontendError: (FrontendConnectionError) -> Unit,
         onCrash: (() -> Unit)? = null,
-        onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)? = null,
+        onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean, isForMainFrame: Boolean) -> Boolean)? = null,
         onPageFinished: ((url: String?) -> Unit)? = null,
         onReceivedHttpAuthRequest: (
             (
@@ -114,7 +115,7 @@ class HAWebViewClient internal constructor(
     private val currentUrlFlow: StateFlow<String?>,
     private val onFrontendError: (FrontendConnectionError) -> Unit,
     private val onCrash: (() -> Unit)?,
-    private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
+    private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean, isForMainFrame: Boolean) -> Boolean)?,
     private val onPageFinished: ((url: String?) -> Unit)?,
     private val onReceivedHttpAuthRequest: (
         (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
@@ -309,7 +310,8 @@ class HAWebViewClient internal constructor(
     }
 
     override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-        return request?.url?.let { onUrlIntercepted?.invoke(it, isTLSClientAuthNeeded) } ?: false
+        val url = request?.url ?: return false
+        return onUrlIntercepted?.invoke(url, isTLSClientAuthNeeded, request.isForMainFrame) ?: false
     }
 
     private fun formatErrorDetails(context: Context?, code: Int?, description: String?): String {

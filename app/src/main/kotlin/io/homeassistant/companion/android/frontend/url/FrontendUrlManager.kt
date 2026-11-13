@@ -141,6 +141,13 @@ class FrontendUrlManager @Inject constructor(
     }
 
     /**
+     * Classifies the path of [url], which must be on the origin of the server [serverId], to tell
+     * whether the WebView can navigate to it.
+     */
+    suspend fun classifyServerUrl(serverId: Int, url: HttpUrl): ServerPathType =
+        classifyServerPath(serverId = serverId, url = url)
+
+    /**
      * Builds the result for [url], which is on the server origin. The WebView gives the page
      * access to the JavaScript bridge, so only the frontend can be loaded in it.
      */

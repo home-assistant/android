@@ -4,6 +4,7 @@ import android.net.Uri
 import android.net.http.SslError
 import android.webkit.HttpAuthHandler
 import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient.ERROR_AUTHENTICATION
@@ -88,6 +89,35 @@ class HAWebViewClientTest {
         client.onPageFinished(null, "http://homeassistant.local:80/onboarding")
 
         assertEquals("http://homeassistant.local:80/onboarding", finishedUrl)
+    }
+
+    @ParameterizedTest(name = "isForMainFrame={0}")
+    @ValueSource(booleans = [true, false])
+    fun `Given onUrlIntercepted callback when shouldOverrideUrlLoading then reports the frame and returns its result`(
+        isForMainFrame: Boolean,
+    ) {
+        val uri = mockk<Uri>()
+        var intercepted: Pair<Uri, Boolean>? = null
+        val client = HAWebViewClient(
+            keyChainRepository = keyChainRepository,
+            clientCertProvider = clientCertProvider,
+            currentUrlFlow = currentUrlFlow,
+            onFrontendError = { capturedError = it },
+            onCrash = null,
+            onUrlIntercepted = { url, _, mainFrame ->
+                intercepted = url to mainFrame
+                true
+            },
+            onPageFinished = null,
+            onReceivedHttpAuthRequest = null,
+        )
+        val request = mockk<WebResourceRequest> {
+            every { url } returns uri
+            every { this@mockk.isForMainFrame } returns isForMainFrame
+        }
+
+        assertTrue(client.shouldOverrideUrlLoading(null, request))
+        assertEquals(uri to isForMainFrame, intercepted)
     }
 
     @Test

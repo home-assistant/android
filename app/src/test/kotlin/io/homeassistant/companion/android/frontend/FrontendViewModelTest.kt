@@ -58,6 +58,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendEvent
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
+import io.homeassistant.companion.android.frontend.url.ServerPathType
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
@@ -90,6 +91,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -205,14 +207,17 @@ class FrontendViewModelTest {
 
         /**
          * Captures the `onUrlIntercepted` callback the ViewModel wires into the WebView client and returns a
-         * lambda that drives it (the `false` TLS-client-auth flag is irrelevant to scheme handling).
+         * lambda that drives it as a main frame navigation unless told otherwise (the `false`
+         * TLS-client-auth flag is irrelevant to scheme handling).
          *
          * The external/same-origin branch relies on [hasSameOrigin], which parses URLs via real
          * `android.net.Uri` (unavailable on the plain JVM these tests run on); tests covering that branch
          * mock [hasSameOrigin] directly. The origin parsing itself is covered by `UrlUtilTest`.
          */
-        private suspend fun createViewModelWithUrlInterceptCapture(): Pair<FrontendViewModel, (Uri) -> Boolean> {
-            var capturedCallback: ((Uri, Boolean) -> Boolean)? = null
+        private suspend fun createViewModelWithUrlInterceptCapture(
+            isForMainFrame: Boolean = true,
+        ): Pair<FrontendViewModel, (Uri) -> Boolean> {
+            var capturedCallback: ((Uri, Boolean, Boolean) -> Boolean)? = null
             coEvery {
                 webViewClientFactory.create(
                     currentUrlFlow = any(),
@@ -235,7 +240,7 @@ class FrontendViewModelTest {
             return viewModel to { uri ->
                 val callback = capturedCallback
                 assertNotNull(callback)
-                callback.invoke(uri, false)
+                callback.invoke(uri, false, isForMainFrame)
             }
         }
 
@@ -290,20 +295,88 @@ class FrontendViewModelTest {
             }
         }
 
-        @Test
-        fun `Given url matching server origin when intercepted then sends no event and lets WebView load`() = runTest {
-            mockkStatic("io.homeassistant.companion.android.util.UrlUtilKt")
-            try {
-                every { any<Uri>().hasSameOrigin(any<String>()) } returns true
+        @ParameterizedTest(name = "{0}")
+        @ValueSource(strings = ["https://example.com", "https://example.com/", "https://example.com/?external_auth=1"])
+        fun `Given root url of the server when intercepted then lets WebView load without classifying`(
+            url: String,
+        ) = runTest {
+            withSameOrigin {
                 val (viewModel, intercept) = createViewModelWithUrlInterceptCapture()
 
                 viewModel.events.test {
-                    val handled = intercept(uri("https://example.com/lovelace/0"))
-
-                    assertFalse(handled)
+                    assertFalse(intercept(uri(url)))
+                    advanceUntilIdle()
                     expectNoEvents()
-                    cancelAndIgnoreRemainingEvents()
                 }
+                coVerify(exactly = 0) { urlManager.classifyServerUrl(any(), any()) }
+            }
+        }
+
+        @Test
+        fun `Given server url loaded in an iframe when intercepted then lets WebView load without classifying`() = runTest {
+            withSameOrigin {
+                val (viewModel, intercept) = createViewModelWithUrlInterceptCapture(isForMainFrame = false)
+
+                viewModel.events.test {
+                    assertFalse(intercept(uri("https://example.com/local/page.html")))
+                    advanceUntilIdle()
+                    expectNoEvents()
+                }
+                coVerify(exactly = 0) { urlManager.classifyServerUrl(any(), any()) }
+            }
+        }
+
+        @Test
+        fun `Given server url not served by the frontend when intercepted then opens it in a custom tab and keeps the page`() = runTest {
+            withSameOrigin {
+                val fileUri = uri("https://example.com/local/page.html")
+                coEvery { urlManager.classifyServerUrl(serverId, any()) } returns ServerPathType.NotFrontend
+                val (viewModel, intercept) = createViewModelWithUrlInterceptCapture()
+                advanceUntilIdle()
+                val stateBefore = viewModel.viewState.value
+
+                viewModel.events.test {
+                    assertTrue(intercept(fileUri))
+
+                    assertEquals(FrontendEvent.OpenCustomTab(fileUri), awaitItem())
+                    expectNoEvents()
+                }
+                assertEquals(stateBefore, viewModel.viewState.value)
+                coVerify { urlManager.classifyServerUrl(serverId, "https://example.com/local/page.html".toHttpUrl()) }
+            }
+        }
+
+        @Test
+        fun `Given frontend server url when intercepted then loads it as a frontend target`() = runTest {
+            assertLoadedAsFrontendTarget(ServerPathType.Frontend)
+        }
+
+        @Test
+        fun `Given unknown server url when intercepted then loads it as a frontend target`() = runTest {
+            assertLoadedAsFrontendTarget(ServerPathType.Unknown)
+        }
+
+        private suspend fun TestScope.assertLoadedAsFrontendTarget(pathType: ServerPathType) {
+            withSameOrigin {
+                val panelUrl = "https://example.com/lovelace/0"
+                coEvery { urlManager.classifyServerUrl(serverId, any()) } returns pathType
+                val (viewModel, intercept) = createViewModelWithUrlInterceptCapture()
+                advanceUntilIdle()
+
+                viewModel.events.test {
+                    assertTrue(intercept(uri(panelUrl)))
+                    advanceUntilIdle()
+                    expectNoEvents()
+                }
+                verify { urlManager.serverUrlFlow(serverId, FrontendTarget.Path(panelUrl)) }
+            }
+        }
+
+        private inline fun withSameOrigin(block: () -> Unit) {
+            mockkStatic("io.homeassistant.companion.android.util.UrlUtilKt")
+            try {
+                every { any<Uri>().hasSameOrigin(any<String>()) } returns true
+                block()
             } finally {
                 unmockkStatic("io.homeassistant.companion.android.util.UrlUtilKt")
             }
