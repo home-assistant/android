@@ -372,30 +372,38 @@ class IntegrationRepositoryImplTest {
         }
 
         @Test
-        fun `Given a states fetch when collecting entity updates for ids then only the subscribed entities are kept`() = runTest {
+        fun `Given a collector joining after the initial states when collecting entity updates for ids then only the changed entity is fetched`() = runTest {
             coEvery { webSocketRepository.getCompressedStateAndChanges(listOf(entityId)) } returns flowOf(
                 changedEvent("off"),
+                changedEvent("on"),
             )
-            coEvery { webSocketRepository.getStates() } returns listOf(
-                EntityResponse(
-                    entityId = entityId,
-                    state = "off",
-                    attributes = emptyMap(),
-                    lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
-                    lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
-                ),
-                EntityResponse(
-                    entityId = "light.other",
-                    state = "on",
-                    attributes = emptyMap(),
-                    lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
-                    lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
-                ),
+            val spyRepository = spyk(repository)
+            coEvery { spyRepository.getEntity(entityId) } returns Entity(
+                entityId = entityId,
+                state = "off",
+                attributes = emptyMap(),
+                lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
             )
 
-            val updates = checkNotNull(repository.getEntityUpdates(listOf(entityId))).toList()
+            val updates = checkNotNull(spyRepository.getEntityUpdates(listOf(entityId))).toList()
 
-            assertEquals(listOf(entityId), updates.map { it.entityId })
+            // The fetched state already holds the first diff, the second one applies to it
+            assertEquals(listOf("off", "on"), updates.map { it.state })
+            coVerify(exactly = 1) { spyRepository.getEntity(entityId) }
+            coVerify(exactly = 0) { webSocketRepository.getStates() }
+        }
+
+        @Test
+        fun `Given the state of a joining collector can't be fetched when collecting entity updates for ids then the diff is dropped`() = runTest {
+            coEvery { webSocketRepository.getCompressedStateAndChanges(listOf(entityId)) } returns flowOf(changedEvent("off"))
+            val spyRepository = spyk(repository)
+            coEvery { spyRepository.getEntity(entityId) } throws IllegalStateException("offline")
+
+            val updates = checkNotNull(spyRepository.getEntityUpdates(listOf(entityId))).toList()
+
+            assertTrue(updates.isEmpty())
+            coVerify(exactly = 0) { webSocketRepository.getStates() }
         }
 
         @Test
@@ -424,6 +432,91 @@ class IntegrationRepositoryImplTest {
 
             assertEquals(entity, updates.single())
             coVerify(exactly = 0) { webSocketRepository.getCompressedStateAndChanges() }
+        }
+
+        @Test
+        fun `Given ids when getting entities then their initial states come from one filtered subscription in the requested order`() = runTest {
+            val ids = listOf("sensor.b", "sensor.missing", "sensor.a")
+            coEvery { webSocketRepository.getCompressedStateAndChangesFromStart(ids) } returns flowOf(
+                CompressedStateChangedEvent(
+                    added = mapOf("sensor.a" to compressedState("1"), "sensor.b" to compressedState("2")),
+                ),
+            )
+
+            val entities = repository.getEntities(ids)
+
+            assertEquals(listOf("sensor.b" to "2", "sensor.a" to "1"), entities?.map { it.entityId to it.state })
+            coVerify(exactly = 0) { webSocketRepository.getStates() }
+        }
+
+        @Test
+        fun `Given the subscription ends without states when getting entities then null is returned`() = runTest {
+            coEvery { webSocketRepository.getCompressedStateAndChangesFromStart(listOf(entityId)) } returns flowOf()
+
+            assertNull(repository.getEntities(listOf(entityId)))
+            coVerify(exactly = 0) { webSocketRepository.getStates() }
+        }
+
+        @Test
+        fun `Given no ids when getting entities then nothing is fetched`() = runTest {
+            assertEquals(emptyList<Entity>(), repository.getEntities(emptyList()))
+            coVerify(exactly = 0) { webSocketRepository.getCompressedStateAndChangesFromStart(any()) }
+        }
+
+        @Test
+        fun `Given ids when getting entities and updates then the initial states and each change arrive as batches of one subscription`() = runTest {
+            val ids = listOf("sensor.a", "sensor.b")
+            coEvery { webSocketRepository.getCompressedStateAndChangesFromStart(ids) } returns flowOf(
+                CompressedStateChangedEvent(
+                    added = mapOf("sensor.a" to compressedState("1"), "sensor.b" to compressedState("2")),
+                ),
+                CompressedStateChangedEvent(
+                    changed = mapOf("sensor.b" to CompressedStateDiff(plus = compressedState("3"))),
+                ),
+            )
+
+            val batches = checkNotNull(repository.getEntitiesAndUpdates(ids)).toList()
+
+            assertEquals(
+                listOf(listOf("sensor.a" to "1", "sensor.b" to "2"), listOf("sensor.b" to "3")),
+                batches.map { batch -> batch.map { it.entityId to it.state } },
+            )
+            coVerify(exactly = 0) { webSocketRepository.getCompressedStateAndChanges(any()) }
+        }
+
+        @Test
+        fun `Given an older server when getting entities and updates then null is returned`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+
+            assertNull(repository.getEntitiesAndUpdates(listOf(entityId)))
+        }
+
+        @Test
+        fun `Given an older server when getting entities then all states are fetched and filtered`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+            givenCurrentStatesFetchReturns("on")
+
+            val entities = repository.getEntities(listOf(entityId, "light.other"))
+
+            assertEquals(listOf(entityId), entities?.map { it.entityId })
+        }
+
+        @Test
+        fun `Given an older server when getting entities then the requested order is kept`() = runTest {
+            every { server.version } returns HomeAssistantVersion(2022, 3, 0)
+            coEvery { webSocketRepository.getStates() } returns listOf("light.a", "switch.b").map {
+                EntityResponse(
+                    entityId = it,
+                    state = "on",
+                    attributes = emptyMap(),
+                    lastChanged = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                    lastUpdated = LocalDateTime.of(2024, 1, 1, 12, 0, 0),
+                )
+            }
+
+            val entities = repository.getEntities(listOf("switch.b", "light.a"))
+
+            assertEquals(listOf("switch.b", "light.a"), entities?.map { it.entityId })
         }
     }
 }

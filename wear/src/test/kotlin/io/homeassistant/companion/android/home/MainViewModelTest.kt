@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -66,13 +67,30 @@ class MainViewModelTest {
         EntityDisplayWithoutContext(entityId = entityId, name = entityId, icon = mockk()),
     )
 
-    /** Makes the manager emit the given entities that pass the filter of the caller, as the real one does. */
+    /** Makes the manager emit the given entities of the domains the caller asks for, as the real one does. */
     private fun givenServerEntities(vararg entityIds: String) {
-        every { entitiesForDisplayManager.observeInContext(ServerManager.SERVER_ID_ACTIVE, any<(Entity) -> Boolean>()) } answers {
-            val filter = secondArg<(Entity) -> Boolean>()
-            val items = entityIds.filter { filter(fakeEntity(it)) }.map { fakeItem(it) }
+        every { entitiesForDisplayManager.observeDomainsInContext(ServerManager.SERVER_ID_ACTIVE, any()) } answers {
+            val domains = secondArg<Set<String>>()
+            val items = entityIds.filter { fakeEntity(it).domain in domains }.map { fakeItem(it) }
             flowOf(EntityDisplayState.Loaded(items))
         }
+    }
+
+    @Test
+    fun `Given the home screen when observing entities then only the supported and tile domains are asked for`() = runTest {
+        givenServerEntities("light.kitchen")
+        val viewModel = createViewModel()
+
+        viewModel.observeEntities()
+
+        verify {
+            entitiesForDisplayManager.observeDomainsInContext(
+                ServerManager.SERVER_ID_ACTIVE,
+                match { "sensor" !in it && "light" in it && "camera" in it && "climate" in it },
+            )
+        }
+        verify(exactly = 0) { entitiesForDisplayManager.observeInContext(any(), any<(Entity) -> Boolean>()) }
+        verify(exactly = 0) { entitiesForDisplayManager.observeInContext(any(), any<List<String>>()) }
     }
 
     @Test

@@ -53,11 +53,15 @@ import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
 import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl
@@ -90,6 +94,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
         // Note: _not_ server-specific
         private const val PREF_PUSH_TOKEN = "push_token"
+
+        /** How long the state of the entities asked to [getEntities] can take to arrive. */
+        private val ENTITIES_INITIAL_STATES_TIMEOUT = 30.seconds
 
         // Note: _not_ server-specific
         private const val PREF_ORPHANED_THREAD_BORDER_AGENT_IDS = "orphaned_thread_border_agent_ids"
@@ -497,6 +504,39 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         return response
     }
 
+    override suspend fun getEntities(entityIds: List<String>): List<Entity>? = when {
+        entityIds.isEmpty() -> emptyList()
+        // Keep the requested order, like the compressed state path does
+        !supportsCompressedStateChanges() -> getEntities()?.associateBy { it.entityId }?.let { entitiesById ->
+            entityIds.mapNotNull { entitiesById[it] }
+        }
+        else -> getEntitiesFromInitialStates(entityIds)
+    }
+
+    private suspend fun getEntitiesFromInitialStates(entityIds: List<String>): List<Entity>? {
+        // The subscription starts with the full state of every requested entity, filtered server
+        // side, which is all we need here
+        val initialStates = withTimeoutOrNull(ENTITIES_INITIAL_STATES_TIMEOUT) {
+            webSocketRepository().getCompressedStateAndChangesFromStart(entityIds)?.firstOrNull {
+                it.added != null
+            }?.added
+        }
+        if (initialStates == null) {
+            Timber.w("Unable to fetch the states of ${entityIds.size} entities")
+            return null
+        }
+        return entityIds.mapNotNull { entityId ->
+            initialStates[entityId]?.let { state ->
+                try {
+                    state.toEntity(entityId)
+                } catch (e: IllegalStateException) {
+                    Timber.w(e, "Invalid state for $entityId")
+                    null
+                }
+            }
+        }
+    }
+
     override suspend fun getEntityUpdates(): Flow<Entity>? {
         return if (supportsCompressedStateChanges()) {
             webSocketRepository().getCompressedStateAndChanges()?.toEntityUpdates()
@@ -506,6 +546,13 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 ?.map { it.newState!! }
         }
     }
+
+    override suspend fun getEntitiesAndUpdates(entityIds: List<String>): Flow<List<Entity>>? =
+        if (supportsCompressedStateChanges()) {
+            webSocketRepository().getCompressedStateAndChangesFromStart(entityIds)?.toEntityBatches(entityIds.toSet())
+        } else {
+            null
+        }
 
     override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
         return if (supportsCompressedStateChanges()) {
@@ -531,24 +578,35 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
      * against the last known state of each entity. The full states the subscription sends when it
      * starts are emitted too, so collectors also converge back to the server state after a
      * reconnection.
+     *
+     * A collector joining an already active shared subscription missed its initial full states.
+     * Without [entityIds] every current state is fetched before collecting, as fetching on the
+     * websocket while handling an event would deadlock (the websocket processes messages
+     * sequentially, so the fetch response could never arrive). With [entityIds], downloading every
+     * state of the server only to follow a few entities is too much for constrained devices, so a
+     * diff for an entity without a known state fetches that entity alone over HTTP instead.
      */
-    private fun Flow<CompressedStateChangedEvent>.toEntityUpdates(entityIds: Set<String>? = null): Flow<Entity> = flow {
+    private fun Flow<CompressedStateChangedEvent>.toEntityUpdates(entityIds: Set<String>? = null): Flow<Entity> =
+        toEntityBatches(entityIds).transform { batch -> batch.forEach { emit(it) } }
+
+    /** Like [toEntityUpdates], emitting the entities resolved from each event together. */
+    private fun Flow<CompressedStateChangedEvent>.toEntityBatches(entityIds: Set<String>?): Flow<List<Entity>> = flow {
         val entities = mutableMapOf<String, Entity>()
-        // Seed before collecting: a collector joining an already active shared subscription missed
-        // its initial full states, and fetching while handling an event would deadlock because the
-        // websocket processes messages sequentially, so the fetch response could never arrive.
-        entities.seedCurrentStates(entityIds)
+        if (entityIds == null) entities.seedCurrentStates()
         collect { event ->
+            val batch = mutableListOf<Entity>()
             event.added?.forEach { (entityId, state) ->
                 val entity = state.toEntity(entityId)
                 entities[entityId] = entity
-                emit(entity)
+                batch += entity
             }
             event.changed?.forEach { (entityId, diff) ->
                 val entity = entities[entityId]?.applyCompressedStateDiff(diff)
+                    // The fetched state is the current one, the diff is already part of it
+                    ?: entityIds?.let { fetchMissedState(entityId) }
                 if (entity != null) {
                     entities[entityId] = entity
-                    emit(entity)
+                    batch += entity
                 } else {
                     // The entity converges again on its next full state event.
                     Timber.w("Dropping state diff for $entityId without a known state")
@@ -557,23 +615,27 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             event.removed?.forEach { entityId ->
                 entities.remove(entityId)
             }
+            emit(batch)
         }
     }
 
-    /**
-     * Seeds with the current state of every subscribed entity, limited to [entityIds]
-     * when not null, fetched on the websocket.
-     */
-    private suspend fun MutableMap<String, Entity>.seedCurrentStates(entityIds: Set<String>?) {
+    /** Seeds with the current state of every entity of the server, fetched on the websocket. */
+    private suspend fun MutableMap<String, Entity>.seedCurrentStates() {
         val states = webSocketRepository().getStates() ?: run {
             Timber.w("Unable to fetch the current states to resolve state diffs")
             return
         }
-        states.forEach { response ->
-            if (entityIds == null || response.entityId in entityIds) {
-                put(response.entityId, response)
-            }
-        }
+        states.forEach { response -> put(response.entityId, response) }
+    }
+
+    /** Current state of [entityId] fetched over HTTP, or null when it can't be retrieved. */
+    private suspend fun fetchMissedState(entityId: String): Entity? = try {
+        getEntity(entityId)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.w(e, "Unable to fetch the state of $entityId")
+        null
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -13,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,7 +47,12 @@ fun ChooseEntityView(
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit,
     allowNone: Boolean = true,
+    favoriteEntities: List<EntityDisplay>? = null,
+    failedDomains: Set<String> = emptySet(),
+    onDomainExpanded: ((domain: String) -> Unit)? = null,
 ) {
+    // With onDomainExpanded, every domain is listed and its entities are loaded once expanded
+    val loadDomainsOnExpand = onDomainExpanded != null
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(entitiesByDomainOrder)
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(false) }
@@ -80,7 +87,7 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedFavorites) {
-                    val allEntities = entitiesByDomain.flatMap { (_, values) -> values }
+                    val allEntities = favoriteEntities ?: entitiesByDomain.flatMap { (_, values) -> values }
                     items(favoriteEntityIds.size) { index ->
                         val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
                         allEntities
@@ -97,7 +104,7 @@ fun ChooseEntityView(
 
             for (domain in entitiesByDomainOrder) {
                 val entities = entitiesByDomain[domain]
-                if (!entities.isNullOrEmpty()) {
+                if (loadDomainsOnExpand || !entities.isNullOrEmpty()) {
                     item {
                         ExpandableListHeader(
                             string = stringForDomain(domain, LocalContext.current)
@@ -107,16 +114,51 @@ fun ChooseEntityView(
                         )
                     }
                     if (expandedStates[domain] == true) {
-                        items(entities, key = { it.entityId }) { entity ->
-                            ChooseEntityChip(
-                                entity = entity,
-                                onEntitySelected = onEntitySelected,
-                            )
+                        if (entities != null) {
+                            items(entities, key = { it.entityId }) { entity ->
+                                ChooseEntityChip(
+                                    entity = entity,
+                                    onEntitySelected = onEntitySelected,
+                                )
+                            }
+                        } else if (onDomainExpanded != null) {
+                            item(key = "domain-status-$domain") {
+                                DomainStatus(
+                                    failed = domain in failedDomains,
+                                    onLoad = { onDomainExpanded(domain) },
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * Placeholder of an expanded domain whose entities aren't loaded: it asks for them when shown, and
+ * offers to retry when they couldn't be loaded.
+ */
+@Composable
+private fun DomainStatus(failed: Boolean, onLoad: () -> Unit) {
+    if (failed) {
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(commonR.string.error_loading_entities)) },
+            secondaryLabel = { Text(stringResource(commonR.string.retry)) },
+            onClick = onLoad,
+            colors = getFilledTonalButtonColors(),
+        )
+    } else {
+        LaunchedEffect(Unit) { onLoad() }
+        Text(
+            text = stringResource(commonR.string.loading),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

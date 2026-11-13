@@ -1047,6 +1047,106 @@ class EntitiesForDisplayManagerTest {
             }
 
             @Test
+            fun `Given a large registry when observing domains then the entities of these domains are loaded and followed on one subscription`() = runTest {
+                givenObservedRegistry("sensor.power", "switch.fan", "light.bed")
+                val ids = listOf("light.bed", "switch.fan")
+                val batches = MutableSharedFlow<List<Entity>>()
+                coEvery { integrationRepository.getEntitiesAndUpdates(ids) } returns batches
+
+                manager.observeDomainsInContext(serverId, setOf("light", "switch")).test {
+                    assertEquals(EntityDisplayState.Loading, awaitItem())
+                    batches.awaitSubscribed()
+                    // The server sends the starting states in any order
+                    batches.emit(listOf(entity("switch.fan", "Fan"), entity("light.bed", "Bed Light")))
+                    assertEquals(listOf("light.bed", "switch.fan"), awaitLoaded().map { it.entityId })
+
+                    batches.emit(listOf(entity("switch.fan", "Ceiling Fan")))
+
+                    assertEquals("Ceiling Fan", awaitLoaded().single { it.entityId == "switch.fan" }.name)
+                    cancelAndIgnoreRemainingEvents()
+                }
+
+                coVerify(exactly = 1) { integrationRepository.getEntitiesAndUpdates(ids) }
+                coVerify(exactly = 0) { integrationRepository.getEntities() }
+                coVerify(exactly = 0) { integrationRepository.getEntities(any()) }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates(any()) }
+            }
+
+            @Test
+            fun `Given a large registry on a server without filtered subscriptions when observing domains then the entities of these domains are fetched then followed`() = runTest {
+                givenObservedRegistry("sensor.power", "switch.fan", "light.bed")
+                val ids = listOf("light.bed", "switch.fan")
+                coEvery { integrationRepository.getEntitiesAndUpdates(ids) } returns null
+                coEvery { integrationRepository.getEntities(ids) } returns
+                    listOf(entity("light.bed", "Bed Light"), entity("switch.fan", "Fan"))
+                coEvery { integrationRepository.getEntityUpdates(ids) } returns entityUpdates
+
+                manager.observeDomainsInContext(serverId, setOf("light", "switch")).test {
+                    assertEquals(listOf("light.bed", "switch.fan"), awaitInitialLoad().map { it.entityId })
+                    entityUpdates.awaitSubscribed()
+
+                    entityUpdates.emit(entity("switch.fan", "Ceiling Fan"))
+
+                    assertEquals("Ceiling Fan", awaitLoaded().single { it.entityId == "switch.fan" }.name)
+                    cancelAndIgnoreRemainingEvents()
+                }
+
+                coVerify(exactly = 0) { integrationRepository.getEntities() }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+            }
+
+            @Test
+            fun `Given a large registry without entities of the domains when observing then no state subscription is made`() = runTest {
+                givenObservedRegistry()
+
+                manager.observeDomainsInContext(serverId, setOf("light")).test {
+                    assertEquals(emptyList<EntityDisplayWithContext>(), awaitInitialLoad())
+                    cancelAndIgnoreRemainingEvents()
+                }
+
+                coVerify(exactly = 0) { integrationRepository.getEntitiesAndUpdates(any()) }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates(any()) }
+            }
+
+            @Test
+            fun `Given a small registry when observing domains then every state is fetched and followed, entities without registry entry included`() = runTest {
+                givenObservedRegistry("light.bed", large = false)
+                coEvery { integrationRepository.getEntities() } returns
+                    listOf(entity("light.bed", "Bed Light"), entity("light.yaml_only", "YAML Light"), entity("sensor.power", "Power"))
+
+                manager.observeDomainsInContext(serverId, setOf("light")).test {
+                    assertEquals(listOf("light.bed", "light.yaml_only"), awaitInitialLoad().map { it.entityId })
+                    cancelAndIgnoreRemainingEvents()
+                }
+
+                coVerify(exactly = 1) { integrationRepository.getEntityUpdates() }
+                coVerify(exactly = 0) { integrationRepository.getEntities(any()) }
+            }
+
+            /** Registry holding [entityIds], padded with other entities when [large] to go over [FULL_FETCH_MAX_ENTITIES]. */
+            private fun givenObservedRegistry(vararg entityIds: String, large: Boolean = true) {
+                val padding = if (large) List(FULL_FETCH_MAX_ENTITIES + 1) { "zz_padding.entity_$it" } else emptyList()
+                coEvery { webSocketRepository.getEntityRegistryDisplay() } returns EntityRegistryDisplayResponse(
+                    entities = (entityIds.toList() + padding).map { EntityRegistryDisplayEntry(entityId = it) },
+                )
+            }
+
+            @Test
+            fun `Given no entity registry when observing domains then every state is fetched and filtered`() = runTest {
+                coEvery { webSocketRepository.getEntityRegistryDisplay() } returns null
+                coEvery { webSocketRepository.getEntityRegistry() } returns null
+                coEvery { integrationRepository.getEntities() } returns
+                    listOf(entity("light.bed", "Bed Light"), entity("sensor.power", "Power"))
+
+                manager.observeDomainsInContext(serverId, setOf("light")).test {
+                    assertEquals(listOf("light.bed"), awaitInitialLoad().map { it.entityId })
+                    cancelAndIgnoreRemainingEvents()
+                }
+            }
+
+            @Test
             fun `Given a new entity when observing then it is appended to the items`() = runTest {
                 manager.observeInContext(serverId).test {
                     awaitInitialLoad()
@@ -1182,5 +1282,100 @@ class EntitiesForDisplayManagerTest {
                 coVerify(exactly = 0) { webSocketRepository.getEntityRegistryUpdates() }
             }
         }
+    }
+
+    /** Registry holding [entityIds], padded with other entities when [large] to go over [FULL_FETCH_MAX_ENTITIES]. */
+    private fun givenRegistryEntities(vararg entityIds: String, large: Boolean = true) {
+        val padding = if (large) List(FULL_FETCH_MAX_ENTITIES + 1) { "zz_padding.entity_$it" } else emptyList()
+        coEvery { webSocketRepository.getEntityRegistryDisplay() } returns EntityRegistryDisplayResponse(
+            entities = (entityIds.toList() + padding).map { EntityRegistryDisplayEntry(entityId = it) },
+        )
+    }
+
+    @Test
+    fun `Given a large registry when browsing then domains come from the registry without fetching any state`() = runTest {
+        givenRegistryEntities("switch.fan", "sensor.power", "light.bed", "sensor.energy")
+
+        val browser = manager.browse(serverId)
+
+        assertEquals(listOf("light", "sensor", "switch", "zz_padding"), browser?.domains)
+        coVerify(exactly = 0) { integrationRepository.getEntities() }
+        coVerify(exactly = 0) { integrationRepository.getEntities(any()) }
+    }
+
+    @Test
+    fun `Given a large registry when loading a domain then only the states of its entities are fetched`() = runTest {
+        givenRegistryEntities("switch.fan", "sensor.power", "light.bed", "sensor.energy")
+        coEvery {
+            integrationRepository.getEntities(listOf("sensor.energy", "sensor.power"))
+        } returns listOf(entity("sensor.energy", "Energy"), entity("sensor.power", "Power"))
+
+        val items = manager.browse(serverId)?.load("sensor")
+
+        assertEquals(listOf("Energy", "Power"), items?.map { it.name })
+        coVerify(exactly = 1) { integrationRepository.getEntities(listOf("sensor.energy", "sensor.power")) }
+        coVerify(exactly = 0) { integrationRepository.getEntities() }
+    }
+
+    @Test
+    fun `Given a large registry when loading ids then the registry name is used`() = runTest {
+        coEvery { webSocketRepository.getEntityRegistryDisplay() } returns EntityRegistryDisplayResponse(
+            entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed")) +
+                List(FULL_FETCH_MAX_ENTITIES) { EntityRegistryDisplayEntry(entityId = "zz_padding.entity_$it") },
+        )
+        coEvery { integrationRepository.getEntities(listOf("light.bed")) } returns listOf(entity("light.bed", "Bed Light"))
+
+        val items = manager.browse(serverId)?.load(listOf("light.bed"))
+
+        assertEquals(listOf("Bed"), items?.map { it.name })
+    }
+
+    @Test
+    fun `Given a large registry and states that can't be fetched when loading a domain then null is returned`() = runTest {
+        givenRegistryEntities("light.bed")
+        coEvery { integrationRepository.getEntities(any()) } returns null
+
+        assertNull(manager.browse(serverId)?.load("light"))
+    }
+
+    @Test
+    fun `Given a small registry when browsing then every state is fetched once, listing entities without registry entry`() = runTest {
+        givenRegistryEntities("light.bed", large = false)
+        coEvery { integrationRepository.getEntities() } returns listOf(
+            entity("switch.yaml_only", "YAML Switch"),
+            entity("light.bed", "Bed Light"),
+        )
+
+        val browser = manager.browse(serverId)
+
+        assertEquals(listOf("light", "switch"), browser?.domains)
+        assertEquals(listOf("YAML Switch"), browser?.load("switch")?.map { it.name })
+        assertEquals(listOf("switch.yaml_only"), browser?.load(listOf("switch.yaml_only", "light.gone"))?.map { it.entityId })
+        coVerify(exactly = 1) { integrationRepository.getEntities() }
+        coVerify(exactly = 0) { integrationRepository.getEntities(any()) }
+    }
+
+    @Test
+    fun `Given no entity registry when browsing then every state is fetched`() = runTest {
+        coEvery { webSocketRepository.getEntityRegistryDisplay() } returns null
+        coEvery { webSocketRepository.getEntityRegistry() } returns null
+        coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
+
+        assertEquals(listOf("light"), manager.browse(serverId)?.domains)
+    }
+
+    @Test
+    fun `Given a small registry and states that can't be fetched when browsing then null is returned`() = runTest {
+        givenRegistryEntities("light.bed", large = false)
+        coEvery { integrationRepository.getEntities() } returns null
+
+        assertNull(manager.browse(serverId))
+    }
+
+    @Test
+    fun `Given no registered server when browsing then null is returned`() = runTest {
+        coEvery { serverManager.isRegistered() } returns false
+
+        assertNull(manager.browse(serverId))
     }
 }
