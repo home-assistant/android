@@ -39,6 +39,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -136,20 +137,23 @@ class ThermostatTile : TileService() {
                             thermostatTileDao.add(updated)
                         }
 
+                        var shownEntity = entity
                         if (lastId == TAP_ACTION_TOGGLE) {
                             serverManager.integrationRepository().callAction(
                                 entity.domain,
                                 if (entity.rawState == "off") "turn_on" else "turn_off",
                                 hashMapOf("entity_id" to entity.entityId),
                             )
+                            shownEntity = awaitUpdatedEntity(entity)
+                            targetTemp = shownEntity.climateControls?.targetTemperature
                         }
 
-                        val name = entity.name.takeIf { tileConfig.showEntityName == true }
+                        val name = shownEntity.name.takeIf { tileConfig.showEntityName == true }
 
                         tile.setTileTimeline(
                             timeline(
                                 this@ThermostatTile,
-                                entity,
+                                shownEntity,
                                 name,
                                 targetTemp,
                                 temperatureUnit,
@@ -191,6 +195,21 @@ class ThermostatTile : TileService() {
             ?.entity(entityId)
         if (display != null) entityNames[tileId] = entityId to display.name
         return display
+    }
+
+    /**
+     * Waits briefly for the server to report the new state after a toggle, so the tile doesn't
+     * redraw the previous one. Falls back to [entity] when the state doesn't change in time.
+     */
+    private suspend fun awaitUpdatedEntity(entity: EntityDisplay): EntityDisplay {
+        repeat(TOGGLE_REFRESH_ATTEMPTS) {
+            delay(TOGGLE_REFRESH_DELAY_MS)
+            val updated = serverManager.integrationRepository().getEntity(entity.entityId)
+            if (updated != null && updated.state != entity.rawState) {
+                return EntityDisplayWithoutContext(entity = updated, name = entity.name)
+            }
+        }
+        return entity
     }
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
@@ -246,6 +265,8 @@ class ThermostatTile : TileService() {
         const val TAP_ACTION_TOGGLE = "Toggle"
         private const val RESOURCE_POWER = "power"
         private const val BUTTON_SIZE_DP = 40f
+        private const val TOGGLE_REFRESH_ATTEMPTS = 4
+        private const val TOGGLE_REFRESH_DELAY_MS = 500L
         private const val TARGET_TEMPERATURE_SIZE_SP = 30f
         private const val SPACING_DP = 10f
         private const val NAME_ARC_THICKNESS_DP = 30f
