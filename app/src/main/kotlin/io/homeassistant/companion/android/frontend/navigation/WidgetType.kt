@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.frontend.navigation
 
 import android.content.Context
 import android.content.Intent
+import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidgetConfigureActivity
@@ -40,6 +41,11 @@ sealed interface WidgetType {
     data object Todo : WidgetType {
         override fun toConfigureIntent(context: Context, entityId: String?): Intent =
             TodoWidgetConfigureActivity.newInstance(context, entityId)
+    }
+
+    data object Button : WidgetType {
+        override fun toConfigureIntent(context: Context, entityId: String?): Intent =
+            ButtonWidgetConfigureActivity.newInstance(context, entityId)
     }
 
     data object Template : WidgetType {
