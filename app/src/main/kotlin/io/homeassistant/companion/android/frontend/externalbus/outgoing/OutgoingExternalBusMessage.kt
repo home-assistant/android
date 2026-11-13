@@ -78,6 +78,7 @@ object ConfigResultMessage {
         hasBarCodeScanner: Int,
         canSetupImprov: Boolean,
         appVersion: AppVersion,
+        hasCameraMicrophoneStream: Boolean,
     ): OutgoingExternalBusMessage {
         return ResultMessage(
             id = id,
@@ -90,6 +91,7 @@ object ConfigResultMessage {
                     hasBarCodeScanner,
                     canSetupImprov,
                     appVersion,
+                    hasCameraMicrophoneStream,
                 ),
             ),
         )
@@ -118,7 +120,18 @@ object ConfigResultMessage {
         val hasSplashscreen: Boolean = true,
         val hasMatterStatusReport: Boolean = true,
         val canShareMatterDeviceToOtherApps: Boolean,
+        val webrtc: WebRtc,
     ) {
+        /** The app's WebRTC capabilities. */
+        @Serializable
+        data class WebRtc(
+            /**
+             * The app can stream the microphone to a camera itself (`webrtc/stream/start`), used when
+             * the frontend has no secure context. Gated on the device having a microphone.
+             */
+            val hasCameraMicrophoneStream: Boolean,
+        )
+
         companion object {
             fun create(
                 hasNfc: Boolean,
@@ -128,6 +141,7 @@ object ConfigResultMessage {
                 hasBarCodeScanner: Int,
                 canSetupImprov: Boolean,
                 appVersion: AppVersion,
+                hasCameraMicrophoneStream: Boolean,
             ) = ConfigResult(
                 canWriteTag = hasNfc,
                 canCommissionMatter = canCommissionMatter,
@@ -136,9 +150,34 @@ object ConfigResultMessage {
                 hasBarCodeScanner = hasBarCodeScanner,
                 canSetupImprov = canSetupImprov,
                 appVersion = appVersion.toString(),
+                webrtc = WebRtc(hasCameraMicrophoneStream = hasCameraMicrophoneStream),
             )
         }
     }
+}
+
+/**
+ * Reply to a `webrtc/stream/start` request: the app-generated `session_id` once the stream is
+ * connected, or an error ([code] from [WebRtcStreamErrorCode]) when it could not be started.
+ * Correlated to the request by [id].
+ */
+object WebRtcStreamResultMessage {
+    operator fun invoke(id: Int?, sessionId: String): OutgoingExternalBusMessage = ResultMessage(
+        id = id,
+        result = frontendExternalBusJson.encodeToJsonElement(SessionIdPayload(sessionId = sessionId)),
+    )
+
+    fun error(id: Int?, code: WebRtcStreamErrorCode, message: String?): OutgoingExternalBusMessage = ResultMessage(
+        id = id,
+        success = false,
+        error = frontendExternalBusJson.encodeToJsonElement(ErrorPayload(code = code.value, message = message)),
+    )
+
+    @Serializable
+    private data class SessionIdPayload(@SerialName("session_id") val sessionId: String)
+
+    @Serializable
+    private data class ErrorPayload(val code: String, val message: String?)
 }
 
 object EntityAddToActionsResultMessage {
