@@ -52,6 +52,9 @@ import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
 import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
+import java.net.HttpURLConnection.HTTP_GONE
+import java.net.HttpURLConnection.HTTP_NOT_FOUND
+import java.net.HttpURLConnection.HTTP_OK
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -161,28 +164,46 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
         val request = RegisterDeviceIntegrationRequest(createUpdateRegistrationRequest(deviceRegistration))
-        callWebhookOnUrls(
-            request,
-            onSuccess = { response ->
-                // The server should return a body with the registration, but might return:
-                // 200 with empty body for broken direct webhook
-                // 404 for broken cloudhook
-                // 410 for missing config entry
-                if (response.code() == 200 && response.body()?.contentLength() == 0L) {
-                    Timber.w("update_registration returned empty body")
-                    maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
-                } else if (response.code() == 404 || response.code() == 410) {
-                    Timber.w("update_registration returned HTTP ${response.code()}")
-                    maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
-                } else {
-                    persistDeviceRegistration(deviceRegistration)
+        val response = callUpdateRegistration(request)
+        // The server should return a body with the registration, but might return:
+        // 200 with empty body for broken direct webhook
+        // 404 for broken cloudhook
+        // 410 for missing config entry
+        if (response.code() == HTTP_OK && response.body()?.contentLength() == 0L) {
+            Timber.w("update_registration returned empty body")
+            maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
+        } else if (response.code() == HTTP_NOT_FOUND || response.code() == HTTP_GONE) {
+            Timber.w("update_registration returned HTTP ${response.code()}")
+            maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
+        } else {
+            persistDeviceRegistration(deviceRegistration)
+        }
+    }
+
+    /**
+     * Sends the registration update to the first URL that answers about the registration itself.
+     *
+     * A 404 only tells that the URL is not usable (e.g. a broken cloudhook) while the registration
+     * can still be valid, so the remaining URLs are tried first. It is returned when none of them
+     * answered. If one answered with another error (e.g. a 500), the state of the registration is
+     * unknown and the call fails instead.
+     */
+    private suspend fun callUpdateRegistration(request: IntegrationRequest): Response<ResponseBody> {
+        var notFoundResponse: Response<ResponseBody>? = null
+        var hasOtherHttpError = false
+        return try {
+            tryOnUrls("update_registration") { url ->
+                val response = integrationService.callWebhook(url, request)
+                when {
+                    response.isSuccessful || response.code() == HTTP_GONE -> return@tryOnUrls response
+                    response.code() == HTTP_NOT_FOUND -> notFoundResponse = response
+                    else -> hasOtherHttpError = true
                 }
-            },
-            isValidResponse = { response ->
-                // when registration was successful or encountered an expected error
-                response.isSuccessful || response.code() == 404 || response.code() == 410
-            },
-        )
+                throw IntegrationException("Error calling webhook", response.code(), response.errorBody())
+            }
+        } catch (e: IntegrationException) {
+            notFoundResponse?.takeUnless { hasOtherHttpError } ?: throw e
+        }
     }
 
     private suspend fun maybeReregisterDeviceOnFailedUpdate(
@@ -688,14 +709,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     private suspend fun callWebhookOnUrls(
         request: IntegrationRequest,
-        onSuccess: suspend (response: Response<ResponseBody>) -> Unit = {},
         isValidResponse: (response: Response<ResponseBody>) -> Boolean = { it.isSuccessful },
     ) {
-        val response = tryOnUrls("webhook") { url ->
+        tryOnUrls("webhook") { url ->
             val response = integrationService.callWebhook(url, request)
-            if (isValidResponse(response)) {
-                response
-            } else {
+            if (!isValidResponse(response)) {
                 throw IntegrationException(
                     "Error calling webhook",
                     response.code(),
@@ -703,7 +721,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 )
             }
         }
-        onSuccess(response)
     }
 
     private suspend fun <T> tryOnUrls(requestName: String, action: suspend (HttpUrl) -> T): T =

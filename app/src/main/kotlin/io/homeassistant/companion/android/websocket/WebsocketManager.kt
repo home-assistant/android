@@ -48,6 +48,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/** A running collection of the notifications of a server, with the webhook ID it subscribed with. */
+private data class NotificationJob(val job: Job, val webhookId: String?)
+
 class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
 
@@ -135,7 +138,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
 
         // Start listening for notifications
         Timber.d("Starting to listen to Websocket")
-        val jobs = mutableMapOf<Int, Job>()
+        val jobs = mutableMapOf<Int, NotificationJob>()
         manageServerJobs(jobs, this)
 
         // play ping pong to ensure we have a connection and server changes are handled.
@@ -143,7 +146,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             delay(30000)
         } while (isActive && shouldWeRun() && manageServerJobs(jobs, this))
 
-        jobs.forEach { it.value.cancel() }
+        jobs.forEach { it.value.job.cancel() }
         jobs.clear()
 
         Timber.d("Done listening to Websocket")
@@ -177,15 +180,23 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         return true
     }
 
-    private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
+    private suspend fun manageServerJobs(
+        jobs: MutableMap<Int, NotificationJob>,
+        coroutineScope: CoroutineScope,
+    ): Boolean {
         val servers = serverManager.servers()
 
-        // Clean up, including stopped jobs so they are started again below...
-        jobs.filter { (serverId, job) ->
-            servers.none { it.id == serverId } || !job.isActive || !shouldRunForServer(serverId)
+        // Clean up, including stopped jobs and jobs subscribed with a webhook ID replaced by a new
+        // registration of the device, so they are started again below...
+        jobs.filter { (serverId, notificationJob) ->
+            val server = servers.firstOrNull { it.id == serverId }
+            server == null ||
+                !notificationJob.job.isActive ||
+                server.connection.webhookId != notificationJob.webhookId ||
+                !shouldRunForServer(serverId)
         }
-            .forEach { (serverId, job) ->
-                job.cancel()
+            .forEach { (serverId, notificationJob) ->
+                notificationJob.job.cancel()
                 jobs.remove(serverId)
             }
         // Keep up existing connections...
@@ -195,7 +206,10 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         // Start new connections...
         servers.filter { it.id !in jobs.keys && shouldRunForServer(it.id) }
             .forEach {
-                jobs[it.id] = coroutineScope.launch { collectNotifications(it.id) }
+                jobs[it.id] = NotificationJob(
+                    job = coroutineScope.launch { collectNotifications(it.id) },
+                    webhookId = it.connection.webhookId,
+                )
             }
 
         return true // for while
