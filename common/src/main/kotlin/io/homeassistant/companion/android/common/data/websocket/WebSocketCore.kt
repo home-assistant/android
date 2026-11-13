@@ -66,7 +66,9 @@ internal interface WebSocketCore {
     /**
      * Start a subscription for events on the websocket connection and get a Flow for listening to
      * new messages. When there are no more listeners, the subscription will automatically be cancelled
-     * using `unsubscribe_events`. If the subscription already exists, the existing Flow is returned.
+     * using `unsubscribe_events`. If the subscription already exists, the existing Flow is returned,
+     * unless [reconnectPolicy] is [SubscriptionReconnectPolicy.Complete], which always starts a
+     * subscription of its own.
      *
      * @param type value for the `type` key in the subscription message, for example `subscribe_events`
      * @param data a key/value map of additional data to be included in the subscription message, for
@@ -97,7 +99,13 @@ internal sealed interface SubscriptionReconnectPolicy {
     /**
      * Complete the Flow instead of subscribing again: the server dropped the state behind the
      * subscription with the connection, and replaying the command would create new state the
-     * collector does not expect. The Flow is not shared, collect it once.
+     * collector does not expect.
+     *
+     * Such a subscription belongs to its caller, so it is never shared: every call starts a
+     * subscription of its own, even for an identical message, and its Flow is collected once.
+     * For example each `camera/webrtc/offer` opens a WebRTC session on the server that is tied to
+     * one peer connection: a second caller joining it would receive the answer and candidates of
+     * a session it did not negotiate, and the first collector leaving would close it for both.
      */
     data object Complete : SubscriptionReconnectPolicy
 }

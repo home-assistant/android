@@ -674,10 +674,12 @@ internal class WebSocketCoreImpl(
         }
 
         return eventSubscriptionMutex.withLock<Flow<T>?> {
-            ( // Check for existing subscription before creating a new one
-                findSubscription(subscribeMessage)?.second?.eventFlow
-                    ?: createSubscriptionFlow<T>(subscribeMessage, timeout, reconnectPolicy)
-                ) as? Flow<T>
+            val existingFlow = when (reconnectPolicy) {
+                SubscriptionReconnectPolicy.Resubscribe -> findSharedSubscription(subscribeMessage)?.eventFlow
+                // Its Flow is collected once, so the subscription is never one that already exists
+                SubscriptionReconnectPolicy.Complete -> null
+            }
+            (existingFlow ?: createSubscriptionFlow<T>(subscribeMessage, timeout, reconnectPolicy)) as? Flow<T>
         }
     }
 
@@ -815,7 +817,8 @@ internal class WebSocketCoreImpl(
             awaitClose {
                 wsScope.launch {
                     eventSubscriptionMutex.withLock {
-                        findSubscription(subscribeMessage)?.let { (subscriptionId, subscription) ->
+                        // Found by its channel: an identical subscription that isn't shared ends its own
+                        findSubscription(channel)?.let { (subscriptionId, subscription) ->
                             Timber.d("Unsubscribing from ${sensitive { subscribeMessage.toString() }}")
                             // Unsubscribe must happen before removing from activeMessages to ensure
                             // the server acknowledges before we stop handling events for this subscription
@@ -859,7 +862,7 @@ internal class WebSocketCoreImpl(
         )
         if (response == null || response.success != true) {
             Timber.e("Unable to subscribe to ${sensitive { subscribeMessage.toString() }}")
-            findSubscription(subscribeMessage)?.let { (subscriptionId, _) -> activeMessages.remove(subscriptionId) }
+            findSubscription(channel)?.let { (subscriptionId, _) -> activeMessages.remove(subscriptionId) }
             return null
         } else {
             return eventFlow
@@ -867,20 +870,25 @@ internal class WebSocketCoreImpl(
     }
 
     /**
-     * Finds the single [ActiveMessage.Subscription] entry and its ID matching [subscribeMessage].
+     * Finds the shared [ActiveMessage.Subscription] matching [subscribeMessage], the only one new
+     * collectors can join.
      *
-     * Resubscription attempts are tracked as [ActiveMessage.Reconnecting] and never match, so one
-     * logical subscription always has exactly one matching entry.
+     * Resubscription attempts are tracked as [ActiveMessage.Reconnecting] and never match, and a
+     * subscription with [SubscriptionReconnectPolicy.Complete] is never shared, so there is at
+     * most one matching entry.
      */
-    private fun findSubscription(subscribeMessage: Map<String, Any?>): Pair<Long, ActiveMessage.Subscription>? {
-        return activeMessages.firstNotNullOfOrNull { (id, message) ->
-            if (message is ActiveMessage.Subscription && message.request.message == subscribeMessage) {
-                id to message
-            } else {
-                null
+    private fun findSharedSubscription(subscribeMessage: Map<String, Any?>): ActiveMessage.Subscription? =
+        activeMessages.values.firstNotNullOfOrNull { message ->
+            (message as? ActiveMessage.Subscription)?.takeIf {
+                it.reconnectPolicy is SubscriptionReconnectPolicy.Resubscribe && it.request.message == subscribeMessage
             }
         }
-    }
+
+    /** Finds the [ActiveMessage.Subscription] entry delivering its events to [onEvent], and its ID. */
+    private fun findSubscription(onEvent: Channel<*>): Pair<Long, ActiveMessage.Subscription>? =
+        activeMessages.firstNotNullOfOrNull { (id, message) ->
+            (message as? ActiveMessage.Subscription)?.takeIf { it.onEvent === onEvent }?.let { id to it }
+        }
 
     private fun handleAuthComplete(successful: Boolean, haVersion: String?) {
         val parsedVersion = haVersion?.let { HomeAssistantVersion.fromString(it) }
