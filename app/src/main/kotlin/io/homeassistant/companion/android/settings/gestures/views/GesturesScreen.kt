@@ -5,7 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,7 +38,7 @@ fun GesturesScreen(
     onSetAction: (HAGesture, GestureAction) -> Unit,
     onToolbarTitleChanged: (String) -> Unit,
 ) {
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val navController = rememberNavController()
     NavHost(
         navController = navController,
@@ -79,10 +79,10 @@ fun GesturesScreen(
     LaunchedEffect(Unit) {
         navController.currentBackStackEntryFlow.collect { backStackEntry ->
             if (backStackEntry.destination.hasRoute(route = GesturesRoute::class)) {
-                onToolbarTitleChanged(context.getString(R.string.gestures))
+                onToolbarTitleChanged(resources.getString(R.string.gestures))
             } else if (backStackEntry.destination.hasRoute(ActionsRoute::class)) {
                 val action: ActionsRoute = backStackEntry.toRoute()
-                onToolbarTitleChanged(context.getString(action.gesture.fullDescription))
+                onToolbarTitleChanged(resources.getString(action.gesture.fullDescription))
             }
         }
     }
