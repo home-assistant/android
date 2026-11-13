@@ -422,6 +422,33 @@ class FrontendViewModelTest {
                 }
             }
         }
+
+        @Test
+        fun `Given non frontend url target when loading then sends OpenCustomTab and loads the server without it`() = runTest {
+            val nonFrontendUrl = "https://example.com/local/video.mp4"
+            val nonFrontendTarget = FrontendTarget.Path("/local/video.mp4")
+            val nonFrontendUri: Uri = mockk()
+            mockkStatic(Uri::class) {
+                every { Uri.parse(nonFrontendUrl) } returns nonFrontendUri
+                val nonFrontendTargetUrlFlow = MutableSharedFlow<UrlLoadResult>()
+                every { urlManager.serverUrlFlow(serverId, nonFrontendTarget) } returns nonFrontendTargetUrlFlow
+                every { urlManager.serverUrlFlow(serverId, FrontendTarget.Default) } returns flowOf(
+                    UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+                )
+
+                val viewModel = createViewModel(path = "/local/video.mp4")
+                viewModel.events.test {
+                    nonFrontendTargetUrlFlow.emit(
+                        UrlLoadResult.NonFrontendUrl(url = nonFrontendUrl, serverId = serverId),
+                    )
+                    advanceTimeBy(1.seconds)
+                    assertEquals(FrontendEvent.OpenCustomTab(nonFrontendUri), awaitItem())
+                    val state = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+                    // A restart of the load (e.g. on resume) uses this target, it must not reopen the Custom Tab
+                    assertEquals(FrontendTarget.Default, state.target)
+                }
+            }
+        }
     }
 
     @Nested

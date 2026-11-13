@@ -79,4 +79,14 @@ sealed interface UrlLoadResult {
      * @property serverId The server ID the target was requested for
      */
     data class ExternalUrl(val url: String, val serverId: Int) : UrlLoadResult
+
+    /**
+     * The target is on the server origin but is not a frontend page (e.g. a file under `/local/`).
+     *
+     * It must not be loaded in the WebView, which is reserved for the frontend.
+     *
+     * @property url The URL to open outside the WebView
+     * @property serverId The server ID the target was requested for
+     */
+    data class NonFrontendUrl(val url: String, val serverId: Int) : UrlLoadResult
 }

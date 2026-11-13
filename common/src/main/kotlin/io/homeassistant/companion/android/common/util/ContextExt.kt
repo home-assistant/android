@@ -225,7 +225,7 @@ private fun Context.appOrStoreIntent(packageName: String): Intent {
  * Starts [intent], showing "no app available to open [target]" via [onShowSnackbar] when no activity can
  * handle it. [target] is the user-facing description of what we tried to open (a URI, package, or label).
  */
-private suspend fun Context.startActivityOrShowSnackbar(
+suspend fun Context.startActivityOrShowSnackbar(
     intent: Intent,
     target: String,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,

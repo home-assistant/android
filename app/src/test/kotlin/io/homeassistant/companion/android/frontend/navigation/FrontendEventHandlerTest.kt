@@ -346,6 +346,35 @@ class FrontendEventHandlerTest {
     }
 
     @Test
+    fun `Given OpenCustomTab event then onOpenCustomTab is called with the URI`() {
+        var capturedUri: Uri? = null
+        val events = TestSharedFlow<FrontendEvent>()
+
+        composeTestRule.setContent {
+            FrontendEventHandler(
+                events = events,
+                onShowSnackbar = { _, _ -> false },
+                onNavigateToSettings = {},
+                onNavigateToAssist = { _, _, _ -> },
+                onOpenExternalLink = {},
+                onOpenCustomTab = { uri -> capturedUri = uri },
+                onShowServerSwitcher = {},
+                onNavigateToNfcWrite = { _, _ -> },
+                onLaunchMatterThreadIntent = {},
+                onRequestFullscreen = {},
+                onNavigateToWidgetConfig = { _, _ -> },
+            )
+        }
+
+        val testUri = Uri.parse("https://home.example.com/local/video.mp4")
+        composeTestRule.waitForIdle()
+        events.emit(FrontendEvent.OpenCustomTab(uri = testUri))
+        composeTestRule.waitForIdle()
+
+        assertEquals(testUri, capturedUri)
+    }
+
+    @Test
     fun `Given LaunchApp event then onLaunchApp is called with the package name`() {
         var capturedPackageName: String? = null
         val events = TestSharedFlow<FrontendEvent>()

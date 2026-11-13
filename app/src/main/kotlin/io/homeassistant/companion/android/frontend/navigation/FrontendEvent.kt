@@ -71,6 +71,9 @@ sealed interface FrontendEvent {
     /** Open a URI externally using the host-provided external link handler. */
     data class OpenExternalLink(val uri: Uri) : FrontendEvent
 
+    /** Open a URI in a Custom Tab, keeping the user in the app's task. */
+    data class OpenCustomTab(val uri: Uri) : FrontendEvent
+
     /**
      * Launch an installed app by its [packageName].
      *

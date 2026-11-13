@@ -155,7 +155,7 @@ class FrontendUrlManager @Inject constructor(
 
             ServerPathType.NotFrontend -> {
                 Timber.w("Target ${sensitive(url.toString())} is not a frontend page, opening outside the WebView")
-                UrlLoadResult.ExternalUrl(url = url.toString(), serverId = serverId)
+                UrlLoadResult.NonFrontendUrl(url = url.toString(), serverId = serverId)
             }
 
             ServerPathType.Unknown -> {

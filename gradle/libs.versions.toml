@@ -15,6 +15,7 @@ androidSdk-automotive-min = "29"
 androidSdk-wear-min = "26"
 androidSdk-wear-target = "36"
 androidTools = "32.5.1"
+androidxBrowser = "1.10.0"
 androidxConcurrent = "1.3.0"
 androidxHiltNavigationCompose = "1.4.0"
 androidxTestCore = "1.7.0"
@@ -129,6 +130,7 @@ activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activ
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycle" }
+androidx-browser = { module = "androidx.browser:browser", version.ref = "androidxBrowser" }
 androidx-concurrent-ktx = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version.ref = "androidxConcurrent" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material = { module = "androidx.glance:glance-material", version.ref = "glance" }
