@@ -141,6 +141,9 @@ interface PrefsRepository {
 
     suspend fun isWebViewDebugEnabled(): Boolean
 
+    /** Emits the current "WebView debug" preference immediately on collection, then on every change. */
+    suspend fun webViewDebugFlow(): Flow<Boolean>
+
     suspend fun setWebViewDebugEnabled(enabled: Boolean)
 
     suspend fun isCrashReporting(): Boolean
@@ -199,6 +202,11 @@ interface PrefsRepository {
     suspend fun isWakeWordEnabled(): Boolean
 
     suspend fun setWakeWordEnabled(enabled: Boolean)
+
+    /** Whether a chime plays when Assist starts listening hands-free. Enabled by default. */
+    suspend fun isAssistListeningChimeEnabled(): Boolean
+
+    suspend fun setAssistListeningChimeEnabled(enabled: Boolean)
 
     suspend fun getSelectedWakeWord(): String?
 

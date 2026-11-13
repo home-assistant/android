@@ -82,7 +82,16 @@ class PrefsRepositoryImplTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = ["SWIPE_UP_TWO", "SWIPE_DOWN_TWO", "SWIPE_LEFT_TWO", "SWIPE_RIGHT_TWO"])
+        @ValueSource(
+            strings = [
+                "SWIPE_LEFT_ONE_EDGE",
+                "SWIPE_RIGHT_ONE_EDGE",
+                "SWIPE_UP_TWO",
+                "SWIPE_DOWN_TWO",
+                "SWIPE_LEFT_TWO",
+                "SWIPE_RIGHT_TWO",
+            ],
+        )
         fun `Given gesture with no default action when getting pref then none action is returned`(
             gestureName: String,
         ) = runTest {
@@ -186,6 +195,21 @@ class PrefsRepositoryImplTest {
 
                 coEvery { localStorage.getBoolean("keep_screen_on_enabled") } returns true
                 keyChangesFlow.emit("keep_screen_on_enabled")
+
+                assertTrue(awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given collecting flow when webview debug changes then updated webview debug is emitted`() = runTest {
+            coEvery { localStorage.getBoolean("webview_debug_enabled") } returns false
+
+            repository.webViewDebugFlow().test {
+                assertFalse(awaitItem())
+
+                coEvery { localStorage.getBoolean("webview_debug_enabled") } returns true
+                keyChangesFlow.emit("webview_debug_enabled")
 
                 assertTrue(awaitItem())
                 cancelAndIgnoreRemainingEvents()

@@ -1,11 +1,13 @@
 package io.homeassistant.companion.android.onboarding.manualserver.navigation
 
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import io.homeassistant.companion.android.onboarding.manualserver.ManualServerScreen
+import io.homeassistant.companion.android.util.compose.dropUnlessResumed
 import java.net.URL
 import kotlinx.serialization.Serializable
 
@@ -23,8 +25,8 @@ internal fun NavGraphBuilder.manualServerScreen(
 ) {
     composable<ManualServerRoute> {
         ManualServerScreen(
-            onBackClick = onBackClick,
-            onConnectTo = onConnectTo,
+            onBackClick = dropUnlessResumed(block = onBackClick),
+            onConnectTo = dropUnlessResumed(block = onConnectTo),
             onHelpClick = onHelpClick,
             viewModel = hiltViewModel(),
         )

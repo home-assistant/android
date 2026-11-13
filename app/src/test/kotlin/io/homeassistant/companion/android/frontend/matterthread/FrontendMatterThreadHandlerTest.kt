@@ -9,7 +9,11 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.ErrorResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.MatterCommissionFinishMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
+import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.mockk.coEvery
@@ -23,7 +27,21 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+
+private const val SHARE_MESSAGE_ID = 42
+private val SHARE_PAYLOAD = MatterShareDevicePayload(
+    passcode = 20202021,
+    discriminator = 3840,
+    remainingSeconds = 250,
+    vendorId = 0xFFF1,
+    productId = 0x8000,
+    deviceName = "Kitchen light",
+)
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FrontendMatterThreadHandlerTest {
@@ -53,7 +71,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Matter Ready result when onStartMatterCommissioning then emits LaunchIntent`() = runTest {
+    fun `Given Matter Ready result when onStartMatterCommissioning then sends LaunchIntent`() = runTest {
         val intent: IntentSender = mockk()
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(intent)
         val handler = createHandler()
@@ -68,7 +86,24 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Matter Error result when onStartMatterCommissioning then emits MatterError snackbar event`() = runTest {
+    fun `Given LaunchIntent sent before collecting when collecting then it is delivered once`() = runTest {
+        val intent: IntentSender = mockk()
+        coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(intent)
+        val handler = createHandler()
+
+        handler.onStartMatterCommissioning()
+
+        handler.events.test {
+            val event = assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+            assertEquals(intent, event.intentSender)
+        }
+        handler.events.test {
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given Matter Error result when onStartMatterCommissioning then sends MatterError snackbar event`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns
             MatterManager.CommissioningResult.Error(IllegalStateException("nope"))
         val handler = createHandler()
@@ -85,7 +120,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given commissionMatterDevice throws when onStartMatterCommissioning then emits MatterError snackbar event`() = runTest {
+    fun `Given commissionMatterDevice throws when onStartMatterCommissioning then sends MatterError snackbar event`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } throws IllegalStateException("boom")
         val handler = createHandler()
 
@@ -106,10 +141,12 @@ class FrontendMatterThreadHandlerTest {
         every { matterManager.parseCommissioningIntentResult(any()) } returns
             MatterManager.CommissioningRequestResult.Success(deviceName = "Kitchen light")
         val handler = createHandler()
-        // Drive the handler to the awaiting-intent-result state.
-        handler.onStartMatterCommissioning()
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onStartMatterCommissioning()
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null))
             expectNoEvents()
         }
@@ -118,14 +155,17 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Matter is in-flight and commissioning failed on old server when onMatterThreadIntentResult then reports failure and emits MatterCancelled snackbar`() = runTest {
+    fun `Given Matter is in-flight and commissioning failed on old server when onMatterThreadIntentResult then reports failure and sends MatterCancelled snackbar`() = runTest {
         coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
         every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningRequestResult.Failed
         givenServerVersion(HomeAssistantVersion(2026, 6, 0))
         val handler = createHandler()
-        handler.onStartMatterCommissioning()
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onStartMatterCommissioning()
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             launch { handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_CANCELED, null)) }
             val event = assertInstanceOf(FrontendMatterThreadHandler.Event.ShowSnackbar::class.java, awaitItem())
 
@@ -144,9 +184,12 @@ class FrontendMatterThreadHandlerTest {
         every { matterManager.parseCommissioningIntentResult(any()) } returns MatterManager.CommissioningRequestResult.Failed
         givenServerVersion(HomeAssistantVersion(2026, 7, 0))
         val handler = createHandler()
-        handler.onStartMatterCommissioning()
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onStartMatterCommissioning()
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_CANCELED, null))
             expectNoEvents()
         }
@@ -166,7 +209,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Thread Ready result when onImportThreadCredentials then emits LaunchIntent`() = runTest {
+    fun `Given Thread Ready result when onImportThreadCredentials then sends LaunchIntent`() = runTest {
         val intent: IntentSender = mockk()
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = intent)
         val handler = createHandler()
@@ -200,7 +243,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Thread AppUnsupported result when onImportThreadCredentials then emits ThreadError snackbar event`() = runTest {
+    fun `Given Thread AppUnsupported result when onImportThreadCredentials then sends ThreadError snackbar event`() = runTest {
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.AppUnsupported
         val handler = createHandler()
 
@@ -217,7 +260,7 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given exportThreadCredentials throws when onImportThreadCredentials then emits ThreadError snackbar event`() = runTest {
+    fun `Given exportThreadCredentials throws when onImportThreadCredentials then sends ThreadError snackbar event`() = runTest {
         coEvery { threadManager.exportPreferredDataset(any()) } throws IllegalStateException("boom")
         val handler = createHandler()
 
@@ -247,13 +290,16 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Thread is in-flight and sendThreadDatasetExportResult returns name when onMatterThreadIntentResult then emits ThreadSuccess snackbar`() = runTest {
+    fun `Given Thread is in-flight and sendThreadDatasetExportResult returns name when onMatterThreadIntentResult then sends ThreadSuccess snackbar`() = runTest {
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
         coEvery { threadManager.sendThreadDatasetExportResult(any(), any()) } returns "My Thread Network"
         val handler = createHandler()
-        handler.onImportThreadCredentials(serverId = 42)
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onImportThreadCredentials(serverId = 42)
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             launch { handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null)) }
             val event = assertInstanceOf(FrontendMatterThreadHandler.Event.ShowSnackbar::class.java, awaitItem())
 
@@ -280,13 +326,16 @@ class FrontendMatterThreadHandlerTest {
     }
 
     @Test
-    fun `Given Thread is in-flight and sendThreadDatasetExportResult throws when onMatterThreadIntentResult then emits ThreadError snackbar`() = runTest {
+    fun `Given Thread is in-flight and sendThreadDatasetExportResult throws when onMatterThreadIntentResult then sends ThreadError snackbar`() = runTest {
         coEvery { threadManager.exportPreferredDataset(any()) } returns ThreadManager.SyncResult.OnlyOnDevice(exportIntent = mockk())
         coEvery { threadManager.sendThreadDatasetExportResult(any(), any()) } throws IllegalStateException("boom")
         val handler = createHandler()
-        handler.onImportThreadCredentials(serverId = 1)
 
         handler.events.test {
+            // Starting the flow asks the screen to launch the Play Services intent first
+            handler.onImportThreadCredentials(serverId = 1)
+            assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+
             launch { handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null)) }
             val event = assertInstanceOf(FrontendMatterThreadHandler.Event.ShowSnackbar::class.java, awaitItem())
 
@@ -309,5 +358,128 @@ class FrontendMatterThreadHandlerTest {
 
         coVerify(exactly = 0) { threadManager.exportPreferredDataset(any()) }
         firstJob.cancel()
+    }
+
+    @Nested
+    inner class MatterSharingTest {
+
+        @Test
+        fun `Given sharing Ready result when onStartMatterSharing then emits LaunchIntent for the payload`() = runTest {
+            val intent: IntentSender = mockk()
+            coEvery { matterManager.prepareDeviceSharing(any()) } returns MatterManager.CommissioningResult.Ready(intent)
+            val handler = createHandler()
+
+            handler.events.test {
+                launch { handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD) }
+                val event =
+                    assertInstanceOf(FrontendMatterThreadHandler.Event.LaunchIntent::class.java, awaitItem())
+                assertEquals(intent, event.intentSender)
+                cancelAndIgnoreRemainingEvents()
+            }
+            coVerify { matterManager.prepareDeviceSharing(SHARE_PAYLOAD) }
+        }
+
+        @Test
+        fun `Given no message id when onStartMatterSharing then nothing happens`() = runTest {
+            val handler = createHandler()
+
+            handler.onStartMatterSharing(null, SHARE_PAYLOAD)
+
+            coVerify(exactly = 0) { matterManager.prepareDeviceSharing(any()) }
+            coVerify(exactly = 0) { externalBusRepository.send(any()) }
+            // Nothing was claimed, so the next request still gets through.
+            handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+            coVerify { matterManager.prepareDeviceSharing(any()) }
+        }
+
+        @Test
+        fun `Given another flow in flight when onStartMatterSharing then replies failed and leaves that flow alone`() = runTest {
+            coEvery { matterManager.prepareMatterDeviceCommissioning() } returns MatterManager.CommissioningResult.Ready(mockk())
+            every { matterManager.parseCommissioningIntentResult(any()) } returns
+                MatterManager.CommissioningRequestResult.Success(deviceName = "Kitchen light")
+            val handler = createHandler()
+            handler.onStartMatterCommissioning()
+
+            handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+
+            coVerify(exactly = 0) { matterManager.prepareDeviceSharing(any()) }
+            coVerify {
+                externalBusRepository.send(
+                    ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "failed", message = "Another flow is in progress"),
+                )
+            }
+            handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null))
+            coVerify { externalBusRepository.send(MatterCommissionFinishMessage(name = "Kitchen light", success = true)) }
+        }
+
+        @Test
+        fun `Given sharing Error result when onStartMatterSharing then replies failed and releases`() = runTest {
+            coEvery { matterManager.prepareDeviceSharing(any()) } returns
+                MatterManager.CommissioningResult.Error(IllegalStateException("nope"))
+            val handler = createHandler()
+
+            handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+
+            coVerify {
+                externalBusRepository.send(
+                    ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "failed", message = "Sharing could not be prepared"),
+                )
+            }
+            handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+            coVerify(exactly = 2) { matterManager.prepareDeviceSharing(any()) }
+        }
+
+        @Test
+        fun `Given prepareDeviceSharing throws when onStartMatterSharing then replies failed and releases`() = runTest {
+            coEvery { matterManager.prepareDeviceSharing(any()) } throws IllegalStateException("nope")
+            val handler = createHandler()
+
+            handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+
+            coVerify {
+                externalBusRepository.send(
+                    ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "failed", message = "Sharing could not be prepared"),
+                )
+            }
+            handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+            coVerify(exactly = 2) { matterManager.prepareDeviceSharing(any()) }
+        }
+
+        @ParameterizedTest
+        @MethodSource(
+            "io.homeassistant.companion.android.frontend.matterthread.FrontendMatterThreadHandlerTest#shareOutcomes",
+        )
+        fun `Given sharing is in-flight when onMatterThreadIntentResult then replies with the outcome`(
+            outcome: MatterManager.SharingRequestResult,
+            reply: OutgoingExternalBusMessage,
+        ) = runTest {
+            givenSharingInFlight(outcome)
+            val handler = createHandler()
+            handler.onStartMatterSharing(SHARE_MESSAGE_ID, SHARE_PAYLOAD)
+
+            handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null))
+
+            coVerify { externalBusRepository.send(reply) }
+        }
+
+        private fun givenSharingInFlight(outcome: MatterManager.SharingRequestResult) {
+            coEvery { matterManager.prepareDeviceSharing(any()) } returns MatterManager.CommissioningResult.Ready(mockk())
+            every { matterManager.parseSharingIntentResult(any()) } returns outcome
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        fun shareOutcomes(): List<Arguments> = listOf(
+            Arguments.of(MatterManager.SharingRequestResult.Shared, SuccessResultMessage(SHARE_MESSAGE_ID)),
+            Arguments.of(
+                MatterManager.SharingRequestResult.Cancelled,
+                ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "canceled", message = "Cancelled by the user"),
+            ),
+            Arguments.of(
+                MatterManager.SharingRequestResult.Failed,
+                ErrorResultMessage(id = SHARE_MESSAGE_ID, code = "failed", message = "Sharing failed"),
+            ),
+        )
     }
 }

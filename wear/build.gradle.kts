@@ -39,6 +39,9 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp.android)
 
+    implementation(libs.coil.views)
+    implementation(libs.coil.okhttp)
+
     implementation(libs.appcompat)
 
     implementation(libs.activity.ktx)

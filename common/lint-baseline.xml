@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.4.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.4.1)" variant="all" version="9.4.1">
+<issues format="6" by="lint 9.5.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.0)" variant="all" version="9.5.0">
 
     <issue
         id="MissingPermission"
@@ -8,7 +8,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="85"
+            line="101"
             column="21"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="88"
+            line="104"
             column="21"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="288"
+            line="285"
             column="28"/>
     </issue>
 
@@ -41,7 +41,7 @@
         errorLine2="                           ^">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="332"
+            line="328"
             column="28"/>
     </issue>
 
@@ -52,7 +52,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/PhoneStateSensorManager.kt"
-            line="340"
+            line="336"
             column="46"/>
     </issue>
 
@@ -63,29 +63,29 @@
         errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/StorageSensorManager.kt"
-            line="148"
+            line="151"
             column="42"/>
     </issue>
 
     <issue
         id="NewApi"
-        message="Call requires API level 29 (current min is 23): `android.telephony.TelephonyManager#isDataRoamingEnabled`"
+        message="Call requires API level 29 (current min is 24): `android.telephony.TelephonyManager#isDataRoamingEnabled`"
         errorLine1="                    telephonyManager.isDataRoamingEnabled"
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="85"
+            line="101"
             column="38"/>
     </issue>
 
     <issue
         id="NewApi"
-        message="Call requires API level 26 (current min is 23): `android.telephony.TelephonyManager#isDataEnabled`"
+        message="Call requires API level 26 (current min is 24): `android.telephony.TelephonyManager#isDataEnabled`"
         errorLine1="                    telephonyManager.isDataEnabled"
         errorLine2="                                     ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/MobileDataManager.kt"
-            line="88"
+            line="104"
             column="38"/>
     </issue>
 
@@ -96,7 +96,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorUpdater.kt"
-            line="420"
+            line="418"
             column="9"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/authentication/impl/AuthenticationRepositoryImpl.kt"
-            line="41"
+            line="44"
             column="13"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                                                            ~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/sensors/SensorManager.kt"
-            line="375"
+            line="377"
             column="61"/>
     </issue>
 
@@ -197,50 +197,6 @@
             file="src/main/kotlin/io/homeassistant/companion/android/common/compose/composable/HASwitch.kt"
             line="46"
             column="1"/>
-    </issue>
-
-    <issue
-        id="ComposeReadOnlyComposable"
-        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
-        errorLine1="        @Composable"
-        errorLine2="        ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/theme/HATextStyle.kt"
-            line="33"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="ComposeReadOnlyComposable"
-        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
-        errorLine1="        @Composable"
-        errorLine2="        ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/theme/HATextStyle.kt"
-            line="44"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="ComposeReadOnlyComposable"
-        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
-        errorLine1="        @Composable"
-        errorLine2="        ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/theme/HATextStyle.kt"
-            line="55"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="ComposeReadOnlyComposable"
-        message="All composable functions and properties used by this declaration are marked @ReadOnlyComposable, so this declaration can be marked @ReadOnlyComposable too.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
-        errorLine1="        @Composable"
-        errorLine2="        ~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/homeassistant/companion/android/common/compose/theme/HATextStyle.kt"
-            line="93"
-            column="9"/>
     </issue>
 
 </issues>

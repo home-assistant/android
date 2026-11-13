@@ -46,11 +46,12 @@ class SensorManagerCompletenessTest {
 
         val bound = managers.map { it::class.java.name }.toSet()
         val expected = ClassGraph()
+            .enableClasspath()
             .enableClassInfo()
             .acceptPackages("io.homeassistant.companion.android")
             .scan()
             .use { result ->
-                result.getClassesImplementing(SensorManager::class.java)
+                result.getAllClassesImplementing(SensorManager::class.java)
                     .standardClasses
                     .filter { !it.isAbstract }
                     .map { it.name }

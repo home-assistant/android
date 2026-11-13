@@ -44,6 +44,7 @@ class ConnectionScreenTest {
                     getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsNotDisplayed()
@@ -62,6 +63,7 @@ class ConnectionScreenTest {
                     getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
@@ -81,6 +83,7 @@ class ConnectionScreenTest {
                     getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
@@ -100,6 +103,7 @@ class ConnectionScreenTest {
                     getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsNotDisplayed()
@@ -123,6 +127,7 @@ class ConnectionScreenTest {
                     getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
 
