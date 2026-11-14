@@ -39,9 +39,9 @@ class RequestTimeoutScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(composeTestRule.activity.getString(R.string.network_request_timeout_seconds, 30L))
+        composeTestRule.onNodeWithText(composeTestRule.activity.resources.getQuantityString(R.plurals.network_request_timeout_seconds, 30, 30))
             .assertIsSelected()
-        composeTestRule.onNodeWithText(composeTestRule.activity.getString(R.string.network_request_timeout_seconds, 10L))
+        composeTestRule.onNodeWithText(composeTestRule.activity.resources.getQuantityString(R.plurals.network_request_timeout_seconds, 10, 10))
             .performClick()
 
         assertEquals(10.seconds, selected)
@@ -60,7 +60,7 @@ class RequestTimeoutScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(composeTestRule.activity.getString(R.string.network_request_timeout_seconds, 5L))
+        composeTestRule.onNodeWithText(composeTestRule.activity.resources.getQuantityString(R.plurals.network_request_timeout_seconds, 5, 5))
             .performClick()
 
         assertNull(selected)
