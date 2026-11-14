@@ -19,6 +19,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 import timber.log.Timber
 
 /**
@@ -33,8 +34,8 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
             "io.homeassistant.companion.android.widgets.UPDATE_WIDGETS"
 
         private var widgetScope: CoroutineScope = newCoroutineScopeProvider()
-        private val widgetEntities = mutableMapOf<Int, List<String>>()
-        private val widgetJobs = mutableMapOf<Int, Job>()
+        private val widgetEntities = ConcurrentHashMap<Int, List<String>>()
+        private val widgetJobs = ConcurrentHashMap<Int, Job>()
 
         private fun newCoroutineScopeProvider() = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
@@ -103,17 +104,29 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
 
     abstract suspend fun onReceiveIntentNotHandled(context: Context, intent: Intent, appWidgetId: Int)
 
-    suspend fun onScreenOn(context: Context) {
+    suspend fun onScreenOn(context: Context, forceRefreshWidgetId: Int? = null) {
         if (!serverManager.isRegistered()) return
-        updateAllWidgets(context)
+        // A targeted refresh only needs its subscription recreated, not a full re-render
+        if (forceRefreshWidgetId == null) {
+            updateAllWidgets(context)
+        }
 
         val allWidgets = getAllWidgetIdsWithEntities(context)
-        val widgetsWithDifferentEntities = allWidgets.filter { it.value.second != widgetEntities[it.key] }
-        if (widgetsWithDifferentEntities.isNotEmpty()) {
-            widgetsWithDifferentEntities.forEach { (id, pair) ->
+        val widgetsWithChangedSubscriptions = allWidgets.filter {
+            it.key == forceRefreshWidgetId ||
+                it.value.second != widgetEntities[it.key] ||
+                widgetJobs[it.key]?.isActive != true
+        }
+        if (widgetsWithChangedSubscriptions.isNotEmpty()) {
+            widgetsWithChangedSubscriptions.forEach { (id, pair) ->
                 widgetJobs[id]?.cancel()
 
-                val (serverId, entities) = pair.first to pair.second
+                val (serverId, entities) = pair
+                if (entities.isEmpty()) {
+                    widgetEntities.remove(id)
+                    widgetJobs.remove(id)
+                    return@forEach
+                }
                 val entityUpdates =
                     if (serverManager.getServer(serverId) != null) {
                         serverManager.integrationRepository(serverId).getEntityUpdates(entities)
