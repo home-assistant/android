@@ -15,6 +15,10 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 internal val currentChangelog = Changelog(
     new = listOf(
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_request_timeout,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_edge_gestures,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.Gestures),
