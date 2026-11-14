@@ -638,7 +638,7 @@
         </activity>
 
         <!--
-        The tile services dont have the app-wide intentMatchingFlags="enforceIntentFilter".
+        The tile services don't have the app-wide intentMatchingFlags="enforceIntentFilter".
 	Some OEM SystemUIs bind tiles with an explicit intent that has no QS_TILE action,
 	which strict matching rejects, so the tiles never bind (see #6046).
 	They are still protected by BIND_QUICK_SETTINGS_TILE, which only the system can hold.
