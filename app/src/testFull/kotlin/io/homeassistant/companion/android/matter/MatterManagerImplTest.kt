@@ -31,7 +31,6 @@ import io.mockk.verify
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -53,7 +52,6 @@ private val SHARE_PAYLOAD = MatterShareDevicePayload(
     deviceName = "Kitchen light",
 )
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class MatterManagerImplTest {
 
     private val serverManager: ServerManager = mockk(relaxed = true)
@@ -63,7 +61,6 @@ class MatterManagerImplTest {
 
     @AfterEach
     fun tearDown() {
-        SdkVersion.resetSdkInt()
         unmockkStatic(SystemClock::class)
     }
 

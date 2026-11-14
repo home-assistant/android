@@ -74,7 +74,6 @@ class AudioUrlPlayerTest {
     @AfterEach
     fun tearDown() {
         unmockkAll()
-        SdkVersion.resetSdkInt()
     }
 
     @ParameterizedTest(name = "SDK {0}, isAssistant {1} -> stream {2}")
