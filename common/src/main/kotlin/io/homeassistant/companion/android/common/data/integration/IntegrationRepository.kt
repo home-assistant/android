@@ -49,6 +49,12 @@ interface IntegrationRepository {
     suspend fun getEntityUpdates(): Flow<Entity>?
     suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>?
 
+    /**
+     * State changes and removals of [entityIds], or of every entity of the server when null; null
+     * when the subscription cannot be established. [getEntityUpdates] follows the states only.
+     */
+    suspend fun getEntityChanges(entityIds: List<String>?): Flow<EntityChange>?
+
     suspend fun callAction(domain: String, action: String, actionData: Map<String, Any?>)
 
     suspend fun scanTag(data: Map<String, String>)
