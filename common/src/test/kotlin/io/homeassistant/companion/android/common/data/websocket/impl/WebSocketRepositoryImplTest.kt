@@ -321,7 +321,7 @@ class WebSocketRepositoryImplTest {
     @Nested
     inner class RegistryForDisplay {
 
-        private fun captureSentMessage(resultJson: String, version: String = "2025.1.0"): CapturingSlot<Map<String, Any?>> {
+        private fun captureSentMessage(resultJson: String, version: String? = "2025.1.0"): CapturingSlot<Map<String, Any?>> {
             coEvery { webSocketCore.server() } returns createServer(version = version)
             val messageSlot = slot<Map<String, Any?>>()
             coEvery { webSocketCore.sendMessage(capture(messageSlot)) } returns MessageSocketResponse(
@@ -353,6 +353,16 @@ class WebSocketRepositoryImplTest {
             assertNull(repository.getEntityRegistryDisplay())
 
             coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
+        }
+
+        @Test
+        fun `Given an unknown server version When getting entity registry display Then sends list_for_display`() = runTest {
+            val messageSlot = captureSentMessage("""{"entities": [{"ei": "light.bed"}]}""", version = null)
+
+            val response = repository.getEntityRegistryDisplay()
+
+            assertEquals("config/entity_registry/list_for_display", messageSlot.captured["type"])
+            assertEquals("light.bed", response?.entities?.single()?.entityId)
         }
 
         @Test
