@@ -75,6 +75,9 @@ internal class SensorRepositoryImpl @Inject constructor(
 
     override suspend fun update(sensor: Sensor) = dao.upsert(sensor)
 
+    override suspend fun markRegistrationFailed(sensorId: String, serverId: Int) =
+        dao.markRegistrationFailed(sensorId, serverId)
+
     override suspend fun setSensorEnabled(sensorId: String, serverIds: List<Int>, enabled: Boolean) =
         dao.setSensorEnabled(sensorId, serverIds, enabled)
 
