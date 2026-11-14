@@ -79,7 +79,11 @@ private fun requestTimeoutOptions(enabled: Boolean): List<RadioOption<Duration>>
         REQUEST_TIMEOUT_OPTIONS.map { timeout ->
             RadioOption(
                 selectionKey = timeout,
-                headline = resources.getString(commonR.string.network_request_timeout_seconds, timeout.inWholeSeconds),
+                headline = resources.getQuantityString(
+                    commonR.plurals.network_request_timeout_seconds,
+                    timeout.inWholeSeconds.toInt(),
+                    timeout.inWholeSeconds,
+                ),
                 secondary = defaultLabel.takeIf { timeout == DEFAULT_REQUEST_TIMEOUT },
                 enabled = enabled,
             )
