@@ -5,7 +5,6 @@ import android.net.wifi.WifiManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -26,11 +25,6 @@ class WifiHelperImplTest {
         SdkVersion.sdkInt = ANDROID_11_SDK
         every { wifiManager.connectionInfo } returns wifiInfo
         every { wifiInfo.bssid } returns null
-    }
-
-    @AfterEach
-    fun tearDown() {
-        SdkVersion.resetSdkInt()
     }
 
     @Test
