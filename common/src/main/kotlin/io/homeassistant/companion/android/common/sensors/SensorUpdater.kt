@@ -155,15 +155,26 @@ class SensorUpdater @VisibleForTesting internal constructor(
             }.forEach { fullSensor ->
                 launch {
                     try {
-                        serverManager.integrationRepository(
+                        val success = serverManager.integrationRepository(
                             fullSensor.sensor.serverId,
                         ).updateSensors(listOf(fullSensor.toSensorRegistration(basicSensor)))
-                        sensorRepository.updateLastSentStateAndIcon(
-                            basicSensor.id,
-                            fullSensor.sensor.serverId,
-                            fullSensor.sensor.state,
-                            fullSensor.sensor.icon,
-                        )
+                        if (success) {
+                            sensorRepository.updateLastSentStateAndIcon(
+                                basicSensor.id,
+                                fullSensor.sensor.serverId,
+                                fullSensor.sensor.state,
+                                fullSensor.sensor.icon,
+                            )
+                        } else {
+                            // Re-register during the next normal refresh when the server rejects the update.
+                            val sensor = sensorRepository.get(basicSensor.id, fullSensor.sensor.serverId)
+                            // Missing rows have an unregistered default; do not persist it on rejection.
+                            if (sensor?.registered != null) {
+                                sensorRepository.update(
+                                    sensor.copy(registered = null, lastSentState = null, lastSentIcon = null),
+                                )
+                            }
+                        }
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
