@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import io.homeassistant.companion.android.settings.sensor.SensorSettingsViewMode
 import io.homeassistant.companion.android.settings.views.SettingsRow
 import io.homeassistant.companion.android.settings.views.SettingsSubheader
 import io.homeassistant.companion.android.settings.views.SettingsSubheaderDefaults
+import io.homeassistant.companion.android.util.compose.verticalScrollBar
 import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -29,8 +31,10 @@ fun SensorListView(
     onSensorClicked: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val lazyListState = rememberLazyListState()
     LazyColumn(
-        modifier = modifier,
+        state = lazyListState,
+        modifier = modifier.verticalScrollBar(lazyListState),
         contentPadding = safeBottomPaddingValues(applyHorizontal = false),
     ) {
         viewModel.allSensors.filter { it.value.isNotEmpty() }.forEach { (manager, currentSensors) ->
