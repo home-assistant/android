@@ -26,6 +26,7 @@ class ServerRegistrationRepository @Inject constructor(
      * @param url The base URL of the Home Assistant server (e.g., "https://homeassistant.local:8123").
      * @param authorizationCode The OAuth authorization code received from the authentication flow.
      * @param allowInsecureConnection Whether to allow insecure connections (null to let this handle later in the flow).
+     * @param codeVerifier The PKCE code verifier, required when the authorization request included a code challenge.
      * @return A [TemporaryServer] containing the session tokens and server URL if successful,
      *         or `null` if the URL is invalid or the token response is missing a refresh token.
      */
@@ -33,6 +34,7 @@ class ServerRegistrationRepository @Inject constructor(
         url: String,
         authorizationCode: String,
         allowInsecureConnection: Boolean?,
+        codeVerifier: String? = null,
     ): TemporaryServer? {
         return url.toHttpUrlOrNull()?.let { httpUrl ->
             authenticationServiceProvider().getToken(
@@ -40,6 +42,7 @@ class ServerRegistrationRepository @Inject constructor(
                 AuthenticationService.GRANT_TYPE_CODE,
                 authorizationCode,
                 AuthenticationService.CLIENT_ID,
+                codeVerifier,
             ).let {
                 if (it.refreshToken == null) {
                     Timber.e("Missing refresh token in the retrieved token")
