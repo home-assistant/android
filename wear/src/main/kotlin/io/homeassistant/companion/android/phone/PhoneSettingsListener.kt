@@ -167,6 +167,7 @@ class PhoneSettingsListener :
     private fun login(dataMap: DataMap) = serviceScope.launch {
         var authId = ""
         var serverId: Int? = null
+        val previousTrustAnchor = keyStoreRepository.getServerTrustAnchorProvider().certificate
         try {
             authId = dataMap.getString("AuthId", "")
             val url = dataMap.getString("URL", "")
@@ -229,6 +230,7 @@ class PhoneSettingsListener :
             } catch (e: Exception) {
                 Timber.e(e, "Can't revoke session")
             }
+            keyStoreRepository.storeServerTrustAnchor(previousTrustAnchor)
             launch {
                 sendLoginResult(authId, false, e.stackTraceToString())
             }
