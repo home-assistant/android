@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.util.CHANNEL_SENSOR_WORKER
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -139,6 +140,8 @@ class SensorWorker(private val context: Context, workerParams: WorkerParameters)
             setForeground(foregroundInfo)
             Timber.d("Updating all Sensors in foreground.")
         } catch (e: IllegalStateException) {
+            if (e is CancellationException) throw e
+
             // On Android 12+ we might encounter a ForegroundServiceStartNotAllowedException
             // depending on battery settings and trigger. Because the service also works in the
             // background, ignore it and continue (doesn't need to be logged as an exception).
