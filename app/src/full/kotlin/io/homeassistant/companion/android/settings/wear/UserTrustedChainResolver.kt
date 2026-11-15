@@ -1,12 +1,9 @@
 package io.homeassistant.companion.android.settings.wear
 
 import android.net.http.X509TrustManagerExtensions
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.TLSHelper
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.util.sensitive
 import java.io.IOException
 import java.security.GeneralSecurityException
@@ -41,13 +38,13 @@ class UserTrustedChainResolver @VisibleForTesting constructor(
 
     /**
      * Connects to [url] and returns the user-installed CA its certificate chain is trusted with (possibly
-     * the server certificate itself), or `null` when there is none or before Android N.
+     * the server certificate itself), or `null` when there is none.
      *
      * Never throws: any failure is logged and returns `null`.
      */
     suspend fun resolve(url: String): X509Certificate? {
         val httpUrl = url.toHttpUrlOrNull()?.takeIf { it.isHttps }
-        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.N) || httpUrl == null) return null
+        if (httpUrl == null) return null
         return try {
             fetchPeerChain(httpUrl.toString())?.let { peerChain ->
                 withContext(backgroundDispatcher) { userTrustedAnchor(peerChain, httpUrl.host) }
@@ -91,7 +88,6 @@ class UserTrustedChainResolver @VisibleForTesting constructor(
     }
 
     /** Returns the trust anchor of [peerChain] when it validates against the user-installed CAs only. */
-    @RequiresApi(Build.VERSION_CODES.N)
     private fun userTrustedAnchor(peerChain: List<X509Certificate>, host: String): X509Certificate? {
         val userCaTrustManager = tlsHelper.userInstalledCaTrustManager() ?: return null
         return try {
