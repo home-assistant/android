@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders.argb
+import androidx.wear.protolayout.DeviceParametersBuilders.DeviceParameters
 import androidx.wear.protolayout.DimensionBuilders.dp
 import androidx.wear.protolayout.DimensionBuilders.sp
 import androidx.wear.protolayout.LayoutElementBuilders
@@ -38,6 +39,7 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.getIcon
 import java.nio.ByteBuffer
 import javax.inject.Inject
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +55,7 @@ private const val ICON_SIZE_FULL = 48f * 0.7071f // square that fits in 48dp cir
 private const val ICON_SIZE_SMALL = 40f * 0.7071f // square that fits in 48dp circle
 private const val SPACING = 8f
 private const val TEXT_SIZE = 8f
+private const val MIN_TEXT_SIZE = 6f
 private const val TEXT_PADDING = 2f
 
 @AndroidEntryPoint
@@ -84,7 +87,7 @@ class ShortcutsTile : TileService() {
             .setResourcesVersion(entities.toString())
             .setTileTimeline(
                 if (serverManager.isRegistered()) {
-                    timeline(tileId)
+                    timeline(tileId, screenDiameterDp(requestParams.deviceConfiguration))
                 } else {
                     loggedOutTimeline(
                         this@ShortcutsTile,
@@ -99,10 +102,14 @@ class ShortcutsTile : TileService() {
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
             val showLabels = wearPrefsRepository.getShowShortcutText()
-            val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
+            val entities = getEntities(requestParams.tileId)
+            val circleSize = packedShortcutLayout(
+                entities.size,
+                screenDiameterDp(requestParams.deviceConfiguration),
+            )?.circleSize ?: CIRCLE_SIZE
+            val iconSize = (if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL) * circleSize / CIRCLE_SIZE
             val density = requestParams.deviceConfiguration.screenDensity
             val iconSizePx = (iconSize * density).roundToInt()
-            val entities = getEntities(requestParams.tileId)
 
             Resources.Builder()
                 .setVersion(entities.toString())
@@ -179,11 +186,19 @@ class ShortcutsTile : TileService() {
         return wearPrefsRepository.getTileShortcutsAndSaveTileId(tileId).map { SimplifiedEntity(it) }
     }
 
-    private suspend fun timeline(tileId: Int): Timeline {
+    private suspend fun timeline(tileId: Int, screenDiameterDp: Float): Timeline {
         val entities = getEntities(tileId)
         val showLabels = wearPrefsRepository.getShowShortcutText()
 
-        return Timeline.fromLayoutElement(layout(entities, showLabels))
+        // Many shortcuts are placed to use the whole round screen, otherwise the original rows are used
+        val packed = packedShortcutLayout(entities.size, screenDiameterDp)
+        val layout = if (packed != null) {
+            packedShortcutsView(entities, packed, screenDiameterDp) { iconLayout(it, showLabels, packed.circleSize) }
+        } else {
+            layout(entities, showLabels)
+        }
+
+        return Timeline.fromLayoutElement(layout)
     }
 
     fun layout(entities: List<SimplifiedEntity>, showLabels: Boolean): LayoutElement = Column.Builder().apply {
@@ -216,10 +231,14 @@ class ShortcutsTile : TileService() {
     }
         .build()
 
-    private fun iconLayout(entity: SimplifiedEntity, showLabels: Boolean): LayoutElement = Box.Builder().apply {
-        val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
-        setWidth(dp(CIRCLE_SIZE))
-        setHeight(dp(CIRCLE_SIZE))
+    private fun iconLayout(
+        entity: SimplifiedEntity,
+        showLabels: Boolean,
+        circleSize: Float = CIRCLE_SIZE,
+    ): LayoutElement = Box.Builder().apply {
+        val iconSize = (if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL) * circleSize / CIRCLE_SIZE
+        setWidth(dp(circleSize))
+        setHeight(dp(circleSize))
         setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
         setModifiers(
             ModifiersBuilders.Modifiers.Builder()
@@ -229,7 +248,7 @@ class ShortcutsTile : TileService() {
                         .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorOverlay)))
                         .setCorner(
                             ModifiersBuilders.Corner.Builder()
-                                .setRadius(dp(CIRCLE_SIZE / 2))
+                                .setRadius(dp(circleSize / 2))
                                 .build(),
                         )
                         .build(),
@@ -261,7 +280,7 @@ class ShortcutsTile : TileService() {
                             .setText(entity.name)
                             .setFontStyle(
                                 LayoutElementBuilders.FontStyle.Builder()
-                                    .setSize(sp(TEXT_SIZE))
+                                    .setSize(sp(max(TEXT_SIZE * circleSize / CIRCLE_SIZE, MIN_TEXT_SIZE)))
                                     .build(),
                             )
                             .build(),
@@ -286,3 +305,6 @@ class ShortcutsTile : TileService() {
         }
     }
 }
+
+private fun screenDiameterDp(deviceConfiguration: DeviceParameters): Float =
+    min(deviceConfiguration.screenWidthDp, deviceConfiguration.screenHeightDp).toFloat()
