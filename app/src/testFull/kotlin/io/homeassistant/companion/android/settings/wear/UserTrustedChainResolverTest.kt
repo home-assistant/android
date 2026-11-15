@@ -79,6 +79,32 @@ class UserTrustedChainResolverTest {
         assertEquals(userCa.certificate, resolver.resolve(serverUrl()))
     }
 
+    @Test
+    fun `Given a server not anchored on a user-installed CA when resolving then no anchor is returned`() = runTest {
+        val resolver = resolverOf(platformTrustedCa = userCa, userInstalledCa = systemCa)
+
+        assertEquals(null, resolver.resolve(serverUrl()))
+    }
+
+    @Test
+    fun `Given non-HTTPS or invalid URLs when resolving then no anchor is returned`() = runTest {
+        val resolver = UserTrustedChainResolver(mockk(), mockk())
+
+        assertEquals(null, resolver.resolve("http://$LOCALHOST/"))
+        assertEquals(null, resolver.resolve("not a URL"))
+    }
+
+    @Test
+    fun `Given a connection failure when resolving then no anchor is returned`() = runTest {
+        val client = OkHttpClient.Builder()
+            .addInterceptor { throw IOException("Connection failed") }
+            .build()
+        val homeAssistantApis = mockk<HomeAssistantApis> { coEvery { getOkHttpClient() } returns client }
+        val resolver = UserTrustedChainResolver(homeAssistantApis, mockk())
+
+        assertEquals(null, resolver.resolve(serverUrl()))
+    }
+
     private fun serverUrl(): String = "https://$LOCALHOST:${serverSocket.localPort}/"
 
     /** Answers a single request with an empty `200 OK`, completing the TLS handshake on the first read. */
