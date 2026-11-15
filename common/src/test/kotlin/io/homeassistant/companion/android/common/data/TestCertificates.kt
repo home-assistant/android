@@ -24,6 +24,13 @@ internal object TestCertificates {
         .build()
         .certificate
 
+    /** Server certificate for `localhost` with its private key, signed by [PRIVATE_CA], to run a local TLS server. */
+    val PRIVATE_CA_LOCALHOST: HeldCertificate = HeldCertificate.Builder()
+        .commonName("localhost")
+        .addSubjectAlternativeName("localhost")
+        .signedBy(privateCa)
+        .build()
+
     /** CA certificate (`CN=Test System CA`) standing in for a preinstalled one, unrelated to the others. */
     val SYSTEM_CA: X509Certificate = HeldCertificate.Builder()
         .commonName("Test System CA")

@@ -3,15 +3,13 @@ package io.homeassistant.companion.android.settings.wear
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.TLSHelper
+import io.homeassistant.companion.android.testing.unit.LocalTlsServer
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
-import java.net.InetAddress
-import java.net.ServerSocket
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509ExtendedTrustManager
-import kotlin.concurrent.thread
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
 import okhttp3.tls.HandshakeCertificates
@@ -25,7 +23,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 private const val LOCALHOST = "localhost"
-private const val EMPTY_OK_RESPONSE = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -41,8 +38,7 @@ class UserTrustedChainResolverTest {
         .certificateAuthority(0)
         .build()
 
-    private lateinit var serverSocket: ServerSocket
-    private lateinit var serverThread: Thread
+    private lateinit var server: LocalTlsServer
 
     @Before
     fun setUp() {
@@ -51,39 +47,33 @@ class UserTrustedChainResolverTest {
             .addSubjectAlternativeName(LOCALHOST)
             .signedBy(userCa)
             .build()
-        val serverCertificates = HandshakeCertificates.Builder()
-            .heldCertificate(serverCertificate)
-            .build()
-        serverSocket = serverCertificates.sslContext().serverSocketFactory
-            .createServerSocket(0, 1, InetAddress.getByName(LOCALHOST))
-        serverThread = thread { serveOneRequest() }
+        server = LocalTlsServer(serverCertificate)
     }
 
     @After
     fun tearDown() {
-        serverSocket.close()
-        serverThread.join()
+        server.close()
     }
 
     @Test
     fun `Given a server trusted by the platform when resolving then the user CA is returned`() = runTest {
         val resolver = resolverOf(platformTrustedCa = userCa, userInstalledCa = userCa)
 
-        assertEquals(userCa.certificate, resolver.resolve(serverUrl()))
+        assertEquals(userCa.certificate, resolver.resolve(server.url))
     }
 
     @Test
     fun `Given a server trusted only by the user-CA fallback when resolving then the user CA is returned`() = runTest {
         val resolver = resolverOf(platformTrustedCa = systemCa, userInstalledCa = userCa)
 
-        assertEquals(userCa.certificate, resolver.resolve(serverUrl()))
+        assertEquals(userCa.certificate, resolver.resolve(server.url))
     }
 
     @Test
     fun `Given a server not anchored on a user-installed CA when resolving then no anchor is returned`() = runTest {
         val resolver = resolverOf(platformTrustedCa = userCa, userInstalledCa = systemCa)
 
-        assertEquals(null, resolver.resolve(serverUrl()))
+        assertEquals(null, resolver.resolve(server.url))
     }
 
     @Test
@@ -102,25 +92,7 @@ class UserTrustedChainResolverTest {
         val homeAssistantApis = mockk<HomeAssistantApis> { coEvery { getOkHttpClient() } returns client }
         val resolver = UserTrustedChainResolver(homeAssistantApis, mockk())
 
-        assertEquals(null, resolver.resolve(serverUrl()))
-    }
-
-    private fun serverUrl(): String = "https://$LOCALHOST:${serverSocket.localPort}/"
-
-    /** Answers a single request with an empty `200 OK`, completing the TLS handshake on the first read. */
-    private fun serveOneRequest() {
-        try {
-            serverSocket.accept().use { socket ->
-                val reader = socket.getInputStream().bufferedReader()
-                while (reader.readLine()?.isNotEmpty() == true) {
-                    // Skip the request headers until the blank line ending them
-                }
-                socket.getOutputStream().write(EMPTY_OK_RESPONSE.toByteArray())
-                socket.getOutputStream().flush()
-            }
-        } catch (_: IOException) {
-            // Server socket closed by tearDown, or the client dropped the connection
-        }
+        assertEquals(null, resolver.resolve(server.url))
     }
 
     /**
