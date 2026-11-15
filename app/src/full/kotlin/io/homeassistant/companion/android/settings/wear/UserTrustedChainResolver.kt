@@ -55,7 +55,10 @@ class UserTrustedChainResolver @VisibleForTesting constructor(
                 Timber.d("User trusted anchor found for ${sensitive(httpUrl.host)}: ${anchor != null}")
             }
         } catch (e: IOException) {
-            Timber.w(e, "Failed to connect to the server to resolve its user trusted anchor")
+            Timber.w(
+                "Failed to connect to the server to resolve its user trusted anchor: ${e.javaClass.simpleName}, " +
+                    "details: ${sensitive { e.stackTraceToString() }}",
+            )
             null
         } catch (e: GeneralSecurityException) {
             Timber.w(e, "Failed to validate the server chain to resolve its user trusted anchor")
@@ -84,8 +87,9 @@ class UserTrustedChainResolver @VisibleForTesting constructor(
                 chain.proceed(chain.request())
             }
             .build()
-        val response = withContext(backgroundDispatcher) { client.newCall(request).execute() }
-        val cleanedChain = response.use { it.handshake?.peerCertificates }
+        val cleanedChain = withContext(backgroundDispatcher) {
+            client.newCall(request).execute().use { it.handshake?.peerCertificates }
+        }
         val peerCertificates = cleanedChain?.takeIf { it.isNotEmpty() } ?: sessionChain
         return peerCertificates?.filterIsInstance<X509Certificate>()?.takeIf { it.isNotEmpty() }
     }
