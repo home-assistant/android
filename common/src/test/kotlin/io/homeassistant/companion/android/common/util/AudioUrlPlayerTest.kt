@@ -20,6 +20,7 @@ import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
+import java.util.stream.Stream
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -29,9 +30,31 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
+
+private const val ANDROID_17_SDK = 37
+private const val PRE_ANDROID_17_SDK = 36
 
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class AudioUrlPlayerTest {
+
+    companion object {
+        /**
+         * Cases for testing volume stream + isAssistant combinations: on Android 17 this will
+         * check STREAM_MUSIC or STREAM_ASSISTANT, on older Android versions this will always be
+         * STREAM_MUSIC.
+         */
+        @JvmStatic
+        fun volumeStreamCases(): Stream<Arguments> = Stream.of(
+            Arguments.of(ANDROID_17_SDK, true, AudioManager.STREAM_ASSISTANT),
+            Arguments.of(ANDROID_17_SDK, false, AudioManager.STREAM_MUSIC),
+            Arguments.of(PRE_ANDROID_17_SDK, true, AudioManager.STREAM_MUSIC),
+            Arguments.of(PRE_ANDROID_17_SDK, false, AudioManager.STREAM_MUSIC),
+        )
+    }
+
     private lateinit var audioManager: AudioManager
     private lateinit var exoPlayer: ExoPlayer
     private lateinit var player: AudioUrlPlayer
@@ -40,6 +63,7 @@ class AudioUrlPlayerTest {
     fun setUp() {
         audioManager = mockk(relaxed = true)
         exoPlayer = mockk(relaxed = true)
+        SdkVersion.sdkInt = PRE_ANDROID_17_SDK
 
         player = AudioUrlPlayer(audioManager) { block ->
             exoPlayer.apply { block() }
@@ -50,16 +74,46 @@ class AudioUrlPlayerTest {
     @AfterEach
     fun tearDown() {
         unmockkAll()
+        SdkVersion.resetSdkInt()
     }
 
-    @Test
-    fun `Given volume equal to 0 when playAudio then emits nothing and no audio is played`() = runTest {
-        every { audioManager.getStreamVolume(any()) } returns 0
+    @ParameterizedTest(name = "SDK {0}, isAssistant {1} -> stream {2}")
+    @MethodSource("volumeStreamCases")
+    fun `Given volume equal to 0 when playAudio then checks correct stream, emits nothing and no audio is played`(
+        sdk: Int,
+        isAssistant: Boolean,
+        stream: Int,
+    ) = runTest {
+        SdkVersion.sdkInt = sdk
+        val otherStream = if (stream == AudioManager.STREAM_MUSIC) AudioManager.STREAM_ASSISTANT else AudioManager.STREAM_MUSIC
+        every { audioManager.getStreamVolume(stream) } returns 0
+        every { audioManager.getStreamVolume(otherStream) } returns 1
 
-        val states = player.playAudio("").toList()
+        val states = player.playAudio(url = "", isAssistant = isAssistant).toList()
+
+        verify(exactly = 1) { audioManager.getStreamVolume(stream) }
+        verify(exactly = 0) { audioManager.getStreamVolume(otherStream) }
 
         assertTrue(states.isEmpty())
         verify(exactly = 0) { exoPlayer.play() }
+    }
+
+    @Test
+    fun `Given Android 17 and media volume equal to 0 but assistant volume above 0 when playing assistant audio then playback starts`() = runTest {
+        val listenerSlot = slot<Player.Listener>()
+
+        SdkVersion.sdkInt = ANDROID_17_SDK
+        every { audioManager.getStreamVolume(AudioManager.STREAM_ASSISTANT) } returns 1
+        every { audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) } returns 0
+        every { exoPlayer.addListener(capture(listenerSlot)) } just Runs
+        every { exoPlayer.prepare() } answers {
+            listenerSlot.captured.onPlaybackStateChanged(Player.STATE_READY)
+        }
+
+        player.playAudio(url = "test_url", isAssistant = true).test {
+            assertEquals(PlaybackState.READY, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test

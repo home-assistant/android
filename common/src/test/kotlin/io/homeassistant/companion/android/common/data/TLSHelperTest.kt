@@ -11,7 +11,6 @@ import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
 import io.homeassistant.companion.android.common.data.keychain.ServerTrustAnchorProvider
-import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.testing.unit.LocalTlsServer
 import io.mockk.every
 import io.mockk.mockk
@@ -30,9 +29,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
-
-/** Android N, the first version with the user-installed CA and server trust anchor fallbacks. */
-private const val ANDROID_7_SDK = 24
 
 class TLSHelperTest {
 
@@ -77,7 +73,6 @@ class TLSHelperTest {
 
     @Test
     fun `Given a phone when setting up the client then the server trust anchor is not loaded`() = runTest {
-        SdkVersion.sdkInt = ANDROID_7_SDK
         val keyStore = FakeKeyStoreRepository()
         val tlsHelper = tlsHelperOf(keyStore = keyStore, isWear = false)
 
@@ -88,7 +83,6 @@ class TLSHelperTest {
 
     @Test
     fun `Given a watch when setting up the client then the server trust anchor is loaded`() = runTest {
-        SdkVersion.sdkInt = ANDROID_7_SDK
         val keyStore = FakeKeyStoreRepository()
         val tlsHelper = tlsHelperOf(keyStore = keyStore, isWear = true)
 
@@ -194,7 +188,6 @@ class TLSHelperTest {
      * resolves to the loopback address [LocalTlsServer] listens on, so a failure is the one of the handshake.
      */
     private suspend fun clientOf(keyStore: KeyStoreRepository, isWear: Boolean): OkHttpClient {
-        SdkVersion.sdkInt = ANDROID_7_SDK
         val builder = OkHttpClient.Builder().dns { listOf(InetAddress.getLoopbackAddress()) }
         tlsHelperOf(keyStore = keyStore, isWear = isWear).setupOkHttpClientSSLSocketFactory(builder)
         return builder.build()

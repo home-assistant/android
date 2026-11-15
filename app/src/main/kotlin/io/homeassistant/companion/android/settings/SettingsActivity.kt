@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
@@ -17,6 +16,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
+import eightbitlab.com.blurview.BlurTarget
 import eightbitlab.com.blurview.BlurView
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
@@ -95,8 +95,10 @@ class SettingsActivity : BaseActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
+        val blurTarget = findViewById<BlurTarget>(R.id.blurTarget)
         blurView = findViewById(R.id.blurView)
-        blurView.setupWith(window.decorView.rootView as ViewGroup)
+        blurView.setupWith(blurTarget)
+            .setFrameClearDrawable(window.decorView.background)
             .setBlurRadius(8f)
             .setBlurEnabled(false)
 

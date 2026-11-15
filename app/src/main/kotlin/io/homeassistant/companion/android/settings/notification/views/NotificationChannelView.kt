@@ -21,7 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.github.timoptr.mdiicons.Mdi
@@ -41,7 +41,7 @@ import kotlinx.coroutines.launch
 fun NotificationChannelView(notificationViewModel: NotificationViewModel, modifier: Modifier = Modifier) {
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val resources = LocalResources.current
     Scaffold(
         modifier = modifier,
         scaffoldState = scaffoldState,
@@ -97,11 +97,11 @@ fun NotificationChannelView(notificationViewModel: NotificationViewModel, modifi
                                         scope.launch {
                                             scaffoldState.snackbarHostState
                                                 .showSnackbar(
-                                                    context.getString(
+                                                    resources.getString(
                                                         R.string.notification_channel_deleted,
                                                         channel.name,
                                                     ),
-                                                    context.getString(R.string.undo),
+                                                    resources.getString(R.string.undo),
                                                 )
                                                 .let {
                                                     if (it == SnackbarResult.ActionPerformed) {

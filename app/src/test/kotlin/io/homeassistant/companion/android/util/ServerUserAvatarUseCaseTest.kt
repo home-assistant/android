@@ -8,6 +8,8 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import coil3.request.ImageResult
 import coil3.request.allowHardware
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -16,23 +18,24 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
 import io.homeassistant.companion.android.database.server.ServerUserInfo
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import java.net.URL
 import java.time.LocalDateTime
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class ServerUserAvatarUseCaseTest {
 
     // The context is only stored on the ImageRequest (its methods are never called at build time),
@@ -46,12 +49,12 @@ class ServerUserAvatarUseCaseTest {
         serverManager = serverManager,
     )
 
-    private fun server(id: Int, userId: String?): Server = Server(
+    private fun server(id: Int, userId: String?, userPicturePath: String?): Server = Server(
         id = id,
         _name = "Home",
         connection = ServerConnectionInfo(externalUrl = ""),
         session = ServerSessionInfo(),
-        user = ServerUserInfo(id = userId, name = "Alice"),
+        user = ServerUserInfo(id = userId, name = "Alice", picturePath = userPicturePath),
     )
 
     private fun personEntity(userId: String, picture: String?): Entity = Entity(
@@ -72,8 +75,9 @@ class ServerUserAvatarUseCaseTest {
     }
 
     /** Stubs [serverManager] so the user on [serverId] resolves to a person with [picture]. */
-    private fun givenServerWithPersonPicture(serverId: Int, picture: String) {
-        coEvery { serverManager.getServer(serverId) } returns server(id = serverId, userId = "uid-$serverId")
+    private fun givenServerWithPersonPicture(serverId: Int, picture: String, previousPicture: String? = null) {
+        coEvery { serverManager.getServer(serverId) } returns server(id = serverId, userId = "uid-$serverId", userPicturePath = previousPicture)
+        coEvery { serverManager.updateServer(any()) } just Runs
         coEvery { serverManager.integrationRepository(serverId) } returns mockk<IntegrationRepository> {
             coEvery { getEntities() } returns listOf(personEntity(userId = "uid-$serverId", picture = picture))
         }
@@ -94,30 +98,57 @@ class ServerUserAvatarUseCaseTest {
 
     @Test
     fun `Given a user without an id when getUserAvatar then returns null and entities are not queried`() = runTest {
-        coEvery { serverManager.getServer(1) } returns server(id = 1, userId = null)
+        coEvery { serverManager.getServer(1) } returns server(id = 1, userId = null, userPicturePath = null)
 
         assertNull(useCase.getUserAvatar(1))
         coVerify(exactly = 0) { serverManager.integrationRepository(any()) }
     }
 
     @Test
-    fun `Given no person entity matches the user when getUserAvatar then returns null`() = runTest {
-        coEvery { serverManager.getServer(1) } returns server(id = 1, userId = "uid-1")
+    fun `Given no person entity matches the user when getUserAvatar then stores and returns null`() = runTest {
+        coEvery { serverManager.getServer(1) } returns server(id = 1, userId = "uid-1", userPicturePath = null)
         coEvery { serverManager.integrationRepository(1) } returns mockk<IntegrationRepository> {
             coEvery { getEntities() } returns listOf(personEntity(userId = "someone-else", picture = "/picture.png"))
         }
+        val serverSlot = slot<Server>()
+        coEvery { serverManager.updateServer(capture(serverSlot)) } just Runs
 
         assertNull(useCase.getUserAvatar(1))
+        assertNull(serverSlot.captured.user.picturePath)
     }
 
     @Test
-    fun `Given a resolvable picture when getUserAvatar then the avatar is downloaded`() = runTest {
-        givenServerWithPersonPicture(serverId = 1, picture = "http://homeassistant.local:8123/api/image/serve/abc")
+    fun `Given a resolvable picture when getUserAvatar then path is stored and the avatar is downloaded`() = runTest {
+        val picturePath = "http://homeassistant.local:8123/api/image/serve/abc"
+        givenServerWithPersonPicture(serverId = 1, picture = picturePath)
+
+        val serverSlot = slot<Server>()
+        coEvery { serverManager.updateServer(capture(serverSlot)) } just Runs
         coEvery { imageLoader.execute(any()) } returns imageResult()
 
         useCase.getUserAvatar(1)
 
+        assertEquals(picturePath, serverSlot.captured.user.picturePath)
         coVerify { imageLoader.execute(any()) }
+    }
+
+    @Test
+    fun `Given no resolvable picture but previously stored when getUserAvatar then the avatar is downloaded from the stored path`() = runTest {
+        val storedPicture = "http://homeassistant.local:8123/api/image/serve/previous"
+        givenServerWithPersonPicture(serverId = 1, picture = "", previousPicture = storedPicture)
+
+        // Entities don't load, so nothing to load picture from
+        coEvery { serverManager.integrationRepository(1) } returns mockk {
+            coEvery { getEntities() } returns emptyList()
+        }
+        val imageRequestSlot = slot<ImageRequest>()
+        coEvery { imageLoader.execute(capture(imageRequestSlot)) } returns imageResult()
+
+        useCase.getUserAvatar(1)
+
+        coVerify(exactly = 0) { serverManager.updateServer(any()) }
+        assertNotNull(imageRequestSlot.captured)
+        assertEquals(storedPicture, imageRequestSlot.captured.data.toString())
     }
 
     @Test
@@ -164,7 +195,10 @@ class ServerUserAvatarUseCaseTest {
     @Test
     fun `Given credentials cannot be safely sent when getUserAvatar then it does not download and falls back to the cache`() = runTest {
         val picture = "http://homeassistant.local:8123/api/image/serve/abc"
-        givenServerWithPersonPicture(serverId = 1, picture = picture)
+        givenServerWithPersonPicture(serverId = 1, picture = picture, previousPicture = picture)
+        coEvery { serverManager.integrationRepository(1) } returns mockk {
+            coEvery { getEntities() } returns emptyList()
+        }
         coEvery { serverManager.connectionStateProvider(1) } returns mockk {
             coEvery { canSafelySendCredentials(any()) } returns false
         }
@@ -174,6 +208,7 @@ class ServerUserAvatarUseCaseTest {
         every { imageLoader.diskCache } returns null
 
         assertNull(useCase.getUserAvatar(1))
+        coVerify(exactly = 0) { serverManager.updateServer(any()) }
         coVerify(exactly = 0) { imageLoader.execute(any()) }
         verify { memoryCache.get(MemoryCache.Key(avatarCacheKey(serverId = 1, picturePath = picture))) }
     }
@@ -189,8 +224,11 @@ class ServerUserAvatarUseCaseTest {
     @Test
     fun `Given the server is unreachable when getUserAvatar then the cache is queried by the cache key`() = runTest {
         val picture = "/api/image/serve/abc"
-        givenServerWithPersonPicture(serverId = 1, picture = picture)
-        // No base URL available, so the avatar can only come from the cache.
+        givenServerWithPersonPicture(serverId = 1, picture = picture, previousPicture = picture)
+        // No entities or base URL available, so the avatar can only come from the cache.
+        coEvery { serverManager.integrationRepository(1) } returns mockk {
+            coEvery { getEntities() } returns emptyList()
+        }
         coEvery { serverManager.connectionStateProvider(1) } returns mockk {
             every { urlFlow() } returns flowOf(UrlState.HasUrl(null))
         }
@@ -200,6 +238,7 @@ class ServerUserAvatarUseCaseTest {
         every { imageLoader.diskCache } returns null
 
         assertNull(useCase.getUserAvatar(1))
+        coVerify(exactly = 0) { serverManager.updateServer(any()) }
         verify { memoryCache.get(MemoryCache.Key(avatarCacheKey(serverId = 1, picturePath = picture))) }
         coVerify(exactly = 0) { imageLoader.execute(any()) }
     }
@@ -207,7 +246,11 @@ class ServerUserAvatarUseCaseTest {
     @Test
     fun `Given the server is unreachable and the memory cache misses when getUserAvatar then the disk cache is queried`() = runTest {
         val picture = "/api/image/serve/abc"
-        givenServerWithPersonPicture(serverId = 1, picture = picture)
+        givenServerWithPersonPicture(serverId = 1, picture = picture, previousPicture = picture)
+        // No entities or base URL available, so the avatar can only come from the cache.
+        coEvery { serverManager.integrationRepository(1) } returns mockk {
+            coEvery { getEntities() } returns emptyList()
+        }
         coEvery { serverManager.connectionStateProvider(1) } returns mockk {
             every { urlFlow() } returns flowOf(UrlState.HasUrl(null))
         }
@@ -219,7 +262,36 @@ class ServerUserAvatarUseCaseTest {
         every { imageLoader.diskCache } returns diskCache
 
         assertNull(useCase.getUserAvatar(1))
+        coVerify(exactly = 0) { serverManager.updateServer(any()) }
         verify { diskCache.openSnapshot(avatarCacheKey(serverId = 1, picturePath = picture)) }
+    }
+
+    @Test
+    fun `Given the server is offline and auth is expired when getUserAvatar then the cache is queried by the cache key`() = runTest {
+        val picture = "/api/image/serve/abc"
+        givenServerWithPersonPicture(serverId = 1, picture = picture, previousPicture = picture)
+        // When offline, we have an url but the websocket returns null and Retrofit throws
+        coEvery { serverManager.connectionStateProvider(1) } returns mockk {
+            every { urlFlow() } returns flowOf(UrlState.HasUrl(URL("http://homeassistant.local:8123/")))
+            coEvery { canSafelySendCredentials(any()) } returns true
+        }
+        coEvery { serverManager.integrationRepository(1) } returns mockk {
+            coEvery { getEntities() } returns emptyList()
+        }
+        val authRepo = mockk<AuthenticationRepository> {
+            coEvery { buildBearerToken() } throws AuthorizationException()
+        }
+        coEvery { serverManager.authenticationRepository(1) } returns authRepo
+        val memoryCache = mockk<MemoryCache>()
+        every { memoryCache.get(any()) } returns null
+        every { imageLoader.memoryCache } returns memoryCache
+        every { imageLoader.diskCache } returns null
+
+        assertNull(useCase.getUserAvatar(1))
+        coVerify(exactly = 0) { serverManager.updateServer(any()) }
+        coVerify { authRepo.buildBearerToken() }
+        verify { memoryCache.get(MemoryCache.Key(avatarCacheKey(serverId = 1, picturePath = picture))) }
+        coVerify(exactly = 0) { imageLoader.execute(any()) }
     }
 
     @Test

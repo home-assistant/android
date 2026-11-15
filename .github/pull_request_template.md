@@ -42,33 +42,28 @@ Select exactly one option that describes AI usage in this contribution:
     Note: Remove this section if there are no screenshots.
 -->
 
-## Link to pull request in documentation repositories
-<!-- 
-    This pull request introduces, changes, or removes user-facing functionality.
-    A corresponding update to the Companion App documentation in the documentation repository (https://github.com/home-assistant/companion.home-assistant) is required.
+## Additional information
+<!--
+    A user-facing change needs a pull request in the Companion App documentation
+    (https://github.com/home-assistant/companion.home-assistant). Mark the feature
+    there with the `<span class='beta'>BETA</span> ` flag.
+    A developer-facing change needs a pull request in the contributor documentation
+    (https://github.com/home-assistant/contributors.home-assistant.io).
 
-    Instructions:
-    1. Create a pull request in the documentation repository.
-    2. Add the documentation pull request number after the "#" below.
-    3. Add the `<span class='beta'>BETA</span> ` flag in the documentation to mark it as such.
+    Under "This PR belongs together with", list the pull requests that are
+    part of the same change, in any repository: the code this documents, its
+    documentation or brands, or code that has to be merged together with it.
+    One pull request fits on the line itself; list several as indented
+    bullets below it, as `owner/repo#number` or a link:
 
-    Note: Remove this section if there is no PR.
+    - This PR belongs together with:
+      - home-assistant/core#12345
+      - home-assistant/home-assistant.io#67890
+
+    List this pull request on theirs too. Mention other pull requests and
+    issues, like one this builds on or a revert, in the summary above.
+
+    Add any other information of note below these lines.
 -->
-User Documentation: home-assistant/companion.home-assistant#
-
-<!-- 
-    This pull request introduces, changes, or removes developer-facing functionality.
-    A corresponding update to the contributor documentation in the documentation repository (https://github.com/home-assistant/contributors.home-assistant.io) is required.
-
-    Instructions:
-    1. Create a pull request in the documentation repository.
-    2. Add the documentation pull request number after the "#" below.
-
-    Note: Remove this section if there is no PR.
--->
-Contributor Documentation: home-assistant/contributors.home-assistant.io#
-
-## Any other notes
-<!-- 
-    If there is any other information of note, like if this Pull Request is part of a bigger change, please include it here.
--->
+- This PR fixes or closes issue: fixes #
+- This PR belongs together with: 

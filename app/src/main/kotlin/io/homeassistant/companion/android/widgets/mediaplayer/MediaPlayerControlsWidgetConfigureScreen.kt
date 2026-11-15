@@ -1,57 +1,42 @@
 package io.homeassistant.companion.android.widgets.mediaplayer
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.Close
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HACheckbox
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
-import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HAHorizontalDivider
 import io.homeassistant.companion.android.common.compose.composable.HATextField
-import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
-import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState.Loaded
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -62,7 +47,10 @@ import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
-import io.homeassistant.companion.android.widgets.WidgetBackgroundTypeDropdown
+import io.homeassistant.companion.android.widgets.configure.WidgetBackgroundTypeDropdown
+import io.homeassistant.companion.android.widgets.configure.WidgetConfigureScaffold
+import io.homeassistant.companion.android.widgets.configure.WidgetConfigureScreen
+import io.homeassistant.companion.android.widgets.configure.formControlWidth
 
 // Size of the glyph drawn by the Material checkbox; not exposed publicly by Material.
 private val CheckboxGlyphSize = 20.dp
@@ -72,6 +60,7 @@ private val CheckboxGlyphSize = 20.dp
  * [MediaPlayerControlsWidgetConfigureContent]. Collects the UI state and surfaces one-shot user
  * messages as a Snackbar.
  */
+@SuppressLint("ComposeViewModelForwarding")
 @Composable
 internal fun MediaPlayerControlsWidgetConfigureScreen(
     viewModel: MediaPlayerControlsWidgetConfigureViewModel,
@@ -79,32 +68,24 @@ internal fun MediaPlayerControlsWidgetConfigureScreen(
     onNavigate: () -> Unit,
     onActionClick: () -> Unit,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val resources = LocalResources.current
-
-    LaunchedEffect(Unit) {
-        viewModel.errors.collect { resId ->
-            snackbarHostState.showSnackbar(resources.getString(resId))
-        }
+    WidgetConfigureScreen(viewModel) { state, snackbarHostState ->
+        MediaPlayerControlsWidgetConfigureContent(
+            state = state,
+            canNavigateBack = canNavigateBack,
+            onNavigate = onNavigate,
+            onServerSelected = viewModel::onServerSelected,
+            onEntityAdded = viewModel::onEntityAdded,
+            onEntityRemoved = viewModel::onEntityRemoved,
+            onLabelChanged = viewModel::onLabelChanged,
+            onShowVolumeChanged = viewModel::onShowVolumeChanged,
+            onShowSkipChanged = viewModel::onShowSkipChanged,
+            onShowSeekChanged = viewModel::onShowSeekChanged,
+            onShowSourceChanged = viewModel::onShowSourceChanged,
+            onBackgroundTypeSelected = viewModel::onBackgroundTypeSelected,
+            onActionClick = onActionClick,
+            snackbarHostState = snackbarHostState,
+        )
     }
-
-    MediaPlayerControlsWidgetConfigureContent(
-        state = state,
-        snackbarHostState = snackbarHostState,
-        canNavigateBack = canNavigateBack,
-        onNavigate = onNavigate,
-        onServerSelected = viewModel::onServerSelected,
-        onEntityAdded = viewModel::onEntityAdded,
-        onEntityRemoved = viewModel::onEntityRemoved,
-        onLabelChanged = viewModel::onLabelChanged,
-        onShowVolumeChanged = viewModel::onShowVolumeChanged,
-        onShowSkipChanged = viewModel::onShowSkipChanged,
-        onShowSeekChanged = viewModel::onShowSeekChanged,
-        onShowSourceChanged = viewModel::onShowSourceChanged,
-        onBackgroundTypeSelected = viewModel::onBackgroundTypeSelected,
-        onActionClick = onActionClick,
-    )
 }
 
 /** Stateless configuration screen for the Media Player Controls widget. */
@@ -125,61 +106,31 @@ internal fun MediaPlayerControlsWidgetConfigureContent(
     onActionClick: () -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    Scaffold(
-        topBar = {
-            HATopBar(
-                title = { Text(stringResource(commonR.string.select_entity_to_display)) },
-                onBackClick = onNavigate.takeIf { canNavigateBack },
-                onCloseClick = onNavigate.takeIf { !canNavigateBack },
-            )
-        },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        },
-        contentWindowInsets = WindowInsets.safeDrawing,
-    ) { contentPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(contentPadding)
-                .padding(HADimens.SPACE4),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
-        ) {
-            ServerSelector(
-                items = state.serversDropdownItems,
-                selectedServerId = state.selectedServerId,
-                showServerSelector = state.showServerSelector,
-                onServerSelected = onServerSelected,
-            )
+    WidgetConfigureScaffold(
+        title = commonR.string.select_entity_to_display,
+        state = state,
+        snackbarHostState = snackbarHostState,
+        canNavigateBack = canNavigateBack,
+        onNavigate = onNavigate,
+        onServerSelected = onServerSelected,
+        onActionClick = onActionClick,
+    ) {
+        EntityPickerSection(
+            availableEntities = state.availableEntities,
+            selectedEntities = state.selectedEntities,
+            onEntityAdded = onEntityAdded,
+            onEntityRemoved = onEntityRemoved,
+        )
 
-            EntityPickerSection(
-                availableEntities = state.availableEntities,
-                selectedEntities = state.selectedEntities,
-                onEntityAdded = onEntityAdded,
-                onEntityRemoved = onEntityRemoved,
-            )
-
-            ConfigurationSections(
-                state = state,
-                onLabelChanged = onLabelChanged,
-                onShowVolumeChanged = onShowVolumeChanged,
-                onShowSkipChanged = onShowSkipChanged,
-                onShowSeekChanged = onShowSeekChanged,
-                onShowSourceChanged = onShowSourceChanged,
-                onBackgroundTypeSelected = onBackgroundTypeSelected,
-            )
-
-            HAAccentButton(
-                text = stringResource(
-                    if (state.isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget,
-                ),
-                onClick = onActionClick,
-                enabled = state.isActionEnabled,
-                modifier = Modifier.formControlWidth(),
-            )
-        }
+        ConfigurationSections(
+            state = state,
+            onLabelChanged = onLabelChanged,
+            onShowVolumeChanged = onShowVolumeChanged,
+            onShowSkipChanged = onShowSkipChanged,
+            onShowSeekChanged = onShowSeekChanged,
+            onShowSourceChanged = onShowSourceChanged,
+            onBackgroundTypeSelected = onBackgroundTypeSelected,
+        )
     }
 }
 
@@ -221,26 +172,6 @@ private fun ColumnScope.ConfigurationSections(
             )
         }
     }
-}
-
-@Composable
-private fun ServerSelector(
-    items: List<HADropdownItem<Int>>,
-    selectedServerId: Int,
-    showServerSelector: Boolean,
-    onServerSelected: (Int) -> Unit,
-) {
-    if (!showServerSelector) return
-
-    HADropdownMenu(
-        items = items,
-        selectedKey = selectedServerId,
-        onItemSelected = onServerSelected,
-        label = stringResource(commonR.string.server_select),
-        placeholder = stringResource(commonR.string.server_select),
-        modifier = Modifier.formControlWidth(),
-        enabled = items.isNotEmpty(),
-    )
 }
 
 @Composable
@@ -393,10 +324,6 @@ private fun SelectedEntityRow(entity: EntityDisplayWithContext, onRemove: () -> 
         }
     }
 }
-
-private fun Modifier.formControlWidth(): Modifier = this
-    .widthIn(max = MaxButtonWidth)
-    .fillMaxWidth()
 
 @Preview
 @Composable

@@ -2,14 +2,12 @@ package io.homeassistant.companion.android.common.data
 
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.annotation.VisibleForTesting
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.keychain.ClientCertificateManager
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
 import io.homeassistant.companion.android.common.data.keychain.ServerTrustAnchorProvider
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.common.util.SdkVersion
 import java.io.IOException
 import java.net.Socket
 import java.security.GeneralSecurityException
@@ -88,9 +86,8 @@ class TLSHelper @Inject constructor(
      * - when there are no user-installed CAs.
      */
     private fun withUserInstalledCaFallback(trustManager: X509TrustManager): X509TrustManager {
-        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.N)) return trustManager
         val extended = trustManager as? X509ExtendedTrustManager ?: return trustManager
-        val userCaTrustManager = userInstalledCaTrustManager() as? X509ExtendedTrustManager ?: return trustManager
+        val userCaTrustManager = userInstalledCaTrustManager() ?: return trustManager
         return CompositeX509ExtendedTrustManager(primary = extended, fallback = userCaTrustManager)
     }
 
@@ -100,14 +97,13 @@ class TLSHelper @Inject constructor(
      * Wraps [trustManager] so the anchor of [serverTrustAnchorProvider] is honored as a fallback (see
      * [ServerTrustAnchorTrustManager]).
      *
-     * Returns [trustManager] unchanged before Android N or when it is not an [X509ExtendedTrustManager]
-     * (the composite needs the hostname-aware overloads).
+     * Returns [trustManager] unchanged when it is not an [X509ExtendedTrustManager] (the composite needs
+     * the hostname-aware overloads).
      */
     private fun withServerTrustAnchorFallback(
         trustManager: X509TrustManager,
         serverTrustAnchorProvider: ServerTrustAnchorProvider,
     ): X509TrustManager {
-        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.N)) return trustManager
         return (trustManager as? X509ExtendedTrustManager)?.let { extended ->
             val anchorTrustManager = ServerTrustAnchorTrustManager(serverTrustAnchorProvider)
             CompositeX509ExtendedTrustManager(primary = extended, fallback = anchorTrustManager)
@@ -117,12 +113,10 @@ class TLSHelper @Inject constructor(
     /**
      * Builds a trust manager from the user-installed CAs (see [userInstalledCaKeyStore]), or `null`
      * when there are none or AndroidCAStore can't be read.
-     *
-     * Available on every supported Android version; it is an [X509ExtendedTrustManager] from Android N.
      */
-    fun userInstalledCaTrustManager(): X509TrustManager? = try {
+    fun userInstalledCaTrustManager(): X509ExtendedTrustManager? = try {
         val androidCaStore = loadKeyStore("AndroidCAStore")
-        userInstalledCaKeyStore(androidCaStore)?.let { defaultX509TrustManager(it) }
+        userInstalledCaKeyStore(androidCaStore)?.let { defaultX509TrustManager(it) as? X509ExtendedTrustManager }
     } catch (e: GeneralSecurityException) {
         Timber.w(e, "Could not read user-installed CAs, user-CA fallback disabled")
         null

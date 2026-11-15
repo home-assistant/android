@@ -35,7 +35,7 @@ object ClimateControl : HaControl {
     )
     private val climateStates = ConcurrentHashMap<String, ClimateState>()
 
-    override fun provideControlFeatures(
+    override suspend fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         item: EntityDisplayWithContext,

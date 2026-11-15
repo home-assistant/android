@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.common.data
 
 import android.annotation.SuppressLint
-import android.os.Build
-import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.keychain.ServerTrustAnchorProvider
 import java.net.Socket
 import java.security.cert.CertificateException
@@ -21,7 +19,6 @@ private const val SERVER_TRUST_ANCHOR_ALIAS = "serverTrustAnchor"
  *
  * Client-trust checks are not supported by this fallback and always reject.
  */
-@RequiresApi(Build.VERSION_CODES.N)
 @SuppressLint("CustomX509TrustManager")
 internal class ServerTrustAnchorTrustManager(private val serverTrustAnchor: ServerTrustAnchorProvider) :
     X509ExtendedTrustManager() {

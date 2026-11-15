@@ -51,6 +51,16 @@ interface AssistConfigManager {
      */
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     suspend fun setSelectedWakeWordModel(model: MicroWakeWordModelConfig)
+
+    /**
+     * Returns whether a chime plays when Assist starts listening without the user tapping the screen.
+     */
+    suspend fun isListeningChimeEnabled(): Boolean
+
+    /**
+     * Sets whether a chime plays when Assist starts listening without the user tapping the screen.
+     */
+    suspend fun setListeningChimeEnabled(enabled: Boolean)
 }
 
 class AssistConfigManagerImpl @Inject constructor(
@@ -100,5 +110,11 @@ class AssistConfigManagerImpl @Inject constructor(
         if (model.wakeWord != previousWakeWord && prefsRepository.isWakeWordEnabled()) {
             AssistVoiceInteractionService.startListening(context)
         }
+    }
+
+    override suspend fun isListeningChimeEnabled(): Boolean = prefsRepository.isAssistListeningChimeEnabled()
+
+    override suspend fun setListeningChimeEnabled(enabled: Boolean) {
+        prefsRepository.setAssistListeningChimeEnabled(enabled)
     }
 }

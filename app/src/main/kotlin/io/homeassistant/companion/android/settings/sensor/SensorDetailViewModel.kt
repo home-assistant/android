@@ -40,16 +40,16 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -110,8 +110,8 @@ class SensorDetailViewModel @Inject constructor(
     val permissionRequests = MutableLiveData<PermissionsDialog?>()
     val locationPermissionRequests = MutableLiveData<LocationPermissionsDialog?>()
 
-    private val _permissionSnackbar = MutableSharedFlow<PermissionSnackbar>()
-    var permissionSnackbar = _permissionSnackbar.asSharedFlow()
+    private val _permissionSnackbar = Channel<PermissionSnackbar>(Channel.BUFFERED)
+    val permissionSnackbar = _permissionSnackbar.receiveAsFlow()
 
     val sensorManager: SensorManager? = runBlocking {
         managers
@@ -585,7 +585,7 @@ class SensorDetailViewModel @Inject constructor(
             // we have all permissions and should enable the sensor.
             val hasPermission = sensorManager?.checkPermission(sensorId) == true
             if (!hasPermission) {
-                _permissionSnackbar.emit(
+                _permissionSnackbar.send(
                     PermissionSnackbar(commonR.string.enable_sensor_missing_permission_general, false),
                 )
             }
@@ -609,7 +609,7 @@ class SensorDetailViewModel @Inject constructor(
             val hasPermission =
                 results.values.all { it } && sensorManager?.checkPermission(sensorId) == true
             if (!hasPermission) {
-                _permissionSnackbar.emit(
+                _permissionSnackbar.send(
                     PermissionSnackbar(
                         when (results.entries.firstOrNull { !it.value }?.key) {
                             Manifest.permission.ACTIVITY_RECOGNITION ->

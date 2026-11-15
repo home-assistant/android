@@ -14,6 +14,7 @@ import org.gradle.kotlin.dsl.getByType
  * - Creating the `minimal` flavor with the application ID suffix `.minimal` and the version name suffix `-minimal`.
  * - Creating the `full` flavor with no application ID or version name suffix.
  * - Generating a list of all application IDs (including suffixes) into the `BuildConfig` as `APPLICATION_IDS`.
+ * - Targeting the `fullDebug` variant with the screenshot test suites of the module.
  *
  * This plugin expects the Android Application Gradle plugin to be applied to the project.
  */
@@ -40,6 +41,10 @@ class AndroidFullMinimalFlavorConventionPlugin : Plugin<Project> {
                     }
 
                     defaultConfig.buildConfigField("String[]", "APPLICATION_IDS", "{$values}")
+                }
+
+                testOptions.screenshotTests.configureEach {
+                    targetVariants.add("fullDebug")
                 }
             }
         }

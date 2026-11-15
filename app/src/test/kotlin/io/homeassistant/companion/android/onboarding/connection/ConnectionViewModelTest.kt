@@ -218,9 +218,9 @@ class ConnectionViewModelTest {
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
-    fun `Given auth callback uri with code when shouldRedirect then emits Authenticated event with mTLS status and returns true`(requireMTLS: Boolean) = runTest {
+    fun `Given auth callback uri with code when shouldRedirect then sends Authenticated event with mTLS status and returns true`(requireMTLS: Boolean) = runTest {
         val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager, prefsRepository)
 
@@ -232,10 +232,7 @@ class ConnectionViewModelTest {
 
             viewModel.getWebViewClient().isTLSClientAuthNeeded = requireMTLS
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
-                null,
-                stringUri,
-            )
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -248,9 +245,29 @@ class ConnectionViewModelTest {
     }
 
     @Test
+    fun `Given Authenticated event already handled when the screen collects again then it is not delivered again`() = runTest {
+        val stringUri = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = "test_auth_code")
+        val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager, prefsRepository)
+
+        // Sent before anything collects, it must still reach the screen once
+        assertTrue(viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri))
+        advanceUntilIdle()
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+            assertTrue(navigationEventsFlow.awaitItem() is ConnectionNavigationEvent.Authenticated)
+            navigationEventsFlow.cancelAndIgnoreRemainingEvents()
+        }
+        // A new collector, e.g. the screen after a rotation, must not navigate again
+        turbineScope {
+            viewModel.navigationEventsFlow.testIn(backgroundScope).expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given same-host redirect to a new port when auth completes then Authenticated url uses the new origin`() = runTest {
         val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
@@ -268,7 +285,7 @@ class ConnectionViewModelTest {
             // Port 80 is http's default, so the normalized stored URL drops it.
             viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:80/onboarding")
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -280,7 +297,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given same-host IPv6 redirect to a new port when auth completes then Authenticated url keeps the host bracketed`() = runTest {
         val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel(
             "http://[::1]:8123",
@@ -297,7 +314,7 @@ class ConnectionViewModelTest {
             // Same IPv6 host, new port: the produced origin must keep the brackets to stay a valid URL
             viewModel.getWebViewClient().onPageFinished(null, "http://[::1]:80/onboarding")
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -308,7 +325,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given a same-host redirect that downgrades https to http when auth completes then Authenticated url keeps the original https url`() = runTest {
         val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel(
             "https://homeassistant.local:8123",
@@ -325,7 +342,7 @@ class ConnectionViewModelTest {
             // A redirect that downgrades https -> http on the same host must be ignored
             viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:80/onboarding")
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -336,7 +353,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given a same-host redirect that upgrades http to https when auth completes then Authenticated url uses the https origin`() = runTest {
         val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
@@ -353,7 +370,7 @@ class ConnectionViewModelTest {
             // An upgrade http -> https on the same host is allowed and adopted
             viewModel.getWebViewClient().onPageFinished(null, "https://homeassistant.local/onboarding")
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -364,7 +381,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given redirect to a different host when auth completes then Authenticated url stays the initial url`() = runTest {
         val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123/lovelace?foo=bar#baz",
@@ -381,7 +398,7 @@ class ConnectionViewModelTest {
             // A redirect to a different host must NOT change the stored URL
             viewModel.getWebViewClient().onPageFinished(null, "http://other.local:80/onboarding")
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -392,7 +409,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given no redirect when auth completes then Authenticated url stays the initial url`() = runTest {
         val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
@@ -406,7 +423,7 @@ class ConnectionViewModelTest {
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -417,7 +434,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given an initial url with a path and query when auth completes then Authenticated url is the bare origin`() = runTest {
         val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123/lovelace?foo=bar#baz",
@@ -431,7 +448,7 @@ class ConnectionViewModelTest {
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -443,7 +460,7 @@ class ConnectionViewModelTest {
     @Test
     fun `Given multiple same-host redirects when auth completes then Authenticated url uses the last origin`() = runTest {
         val authCode = "test_auth_code"
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
 
         val viewModel = ConnectionViewModel(
             "http://homeassistant.local:8123",
@@ -463,7 +480,7 @@ class ConnectionViewModelTest {
             viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:80/onboarding")
             viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:8080/onboarding")
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, stringUri)
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
@@ -473,7 +490,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given auth callback uri without code when shouldRedirect then no event and returns false`() = runTest {
-        val stringUri = mockAuthCodeUri(scheme = "homeassistant", host = "auth-callback", authCode = null)
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = null)
 
         val viewModel = ConnectionViewModel("http://homeassistant.local:8123", webViewClientFactory, connectivityCheckRepository, fileChooserHandler, permissionManager, prefsRepository)
 
@@ -483,10 +500,7 @@ class ConnectionViewModelTest {
 
             assertNull(errorFlow.awaitItem())
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
-                null,
-                stringUri,
-            )
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertFalse(result)
             navigationEventsFlow.expectNoEvents()
@@ -496,7 +510,7 @@ class ConnectionViewModelTest {
 
     @Test
     fun `Given opaque auth callback uri when shouldRedirect then no event and returns false`() = runTest {
-        val stringUri = mockAuthCodeUri(
+        val request = mockAuthCodeRequest(
             scheme = "homeassistant",
             host = "auth-callback",
             authCode = "test_auth_code",
@@ -511,10 +525,7 @@ class ConnectionViewModelTest {
 
             assertNull(errorFlow.awaitItem())
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
-                null,
-                stringUri,
-            )
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertFalse(result)
             navigationEventsFlow.expectNoEvents()
@@ -529,7 +540,7 @@ class ConnectionViewModelTest {
         // Used to parse the rawUrl given in the constructor of ConnectionViewModel
         mockUriParse()
 
-        val stringUri = mockAuthCodeUri(scheme = "http", host = "google", authCode = "not_related_code")
+        val request = mockAuthCodeRequest(scheme = "http", host = "google", authCode = "not_related_code")
 
         turbineScope {
             val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
@@ -537,15 +548,12 @@ class ConnectionViewModelTest {
 
             assertNull(errorFlow.awaitItem())
 
-            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(
-                null,
-                stringUri,
-            )
+            val result = viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request)
 
             assertTrue(result)
             val event = navigationEventsFlow.awaitItem()
             assertTrue(event is ConnectionNavigationEvent.OpenExternalLink)
-            assertEquals(stringUri, (event as ConnectionNavigationEvent.OpenExternalLink).url.toString())
+            assertEquals(request.url, (event as ConnectionNavigationEvent.OpenExternalLink).url)
 
             navigationEventsFlow.expectNoEvents()
             errorFlow.expectNoEvents()
@@ -565,19 +573,23 @@ class ConnectionViewModelTest {
         assertEquals(errorClass.toString(), error.rawErrorType)
     }
 
-    private fun mockAuthCodeUri(scheme: String, host: String, authCode: String?, isOpaque: Boolean = false): String {
-        val stringUri = "$scheme://$host${authCode?.let { "?code=$authCode" } ?: ""}"
-        every { Uri.parse(stringUri) } answers {
-            val uriString = firstArg<String>()
-            return@answers mockk<Uri> {
-                every { this@mockk.toString() } returns uriString
-                every { this@mockk.scheme } returns scheme
-                every { this@mockk.host } returns host
-                every { this@mockk.isOpaque } returns isOpaque
-                every { getQueryParameter("code") } returns authCode
-            }
+    private fun mockAuthCodeRequest(
+        scheme: String,
+        host: String,
+        authCode: String?,
+        isOpaque: Boolean = false,
+    ): WebResourceRequest {
+        val uriString = "$scheme://$host${authCode?.let { "?code=$authCode" } ?: ""}"
+        val uri = mockk<Uri> {
+            every { this@mockk.toString() } returns uriString
+            every { this@mockk.scheme } returns scheme
+            every { this@mockk.host } returns host
+            every { this@mockk.isOpaque } returns isOpaque
+            every { getQueryParameter("code") } returns authCode
         }
-        return stringUri
+        return mockk<WebResourceRequest> {
+            every { url } returns uri
+        }
     }
 
     private fun mockUriParse() {

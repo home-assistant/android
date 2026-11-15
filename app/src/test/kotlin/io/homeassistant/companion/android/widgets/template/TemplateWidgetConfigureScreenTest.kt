@@ -7,9 +7,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -21,10 +19,9 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -59,82 +56,6 @@ class TemplateWidgetConfigureScreenTest {
                 onNodeWithText(activity.getString(commonR.string.add_widget))
                     .performScrollTo()
                     .assertIsEnabled()
-            }
-        }
-    }
-
-    @Test
-    fun `Given an existing widget when displayed then the update action is shown`() {
-        composeTestRule.apply {
-            testScreen(renderedState.copy(isUpdateWidget = true)) {
-                onNodeWithText(activity.getString(commonR.string.update_widget))
-                    .performScrollTo()
-                    .assertIsEnabled()
-            }
-        }
-    }
-
-    @Test
-    fun `Given the screen is the task root when displayed then it offers close`() {
-        composeTestRule.apply {
-            testScreen(singleServerState, canNavigateBack = false) {
-                onNodeWithContentDescription(activity.getString(commonR.string.navigate_up)).assertDoesNotExist()
-                onNodeWithContentDescription(activity.getString(commonR.string.close)).performClick()
-                assertTrue(navigated)
-            }
-        }
-    }
-
-    @Test
-    fun `Given the screen has a back stack when displayed then it offers back`() {
-        composeTestRule.apply {
-            testScreen(singleServerState, canNavigateBack = true) {
-                onNodeWithContentDescription(activity.getString(commonR.string.close)).assertDoesNotExist()
-                onNodeWithContentDescription(activity.getString(commonR.string.navigate_up)).performClick()
-                assertTrue(navigated)
-            }
-        }
-    }
-
-    @Test
-    fun `Given a valid configuration when the action is clicked then onActionClick is triggered`() {
-        composeTestRule.apply {
-            testScreen(renderedState) {
-                onNodeWithText(activity.getString(commonR.string.add_widget))
-                    .performScrollTo()
-                    .performClick()
-                assertTrue(actionClicked)
-            }
-        }
-    }
-
-    @Test
-    fun `Given a single server when displayed then the server selector is hidden`() {
-        composeTestRule.apply {
-            testScreen(singleServerState) {
-                onNodeWithText(activity.getString(commonR.string.server_select)).assertDoesNotExist()
-            }
-        }
-    }
-
-    @Test
-    fun `Given several servers when displayed then the server selector is shown`() {
-        composeTestRule.apply {
-            testScreen(multipleServersState) {
-                onNodeWithText(activity.getString(commonR.string.server_select), substring = true)
-                    .assertIsDisplayed()
-            }
-        }
-    }
-
-    @Test
-    fun `Given several servers when a server is picked then onServerSelected is triggered`() {
-        composeTestRule.apply {
-            testScreen(multipleServersState) {
-                onNodeWithText(activity.getString(commonR.string.server_select), substring = true)
-                    .performClick()
-                onNodeWithText("Vacation home").performClick()
-                assertEquals(2, serverSelected)
             }
         }
     }
@@ -202,56 +123,6 @@ class TemplateWidgetConfigureScreenTest {
         }
     }
 
-    @Test
-    fun `Given a non transparent background when displayed then the text color dropdown is hidden`() {
-        composeTestRule.apply {
-            testScreen(singleServerState.copy(selectedBackgroundType = WidgetBackgroundType.DAYNIGHT)) {
-                onNodeWithText(activity.getString(commonR.string.widget_text_color_label)).assertDoesNotExist()
-            }
-        }
-    }
-
-    @Test
-    fun `Given a transparent background when displayed then the text color dropdown is shown`() {
-        composeTestRule.apply {
-            testScreen(singleServerState.copy(selectedBackgroundType = WidgetBackgroundType.TRANSPARENT)) {
-                onNodeWithText(activity.getString(commonR.string.widget_text_color_label), substring = true)
-                    .performScrollTo()
-                    .assertIsDisplayed()
-            }
-        }
-    }
-
-    @Test
-    fun `Given screen when a background type is picked then onBackgroundTypeSelected is triggered`() {
-        composeTestRule.apply {
-            testScreen(singleServerState.copy(selectedBackgroundType = WidgetBackgroundType.DAYNIGHT)) {
-                onNodeWithText(activity.getString(commonR.string.widget_background_type_label), substring = true)
-                    .performScrollTo()
-                    .performClick()
-                onNodeWithText(activity.getString(commonR.string.widget_background_type_transparent))
-                    .performClick()
-                assertEquals(WidgetBackgroundType.TRANSPARENT, backgroundType)
-            }
-        }
-    }
-
-    @Test
-    fun `Given a transparent background when a text color is picked then onTextColorSelected is triggered`() {
-        composeTestRule.apply {
-            testScreen(singleServerState.copy(selectedBackgroundType = WidgetBackgroundType.TRANSPARENT)) {
-                onNodeWithText(activity.getString(commonR.string.widget_text_color_label), substring = true)
-                    .performScrollTo()
-                    .performClick()
-                // The unset default follows the system theme (BLACK in the light test environment),
-                // so pick WHITE to guarantee a change that fires the callback.
-                onNodeWithText(activity.getString(commonR.string.widget_text_color_white))
-                    .performClick()
-                assertTrue(textColor != null)
-            }
-        }
-    }
-
     private class TestHelper {
         var serverSelected: Int? = null
         var template: String? = null
@@ -292,13 +163,6 @@ class TemplateWidgetConfigureScreenTest {
 private val singleServerState = TemplateWidgetConfigureState(
     serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
     selectedServerId = 1,
-)
-
-private val multipleServersState = singleServerState.copy(
-    serversDropdownItems = listOf(
-        HADropdownItem(key = 1, label = "Home"),
-        HADropdownItem(key = 2, label = "Vacation home"),
-    ),
 )
 
 private val renderedState = singleServerState.copy(

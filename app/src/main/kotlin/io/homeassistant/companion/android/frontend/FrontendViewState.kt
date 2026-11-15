@@ -71,6 +71,7 @@ sealed interface FrontendViewState {
         override val serverId: Int,
         override val url: String,
         val serverHandleInsets: Boolean = false,
+        val serverHandleTopInsets: Boolean = false,
         val nightModeTheme: NightModeTheme? = null,
         val statusBarColor: Color? = null,
         val backgroundColor: Color? = null,

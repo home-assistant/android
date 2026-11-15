@@ -68,7 +68,7 @@ class MainViewModelTest {
 
     /** Makes the manager emit the given entities that pass the filter of the caller, as the real one does. */
     private fun givenServerEntities(vararg entityIds: String) {
-        every { entitiesForDisplayManager.observeInContext(ServerManager.SERVER_ID_ACTIVE, any()) } answers {
+        every { entitiesForDisplayManager.observeInContext(ServerManager.SERVER_ID_ACTIVE, any<(Entity) -> Boolean>()) } answers {
             val filter = secondArg<(Entity) -> Boolean>()
             val items = entityIds.filter { filter(fakeEntity(it)) }.map { fakeItem(it) }
             flowOf(EntityDisplayState.Loaded(items))
