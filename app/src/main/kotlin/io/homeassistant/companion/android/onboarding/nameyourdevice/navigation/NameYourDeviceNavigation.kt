@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.onboarding.nameyourdevice.navigation
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
@@ -54,7 +54,7 @@ internal fun HandleNameYourDeviceNavigationEvents(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onBackClick: () -> Unit,
 ) {
-    val context = LocalContext.current
+    val resources = LocalResources.current
 
     LaunchedEffect(viewModel) {
         viewModel.navigationEventsFlow.collect {
@@ -66,7 +66,7 @@ internal fun HandleNameYourDeviceNavigationEvents(
                 )
 
                 is NameYourDeviceNavigationEvent.Error -> {
-                    onShowSnackbar(context.getString(it.messageRes), null)
+                    onShowSnackbar(resources.getString(it.messageRes), null)
                     onBackClick()
                 }
             }

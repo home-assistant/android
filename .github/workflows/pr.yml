@@ -252,6 +252,11 @@ jobs:
         with:
           run: ./gradlew :common:testDebugScreenshotTestDefaultTestSuite
 
+      - name: Validate Screenshot Previews - webrtc
+        uses: $/.github/actions/monitor-resources
+        with:
+          run: ./gradlew :webrtc:testDebugScreenshotTestDefaultTestSuite
+
       - uses: $/.github/actions/upload-test-results
         if: always()
         with:
