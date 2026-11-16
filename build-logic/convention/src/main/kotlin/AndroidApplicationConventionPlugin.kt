@@ -80,9 +80,10 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                         isDebuggable = false
                         isJniDebuggable = false
                         signingConfig = signingConfigs.getByName("release")
-                        isMinifyEnabled = true
+                        optimization {
+                            enable = true
+                        }
                         proguardFiles(
-                            getDefaultProguardFile("proguard-android-optimize.txt"),
                             rootProject.file(".r8/apps.pro"),
                             "proguard-rules.pro",
                         )
