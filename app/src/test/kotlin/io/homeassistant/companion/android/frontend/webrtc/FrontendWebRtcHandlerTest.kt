@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -86,7 +85,7 @@ private class FakeWebRtcSessionFactory : WebRtcSessionFactory {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class WebRtcHandlerTest {
+class FrontendWebRtcHandlerTest {
 
     private val factory = FakeWebRtcSessionFactory()
     private val serverManager: ServerManager = mockk(relaxed = true)
@@ -95,9 +94,9 @@ class WebRtcHandlerTest {
     private val audioManager: AudioManager = mockk(relaxed = true)
     private val sent = mutableListOf<OutgoingExternalBusMessage>()
 
-    private fun TestScope.createHandler(): WebRtcHandler {
+    private fun createHandler(): FrontendWebRtcHandler {
         coEvery { externalBus.send(capture(sent)) } returns Unit
-        return WebRtcHandler(
+        return FrontendWebRtcHandler(
             webRtcSessionFactory = factory,
             serverManager = serverManager,
             permissionManager = permissionManager,
@@ -113,6 +112,13 @@ class WebRtcHandlerTest {
     private fun OutgoingExternalBusMessage.stoppedCode(): String = asJson().getValue("payload").jsonObject.getValue("code").jsonPrimitive.content
 
     private fun OutgoingExternalBusMessage.command(): String = asJson().getValue("command").jsonPrimitive.content
+
+    private fun factorySessionId(index: Int): String {
+        val sessionIds = sent.mapNotNull {
+            it.asJson()["result"]?.jsonObject?.get("session_id")?.jsonPrimitive?.content
+        }
+        return sessionIds[index]
+    }
 
     @Test
     fun `Given a start When the session connects Then a mic-only session is created and a session id is replied`() = runTest {
@@ -238,30 +244,22 @@ class WebRtcHandlerTest {
     }
 
     @Test
-    fun `Given two sessions When both stop Then communication mode is entered once and restored once`() = runTest {
+    fun `Given two connected sessions When they stop one after the other Then communication mode is restored after the last`() = runTest {
         coEvery { permissionManager.checkMicrophonePermission() } returns true
         coEvery { audioManager.mode } returns AudioManager.MODE_NORMAL
         val modes = mutableListOf<Int>()
         every { audioManager.mode = capture(modes) } returns Unit
         val handler = createHandler()
-
         handler.start(scope = backgroundScope, serverId = SERVER_ID, messageId = 1, streamType = WebRtcStreamType.MICROPHONE, entityId = "camera.a")
-        runCurrent()
         handler.start(scope = backgroundScope, serverId = SERVER_ID, messageId = 2, streamType = WebRtcStreamType.MICROPHONE, entityId = "camera.b")
+        factory.created.forEach { it.stateFlow.value = ConnectionState.Connected }
         runCurrent()
-        val ids = factory.created
-        ids[0].stateFlow.value = ConnectionState.Connected
-        ids[1].stateFlow.value = ConnectionState.Connected
-        runCurrent()
-
-        // Entered communication mode once (on the first session), not again for the second
-        assertEquals(1, modes.count { it == AudioManager.MODE_IN_COMMUNICATION })
 
         handler.stop(factorySessionId(0))
+        assertEquals(listOf(AudioManager.MODE_IN_COMMUNICATION), modes)
+
         handler.stop(factorySessionId(1))
-        runCurrent()
-        // Restored to the previous mode once, only after the last session stopped
-        assertEquals(1, modes.count { it == AudioManager.MODE_NORMAL })
+        assertEquals(listOf(AudioManager.MODE_IN_COMMUNICATION, AudioManager.MODE_NORMAL), modes)
     }
 
     @Test
@@ -391,25 +389,38 @@ class WebRtcHandlerTest {
     }
 
     @Test
-    fun `Given a start creating its session When its scope is cancelled Then the audio mode is restored`() = runTest {
+    fun `Given a connected session and a start creating its session When the first stops and the second is cancelled Then communication mode is entered once and restored once`() = runTest {
         coEvery { permissionManager.checkMicrophonePermission() } returns true
         coEvery { audioManager.mode } returns AudioManager.MODE_NORMAL
         val modes = mutableListOf<Int>()
         every { audioManager.mode = capture(modes) } returns Unit
-        factory.createGate = CompletableDeferred()
         val handler = createHandler()
+        handler.start(scope = backgroundScope, serverId = SERVER_ID, messageId = 1, streamType = WebRtcStreamType.MICROPHONE, entityId = "camera.a")
+        runCurrent()
+        factory.created.single().stateFlow.value = ConnectionState.Connected
+        runCurrent()
+        val connectedSessionId = factorySessionId(0)
+        sent.clear()
+        factory.createGate = CompletableDeferred()
         val startJob = backgroundScope.launch {
-            handler.start(scope = backgroundScope, serverId = SERVER_ID, messageId = 5, streamType = WebRtcStreamType.MICROPHONE, entityId = "camera.front_door")
+            handler.start(scope = backgroundScope, serverId = SERVER_ID, messageId = 2, streamType = WebRtcStreamType.MICROPHONE, entityId = "camera.b")
         }
         runCurrent()
+        // Entered communication mode once (on the first session), not again for the second
+        assertEquals(listOf(AudioManager.MODE_IN_COMMUNICATION), modes)
+
+        handler.stop(connectedSessionId)
+        runCurrent()
+        // Still in communication mode while the second start is in progress
         assertEquals(listOf(AudioManager.MODE_IN_COMMUNICATION), modes)
 
         // The ViewModel is cleared while the session factory is still initialising
         startJob.cancel()
         runCurrent()
 
+        // Restored to the previous mode once, only after the last session is gone
         assertEquals(listOf(AudioManager.MODE_IN_COMMUNICATION, AudioManager.MODE_NORMAL), modes)
-        assertTrue(factory.created.isEmpty())
+        assertEquals(1, factory.created.size)
         assertTrue(sent.isEmpty())
     }
 
@@ -458,14 +469,5 @@ class WebRtcHandlerTest {
         // The page is gone (no notify), so the still-open start request is dropped without a reply.
         assertTrue(sent.isEmpty())
         assertTrue(factory.created.single().released)
-    }
-
-    // Helper: the handler generates session ids internally; recover the id from the result messages
-    // that carry one.
-    private fun factorySessionId(index: Int): String {
-        val sessionIds = sent.mapNotNull {
-            it.asJson()["result"]?.jsonObject?.get("session_id")?.jsonPrimitive?.content
-        }
-        return sessionIds[index]
     }
 }

@@ -60,7 +60,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
-import io.homeassistant.companion.android.frontend.webrtc.WebRtcHandler
+import io.homeassistant.companion.android.frontend.webrtc.FrontendWebRtcHandler
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -153,7 +153,7 @@ class FrontendViewModelTest {
         every { events } returns MutableSharedFlow()
     }
 
-    private val webRtcHandler: WebRtcHandler = mockk(relaxed = true)
+    private val webRtcHandler: FrontendWebRtcHandler = mockk(relaxed = true)
 
     private val improvUiStateFlow = MutableStateFlow<ImprovUIState?>(null)
     private val improvEventsFlow = MutableSharedFlow<FrontendImprovHandler.Event>(extraBufferCapacity = 1)
@@ -3217,7 +3217,7 @@ class FrontendViewModelTest {
     }
 
     @Nested
-    inner class CameraMicrophoneStream {
+    inner class WebRtcStream {
 
         private suspend fun TestScope.createConnectedViewModel(
             messageFlow: MutableSharedFlow<FrontendHandlerEvent>,

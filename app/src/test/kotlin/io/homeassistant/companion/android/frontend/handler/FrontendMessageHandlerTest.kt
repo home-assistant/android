@@ -74,6 +74,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
@@ -587,6 +588,24 @@ class FrontendMessageHandlerTest {
         coVerify { externalBusRepository.send(any()) }
         val configResult = assertInstanceOf(ResultMessage::class.java, responseSlot.captured).result
         assertEquals(0, configResult.jsonObject["hasBarCodeScanner"]?.jsonPrimitive?.int)
+    }
+
+    @Test
+    fun `Given device without microphone when config get then hasCameraMicrophoneStream is false`() = runTest {
+        every { packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) } returns false
+        every { externalBusRepository.incomingMessages() } returns flowOf(ConfigGetMessage(id = 1))
+
+        val responseSlot = slot<OutgoingExternalBusMessage>()
+        coEvery { externalBusRepository.send(capture(responseSlot)) } returns Unit
+
+        handler.messageResults().test {
+            awaitItem()
+            expectNoEvents()
+        }
+
+        val configResult = assertInstanceOf(ResultMessage::class.java, responseSlot.captured).result
+        val webrtc = configResult.jsonObject["webrtc"]?.jsonObject
+        assertEquals(false, webrtc?.get("hasCameraMicrophoneStream")?.jsonPrimitive?.boolean)
     }
 
     @Test

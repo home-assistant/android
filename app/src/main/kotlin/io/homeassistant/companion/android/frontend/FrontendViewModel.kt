@@ -52,7 +52,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
-import io.homeassistant.companion.android.frontend.webrtc.WebRtcHandler
+import io.homeassistant.companion.android.frontend.webrtc.FrontendWebRtcHandler
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -137,7 +137,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
-    private val webRtcHandler: WebRtcHandler,
+    private val webRtcHandler: FrontendWebRtcHandler,
     private val keyChainRepository: KeyChainRepository,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
@@ -163,7 +163,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
         matterThreadHandler: FrontendMatterThreadHandler,
-        webRtcHandler: WebRtcHandler,
+        webRtcHandler: FrontendWebRtcHandler,
         keyChainRepository: KeyChainRepository,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
@@ -913,6 +913,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 Timber.d("Frontend external bus disconnected")
                 // Frontend WebSocket disconnected, stopping the WebRTC stream and notify the frontend.
                 webRtcHandler.stopAll(notifyFrontend = true)
+                // TODO Proper handling of disconnection is not yet implemented https://github.com/home-assistant/android/issues/7899
             }
 
             is FrontendHandlerEvent.StartWebRtcStream -> viewModelScope.launch {

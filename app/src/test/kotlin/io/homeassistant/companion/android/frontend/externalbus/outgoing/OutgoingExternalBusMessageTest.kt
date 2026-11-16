@@ -57,7 +57,6 @@ class OutgoingExternalBusMessageTest {
             ),
         )
         assertTrue(json.contains(""""canSetupImprov":false"""))
-        assertTrue(json.contains(""""webrtc":{"hasCameraMicrophoneStream":false}"""))
     }
 
     @Test
@@ -82,6 +81,7 @@ class OutgoingExternalBusMessageTest {
         assertTrue(config.hasAssistSettings)
         assertTrue(config.hasSplashscreen)
         assertTrue(config.hasMatterStatusReport)
+        assertTrue(config.webrtc.hasCameraMicrophoneStream)
     }
 
     @Test
