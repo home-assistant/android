@@ -132,7 +132,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
         extensions.configure<SentryPluginExtension> {
             ignoredFlavors.set(setOf("minimal"))
             ignoredBuildTypes.set(setOf("debug"))
-            autoUploadProguardMapping.set(System.getenv("SENTRY_AUTH_TOKEN") != null)
+            autoUploadProguardMapping.set(!System.getenv("SENTRY_AUTH_TOKEN").isNullOrBlank())
             telemetry.set(false)
             autoInstallation.enabled.set(false)
             tracingInstrumentation.enabled.set(false)
