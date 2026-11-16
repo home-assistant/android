@@ -681,5 +681,12 @@ class EntityTest {
             assertEquals(newDateTime, entity.lastChanged)
             assertEquals(newDateTime, entity.lastUpdated)
         }
+
+        @Test
+        fun `Given a compressed entity state with a null state when converting to an entity then the state is empty`() {
+            val compressed = kotlinJsonMapper.decodeFromString<CompressedEntityState>("""{"s": null, "lc": $newDateTimeEpoch}""")
+
+            assertEquals("", compressed.toEntity("light.bed").state)
+        }
     }
 }
