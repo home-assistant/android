@@ -3245,7 +3245,7 @@ class FrontendViewModelTest {
             every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
-            coEvery { prefsRepository.nightModeThemeFlow() } returns MutableSharedFlow()
+            coEvery { nightModeManager.getCurrentNightModeFlow() } returns MutableSharedFlow()
 
             val viewModel = createViewModel()
 

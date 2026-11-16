@@ -34,7 +34,7 @@ class NightModeManagerTest {
     ) = runTest {
         coEvery { prefsRepository.getCurrentNightModeTheme() } returns theme
 
-        assertEquals(theme, prefsRepository.getCurrentNightModeTheme())
+        assertEquals(theme, manager.getCurrentNightMode())
         coVerify(exactly = 0) { prefsRepository.saveNightModeTheme(any()) }
     }
 
