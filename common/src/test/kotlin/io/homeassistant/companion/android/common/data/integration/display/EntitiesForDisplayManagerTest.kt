@@ -9,6 +9,7 @@ import io.github.timoptr.mdiicons.generated.Heart
 import io.github.timoptr.mdiicons.generated.Robot
 import io.github.timoptr.mdiicons.generated.RobotOff
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -80,7 +81,7 @@ class EntitiesForDisplayManagerTest {
         coEvery { serverManager.webSocketRepository(serverId) } returns webSocketRepository
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
-        coEvery { integrationRepository.getEntityUpdates(entityIds) } returns entityUpdates
+        coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = entityIds.toSet())) } returns entityUpdates
         coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
     }
 
@@ -301,7 +302,6 @@ class EntitiesForDisplayManagerTest {
 
         // Subscribed to every entity, not to a filtered id list
         coVerify(exactly = 1) { integrationRepository.getEntityUpdates() }
-        coVerify(exactly = 0) { integrationRepository.getEntityUpdates(any<List<String>>()) }
     }
 
     @Test
@@ -338,7 +338,7 @@ class EntitiesForDisplayManagerTest {
             ),
         )
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"), entity("switch.fan"))
-        coEvery { integrationRepository.getEntityUpdates(ids) } returns entityUpdates
+        coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = ids.toSet())) } returns entityUpdates
 
         manager.observe(serverId, ids).test {
             assertEquals(listOf("Bed", "Fan"), awaitInitialLoad().entities.map { it.name })
@@ -1082,7 +1082,7 @@ class EntitiesForDisplayManagerTest {
                     entity("light.bed", "Bed Light"),
                     entity("switch.fan", "Fan"),
                 )
-                coEvery { integrationRepository.getEntityUpdates(entityIds) } returns entityUpdates
+                coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = entityIds.toSet())) } returns entityUpdates
 
                 manager.observeInContext(serverId, entityIds).test {
                     assertEquals(listOf("light.bed"), awaitInitialLoad().map { it.entityId })
@@ -1093,7 +1093,7 @@ class EntitiesForDisplayManagerTest {
                     assertEquals(listOf("Renamed Light"), awaitLoaded().map { it.name })
                     cancelAndIgnoreRemainingEvents()
                 }
-                coVerify(exactly = 1) { integrationRepository.getEntityUpdates(entityIds) }
+                coVerify(exactly = 1) { integrationRepository.getEntityUpdates(EntityFilter(entityIds = entityIds.toSet())) }
                 coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
             }
 
