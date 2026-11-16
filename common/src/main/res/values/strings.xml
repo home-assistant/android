@@ -1575,4 +1575,14 @@
     <string name="learn_more">Learn more</string>
     <string name="default_assistant_required">Home Assistant must be your default assistant to perform %s.</string>
     <string name="hidden_entity">Hidden entity</string>
+    <string name="network_request_timeout">Network request timeout</string>
+    <string name="network_request_timeout_summary">Choose how long native Home Assistant API requests can wait</string>
+    <string name="network_request_timeout_description">Maximum time for native Home Assistant API requests, including authentication. Changes apply to new requests for all servers on this device. Shorter timeouts can fail on slow networks. This does not change dashboard loading timeouts or existing WebSocket connections.</string>
+    <plurals name="network_request_timeout_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <string name="network_request_timeout_default">Default</string>
+    <string name="network_request_timeout_error">Unable to load or save the request timeout. Please try again.</string>
+    <string name="changelog_entry_request_timeout">Choose the timeout for native Home Assistant API requests in Troubleshooting.</string>
 </resources>

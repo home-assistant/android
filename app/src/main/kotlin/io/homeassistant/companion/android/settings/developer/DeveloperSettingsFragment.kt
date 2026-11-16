@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.settings.developer.location.LocationTrackingFragment
 import io.homeassistant.companion.android.settings.log.LogFragment
+import io.homeassistant.companion.android.settings.network.RequestTimeoutFragment
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 import io.homeassistant.companion.android.util.applyBottomSafeDrawingInsets
 import javax.inject.Inject
@@ -47,6 +48,21 @@ class DeveloperSettingsFragment :
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
         setPreferencesFromResource(R.xml.preferences_developer, rootKey)
+
+        preferenceScreen.addPreference(
+            Preference(requireContext()).apply {
+                key = "network_request_timeout"
+                setTitle(commonR.string.network_request_timeout)
+                setSummary(commonR.string.network_request_timeout_summary)
+                setOnPreferenceClickListener {
+                    parentFragmentManager.commit {
+                        replace(R.id.content, RequestTimeoutFragment::class.java, null)
+                        addToBackStack(getString(commonR.string.network_request_timeout))
+                    }
+                    true
+                }
+            },
+        )
 
         findPreference<Preference>("show_share_logs")?.setOnPreferenceClickListener {
             parentFragmentManager.commit {

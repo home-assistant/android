@@ -33,6 +33,7 @@ class HomeAssistantApis @Inject constructor(
     private val tlsHelper: TLSHelper,
     @ApplicationContext private val appContext: Context,
     private val configurators: Set<@JvmSuppressWildcards OkHttpConfigurator>,
+    private val requestTimeoutRepository: RequestTimeoutRepository,
 ) {
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
@@ -60,6 +61,7 @@ class HomeAssistantApis @Inject constructor(
     }
 
     suspend fun getRetrofit(): Retrofit {
+        requestTimeoutRepository.load()
         return retrofit ?: retrofitMutex.withLock {
             retrofit ?: Retrofit
                 .Builder()
@@ -68,7 +70,9 @@ class HomeAssistantApis @Inject constructor(
                         "application/json; charset=UTF-8".toMediaType(),
                     ),
                 )
-                .client(getOkHttpClient())
+                .callFactory(
+                    RequestTimeoutCallFactory(getOkHttpClient()) { requestTimeoutRepository.timeout.value },
+                )
                 .baseUrl(LOCAL_HOST)
                 .build().also { retrofit = it }
         }
