@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -26,17 +28,24 @@ class NightModeManager @Inject constructor(private val prefsRepository: PrefsRep
 
     suspend fun getCurrentNightMode(): NightModeTheme {
         val nightMode = prefsRepository.getCurrentNightModeTheme()
-        return if (nightMode == null) {
-            val nightModeThemeToSet = if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
-                SYSTEM
-            } else {
-                LIGHT
-            }
-            prefsRepository.saveNightModeTheme(nightModeThemeToSet)
-            nightModeThemeToSet
-        } else {
-            nightMode
+        return getAndSetNightMode(nightMode)
+    }
+
+    suspend fun getCurrentNightModeFlow(): Flow<NightModeTheme?> =
+        prefsRepository.nightModeThemeFlow().map { nightMode ->
+            getAndSetNightMode(nightMode)
         }
+
+    private suspend fun getAndSetNightMode(nightMode: NightModeTheme?): NightModeTheme = if (nightMode == null) {
+        val nightModeThemeToSet = if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
+            SYSTEM
+        } else {
+            LIGHT
+        }
+        prefsRepository.saveNightModeTheme(nightModeThemeToSet)
+        nightModeThemeToSet
+    } else {
+        nightMode
     }
 
     suspend fun saveNightMode(nightModeTheme: NightModeTheme?) {

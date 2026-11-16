@@ -63,6 +63,7 @@ import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.frontend.webrtc.FrontendWebRtcHandler
 import io.homeassistant.companion.android.testing.unit.FakeClock
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
 import io.homeassistant.companion.android.util.LifecycleHandler
 import io.homeassistant.companion.android.util.hasSameOrigin
@@ -122,6 +123,7 @@ class FrontendViewModelTest {
     private val gestureManager: FrontendGestureManager = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val keyChainRepository: KeyChainRepository = mockk(relaxed = true)
+    private val nightModeManager: NightModeManager = mockk(relaxed = true)
     private val zoomSettingsFlow = MutableStateFlow(ZoomSettings())
     private val autoPlayVideoFlow = MutableStateFlow(false)
     private val screenOrientationFlow = MutableStateFlow(ScreenOrientation.SYSTEM)
@@ -202,6 +204,7 @@ class FrontendViewModelTest {
             matterThreadHandler = matterThreadHandler,
             webRtcHandler = webRtcHandler,
             keyChainRepository = keyChainRepository,
+            nightModeManager = nightModeManager,
         )
     }
 

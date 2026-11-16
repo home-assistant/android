@@ -69,6 +69,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.util.isLight
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
@@ -146,6 +147,7 @@ internal fun FrontendScreen(
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
     val webViewDebugEnabled by viewModel.webViewDebugEnabled.collectAsStateWithLifecycle()
+    val nightModeTheme by viewModel.nightModeTheme.collectAsStateWithLifecycle()
     val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
     val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val improvScanRequested by viewModel.improvScanRequested.collectAsStateWithLifecycle()
@@ -208,6 +210,7 @@ internal fun FrontendScreen(
         onBarcodeCancelled = viewModel::onBarcodeCancelled,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
         webViewDebugEnabled = webViewDebugEnabled,
+        nightModeTheme = nightModeTheme,
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
         onPipReadinessChanged = onPipReadinessChanged,
@@ -238,6 +241,7 @@ internal fun FrontendScreenContent(
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
     webViewDebugEnabled: Boolean? = null,
+    nightModeTheme: NightModeTheme? = null,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
     keepScreenOnEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
@@ -307,6 +311,7 @@ internal fun FrontendScreenContent(
             onGesture = onGesture,
             autoPlayVideoEnabled = autoPlayVideoEnabled,
             webViewDebugEnabled = webViewDebugEnabled,
+            nightModeTheme = nightModeTheme,
         )
 
         PipEligibleOverlays(
@@ -599,6 +604,7 @@ private fun SafeHAWebView(
     onWebViewCreationFailed: (Throwable) -> Unit,
     autoPlayVideoEnabled: Boolean,
     webViewDebugEnabled: Boolean?,
+    nightModeTheme: NightModeTheme?,
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
@@ -637,7 +643,7 @@ private fun SafeHAWebView(
             }
 
             HAWebView(
-                nightModeTheme = contentState?.nightModeTheme,
+                nightModeTheme = nightModeTheme,
                 modifier = Modifier
                     .weight(1f)
                     .background(Color.Transparent),

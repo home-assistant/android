@@ -133,6 +133,12 @@ internal class PrefsRepositoryImpl @Inject constructor(
         return NightModeTheme.fromStorageValue(localStorage().getString(PREF_NIGHT_MODE_THEME))
     }
 
+    override suspend fun nightModeThemeFlow(): Flow<NightModeTheme?> {
+        return localStorage().observeChanges(PREF_NIGHT_MODE_THEME) {
+            getCurrentNightModeTheme()
+        }
+    }
+
     override suspend fun saveNightModeTheme(nightModeTheme: NightModeTheme) {
         localStorage().putString(PREF_NIGHT_MODE_THEME, nightModeTheme.storageValue)
     }
