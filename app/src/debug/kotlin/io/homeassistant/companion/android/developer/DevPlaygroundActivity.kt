@@ -38,6 +38,7 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.developer.catalog.HAComposeCatalogActivity
 import io.homeassistant.companion.android.developer.nfc.DebugNfcTagEmulatorActivity
+import io.homeassistant.companion.android.developer.webrtc.WebRtcDebugActivity
 import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -131,6 +132,12 @@ private fun DevPlayGroundScreen(context: Context? = null) {
                     text = "Start HA Compose Catalog",
                     onClick = {
                         context?.run { startActivity(Intent(this, HAComposeCatalogActivity::class.java)) }
+                    },
+                )
+                HAFilledButton(
+                    text = "Start WebRTC debug",
+                    onClick = {
+                        context?.run { startActivity(Intent(this, WebRtcDebugActivity::class.java)) }
                     },
                 )
                 HAFilledButton(
