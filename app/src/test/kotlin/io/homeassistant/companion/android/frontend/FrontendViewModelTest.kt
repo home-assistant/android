@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
 import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.prefs.ZoomSettings
@@ -105,6 +106,7 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -3216,6 +3218,38 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
 
             assertNull(viewModel.webViewDebugEnabled.value)
+        }
+    }
+
+    @Nested
+    inner class NightModeThemeSetting {
+
+        @ParameterizedTest
+        @EnumSource(NightModeTheme::class)
+        fun `Given the theme setting when created then nightModeTheme follows it`(
+            theme: NightModeTheme,
+        ) = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { nightModeManager.getCurrentNightModeFlow() } returns flowOf(theme)
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(theme, viewModel.nightModeTheme.value)
+        }
+
+        @Test
+        fun `Given the setting not read yet when created then nightModeTheme is null`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { prefsRepository.nightModeThemeFlow() } returns MutableSharedFlow()
+
+            val viewModel = createViewModel()
+
+            assertNull(viewModel.nightModeTheme.value)
         }
     }
 
