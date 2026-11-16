@@ -116,12 +116,45 @@ class FrontendEntityAddToManagerTest {
 
     @Test
     fun `Given standard entityId when getting actionsForEntity then returns EntityWidget`() = runTest {
-        val entityId = "automation.test"
+        val entityId = "weather.test"
         mockGetEntity(entityId)
 
         val actions = createManager().getActionsForEntity(entityId)
 
         assertEquals(listOf(EntityAddToAction.EntityWidget), actions.unwrap())
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["automation.test", "humidifier.test", "remote.test", "siren.test"])
+    fun `Given non-vehicle entity in a press action domain when getting actionsForEntity then returns EntityWidget and ButtonWidget`(entityId: String) = runTest {
+        mockGetEntity(entityId)
+
+        val actions = createManager().getActionsForEntity(entityId)
+
+        assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.ButtonWidget), actions.unwrap())
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["light.test", "scene.test", "script.test", "button.test"])
+    fun `Given vehicle entity in a press action domain when getting actionsForEntity then returns EntityWidget, ButtonWidget and AndroidAutoFavorite`(entityId: String) = runTest {
+        mockGetEntity(entityId)
+
+        val actions = createManager().getActionsForEntity(entityId)
+
+        assertEquals(
+            listOf(EntityAddToAction.EntityWidget, EntityAddToAction.ButtonWidget, EntityAddToAction.AndroidAutoFavorite),
+            actions.unwrap(),
+        )
+    }
+
+    @Test
+    fun `Given sensor entityId when getting actionsForEntity then returns EntityWidget and AndroidAutoFavorite`() = runTest {
+        val entityId = "sensor.test"
+        mockGetEntity(entityId)
+
+        val actions = createManager().getActionsForEntity(entityId)
+
+        assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.AndroidAutoFavorite), actions.unwrap())
     }
 
     @Test
@@ -145,13 +178,16 @@ class FrontendEntityAddToManagerTest {
     }
 
     @Test
-    fun `Given media player entityId when getting actionsForEntity then returns EntityWidget and MediaPlayerWidget`() = runTest {
+    fun `Given media player entityId when getting actionsForEntity then returns EntityWidget, MediaPlayerWidget and ButtonWidget`() = runTest {
         val entityId = "$MEDIA_PLAYER_DOMAIN.test"
         mockGetEntity(entityId)
 
         val actions = createManager().getActionsForEntity(entityId)
 
-        assertEquals(listOf(EntityAddToAction.EntityWidget, EntityAddToAction.MediaPlayerWidget), actions.unwrap())
+        assertEquals(
+            listOf(EntityAddToAction.EntityWidget, EntityAddToAction.MediaPlayerWidget, EntityAddToAction.ButtonWidget),
+            actions.unwrap(),
+        )
     }
 
     @Test
@@ -210,6 +246,13 @@ class FrontendEntityAddToManagerTest {
         val event = createManager().execute("todo.shopping", EntityAddToAction.TodoWidget)
 
         assertEquals(FrontendEvent.NavigateToWidgetConfig("todo.shopping", WidgetType.Todo), event)
+    }
+
+    @Test
+    fun `Given ButtonWidget action when executing then returns NavigateToWidgetConfig with Button type`() = runTest {
+        val event = createManager().execute("light.test", EntityAddToAction.ButtonWidget)
+
+        assertEquals(FrontendEvent.NavigateToWidgetConfig("light.test", WidgetType.Button), event)
     }
 
     @Test

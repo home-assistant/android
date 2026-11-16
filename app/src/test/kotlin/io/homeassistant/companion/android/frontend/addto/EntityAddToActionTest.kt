@@ -124,6 +124,18 @@ class EntityAddToActionTest {
     }
 
     @Test
+    fun `Given ButtonWidget when testing attributes then return correct values`() {
+        every { context.getString(R.string.add_to_button_widget) } returns "Button"
+
+        val action = EntityAddToAction.ButtonWidget
+
+        assertEquals("mdi:gesture-tap", action.mdiIcon)
+        assertEquals("Button", action.text(context))
+        assertEquals(true, action.enabled)
+        assertEquals(null, action.details(context))
+    }
+
+    @Test
     fun `Given enabled Watch when testing attributes then return correct values`() {
         val watchName = "Pixel Watch"
         every { context.getString(R.string.add_to_watch_favorite, watchName) } returns "$watchName favorites"

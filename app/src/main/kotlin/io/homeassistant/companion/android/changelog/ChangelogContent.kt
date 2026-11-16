@@ -25,6 +25,11 @@ internal val currentChangelog = Changelog(
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
             actionRequiresPlatform = true,
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_add_to_action_button,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenWidgetConfig(WidgetType.Button),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(

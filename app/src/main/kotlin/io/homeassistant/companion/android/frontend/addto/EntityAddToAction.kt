@@ -164,6 +164,18 @@ sealed interface EntityAddToAction {
     }
 
     /**
+     * Action to add a button widget that performs an action on the entity to the home screen.
+     */
+    @Serializable
+    data object ButtonWidget : EntityAddToAction {
+        override val mdiIcon: String = "mdi:gesture-tap"
+
+        override fun text(context: Context): String {
+            return context.getString(commonR.string.add_to_button_widget)
+        }
+    }
+
+    /**
      * Action to add an entity to favorites on a connected Wear OS watch.
      *
      * This action may be disabled if the watch is currently disconnected from the phone.
