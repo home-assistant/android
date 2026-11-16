@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material3.Button
@@ -44,8 +44,8 @@ fun SensorsView(allManagers: List<SensorManager>, onClickSensorManager: (SensorM
 
 @Composable
 fun getSensorManagers(allManagers: List<SensorManager>): List<SensorManager> {
-    val context = LocalContext.current
-    return allManagers.sortedBy { context.getString(it.name) }.filter { it.hasSensor() }
+    val resources = LocalResources.current
+    return allManagers.sortedBy { resources.getString(it.name) }.filter { it.hasSensor() }
 }
 
 @Preview(device = WearDevices.LARGE_ROUND)
