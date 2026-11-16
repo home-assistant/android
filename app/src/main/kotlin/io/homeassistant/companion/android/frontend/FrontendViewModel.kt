@@ -1249,9 +1249,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
-     * A main-frame load begins, including a same-URL reload the view-state URL never reflects: the
-     * page that owns any mic session is being replaced and the new one has no session id to stop it,
-     * so the sessions are released now rather than once the load finishes, which can take a while.
+     * Called when a main-frame load begins, including a same-URL reload the view-state URL never reflects.
+     * 
+     * Stops all active WebRTC sessions as the page that owns any mic session is being replaced and the
+     * new one has no session id to stop it.
      */
     private fun onPageStarted() {
         viewModelScope.launch { webRtcHandler.stopAll() }

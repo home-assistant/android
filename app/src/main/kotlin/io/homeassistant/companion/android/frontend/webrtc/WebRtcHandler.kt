@@ -99,8 +99,10 @@ class WebRtcHandler @VisibleForTesting internal constructor(
             override val collector: Job? = null
         }
 
-        /** Created and connecting: the [collector] awaits the first terminal state. [messageId] is
-         *  kept, as in [Starting], so a teardown before connecting fails that still-open start request. */
+        /**
+         * Created and connecting: the [collector] awaits the first terminal state. [messageId] is
+         *  kept, as in [Starting], so a teardown before connecting fails that still-open start request.
+         */
         class Connecting(override val player: WebRtcSession, override val collector: Job, val messageId: Int?) :
             ActiveSession
 
