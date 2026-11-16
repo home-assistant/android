@@ -1251,7 +1251,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /**
      * Called when a main-frame load begins, including a same-URL reload the view-state URL never reflects.
-     * 
+     *
      * Stops all active WebRTC sessions as the page that owns any mic session is being replaced and the
      * new one has no session id to stop it.
      */
