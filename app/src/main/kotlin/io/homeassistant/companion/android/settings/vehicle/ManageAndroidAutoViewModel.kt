@@ -23,8 +23,11 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.vehicle.VEHICLE_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -61,7 +64,11 @@ class ManageAndroidAutoViewModel @Inject constructor(
                 async {
                     entitiesForDisplayManager
                         .snapshotInContext(serverId, EntityFilter(domains = VEHICLE_DOMAINS))
-                        .collect { state -> displayEntitiesByServer[serverId] = state.keepingVehicleEntities() }
+                        .map { state ->
+                            state.keepingVehicleEntities()
+                        }
+                        .flowOn(Dispatchers.Default)
+                        .collect { state -> displayEntitiesByServer[serverId] = state }
                 }
             }.awaitAll()
             loadEntities(serverManager.getServer()?.id ?: 0)
