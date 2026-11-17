@@ -103,7 +103,7 @@ class TodoListActivity : ComponentActivity() {
                         TodoListsView(
                             lists = lists,
                             status = listsStatus,
-                            onSelectList = { navController.navigate("$ROUTE_LIST/$it") },
+                            onSelectList = { listId -> navController.navigate("$ROUTE_LIST/$listId") },
                             onRetry = viewModel::retryLists,
                         )
                     }

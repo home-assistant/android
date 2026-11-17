@@ -29,7 +29,13 @@ class TodoListViewModel @Inject constructor(
 ) : ViewModel() {
 
     /** Where the loading of the to-do lists of the server stands. */
-    enum class ListsStatus { LOADING, LOADED, ERROR }
+    sealed interface ListsStatus {
+        data object Loading : ListsStatus
+
+        data object Loaded : ListsStatus
+
+        data object Error : ListsStatus
+    }
 
     data class UiState(
         val entityId: String? = null,
@@ -44,9 +50,9 @@ class TodoListViewModel @Inject constructor(
     /** The to-do list entities of the server, kept current by [observeLists]. */
     val lists: StateFlow<List<EntityDisplay>> = _lists.asStateFlow()
 
-    private val _listsStatus = MutableStateFlow(ListsStatus.LOADING)
+    private val _listsStatus = MutableStateFlow<ListsStatus>(ListsStatus.Loading)
 
-    /** Tells a list that is still loading or failed to load from a server without to-do lists. */
+    /** Tells lists that are still loading or failed to load from a server without to-do lists. */
     val listsStatus: StateFlow<ListsStatus> = _listsStatus.asStateFlow()
 
     private val listsRetry = MutableStateFlow(0)
@@ -67,19 +73,19 @@ class TodoListViewModel @Inject constructor(
 
     /** Keeps [lists] current until cancelled, observing again when [retryLists] is called. */
     suspend fun observeLists() {
-        listsRetry.collectLatest {
-            if (_listsStatus.value != ListsStatus.LOADED) _listsStatus.value = ListsStatus.LOADING
+        listsRetry.collectLatest { _ ->
+            if (_listsStatus.value != ListsStatus.Loaded) _listsStatus.value = ListsStatus.Loading
             entitiesForDisplayManager
                 .observeInContext(ServerManager.SERVER_ID_ACTIVE) { it.domain == TODO_DOMAIN }
                 .collect { state ->
                     when (state) {
                         is EntityDisplayState.Loaded -> {
                             _lists.value = state.entities.sortedBy { it.name }
-                            _listsStatus.value = ListsStatus.LOADED
+                            _listsStatus.value = ListsStatus.Loaded
                         }
                         // Keep showing the lists already known when only a refresh failed
                         is EntityDisplayState.Error -> if (_lists.value.isEmpty()) {
-                            _listsStatus.value = ListsStatus.ERROR
+                            _listsStatus.value = ListsStatus.Error
                         }
                         EntityDisplayState.Loading -> Unit
                     }
@@ -87,7 +93,7 @@ class TodoListViewModel @Inject constructor(
         }
     }
 
-    /** Tries again to load the lists after [ListsStatus.ERROR]. */
+    /** Tries again to load the lists after [ListsStatus.Error]. */
     fun retryLists() {
         listsRetry.update { it + 1 }
     }

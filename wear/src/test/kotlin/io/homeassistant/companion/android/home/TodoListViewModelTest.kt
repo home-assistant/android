@@ -44,15 +44,13 @@ class TodoListViewModelTest {
 
     private fun createViewModel() = TodoListViewModel(serverManager, entitiesForDisplayManager)
 
-    private fun todos(entityId: String, vararg items: TodoItem) =
-        GetTodosResponse(mapOf(entityId to TodoResponse(items.toList())))
+    private fun todos(entityId: String, vararg items: TodoItem) = GetTodosResponse(mapOf(entityId to TodoResponse(items.toList())))
 
     private fun givenItems(entityId: String, vararg items: TodoItem) {
         coEvery { webSocket.getTodos(entityId) } returns todos(entityId, *items)
     }
 
-    private fun fakeList(entityId: String, name: String) =
-        EntityDisplayWithContext(EntityDisplayWithoutContext(entityId = entityId, name = name, icon = mockk()))
+    private fun fakeList(entityId: String, name: String) = EntityDisplayWithContext(EntityDisplayWithoutContext(entityId = entityId, name = name, icon = mockk()))
 
     private fun givenListsStates(vararg states: EntityDisplayState<EntityDisplayWithContext>) {
         every {
@@ -134,22 +132,21 @@ class TodoListViewModelTest {
     }
 
     @Test
-    fun `Given a change and its refresh both fail when offline then the last confirmed items come back with a retry`() =
-        runTest {
-            coEvery { webSocket.getTodos("todo.shopping") } returnsMany listOf(todos("todo.shopping", milk), null)
-            coEvery { webSocket.updateTodo(any(), any(), any(), any()) } returns false
-            val viewModel = createViewModel()
-            viewModel.load("todo.shopping")
-            advanceUntilIdle()
+    fun `Given a change and its refresh both fail when offline then the last confirmed items come back with a retry`() = runTest {
+        coEvery { webSocket.getTodos("todo.shopping") } returnsMany listOf(todos("todo.shopping", milk), null)
+        coEvery { webSocket.updateTodo(any(), any(), any(), any()) } returns false
+        val viewModel = createViewModel()
+        viewModel.load("todo.shopping")
+        advanceUntilIdle()
 
-            viewModel.setCompleted("todo.shopping", milk, completed = true)
-            advanceUntilIdle()
+        viewModel.setCompleted("todo.shopping", milk, completed = true)
+        advanceUntilIdle()
 
-            val state = viewModel.uiState.value
-            assertEquals(listOf(milk), state.items)
-            assertTrue(state.hasLoadError)
-            assertTrue(state.hasActionError)
-        }
+        val state = viewModel.uiState.value
+        assertEquals(listOf(milk), state.items)
+        assertTrue(state.hasLoadError)
+        assertTrue(state.hasActionError)
+    }
 
     @Test
     fun `Given a change the server refuses when the refresh works then the server state is shown`() = runTest {
@@ -271,27 +268,26 @@ class TodoListViewModelTest {
         runCurrent()
 
         assertEquals(listOf("Home", "Zoo"), viewModel.lists.value.map { it.name })
-        assertEquals(TodoListViewModel.ListsStatus.LOADED, viewModel.listsStatus.value)
+        assertEquals(TodoListViewModel.ListsStatus.Loaded, viewModel.listsStatus.value)
     }
 
     @Test
-    fun `Given the server cannot be reached when observing the lists then an error is reported and a retry loads them`() =
-        runTest {
-            givenListsStates(
-                EntityDisplayState.Error,
-                EntityDisplayState.Loaded(listOf(fakeList("todo.a", "Home"))),
-            )
-            val viewModel = createViewModel()
+    fun `Given the server cannot be reached when observing the lists then an error is reported and a retry loads them`() = runTest {
+        givenListsStates(
+            EntityDisplayState.Error,
+            EntityDisplayState.Loaded(listOf(fakeList("todo.a", "Home"))),
+        )
+        val viewModel = createViewModel()
 
-            backgroundScope.launch { viewModel.observeLists() }
-            runCurrent()
-            assertEquals(TodoListViewModel.ListsStatus.ERROR, viewModel.listsStatus.value)
-            assertTrue(viewModel.lists.value.isEmpty())
+        backgroundScope.launch { viewModel.observeLists() }
+        runCurrent()
+        assertEquals(TodoListViewModel.ListsStatus.Error, viewModel.listsStatus.value)
+        assertTrue(viewModel.lists.value.isEmpty())
 
-            viewModel.retryLists()
-            runCurrent()
+        viewModel.retryLists()
+        runCurrent()
 
-            assertEquals(TodoListViewModel.ListsStatus.LOADED, viewModel.listsStatus.value)
-            assertEquals(listOf("Home"), viewModel.lists.value.map { it.name })
-        }
+        assertEquals(TodoListViewModel.ListsStatus.Loaded, viewModel.listsStatus.value)
+        assertEquals(listOf("Home"), viewModel.lists.value.map { it.name })
+    }
 }

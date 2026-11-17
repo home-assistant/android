@@ -48,18 +48,18 @@ fun TodoListsView(
             if (lists.isEmpty()) {
                 item {
                     when (status) {
-                        TodoListViewModel.ListsStatus.LOADING -> Text(
+                        TodoListViewModel.ListsStatus.Loading -> Text(
                             text = stringResource(commonR.string.loading),
                             textAlign = TextAlign.Center,
                         )
-                        TodoListViewModel.ListsStatus.ERROR -> Button(
+                        TodoListViewModel.ListsStatus.Error -> Button(
                             modifier = Modifier.fillMaxWidth(),
                             label = { Text(stringResource(commonR.string.todo_list_load_failed)) },
                             secondaryLabel = { Text(stringResource(commonR.string.refresh)) },
                             onClick = onRetry,
                             colors = getFilledTonalButtonColors(),
                         )
-                        TodoListViewModel.ListsStatus.LOADED -> Text(
+                        TodoListViewModel.ListsStatus.Loaded -> Text(
                             text = stringResource(commonR.string.todo_lists_empty),
                             textAlign = TextAlign.Center,
                         )
@@ -93,34 +93,12 @@ fun TodoListView(
     onClearCompleted: () -> Unit,
     onRetry: () -> Unit,
 ) {
-    val addLabel = stringResource(commonR.string.todo_list_new_item_hint)
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            RemoteInput.getResultsFromIntent(result.data)?.getCharSequence(REMOTE_INPUT_KEY)?.let {
-                onAddItem(it.toString())
-            }
-        }
-    }
     val (open, completed) = state.items.partition { it.status != TodoItem.COMPLETED_STATUS }
 
     WearAppTheme {
         ThemeLazyColumn {
             item { ListHeader(listName) }
-            item {
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(commonR.string.todo_list_add_item)) },
-                    onClick = {
-                        val intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
-                        RemoteInputIntentHelper.putRemoteInputsExtra(
-                            intent,
-                            listOf(RemoteInput.Builder(REMOTE_INPUT_KEY).setLabel(addLabel).build()),
-                        )
-                        launcher.launch(intent)
-                    },
-                    colors = getFilledTonalButtonColors(),
-                )
-            }
+            item { AddItemButton(onAddItem) }
             if (state.hasActionError) {
                 item {
                     Text(
@@ -159,6 +137,32 @@ fun TodoListView(
             }
         }
     }
+}
+
+/** The button asking for the text of a new item with the keyboard or the voice input of the watch. */
+@Composable
+private fun AddItemButton(onAddItem: (String) -> Unit) {
+    val addLabel = stringResource(commonR.string.todo_list_new_item_hint)
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            RemoteInput.getResultsFromIntent(result.data)?.getCharSequence(REMOTE_INPUT_KEY)?.let {
+                onAddItem(it.toString())
+            }
+        }
+    }
+    Button(
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(stringResource(commonR.string.todo_list_add_item)) },
+        onClick = {
+            val intent = RemoteInputIntentHelper.createActionRemoteInputIntent()
+            RemoteInputIntentHelper.putRemoteInputsExtra(
+                intent,
+                listOf(RemoteInput.Builder(REMOTE_INPUT_KEY).setLabel(addLabel).build()),
+            )
+            launcher.launch(intent)
+        },
+        colors = getFilledTonalButtonColors(),
+    )
 }
 
 @Composable
@@ -221,7 +225,7 @@ private fun PreviewTodoListView() {
 private fun PreviewTodoListsViewEmpty() {
     TodoListsView(
         lists = emptyList(),
-        status = TodoListViewModel.ListsStatus.LOADED,
+        status = TodoListViewModel.ListsStatus.Loaded,
         onSelectList = {},
         onRetry = {},
     )

@@ -46,7 +46,7 @@ fun SetTodoListTileView(
                     },
                     colors = getFilledTonalButtonColors(),
                     label = { Text(stringResource(id = commonR.string.choose_entity)) },
-                    secondaryLabel = { Text(entityItem?.name ?: tile?.entityId ?: "") },
+                    secondaryLabel = { Text((entityItem?.name ?: tile?.entityId).orEmpty()) },
                     onClick = onSelectEntity,
                 )
             }

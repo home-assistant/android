@@ -535,14 +535,13 @@ class MainViewModel @Inject constructor(
     }
 
     /** Saves the refresh interval of the tile, [onSaved] is called once it is stored. */
-    fun setTodoListTileRefreshInterval(tileId: Int, interval: Long, onSaved: () -> Unit = {}) =
-        viewModelScope.launch {
-            val current = todoListTileDao.get(tileId)
-            todoListTileDao.add(
-                current?.copy(refreshInterval = interval) ?: TodoListTile(id = tileId, refreshInterval = interval),
-            )
-            onSaved()
-        }
+    fun setTodoListTileRefreshInterval(tileId: Int, interval: Long, onSaved: () -> Unit = {}) = viewModelScope.launch {
+        val current = todoListTileDao.get(tileId)
+        todoListTileDao.add(
+            current?.copy(refreshInterval = interval) ?: TodoListTile(id = tileId, refreshInterval = interval),
+        )
+        onSaved()
+    }
 
     fun setThermostatTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
         val current = thermostatTileDao.get(tileId)

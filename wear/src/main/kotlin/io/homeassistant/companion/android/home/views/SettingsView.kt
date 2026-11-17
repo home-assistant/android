@@ -21,6 +21,7 @@ import io.github.timoptr.mdiicons.generated.BellRing
 import io.github.timoptr.mdiicons.generated.CommentProcessingOutline
 import io.github.timoptr.mdiicons.generated.Delete
 import io.github.timoptr.mdiicons.generated.ExitRun
+import io.github.timoptr.mdiicons.generated.FormatListChecks
 import io.github.timoptr.mdiicons.generated.HomeHeart
 import io.github.timoptr.mdiicons.generated.Leak
 import io.github.timoptr.mdiicons.generated.Message
@@ -28,7 +29,6 @@ import io.github.timoptr.mdiicons.generated.MessageOff
 import io.github.timoptr.mdiicons.generated.Star
 import io.github.timoptr.mdiicons.generated.StarCircleOutline
 import io.github.timoptr.mdiicons.generated.TextBox
-import io.github.timoptr.mdiicons.generated.FormatListChecks
 import io.github.timoptr.mdiicons.generated.Thermostat
 import io.github.timoptr.mdiicons.generated.VideoBox
 import io.github.timoptr.mdiicons.generated.WatchVibrate

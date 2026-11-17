@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package io.homeassistant.companion.android.tiles
 
 import androidx.wear.protolayout.ActionBuilders
@@ -29,14 +31,14 @@ import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.todo.TodoListActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /** A tile showing the open items of a Home Assistant to-do list, tap an item to complete it. */
@@ -47,12 +49,13 @@ class TodoListTile : TileService() {
         private const val TAG = "TodoListTile"
         const val DEFAULT_REFRESH_INTERVAL = 600L
         private const val MAX_VISIBLE_ITEMS = 4
+        private const val ITEM_PADDING_DP = 3f
         private const val CLICK_COMPLETE_PREFIX = "complete:"
         private const val CLICK_OPEN_LIST = "open_list"
     }
 
     private val serviceJob = Job()
-    private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
+    private val serviceScope = CoroutineScope(serviceJob)
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -66,6 +69,9 @@ class TodoListTile : TileService() {
     @Inject
     lateinit var entitiesForDisplayManager: EntitiesForDisplayManager
 
+    @Inject
+    lateinit var clock: Clock
+
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val tileId = requestParams.tileId
@@ -74,73 +80,71 @@ class TodoListTile : TileService() {
 
             if (lastId.isNotEmpty() && wearPrefsRepository.getWearHapticFeedback()) hapticClick(applicationContext)
 
-            val freshness = when {
-                tileConfig?.refreshInterval != null && tileConfig.refreshInterval!! <= 1 -> 0
-                tileConfig?.refreshInterval != null -> tileConfig.refreshInterval!!
-                else -> DEFAULT_REFRESH_INTERVAL
-            }
-
-            val tile = Tile.Builder()
-                .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
-                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
-
-            if (!serverManager.isRegistered()) {
-                return@future tile.setTileTimeline(
-                    loggedOutTimeline(
-                        this@TodoListTile,
-                        requestParams,
-                        commonR.string.todo_list_tile,
-                        commonR.string.todo_list_tile_log_in,
-                    ),
-                ).build()
-            }
-
             val entityId = tileConfig?.entityId
-            if (entityId.isNullOrBlank()) {
-                return@future tile.setTileTimeline(
-                    getNotConfiguredTimeline(
-                        this@TodoListTile,
-                        requestParams,
-                        commonR.string.todo_list_tile_no_entity_yet,
-                        HomeActivity.Companion.LaunchMode.TodoListTile,
-                    ),
-                ).build()
+            val timeline = when {
+                !serverManager.isRegistered() -> loggedOutTimeline(
+                    this@TodoListTile,
+                    requestParams,
+                    commonR.string.todo_list_tile,
+                    commonR.string.todo_list_tile_log_in,
+                )
+                entityId.isNullOrBlank() -> getNotConfiguredTimeline(
+                    this@TodoListTile,
+                    requestParams,
+                    commonR.string.todo_list_tile_no_entity_yet,
+                    HomeActivity.Companion.LaunchMode.TodoListTile,
+                )
+                else -> listTimeline(requestParams, entityId, lastId)
             }
 
-            try {
-                val webSocket = serverManager.webSocketRepository()
-                if (lastId.startsWith(CLICK_COMPLETE_PREFIX)) {
-                    webSocket.updateTodo(
-                        entityId,
-                        lastId.removePrefix(CLICK_COMPLETE_PREFIX),
-                        null,
-                        TodoItem.COMPLETED_STATUS,
-                    )
-                }
-                val items = checkNotNull(webSocket.getTodos(entityId)).response[entityId]?.items.orEmpty()
-                    .filter { it.status == TodoItem.NEEDS_ACTION_STATUS }
-                val name = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
-                    .awaitLoadedOrNull()
-                    ?.entity(entityId)
-                    ?.name ?: entityId
-
-                tile.setTileTimeline(timeline(entityId, name, items)).build()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.e(e, "Unable to fetch to-do list $entityId")
-                tile.setTileTimeline(
-                    primaryLayoutTimeline(
-                        this@TodoListTile,
-                        requestParams,
-                        null,
-                        commonR.string.todo_list_load_failed,
-                        commonR.string.refresh,
-                        ActionBuilders.LoadAction.Builder().build(),
-                    ),
-                ).build()
-            }
+            Tile.Builder()
+                .setResourcesVersion("$TAG$tileId.${clock.now().toEpochMilliseconds()}")
+                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshnessSeconds(tileConfig)))
+                .setTileTimeline(timeline)
+                .build()
         }
+
+    private fun freshnessSeconds(tileConfig: TodoListTile?): Long {
+        val interval = tileConfig?.refreshInterval ?: DEFAULT_REFRESH_INTERVAL
+        return if (interval <= 1) 0 else interval
+    }
+
+    /** The items of the list, after completing the one tapped on the previous request. */
+    private suspend fun listTimeline(
+        requestParams: RequestBuilders.TileRequest,
+        entityId: String,
+        lastId: String,
+    ): Timeline = try {
+        val webSocket = serverManager.webSocketRepository()
+        if (lastId.startsWith(CLICK_COMPLETE_PREFIX)) {
+            webSocket.updateTodo(
+                entityId,
+                lastId.removePrefix(CLICK_COMPLETE_PREFIX),
+                null,
+                TodoItem.COMPLETED_STATUS,
+            )
+        }
+        val items = checkNotNull(webSocket.getTodos(entityId)).response[entityId]?.items.orEmpty()
+            .filter { it.status == TodoItem.NEEDS_ACTION_STATUS }
+        val name = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
+            .awaitLoadedOrNull()
+            ?.entity(entityId)
+            ?.name ?: entityId
+
+        timeline(entityId, name, items)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Unable to fetch to-do list $entityId")
+        primaryLayoutTimeline(
+            this,
+            requestParams,
+            null,
+            commonR.string.todo_list_load_failed,
+            commonR.string.refresh,
+            ActionBuilders.LoadAction.Builder().build(),
+        )
+    }
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
@@ -159,17 +163,13 @@ class TodoListTile : TileService() {
         }
 
     override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) = runBlocking {
-        withContext(Dispatchers.IO) {
-            if (todoListTileDao.get(requestParams.tileId) == null) {
-                todoListTileDao.add(TodoListTile(id = requestParams.tileId))
-            }
+        if (todoListTileDao.get(requestParams.tileId) == null) {
+            todoListTileDao.add(TodoListTile(id = requestParams.tileId))
         }
     }
 
     override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
-        withContext(Dispatchers.IO) {
-            todoListTileDao.delete(requestParams.tileId)
-        }
+        todoListTileDao.delete(requestParams.tileId)
     }
 
     override fun onDestroy() {
@@ -203,27 +203,7 @@ class TodoListTile : TileService() {
                     .build(),
             )
         }
-        items.take(MAX_VISIBLE_ITEMS).forEach { item ->
-            val key = item.uid ?: item.summary
-            column.addContent(
-                LayoutElementBuilders.Text.Builder()
-                    .setText("○ ${item.summary.orEmpty()}")
-                    .setMaxLines(1)
-                    .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
-                    .setModifiers(
-                        if (key != null) {
-                            clickModifiers(
-                                "$CLICK_COMPLETE_PREFIX$key",
-                                ActionBuilders.LoadAction.Builder().build(),
-                                paddingDp = 3f,
-                            )
-                        } else {
-                            ModifiersBuilders.Modifiers.Builder().build()
-                        },
-                    )
-                    .build(),
-            )
-        }
+        items.take(MAX_VISIBLE_ITEMS).forEach { column.addContent(itemRow(it)) }
         if (items.size > MAX_VISIBLE_ITEMS) {
             column.addContent(
                 LayoutElementBuilders.Text.Builder()
@@ -242,19 +222,37 @@ class TodoListTile : TileService() {
         )
     }
 
-    private fun openListAction(entityId: String) =
-        ActionBuilders.LaunchAction.Builder()
-            .setAndroidActivity(
-                ActionBuilders.AndroidActivity.Builder()
-                    .setPackageName(applicationContext.packageName)
-                    .setClassName(TodoListActivity::class.java.name)
-                    .addKeyToExtraMapping(
-                        TodoListActivity.EXTRA_ENTITY_ID,
-                        ActionBuilders.AndroidStringExtra.Builder().setValue(entityId).build(),
-                    )
-                    .build(),
+    private fun itemRow(item: TodoItem): LayoutElementBuilders.Text {
+        val key = item.uid ?: item.summary
+        val modifiers = if (key != null) {
+            clickModifiers(
+                "$CLICK_COMPLETE_PREFIX$key",
+                ActionBuilders.LoadAction.Builder().build(),
+                paddingDp = ITEM_PADDING_DP,
             )
+        } else {
+            ModifiersBuilders.Modifiers.Builder().build()
+        }
+        return LayoutElementBuilders.Text.Builder()
+            .setText("○ ${item.summary.orEmpty()}")
+            .setMaxLines(1)
+            .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
+            .setModifiers(modifiers)
             .build()
+    }
+
+    private fun openListAction(entityId: String) = ActionBuilders.LaunchAction.Builder()
+        .setAndroidActivity(
+            ActionBuilders.AndroidActivity.Builder()
+                .setPackageName(applicationContext.packageName)
+                .setClassName(TodoListActivity::class.java.name)
+                .addKeyToExtraMapping(
+                    TodoListActivity.EXTRA_ENTITY_ID,
+                    ActionBuilders.AndroidStringExtra.Builder().setValue(entityId).build(),
+                )
+                .build(),
+        )
+        .build()
 
     private fun clickModifiers(id: String, action: ActionBuilders.Action, paddingDp: Float = 0f) =
         ModifiersBuilders.Modifiers.Builder()
