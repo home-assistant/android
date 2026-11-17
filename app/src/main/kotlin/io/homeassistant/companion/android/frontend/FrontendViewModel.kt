@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -53,6 +54,7 @@ import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
 import io.homeassistant.companion.android.frontend.webrtc.FrontendWebRtcHandler
+import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -139,6 +141,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val matterThreadHandler: FrontendMatterThreadHandler,
     private val webRtcHandler: FrontendWebRtcHandler,
     private val keyChainRepository: KeyChainRepository,
+    private val nightModeManager: NightModeManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -165,6 +168,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         matterThreadHandler: FrontendMatterThreadHandler,
         webRtcHandler: FrontendWebRtcHandler,
         keyChainRepository: KeyChainRepository,
+        nightModeManager: NightModeManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialTarget = savedStateHandle.toRoute<FrontendRoute>().target,
@@ -188,6 +192,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         matterThreadHandler = matterThreadHandler,
         webRtcHandler = webRtcHandler,
         keyChainRepository = keyChainRepository,
+        nightModeManager = nightModeManager,
     )
 
     /**
@@ -398,6 +403,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     /** Whether the WebView is debuggable per the developer setting, null until the pref is read. */
     val webViewDebugEnabled: StateFlow<Boolean?> = flow {
         emitAll(prefsRepository.webViewDebugFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+
+    /** The user's theme preference, null until the pref is read. */
+    val nightModeTheme: StateFlow<NightModeTheme?> = flow {
+        emitAll(nightModeManager.getCurrentNightModeFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
 
     /**

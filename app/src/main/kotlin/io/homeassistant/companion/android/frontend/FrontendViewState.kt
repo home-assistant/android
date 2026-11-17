@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.frontend
 
 import androidx.compose.ui.graphics.Color
-import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.error.ErrorAction
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
@@ -72,7 +71,6 @@ sealed interface FrontendViewState {
         override val url: String,
         val serverHandleInsets: Boolean = false,
         val serverHandleTopInsets: Boolean = false,
-        val nightModeTheme: NightModeTheme? = null,
         val statusBarColor: Color? = null,
         val backgroundColor: Color? = null,
         val canGoBack: Boolean = false,
