@@ -26,6 +26,7 @@
                 android:layout_height="match_parent"
                 android:contentDescription="@string/widget_media_image_description"
                 android:adjustViewBounds="true"
+                android:maxWidth="@dimen/widget_media_image_max_width"
                 android:scaleType="centerCrop"
                 android:visibility="invisible" />
 
@@ -39,6 +40,7 @@
                 android:layout_marginBottom="4dp"
                 android:contentDescription="@string/widget_media_image_description"
                 android:adjustViewBounds="true"
+                android:maxWidth="@dimen/widget_media_image_max_width"
                 android:scaleType="fitCenter"
                 android:tint="?colorWidgetOnBackground"
                 android:src="@android:drawable/ic_media_play" />
