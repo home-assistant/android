@@ -528,7 +528,7 @@ class WebSocketRepositoryImplTest {
                 """.trimIndent(),
             )
 
-            val response = checkNotNull(repository.getEntityRegistryDisplay(listOf("sensor.power", "light.bed", "light.unknown")))
+            val response = checkNotNull(repository.getEntityRegistryDisplay(EntityFilter(entityIds = setOf("sensor.power", "light.bed", "light.unknown"))))
 
             assertEquals("config/entity_registry/get_entries", messageSlot.captured["type"])
             assertEquals(listOf("sensor.power", "light.bed", "light.unknown"), messageSlot.captured["entity_ids"])
@@ -553,10 +553,59 @@ class WebSocketRepositoryImplTest {
         }
 
         @Test
+        fun `Given a server filtering the display registry When getting it for a filter Then the server limits it`() = runTest {
+            val messageSlot = captureSentMessage(
+                """{"entity_categories": {}, "entities": [{"ei": "light.bed", "en": "Bed"}]}""",
+                version = "2026.12.0",
+            )
+
+            val response = repository.getEntityRegistryDisplay(
+                EntityFilter(domains = setOf("light"), entityIds = setOf("switch.fan")),
+            )
+
+            assertEquals(
+                mapOf(
+                    "type" to "config/entity_registry/list_for_display",
+                    "include" to mapOf("domains" to listOf("light"), "entities" to listOf("switch.fan")),
+                ),
+                messageSlot.captured,
+            )
+            assertEquals(listOf("light.bed"), response?.entities?.map { it.entityId })
+        }
+
+        @Test
+        fun `Given a server filtering the display registry When getting it for ids Then the server limits it without get_entries`() = runTest {
+            val messageSlot = captureSentMessage(
+                """{"entity_categories": {}, "entities": [{"ei": "light.bed", "en": "Bed"}]}""",
+                version = "2026.12.0",
+            )
+
+            repository.getEntityRegistryDisplay(EntityFilter(entityIds = setOf("light.bed")))
+
+            assertEquals(
+                mapOf("type" to "config/entity_registry/list_for_display", "entity_ids" to listOf("light.bed")),
+                messageSlot.captured,
+            )
+        }
+
+        @Test
+        fun `Given a server not filtering the display registry When getting it for domains Then the whole registry is filtered on the device`() = runTest {
+            val messageSlot = captureSentMessage(
+                """{"entity_categories": {}, "entities": [{"ei": "light.bed"}, {"ei": "sensor.power"}]}""",
+                version = "2026.11.3",
+            )
+
+            val response = repository.getEntityRegistryDisplay(EntityFilter(domains = setOf("light")))
+
+            assertEquals(mapOf<String, Any?>("type" to "config/entity_registry/list_for_display"), messageSlot.captured)
+            assertEquals(listOf("light.bed"), response?.entities?.map { it.entityId })
+        }
+
+        @Test
         fun `Given a server older than 2024 10 When getting entity registry display for ids Then returns null without sending`() = runTest {
             captureSentMessage("""{}""", version = "2024.9.3")
 
-            assertNull(repository.getEntityRegistryDisplay(listOf("light.bed")))
+            assertNull(repository.getEntityRegistryDisplay(EntityFilter(entityIds = setOf("light.bed"))))
 
             coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
         }
@@ -570,7 +619,7 @@ class WebSocketRepositoryImplTest {
                 error = kotlinJsonMapper.parseToJsonElement("""{"code": "unknown_command"}"""),
             )
 
-            assertNull(repository.getEntityRegistryDisplay(listOf("light.bed")))
+            assertNull(repository.getEntityRegistryDisplay(EntityFilter(entityIds = setOf("light.bed"))))
         }
 
         @Test
