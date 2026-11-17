@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +35,10 @@ import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+
+/** How often and how long to poll for the new state after a power toggle, as the server reports it late. */
+private const val TOGGLE_REFRESH_ATTEMPTS = 4
+private val TOGGLE_REFRESH_DELAY = 500.milliseconds
 
 @AndroidEntryPoint
 class ThermostatTile : TileService() {
@@ -196,7 +201,7 @@ class ThermostatTile : TileService() {
      */
     private suspend fun awaitUpdatedEntity(entity: EntityDisplay): EntityDisplay {
         repeat(TOGGLE_REFRESH_ATTEMPTS) {
-            delay(TOGGLE_REFRESH_DELAY_MS)
+            delay(TOGGLE_REFRESH_DELAY)
             val updated = serverManager.integrationRepository().getEntity(entity.entityId)
             if (updated != null && updated.state != entity.rawState) {
                 return EntityDisplayWithoutContext(entity = updated, name = entity.name)
@@ -256,8 +261,6 @@ class ThermostatTile : TileService() {
         const val TAP_ACTION_UP = "Up"
         const val TAP_ACTION_DOWN = "Down"
         const val TAP_ACTION_TOGGLE = "Toggle"
-        private const val TOGGLE_REFRESH_ATTEMPTS = 4
-        private const val TOGGLE_REFRESH_DELAY_MS = 500L
 
         /** Entity id and name per tile, as of the last full fetch, so a tap doesn't fetch the registry. */
         private val entityNames = ConcurrentHashMap<Int, Pair<String, String>>()
