@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.EnumSource
@@ -64,9 +65,11 @@ class NightModeManagerTest {
     ) = runTest {
         SdkVersion.sdkInt = sdk
         coEvery { prefsRepository.getCurrentNightModeTheme() } returns null
+
         val theme = NightModeTheme.fromStorageValue(prefStorageValue)
+        assertNotNull(theme)
 
         assertEquals(theme, manager.getCurrentNightMode())
-        coVerify { prefsRepository.saveNightModeTheme(theme!!) }
+        coVerify { prefsRepository.saveNightModeTheme(theme) }
     }
 }
