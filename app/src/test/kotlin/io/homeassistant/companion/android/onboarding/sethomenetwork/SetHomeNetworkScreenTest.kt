@@ -106,6 +106,7 @@ class SetHomeNetworkScreenTest {
 
     private class TestHelper {
         var helpClicked = false
+        var backClicked = false
         var nextClicked = false
 
         var currentWifiNetworkSet: String? = null
@@ -123,6 +124,7 @@ class SetHomeNetworkScreenTest {
             setContent {
                 SetHomeNetworkScreen(
                     onHelpClick = { helpClicked = true },
+                    onBackClick = { backClicked = true },
                     onNextClick = { nextClicked = true },
                     currentWifiNetwork = currentWifiNetwork,
                     onCurrentWifiNetworkChange = { currentWifiNetworkSet = it },
@@ -137,6 +139,9 @@ class SetHomeNetworkScreenTest {
 
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).assertIsDisplayed().performClick()
             assertTrue(helpClicked)
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).assertIsDisplayed().performClick()
+            assertTrue(backClicked)
 
             onNodeWithText(stringResource(commonR.string.manage_ssids_warning)).performScrollTo().assertIsDisplayed()
 

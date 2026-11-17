@@ -15,6 +15,7 @@ import java.io.File
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -33,10 +34,12 @@ import org.junit.runner.RunWith
 class AppDatabaseMigrationTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
 
+    private val helperDbFile: File = context.getDatabasePath("migration-test")
+
     @get:Rule
     val helper = MigrationTestHelper(
         instrumentation = InstrumentationRegistry.getInstrumentation(),
-        file = context.getDatabasePath("migration-test"),
+        file = helperDbFile,
         driver = AndroidSQLiteDriver(),
         databaseClass = AppDatabase::class,
     )
@@ -44,13 +47,18 @@ class AppDatabaseMigrationTest {
     private val directDbFile: File = context.getDatabasePath("migration-direct-test")
 
     @After
-    fun deleteDirectDb() {
-        listOf("", "-wal", "-shm", "-journal").forEach { File(directDbFile.path + it).delete() }
+    fun deleteDbs() {
+        helperDbFile.deleteDb()
+        directDbFile.deleteDb()
+    }
+
+    private fun File.deleteDb() {
+        listOf("", "-wal", "-shm", "-journal").forEach { File(path + it).delete() }
     }
 
     /** Opens a fresh driver connection on a real (non-helper) database file. */
     private fun openDirectDb(): SQLiteConnection {
-        listOf("", "-wal", "-shm", "-journal").forEach { File(directDbFile.path + it).delete() }
+        directDbFile.deleteDb()
         directDbFile.parentFile?.mkdirs()
         return AndroidSQLiteDriver().open(directDbFile.path)
     }
@@ -125,6 +133,67 @@ class AppDatabaseMigrationTest {
                 ),
                 names,
             )
+        }
+    }
+
+    @Test
+    fun migration55to56_enabledSensorWithoutStoredSetting_storesContentsOn() = runTest {
+        assertEquals(
+            listOf("true", "toggle", "1", ""),
+            contentsSettingAfterMigration55to56(sensorEnabled = true, storedValue = null),
+        )
+    }
+
+    @Test
+    fun migration55to56_enabledSensorWithStoredSetting_keepsStoredValue() = runTest {
+        assertEquals(
+            listOf("false", "toggle", "1", ""),
+            contentsSettingAfterMigration55to56(sensorEnabled = true, storedValue = "false"),
+        )
+    }
+
+    @Test
+    fun migration55to56_sensorNotEnabled_storesNothing() = runTest {
+        assertNull(contentsSettingAfterMigration55to56(sensorEnabled = false, storedValue = null))
+    }
+
+    /**
+     * Runs the 55 to 56 migration on a database holding the active notification count sensor, the
+     * contents setting when [storedValue] is set, and an unrelated enabled sensor.
+     *
+     * @return the `value`, `value_type`, `enabled` and `entries` of the stored contents setting, `null`
+     * when there is none
+     */
+    private suspend fun contentsSettingAfterMigration55to56(
+        sensorEnabled: Boolean,
+        storedValue: String?,
+    ): List<String>? {
+        helper.createDatabase(55).use { connection ->
+            connection.execSQL(
+                "INSERT INTO `sensors` (`id`,`server_id`,`enabled`,`state`,`state_type`,`type`,`icon`,`name`) " +
+                    "VALUES ('last_notification',0,1,'','','','','')," +
+                    "('active_notification_count',0,${if (sensorEnabled) 1 else 0},'','','','','')",
+            )
+            if (storedValue != null) {
+                connection.execSQL(
+                    "INSERT INTO `sensor_settings` VALUES ('active_notification_count'," +
+                        "'active_notification_count_content_attrs','$storedValue','toggle',1,'')",
+                )
+            }
+        }
+
+        return helper.runMigrationsAndValidate(56, migrationPath(context).toList()).use { connection ->
+            connection.prepare(
+                "SELECT `value`,`value_type`,`enabled`,`entries` FROM `sensor_settings` " +
+                    "WHERE `sensor_id` = 'active_notification_count' " +
+                    "AND `name` = 'active_notification_count_content_attrs'",
+            ).use {
+                if (it.step()) {
+                    listOf(it.getText(0), it.getText(1), it.getLong(2).toString(), it.getText(3))
+                } else {
+                    null
+                }
+            }
         }
     }
 

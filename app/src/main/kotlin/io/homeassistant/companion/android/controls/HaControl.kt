@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.actions.ControlAction
+import androidx.annotation.ColorRes
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -27,7 +28,7 @@ private const val CONTROL_ICON_SIZE_DP = 48
 interface HaControl {
 
     @SuppressLint("ResourceType")
-    fun createControl(context: Context, item: EntityDisplayWithContext, info: HaControlInfo): Control {
+    suspend fun createControl(context: Context, item: EntityDisplayWithContext, info: HaControlInfo): Control {
         val controlIntent =
             context.applicationContext.intentLaunchWithNavigateTo(
                 FrontendTarget.EntityMoreInfo(info.entityId),
@@ -62,27 +63,14 @@ interface HaControl {
             control.setAuthRequired(info.authRequired)
         }
         // Render the resolved icon to match the HA frontend rather than the provided device type
-        val colorTint = when {
-            item.domain == LIGHT_DOMAIN && item.rawState == "on" -> R.color.colorDeviceControlsLightOn
-            item.domain == CAMERA_DOMAIN -> R.color.colorDeviceControlsCamera
-            item.domain == CLIMATE_DOMAIN && item.rawState == "heat"
-            -> R.color.colorDeviceControlsThermostatHeat
-
-            item.rawState in listOf(
-                "off",
-                "unavailable",
-                "unknown",
-            ) -> R.color.colorDeviceControlsOff
-
-            else -> R.color.colorDeviceControlsDefaultOn
-        }
-        val iconBitmap = item.icon.toBitmap(context, CONTROL_ICON_SIZE_DP, ContextCompat.getColor(context, colorTint))
+        val colorTint = ContextCompat.getColor(context, item.iconTint())
+        val iconBitmap = item.icon.toBitmap(context, CONTROL_ICON_SIZE_DP, colorTint)
         control.setCustomIcon(IconCompat.createWithBitmap(iconBitmap).toIcon(context))
 
         return provideControlFeatures(context, control, item, info).build()
     }
 
-    fun provideControlFeatures(
+    suspend fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         item: EntityDisplayWithContext,
@@ -98,4 +86,17 @@ interface HaControl {
         action: ControlAction,
         serverId: Int,
     ): Boolean
+}
+
+@ColorRes
+private fun EntityDisplayWithContext.iconTint(): Int = when {
+    domain == LIGHT_DOMAIN && rawState == "on" -> R.color.colorDeviceControlsLightOn
+
+    domain == CAMERA_DOMAIN -> R.color.colorDeviceControlsCamera
+
+    domain == CLIMATE_DOMAIN && rawState == "heat" -> R.color.colorDeviceControlsThermostatHeat
+
+    rawState in listOf("off", "unavailable", "unknown") -> R.color.colorDeviceControlsOff
+
+    else -> R.color.colorDeviceControlsDefaultOn
 }

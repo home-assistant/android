@@ -23,6 +23,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 class AssistConfigManagerTest {
 
@@ -87,6 +89,27 @@ class AssistConfigManagerTest {
             val result = manager.isWakeWordEnabled()
 
             assertFalse(result)
+        }
+    }
+
+    @Nested
+    inner class ListeningChimeTest {
+
+        @ParameterizedTest
+        @ValueSource(booleans = [true, false])
+        fun `Given chime preference when isListeningChimeEnabled then return stored value`(enabled: Boolean) = runTest {
+            coEvery { prefsRepository.isAssistListeningChimeEnabled() } returns enabled
+
+            assertEquals(enabled, manager.isListeningChimeEnabled())
+        }
+
+        @Test
+        fun `Given false when setListeningChimeEnabled then save preference`() = runTest {
+            coEvery { prefsRepository.setAssistListeningChimeEnabled(any()) } just Runs
+
+            manager.setListeningChimeEnabled(false)
+
+            coVerify { prefsRepository.setAssistListeningChimeEnabled(false) }
         }
     }
 

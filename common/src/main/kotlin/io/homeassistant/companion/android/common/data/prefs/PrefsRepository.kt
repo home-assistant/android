@@ -62,6 +62,9 @@ interface PrefsRepository {
 
     suspend fun getCurrentNightModeTheme(): NightModeTheme?
 
+    /** Emits the current "Theme" preference immediately on collection, then on every change. */
+    suspend fun nightModeThemeFlow(): Flow<NightModeTheme?>
+
     suspend fun saveNightModeTheme(nightModeTheme: NightModeTheme)
 
     suspend fun getCurrentLang(): String?
@@ -202,6 +205,11 @@ interface PrefsRepository {
     suspend fun isWakeWordEnabled(): Boolean
 
     suspend fun setWakeWordEnabled(enabled: Boolean)
+
+    /** Whether a chime plays when Assist starts listening hands-free. Enabled by default. */
+    suspend fun isAssistListeningChimeEnabled(): Boolean
+
+    suspend fun setAssistListeningChimeEnabled(enabled: Boolean)
 
     suspend fun getSelectedWakeWord(): String?
 

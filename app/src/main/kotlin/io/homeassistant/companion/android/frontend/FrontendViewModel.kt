@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckRepository
 import io.homeassistant.companion.android.common.data.connectivity.ConnectivityCheckState
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -52,6 +53,8 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.url.FrontendUrlManager
 import io.homeassistant.companion.android.frontend.url.UrlLoadResult
+import io.homeassistant.companion.android.frontend.webrtc.FrontendWebRtcHandler
+import io.homeassistant.companion.android.themes.NightModeManager
 import io.homeassistant.companion.android.util.HAWebChromeClient
 import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.HAWebViewClientFactory
@@ -60,17 +63,19 @@ import io.homeassistant.companion.android.util.hasSameOrigin
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalForInheritanceCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -80,6 +85,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -133,7 +139,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val improvHandler: FrontendImprovHandler,
     private val barcodeScannerHandler: FrontendBarcodeScannerHandler,
     private val matterThreadHandler: FrontendMatterThreadHandler,
+    private val webRtcHandler: FrontendWebRtcHandler,
     private val keyChainRepository: KeyChainRepository,
+    private val nightModeManager: NightModeManager,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -158,7 +166,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler: FrontendImprovHandler,
         barcodeScannerHandler: FrontendBarcodeScannerHandler,
         matterThreadHandler: FrontendMatterThreadHandler,
+        webRtcHandler: FrontendWebRtcHandler,
         keyChainRepository: KeyChainRepository,
+        nightModeManager: NightModeManager,
     ) : this(
         initialServerId = savedStateHandle.toRoute<FrontendRoute>().serverId,
         initialTarget = savedStateHandle.toRoute<FrontendRoute>().target,
@@ -180,7 +190,9 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         improvHandler = improvHandler,
         barcodeScannerHandler = barcodeScannerHandler,
         matterThreadHandler = matterThreadHandler,
+        webRtcHandler = webRtcHandler,
         keyChainRepository = keyChainRepository,
+        nightModeManager = nightModeManager,
     )
 
     /**
@@ -227,8 +239,8 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private val _connectivityCheckState = MutableStateFlow(ConnectivityCheckState())
     override val connectivityCheckState: StateFlow<ConnectivityCheckState> = _connectivityCheckState.asStateFlow()
 
-    private val _events = MutableSharedFlow<FrontendEvent>(extraBufferCapacity = 1)
-    val events: SharedFlow<FrontendEvent> = _events.asSharedFlow()
+    private val _events = Channel<FrontendEvent>(Channel.BUFFERED)
+    val events: Flow<FrontendEvent> = _events.receiveAsFlow()
 
     private val isScreenStarted = MutableStateFlow(true)
 
@@ -270,13 +282,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             onFrontendError = ::onError,
             onCrash = ::onRetry,
             onPageFinished = ::onPageFinished,
+            onPageStarted = { onPageStarted() },
             onUrlIntercepted = { uri, _ -> onUrlIntercepted(uri) },
             onReceivedHttpAuthRequest = { handler, host, resource, realm ->
                 viewModelScope.launch {
                     if (httpAuthHandler.handleAuthRequest(handler, host = host, resource = resource, realm = realm) ==
                         HttpAuthResult.Cancelled
                     ) {
-                        _events.tryEmit(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
+                        _events.send(FrontendEvent.ShowSnackbar(commonR.string.auth_cancel))
                     }
                 }
             },
@@ -291,7 +304,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 // Only the host is shown: it is what the certificate failed for, and the rest of the URL
                 // would overflow the snackbar.
                 val host = url?.toHttpUrlOrNull()?.host
-                _events.tryEmit(
+                _events.trySend(
                     if (host != null) {
                         FrontendEvent.ShowSnackbar(
                             commonR.string.error_ssl_subresource_host,
@@ -392,6 +405,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         emitAll(prefsRepository.webViewDebugFlow())
     }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
 
+    /** The user's theme preference, null until the pref is read. */
+    val nightModeTheme: StateFlow<NightModeTheme?> = flow {
+        emitAll(nightModeManager.getCurrentNightModeFlow())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+
     /**
      * The user's "Screen orientation" preference.
      *
@@ -451,7 +469,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             var wasFullScreen = false
             exoPlayerManager.state.collect { exoState ->
                 if (wasFullScreen && exoState == null) {
-                    _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = false))
+                    _events.send(FrontendEvent.RequestFullscreen(fullscreen = false))
                 }
                 wasFullScreen = exoState?.isFullScreen == true
                 _viewState.update { currentState ->
@@ -503,6 +521,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     override fun onCleared() {
         exoPlayerManager.close()
+        // viewModelScope is already cancelling, which stops the session collectors but does not
+        // release their native peer connections; run the release on a short-lived scope that
+        // outlives it.
+        val cleanupScope = CoroutineScope(Dispatchers.Main.immediate)
+        cleanupScope.launch { webRtcHandler.stopAll() }.invokeOnCompletion { cleanupScope.cancel() }
     }
 
     /**
@@ -551,11 +574,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             },
             onShowCustomView = { view ->
                 onShowCustomView(view)
-                _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = true))
+                _events.trySend(FrontendEvent.RequestFullscreen(fullscreen = true))
             },
             onHideCustomView = {
                 onHideCustomView()
-                _events.tryEmit(FrontendEvent.RequestFullscreen(fullscreen = false))
+                _events.trySend(FrontendEvent.RequestFullscreen(fullscreen = false))
             },
         )
 
@@ -589,19 +612,19 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         when (intent) {
             ErrorActionIntent.RemoveServerAndRelaunch -> viewModelScope.launch {
                 serverManager.removeServer(_viewState.value.serverId)
-                _events.emit(FrontendEvent.Relaunch)
+                _events.send(FrontendEvent.Relaunch)
             }
 
             ErrorActionIntent.ClearKeychainAndRelaunch -> viewModelScope.launch {
                 keyChainRepository.clear()
-                _events.emit(FrontendEvent.Relaunch)
+                _events.send(FrontendEvent.Relaunch)
             }
 
-            ErrorActionIntent.GoToSettings -> _events.tryEmit(FrontendEvent.NavigateToSettings)
+            ErrorActionIntent.GoToSettings -> _events.trySend(FrontendEvent.NavigateToSettings)
 
-            ErrorActionIntent.OpenSecuritySettings -> _events.tryEmit(FrontendEvent.OpenSecuritySettings)
+            ErrorActionIntent.OpenSecuritySettings -> _events.trySend(FrontendEvent.OpenSecuritySettings)
 
-            ErrorActionIntent.UpdateWebView -> _events.tryEmit(FrontendEvent.UpdateWebView)
+            ErrorActionIntent.UpdateWebView -> _events.trySend(FrontendEvent.UpdateWebView)
 
             ErrorActionIntent.Refresh -> onRetry()
 
@@ -715,7 +738,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     fun onExoPlayerFullscreenChanged(isFullScreen: Boolean) {
         exoPlayerManager.onFullscreenChanged(isFullScreen)
-        _events.tryEmit(FrontendEvent.RequestFullscreen(isFullScreen))
+        _events.trySend(FrontendEvent.RequestFullscreen(isFullScreen))
     }
 
     /**
@@ -732,19 +755,22 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     }
 
     /**
-     * Called when the app is leaving the foreground (host activity stop). When the user enabled
-     * "always show first view on app start", resets the frontend to its default dashboard so the
-     * next launch starts there — unless the user is in the Home Assistant settings or add-ons area.
+     * Called when the host activity stops (the frontend leaves the foreground). Ends any mic talk-back
+     * session. When the user enabled "always show first view on app start", resets the frontend to its
+     * default dashboard — unless the user is in the Home Assistant settings or add-ons area.
      *
-     * The preference is read first on purpose: it suspends, which lets the pending stop dispatch
-     * complete so [LifecycleHandler.isAppInBackground] reads an up-to-date value (the activity stop
-     * is not yet reflected at the instant the stop event fires). The background check then excludes
-     * the case where one of our own activities (e.g. NFC write) came to the foreground.
+     * Dispatched on the non-immediate Main dispatcher on purpose: this runs during the activity's
+     * `ON_STOP`, before [LifecycleHandler.onActivityStopped] has decremented its activity count, so
+     * posting the work lets those stop callbacks finish first and [LifecycleHandler.isAppInBackground]
+     * reads an up-to-date value for the dashboard reset. The mic teardown does not need that value: it
+     * happens on any stop, so opening another of our own activities (e.g. NFC write) still ends it.
      */
     fun onLeavingApp(currentUrl: String?) {
-        viewModelScope.launch {
-            if (!prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()) return@launch
+        viewModelScope.launch(Dispatchers.Main) {
+            webRtcHandler.stopAll(notifyFrontend = true)
+
             if (!LifecycleHandler.isAppInBackground()) return@launch
+            if (!prefsRepository.isAlwaysShowFirstViewOnAppStartEnabled()) return@launch
             if (!shouldShowFirstView(currentUrl)) return@launch
             navigateToDefaultDashboard(_viewState.value.serverId)
         }
@@ -760,7 +786,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     private suspend fun handleGestureResult(result: GestureResult) {
         when (result) {
-            is GestureResult.Navigate -> _events.emit(result.event)
+            is GestureResult.Navigate -> _events.send(result.event)
             is GestureResult.PerformWebViewAction -> _webViewActions.emit(result.action)
             is GestureResult.SwitchServer -> switchServer(result.serverId)
             is GestureResult.NavigateToDefaultDashboard -> navigateToDefaultDashboard(_viewState.value.serverId)
@@ -777,7 +803,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
         if (uri != null) {
             val openEvent = FrontendEvent.OpenExternalLink(uri)
-            _events.emit(openEvent)
+            _events.send(openEvent)
         } else {
             Timber.w("Open in browser requested but current URI couldn't be read")
         }
@@ -869,7 +895,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private fun collectMatterThreadEvents() {
         viewModelScope.launch {
             matterThreadHandler.events.collect { event ->
-                _events.emit(
+                _events.send(
                     when (event) {
                         is FrontendMatterThreadHandler.Event.LaunchIntent ->
                             FrontendEvent.LaunchMatterThreadIntent(event.intentSender)
@@ -894,9 +920,25 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is FrontendHandlerEvent.Connected -> onConnected()
 
             is FrontendHandlerEvent.Disconnected -> {
-                // Disconnection handling not yet implemented
                 Timber.d("Frontend external bus disconnected")
+                // Frontend WebSocket disconnected, stopping the WebRTC stream and notify the frontend.
+                webRtcHandler.stopAll(notifyFrontend = true)
+                // TODO Proper handling of disconnection is not yet implemented https://github.com/home-assistant/android/issues/7899
             }
+
+            is FrontendHandlerEvent.StartWebRtcStream -> viewModelScope.launch {
+                webRtcHandler.start(
+                    scope = viewModelScope,
+                    serverId = viewState.value.serverId,
+                    messageId = result.messageId,
+                    streamType = result.streamType,
+                    entityId = result.entityId,
+                )
+            }
+
+            is FrontendHandlerEvent.StopWebRtcStream ->
+                viewModelScope.launch { webRtcHandler.stop(result.sessionId) }
+
             is FrontendHandlerEvent.Loaded -> showContent()
 
             is FrontendHandlerEvent.ThemeUpdated -> {
@@ -904,15 +946,15 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.OpenSettings -> {
-                _events.emit(FrontendEvent.NavigateToSettings)
+                _events.send(FrontendEvent.NavigateToSettings)
             }
 
             is FrontendHandlerEvent.OpenAssistSettings -> {
-                _events.emit(FrontendEvent.NavigateToAssistSettings)
+                _events.send(FrontendEvent.NavigateToAssistSettings)
             }
 
             is FrontendHandlerEvent.ShowAssist -> {
-                _events.emit(
+                _events.send(
                     FrontendEvent.NavigateToAssist(
                         serverId = _viewState.value.serverId,
                         pipelineId = result.pipelineId,
@@ -934,7 +976,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is FrontendHandlerEvent.WriteNfcTag -> {
-                _events.tryEmit(FrontendEvent.NavigateToNfcWrite(messageId = result.messageId, tagId = result.tagId))
+                _events.send(FrontendEvent.NavigateToNfcWrite(messageId = result.messageId, tagId = result.tagId))
             }
 
             is FrontendHandlerEvent.ExoPlayerAction -> {
@@ -947,7 +989,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 improvHandler.onConfigureImprovDevice(result.deviceName)
 
             is FrontendHandlerEvent.EntityAddToExecuted -> {
-                result.event?.let { _events.tryEmit(it) }
+                result.event?.let { _events.send(it) }
             }
 
             is FrontendHandlerEvent.StartMatterCommissioning -> {
@@ -1080,7 +1122,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             is UrlLoadResult.ExternalUrl -> {
                 // Suspends while the screen is busy with a previous event instead of dropping this one
-                _events.emit(FrontendEvent.OpenExternalLink(result.url.toUri()))
+                _events.send(FrontendEvent.OpenExternalLink(result.url.toUri()))
                 // Load the server without the rejected target, so no later restart can reopen it
                 startLoad(serverId = result.serverId)
             }
@@ -1095,11 +1137,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             }
 
             is DownloadResult.OpenWithSystem -> {
-                _events.emit(FrontendEvent.OpenExternalLink(result.uri))
+                _events.send(FrontendEvent.OpenExternalLink(result.uri))
             }
 
             is DownloadResult.Error -> {
-                _events.emit(FrontendEvent.ShowSnackbar(result.messageResId))
+                _events.send(FrontendEvent.ShowSnackbar(result.messageResId))
             }
         }
     }
@@ -1117,19 +1159,19 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         val rawUrl = uri.toString()
         return when {
             rawUrl.startsWith(APP_PREFIX) -> {
-                _events.tryEmit(FrontendEvent.LaunchApp(rawUrl.substringAfter(APP_PREFIX)))
+                _events.trySend(FrontendEvent.LaunchApp(rawUrl.substringAfter(APP_PREFIX)))
                 true
             }
 
             rawUrl.startsWith(INTENT_PREFIX) -> {
-                _events.tryEmit(FrontendEvent.LaunchIntent(rawUrl))
+                _events.trySend(FrontendEvent.LaunchIntent(rawUrl))
                 true
             }
 
             uri.hasSameOrigin(urlFlow.value) -> false
 
             else -> {
-                _events.tryEmit(FrontendEvent.OpenExternalLink(uri))
+                _events.trySend(FrontendEvent.OpenExternalLink(uri))
                 true
             }
         }
@@ -1205,7 +1247,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             false
         }
         if (shouldWarn) {
-            _events.emit(
+            _events.send(
                 FrontendEvent.ShowSnackbar(
                     messageResId = commonR.string.security_vulnerably_message,
                     action = FrontendEvent.ShowSnackbar.Action(
@@ -1215,6 +1257,16 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 ),
             )
         }
+    }
+
+    /**
+     * Called when a main-frame load begins, including a same-URL reload the view-state URL never reflects.
+     *
+     * Stops all active WebRTC sessions as the page that owns any mic session is being replaced and the
+     * new one has no session id to stop it.
+     */
+    private fun onPageStarted() {
+        viewModelScope.launch { webRtcHandler.stopAll() }
     }
 
     /**
@@ -1255,6 +1307,10 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      */
     private suspend fun serverHandlesInsets(serverId: Int): Boolean {
         return serverManager.getServer(serverId)?.version?.isAtLeast(2026, 2, 0) == true
+    }
+
+    private suspend fun serverHandlesTopInsets(serverId: Int): Boolean {
+        return serverManager.getServer(serverId)?.version?.isAtLeast(minYear = 2026, minMonth = 10) == true
     }
 
     /**
@@ -1298,12 +1354,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     private suspend fun showContent() {
         val wasAwaitingConnection = _viewState.value.isAwaitingConnection()
         val serverHandleInsets = serverHandlesInsets(_viewState.value.serverId)
+        val serverHandleTopInsets = serverHandlesTopInsets(_viewState.value.serverId)
         _viewState.update { currentState ->
             if (currentState.isAwaitingConnection()) {
                 FrontendViewState.Content(
                     serverId = currentState.serverId,
                     url = currentState.url,
                     serverHandleInsets = serverHandleInsets,
+                    serverHandleTopInsets = serverHandleTopInsets,
                 )
             } else {
                 currentState

@@ -1,11 +1,8 @@
 package io.homeassistant.companion.android.common.data
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.data.keychain.ClientCertificateManager
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.common.util.SdkVersion
 import java.io.IOException
 import java.net.Socket
 import java.security.GeneralSecurityException
@@ -71,7 +68,6 @@ class TLSHelper @Inject constructor(private val clientCertificateManager: Client
      * - when there are no user-installed CAs.
      */
     private fun withUserInstalledCaFallback(trustManager: X509TrustManager): X509TrustManager {
-        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.N)) return trustManager
         val extended = trustManager as? X509ExtendedTrustManager ?: return trustManager
         val userCaTrustManager = userInstalledCaTrustManager() ?: return trustManager
         return CompositeX509ExtendedTrustManager(primary = extended, fallback = userCaTrustManager)
@@ -87,7 +83,6 @@ class TLSHelper @Inject constructor(private val clientCertificateManager: Client
      * Builds a trust manager from the user-installed CAs (see [userInstalledCaKeyStore]), or `null`
      * when there are none or AndroidCAStore can't be read.
      */
-    @RequiresApi(Build.VERSION_CODES.N)
     private fun userInstalledCaTrustManager(): X509ExtendedTrustManager? = try {
         val androidCaStore = loadKeyStore("AndroidCAStore")
         userInstalledCaKeyStore(androidCaStore)?.let { defaultX509TrustManager(it) as? X509ExtendedTrustManager }

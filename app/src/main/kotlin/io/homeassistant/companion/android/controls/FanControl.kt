@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 
 @RequiresApi(Build.VERSION_CODES.R)
 object FanControl : HaControl {
-    override fun provideControlFeatures(
+    override suspend fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         item: EntityDisplayWithContext,

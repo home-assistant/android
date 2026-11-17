@@ -53,8 +53,10 @@ internal class TodoWidgetStateUpdater @Inject constructor(
                 val serverId = todoEntity.serverId
                 val listEntityId = todoEntity.entityId
 
-                // Every emission is a change of the entity or of its name, so each one refreshes
+                // The manager re-emits on every registry update of the server, so only a change of
+                // the list entity itself or of its display information refreshes the todos
                 entitiesForDisplayManager.observe(serverId, listOf(listEntityId))
+                    .distinctUntilChanged()
                     .map { state ->
                         val displayEntity = when (state) {
                             // Nothing was ever loaded for this widget, so there is nothing to show yet

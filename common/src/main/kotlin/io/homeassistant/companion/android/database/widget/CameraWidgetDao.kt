@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface CameraWidgetDao : WidgetDao<CameraWidgetEntity> {
 
     @Query("SELECT * FROM camera_widgets WHERE id = :id")
-    suspend fun get(id: Int): CameraWidgetEntity?
+    override suspend fun get(id: Int): CameraWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     override suspend fun add(entity: CameraWidgetEntity)

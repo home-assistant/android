@@ -44,6 +44,16 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
+import coil3.imageLoader
+import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
+import coil3.request.CachePolicy
+import coil3.request.ErrorResult
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.size.Size
+import coil3.toBitmap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
@@ -74,7 +84,7 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
-import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.getActiveNotificationGroup
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.parseExternalIntentUri
@@ -104,13 +114,14 @@ import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import java.io.File
+import java.io.IOException
 import java.net.URL
 import java.net.URLDecoder
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -139,6 +150,7 @@ class MessagingManager @Inject constructor(
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
     private val bluetoothSensorManager: BluetoothSensorManager,
+    private val clock: Clock,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -297,6 +309,12 @@ class MessagingManager @Inject constructor(
 
         // Values for temporarily added keys
         const val THIS_SERVER_ID = "server_id"
+
+        private const val HEADER_AUTHORIZATION = "Authorization"
+        private const val MIME_TYPE_GIF = "image/gif"
+        private const val ANIMATED_IMAGE_FOLDER = "animated_notification_image"
+        private val ANIMATED_IMAGE_MAX_AGE = 2.days
+        private const val MAX_NOTIFICATION_IMAGE_SIZE_PX = 1024
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1056,12 +1074,10 @@ class MessagingManager @Inject constructor(
             group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
-            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
-                if (notification != null && notification.isGroup) {
-                    previousGroup = NotificationData.GROUP_PREFIX + notification.tag
-                    previousGroupId = previousGroup.hashCode()
-                }
+            val activeGroup = notificationManagerCompat.getActiveNotificationGroup(tag, messageId)
+            if (activeGroup != null) {
+                previousGroup = activeGroup
+                previousGroupId = previousGroup.hashCode()
             }
         }
 
@@ -1159,12 +1175,10 @@ class MessagingManager @Inject constructor(
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
-                if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                    val countdown = notificationWhen > System.currentTimeMillis()
-                    // Without this builder.setChronometerCountDown throws a null reference exception
-                    builder.addExtras(Bundle())
-                    builder.setChronometerCountDown(countdown)
-                }
+                val countdown = notificationWhen > System.currentTimeMillis()
+                // Without this builder.setChronometerCountDown throws a null reference exception
+                builder.addExtras(Bundle())
+                builder.setChronometerCountDown(countdown)
             }
         } catch (e: Exception) {
             Timber.e(e, "Error while handling chronometer notification")
@@ -1352,7 +1366,15 @@ class MessagingManager @Inject constructor(
             val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
             if (urlState is UrlState.HasUrl) {
                 val url = UrlUtil.handle(urlState.url, dataIcon)
-                val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataIcon))
+                val iconSize = context.resources.getDimensionPixelSize(
+                    android.R.dimen.notification_large_icon_width,
+                )
+                val bitmap = loadImage(
+                    serverId,
+                    url,
+                    !UrlUtil.isAbsoluteUrl(dataIcon),
+                    Size(iconSize, iconSize),
+                )?.image?.toBitmap()
                 if (bitmap != null) {
                     builder.setLargeIcon(bitmap)
                 }
@@ -1368,20 +1390,30 @@ class MessagingManager @Inject constructor(
             val dataImage = imageUrl.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
+            val sdkSupportsAnimatedImages = SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
             if (urlState is UrlState.HasUrl) {
                 val url = UrlUtil.handle(urlState.url, dataImage)
-                val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))
-                if (bitmap != null) {
+                // The downloaded file is only needed for animated images
+                val diskCachePolicy = if (sdkSupportsAnimatedImages) {
+                    CachePolicy.WRITE_ONLY
+                } else {
+                    CachePolicy.DISABLED
+                }
+                val image = loadImage(
+                    serverId,
+                    url,
+                    !UrlUtil.isAbsoluteUrl(dataImage),
+                    bigPictureTargetSize(),
+                    diskCachePolicy,
+                )
+                if (image != null) {
+                    val bitmap = image.image.toBitmap()
                     builder
                         .setLargeIcon(bitmap)
                         .setStyle(
                             NotificationCompat.BigPictureStyle().also { style ->
-                                if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
-                                    saveTempAnimatedImage(
-                                        serverId,
-                                        url,
-                                        !UrlUtil.isAbsoluteUrl(dataImage),
-                                    )?.let { filePath ->
+                                if (sdkSupportsAnimatedImages) {
+                                    saveTempAnimatedImage(image.diskCacheKey)?.let { filePath ->
                                         style.bigPicture(Icon.createWithContentUri(filePath))
                                     } ?: run { style.bigPicture(bitmap) }
                                 } else {
@@ -1397,73 +1429,115 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private suspend fun getImageBitmap(serverId: Int, url: URL?, requiresAuth: Boolean = false): Bitmap? = withContext(
-        Dispatchers.IO,
-    ) {
-        if (url == null) {
+    /**
+     * Target size for a notification big picture. Vector images (e.g. SVGs) are rasterized at this
+     * resolution and large raster images are downscaled to it, keeping the result crisp while
+     * bounding the memory used by the decoded bitmap.
+     *
+     * The display width gives a crisp result since the big picture spans the notification width; it
+     * is capped by [MAX_NOTIFICATION_IMAGE_SIZE_PX] so large or high-density screens don't produce
+     * excessively large bitmaps.
+     */
+    private fun bigPictureTargetSize(): Size {
+        val dimension = context.resources.displayMetrics.widthPixels
+            .coerceIn(1, MAX_NOTIFICATION_IMAGE_SIZE_PX)
+        return Size(dimension, dimension)
+    }
+
+    /**
+     * Downloads the image at [url], sending the server credentials when [requiresAuth] is set.
+     * Returns `null` when the image cannot be loaded.
+     *
+     * [targetSize] bounds the decoded bitmap. It is required so that vector images (e.g. SVGs) are
+     * rasterized at a resolution matching where the notification displays them instead of their
+     * small intrinsic size, and so that large raster images are downscaled to a reasonable size.
+     *
+     * Use [CachePolicy.WRITE_ONLY] as [diskCachePolicy] to access the downloaded file afterwards.
+     */
+    private suspend fun loadImage(
+        serverId: Int,
+        url: URL?,
+        requiresAuth: Boolean,
+        targetSize: Size,
+        diskCachePolicy: CachePolicy = CachePolicy.DISABLED,
+    ): SuccessResult? {
+        url ?: return null
+        return try {
+            val request = ImageRequest.Builder(context)
+                .data(url.toString())
+                .apply {
+                    if (requiresAuth) {
+                        val token = serverManager.authenticationRepository(serverId).buildBearerToken()
+                        httpHeaders(NetworkHeaders.Builder().add(HEADER_AUTHORIZATION, token).build())
+                    }
+                }
+                .size(targetSize)
+                // The bitmap is sent to the system UI, keep it software-backed
+                .allowHardware(false)
+                // A URL can serve a new image for each notification (e.g. a camera snapshot), so never
+                // read the caches
+                .memoryCachePolicy(CachePolicy.DISABLED)
+                .diskCachePolicy(diskCachePolicy)
+                .build()
+            when (val result = context.imageLoader.execute(request)) {
+                is SuccessResult -> result
+
+                is ErrorResult -> {
+                    Timber.e(result.throwable, "Couldn't download image for notification")
+                    null
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Couldn't download image for notification")
+            null
+        }
+    }
+
+    /**
+     * Copies the downloaded image stored under [diskCacheKey] to a file shareable with the system UI
+     * when it is a GIF. Returns `null` for any other image.
+     */
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private suspend fun saveTempAnimatedImage(diskCacheKey: String?): Uri? = withContext(Dispatchers.IO) {
+        val diskCache = context.imageLoader.diskCache
+        val cacheFolder = context.externalCacheDir?.resolve(ANIMATED_IMAGE_FOLDER)
+        if (diskCacheKey == null || diskCache == null || cacheFolder == null) {
             return@withContext null
         }
 
-        var image: Bitmap? = null
         try {
-            val request = Request.Builder().apply {
-                url(url)
-                if (requiresAuth) {
-                    addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+            diskCache.openSnapshot(diskCacheKey)?.use { snapshot ->
+                val image = snapshot.data.toFile()
+                if (!image.isGif()) {
+                    return@use null
                 }
-            }.build()
 
-            okHttpClientProvider().newCall(request).execute().use {
-                image = BitmapFactory.decodeStream(it.body.byteStream())
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "Couldn't download image for notification")
-        }
-        return@withContext image
-    }
-
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    private suspend fun saveTempAnimatedImage(serverId: Int, url: URL?, requiresAuth: Boolean = false): Uri? =
-        withContext(
-            Dispatchers.IO,
-        ) {
-            if (url == null || url.path.endsWith("gif").not()) {
-                return@withContext null
-            }
-
-            // delete previous images that are no longer needed
-            val imageCutoff = LocalDateTime.now().minusDays(2)
-            val imageCacheFolderPath = context.externalCacheDir?.absolutePath?.plus("/animated_notification_image")
-            imageCacheFolderPath?.let { path ->
-                val cacheFolder = File(path)
                 // Create folder, if it does not yet exist
                 cacheFolder.mkdir()
                 // Clean up stale images
-                cacheFolder.listFiles()?.filter { file ->
-                    imageCutoff.isAfter(
-                        LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()),
-                    )
-                }?.forEach { expired -> expired.delete() }
-            }
+                val staleBefore = clock.now() - ANIMATED_IMAGE_MAX_AGE
+                cacheFolder.listFiles()
+                    ?.filter { Instant.fromEpochMilliseconds(it.lastModified()) < staleBefore }
+                    ?.forEach { expired -> expired.delete() }
 
-            val file = File(imageCacheFolderPath, "${System.currentTimeMillis()}_animated_notification.gif")
-            try {
-                val request = Request.Builder().apply {
-                    url(url)
-                    if (requiresAuth) {
-                        addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
-                    }
-                }.build()
-
-                okHttpClientProvider().newCall(request).execute().use {
-                    val bytes = it.body.bytes()
-                    file.writeBytes(bytes)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Couldn't download image for notification")
+                val file = File(cacheFolder, "${clock.now().toEpochMilliseconds()}_animated_notification.gif")
+                image.copyTo(file)
+                FileProvider.getUriForFile(context, context.fileProviderAuthority, file)
             }
-            return@withContext FileProvider.getUriForFile(context, context.fileProviderAuthority, file)
+        } catch (e: IOException) {
+            Timber.e(e, "Couldn't save animated image for notification")
+            null
         }
+    }
+
+    /** Detects a GIF from the content of the file, the URL it comes from does not have to end with `.gif`. */
+    private fun File.isGif(): Boolean {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, options)
+        return options.outMimeType == MIME_TYPE_GIF
+    }
 
     private suspend fun handleVideo(builder: NotificationCompat.Builder, data: Map<String, String>) {
         val videoUrl = data[VIDEO_URL]
@@ -1795,15 +1869,13 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleReplyHistory(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-            val replies = data.entries
-                .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
-                .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
-            if (replies.any()) {
-                val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
-                builder.setRemoteInputHistory(history)
-                builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
-            }
+        val replies = data.entries
+            .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
+            .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
+        if (replies.any()) {
+            val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
+            builder.setRemoteInputHistory(history)
+            builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
         }
     }
 

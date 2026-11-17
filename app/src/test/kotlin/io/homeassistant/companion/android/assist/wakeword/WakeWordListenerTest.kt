@@ -9,7 +9,9 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -331,6 +333,49 @@ class WakeWordListenerTest {
             } catch (e: RuntimeException) {
                 assertEquals(expectedException, e)
             }
+        }
+    }
+
+    @Nested
+    inner class WarmUpTests {
+
+        @Test
+        fun `Given an engine when warming it up then it processes low level noise and ignores the result`() = runTest {
+            val processed = mutableListOf<ShortArray>()
+            val engine = mockk<MicroWakeWord> {
+                // The same buffer is reused between calls, so keep a copy of each one
+                every { processAudio(any()) } answers {
+                    processed += firstArg<ShortArray>().copyOf()
+                    true
+                }
+            }
+
+            engine.warmedUp()
+
+            assertEquals(WARM_UP_CHUNKS, processed.size)
+            assertTrue(processed.all { it.size == WARM_UP_CHUNK_SAMPLES })
+            // Background noise only: far below the level of speech (a few thousand)
+            assertTrue(processed.all { chunk -> chunk.all { kotlin.math.abs(it.toInt()) < 500 } })
+            assertTrue(processed.any { chunk -> chunk.any { it.toInt() != 0 } })
+            verify(exactly = 0) { engine.close() }
+        }
+
+        @Test
+        fun `Given warm up is cancelled then the engine is closed`() = runTest {
+            val engine = mockk<MicroWakeWord>(relaxed = true)
+            lateinit var job: Job
+            every { engine.processAudio(any()) } answers {
+                job.cancel()
+                false
+            }
+
+            job = launch { engine.warmedUp() }
+            runCurrent()
+
+            assertTrue(job.isCancelled)
+            // Cancellation is noticed at the next chunk, long before the whole warm-up ran
+            verify(atMost = 1) { engine.processAudio(any()) }
+            verify(exactly = 1) { engine.close() }
         }
     }
 }

@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.frontend
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.view.MotionEvent
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
@@ -70,6 +69,7 @@ import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.compose.util.isLight
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
 import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
@@ -85,6 +85,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
+import io.homeassistant.companion.android.frontend.gesture.FrontendSwipeListener
 import io.homeassistant.companion.android.frontend.improv.ui.ImprovOverlay
 import io.homeassistant.companion.android.frontend.insecure.BlockInsecureScreen
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
@@ -96,7 +97,6 @@ import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
-import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
@@ -104,9 +104,6 @@ import io.homeassistant.companion.android.util.sensitive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import timber.log.Timber
-
-/** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
-private const val MINIMUM_GESTURE_VELOCITY = 75f
 
 /** Duration of the loading overlay fade-out once the frontend is ready. */
 private const val LOADING_OVERLAY_FADE_OUT_MILLIS = 350
@@ -150,6 +147,7 @@ internal fun FrontendScreen(
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
     val webViewDebugEnabled by viewModel.webViewDebugEnabled.collectAsStateWithLifecycle()
+    val nightModeTheme by viewModel.nightModeTheme.collectAsStateWithLifecycle()
     val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
     val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val improvScanRequested by viewModel.improvScanRequested.collectAsStateWithLifecycle()
@@ -212,6 +210,7 @@ internal fun FrontendScreen(
         onBarcodeCancelled = viewModel::onBarcodeCancelled,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
         webViewDebugEnabled = webViewDebugEnabled,
+        nightModeTheme = nightModeTheme,
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
         onPipReadinessChanged = onPipReadinessChanged,
@@ -242,6 +241,7 @@ internal fun FrontendScreenContent(
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
     webViewDebugEnabled: Boolean? = null,
+    nightModeTheme: NightModeTheme? = null,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
     keepScreenOnEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
@@ -293,6 +293,7 @@ internal fun FrontendScreenContent(
         onLeavingApp = onLeavingApp,
         statusBarColor = content?.statusBarColor ?: loadingSurfaceColor,
         navigationBarColor = content?.backgroundColor ?: loadingSurfaceColor,
+        serverHandleTopInsets = content?.serverHandleTopInsets ?: false,
         onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
         onScreenStartedChanged = onScreenStartedChanged,
     )
@@ -310,6 +311,7 @@ internal fun FrontendScreenContent(
             onGesture = onGesture,
             autoPlayVideoEnabled = autoPlayVideoEnabled,
             webViewDebugEnabled = webViewDebugEnabled,
+            nightModeTheme = nightModeTheme,
         )
 
         PipEligibleOverlays(
@@ -379,6 +381,7 @@ private fun FrontendScreenEffects(
     onLeavingApp: (String?) -> Unit,
     statusBarColor: Color?,
     navigationBarColor: Color?,
+    serverHandleTopInsets: Boolean,
     onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
     onScreenStartedChanged: (Boolean) -> Unit,
 ) {
@@ -387,7 +390,10 @@ private fun FrontendScreenEffects(
         navigationBarColor = navigationBarColor,
     )
 
-    ReportSafeAreaInsetsEffect(onSafeAreaInsetsChanged = onSafeAreaInsetsChanged)
+    ReportSafeAreaInsetsEffect(
+        serverHandleTopInsets = serverHandleTopInsets,
+        onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
+    )
 
     ReportScreenStartedEffect(onScreenStartedChanged = onScreenStartedChanged)
 
@@ -598,11 +604,13 @@ private fun SafeHAWebView(
     onWebViewCreationFailed: (Throwable) -> Unit,
     autoPlayVideoEnabled: Boolean,
     webViewDebugEnabled: Boolean?,
+    nightModeTheme: NightModeTheme?,
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
+    val serverHandleTopInsets = contentState?.serverHandleTopInsets ?: false
     val insets = WindowInsets.safeDrawing
     val insetsPaddingValues = insets.asPaddingValues()
 
@@ -613,16 +621,15 @@ private fun SafeHAWebView(
     val backgroundColor = contentState?.backgroundColor ?: fallbackColor
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // The top is never drawn edge-to-edge: we always reserve and color the status bar strip.
-        // Before considering removal, https://github.com/home-assistant/frontend/issues/29125 and
-        // contrast with drawers (left/right status bar cannot be different colors) should be addressed.
-        statusBarColor.Overlay(
-            modifier = Modifier
-                .height(insetsPaddingValues.calculateTopPadding())
-                .fillMaxWidth()
-                // We don't want the status bar to color the left and right areas
-                .padding(insets.only(WindowInsetsSides.Horizontal).asPaddingValues()),
-        )
+        if (!serverHandleTopInsets) {
+            statusBarColor.Overlay(
+                modifier = Modifier
+                    .height(insetsPaddingValues.calculateTopPadding())
+                    .fillMaxWidth()
+                    // We don't want the status bar to color the left and right areas
+                    .padding(insets.only(WindowInsetsSides.Horizontal).asPaddingValues()),
+            )
+        }
 
         // Main content row with left/right safe areas
         Row(modifier = Modifier.weight(1f)) {
@@ -636,7 +643,7 @@ private fun SafeHAWebView(
             }
 
             HAWebView(
-                nightModeTheme = contentState?.nightModeTheme,
+                nightModeTheme = nightModeTheme,
                 modifier = Modifier
                     .weight(1f)
                     .background(Color.Transparent),
@@ -683,9 +690,7 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
 /**
  * Applies the WebView configuration required to host the Home Assistant frontend
  *
- * The `ClickableViewAccessibility` lint is suppressed because the touch listener only observes
- * multi-pointer swipe gestures (returning `false` for every event) — clicks still flow through
- * the WebView's built-in handling, so overriding `performClick` would add no accessibility value.
+ * The touch listener observes swipes; the WebView continues to handle clicks and accessibility.
  */
 @SuppressLint("ClickableViewAccessibility")
 private fun WebView.configureForFrontend(
@@ -713,24 +718,7 @@ private fun WebView.configureForFrontend(
         onDownloadRequested(url, contentDisposition, mimetype)
     }
 
-    setOnTouchListener(
-        object : OnSwipeListener(context) {
-            override fun onSwipe(
-                e1: MotionEvent,
-                e2: MotionEvent,
-                velocity: Float,
-                direction: GestureDirection,
-                pointerCount: Int,
-            ): Boolean {
-                if (pointerCount > 1 && velocity >= MINIMUM_GESTURE_VELOCITY) {
-                    onGesture(direction, pointerCount)
-                }
-                return false
-            }
-
-            override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean = false
-        },
-    )
+    setOnTouchListener(FrontendSwipeListener(view = this, onGesture = onGesture))
 }
 
 /**
@@ -858,17 +846,16 @@ private fun SystemBarsAppearanceEffect(statusBarColor: Color?, navigationBarColo
  * for edge-to-edge layout. Reading window insets is a UI concern, so only the reporting lives here.
  */
 @Composable
-private fun ReportSafeAreaInsetsEffect(onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit) {
+private fun ReportSafeAreaInsetsEffect(
+    serverHandleTopInsets: Boolean,
+    onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
+) {
     val insets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
     val density = LocalDensity.current
     val displayMetrics = LocalResources.current.displayMetrics
     val layoutDirection = LocalLayoutDirection.current
 
-    // The app already reserves and colors the status bar strip itself (see SafeHAWebView), so the
-    // frontend must not add its own top inset — otherwise the top spacing would be applied twice.
-    // Kept 0 until the frontend can go edge-to-edge at the top.
-    // https://github.com/home-assistant/frontend/issues/29125
-    val top = 0f
+    val top = if (serverHandleTopInsets) pxToDp(insets.getTop(density).toFloat(), displayMetrics) else 0f
     val bottom = pxToDp(insets.getBottom(density).toFloat(), displayMetrics)
     val left = pxToDp(insets.getLeft(density, layoutDirection).toFloat(), displayMetrics)
     val right = pxToDp(insets.getRight(density, layoutDirection).toFloat(), displayMetrics)
@@ -974,6 +961,7 @@ private fun FrontendBarcodeOverlay(
     )
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenLoadingPreview() {
@@ -1000,6 +988,7 @@ private fun FrontendScreenLoadingPreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenErrorPreview() {
@@ -1031,6 +1020,7 @@ private fun FrontendScreenErrorPreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenInsecurePreview() {
@@ -1058,6 +1048,7 @@ private fun FrontendScreenInsecurePreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenSecurityLevelRequiredPreview() {

@@ -13,7 +13,6 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.annotation.VisibleForTesting
-import androidx.core.net.toUri
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.R as commonR
@@ -70,6 +69,8 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
      * @param onSubresourceSslError Optional callback when an SSL error occurs on a resource other than
      *        the main URL being loaded. Receives the URL of the failing resource. The frontend itself
      *        is unaffected, so this is a notice rather than a connection error.
+     * @param onPageStarted Optional callback when a main-frame load starts (including a reload of the
+     *        same URL), with the URL being loaded.
      */
     suspend fun create(
         currentUrlFlow: StateFlow<String?>,
@@ -87,6 +88,7 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
         )? = null,
         onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
         onSubresourceSslError: ((url: String?) -> Unit)? = null,
+        onPageStarted: ((url: String?) -> Unit)? = null,
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
@@ -96,6 +98,7 @@ class HAWebViewClientFactory @Inject constructor(private val keyChainRepository:
             onCrash = onCrash,
             onUrlIntercepted = onUrlIntercepted,
             onPageFinished = onPageFinished,
+            onPageStarted = onPageStarted,
             onReceivedHttpAuthRequest = onReceivedHttpAuthRequest,
             onCanGoBackChanged = onCanGoBackChanged,
             onSubresourceSslError = onSubresourceSslError,
@@ -117,6 +120,7 @@ class HAWebViewClient internal constructor(
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
     private val onPageFinished: ((url: String?) -> Unit)?,
+    private val onPageStarted: ((url: String?) -> Unit)? = null,
     private val onReceivedHttpAuthRequest: (
         (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
     )?,
@@ -135,6 +139,7 @@ class HAWebViewClient internal constructor(
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
+        onPageStarted?.invoke(url)
         val onCanGoBackChanged = onCanGoBackChanged
         if (view != null && onCanGoBackChanged != null && historyObservedWebView?.get() !== view) {
             historyObservedWebView = WeakReference(view)
@@ -309,13 +314,8 @@ class HAWebViewClient internal constructor(
         return true
     }
 
-    // Override deprecated method for backward compatibility with API 23 and below.
-    // The non-deprecated shouldOverrideUrlLoading(WebView, WebResourceRequest) is not invoked
-    // on these older Android versions, so this method remains necessary.
-    @Suppress("DEPRECATION")
-    @Deprecated("Deprecated in Java for SDK >= 24", ReplaceWith("shouldOverrideUrlLoading(view, request)"))
-    override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-        return url?.toUri()?.let { onUrlIntercepted?.invoke(it, isTLSClientAuthNeeded) } ?: false
+    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+        return request?.url?.let { onUrlIntercepted?.invoke(it, isTLSClientAuthNeeded) } ?: false
     }
 
     private fun formatErrorDetails(context: Context?, code: Int?, description: String?): String {

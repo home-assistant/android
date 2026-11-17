@@ -125,7 +125,7 @@ internal class HaRemoteMediaPlayer(
     fun updateState(state: EntityDisplayWithoutContext?, artworkBytes: ByteArray?) {
         mediaState = state
         this.artworkBytes = artworkBytes
-        pendingCommandFuture?.set(null)
+        pendingCommandFuture?.set(Unit)
         pendingCommandFuture = null
         invalidateState()
     }
@@ -265,7 +265,7 @@ internal class HaRemoteMediaPlayer(
     /** Returns a future pending until [updateState], replacing the in-flight one, failed if [job] fails. */
     private fun trackCommand(job: Job): ListenableFuture<Unit> {
         // Complete any in-flight future so it doesn't stay in SimpleBasePlayer's pendingOperations.
-        pendingCommandFuture?.set(null)
+        pendingCommandFuture?.set(Unit)
         val future = SettableFuture.create<Unit>()
         pendingCommandFuture = future
         job.invokeOnCompletion { cause ->

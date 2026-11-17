@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ButtonWidgetDao : WidgetDao<ButtonWidgetEntity> {
     @Query("SELECT * FROM button_widgets WHERE id = :id")
-    suspend fun get(id: Int): ButtonWidgetEntity?
+    override suspend fun get(id: Int): ButtonWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     override suspend fun add(entity: ButtonWidgetEntity)

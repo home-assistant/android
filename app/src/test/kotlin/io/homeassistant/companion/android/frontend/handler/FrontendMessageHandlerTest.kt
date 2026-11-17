@@ -74,6 +74,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
@@ -106,6 +107,7 @@ class FrontendMessageHandlerTest {
     fun setup() {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_NFC) } returns false
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
+        every { packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) } returns true
         every { matterManager.appSupportsCommissioning() } returns false
         every { matterManager.appSupportsSharing() } returns false
         every { threadManager.appSupportsThread() } returns false
@@ -589,6 +591,24 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
+    fun `Given device without microphone when config get then hasCameraMicrophoneStream is false`() = runTest {
+        every { packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) } returns false
+        every { externalBusRepository.incomingMessages() } returns flowOf(ConfigGetMessage(id = 1))
+
+        val responseSlot = slot<OutgoingExternalBusMessage>()
+        coEvery { externalBusRepository.send(capture(responseSlot)) } returns Unit
+
+        handler.messageResults().test {
+            awaitItem()
+            expectNoEvents()
+        }
+
+        val configResult = assertInstanceOf(ResultMessage::class.java, responseSlot.captured).result
+        val webrtc = configResult.jsonObject["webrtc"]?.jsonObject
+        assertEquals(false, webrtc?.get("hasCameraMicrophoneStream")?.jsonPrimitive?.boolean)
+    }
+
+    @Test
     fun `Given successful auth when getExternalAuth then evaluates success callback`() = runTest {
         val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
         val authResult = ExternalAuthResult.Success(callbackScript = "externalAuthSetToken(true, {token})")
@@ -602,7 +622,30 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given failed auth with error when getExternalAuth then evaluates callback and emits AuthError`() = runTest {
+    fun `Given two failed auths before collecting when collecting messageResults then both AuthErrors are delivered`() = runTest {
+        val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
+        val error = FrontendConnectionError.AuthRevoked(
+            message = commonR.string.error_connection_failed,
+            errorDetails = "Auth failed",
+            rawErrorType = "ExternalAuthFailed",
+        )
+        coEvery { sessionManager.getExternalAuth(1, authPayload) } returns
+            ExternalAuthResult.Failed(callbackScript = "externalAuthSetToken(false)", error = error)
+        coEvery { externalBusRepository.evaluateScript("externalAuthSetToken(false)") } returns null
+        every { externalBusRepository.incomingMessages() } returns emptyFlow()
+
+        handler.getExternalAuth(authPayload, serverId = 1)
+        handler.getExternalAuth(authPayload, serverId = 1)
+
+        handler.messageResults().test {
+            assertEquals(FrontendHandlerEvent.AuthError(error), awaitItem())
+            assertEquals(FrontendHandlerEvent.AuthError(error), awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given failed auth with error when getExternalAuth then evaluates callback and sends AuthError`() = runTest {
         val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
         val error = FrontendConnectionError.AuthRevoked(
             message = commonR.string.error_connection_failed,

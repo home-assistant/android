@@ -65,6 +65,8 @@ dependencies {
     androidTestImplementation(libs.bundles.androidx.test)
     androidTestImplementation(libs.androidx.room.testing)
 
+    testImplementation(libs.androidx.work.testing)
+
     // This fix an issue: provided Metadata instance has version 2.1.0, while maximum supported version is 2.0.0. To support newer versions, update the kotlinx-metadata-jvm library
     lintChecks(libs.androidx.runtime.lint)
 
@@ -79,7 +81,7 @@ dependencies {
     implementation(libs.media3.datasource.cronet) {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
-    implementation(libs.cronet.api)
+    implementation(libs.cronet)
 
     // Force patched protobuf-javalite version to fix CVE-2024-7254 (DoS via StackOverflow in nested groups/map fields)
     implementation(libs.protobuf.javalite)

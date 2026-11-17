@@ -20,7 +20,7 @@ import java.math.RoundingMode
 
 @RequiresApi(Build.VERSION_CODES.R)
 object MediaPlayerControl : HaControl {
-    override fun provideControlFeatures(
+    override suspend fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         item: EntityDisplayWithContext,
