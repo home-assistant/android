@@ -25,6 +25,10 @@ internal val currentChangelog = Changelog(
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
             actionRequiresPlatform = true,
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_wear_todo_lists,
+            platforms = setOf(ChangelogPlatform.WEAR),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(
