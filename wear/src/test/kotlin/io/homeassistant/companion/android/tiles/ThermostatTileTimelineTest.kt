@@ -51,7 +51,7 @@ class ThermostatTileTimelineTest {
         entity: EntityDisplay,
         entityName: String? = null,
         targetTemperature: Float? = 19.5f,
-    ): List<LayoutElement> = ThermostatTile.timeline(context, entity, entityName, targetTemperature, "°C")
+    ): List<LayoutElement> = thermostatTimeline(context, entity, entityName, targetTemperature, "°C")
         .timelineEntries.first().layout!!.root!!.withDescendants()
 
     private fun LayoutElement.withDescendants(): List<LayoutElement> = listOf(this) + children().flatMap {
