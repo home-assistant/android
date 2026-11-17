@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -32,6 +33,8 @@ import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
+import io.homeassistant.companion.android.database.wear.TodoListTile
+import io.homeassistant.companion.android.database.wear.TodoListTileDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -53,6 +56,7 @@ class MainViewModel @Inject constructor(
     private val sensorRepository: SensorRepository,
     private val cameraTileDao: CameraTileDao,
     private val thermostatTileDao: ThermostatTileDao,
+    private val todoListTileDao: TodoListTileDao,
     private val managers: Set<@JvmSuppressWildcards SensorManager>,
     application: Application,
 ) : AndroidViewModel(application) {
@@ -97,6 +101,7 @@ class MainViewModel @Inject constructor(
         val displayItems: Map<String, EntityDisplayWithContext> = emptyMap(),
         val cameraItems: List<EntityDisplay> = emptyList(),
         val climateItems: List<EntityDisplay> = emptyList(),
+        val todoItems: List<EntityDisplay> = emptyList(),
         val favoriteCaches: List<FavoriteCaches> = emptyList(),
         val isFavoritesOnly: Boolean = false,
         val isHapticEnabled: Boolean = false,
@@ -150,6 +155,8 @@ class MainViewModel @Inject constructor(
 
     val thermostatTiles = thermostatTileDao.getAllFlow().collectAsState()
 
+    val todoListTiles = todoListTileDao.getAllFlow().collectAsState()
+
     fun setEntityListNavigation(
         entityListIds: Map<String, List<String>>,
         entityListsOrder: List<String>,
@@ -187,7 +194,7 @@ class MainViewModel @Inject constructor(
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
     /** Domains of the entities the tiles can show, but the main UI does not support. */
-    private val tileDomains = listOf(CAMERA_DOMAIN, CLIMATE_DOMAIN)
+    private val tileDomains = listOf(CAMERA_DOMAIN, CLIMATE_DOMAIN, TODO_DOMAIN)
 
     fun stringForDomain(domain: String): String? =
         HomePresenterImpl.domainsWithNames[domain]?.let { getApplication<Application>().getString(it) }
@@ -316,6 +323,7 @@ class MainViewModel @Inject constructor(
                 displayItems = items,
                 cameraItems = tileItems.filter { it.domain == CAMERA_DOMAIN },
                 climateItems = tileItems.filter { it.domain == CLIMATE_DOMAIN },
+                todoItems = tileItems.filter { it.domain == TODO_DOMAIN },
                 allDisplayItemsByDomain = itemsByDomain,
                 entityListNavigation = uiState.entityListNavigation.copy(
                     entityLists = uiState.entityListNavigation.entityListIds.resolveEntities(items),
@@ -517,6 +525,18 @@ class MainViewModel @Inject constructor(
         val current = cameraTileDao.get(tileId)
         val updated = current?.copy(refreshInterval = interval) ?: CameraTile(id = tileId, refreshInterval = interval)
         cameraTileDao.add(updated)
+    }
+
+    fun setTodoListTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
+        val current = todoListTileDao.get(tileId)
+        todoListTileDao.add(current?.copy(entityId = entityId) ?: TodoListTile(id = tileId, entityId = entityId))
+    }
+
+    fun setTodoListTileRefreshInterval(tileId: Int, interval: Long) = viewModelScope.launch {
+        val current = todoListTileDao.get(tileId)
+        todoListTileDao.add(
+            current?.copy(refreshInterval = interval) ?: TodoListTile(id = tileId, refreshInterval = interval),
+        )
     }
 
     fun setThermostatTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {

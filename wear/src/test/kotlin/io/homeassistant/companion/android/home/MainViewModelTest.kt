@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
+import io.homeassistant.companion.android.database.wear.TodoListTileDao
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.every
@@ -43,6 +44,10 @@ class MainViewModelTest {
         every { getAllFlow() } returns flowOf(emptyList())
     }
 
+    private val todoListTileDao: TodoListTileDao = mockk {
+        every { getAllFlow() } returns flowOf(emptyList())
+    }
+
     private fun createViewModel() = MainViewModel(
         entitiesForDisplayManager = entitiesForDisplayManager,
         favoritesDao = favoritesDao,
@@ -50,6 +55,7 @@ class MainViewModelTest {
         sensorRepository = sensorRepository,
         cameraTileDao = cameraTileDao,
         thermostatTileDao = thermostatTileDao,
+        todoListTileDao = todoListTileDao,
         managers = emptySet(),
         application = mockk<Application>(relaxed = true),
     )

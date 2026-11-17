@@ -28,6 +28,7 @@ import io.github.timoptr.mdiicons.generated.MessageOff
 import io.github.timoptr.mdiicons.generated.Star
 import io.github.timoptr.mdiicons.generated.StarCircleOutline
 import io.github.timoptr.mdiicons.generated.TextBox
+import io.github.timoptr.mdiicons.generated.FormatListChecks
 import io.github.timoptr.mdiicons.generated.Thermostat
 import io.github.timoptr.mdiicons.generated.VideoBox
 import io.github.timoptr.mdiicons.generated.WatchVibrate
@@ -91,6 +92,7 @@ fun SettingsView(
     onClickCameraTile: () -> Unit,
     onClickTemplateTiles: () -> Unit,
     onClickThermostatTiles: () -> Unit,
+    onClickTodoListTiles: () -> Unit,
     onAssistantAppAllowed: (Boolean) -> Unit,
     onClickNotifications: () -> Unit,
 ) {
@@ -209,6 +211,13 @@ fun SettingsView(
                 )
             }
             item {
+                SecondarySettingsChip(
+                    icon = Mdi.FormatListChecks,
+                    label = stringResource(commonR.string.todo_list_tiles),
+                    onClick = onClickTodoListTiles,
+                )
+            }
+            item {
                 ListHeader(
                     id = commonR.string.sensors,
                 )
@@ -306,6 +315,7 @@ private fun PreviewSettingsView() {
         onClickCameraTile = {},
         onClickTemplateTiles = {},
         onClickThermostatTiles = {},
+        onClickTodoListTiles = {},
         onAssistantAppAllowed = {},
         onClickNotifications = {},
     )

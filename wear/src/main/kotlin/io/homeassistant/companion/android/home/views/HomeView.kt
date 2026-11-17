@@ -17,6 +17,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.tiles.CameraTile
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.tiles.ThermostatTile
+import io.homeassistant.companion.android.tiles.TodoListTile
 import io.homeassistant.companion.android.views.ChooseEntityView
 
 private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
@@ -46,6 +48,12 @@ private const val SCREEN_SET_CAMERA_TILE = "set_camera_tile"
 private const val SCREEN_SET_CAMERA_TILE_ENTITY = "entity"
 private const val SCREEN_SET_CAMERA_TILE_REFRESH_INTERVAL = "refresh_interval"
 private const val ROUTE_THERMOSTAT_TILE = "thermostat_tile"
+private const val ROUTE_TODO_LIST_TILE = "todo_list_tile"
+private const val ARG_SCREEN_TODO_LIST_TILE_ID = "todoListTileId"
+private const val SCREEN_SELECT_TODO_LIST_TILE = "select_todo_list_tile"
+private const val SCREEN_SET_TODO_LIST_TILE = "set_todo_list_tile"
+private const val SCREEN_SET_TODO_LIST_TILE_ENTITY = "entity"
+private const val SCREEN_SET_TODO_LIST_TILE_REFRESH_INTERVAL = "refresh_interval"
 private const val SCREEN_SELECT_THERMOSTAT_TILE = "select_thermostat_tile"
 private const val SCREEN_SET_THERMOSTAT_TILE = "set_thermostat_tile"
 private const val SCREEN_SET_THERMOSTAT_TILE_ENTITY = "entity"
@@ -62,6 +70,7 @@ private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template
 const val DEEPLINK_SENSOR_MANAGER = "ha_wear://$SCREEN_SINGLE_SENSOR_MANAGER"
 const val DEEPLINK_PREFIX_SET_CAMERA_TILE = "ha_wear://$SCREEN_SET_CAMERA_TILE"
 const val DEEPLINK_PREFIX_SET_THERMOSTAT_TILE = "ha_wear://$SCREEN_SET_THERMOSTAT_TILE"
+const val DEEPLINK_PREFIX_SET_TODO_LIST_TILE = "ha_wear://$SCREEN_SET_TODO_LIST_TILE"
 const val DEEPLINK_PREFIX_SET_SHORTCUT_TILE = "ha_wear://$SCREEN_SET_SHORTCUTS_TILE"
 const val DEEPLINK_PREFIX_SET_TEMPLATE_TILE = "ha_wear://$SCREEN_SET_TILE_TEMPLATE"
 
@@ -186,6 +195,9 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     onClickThermostatTiles = {
                         swipeDismissableNavController.navigate("$ROUTE_THERMOSTAT_TILE/$SCREEN_SELECT_THERMOSTAT_TILE")
                     },
+                    onClickTodoListTiles = {
+                        swipeDismissableNavController.navigate("$ROUTE_TODO_LIST_TILE/$SCREEN_SELECT_TODO_LIST_TILE")
+                    },
                     onAssistantAppAllowed = mainViewModel::setAssistantApp,
                     onClickNotifications = {
                         notificationLaunch.launch(
@@ -288,6 +300,81 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 ) { interval ->
                     tileId?.let {
                         mainViewModel.setCameraTileRefreshInterval(it, interval.toLong())
+                    }
+                    swipeDismissableNavController.navigateUp()
+                }
+            }
+            composable("$ROUTE_TODO_LIST_TILE/$SCREEN_SELECT_TODO_LIST_TILE") {
+                SelectTodoListTileView(
+                    tiles = mainViewModel.todoListTiles.value,
+                    onSelectTile = { tileId ->
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_TODO_LIST_TILE/$tileId/$SCREEN_SET_TODO_LIST_TILE",
+                        )
+                    },
+                )
+            }
+            composable(
+                route = "$ROUTE_TODO_LIST_TILE/{$ARG_SCREEN_TODO_LIST_TILE_ID}/$SCREEN_SET_TODO_LIST_TILE",
+                arguments = listOf(navArgument(name = ARG_SCREEN_TODO_LIST_TILE_ID) { type = NavType.IntType }),
+                deepLinks = listOf(
+                    navDeepLink {
+                        uriPattern = "$DEEPLINK_PREFIX_SET_TODO_LIST_TILE/{$ARG_SCREEN_TODO_LIST_TILE_ID}"
+                    },
+                ),
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_TODO_LIST_TILE_ID)
+                val todoTile = mainViewModel.todoListTiles.value.firstOrNull { it.id == tileId }
+                SetTodoListTileView(
+                    tile = todoTile,
+                    entityItem = uiState.todoItems.firstOrNull { it.entityId == todoTile?.entityId },
+                    onSelectEntity = {
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_TODO_LIST_TILE/$tileId/$SCREEN_SET_TODO_LIST_TILE_ENTITY",
+                        )
+                    },
+                    onSelectRefreshInterval = {
+                        swipeDismissableNavController.navigate(
+                            "$ROUTE_TODO_LIST_TILE/$tileId/$SCREEN_SET_TODO_LIST_TILE_REFRESH_INTERVAL",
+                        )
+                    },
+                )
+            }
+            composable(
+                route = "$ROUTE_TODO_LIST_TILE/{$ARG_SCREEN_TODO_LIST_TILE_ID}/$SCREEN_SET_TODO_LIST_TILE_ENTITY",
+                arguments = listOf(navArgument(name = ARG_SCREEN_TODO_LIST_TILE_ID) { type = NavType.IntType }),
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_TODO_LIST_TILE_ID)
+                ChooseEntityView(
+                    entitiesByDomainOrder = listOf(TODO_DOMAIN),
+                    entitiesByDomain = mapOf(TODO_DOMAIN to uiState.todoItems),
+                    favoriteEntityIds = emptyList(),
+                    onNoneClicked = {},
+                    onEntitySelected = { entity ->
+                        tileId?.let {
+                            mainViewModel.setTodoListTileEntity(it, entity.entityId)
+                            TileService.getUpdater(context).requestUpdate(TodoListTile::class.java)
+                        }
+                        swipeDismissableNavController.navigateUp()
+                    },
+                    allowNone = false,
+                )
+            }
+            composable(
+                route = "$ROUTE_TODO_LIST_TILE/{$ARG_SCREEN_TODO_LIST_TILE_ID}/" +
+                    SCREEN_SET_TODO_LIST_TILE_REFRESH_INTERVAL,
+                arguments = listOf(navArgument(name = ARG_SCREEN_TODO_LIST_TILE_ID) { type = NavType.IntType }),
+            ) { backStackEntry ->
+                val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_TODO_LIST_TILE_ID)
+                RefreshIntervalPickerView(
+                    currentInterval = (
+                        mainViewModel.todoListTiles.value.firstOrNull { it.id == tileId }?.refreshInterval
+                            ?: TodoListTile.DEFAULT_REFRESH_INTERVAL
+                        ).toInt(),
+                ) { interval ->
+                    tileId?.let {
+                        mainViewModel.setTodoListTileRefreshInterval(it, interval.toLong())
+                        TileService.getUpdater(context).requestUpdate(TodoListTile::class.java)
                     }
                     swipeDismissableNavController.navigateUp()
                 }

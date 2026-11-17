@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_CAMERA_
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_SHORTCUT_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_TEMPLATE_TILE
 import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_THERMOSTAT_TILE
+import io.homeassistant.companion.android.home.views.DEEPLINK_PREFIX_SET_TODO_LIST_TILE
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -59,6 +60,7 @@ class HomeActivity :
         sealed interface LaunchMode {
             object ThermostatTile : LaunchMode
             object CameraTile : LaunchMode
+            object TodoListTile : LaunchMode
         }
 
         fun getLaunchAction(packageName: String, tileId: Int, launchMode: LaunchMode): ActionBuilders.LaunchAction {
@@ -73,6 +75,7 @@ class HomeActivity :
                         when (launchMode) {
                             LaunchMode.ThermostatTile -> OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE
                             LaunchMode.CameraTile -> OpenTileSettingsActivity.CONFIG_CAMERA_TILE
+                            LaunchMode.TodoListTile -> OpenTileSettingsActivity.CONFIG_TODO_LIST_TILE
                         },
                     )
                         .build(),
@@ -89,6 +92,13 @@ class HomeActivity :
 
             return launchAction
         }
+
+        fun getTodoListTileSettingsIntent(context: Context, tileId: Int) = Intent(
+            Intent.ACTION_VIEW,
+            "$DEEPLINK_PREFIX_SET_TODO_LIST_TILE/$tileId".toUri(),
+            context,
+            HomeActivity::class.java,
+        )
 
         fun getCameraTileSettingsIntent(context: Context, tileId: Int) = Intent(
             Intent.ACTION_VIEW,
@@ -125,7 +135,8 @@ class HomeActivity :
         presenter.init(this)
         val launchMode = intent.getStringExtra(LAUNCH_MODE)
         if (launchMode == OpenTileSettingsActivity.CONFIG_THERMOSTAT_TILE ||
-            launchMode == OpenTileSettingsActivity.CONFIG_CAMERA_TILE
+            launchMode == OpenTileSettingsActivity.CONFIG_CAMERA_TILE ||
+            launchMode == OpenTileSettingsActivity.CONFIG_TODO_LIST_TILE
         ) {
             startActivity(
                 OpenTileSettingsActivity.newInstance(
