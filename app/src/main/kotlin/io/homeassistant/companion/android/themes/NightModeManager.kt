@@ -12,6 +12,8 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -31,10 +33,8 @@ class NightModeManager @Inject constructor(private val prefsRepository: PrefsRep
         return getAndSetNightMode(nightMode)
     }
 
-    suspend fun getCurrentNightModeFlow(): Flow<NightModeTheme?> =
-        prefsRepository.nightModeThemeFlow().map { nightMode ->
-            getAndSetNightMode(nightMode)
-        }
+    fun getCurrentNightModeFlow(): Flow<NightModeTheme?> = flow { emitAll(prefsRepository.nightModeThemeFlow()) }
+        .map { nightMode -> getAndSetNightMode(nightMode) }
 
     private suspend fun getAndSetNightMode(nightMode: NightModeTheme?): NightModeTheme = if (nightMode == null) {
         val nightModeThemeToSet = if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
