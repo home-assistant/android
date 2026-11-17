@@ -16,9 +16,11 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class TodoListViewModelTest {
 
@@ -265,7 +268,7 @@ class TodoListViewModelTest {
         val viewModel = createViewModel()
 
         backgroundScope.launch { viewModel.observeLists() }
-        advanceUntilIdle()
+        runCurrent()
 
         assertEquals(listOf("Home", "Zoo"), viewModel.lists.value.map { it.name })
         assertEquals(TodoListViewModel.ListsStatus.LOADED, viewModel.listsStatus.value)
@@ -281,12 +284,12 @@ class TodoListViewModelTest {
             val viewModel = createViewModel()
 
             backgroundScope.launch { viewModel.observeLists() }
-            advanceUntilIdle()
+            runCurrent()
             assertEquals(TodoListViewModel.ListsStatus.ERROR, viewModel.listsStatus.value)
             assertTrue(viewModel.lists.value.isEmpty())
 
             viewModel.retryLists()
-            advanceUntilIdle()
+            runCurrent()
 
             assertEquals(TodoListViewModel.ListsStatus.LOADED, viewModel.listsStatus.value)
             assertEquals(listOf("Home"), viewModel.lists.value.map { it.name })
