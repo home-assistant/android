@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
 import android.content.Context
-import androidx.annotation.VisibleForTesting
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
@@ -34,7 +33,6 @@ internal data class ThermostatTileContent(
     val showPowerButton: Boolean,
 )
 
-@VisibleForTesting
 internal fun thermostatTimeline(context: Context, content: ThermostatTileContent): Timeline =
     Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
