@@ -143,10 +143,13 @@ class ThermostatTile : TileService() {
                         tile.setTileTimeline(
                             thermostatTimeline(
                                 this@ThermostatTile,
-                                shownEntity,
-                                name,
-                                targetTemp,
-                                temperatureUnit,
+                                ThermostatTileContent(
+                                    entity = shownEntity,
+                                    entityName = name,
+                                    targetTemperature = targetTemp,
+                                    temperatureUnit = temperatureUnit,
+                                    showPowerButton = tileConfig.showPowerButton == true,
+                                ),
                             ),
                         ).build()
                     } catch (e: CancellationException) {

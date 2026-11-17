@@ -51,8 +51,11 @@ class ThermostatTileTimelineTest {
         entity: EntityDisplay,
         entityName: String? = null,
         targetTemperature: Float? = 19.5f,
-    ): List<LayoutElement> = thermostatTimeline(context, entity, entityName, targetTemperature, "°C")
-        .timelineEntries.first().layout!!.root!!.withDescendants()
+        showPowerButton: Boolean = true,
+    ): List<LayoutElement> = thermostatTimeline(
+        context,
+        ThermostatTileContent(entity, entityName, targetTemperature, "°C", showPowerButton),
+    ).timelineEntries.first().layout!!.root!!.withDescendants()
 
     private fun LayoutElement.withDescendants(): List<LayoutElement> = listOf(this) + children().flatMap {
         it.withDescendants()
@@ -83,6 +86,16 @@ class ThermostatTileTimelineTest {
         val ids = elements.tappableIds()
 
         assertTrue(ids.containsAll(setOf("Down", "Toggle", "Up")))
+    }
+
+    @Test
+    fun `Given the power button is hidden when building the tile then only the temperature buttons can be tapped`() {
+        val elements = layout(thermostat(rawState = "heat", hvacAction = "heating"), showPowerButton = false)
+
+        val ids = elements.tappableIds()
+
+        assertFalse("Toggle" in ids)
+        assertTrue(ids.containsAll(setOf("Down", "Up")))
     }
 
     @Test

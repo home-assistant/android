@@ -333,6 +333,9 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     onNameEnabled = { tileIdToggle, showName ->
                         mainViewModel.setThermostatTileShowName(tileIdToggle, showName)
                     },
+                    onPowerButtonEnabled = { tileIdToggle, showPowerButton ->
+                        mainViewModel.setThermostatTileShowPowerButton(tileIdToggle, showPowerButton)
+                    },
                 )
             }
             composable(

@@ -22,31 +22,33 @@ private const val NAME_ARC_THICKNESS_DP = 30f
 private const val FULL_CIRCLE_DEGREES = 360f
 private const val HALF_CIRCLE_DEGREES = 180f
 
-/** [entityName] is null when the name isn't shown on the tile. */
-@VisibleForTesting
-internal fun thermostatTimeline(
-    context: Context,
-    entity: EntityDisplay,
-    entityName: String?,
-    targetTemperature: Float?,
-    temperatureUnit: String,
-): Timeline = Timeline.fromLayoutElement(
-    LayoutElementBuilders.Box.Builder().apply {
-        addContent(getControlsColumn(context, entity, targetTemperature, temperatureUnit))
-        addContent(getStatusRing(context, entity))
-        if (entityName != null) addContent(getNameArc(entityName))
-        // Refresh button
-        addContent(getRefreshButton())
-        setModifiers(getRefreshModifiers())
-    }.build(),
+/**
+ * What a thermostat tile shows. [entityName] is null when the name isn't shown on the tile, and the
+ * power button is only drawn when [showPowerButton] is set.
+ */
+internal data class ThermostatTileContent(
+    val entity: EntityDisplay,
+    val entityName: String?,
+    val targetTemperature: Float?,
+    val temperatureUnit: String,
+    val showPowerButton: Boolean,
 )
 
-private fun getControlsColumn(
-    context: Context,
-    entity: EntityDisplay,
-    targetTemperature: Float?,
-    temperatureUnit: String,
-): LayoutElement {
+@VisibleForTesting
+internal fun thermostatTimeline(context: Context, content: ThermostatTileContent): Timeline =
+    Timeline.fromLayoutElement(
+        LayoutElementBuilders.Box.Builder().apply {
+            addContent(getControlsColumn(context, content))
+            addContent(getStatusRing(context, content.entity))
+            content.entityName?.let { addContent(getNameArc(it)) }
+            // Refresh button
+            addContent(getRefreshButton())
+            setModifiers(getRefreshModifiers())
+        }.build(),
+    )
+
+private fun getControlsColumn(context: Context, content: ThermostatTileContent): LayoutElement {
+    val entity = content.entity
     val hvacAction = entity.climateControls?.hvacAction.toString()
 
     return LayoutElementBuilders.Column.Builder()
@@ -57,7 +59,7 @@ private fun getControlsColumn(
         )
         .addContent(
             LayoutElementBuilders.Text.Builder()
-                .setText("${targetTemperature ?: "--"} $temperatureUnit")
+                .setText("${content.targetTemperature ?: "--"} ${content.temperatureUnit}")
                 .setFontStyle(
                     LayoutElementBuilders.FontStyle.Builder().setSize(
                         DimensionBuilders.sp(TARGET_TEMPERATURE_SIZE_SP),
@@ -67,31 +69,42 @@ private fun getControlsColumn(
         )
         .addContent(
             LayoutElementBuilders.Text.Builder()
-                .setText("${entity.climateControls?.currentTemperature ?: "--"} $temperatureUnit")
+                .setText("${entity.climateControls?.currentTemperature ?: "--"} ${content.temperatureUnit}")
                 .build(),
         )
         .addContent(
             LayoutElementBuilders.Spacer.Builder()
                 .setHeight(DimensionBuilders.dp(SPACING_DP)).build(),
         )
-        .addContent(getButtonsRow(context, entity, hvacAction))
+        .addContent(getButtonsRow(context, entity, hvacAction, content.showPowerButton))
         .build()
 }
 
-private fun getButtonsRow(context: Context, entity: EntityDisplay, hvacAction: String): LayoutElement {
+private fun getButtonsRow(
+    context: Context,
+    entity: EntityDisplay,
+    hvacAction: String,
+    showPowerButton: Boolean,
+): LayoutElement {
     val buttonsEnabled = hvacAction != "off" && entity.rawState != "unavailable"
 
     return LayoutElementBuilders.Row.Builder()
         .addContent(getTempButton(context, buttonsEnabled, ThermostatTile.TAP_ACTION_DOWN))
-        .addContent(getSpacer())
-        .addContent(getPowerButton(context, entity.rawState != "unavailable"))
-        .addContent(getSpacer())
+        .apply {
+            if (showPowerButton) {
+                addContent(getSpacer(SPACING_DP))
+                addContent(getPowerButton(context, entity.rawState != "unavailable"))
+                addContent(getSpacer(SPACING_DP))
+            } else {
+                addContent(getSpacer(SPACING_DP * 2))
+            }
+        }
         .addContent(getTempButton(context, buttonsEnabled, ThermostatTile.TAP_ACTION_UP))
         .build()
 }
 
-private fun getSpacer(): LayoutElement = LayoutElementBuilders.Spacer.Builder()
-    .setWidth(DimensionBuilders.dp(SPACING_DP)).build()
+private fun getSpacer(widthDp: Float): LayoutElement = LayoutElementBuilders.Spacer.Builder()
+    .setWidth(DimensionBuilders.dp(widthDp)).build()
 
 private fun getFriendlyHvacAction(context: Context, hvacAction: String): String = when (hvacAction) {
     "heating" -> context.getString(commonR.string.climate_heating)
