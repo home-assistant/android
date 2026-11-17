@@ -19,6 +19,8 @@ import io.homeassistant.companion.android.common.data.integration.display.awaitL
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.EntityStateComplicationsDao
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import timber.log.Timber
 private const val COMPLICATION_ICON_SIZE_DP = 24
 
@@ -45,8 +47,13 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         val entityId = settings?.entityId
             ?: return getErrorComplication(request, R.string.complication_entity_invalid, true)
 
-        val loadedState = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
-            .awaitLoadedOrNull() ?: return getErrorComplication(request, R.string.state_unknown)
+        val loadedState = loadEntity(entityId) ?: run {
+            // Returning null keeps the complication showing its last value: a watch often loses its
+            // connection for a moment (switching between Wi-Fi and Bluetooth), which shouldn't
+            // replace a valid state with "Unknown" until the next refresh
+            Timber.w("Unable to load $entityId, keeping the last complication data")
+            return null
+        }
 
         val displayEntity = loadedState.entity(entityId)
             ?: return getErrorComplication(request, R.string.complication_entity_invalid)
@@ -95,6 +102,14 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
             else -> null // Already handled at the start of the function
         }
     }
+
+    /** Loads [entityId], retrying once after [RETRY_DELAY] as most failures are short connection drops. */
+    private suspend fun loadEntity(entityId: String) =
+        entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId)).awaitLoadedOrNull()
+            ?: run {
+                delay(RETRY_DELAY)
+                entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId)).awaitLoadedOrNull()
+            }
 
     override fun getPreviewData(type: ComplicationType): ComplicationData? {
         val text = PlainComplicationText.Builder(getText(R.string.complication_entity_state_preview)).build()
@@ -174,3 +189,5 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         }
     }
 }
+
+private val RETRY_DELAY = 2.seconds

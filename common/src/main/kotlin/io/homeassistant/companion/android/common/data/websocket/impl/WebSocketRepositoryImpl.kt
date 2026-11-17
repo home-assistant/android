@@ -178,7 +178,9 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     override suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
-        if (!isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY)) return null
+        // Only skip it for servers known to be too old: when the version isn't known yet, the
+        // caller would fall back to the classic registry, many times bigger
+        if (isServerOlderThan(MIN_VERSION_ENTITY_REGISTRY_DISPLAY)) return null
 
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
@@ -526,6 +528,9 @@ class WebSocketRepositoryImpl internal constructor(
     /** Whether the server this repository talks to runs at least [version]. */
     private suspend fun isServerAtLeast(version: HomeAssistantVersion): Boolean =
         webSocketCore.server()?.version?.isAtLeast(version) == true
+
+    private suspend fun isServerOlderThan(version: HomeAssistantVersion): Boolean =
+        webSocketCore.server()?.version?.isAtLeast(version) == false
 
     private inline fun <reified T> mapResponse(response: RawMessageSocketResponse?): T? =
         response?.result?.run { kotlinJsonMapper.decodeFromJsonElement(this) }
