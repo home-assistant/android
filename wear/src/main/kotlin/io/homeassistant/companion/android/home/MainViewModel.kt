@@ -527,17 +527,22 @@ class MainViewModel @Inject constructor(
         cameraTileDao.add(updated)
     }
 
-    fun setTodoListTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
+    /** Saves the list of the tile, [onSaved] is called once it is stored so the tile reads the new value. */
+    fun setTodoListTileEntity(tileId: Int, entityId: String, onSaved: () -> Unit = {}) = viewModelScope.launch {
         val current = todoListTileDao.get(tileId)
         todoListTileDao.add(current?.copy(entityId = entityId) ?: TodoListTile(id = tileId, entityId = entityId))
+        onSaved()
     }
 
-    fun setTodoListTileRefreshInterval(tileId: Int, interval: Long) = viewModelScope.launch {
-        val current = todoListTileDao.get(tileId)
-        todoListTileDao.add(
-            current?.copy(refreshInterval = interval) ?: TodoListTile(id = tileId, refreshInterval = interval),
-        )
-    }
+    /** Saves the refresh interval of the tile, [onSaved] is called once it is stored. */
+    fun setTodoListTileRefreshInterval(tileId: Int, interval: Long, onSaved: () -> Unit = {}) =
+        viewModelScope.launch {
+            val current = todoListTileDao.get(tileId)
+            todoListTileDao.add(
+                current?.copy(refreshInterval = interval) ?: TodoListTile(id = tileId, refreshInterval = interval),
+            )
+            onSaved()
+        }
 
     fun setThermostatTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
         val current = thermostatTileDao.get(tileId)

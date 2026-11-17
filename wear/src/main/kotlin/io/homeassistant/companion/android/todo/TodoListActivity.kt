@@ -8,10 +8,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
@@ -50,6 +53,17 @@ class TodoListActivity : ComponentActivity() {
 
     private val viewModel by viewModels<TodoListViewModel>()
 
+    // A launch while the activity already exists, compared by identity so repeating the same list counts
+    private class LaunchRequest(val entityId: String?)
+
+    private var newLaunchRequest by mutableStateOf<LaunchRequest?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        newLaunchRequest = LaunchRequest(intent.getStringExtra(EXTRA_ENTITY_ID))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -66,8 +80,19 @@ class TodoListActivity : ComponentActivity() {
         val startEntityId = intent.getStringExtra(EXTRA_ENTITY_ID)
         setContent {
             val lists by viewModel.lists.collectAsStateWithLifecycle()
+            val listsStatus by viewModel.listsStatus.collectAsStateWithLifecycle()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             val navController = rememberSwipeDismissableNavController()
+
+            // The task is reused (singleTask), so a tile opening another list comes in as a new intent
+            LaunchedEffect(newLaunchRequest) {
+                newLaunchRequest?.let { request ->
+                    val route = request.entityId?.let { "$ROUTE_LIST/$it" } ?: ROUTE_LISTS
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
+                    }
+                }
+            }
 
             WearAppTheme {
                 SwipeDismissableNavHost(
@@ -77,7 +102,9 @@ class TodoListActivity : ComponentActivity() {
                     composable(ROUTE_LISTS) {
                         TodoListsView(
                             lists = lists,
+                            status = listsStatus,
                             onSelectList = { navController.navigate("$ROUTE_LIST/$it") },
+                            onRetry = viewModel::retryLists,
                         )
                     }
                     composable(

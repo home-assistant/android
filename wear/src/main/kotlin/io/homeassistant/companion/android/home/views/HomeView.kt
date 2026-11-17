@@ -352,8 +352,9 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     onNoneClicked = {},
                     onEntitySelected = { entity ->
                         tileId?.let {
-                            mainViewModel.setTodoListTileEntity(it, entity.entityId)
-                            TileService.getUpdater(context).requestUpdate(TodoListTile::class.java)
+                            mainViewModel.setTodoListTileEntity(it, entity.entityId) {
+                                TileService.getUpdater(context).requestUpdate(TodoListTile::class.java)
+                            }
                         }
                         swipeDismissableNavController.navigateUp()
                     },
@@ -373,8 +374,9 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                         ).toInt(),
                 ) { interval ->
                     tileId?.let {
-                        mainViewModel.setTodoListTileRefreshInterval(it, interval.toLong())
-                        TileService.getUpdater(context).requestUpdate(TodoListTile::class.java)
+                        mainViewModel.setTodoListTileRefreshInterval(it, interval.toLong()) {
+                            TileService.getUpdater(context).requestUpdate(TodoListTile::class.java)
+                        }
                     }
                     swipeDismissableNavController.navigateUp()
                 }

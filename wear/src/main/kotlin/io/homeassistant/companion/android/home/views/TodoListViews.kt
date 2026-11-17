@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.CheckboxButton
 import androidx.wear.compose.material3.SwipeToReveal
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.rememberRevealState
@@ -35,16 +36,34 @@ private const val REMOTE_INPUT_KEY = "todo_item"
 
 /** The to-do lists (entities of the `todo` domain) of the server, to pick one to open. */
 @Composable
-fun TodoListsView(lists: List<EntityDisplay>, onSelectList: (entityId: String) -> Unit) {
+fun TodoListsView(
+    lists: List<EntityDisplay>,
+    status: TodoListViewModel.ListsStatus,
+    onSelectList: (entityId: String) -> Unit,
+    onRetry: () -> Unit,
+) {
     WearAppTheme {
         ThemeLazyColumn {
             item { ListHeader(id = commonR.string.todo_lists) }
             if (lists.isEmpty()) {
                 item {
-                    Text(
-                        text = stringResource(commonR.string.todo_lists_empty),
-                        textAlign = TextAlign.Center,
-                    )
+                    when (status) {
+                        TodoListViewModel.ListsStatus.LOADING -> Text(
+                            text = stringResource(commonR.string.loading),
+                            textAlign = TextAlign.Center,
+                        )
+                        TodoListViewModel.ListsStatus.ERROR -> Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(commonR.string.todo_list_load_failed)) },
+                            secondaryLabel = { Text(stringResource(commonR.string.refresh)) },
+                            onClick = onRetry,
+                            colors = getFilledTonalButtonColors(),
+                        )
+                        TodoListViewModel.ListsStatus.LOADED -> Text(
+                            text = stringResource(commonR.string.todo_lists_empty),
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
             } else {
                 items(lists, key = { it.entityId }) { list ->
@@ -161,10 +180,10 @@ private fun TodoItemRow(
         onSwipePrimaryAction = { onRemove(item) },
         revealState = revealState,
     ) {
-        Button(
+        CheckboxButton(
             modifier = Modifier.fillMaxWidth(),
-            onClick = { onSetCompleted(item, !checked) },
-            icon = { Text(if (checked) "☑" else "☐") },
+            checked = checked,
+            onCheckedChange = { onSetCompleted(item, it) },
             label = {
                 Text(
                     text = item.summary.orEmpty(),
@@ -172,7 +191,6 @@ private fun TodoItemRow(
                     textDecoration = if (checked) TextDecoration.LineThrough else null,
                 )
             },
-            colors = getFilledTonalButtonColors(),
         )
     }
 }
@@ -201,5 +219,10 @@ private fun PreviewTodoListView() {
 @Preview(device = WearDevices.LARGE_ROUND)
 @Composable
 private fun PreviewTodoListsViewEmpty() {
-    TodoListsView(lists = emptyList(), onSelectList = {})
+    TodoListsView(
+        lists = emptyList(),
+        status = TodoListViewModel.ListsStatus.LOADED,
+        onSelectList = {},
+        onRetry = {},
+    )
 }

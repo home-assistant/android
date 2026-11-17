@@ -8,12 +8,15 @@ import io.homeassistant.companion.android.common.data.integration.display.Entiti
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -24,6 +27,9 @@ class TodoListViewModel @Inject constructor(
     private val serverManager: ServerManager,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
 ) : ViewModel() {
+
+    /** Where the loading of the to-do lists of the server stands. */
+    enum class ListsStatus { LOADING, LOADED, ERROR }
 
     data class UiState(
         val entityId: String? = null,
@@ -38,37 +44,75 @@ class TodoListViewModel @Inject constructor(
     /** The to-do list entities of the server, kept current by [observeLists]. */
     val lists: StateFlow<List<EntityDisplay>> = _lists.asStateFlow()
 
+    private val _listsStatus = MutableStateFlow(ListsStatus.LOADING)
+
+    /** Tells a list that is still loading or failed to load from a server without to-do lists. */
+    val listsStatus: StateFlow<ListsStatus> = _listsStatus.asStateFlow()
+
+    private val listsRetry = MutableStateFlow(0)
+
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    /** Keeps [lists] current until cancelled. */
+    // Incremented each time another list is opened, to ignore the late results of the previous one
+    private var generation = 0
+
+    // Modifications sent and not yet answered for the open list, their optimistic result is on screen
+    private var pendingModifications = 0
+
+    // The items of the open list as the server last returned them
+    private var confirmedItems: List<TodoItem> = emptyList()
+
+    private var loadJob: Job? = null
+
+    /** Keeps [lists] current until cancelled, observing again when [retryLists] is called. */
     suspend fun observeLists() {
-        entitiesForDisplayManager
-            .observeInContext(ServerManager.SERVER_ID_ACTIVE) { it.domain == TODO_DOMAIN }
-            .collect { state ->
-                if (state is EntityDisplayState.Loaded) {
-                    _lists.value = state.entities.sortedBy { it.name }
+        listsRetry.collectLatest {
+            if (_listsStatus.value != ListsStatus.LOADED) _listsStatus.value = ListsStatus.LOADING
+            entitiesForDisplayManager
+                .observeInContext(ServerManager.SERVER_ID_ACTIVE) { it.domain == TODO_DOMAIN }
+                .collect { state ->
+                    when (state) {
+                        is EntityDisplayState.Loaded -> {
+                            _lists.value = state.entities.sortedBy { it.name }
+                            _listsStatus.value = ListsStatus.LOADED
+                        }
+                        // Keep showing the lists already known when only a refresh failed
+                        is EntityDisplayState.Error -> if (_lists.value.isEmpty()) {
+                            _listsStatus.value = ListsStatus.ERROR
+                        }
+                        EntityDisplayState.Loading -> Unit
+                    }
                 }
-            }
+        }
+    }
+
+    /** Tries again to load the lists after [ListsStatus.ERROR]. */
+    fun retryLists() {
+        listsRetry.update { it + 1 }
     }
 
     /** Loads the items of [entityId], showing the loading state only when it is another list. */
     fun load(entityId: String) {
-        _uiState.update {
-            if (it.entityId == entityId) {
-                it.copy(hasLoadError = false)
-            } else {
-                UiState(entityId = entityId, isLoading = true)
-            }
+        val switching = _uiState.value.entityId != entityId
+        if (switching) {
+            generation++
+            pendingModifications = 0
+            confirmedItems = emptyList()
         }
-        viewModelScope.launch { fetch(entityId) }
+        _uiState.update {
+            if (switching) UiState(entityId = entityId, isLoading = true) else it.copy(hasLoadError = false)
+        }
+        loadJob?.cancel()
+        val requestGeneration = generation
+        loadJob = viewModelScope.launch { fetch(entityId, requestGeneration) }
     }
 
     fun setCompleted(entityId: String, item: TodoItem, completed: Boolean) {
         val key = item.key() ?: return
         val status = if (completed) TodoItem.COMPLETED_STATUS else TodoItem.NEEDS_ACTION_STATUS
         // Optimistic update, the fetch following the call restores the server state on failure
-        _uiState.update { state ->
+        updateOpenList(entityId) { state ->
             state.copy(items = state.items.map { if (it.key() == key) it.copy(status = status) else it })
         }
         modify(entityId) { it.updateTodo(entityId, key, null, status) }
@@ -82,19 +126,24 @@ class TodoListViewModel @Inject constructor(
 
     fun removeItem(entityId: String, item: TodoItem) {
         val key = item.key() ?: return
-        _uiState.update { state -> state.copy(items = state.items.filterNot { it.key() == key }) }
+        updateOpenList(entityId) { state -> state.copy(items = state.items.filterNot { it.key() == key }) }
         modify(entityId) { it.removeTodo(entityId, key) }
     }
 
     fun clearCompleted(entityId: String) {
-        _uiState.update { state -> state.copy(items = state.items.filterNot { it.status == TodoItem.COMPLETED_STATUS }) }
+        updateOpenList(entityId) { state ->
+            state.copy(items = state.items.filterNot { it.status == TodoItem.COMPLETED_STATUS })
+        }
         modify(entityId) { it.removeCompletedTodos(entityId) }
     }
 
-    private fun modify(
-        entityId: String,
-        call: suspend (io.homeassistant.companion.android.common.data.websocket.WebSocketRepository) -> Boolean,
-    ) {
+    private fun updateOpenList(entityId: String, transform: (UiState) -> UiState) {
+        _uiState.update { if (it.entityId == entityId) transform(it) else it }
+    }
+
+    private fun modify(entityId: String, call: suspend (WebSocketRepository) -> Boolean) {
+        if (_uiState.value.entityId == entityId) pendingModifications++
+        val requestGeneration = generation
         viewModelScope.launch {
             val success = try {
                 call(serverManager.webSocketRepository())
@@ -104,26 +153,37 @@ class TodoListViewModel @Inject constructor(
                 Timber.e(e, "Unable to modify to-do list $entityId")
                 false
             }
+            // Another list is open now, its state is not ours to change
+            if (requestGeneration != generation) return@launch
+            pendingModifications = (pendingModifications - 1).coerceAtLeast(0)
             _uiState.update { it.copy(hasActionError = !success) }
-            fetch(entityId)
+            fetch(entityId, requestGeneration)
         }
     }
 
-    private suspend fun fetch(entityId: String) {
-        try {
-            val items = serverManager.webSocketRepository().getTodos(entityId)?.response?.get(entityId)?.items
-            _uiState.update {
-                if (items == null) {
-                    it.copy(isLoading = false, hasLoadError = it.items.isEmpty())
-                } else {
-                    it.copy(items = items, isLoading = false, hasLoadError = false)
-                }
-            }
+    private suspend fun fetch(entityId: String, requestGeneration: Int) {
+        val items = try {
+            serverManager.webSocketRepository().getTodos(entityId)?.response?.get(entityId)?.items
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Unable to load to-do list $entityId")
-            _uiState.update { it.copy(isLoading = false, hasLoadError = it.items.isEmpty()) }
+            null
+        }
+        if (requestGeneration != generation) return
+        if (items != null) confirmedItems = items
+        // The answer to a modification still waiting would drop its optimistic result, the last one wins
+        if (pendingModifications > 0) {
+            _uiState.update { it.copy(isLoading = false) }
+            return
+        }
+        _uiState.update {
+            if (items == null) {
+                // Show what the server last confirmed instead of edits that were not saved
+                it.copy(items = confirmedItems, isLoading = false, hasLoadError = true)
+            } else {
+                it.copy(items = items, isLoading = false, hasLoadError = false)
+            }
         }
     }
 
