@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
@@ -270,9 +271,9 @@ class WebRtcDebugViewModel @VisibleForTesting internal constructor(
     private fun loadEntities(serverId: Int) {
         loadEntitiesJob?.cancel()
         loadEntitiesJob = viewModelScope.launch {
-            entitiesForDisplayManager.snapshotInContext(serverId) { it.domain == CAMERA_DOMAIN }.collect { state ->
-                _state.update { it.copy(entityDisplayState = state) }
-            }
+            entitiesForDisplayManager
+                .snapshotInContext(serverId, EntityFilter(domains = setOf(CAMERA_DOMAIN)))
+                .collect { state -> _state.update { it.copy(entityDisplayState = state) } }
         }
     }
 

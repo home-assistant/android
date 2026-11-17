@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Cu
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayEntry
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
@@ -221,9 +222,13 @@ class WebSocketRepositoryImpl internal constructor(
         return mapResponse(socketResponse)
     }
 
-    override suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
-        if (!isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY)) return null
+    override suspend fun getEntityRegistryDisplay(entityIds: List<String>): EntityRegistryDisplayResponse? = when {
+        !isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY) -> null
+        entityIds.isEmpty() -> getWholeEntityRegistryDisplay()
+        else -> getEntityRegistryDisplayEntries(entityIds)
+    }
 
+    private suspend fun getWholeEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "config/entity_registry/list_for_display",
@@ -231,6 +236,19 @@ class WebSocketRepositoryImpl internal constructor(
         )
 
         return mapResponse(socketResponse)
+    }
+
+    private suspend fun getEntityRegistryDisplayEntries(entityIds: List<String>): EntityRegistryDisplayResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "config/entity_registry/get_entries",
+                "entity_ids" to entityIds,
+            ),
+        )
+        // The entry of an entity the registry doesn't know is null
+        return socketResponse?.takeIf { it.success == true }
+            ?.let { mapResponse<Map<String, EntityRegistryResponse?>>(it) }
+            ?.values?.filterNotNull()?.toDisplayResponse()
     }
 
     override suspend fun getFloorRegistry(): List<FloorRegistryResponse>? {
@@ -580,6 +598,31 @@ class WebSocketRepositoryImpl internal constructor(
 
     private inline fun <reified T> mapResponse(response: RawMessageSocketResponse?): T? =
         response?.result?.run { kotlinJsonMapper.decodeFromJsonElement(this) }
+}
+
+/**
+ * Converts full registry entries to what `config/entity_registry/list_for_display` sends for them
+ * (https://github.com/home-assistant/core/blob/a14f22ef9fb/homeassistant/helpers/entity_registry.py#L344).
+ */
+private fun List<EntityRegistryResponse>.toDisplayResponse(): EntityRegistryDisplayResponse {
+    val categories = mapNotNull { it.entityCategory }.distinct()
+    return EntityRegistryDisplayResponse(
+        entityCategories = categories.withIndex().associate { (index, category) -> index to category },
+        entities = map { entry ->
+            EntityRegistryDisplayEntry(
+                entityId = entry.entityId,
+                areaId = entry.areaId,
+                deviceId = entry.deviceId,
+                nextNamePart = entry.nextNamePart,
+                labels = entry.labels,
+                icon = entry.icon,
+                entityCategory = entry.entityCategory?.let(categories::indexOf),
+                hidden = entry.hiddenBy != null,
+                name = entry.name ?: entry.originalName,
+                displayPrecision = entry.options?.sensor?.let { it.displayPrecision ?: it.suggestedDisplayPrecision },
+            )
+        },
+    )
 }
 
 /** Whether a server running this version can limit `subscribe_entities` to [filter] itself. */

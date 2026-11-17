@@ -5,6 +5,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -30,7 +31,7 @@ internal class MediaPlayerControlsWidgetConfigureViewModel @AssistedInject const
     initialState = MediaPlayerControlsWidgetConfigureState(
         selectedEntityIds = preselectedEntityId?.let { listOf(it) } ?: emptyList(),
     ),
-    entityFilter = { it.domain == MEDIA_PLAYER_DOMAIN },
+    entityFilter = EntityFilter(domains = setOf(MEDIA_PLAYER_DOMAIN)),
 ) {
 
     fun onEntityAdded(entityId: String) {
