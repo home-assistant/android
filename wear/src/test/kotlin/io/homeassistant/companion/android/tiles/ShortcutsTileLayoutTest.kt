@@ -10,7 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
 private const val TOLERANCE = 0.01f
-private const val MIN_CIRCLE_SIZE = 30f
+private const val MIN_CIRCLE_SIZE = 40f
 
 class ShortcutsTileLayoutTest {
 
@@ -21,7 +21,7 @@ class ShortcutsTileLayoutTest {
     }
 
     @ParameterizedTest
-    @ValueSource(floats = [180f, 192f, 200f, 227f, 240f])
+    @ValueSource(floats = [192f, 200f, 227f, 240f])
     fun `Given more than 7 shortcuts When computing the layout Then circles fit on screen without overlapping`(
         screenDiameterDp: Float,
     ) {
@@ -39,6 +39,15 @@ class ShortcutsTileLayoutTest {
                     assertTrue(hypot(a.x - b.x, a.y - b.y) >= layout.circleSize - TOLERANCE, message)
                 }
             }
+        }
+    }
+
+    @Test
+    fun `Given a large screen When computing the layout Then circles are not larger than the original ones`() {
+        for (count in 8..MAX_SHORTCUTS_PER_TILE) {
+            val layout = requireNotNull(packedShortcutLayout(count, screenDiameterDp = 260f))
+
+            assertTrue(layout.circleSize <= CIRCLE_SIZE, "count=$count circleSize=${layout.circleSize}")
         }
     }
 

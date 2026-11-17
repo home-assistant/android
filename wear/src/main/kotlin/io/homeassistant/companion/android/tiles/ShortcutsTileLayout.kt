@@ -5,7 +5,7 @@ import kotlin.math.min
 import kotlin.math.sqrt
 
 /** Maximum number of shortcuts a single Shortcuts Tile can hold. */
-internal const val MAX_SHORTCUTS_PER_TILE = 15
+internal const val MAX_SHORTCUTS_PER_TILE = 14
 
 /** Screen diameter in dp assumed when the real one is unknown. */
 internal const val DEFAULT_SCREEN_DIAMETER_DP = 200f
@@ -38,7 +38,7 @@ internal data class PackedShortcutLayout(val circleSize: Float, val centers: Lis
 private fun centeredRow(count: Int): List<Int> = List(count) { 2 * it - (count - 1) }
 
 /**
- * The rows, from top to bottom, for 8 to 15 shortcuts. Each layout is mirrored left to right, and the
+ * The rows, from top to bottom, for 8 to 14 shortcuts. Each layout is mirrored left to right, and the
  * sizes were chosen to give the largest circles that fit a round screen, but 11 and 13 reuse the layout of
  * 12 and 14 with a circle left out, so the circles never get smaller when a shortcut is removed.
  */
@@ -50,7 +50,6 @@ private val PACKED_ROWS: Map<Int, List<List<Int>>> = mapOf(
     12 to listOf(centeredRow(2), centeredRow(4), centeredRow(4), centeredRow(2)),
     13 to listOf(centeredRow(3), centeredRow(4), centeredRow(4), listOf(-2, 2)),
     14 to listOf(centeredRow(3), centeredRow(4), centeredRow(4), centeredRow(3)),
-    15 to listOf(centeredRow(2), centeredRow(4), centeredRow(3), centeredRow(4), centeredRow(2)),
 )
 
 /**
@@ -58,8 +57,9 @@ private val PACKED_ROWS: Map<Int, List<List<Int>>> = mapOf(
  * original layout is used (up to [MAX_SHORTCUTS_WITH_DEFAULT_LAYOUT] shortcuts).
  *
  * Equally sized circles are placed in rows, as large as possible while staying inside the screen, since the
- * tile cannot scroll. Counts above [MAX_SHORTCUTS_PER_TILE] are capped. The shortcuts are in reading order:
- * from top to bottom, and from left to right within a row.
+ * tile cannot scroll. The circles are never larger than [CIRCLE_SIZE], the size used by the original
+ * layout. Counts above [MAX_SHORTCUTS_PER_TILE] are capped. The shortcuts are in reading order: from top to
+ * bottom, and from left to right within a row.
  */
 internal fun packedShortcutLayout(
     count: Int,
@@ -82,7 +82,7 @@ private fun fitRowsOnScreen(rows: List<List<Int>>, screenDiameterDp: Float): Pac
     // The farthest edge is (farthest + 0.5) pitches from the center, and a circle is one gap smaller than a pitch.
     val pitch = (screenRadius + PACKED_GAP / 2) / (farthest + 0.5f)
     return PackedShortcutLayout(
-        circleSize = pitch - PACKED_GAP,
+        circleSize = min(pitch - PACKED_GAP, CIRCLE_SIZE),
         centers = unitCenters.map { ShortcutCenter(x = it.x * pitch, y = it.y * pitch) },
     )
 }

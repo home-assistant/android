@@ -50,7 +50,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 // Dimensions (dp)
-private const val CIRCLE_SIZE = 56f
+internal const val CIRCLE_SIZE = 56f
 private const val ICON_SIZE_FULL = 48f * 0.7071f // square that fits in 48dp circle
 private const val ICON_SIZE_SMALL = 40f * 0.7071f // square that fits in 48dp circle
 private const val SPACING = 8f
