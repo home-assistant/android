@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.vehicle
 import android.app.Application
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -23,6 +24,7 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.util.vehicle.VEHICLE_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -32,12 +34,21 @@ import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
-class ManageAndroidAutoViewModel @Inject constructor(
+class ManageAndroidAutoViewModel @VisibleForTesting constructor(
     private val serverManager: ServerManager,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
     private val prefsRepository: PrefsRepository,
+    private val backgroundDispatcher: CoroutineDispatcher,
     application: Application,
 ) : AndroidViewModel(application) {
+
+    @Inject
+    constructor(
+        serverManager: ServerManager,
+        entitiesForDisplayManager: EntitiesForDisplayManager,
+        prefsRepository: PrefsRepository,
+        application: Application,
+    ) : this(serverManager, entitiesForDisplayManager, prefsRepository, Dispatchers.Default, application)
 
     val favoritesList = mutableStateListOf<AutoFavorite>()
 
@@ -67,7 +78,7 @@ class ManageAndroidAutoViewModel @Inject constructor(
                         .map { state ->
                             state.keepingVehicleEntities()
                         }
-                        .flowOn(Dispatchers.Default)
+                        .flowOn(backgroundDispatcher)
                         .collect { state -> displayEntitiesByServer[serverId] = state }
                 }
             }.awaitAll()
