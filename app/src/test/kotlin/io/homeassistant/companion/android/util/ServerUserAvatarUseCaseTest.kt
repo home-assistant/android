@@ -11,6 +11,7 @@ import coil3.request.allowHardware
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
@@ -42,6 +43,7 @@ class ServerUserAvatarUseCaseTest {
     // so a relaxed mock is enough and we avoid needing Robolectric.
     private val imageLoader: ImageLoader = mockk()
     private val serverManager: ServerManager = mockk()
+    private val personFilter = EntityFilter(domains = setOf("person"))
 
     private val useCase = ServerUserAvatarUseCase(
         context = mockk(relaxed = true),
@@ -79,7 +81,7 @@ class ServerUserAvatarUseCaseTest {
         coEvery { serverManager.getServer(serverId) } returns server(id = serverId, userId = "uid-$serverId", userPicturePath = previousPicture)
         coEvery { serverManager.updateServer(any()) } just Runs
         coEvery { serverManager.integrationRepository(serverId) } returns mockk<IntegrationRepository> {
-            coEvery { getEntities() } returns listOf(personEntity(userId = "uid-$serverId", picture = picture))
+            coEvery { getEntities(personFilter) } returns listOf(personEntity(userId = "uid-$serverId", picture = picture))
         }
         coEvery { serverManager.authenticationRepository(serverId) } returns mockk {
             coEvery { buildBearerToken() } returns "Bearer token"
@@ -108,7 +110,7 @@ class ServerUserAvatarUseCaseTest {
     fun `Given no person entity matches the user when getUserAvatar then stores and returns null`() = runTest {
         coEvery { serverManager.getServer(1) } returns server(id = 1, userId = "uid-1", userPicturePath = null)
         coEvery { serverManager.integrationRepository(1) } returns mockk<IntegrationRepository> {
-            coEvery { getEntities() } returns listOf(personEntity(userId = "someone-else", picture = "/picture.png"))
+            coEvery { getEntities(personFilter) } returns listOf(personEntity(userId = "someone-else", picture = "/picture.png"))
         }
         val serverSlot = slot<Server>()
         coEvery { serverManager.updateServer(capture(serverSlot)) } just Runs
@@ -139,7 +141,7 @@ class ServerUserAvatarUseCaseTest {
 
         // Entities don't load, so nothing to load picture from
         coEvery { serverManager.integrationRepository(1) } returns mockk {
-            coEvery { getEntities() } returns emptyList()
+            coEvery { getEntities(personFilter) } returns null
         }
         val imageRequestSlot = slot<ImageRequest>()
         coEvery { imageLoader.execute(capture(imageRequestSlot)) } returns imageResult()
@@ -197,7 +199,7 @@ class ServerUserAvatarUseCaseTest {
         val picture = "http://homeassistant.local:8123/api/image/serve/abc"
         givenServerWithPersonPicture(serverId = 1, picture = picture, previousPicture = picture)
         coEvery { serverManager.integrationRepository(1) } returns mockk {
-            coEvery { getEntities() } returns emptyList()
+            coEvery { getEntities(personFilter) } returns null
         }
         coEvery { serverManager.connectionStateProvider(1) } returns mockk {
             coEvery { canSafelySendCredentials(any()) } returns false
@@ -227,7 +229,7 @@ class ServerUserAvatarUseCaseTest {
         givenServerWithPersonPicture(serverId = 1, picture = picture, previousPicture = picture)
         // No entities or base URL available, so the avatar can only come from the cache.
         coEvery { serverManager.integrationRepository(1) } returns mockk {
-            coEvery { getEntities() } returns emptyList()
+            coEvery { getEntities(personFilter) } returns null
         }
         coEvery { serverManager.connectionStateProvider(1) } returns mockk {
             every { urlFlow() } returns flowOf(UrlState.HasUrl(null))
@@ -249,7 +251,7 @@ class ServerUserAvatarUseCaseTest {
         givenServerWithPersonPicture(serverId = 1, picture = picture, previousPicture = picture)
         // No entities or base URL available, so the avatar can only come from the cache.
         coEvery { serverManager.integrationRepository(1) } returns mockk {
-            coEvery { getEntities() } returns emptyList()
+            coEvery { getEntities(personFilter) } returns null
         }
         coEvery { serverManager.connectionStateProvider(1) } returns mockk {
             every { urlFlow() } returns flowOf(UrlState.HasUrl(null))
@@ -276,7 +278,7 @@ class ServerUserAvatarUseCaseTest {
             coEvery { canSafelySendCredentials(any()) } returns true
         }
         coEvery { serverManager.integrationRepository(1) } returns mockk {
-            coEvery { getEntities() } returns emptyList()
+            coEvery { getEntities(personFilter) } returns null
         }
         val authRepo = mockk<AuthenticationRepository> {
             coEvery { buildBearerToken() } throws AuthorizationException()
