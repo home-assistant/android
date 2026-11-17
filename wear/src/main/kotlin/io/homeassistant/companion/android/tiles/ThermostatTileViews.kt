@@ -182,6 +182,7 @@ private fun getPowerButton(context: Context, enabled: Boolean): LayoutElement {
     return Button.Builder(context, clickable.build())
         .setSize(BUTTON_SIZE_DP)
         .setIconContent(RESOURCE_POWER)
+        .setContentDescription(context.getString(commonR.string.thermostat_tile_power_button_description))
         .setButtonColors(
             ButtonColors(
                 ColorBuilders.argb(
