@@ -142,7 +142,8 @@ class TodoListViewModel @Inject constructor(
     }
 
     private fun modify(entityId: String, call: suspend (WebSocketRepository) -> Boolean) {
-        if (_uiState.value.entityId == entityId) pendingModifications++
+        val isOpenList = _uiState.value.entityId == entityId
+        if (isOpenList) pendingModifications++
         val requestGeneration = generation
         viewModelScope.launch {
             val success = try {
@@ -154,7 +155,7 @@ class TodoListViewModel @Inject constructor(
                 false
             }
             // Another list is open now, its state is not ours to change
-            if (requestGeneration != generation) return@launch
+            if (!isOpenList || requestGeneration != generation) return@launch
             pendingModifications = (pendingModifications - 1).coerceAtLeast(0)
             _uiState.update { it.copy(hasActionError = !success) }
             fetch(entityId, requestGeneration)
