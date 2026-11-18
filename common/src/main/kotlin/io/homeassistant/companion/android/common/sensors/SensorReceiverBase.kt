@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import javax.inject.Inject
@@ -15,7 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
@@ -74,14 +74,10 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         Timber.d("Received intent: ${intent.action}")
         // Keep the process alive until the update finishes: for manifest-delivered broadcasts
         // (boot, package replaced) the system may kill the process as soon as onReceive returns,
-        // silently dropping the sensor update.
-        val pendingResult = goAsync()
-        ioScope.launch {
-            try {
-                handleReceive(context, intent)
-            } finally {
-                pendingResult?.finish()
-            }
+        // silently dropping the sensor update. Bounded to 30 seconds by launchAsync so a slow
+        // sensor/server sync cannot hold the broadcast past Android's deadline.
+        launchAsync(ioScope) {
+            handleReceive(context, intent)
         }
     }
 
