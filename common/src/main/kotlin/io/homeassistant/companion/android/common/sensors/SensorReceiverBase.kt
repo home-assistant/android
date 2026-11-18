@@ -72,69 +72,88 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         Timber.d("Received intent: ${intent.action}")
+        // Keep the process alive until the update finishes: for manifest-delivered broadcasts
+        // (boot, package replaced) the system may kill the process as soon as onReceive returns,
+        // silently dropping the sensor update.
+        val pendingResult = goAsync()
         ioScope.launch {
-            skippableActions[intent.action]?.let { sensors ->
-                val noSensorsEnabled = sensors.none {
-                    isSensorEnabled(it)
-                }
-                if (noSensorsEnabled) {
-                    Timber.d(
-                        String.format(
-                            "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update",
-                            sensors.toString(),
-                            intent.action,
-                        ),
-                    )
-                    return@launch
-                }
+            try {
+                handleReceive(context, intent)
+            } finally {
+                pendingResult?.finish()
             }
+        }
+    }
 
-            @Suppress("DEPRECATION")
-            if (isSensorEnabled(LastUpdateManager.lastUpdate.id)) {
-                lastUpdateManager.sendLastUpdate(intent.action)
-                val allSettings = sensorRepository.getSettings(LastUpdateManager.lastUpdate.id)
-                for (setting in allSettings) {
-                    if (setting.value != "" && intent.action == setting.value) {
-                        val eventData = intent.extras?.keySet()
-                            ?.associate { it.toString() to intent.extras?.get(it).toString() }
-                            ?.plus("intent" to intent.action.toString())
-                            ?: mapOf("intent" to intent.action.toString())
-                        Timber.d("Event data: $eventData")
-                        sensorRepository.get(LastUpdateManager.lastUpdate.id).forEach { sensor ->
-                            if (!sensor.enabled) return@forEach
-                            try {
-                                serverManager.integrationRepository(sensor.serverId).fireEvent(
-                                    "android.intent_received",
-                                    eventData as Map<String, Any>,
-                                )
-                                Timber.d("Event successfully sent to Home Assistant")
-                            } catch (e: CancellationException) {
-                                throw e
-                            } catch (e: Exception) {
-                                Timber.e(e, "Unable to send event data to Home Assistant")
-                            }
-                        }
-                    }
-                }
-            }
+    private suspend fun handleReceive(context: Context, intent: Intent) {
+        if (shouldSkipUpdate(intent)) return
+        sendLastUpdateEvent(intent)
 
-            if (intent.action == Intent.ACTION_TIME_TICK && !settingsDao.shouldDoFastUpdates(context)) {
-                Timber.i("Skipping faster update because not charging/different preference")
-                return@launch
+        if (intent.action == Intent.ACTION_TIME_TICK && !settingsDao.shouldDoFastUpdates(context)) {
+            Timber.i("Skipping faster update because not charging/different preference")
+            return
+        }
+        if (intent.action == ACTION_UPDATE_SENSOR) {
+            val sensorId = intent.getStringExtra(EXTRA_SENSOR_ID)
+            if (sensorId != null) {
+                sensorUpdater.updateSensor(sensorId)
             }
-            if (intent.action == ACTION_UPDATE_SENSOR) {
-                val sensorId = intent.getStringExtra(EXTRA_SENSOR_ID)
-                if (sensorId != null) {
-                    sensorUpdater.updateSensor(sensorId)
-                }
-            } else {
+        } else {
+            updateSensors(intent)
+            if (chargingActions.contains(intent.action)) {
+                // Add a 5 second delay to perform another update so charging state updates completely.
+                // This is necessary as the system needs a few seconds to verify the charger.
+                delay(5.seconds)
                 updateSensors(intent)
-                if (chargingActions.contains(intent.action)) {
-                    // Add a 5 second delay to perform another update so charging state updates completely.
-                    // This is necessary as the system needs a few seconds to verify the charger.
-                    delay(5.seconds)
-                    updateSensors(intent)
-                }
+            }
+        }
+    }
+
+    private suspend fun shouldSkipUpdate(intent: Intent): Boolean {
+        val sensors = skippableActions[intent.action] ?: return false
+        val noSensorsEnabled = sensors.none { isSensorEnabled(it) }
+        if (noSensorsEnabled) {
+            Timber.d(
+                String.format(
+                    "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update",
+                    sensors.toString(),
+                    intent.action,
+                ),
+            )
+        }
+        return noSensorsEnabled
+    }
+
+    private suspend fun sendLastUpdateEvent(intent: Intent) {
+        if (!isSensorEnabled(LastUpdateManager.lastUpdate.id)) return
+        lastUpdateManager.sendLastUpdate(intent.action)
+        val allSettings = sensorRepository.getSettings(LastUpdateManager.lastUpdate.id)
+        for (setting in allSettings) {
+            if (setting.value != "" && intent.action == setting.value) {
+                sendIntentReceivedEvent(intent)
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private suspend fun sendIntentReceivedEvent(intent: Intent) {
+        val eventData = intent.extras?.keySet()
+            ?.associate { it.toString() to intent.extras?.get(it).toString() }
+            ?.plus("intent" to intent.action.toString())
+            ?: mapOf("intent" to intent.action.toString())
+        Timber.d("Event data: $eventData")
+        sensorRepository.get(LastUpdateManager.lastUpdate.id).forEach { sensor ->
+            if (!sensor.enabled) return@forEach
+            try {
+                serverManager.integrationRepository(sensor.serverId).fireEvent(
+                    "android.intent_received",
+                    eventData as Map<String, Any>,
+                )
+                Timber.d("Event successfully sent to Home Assistant")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to send event data to Home Assistant")
             }
         }
     }
