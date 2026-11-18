@@ -10,6 +10,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verify
+import io.mockk.verifyOrder
 import java.util.UUID
 import org.altbeacon.beacon.BeaconTransmitter
 import org.junit.jupiter.api.AfterEach
@@ -88,8 +89,8 @@ class TransmitterManagerTest {
         assertFalse(device.transmitting)
         assertEquals("Unable to transmit", device.state)
         assertEquals(uuid, device.uuid)
-        assertEquals("100", device.major)
-        assertEquals("40004", device.minor)
+        assertEquals("123", device.major)
+        assertEquals("456", device.minor)
         assertTrue(created.isEmpty(), "Expected exactly one retry with a fresh transmitter")
     }
 
@@ -152,13 +153,55 @@ class TransmitterManagerTest {
         assertTrue(device.transmitting)
     }
 
+    @Test
+    fun `Given a start is pending when starting again then the second start is coalesced`() {
+        var capturedCallback: AdvertiseCallback? = null
+        val transmitter = mockk<BeaconTransmitter>(relaxed = true) {
+            every { isStarted } returns false
+        }
+        every { transmitter.startAdvertising(any(), any()) } answers {
+            capturedCallback = secondArg<AdvertiseCallback>()
+        }
+        TransmitterManager.transmitterFactory = { _, _ -> transmitter }
+        val device = device()
+
+        TransmitterManager.startTransmitting(context, device)
+        TransmitterManager.startTransmitting(context, device)
+
+        verify(exactly = 1) { transmitter.startAdvertising(any(), any()) }
+        assertFalse(device.transmitting)
+
+        capturedCallback?.onStartSuccess(mockk<AdvertiseSettings>())
+
+        assertTrue(device.transmitting)
+        assertEquals("Transmitting", device.state)
+    }
+
+    @Test
+    fun `Given start fails with already started when retrying then the original transmitter is stopped before the fresh one starts`() {
+        val first = mockTransmitter() failingWith AdvertiseCallback.ADVERTISE_FAILED_ALREADY_STARTED
+        val second = mockTransmitter() succeedingWith {}
+        val created = ArrayDeque(listOf(first, second))
+        TransmitterManager.transmitterFactory = { _, _ -> created.removeFirst() }
+        val device = device()
+
+        TransmitterManager.startTransmitting(context, device)
+
+        verifyOrder {
+            first.stopAdvertising()
+            second.startAdvertising(any(), any())
+        }
+        assertTrue(device.transmitting)
+        assertEquals("Transmitting", device.state)
+    }
+
     private fun device(
         transmitting: Boolean = false,
         restartRequired: Boolean = false,
     ) = IBeaconTransmitter(
         uuid = UUID.randomUUID().toString(),
-        major = "100",
-        minor = "40004",
+        major = "123",
+        minor = "456",
         transmitting = transmitting,
         transmitRequested = true,
         state = "",

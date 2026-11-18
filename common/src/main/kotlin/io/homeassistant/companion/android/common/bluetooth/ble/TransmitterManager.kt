@@ -15,6 +15,7 @@ import timber.log.Timber
 
 object TransmitterManager {
     private var physicalTransmitter: BeaconTransmitter? = null
+    private var startPending: Boolean = false
     private lateinit var beacon: Beacon
 
     private val defaultTransmitterFactory: (Context, String) -> BeaconTransmitter = { context, layout ->
@@ -35,6 +36,7 @@ object TransmitterManager {
     @VisibleForTesting
     internal fun resetForTesting() {
         physicalTransmitter = null
+        startPending = false
         transmitterFactory = defaultTransmitterFactory
     }
 
@@ -50,7 +52,8 @@ object TransmitterManager {
     }
 
     private fun shouldStartTransmitting(haTransmitter: IBeaconTransmitter): Boolean {
-        return validateInputs(haTransmitter) &&
+        return !startPending &&
+            validateInputs(haTransmitter) &&
             (physicalTransmitter?.isStarted != true || haTransmitter.restartRequired)
     }
 
@@ -110,6 +113,11 @@ object TransmitterManager {
      * the Bluetooth stack still holds a stale advertisement, so it is retried once with a fresh
      * transmitter, which registers a new callback with the stack. A failed start is never
      * reported as transmitting, so the next sensor update retries instead of staying wedged.
+     *
+     * The start is asynchronous: the callback fires later, so [startPending] guards the window
+     * between requesting the start and hearing back. Without it, a second sensor update in that
+     * window would start a second advertiser, and the retry path would replace the transmitter
+     * without stopping the first one, orphaning it (nothing would ever stop it).
      */
     @Synchronized
     private fun startAdvertising(
@@ -121,33 +129,56 @@ object TransmitterManager {
         val transmitter = physicalTransmitter ?: return
         transmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
         transmitter.advertiseMode = getAdvertiseMode(haTransmitter)
+        startPending = true
         transmitter.startAdvertising(
             beacon,
             object : AdvertiseCallback() {
                 override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-                    Timber.d("BLE advertisement started")
-                    haTransmitter.transmitting = true
-                    haTransmitter.state = "Transmitting"
+                    onStartSucceeded(haTransmitter)
                 }
 
                 override fun onStartFailure(errorCode: Int) {
-                    if (errorCode == ADVERTISE_FAILED_ALREADY_STARTED && retryOnAlreadyStarted) {
-                        Timber.d("Advertisement already started, retrying with a fresh transmitter")
-                        physicalTransmitter = transmitterFactory(context, haTransmitter.beaconLayout)
-                        startAdvertising(context, haTransmitter, beacon, retryOnAlreadyStarted = false)
-                        return
-                    }
-                    Timber.w("BLE advertisement failed to start, error code: $errorCode")
-                    if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
-                        haTransmitter.uuid = ""
-                        haTransmitter.major = ""
-                        haTransmitter.minor = ""
-                    }
-                    haTransmitter.state = "Unable to transmit"
-                    haTransmitter.transmitting = false
+                    onStartFailed(context, haTransmitter, beacon, errorCode, retryOnAlreadyStarted)
                 }
             },
         )
+    }
+
+    @Synchronized
+    private fun onStartSucceeded(haTransmitter: IBeaconTransmitter) {
+        startPending = false
+        Timber.d("BLE advertisement started")
+        haTransmitter.transmitting = true
+        haTransmitter.state = "Transmitting"
+    }
+
+    @Synchronized
+    private fun onStartFailed(
+        context: Context,
+        haTransmitter: IBeaconTransmitter,
+        beacon: Beacon,
+        errorCode: Int,
+        retryOnAlreadyStarted: Boolean,
+    ) {
+        if (errorCode == AdvertiseCallback.ADVERTISE_FAILED_ALREADY_STARTED && retryOnAlreadyStarted) {
+            Timber.d("Advertisement already started, retrying with a fresh transmitter")
+            // Stop the original before replacing it: it may already be advertising, and
+            // replacing it without stopping would orphan it. Stopping a transmitter that
+            // never started is a no-op.
+            physicalTransmitter?.stopAdvertising()
+            physicalTransmitter = transmitterFactory(context, haTransmitter.beaconLayout)
+            startAdvertising(context, haTransmitter, beacon, retryOnAlreadyStarted = false)
+            return
+        }
+        startPending = false
+        Timber.w("BLE advertisement failed to start, error code: $errorCode")
+        if (errorCode != AdvertiseCallback.ADVERTISE_FAILED_ALREADY_STARTED) {
+            haTransmitter.uuid = ""
+            haTransmitter.major = ""
+            haTransmitter.minor = ""
+        }
+        haTransmitter.state = "Unable to transmit"
+        haTransmitter.transmitting = false
     }
 
     private fun getAdvertiseMode(haTransmitter: IBeaconTransmitter) = when (haTransmitter.advertiseModeSetting) {
