@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -646,6 +647,7 @@ private fun SafeHAWebView(
                 nightModeTheme = nightModeTheme,
                 modifier = Modifier
                     .weight(1f)
+                    .then(if (serverHandleInsets) Modifier.imePadding() else Modifier)
                     .background(Color.Transparent),
                 configure = {
                     configureForFrontend(

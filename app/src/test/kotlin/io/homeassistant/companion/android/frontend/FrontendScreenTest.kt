@@ -18,11 +18,13 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTopPositionInRootIsEqualTo
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
@@ -78,6 +80,10 @@ import org.robolectric.annotation.Config
 
 private const val STATUS_BAR_HEIGHT_PX = 48
 private const val NAVIGATION_BAR_HEIGHT_PX = 24
+private const val IME_HEIGHT_PX = 300
+
+/** Tolerance in dp for position assertions derived from px-to-dp conversion rounding. */
+private const val POSITION_TOLERANCE_DP = 1f
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -1117,6 +1123,31 @@ class FrontendScreenTest {
         }
     }
 
+    @Test
+    fun `Given a server handling insets when the IME opens then the WebView shrinks by the keyboard height`() {
+        composeTestRule.apply {
+            setFrontendScreenWithSystemBars(
+                viewState = { contentState(serverHandleTopInsets = false) },
+                onSafeAreaInsetsChanged = {},
+            )
+
+            val rootBottom = onRoot().getUnclippedBoundsInRoot().bottom
+            val webViewBottomWithoutIme = onNodeWithTag(HA_WEBVIEW_TAG).getUnclippedBoundsInRoot().bottom
+            assertEquals(rootBottom.value, webViewBottomWithoutIme.value, POSITION_TOLERANCE_DP)
+
+            dispatchWindowInsets(imeHeightPx = IME_HEIGHT_PX)
+            waitForIdle()
+
+            val webViewBottomWithIme = onNodeWithTag(HA_WEBVIEW_TAG).getUnclippedBoundsInRoot().bottom
+            onNodeWithTag(HA_WEBVIEW_TAG).assertTopPositionInRootIsEqualTo(toDp(STATUS_BAR_HEIGHT_PX).dp)
+            assertEquals(
+                toDp(IME_HEIGHT_PX),
+                (webViewBottomWithoutIme - webViewBottomWithIme).value,
+                POSITION_TOLERANCE_DP,
+            )
+        }
+    }
+
     private fun contentState(serverHandleTopInsets: Boolean) = FrontendViewState.Content(
         serverId = 1,
         url = "https://example.com",
@@ -1161,11 +1192,21 @@ class FrontendScreenTest {
                 onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
             )
         }
-        val systemBars = WindowInsetsCompat.Builder()
+        dispatchWindowInsets()
+    }
+
+    private fun AndroidComposeTestRule<ActivityScenarioRule<HiltComponentActivity>, HiltComponentActivity>.dispatchWindowInsets(
+        imeHeightPx: Int = 0,
+    ) {
+        val builder = WindowInsetsCompat.Builder()
             .setInsets(WindowInsetsCompat.Type.statusBars(), Insets.of(0, STATUS_BAR_HEIGHT_PX, 0, 0))
             .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, 0, 0, NAVIGATION_BAR_HEIGHT_PX))
-            .build()
-        runOnUiThread { ViewCompat.dispatchApplyWindowInsets(activity.window.decorView, systemBars) }
+        if (imeHeightPx > 0) {
+            builder
+                .setInsets(WindowInsetsCompat.Type.ime(), Insets.of(0, 0, 0, imeHeightPx))
+                .setVisible(WindowInsetsCompat.Type.ime(), true)
+        }
+        runOnUiThread { ViewCompat.dispatchApplyWindowInsets(activity.window.decorView, builder.build()) }
     }
 }
 
