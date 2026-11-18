@@ -480,6 +480,25 @@ class WebSocketCoreImplTest {
         }
 
         @Test
+        fun `Given repeated authentication failures When each attempt ends Then its URL observer is removed`() = runTest {
+            val urls = MutableStateFlow<UrlState>(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
+            setupServer(urlFlow = urls)
+            prepareAuthenticationAnswer(successfulAuth = false)
+            repeat(2) {
+                assertFalse(webSocketCore.connect())
+                runCurrent()
+                assertEquals(0, urls.subscriptionCount.value)
+            }
+
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+            assertEquals(1, urls.subscriptionCount.value)
+            webSocketCore.shutdown()
+            runCurrent()
+            assertEquals(0, urls.subscriptionCount.value)
+        }
+
+        @Test
         fun `Given auth timeout When 30 seconds pass without auth response Then connect fails`() = runTest {
             setupServer()
 

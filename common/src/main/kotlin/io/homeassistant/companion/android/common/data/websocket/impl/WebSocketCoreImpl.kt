@@ -442,6 +442,7 @@ internal class WebSocketCoreImpl(
                 )
                 if (authSuccess) restoreLeftoverSubscriptions()
                 connectDeferred.complete(authSuccess)
+                if (!authSuccess) urlObserverJob.cancel()
             }
         }
     }
