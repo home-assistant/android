@@ -19,7 +19,7 @@ sealed interface FrontendHandlerEvent {
     /**
      * Frontend reported connection established.
      */
-    data object Connected : FrontendHandlerEvent
+    data class Connected(val navigationId: Long?) : FrontendHandlerEvent
 
     /**
      * Frontend reported disconnection from Home Assistant.
@@ -29,7 +29,7 @@ sealed interface FrontendHandlerEvent {
     /**
      * Frontend reported it finished rendering and is ready to be displayed.
      */
-    data object Loaded : FrontendHandlerEvent
+    data class Loaded(val navigationId: Long?) : FrontendHandlerEvent
 
     /**
      * Frontend requested app configuration and the response was sent.

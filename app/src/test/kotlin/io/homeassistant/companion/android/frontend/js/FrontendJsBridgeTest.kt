@@ -323,18 +323,20 @@ class FrontendJsBridgeTest {
 
         @ParameterizedTest
         @EnumSource(BridgeVersion::class)
-        fun `Given externalBus then handler receives parsed JsonElement`(bridgeVersion: BridgeVersion) = runTest {
+        fun `Given a queued message when navigation changes then the handler receives its original navigation ID`(bridgeVersion: BridgeVersion) = runTest {
             val bridge = createBridge(scope = this)
             val invoke = attach(bridge, bridgeVersion)
 
-            invoke("externalBus", """{"type":"config/get","id":1}""")
+            bridge.onNavigationStarted(1L)
+            invoke("externalBus", """{"type":"loaded","id":1}""")
+            bridge.onNavigationStarted(2L)
             advanceUntilIdle()
 
             val expected = buildJsonObject {
-                put("type", "config/get")
+                put("type", "loaded")
                 put("id", 1)
             }
-            coVerify(exactly = 1) { handler.externalBus(expected) }
+            coVerify(exactly = 1) { handler.externalBus(expected, 1L) }
         }
 
         @ParameterizedTest

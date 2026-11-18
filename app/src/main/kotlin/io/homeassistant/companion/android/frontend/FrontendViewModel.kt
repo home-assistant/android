@@ -83,11 +83,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
@@ -210,22 +210,22 @@ internal class FrontendViewModel @VisibleForTesting constructor(
     ) : StateFlow<FrontendViewState> by _state.asStateFlow() {
 
         /**
-         * Updates the view state using the given [transform] function.
+         * Updates the view state using [transform] and returns the state before the update.
          *
          * If the current state is an [FrontendConnectionError] with an [FrontendConnectionError.Unrecoverable],
          * the update is silently ignored because the state cannot be recovered.
          */
-        fun update(transform: (FrontendViewState) -> FrontendViewState) {
-            _state.update { currentState ->
+        fun update(transform: (FrontendViewState) -> FrontendViewState): FrontendViewState =
+            _state.getAndUpdate { currentState ->
                 if (currentState is FrontendViewState.Error &&
                     currentState.error is FrontendConnectionError.Unrecoverable
                 ) {
                     Timber.w("Ignoring state transition: unrecoverable error present")
-                    return
+                    currentState
+                } else {
+                    transform(currentState)
                 }
-                transform(currentState)
             }
-        }
     }
 
     private val _viewState = ViewStateManager(
@@ -873,7 +873,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
         if (state !is FrontendViewState.Loading) return
 
         if (state.connected) {
-            showContent()
+            showContent(state.navigationId)
         } else {
             onError(FrontendConnectionError.ExternalBusTimeout)
         }
@@ -923,7 +923,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     private suspend fun handleMessageResult(result: FrontendHandlerEvent) {
         when (result) {
-            is FrontendHandlerEvent.Connected -> onConnected()
+            is FrontendHandlerEvent.Connected -> onConnected(result.navigationId)
 
             is FrontendHandlerEvent.Disconnected -> {
                 Timber.d("Frontend external bus disconnected")
@@ -945,7 +945,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
             is FrontendHandlerEvent.StopWebRtcStream ->
                 viewModelScope.launch { webRtcHandler.stop(result.sessionId) }
 
-            is FrontendHandlerEvent.Loaded -> showContent()
+            is FrontendHandlerEvent.Loaded -> showContent(result.navigationId)
 
             is FrontendHandlerEvent.ThemeUpdated -> {
                 viewModelScope.launch { updateThemeColors() }
@@ -1343,13 +1343,21 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * [serverReportsLoaded]) the loading screen stays up until [showContent] runs for that event,
      * otherwise the connection is the best available signal and the content is shown right away.
      */
-    private suspend fun onConnected() {
-        if (serverReportsLoaded(_viewState.value.serverId)) {
+    private suspend fun onConnected(navigationId: Long?) {
+        val state = _viewState.value
+        if (state.navigationId != navigationId) return
+        if (serverReportsLoaded(state.serverId)) {
             // Keep the loading screen up until the frontend reports Loaded; mark the handshake as
             // done so the loading timeout no longer treats the wait as a connection failure.
-            _viewState.update { if (it is FrontendViewState.Loading) it.copy(connected = true) else it }
+            _viewState.update { currentState ->
+                if (currentState is FrontendViewState.Loading && currentState.navigationId == navigationId) {
+                    currentState.copy(connected = true)
+                } else {
+                    currentState
+                }
+            }
         } else {
-            showContent()
+            showContent(navigationId)
         }
     }
 
@@ -1359,12 +1367,14 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      * frontend theme and checking the notification permission once the content is visible.
      * No-op on the state when the content is already shown.
      */
-    private suspend fun showContent() {
-        val wasAwaitingConnection = _viewState.value.isAwaitingConnection()
-        val serverHandleInsets = serverHandlesInsets(_viewState.value.serverId)
-        val serverHandleTopInsets = serverHandlesTopInsets(_viewState.value.serverId)
-        _viewState.update { currentState ->
-            if (currentState.isAwaitingConnection()) {
+    private suspend fun showContent(navigationId: Long?) {
+        val state = _viewState.value
+        if (state.navigationId != navigationId) return
+        val serverHandleInsets = serverHandlesInsets(state.serverId)
+        val serverHandleTopInsets = serverHandlesTopInsets(state.serverId)
+        // A retry can start while the server lookups are suspended.
+        val previous = _viewState.update { currentState ->
+            if (currentState.navigationId == navigationId && currentState.isAwaitingConnection()) {
                 FrontendViewState.Content(
                     serverId = currentState.serverId,
                     url = currentState.url,
@@ -1376,11 +1386,12 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 currentState
             }
         }
-        if (wasAwaitingConnection) {
+        if (previous.navigationId != navigationId) return
+        if (previous.isAwaitingConnection()) {
             // Remove any previous navigation
             _webViewActions.emit(WebViewAction.ClearHistory())
-            checkSecurityVersion(_viewState.value.serverId)
-            permissionManager.checkNotificationPermission(_viewState.value.serverId)
+            checkSecurityVersion(previous.serverId)
+            permissionManager.checkNotificationPermission(previous.serverId)
         }
         viewModelScope.launch { updateThemeColors() }
         viewModelScope.launch { applySafeAreaInsetsIfHandled() }

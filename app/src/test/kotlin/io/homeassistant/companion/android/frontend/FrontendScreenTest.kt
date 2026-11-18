@@ -54,6 +54,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
+import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.launch.PipReadiness
@@ -64,6 +65,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -108,8 +110,15 @@ class FrontendScreenTest {
     fun `Given the same URL when navigation is retried then the WebView loads it again`() {
         val loading = FrontendViewState.Loading(serverId = 1, url = "https://example.com/")
         val state = mutableStateOf<FrontendViewState>(loading)
+        val primed = CompletableDeferred<Unit>()
+        val bridge = mockk<FrontendJsCallback>(relaxed = true)
         composeTestRule.apply {
-            setFrontendScreen(viewState = loading, currentState = { state.value })
+            setFrontendScreen(
+                viewState = loading,
+                currentState = { state.value },
+                prepareUrlLoad = { if (state.value.navigationId == 1L) primed.await() },
+                frontendJsCallback = bridge,
+            )
             val webView = runOnIdle { activity.window.decorView.allViews.filterIsInstance<WebView>().single() }
             val otherPage = "https://example.com/other"
             runOnIdle {
@@ -118,6 +127,12 @@ class FrontendScreenTest {
                 state.value = loading.copy(navigationId = 1)
             }
             runOnIdle {
+                assertEquals(otherPage, webView.url)
+                verify(exactly = 0) { bridge.onNavigationStarted(1L) }
+                primed.complete(Unit)
+            }
+            runOnIdle {
+                verify(exactly = 1) { bridge.onNavigationStarted(1L) }
                 assertEquals(loading.url, webView.url)
                 webView.loadUrl(otherPage)
                 state.value = FrontendViewState.Content(serverId = 1, url = loading.url, navigationId = 1)
@@ -551,14 +566,17 @@ class FrontendScreenTest {
         onImprovDismiss: () -> Unit = {},
         registry: ActivityResultRegistry? = null,
         currentState: () -> FrontendViewState = { viewState },
+        prepareUrlLoad: suspend (String) -> Unit = {},
+        frontendJsCallback: FrontendJsCallback = FrontendJsBridge.noOp,
     ) {
         setContent {
             val content: @Composable () -> Unit = {
                 FrontendScreenContent(
                     viewState = currentState(),
+                    prepareUrlLoad = prepareUrlLoad,
                     getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
-                    frontendJsCallback = FrontendJsBridge.noOp,
+                    frontendJsCallback = frontendJsCallback,
                     errorStateProvider = errorStateProvider,
                     pendingPermissionRequest = pendingPermissionRequest,
                     onBlockInsecureRetry = onBlockInsecureRetry,

@@ -99,6 +99,7 @@ import io.homeassistant.companion.android.onboarding.locationforsecureconnection
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
+import io.homeassistant.companion.android.util.compose.webview.BLANK_URL
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.sensitive
 import kotlinx.coroutines.flow.Flow
@@ -748,6 +749,7 @@ private fun WebViewEffects(
             prepareUrlLoad(url)
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
+            frontendJsCallback.onNavigationStarted(if (url == BLANK_URL) null else navigationId)
         }
         DisposableEffect(webView) {
             onDispose {
