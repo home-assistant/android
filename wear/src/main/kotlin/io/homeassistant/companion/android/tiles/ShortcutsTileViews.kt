@@ -12,9 +12,9 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
  * Places every shortcut of the [layout] at its own position on a round screen of [screenDiameterDp].
  * Each shortcut, built by [shortcutView], is wrapped in a box that is pushed into place with padding.
  */
-internal fun packedShortcutsView(
+internal fun shortcutsView(
     entities: List<SimplifiedEntity>,
-    layout: PackedShortcutLayout,
+    layout: ShortcutLayout,
     screenDiameterDp: Float,
     shortcutView: (SimplifiedEntity) -> LayoutElement,
 ): LayoutElement = Box.Builder().apply {

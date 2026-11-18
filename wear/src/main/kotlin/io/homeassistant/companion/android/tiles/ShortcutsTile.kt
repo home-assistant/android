@@ -17,8 +17,6 @@ import androidx.wear.protolayout.LayoutElementBuilders.Box
 import androidx.wear.protolayout.LayoutElementBuilders.Column
 import androidx.wear.protolayout.LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
-import androidx.wear.protolayout.LayoutElementBuilders.Row
-import androidx.wear.protolayout.LayoutElementBuilders.Spacer
 import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
@@ -53,7 +51,7 @@ import kotlinx.coroutines.withContext
 internal const val CIRCLE_SIZE = 56f
 private const val ICON_SIZE_FULL = 48f * 0.7071f // square that fits in 48dp circle
 private const val ICON_SIZE_SMALL = 40f * 0.7071f // square that fits in 48dp circle
-private const val SPACING = 8f
+internal const val SPACING = 8f
 private const val TEXT_SIZE = 8f
 private const val MIN_TEXT_SIZE = 6f
 private const val TEXT_PADDING = 2f
@@ -103,10 +101,10 @@ class ShortcutsTile : TileService() {
         serviceScope.future {
             val showLabels = wearPrefsRepository.getShowShortcutText()
             val entities = getEntities(requestParams.tileId)
-            val circleSize = packedShortcutLayout(
+            val circleSize = shortcutLayout(
                 entities.size,
                 screenDiameterDp(requestParams.deviceConfiguration),
-            )?.circleSize ?: CIRCLE_SIZE
+            ).circleSize
             val iconSize = (if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL) * circleSize / CIRCLE_SIZE
             val density = requestParams.deviceConfiguration.screenDensity
             val iconSizePx = (iconSize * density).roundToInt()
@@ -190,114 +188,88 @@ class ShortcutsTile : TileService() {
         val entities = getEntities(tileId)
         val showLabels = wearPrefsRepository.getShowShortcutText()
 
-        // Many shortcuts are placed to use the whole round screen, otherwise the original rows are used
-        val packed = packedShortcutLayout(entities.size, screenDiameterDp)
-        val layout = if (packed != null) {
-            packedShortcutsView(entities, packed, screenDiameterDp) { iconLayout(it, showLabels, packed.circleSize) }
+        val layout = if (entities.isEmpty()) {
+            emptyLayout()
         } else {
-            layout(entities, showLabels)
+            val placement = shortcutLayout(entities.size, screenDiameterDp)
+            shortcutsView(entities, placement, screenDiameterDp) {
+                iconLayout(it, showLabels, placement.circleSize)
+            }
         }
 
         return Timeline.fromLayoutElement(layout)
     }
 
-    fun layout(entities: List<SimplifiedEntity>, showLabels: Boolean): LayoutElement = Column.Builder().apply {
-        if (entities.isEmpty()) {
-            addContent(
-                LayoutElementBuilders.Text.Builder()
-                    .setText(getString(commonR.string.shortcuts_tile_empty))
-                    .build(),
-            )
-        } else {
-            addContent(rowLayout(entities.subList(0, min(2, entities.size)), showLabels))
-            if (entities.size > 2) {
-                addContent(Spacer.Builder().setHeight(dp(SPACING)).build())
-                addContent(rowLayout(entities.subList(2, min(5, entities.size)), showLabels))
-            }
-            if (entities.size > 5) {
-                addContent(Spacer.Builder().setHeight(dp(SPACING)).build())
-                addContent(rowLayout(entities.subList(5, min(7, entities.size)), showLabels))
-            }
-        }
-    }
-        .build()
+    private fun emptyLayout(): LayoutElement = Column.Builder().addContent(
+        LayoutElementBuilders.Text.Builder()
+            .setText(getString(commonR.string.shortcuts_tile_empty))
+            .build(),
+    ).build()
 
-    private fun rowLayout(entities: List<SimplifiedEntity>, showLabels: Boolean): LayoutElement = Row.Builder().apply {
-        addContent(iconLayout(entities[0], showLabels))
-        entities.drop(1).forEach { entity ->
-            addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
-            addContent(iconLayout(entity, showLabels))
-        }
-    }
-        .build()
-
-    private fun iconLayout(
-        entity: SimplifiedEntity,
-        showLabels: Boolean,
-        circleSize: Float = CIRCLE_SIZE,
-    ): LayoutElement = Box.Builder().apply {
-        val iconSize = (if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL) * circleSize / CIRCLE_SIZE
-        setWidth(dp(circleSize))
-        setHeight(dp(circleSize))
-        setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
-        setModifiers(
-            ModifiersBuilders.Modifiers.Builder()
-                // Set circular background
-                .setBackground(
-                    ModifiersBuilders.Background.Builder()
-                        .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorOverlay)))
-                        .setCorner(
-                            ModifiersBuilders.Corner.Builder()
-                                .setRadius(dp(circleSize / 2))
-                                .build(),
-                        )
-                        .build(),
-                )
-                // Make clickable and call activity
-                .setClickable(
-                    ModifiersBuilders.Clickable.Builder()
-                        .setId(entity.entityId)
-                        .setOnClick(
-                            ActionBuilders.LoadAction.Builder().build(),
-                        )
-                        .build(),
-                )
-                .build(),
-        )
-        addContent(
-            // Add icon
-            LayoutElementBuilders.Image.Builder()
-                .setResourceId(entity.entityId)
-                .setWidth(dp(iconSize))
-                .setHeight(dp(iconSize))
-                .build(),
-        )
-        if (showLabels) {
-            addContent(
-                LayoutElementBuilders.Arc.Builder()
-                    .addContent(
-                        LayoutElementBuilders.ArcText.Builder()
-                            .setText(entity.name)
-                            .setFontStyle(
-                                LayoutElementBuilders.FontStyle.Builder()
-                                    .setSize(sp(max(TEXT_SIZE * circleSize / CIRCLE_SIZE, MIN_TEXT_SIZE)))
+    private fun iconLayout(entity: SimplifiedEntity, showLabels: Boolean, circleSize: Float): LayoutElement =
+        Box.Builder().apply {
+            val iconSize = (if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL) * circleSize / CIRCLE_SIZE
+            setWidth(dp(circleSize))
+            setHeight(dp(circleSize))
+            setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
+            setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    // Set circular background
+                    .setBackground(
+                        ModifiersBuilders.Background.Builder()
+                            .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorOverlay)))
+                            .setCorner(
+                                ModifiersBuilders.Corner.Builder()
+                                    .setRadius(dp(circleSize / 2))
                                     .build(),
                             )
                             .build(),
                     )
-                    .setModifiers(
-                        ModifiersBuilders.Modifiers.Builder()
-                            .setPadding(
-                                ModifiersBuilders.Padding.Builder()
-                                    .setAll(dp(TEXT_PADDING))
-                                    .build(),
-                            ).build(),
+                    // Make clickable and call activity
+                    .setClickable(
+                        ModifiersBuilders.Clickable.Builder()
+                            .setId(entity.entityId)
+                            .setOnClick(
+                                ActionBuilders.LoadAction.Builder().build(),
+                            )
+                            .build(),
                     )
                     .build(),
             )
+            addContent(
+                // Add icon
+                LayoutElementBuilders.Image.Builder()
+                    .setResourceId(entity.entityId)
+                    .setWidth(dp(iconSize))
+                    .setHeight(dp(iconSize))
+                    .build(),
+            )
+            if (showLabels) {
+                addContent(
+                    LayoutElementBuilders.Arc.Builder()
+                        .addContent(
+                            LayoutElementBuilders.ArcText.Builder()
+                                .setText(entity.name)
+                                .setFontStyle(
+                                    LayoutElementBuilders.FontStyle.Builder()
+                                        .setSize(sp(max(TEXT_SIZE * circleSize / CIRCLE_SIZE, MIN_TEXT_SIZE)))
+                                        .build(),
+                                )
+                                .build(),
+                        )
+                        .setModifiers(
+                            ModifiersBuilders.Modifiers.Builder()
+                                .setPadding(
+                                    ModifiersBuilders.Padding.Builder()
+                                        .setAll(dp(TEXT_PADDING))
+                                        .build(),
+                                ).build(),
+                        )
+                        .build(),
+                )
+            }
         }
-    }
-        .build()
+            .build()
 
     companion object {
         fun requestUpdate(context: Context) {

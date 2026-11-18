@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.tiles
 import kotlin.math.abs
 import kotlin.math.hypot
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -11,13 +10,42 @@ import org.junit.jupiter.params.provider.ValueSource
 
 private const val TOLERANCE = 0.01f
 private const val MIN_CIRCLE_SIZE = 40f
+private const val FIRST_PACKED_COUNT = 8
 
 class ShortcutsTileLayoutTest {
 
+    @Test
+    fun `Given 7 shortcuts When computing the layout Then it matches the original rows`() {
+        val layout = shortcutLayout(7)
+
+        assertEquals(CIRCLE_SIZE, layout.circleSize)
+        val expected = listOf(
+            ShortcutCenter(-32f, -64f),
+            ShortcutCenter(32f, -64f),
+            ShortcutCenter(-64f, 0f),
+            ShortcutCenter(0f, 0f),
+            ShortcutCenter(64f, 0f),
+            ShortcutCenter(-32f, 64f),
+            ShortcutCenter(32f, 64f),
+        )
+        assertEquals(expected, layout.centers)
+    }
+
     @ParameterizedTest
-    @ValueSource(ints = [0, 1, 2, 3, 5, 6, 7])
-    fun `Given up to 7 shortcuts When computing the layout Then the original layout is kept`(count: Int) {
-        assertNull(packedShortcutLayout(count))
+    @ValueSource(ints = [1, 2, 3, 4, 5, 6, 7])
+    fun `Given up to 7 shortcuts When computing the layout Then the circles have the normal size and spacing`(
+        count: Int,
+    ) {
+        val layout = shortcutLayout(count)
+
+        assertEquals(count, layout.centers.size)
+        assertEquals(CIRCLE_SIZE, layout.circleSize)
+        if (count > 1) {
+            val closest = layout.centers.flatMapIndexed { i, a ->
+                layout.centers.drop(i + 1).map { b -> hypot(a.x - b.x, a.y - b.y) }
+            }.min()
+            assertEquals(CIRCLE_SIZE + SPACING, closest, TOLERANCE)
+        }
     }
 
     @ParameterizedTest
@@ -25,8 +53,8 @@ class ShortcutsTileLayoutTest {
     fun `Given more than 7 shortcuts When computing the layout Then circles fit on screen without overlapping`(
         screenDiameterDp: Float,
     ) {
-        for (count in 8..MAX_SHORTCUTS_PER_TILE) {
-            val layout = requireNotNull(packedShortcutLayout(count, screenDiameterDp))
+        for (count in FIRST_PACKED_COUNT..MAX_SHORTCUTS_PER_TILE) {
+            val layout = shortcutLayout(count, screenDiameterDp)
             val message = "count=$count diameter=$screenDiameterDp"
 
             assertEquals(count, layout.centers.size, message)
@@ -43,18 +71,18 @@ class ShortcutsTileLayoutTest {
     }
 
     @Test
-    fun `Given a large screen When computing the layout Then circles are not larger than the original ones`() {
-        for (count in 8..MAX_SHORTCUTS_PER_TILE) {
-            val layout = requireNotNull(packedShortcutLayout(count, screenDiameterDp = 260f))
+    fun `Given a large screen When computing the layout Then circles are not larger than the normal size`() {
+        for (count in FIRST_PACKED_COUNT..MAX_SHORTCUTS_PER_TILE) {
+            val layout = shortcutLayout(count, screenDiameterDp = 260f)
 
             assertTrue(layout.circleSize <= CIRCLE_SIZE, "count=$count circleSize=${layout.circleSize}")
         }
     }
 
     @Test
-    fun `Given more than 7 shortcuts When computing the layout Then it is mirrored left to right`() {
-        for (count in 8..MAX_SHORTCUTS_PER_TILE) {
-            val centers = requireNotNull(packedShortcutLayout(count)).centers
+    fun `Given any number of shortcuts When computing the layout Then it is mirrored left to right`() {
+        for (count in 1..MAX_SHORTCUTS_PER_TILE) {
+            val centers = shortcutLayout(count).centers
 
             centers.forEach { center ->
                 assertTrue(
@@ -66,9 +94,9 @@ class ShortcutsTileLayoutTest {
     }
 
     @Test
-    fun `Given more than 7 shortcuts When computing the layout Then they are in reading order`() {
-        for (count in 8..MAX_SHORTCUTS_PER_TILE) {
-            val centers = requireNotNull(packedShortcutLayout(count)).centers
+    fun `Given any number of shortcuts When computing the layout Then they are in reading order`() {
+        for (count in 1..MAX_SHORTCUTS_PER_TILE) {
+            val centers = shortcutLayout(count).centers
 
             centers.zipWithNext().forEach { (a, b) ->
                 assertTrue(a.y < b.y + TOLERANCE, "count=$count $a is below $b")
@@ -81,7 +109,7 @@ class ShortcutsTileLayoutTest {
 
     @Test
     fun `Given more shortcuts than the maximum When computing the layout Then the count is capped`() {
-        val layout = requireNotNull(packedShortcutLayout(MAX_SHORTCUTS_PER_TILE + 5))
+        val layout = shortcutLayout(MAX_SHORTCUTS_PER_TILE + 5)
 
         assertEquals(MAX_SHORTCUTS_PER_TILE, layout.centers.size)
     }
