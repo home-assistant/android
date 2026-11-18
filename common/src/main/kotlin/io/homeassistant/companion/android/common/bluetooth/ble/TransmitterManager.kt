@@ -4,16 +4,39 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import java.util.UUID
 import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
+import timber.log.Timber
 
 object TransmitterManager {
-    private lateinit var physicalTransmitter: BeaconTransmitter
+    private var physicalTransmitter: BeaconTransmitter? = null
     private lateinit var beacon: Beacon
+
+    private val defaultTransmitterFactory: (Context, String) -> BeaconTransmitter = { context, layout ->
+        BeaconTransmitter(context, BeaconParser().setBeaconLayout(layout))
+    }
+
+    /**
+     * Creates the [BeaconTransmitter] used for advertising. Swappable in tests to observe and
+     * control advertising without the Bluetooth stack.
+     */
+    @VisibleForTesting
+    internal var transmitterFactory: (Context, String) -> BeaconTransmitter = defaultTransmitterFactory
+
+    /**
+     * Drops the current transmitter and restores the default factory. Only for tests: the manager
+     * is a process-wide singleton, so tests must not leak transmitter state into each other.
+     */
+    @VisibleForTesting
+    internal fun resetForTesting() {
+        physicalTransmitter = null
+        transmitterFactory = defaultTransmitterFactory
+    }
 
     private fun buildBeacon(haTransmitterI: IBeaconTransmitter): Beacon {
         val builder = Beacon.Builder()
@@ -28,11 +51,7 @@ object TransmitterManager {
 
     private fun shouldStartTransmitting(haTransmitter: IBeaconTransmitter): Boolean {
         return validateInputs(haTransmitter) &&
-            (
-                !this::physicalTransmitter.isInitialized ||
-                    !physicalTransmitter.isStarted ||
-                    haTransmitter.restartRequired
-                )
+            (physicalTransmitter?.isStarted != true || haTransmitter.restartRequired)
     }
 
     private fun validateInputs(haTransmitter: IBeaconTransmitter): Boolean {
@@ -54,51 +73,81 @@ object TransmitterManager {
         return true
     }
 
+    /**
+     * Starts BLE advertising with the settings from [haTransmitter]. When a restart is required
+     * the current advertisement is stopped first, so a stale advertisement left behind by the
+     * Bluetooth stack cannot block the new one.
+     */
     @Synchronized
     fun startTransmitting(context: Context, haTransmitter: IBeaconTransmitter) {
         if (!shouldStartTransmitting(haTransmitter)) {
             return
         }
-        if (haTransmitter.restartRequired && this::physicalTransmitter.isInitialized) {
+        val transmitter = ensureTransmitter(context, haTransmitter)
+        if (haTransmitter.restartRequired) {
             stopTransmitting(haTransmitter)
-        }
-        if (!this::physicalTransmitter.isInitialized) {
-            val parser = BeaconParser().setBeaconLayout(haTransmitter.beaconLayout)
-            physicalTransmitter = BeaconTransmitter(context, parser)
         }
         val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
         val bluetoothOn = bluetoothAdapter?.isEnabled == true
         if (bluetoothOn) {
             val beacon = buildBeacon(haTransmitter)
-            if (!physicalTransmitter.isStarted) {
-                physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
-                physicalTransmitter.advertiseMode = getAdvertiseMode(haTransmitter)
-                physicalTransmitter.startAdvertising(
-                    beacon,
-                    object : AdvertiseCallback() {
-                        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-                            haTransmitter.transmitting = true
-                            haTransmitter.state = "Transmitting"
-                        }
-
-                        override fun onStartFailure(errorCode: Int) {
-                            if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
-                                haTransmitter.uuid = ""
-                                haTransmitter.major = ""
-                                haTransmitter.minor = ""
-                                haTransmitter.state = "Unable to transmit"
-                                haTransmitter.transmitting = false
-                            } else {
-                                haTransmitter.transmitting = true
-                                haTransmitter.state = "Transmitting"
-                            }
-                        }
-                    },
-                )
+            if (!transmitter.isStarted) {
+                startAdvertising(context, haTransmitter, beacon, retryOnAlreadyStarted = true)
             }
         } else {
             stopTransmitting(haTransmitter)
         }
+    }
+
+    private fun ensureTransmitter(context: Context, haTransmitter: IBeaconTransmitter): BeaconTransmitter {
+        return physicalTransmitter ?: transmitterFactory(context, haTransmitter.beaconLayout).also {
+            physicalTransmitter = it
+        }
+    }
+
+    /**
+     * Starts advertising on the current transmitter. A start rejected as already started means
+     * the Bluetooth stack still holds a stale advertisement, so it is retried once with a fresh
+     * transmitter, which registers a new callback with the stack. A failed start is never
+     * reported as transmitting, so the next sensor update retries instead of staying wedged.
+     */
+    @Synchronized
+    private fun startAdvertising(
+        context: Context,
+        haTransmitter: IBeaconTransmitter,
+        beacon: Beacon,
+        retryOnAlreadyStarted: Boolean,
+    ) {
+        val transmitter = physicalTransmitter ?: return
+        transmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
+        transmitter.advertiseMode = getAdvertiseMode(haTransmitter)
+        transmitter.startAdvertising(
+            beacon,
+            object : AdvertiseCallback() {
+                override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+                    Timber.d("BLE advertisement started")
+                    haTransmitter.transmitting = true
+                    haTransmitter.state = "Transmitting"
+                }
+
+                override fun onStartFailure(errorCode: Int) {
+                    if (errorCode == ADVERTISE_FAILED_ALREADY_STARTED && retryOnAlreadyStarted) {
+                        Timber.d("Advertisement already started, retrying with a fresh transmitter")
+                        physicalTransmitter = transmitterFactory(context, haTransmitter.beaconLayout)
+                        startAdvertising(context, haTransmitter, beacon, retryOnAlreadyStarted = false)
+                        return
+                    }
+                    Timber.w("BLE advertisement failed to start, error code: $errorCode")
+                    if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
+                        haTransmitter.uuid = ""
+                        haTransmitter.major = ""
+                        haTransmitter.minor = ""
+                    }
+                    haTransmitter.state = "Unable to transmit"
+                    haTransmitter.transmitting = false
+                }
+            },
+        )
     }
 
     private fun getAdvertiseMode(haTransmitter: IBeaconTransmitter) = when (haTransmitter.advertiseModeSetting) {
@@ -116,11 +165,13 @@ object TransmitterManager {
         else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
     }
 
+    /**
+     * Stops BLE advertising, if running. Always clears the transmitting state, so a later sensor
+     * update can start advertising again.
+     */
     fun stopTransmitting(haTransmitter: IBeaconTransmitter) {
-        if (haTransmitter.transmitting && this::physicalTransmitter.isInitialized) {
-            if (physicalTransmitter.isStarted) {
-                physicalTransmitter.stopAdvertising()
-            }
+        if (haTransmitter.transmitting) {
+            physicalTransmitter?.takeIf { it.isStarted }?.stopAdvertising()
         }
         haTransmitter.transmitting = false
         haTransmitter.state = "Stopped"
