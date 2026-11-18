@@ -2360,6 +2360,27 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given a retry that times out when the user waits then the same navigation continues`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            runCurrent()
+            val first = viewModel.viewState.value
+            viewModel.onRetry()
+            runCurrent()
+            val retry = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+            assertTrue(retry.navigationId > first.navigationId)
+            advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+            val error = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+            assertEquals(FrontendConnectionError.ExternalBusTimeout, error.error)
+
+            viewModel.onErrorAction(ErrorActionIntent.Wait)
+
+            assertEquals(retry, viewModel.viewState.value)
+        }
+
+        @Test
         fun `Given external bus timeout error when frontend connects then state recovers to Content`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow

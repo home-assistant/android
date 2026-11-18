@@ -631,7 +631,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
             ErrorActionIntent.Wait -> _viewState.update { state ->
                 if (state is FrontendViewState.Error) {
-                    FrontendViewState.Loading(serverId = state.serverId, url = state.url)
+                    FrontendViewState.Loading(
+                        serverId = state.serverId,
+                        url = state.url,
+                        navigationId = state.navigationId,
+                    )
                 } else {
                     state
                 }
