@@ -168,20 +168,10 @@ internal class WebSocketCoreImpl(
 
     private val connectionHolder = AtomicReference<ConnectionHolder?>(null)
 
-    /**
-     * Represents the current state of the WebSocket connection.
-     *
-     * **Thread safety:** This variable is accessed from both the coroutine thread (in [connect])
-     * and the OkHttp callback thread (in [WebSocketListener] methods). However, no synchronization
-     * is needed because:
-     * - The coroutine only sets this when no WebSocket exists yet (URL is null or creation failed),
-     *   meaning no listener callbacks can occur.
-     * - Once a WebSocket is created, only the listener callbacks ([onOpen], [handleAuthComplete],
-     *   [handleClosingSocket]) modify this state.
-     *
-     * This ensures there's no concurrent modification - the coroutine and listener never write
-     * to this variable at the same time.
-     */
+    // OkHttp may call the listener before authentication completes or after cancel() returns.
+    private var currentSocket: WebSocket? = null
+
+    @Volatile
     private var connectionState: WebSocketState = WebSocketState.Initial
 
     /**
@@ -206,7 +196,7 @@ internal class WebSocketCoreImpl(
      * It completes with an [Exception] if [onFailure] is invoked.
      * It completes with an [AuthorizationException] if the authentication fails.
      *
-     * A new instance is created when the connection closes, so it can be reused to reconnect.
+     * Each connection attempt gets a new deferred before its socket is opened.
      *
      * **Thread safety:** Reassignment of this reference is protected by [connectedMutex].
      * Operations on the deferred itself are thread-safe.
@@ -412,6 +402,10 @@ internal class WebSocketCoreImpl(
         setPendingWebSocket: (WebSocket?) -> Unit,
     ) {
         // Clean up any partial connection before using this URL.
+        synchronized(this) {
+            currentSocket = null
+            pendingCloseReason = null
+        }
         connectionHolder.set(null)
         pendingWebSocket?.cancel()
         setPendingWebSocket(null)
@@ -472,12 +466,13 @@ internal class WebSocketCoreImpl(
         var webSocket: WebSocket? = null
         try {
             Timber.d("Creating WebSocket connection")
-            webSocket = okHttpClient.newWebSocket(
-                Request.Builder().url(url.toWebSocketURL())
-                    .header(USER_AGENT, USER_AGENT_STRING)
-                    .build(),
-                this@WebSocketCoreImpl,
-            )
+            val request = Request.Builder().url(url.toWebSocketURL())
+                .header(USER_AGENT, USER_AGENT_STRING)
+                .build()
+            // Publish the socket before an OkHttp callback can inspect it.
+            webSocket = synchronized(this) {
+                okHttpClient.newWebSocket(request, this).also { currentSocket = it }
+            }
 
             val accessToken = serverManager.authenticationRepository(serverId).retrieveAccessToken()
             val result = webSocket.send(
@@ -495,6 +490,7 @@ internal class WebSocketCoreImpl(
             }
             return ConnectionAttemptResult.Success(webSocket)
         } catch (e: CancellationException) {
+            webSocket?.cancel()
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Unable to connect")
@@ -693,19 +689,10 @@ internal class WebSocketCoreImpl(
 
     // ----- WebSocketListener section
 
-    /**
-     * Checks if the given webSocket is stale (no longer the current connection).
-     * Callbacks from stale connections should be ignored to prevent acting on outdated state.
-     *
-     * Note: During connection establishment (before connectionHolder is set), callbacks are
-     * allowed through since connect() is managing the lifecycle.
-     */
-    private fun isStaleConnection(webSocket: WebSocket): Boolean {
-        val currentWebSocket = connectionHolder.get()?.webSocket ?: return false
-        // If no established connection yet, allow callbacks through (connect() handles them)
-        return currentWebSocket != webSocket
-    }
+    @Synchronized
+    private fun isStaleConnection(webSocket: WebSocket): Boolean = currentSocket !== webSocket
 
+    @Synchronized
     override fun onOpen(webSocket: WebSocket, response: Response) {
         Timber.d("Websocket: onOpen")
         if (isStaleConnection(webSocket)) {
@@ -740,7 +727,7 @@ internal class WebSocketCoreImpl(
                 }
 
                 is AuthOkSocketResponse, is AuthInvalidSocketResponse -> {
-                    handleAuthComplete(message is AuthOkSocketResponse, message.haVersion)
+                    handleAuthComplete(webSocket, message is AuthOkSocketResponse, message.haVersion)
                     return@forEach
                 }
 
@@ -780,7 +767,7 @@ internal class WebSocketCoreImpl(
             Timber.w("Ignoring onClosing from stale connection")
             return
         }
-        handleClosingSocket()
+        handleClosingSocket(webSocket)
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
@@ -789,9 +776,10 @@ internal class WebSocketCoreImpl(
             Timber.w("Ignoring onClosed from stale connection")
             return
         }
-        handleClosingSocket()
+        handleClosingSocket(webSocket)
     }
 
+    @Synchronized
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         Timber.e(t, "Websocket: onFailure")
         if (isStaleConnection(webSocket)) {
@@ -801,7 +789,7 @@ internal class WebSocketCoreImpl(
         if (authCompleted.isActive) {
             authCompleted.completeExceptionally(t)
         }
-        handleClosingSocket()
+        handleClosingSocket(webSocket)
     }
 
     private suspend fun <T> createSubscriptionFlow(
@@ -893,7 +881,9 @@ internal class WebSocketCoreImpl(
             (message as? ActiveMessage.Subscription)?.takeIf { it.onEvent === onEvent }?.let { id to it }
         }
 
-    private fun handleAuthComplete(successful: Boolean, haVersion: String?) {
+    @Synchronized
+    private fun handleAuthComplete(webSocket: WebSocket, successful: Boolean, haVersion: String?) {
+        if (isStaleConnection(webSocket)) return
         val parsedVersion = haVersion?.let { HomeAssistantVersion.fromString(it) }
         if (successful) {
             connectionState = WebSocketState.Active
@@ -1091,7 +1081,6 @@ internal class WebSocketCoreImpl(
         pendingConnectDeferred?.complete(false)
         pendingConnectDeferred = null
         authCompleted.completeExceptionally(IOException("Connection closed"))
-        authCompleted = CompletableDeferred()
 
         completeNonReplayableSubscriptions()
 
@@ -1126,9 +1115,14 @@ internal class WebSocketCoreImpl(
             }
     }
 
-    private fun handleClosingSocket() {
+    private fun handleClosingSocket(webSocket: WebSocket) {
         wsScope.launch {
             connectedMutex.withLock {
+                // Another attempt may have replaced this socket while cleanup was waiting for the mutex.
+                synchronized(this@WebSocketCoreImpl) {
+                    if (isStaleConnection(webSocket)) return@launch
+                    currentSocket = null
+                }
                 val previousState = connectionState
                 val closeReason = pendingCloseReason ?: WebSocketState.Closed.Reason.OTHER
                 val wasActive = previousState == WebSocketState.Active

@@ -46,6 +46,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -477,6 +478,59 @@ class WebSocketCoreImplTest {
 
             assertFalse(connectJob.await())
             assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
+        }
+
+        @Test
+        fun `Given a replacement socket awaiting auth When the old socket fails Then the replacement still connects`() = runTest {
+            setupServer()
+            every { mockConnection.send(any<String>()) } returns true
+            assertFalse(webSocketCore.connect()) // Let the first handshake time out.
+
+            val replacement = mockk<WebSocket>(relaxed = true)
+            every { mockOkHttpClient.newWebSocket(any(), any()) } returns replacement
+            every { replacement.send(any<String>()) } returns true
+            val attempt = async { webSocketCore.connect() }
+            runCurrent()
+            verify { replacement.send(any<String>()) }
+
+            webSocketListener.onFailure(mockConnection, IOException("Cancelled"), null)
+            webSocketListener.onMessage(replacement, """{"type":"auth_ok","ha_version":"2025.4.1"}""")
+            runCurrent()
+
+            assertTrue(attempt.await())
+            assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
+        }
+
+        @Test
+        fun `Given queued cleanup for a timed out socket When its replacement authenticates Then it stays connected`() = runTest {
+            var retrying = false
+            val url = UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl())
+            setupServer(
+                urlFlow = flow {
+                    // Queue cleanup while the old socket is still current, just before the retry opens its socket.
+                    if (retrying) webSocketListener.onFailure(mockConnection, IOException("Cancelled"), null)
+                    emit(url)
+                },
+            )
+            every { mockConnection.send(any<String>()) } returns true
+            assertFalse(webSocketCore.connect())
+
+            retrying = true
+            val replacement = mockk<WebSocket>(relaxed = true)
+            every { mockOkHttpClient.newWebSocket(any(), any()) } returns replacement
+            every { replacement.send(any<String>()) } returns true
+            val attempt = async { webSocketCore.connect() }
+            runCurrent()
+            verify { replacement.send(any<String>()) }
+
+            // The retry holds the connection mutex until this response completes authentication.
+            webSocketListener.onMessage(replacement, """{"type":"auth_ok","ha_version":"2025.4.1"}""")
+            runCurrent()
+
+            assertTrue(attempt.await())
+            assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
+            assertTrue(webSocketCore.connect())
+            verify(exactly = 2) { mockOkHttpClient.newWebSocket(any(), any()) }
         }
 
         @Test
