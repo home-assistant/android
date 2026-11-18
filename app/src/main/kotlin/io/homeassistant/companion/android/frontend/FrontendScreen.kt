@@ -280,6 +280,7 @@ internal fun FrontendScreenContent(
     FrontendScreenEffects(
         webView = webView,
         url = viewState.url,
+        navigationId = viewState.navigationId,
         getWebViewClient = getWebViewClient,
         prepareUrlLoad = prepareUrlLoad,
         frontendJsCallback = frontendJsCallback,
@@ -368,6 +369,7 @@ private fun FrontendScreenHandlers(pendingPermissionRequest: PermissionRequest?,
 private fun FrontendScreenEffects(
     webView: WebView?,
     url: String,
+    navigationId: Long,
     getWebViewClient: suspend () -> WebViewClient,
     prepareUrlLoad: suspend (String) -> Unit,
     frontendJsCallback: FrontendJsCallback,
@@ -405,6 +407,7 @@ private fun FrontendScreenEffects(
     WebViewEffects(
         webView = webView,
         url = url,
+        navigationId = navigationId,
         getWebViewClient = getWebViewClient,
         prepareUrlLoad = prepareUrlLoad,
         frontendJsCallback = frontendJsCallback,
@@ -729,6 +732,7 @@ private fun WebView.configureForFrontend(
 private fun WebViewEffects(
     webView: WebView?,
     url: String,
+    navigationId: Long,
     getWebViewClient: suspend () -> WebViewClient,
     prepareUrlLoad: suspend (String) -> Unit,
     frontendJsCallback: FrontendJsCallback,
@@ -736,7 +740,7 @@ private fun WebViewEffects(
     autoPlayVideoEnabled: Boolean,
 ) {
     if (webView != null) {
-        LaunchedEffect(webView, url) {
+        LaunchedEffect(webView, url, navigationId) {
             webView.webViewClient = getWebViewClient()
             frontendJsCallback.attachToWebView(webView)
             // Must run after the WebViewClient is set and before loadUrl, see

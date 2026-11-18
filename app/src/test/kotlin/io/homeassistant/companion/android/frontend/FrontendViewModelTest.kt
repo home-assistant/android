@@ -708,11 +708,14 @@ class FrontendViewModelTest {
 
             // Backgrounded mid-load. The watchdog is cancelled, so the state simply stays Loading
             // however long the app stays away.
+            val firstNavigation = viewModel.viewState.value.navigationId
             viewModel.onScreenStartedChanged(false)
             advanceTimeBy(5.minutes)
             assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
 
             viewModel.onScreenStartedChanged(true)
+            runCurrent()
+            assertTrue(viewModel.viewState.value.navigationId > firstNavigation)
             advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
 
             // Resuming restarts the timeout countdown, so it must also restart the load. The paused

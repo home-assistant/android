@@ -6,6 +6,7 @@ import android.util.Rational
 import android.view.View
 import android.webkit.PermissionRequest as WebViewPermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
@@ -31,6 +32,7 @@ import androidx.core.graphics.Insets
 import androidx.core.util.TypedValueCompat.pxToDp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.allViews
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.google.zxing.BarcodeFormat
 import com.wifi.improv.ErrorState
@@ -99,6 +101,28 @@ class FrontendScreenTest {
 
             assertIsLoading(true)
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given the same URL when navigation is retried then the WebView loads it again`() {
+        val loading = FrontendViewState.Loading(serverId = 1, url = "https://example.com/")
+        val state = mutableStateOf<FrontendViewState>(loading)
+        composeTestRule.apply {
+            setFrontendScreen(viewState = loading, currentState = { state.value })
+            val webView = runOnIdle { activity.window.decorView.allViews.filterIsInstance<WebView>().single() }
+            val otherPage = "https://example.com/other"
+            runOnIdle {
+                assertEquals(loading.url, webView.url)
+                webView.loadUrl(otherPage)
+                state.value = loading.copy(navigationId = 1)
+            }
+            runOnIdle {
+                assertEquals(loading.url, webView.url)
+                webView.loadUrl(otherPage)
+                state.value = FrontendViewState.Content(serverId = 1, url = loading.url, navigationId = 1)
+            }
+            runOnIdle { assertEquals(otherPage, webView.url) }
         }
     }
 
@@ -526,11 +550,12 @@ class FrontendScreenTest {
         onImprovRestart: () -> Unit = {},
         onImprovDismiss: () -> Unit = {},
         registry: ActivityResultRegistry? = null,
+        currentState: () -> FrontendViewState = { viewState },
     ) {
         setContent {
             val content: @Composable () -> Unit = {
                 FrontendScreenContent(
-                    viewState = viewState,
+                    viewState = currentState(),
                     getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,

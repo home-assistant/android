@@ -376,6 +376,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     /** Job tracking the urlFlow collection - cancelled when switching servers. */
     private var urlFlowJob: Job? = null
+    private var nextNavigationId = 0L
 
     /** Job tracking the zoom settings flow collection - restarted on each page load. */
     private var zoomObserverJob: Job? = null
@@ -880,10 +881,11 @@ internal class FrontendViewModel @VisibleForTesting constructor(
 
     private fun loadServer(serverId: Int, target: FrontendTarget) {
         urlFlowJob?.cancel()
+        val navigationId = nextNavigationId++
         urlFlowJob = viewModelScope.launch {
             permissionManager.checkLocalNetworkPermission()
             urlManager.serverUrlFlow(serverId = serverId, target = target).collect { result ->
-                handleUrlResult(result)
+                handleUrlResult(result, navigationId)
             }
         }
     }
@@ -1063,7 +1065,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
      *
      * @param result The URL load result to handle
      */
-    private suspend fun handleUrlResult(result: UrlLoadResult) {
+    private suspend fun handleUrlResult(result: UrlLoadResult, navigationId: Long) {
         when (result) {
             is UrlLoadResult.Success -> {
                 pendingMoreInfoEntityId = result.moreInfoEntityId
@@ -1072,6 +1074,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                         serverId = result.serverId,
                         url = result.url,
                         target = currentState.pendingTarget,
+                        navigationId = navigationId,
                     )
                 }
             }
@@ -1210,6 +1213,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 FrontendViewState.Error(
                     serverId = currentState.serverId,
                     url = currentState.url,
+                    navigationId = currentState.navigationId,
                     error = error,
                     actions = actions,
                 )
@@ -1360,6 +1364,7 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 FrontendViewState.Content(
                     serverId = currentState.serverId,
                     url = currentState.url,
+                    navigationId = currentState.navigationId,
                     serverHandleInsets = serverHandleInsets,
                     serverHandleTopInsets = serverHandleTopInsets,
                 )
