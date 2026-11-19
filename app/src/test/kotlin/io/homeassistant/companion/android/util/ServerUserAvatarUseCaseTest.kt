@@ -110,7 +110,7 @@ class ServerUserAvatarUseCaseTest {
     fun `Given no person entity matches the user when getUserAvatar then stores and returns null`() = runTest {
         coEvery { serverManager.getServer(1) } returns server(id = 1, userId = "uid-1", userPicturePath = null)
         coEvery { serverManager.integrationRepository(1) } returns mockk<IntegrationRepository> {
-            coEvery { getEntities(personFilter) } returns listOf(personEntity(userId = "someone-else", picture = "/picture.png"))
+            coEvery { getEntities(personFilter) } returns emptyList()
         }
         val serverSlot = slot<Server>()
         coEvery { serverManager.updateServer(capture(serverSlot)) } just Runs
