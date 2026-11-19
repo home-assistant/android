@@ -47,7 +47,6 @@ class FriendlyStateTest {
     @After
     fun tearDown() {
         Locale.setDefault(initialLocale)
-        SdkVersion.resetSdkInt()
     }
 
     private fun createEntity(
