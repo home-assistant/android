@@ -80,8 +80,6 @@ class EntitiesForDisplayManagerTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.webSocketRepository(serverId) } returns webSocketRepository
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
-        // Selects among the entities of the server, as the repository does. Declared first: the
-        // stubs for every entity of the server, declared later, take precedence for an empty filter
         coEvery { integrationRepository.getEntities(any()) } coAnswers {
             val filter = firstArg<EntityFilter>()
             integrationRepository.getEntities()?.filter { filter.matches(it.entityId) }
@@ -89,8 +87,6 @@ class EntitiesForDisplayManagerTest {
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
         coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = entityIds.toSet())) } returns entityUpdates
         coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
-        // Selects among the display entries of the server, as the repository does. The stubs for
-        // the whole registry, declared later, take precedence when no entity id is given
         coEvery { webSocketRepository.getEntityRegistryDisplay(any()) } coAnswers {
             val ids = firstArg<List<String>>()
             if (ids.isEmpty()) {

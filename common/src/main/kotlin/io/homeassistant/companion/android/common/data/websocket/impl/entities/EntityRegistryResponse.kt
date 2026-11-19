@@ -26,3 +26,28 @@ data class EntityRegistryOptions(val sensor: EntityRegistrySensorOptions? = null
 
 @Serializable
 data class EntityRegistrySensorOptions(val displayPrecision: Int? = null, val suggestedDisplayPrecision: Int? = null)
+
+/**
+ * Converts full registry entries to what `config/entity_registry/list_for_display` sends for them
+ * (https://github.com/home-assistant/core/blob/a14f22ef9fb/homeassistant/helpers/entity_registry.py#L344).
+ */
+internal fun List<EntityRegistryResponse>.toDisplayResponse(): EntityRegistryDisplayResponse {
+    val categories = mapNotNull { it.entityCategory }.distinct()
+    return EntityRegistryDisplayResponse(
+        entityCategories = categories.withIndex().associate { (index, category) -> index to category },
+        entities = map { entry ->
+            EntityRegistryDisplayEntry(
+                entityId = entry.entityId,
+                areaId = entry.areaId,
+                deviceId = entry.deviceId,
+                nextNamePart = entry.nextNamePart,
+                labels = entry.labels,
+                icon = entry.icon,
+                entityCategory = entry.entityCategory?.let(categories::indexOf),
+                hidden = entry.hiddenBy != null,
+                name = entry.name ?: entry.originalName,
+                displayPrecision = entry.options?.sensor?.let { it.displayPrecision ?: it.suggestedDisplayPrecision },
+            )
+        },
+    )
+}

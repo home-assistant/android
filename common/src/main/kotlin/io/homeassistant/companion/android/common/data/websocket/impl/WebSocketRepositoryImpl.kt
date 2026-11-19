@@ -35,7 +35,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Cu
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayEntry
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
@@ -51,6 +50,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Th
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.toDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.webRtcJsonMapper
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toHexString
@@ -598,31 +598,6 @@ class WebSocketRepositoryImpl internal constructor(
 
     private inline fun <reified T> mapResponse(response: RawMessageSocketResponse?): T? =
         response?.result?.run { kotlinJsonMapper.decodeFromJsonElement(this) }
-}
-
-/**
- * Converts full registry entries to what `config/entity_registry/list_for_display` sends for them
- * (https://github.com/home-assistant/core/blob/a14f22ef9fb/homeassistant/helpers/entity_registry.py#L344).
- */
-private fun List<EntityRegistryResponse>.toDisplayResponse(): EntityRegistryDisplayResponse {
-    val categories = mapNotNull { it.entityCategory }.distinct()
-    return EntityRegistryDisplayResponse(
-        entityCategories = categories.withIndex().associate { (index, category) -> index to category },
-        entities = map { entry ->
-            EntityRegistryDisplayEntry(
-                entityId = entry.entityId,
-                areaId = entry.areaId,
-                deviceId = entry.deviceId,
-                nextNamePart = entry.nextNamePart,
-                labels = entry.labels,
-                icon = entry.icon,
-                entityCategory = entry.entityCategory?.let(categories::indexOf),
-                hidden = entry.hiddenBy != null,
-                name = entry.name ?: entry.originalName,
-                displayPrecision = entry.options?.sensor?.let { it.displayPrecision ?: it.suggestedDisplayPrecision },
-            )
-        },
-    )
 }
 
 /** Whether a server running this version can limit `subscribe_entities` to [filter] itself. */
