@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Looper.getMainLooper
+import androidx.core.content.ContextCompat
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -82,9 +83,11 @@ class SensorReceiverBaseTest {
             settingsDao,
             sensorUpdater,
         )
-        context.registerReceiver(
+        ContextCompat.registerReceiver(
+            context,
             receiver,
             IntentFilter(SensorReceiverBase.ACTION_UPDATE_SENSOR),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
         )
         try {
             context.sendBroadcast(
