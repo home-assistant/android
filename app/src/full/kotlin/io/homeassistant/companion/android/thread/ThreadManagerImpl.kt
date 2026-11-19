@@ -69,7 +69,7 @@ class ThreadManagerImpl @Inject constructor(
 
         if (getDeviceDataset == null) return ThreadManager.SyncResult.NoneHaveCredentials
 
-        val appIsDevicePreferred = appPreferredCredential() != null
+        val appIsDevicePreferred = appOwnedPreferredCredential() != null
         Timber.d("Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer"} dataset from app")
         return if (appIsDevicePreferred) {
             ThreadManager.SyncResult.OnlyOnServer(imported = false)
@@ -124,7 +124,7 @@ class ThreadManagerImpl @Inject constructor(
                 Timber.d(
                     "Thread: device ${if (coreIsDevicePreferred) "prefers" else "doesn't prefer"} core preferred dataset",
                 )
-                val appIsDevicePreferred = coreIsDevicePreferred || appPreferredCredential() != null
+                val appIsDevicePreferred = coreIsDevicePreferred || appOwnedPreferredCredential() != null
                 Timber.d(
                     "Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer"} dataset from app",
                 )
@@ -268,7 +268,12 @@ class ThreadManagerImpl @Inject constructor(
             }
     }
 
-    private suspend fun appPreferredCredential(): ThreadNetworkCredentials? =
+    /**
+     * The credential stored by this app that the device currently prefers, or `null` if the
+     * device prefers none of them. A preferred credential owned by another app is not visible
+     * to this app and also yields `null`.
+     */
+    private suspend fun appOwnedPreferredCredential(): ThreadNetworkCredentials? =
         preferredCredentialAmong(getAllCredentials())
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -359,10 +364,10 @@ class ThreadManagerImpl @Inject constructor(
      */
     private suspend fun predictAmongAppCredentials(): ThreadManager.PreflightOutcome {
         val appCredentials = getAllCredentials()
-        val currentAppPreferred = preferredCredentialAmong(appCredentials)
+        val appOwnedPreferred = preferredCredentialAmong(appCredentials)
         return when {
-            currentAppPreferred != null ->
-                ThreadManager.PreflightOutcome.AppCredentialPreferred(currentAppPreferred.networkName)
+            appOwnedPreferred != null ->
+                ThreadManager.PreflightOutcome.AppCredentialPreferred(appOwnedPreferred.networkName)
             appCredentials == null -> ThreadManager.PreflightOutcome.Unknown
             appCredentials.isEmpty() -> ThreadManager.PreflightOutcome.LikelyToBecomePreferred
             else -> ThreadManager.PreflightOutcome.Unknown
