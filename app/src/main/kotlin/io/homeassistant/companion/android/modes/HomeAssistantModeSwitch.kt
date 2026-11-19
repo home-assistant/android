@@ -98,15 +98,19 @@ internal class HomeAssistantModeSwitch(private val homeAssistantMode: HomeAssist
      * Applies the change waiting for access once the settings are back in the foreground and unlocked, if the user
      * granted access; drops it otherwise, so it is never applied later by surprise. Does nothing before the user left
      * for Android's access screen and came back, see [onResume].
+     *
+     * Leaving the settings cancels this. A change that was not made yet is then made when the user comes back.
      */
     suspend fun onUnlocked(): Update? {
         if (changeReadyToApply() == null) return null
-        // The change is kept until the access is known: the screen can be recreated meanwhile, and restores it then
         val hasAccess = homeAssistantMode.hasAccess()
         return changeReadyToApply()?.let { add ->
+            val update = if (hasAccess) change(add) else Update(display())
+            // The change is kept until it is made or dropped: the screen can be left or recreated meanwhile, and
+            // restores it then. Adding or removing the mode a second time changes nothing.
             pendingChange = null
             returnedSinceRequest = false
-            if (hasAccess) change(add) else Update(display())
+            update
         }
     }
 

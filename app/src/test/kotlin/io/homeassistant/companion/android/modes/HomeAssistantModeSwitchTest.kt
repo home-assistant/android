@@ -151,6 +151,27 @@ class HomeAssistantModeSwitchTest {
     }
 
     @Test
+    fun `Given access granted when leaving the settings while the mode is added then it is added on return`() = runTest {
+        requestAccessThenReturn(add = true, grant = true)
+        val adding = CompletableDeferred<Unit>()
+        coEvery { homeAssistantMode.add() } coAnswers {
+            adding.complete(Unit)
+            awaitCancellation()
+        } andThenAnswer {
+            added = true
+            true
+        }
+        val unlocked = launch { modeSwitch.onUnlocked() }
+        adding.await()
+
+        unlocked.cancelAndJoin()
+        modeSwitch.onResume()
+
+        assertEquals(Update(ADDED, Action.ReportChange), modeSwitch.onUnlocked())
+        assertNull(modeSwitch.onUnlocked())
+    }
+
+    @Test
     fun `Given no request when saving and restoring then nothing is pending`() = runTest {
         assertNull(modeSwitch.savedState)
 
