@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.dialog
 
 import android.content.Context
+import android.net.Uri
 import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
 
 /**
@@ -21,7 +22,7 @@ sealed interface FrontendDialog {
         val message: String,
         val onConfirm: () -> Unit,
         val onCancel: () -> Unit,
-        val moreInfoUrl: String? = null,
+        val moreInfoUrl: Uri? = null,
     ) : FrontendDialog
 
     /**
@@ -32,7 +33,7 @@ sealed interface FrontendDialog {
      * @param moreInfoUrl Optional URL to documentation; when set, the dialog shows a
      *   "Learn more" action that opens it without closing the dialog
      */
-    data class Information(val message: String, val onDismiss: () -> Unit, val moreInfoUrl: String? = null) :
+    data class Information(val message: String, val onDismiss: () -> Unit, val moreInfoUrl: Uri? = null) :
         FrontendDialog
 
     /**

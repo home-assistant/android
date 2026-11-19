@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.net.toUri
 import io.homeassistant.companion.android.frontend.matterthread.ui.MatterThreadProgressDialogContent
 import io.homeassistant.companion.android.frontend.matterthread.ui.MatterThreadTerminalDialogContent
 import kotlinx.coroutines.launch
@@ -23,7 +22,7 @@ import kotlinx.coroutines.launch
 @Composable
 internal fun PendingDialogHandler(pendingDialog: FrontendDialog?, onOpenExternalLink: suspend (Uri) -> Unit) {
     val scope = rememberCoroutineScope()
-    val openExternalLink: (String) -> Unit = { url -> scope.launch { onOpenExternalLink(url.toUri()) } }
+    val openExternalLink: (Uri) -> Unit = { uri -> scope.launch { onOpenExternalLink(uri) } }
     when (pendingDialog) {
         is FrontendDialog.Confirm -> {
             SimpleConfirmDialog(pendingDialog, onOpenExternalLink = openExternalLink)

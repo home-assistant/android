@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.dialog
 
 import android.content.Context
+import android.net.Uri
 import androidx.annotation.StringRes
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
@@ -47,7 +48,7 @@ internal class FrontendDialogManager @Inject constructor(
      * Pass [moreInfoUrl] to offer a "Learn more" action that opens documentation without
      * closing the dialog.
      */
-    suspend fun showConfirm(message: String, moreInfoUrl: String? = null): Boolean = queue.awaitResult { onResult ->
+    suspend fun showConfirm(message: String, moreInfoUrl: Uri? = null): Boolean = queue.awaitResult { onResult ->
         FrontendDialog.Confirm(
             message = message,
             onConfirm = { onResult(true) },
@@ -57,7 +58,7 @@ internal class FrontendDialogManager @Inject constructor(
     }
 
     /** [showConfirm] variant resolving a string resource with optional format arguments. */
-    suspend fun showConfirm(@StringRes messageRes: Int, vararg formatArgs: Any, moreInfoUrl: String? = null): Boolean =
+    suspend fun showConfirm(@StringRes messageRes: Int, vararg formatArgs: Any, moreInfoUrl: Uri? = null): Boolean =
         showConfirm(message = getString(messageRes, formatArgs), moreInfoUrl = moreInfoUrl)
 
     /**
@@ -69,7 +70,7 @@ internal class FrontendDialogManager @Inject constructor(
      * Pass [moreInfoUrl] to offer a "Learn more" action that opens documentation without
      * closing the dialog.
      */
-    suspend fun showInformation(message: String, moreInfoUrl: String? = null) {
+    suspend fun showInformation(message: String, moreInfoUrl: Uri? = null) {
         queue.awaitResult { onResult ->
             FrontendDialog.Information(
                 message = message,
@@ -80,7 +81,7 @@ internal class FrontendDialogManager @Inject constructor(
     }
 
     /** [showInformation] variant resolving a string resource with optional format arguments. */
-    suspend fun showInformation(@StringRes messageRes: Int, vararg formatArgs: Any, moreInfoUrl: String? = null) {
+    suspend fun showInformation(@StringRes messageRes: Int, vararg formatArgs: Any, moreInfoUrl: Uri? = null) {
         showInformation(message = getString(messageRes, formatArgs), moreInfoUrl = moreInfoUrl)
     }
 

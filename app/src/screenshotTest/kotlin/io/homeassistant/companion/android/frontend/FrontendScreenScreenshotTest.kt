@@ -7,6 +7,7 @@ import android.webkit.WebChromeClient
 import android.webkit.WebViewClient
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -227,7 +228,7 @@ class FrontendScreenScreenshotTest {
                         "and any Thread border routers nearby. Continue?",
                     onConfirm = {},
                     onCancel = {},
-                    moreInfoUrl = "https://companion.home-assistant.io/docs/integrations/thread",
+                    moreInfoUrl = "https://companion.home-assistant.io/docs/integrations/thread".toUri(),
                 ),
                 getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
@@ -260,7 +261,7 @@ class FrontendScreenScreenshotTest {
                     message = "\"My network\" has been added, but this device still prefers a different " +
                         "Thread network.",
                     onDismiss = {},
-                    moreInfoUrl = "https://companion.home-assistant.io/docs/integrations/thread",
+                    moreInfoUrl = "https://companion.home-assistant.io/docs/integrations/thread".toUri(),
                 ),
                 getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),

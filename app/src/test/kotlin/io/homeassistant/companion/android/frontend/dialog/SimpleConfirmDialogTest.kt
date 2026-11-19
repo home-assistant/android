@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.frontend.dialog
 
+import android.net.Uri
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.core.net.toUri
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -93,7 +95,7 @@ class SimpleConfirmDialogTest {
 
     @Test
     fun `Given dialog with moreInfoUrl when Learn more clicked then link opens and dialog stays`() {
-        var openedUrl: String? = null
+        var openedUrl: Uri? = null
 
         composeTestRule.apply {
             setContent {
@@ -102,7 +104,7 @@ class SimpleConfirmDialogTest {
                         message = "Are you sure?",
                         onConfirm = {},
                         onCancel = {},
-                        moreInfoUrl = "https://example.com/docs",
+                        moreInfoUrl = "https://example.com/docs".toUri(),
                     ),
                     onOpenExternalLink = { openedUrl = it },
                 )
@@ -110,7 +112,7 @@ class SimpleConfirmDialogTest {
 
             onNodeWithText(stringResource(commonR.string.learn_more)).performClick()
 
-            assertEquals("https://example.com/docs", openedUrl)
+            assertEquals("https://example.com/docs".toUri(), openedUrl)
             onNodeWithText("Are you sure?").assertIsDisplayed()
         }
     }

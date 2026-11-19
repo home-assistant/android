@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.frontend.matterthread
 
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
+import androidx.annotation.StringRes
+import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -284,7 +286,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Unexpected error storing Thread credentials on the device")
-            dialogManager.showInformation(commonR.string.thread_store_failed_unknown, moreInfoUrl = THREAD_DOCS_URL)
+            showThreadInformation(commonR.string.thread_store_failed_unknown)
         } finally {
             inFlight.set(null)
         }
@@ -292,12 +294,12 @@ internal class FrontendMatterThreadHandler @Inject constructor(
 
     private suspend fun storeThreadCredentials(serverId: Int, borderAgentId: String, tlv: ByteArray) {
         if (!threadManager.appSupportsThread()) {
-            dialogManager.showInformation(commonR.string.thread_store_unsupported, moreInfoUrl = THREAD_DOCS_URL)
+            showThreadInformation(commonR.string.thread_store_unsupported)
             return
         }
         val networkName = threadManager.networkNameFromTlv(tlv)
         if (networkName == null) {
-            dialogManager.showInformation(commonR.string.thread_store_invalid_payload, moreInfoUrl = THREAD_DOCS_URL)
+            showThreadInformation(commonR.string.thread_store_invalid_payload)
             return
         }
         val outcome = withProgress { threadManager.predictPreferredOutcome(tlv) }
@@ -320,33 +322,27 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     private suspend fun confirmPreflight(outcome: ThreadManager.PreflightOutcome, networkName: String): Boolean =
         when (outcome) {
             ThreadManager.PreflightOutcome.AlreadyPreferred -> {
-                dialogManager.showInformation(
-                    commonR.string.thread_store_already_preferred,
-                    networkName,
-                    moreInfoUrl = THREAD_DOCS_URL,
-                )
+                showThreadInformation(commonR.string.thread_store_already_preferred, networkName)
                 false
             }
             is ThreadManager.PreflightOutcome.AppCredentialPreferred ->
-                dialogManager.showConfirm(
-                    commonR.string.thread_store_different_preferred,
-                    networkName,
-                    outcome.networkName,
-                    moreInfoUrl = THREAD_DOCS_URL,
-                )
+                showThreadConfirm(commonR.string.thread_store_different_preferred, networkName, outcome.networkName)
             ThreadManager.PreflightOutcome.LikelyToBecomePreferred ->
-                dialogManager.showConfirm(
-                    commonR.string.thread_store_likely_preferred,
-                    networkName,
-                    moreInfoUrl = THREAD_DOCS_URL,
-                )
+                showThreadConfirm(commonR.string.thread_store_likely_preferred, networkName)
             ThreadManager.PreflightOutcome.Unknown ->
-                dialogManager.showConfirm(
-                    commonR.string.thread_store_unknown_preferred,
-                    networkName,
-                    moreInfoUrl = THREAD_DOCS_URL,
-                )
+                showThreadConfirm(commonR.string.thread_store_unknown_preferred, networkName)
         }
+
+    /** [FrontendDialogManager.showConfirm] with a "Learn more" link to the Thread documentation. */
+    @Suppress("SpreadOperator")
+    private suspend fun showThreadConfirm(@StringRes messageRes: Int, vararg formatArgs: Any): Boolean =
+        dialogManager.showConfirm(messageRes, *formatArgs, moreInfoUrl = THREAD_DOCS_URL.toUri())
+
+    /** [FrontendDialogManager.showInformation] with a "Learn more" link to the Thread documentation. */
+    @Suppress("SpreadOperator")
+    private suspend fun showThreadInformation(@StringRes messageRes: Int, vararg formatArgs: Any) {
+        dialogManager.showInformation(messageRes, *formatArgs, moreInfoUrl = THREAD_DOCS_URL.toUri())
+    }
 
     /** Add the credential to the device and report the outcome with an information dialog. */
     private suspend fun addCredentialAndReport(
@@ -362,34 +358,17 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             Timber.d("Thread store: added '${sensitive(networkName)}' ($result)")
             when (result) {
                 ThreadManager.AddCredentialResult.Preferred ->
-                    dialogManager.showInformation(
-                        commonR.string.thread_store_added_preferred,
-                        networkName,
-                        moreInfoUrl = THREAD_DOCS_URL,
-                    )
+                    showThreadInformation(commonR.string.thread_store_added_preferred, networkName)
                 ThreadManager.AddCredentialResult.NotPreferred ->
-                    dialogManager.showInformation(
-                        commonR.string.thread_store_added_not_preferred,
-                        networkName,
-                        moreInfoUrl = THREAD_DOCS_URL,
-                    )
+                    showThreadInformation(commonR.string.thread_store_added_not_preferred, networkName)
                 ThreadManager.AddCredentialResult.PreferredUnknown ->
-                    dialogManager.showInformation(
-                        commonR.string.thread_store_added_unknown,
-                        networkName,
-                        moreInfoUrl = THREAD_DOCS_URL,
-                    )
+                    showThreadInformation(commonR.string.thread_store_added_unknown, networkName)
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.w(e, "Thread store: failed to add credential '${sensitive(networkName)}'")
-            dialogManager.showInformation(
-                commonR.string.thread_store_failed,
-                networkName,
-                e.message.orEmpty(),
-                moreInfoUrl = THREAD_DOCS_URL,
-            )
+            showThreadInformation(commonR.string.thread_store_failed, networkName, e.message.orEmpty())
         }
     }
 

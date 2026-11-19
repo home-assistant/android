@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.frontend.matterthread
 
 import android.app.Activity
 import android.content.IntentSender
+import android.net.Uri
 import androidx.activity.result.ActivityResult
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
@@ -21,13 +22,17 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -63,6 +68,18 @@ class FrontendMatterThreadHandlerTest {
         externalBusRepository = externalBusRepository,
         serverManager = serverManager,
     )
+
+    @BeforeEach
+    fun setUp() {
+        // Uri.parse is a stub returning null in plain JVM tests; the handler uses it for the docs link.
+        mockkStatic(Uri::class)
+        every { Uri.parse(any()) } returns mockk()
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkStatic(Uri::class)
+    }
 
     private fun givenServerVersion(version: HomeAssistantVersion?) {
         val server: Server = mockk {
