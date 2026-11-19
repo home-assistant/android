@@ -35,6 +35,28 @@ class FrontendDialogManagerTest {
     }
 
     @Test
+    fun `Given confirm shown without buttons then the dialog uses OK and Cancel`() = runTest {
+        val manager = FrontendDialogManager(mockk(relaxed = true))
+
+        val outcome = async { manager.showConfirm("Are you sure?") }
+        advanceUntilIdle()
+
+        assertEquals(ConfirmButtons.OkCancel, (manager.pendingDialog.value as FrontendDialog.Confirm).buttons)
+        outcome.cancel()
+    }
+
+    @Test
+    fun `Given confirm shown with YesNo buttons then the dialog carries them`() = runTest {
+        val manager = FrontendDialogManager(mockk(relaxed = true))
+
+        val outcome = async { manager.showConfirm("Continue?", buttons = ConfirmButtons.YesNo) }
+        advanceUntilIdle()
+
+        assertEquals(ConfirmButtons.YesNo, (manager.pendingDialog.value as FrontendDialog.Confirm).buttons)
+        outcome.cancel()
+    }
+
+    @Test
     fun `Given confirm shown when user cancels then suspend returns false and slot clears`() = runTest {
         val manager = FrontendDialogManager(mockk(relaxed = true))
 

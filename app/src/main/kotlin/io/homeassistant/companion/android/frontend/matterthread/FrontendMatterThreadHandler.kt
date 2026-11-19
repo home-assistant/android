@@ -7,6 +7,7 @@ import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.frontend.dialog.ConfirmButtons
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
@@ -333,10 +334,18 @@ internal class FrontendMatterThreadHandler @Inject constructor(
                 showThreadConfirm(commonR.string.thread_store_unknown_preferred, networkName)
         }
 
-    /** [FrontendDialogManager.showConfirm] with a "Learn more" link to the Thread documentation. */
+    /**
+     * [FrontendDialogManager.showConfirm] for a yes/no question, with a "Learn more" link to the
+     * Thread documentation.
+     */
     @Suppress("SpreadOperator")
     private suspend fun showThreadConfirm(@StringRes messageRes: Int, vararg formatArgs: Any): Boolean =
-        dialogManager.showConfirm(messageRes, *formatArgs, moreInfoUrl = THREAD_DOCS_URL.toUri())
+        dialogManager.showConfirm(
+            messageRes,
+            *formatArgs,
+            moreInfoUrl = THREAD_DOCS_URL.toUri(),
+            buttons = ConfirmButtons.YesNo,
+        )
 
     /** [FrontendDialogManager.showInformation] with a "Learn more" link to the Thread documentation. */
     @Suppress("SpreadOperator")

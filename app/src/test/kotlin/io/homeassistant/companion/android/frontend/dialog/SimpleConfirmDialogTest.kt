@@ -76,6 +76,28 @@ class SimpleConfirmDialogTest {
     }
 
     @Test
+    fun `Given YesNo buttons then Yes and No are displayed instead of OK and Cancel`() {
+        composeTestRule.apply {
+            setContent {
+                SimpleConfirmDialog(
+                    FrontendDialog.Confirm(
+                        message = "Are you sure?",
+                        onConfirm = {},
+                        onCancel = {},
+                        buttons = ConfirmButtons.YesNo,
+                    ),
+                    onOpenExternalLink = {},
+                )
+            }
+
+            onNodeWithText(stringResource(commonR.string.confirm_positive)).assertIsDisplayed().assertIsEnabled()
+            onNodeWithText(stringResource(commonR.string.confirm_negative)).assertIsDisplayed().assertIsEnabled()
+            onNodeWithText(stringResource(commonR.string.ok)).assertDoesNotExist()
+            onNodeWithText(stringResource(commonR.string.cancel)).assertDoesNotExist()
+        }
+    }
+
+    @Test
     fun `Given dialog without moreInfoUrl then Learn more is not displayed`() {
         composeTestRule.apply {
             setContent {

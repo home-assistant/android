@@ -12,6 +12,7 @@ import com.android.tools.screenshot.PreviewTest
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
+import io.homeassistant.companion.android.frontend.dialog.ConfirmButtons
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
@@ -229,6 +230,7 @@ class FrontendScreenScreenshotTest {
                     onConfirm = {},
                     onCancel = {},
                     moreInfoUrl = "https://companion.home-assistant.io/docs/integrations/thread".toUri(),
+                    buttons = ConfirmButtons.YesNo,
                 ),
                 getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),

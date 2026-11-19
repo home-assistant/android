@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.frontend.dialog.ConfirmButtons
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
@@ -534,7 +535,7 @@ class FrontendMatterThreadHandlerTest {
         fun `Given user declines the preflight confirmation when storing then does not add`() = runTest {
             givenStoreReady(ThreadManager.PreflightOutcome.LikelyToBecomePreferred)
             coEvery {
-                dialogManager.showConfirm(commonR.string.thread_store_likely_preferred, "MyNetwork", moreInfoUrl = any())
+                dialogManager.showConfirm(commonR.string.thread_store_likely_preferred, "MyNetwork", moreInfoUrl = any(), buttons = ConfirmButtons.YesNo)
             } returns false
 
             store()
@@ -546,7 +547,7 @@ class FrontendMatterThreadHandlerTest {
         fun `Given user confirms and credential becomes preferred when storing then reports preferred`() = runTest {
             givenStoreReady(ThreadManager.PreflightOutcome.LikelyToBecomePreferred)
             coEvery {
-                dialogManager.showConfirm(commonR.string.thread_store_likely_preferred, "MyNetwork", moreInfoUrl = any())
+                dialogManager.showConfirm(commonR.string.thread_store_likely_preferred, "MyNetwork", moreInfoUrl = any(), buttons = ConfirmButtons.YesNo)
             } returns true
             coEvery { threadManager.addCredentialToDevice(1, tlv, borderAgentId) } returns
                 ThreadManager.AddCredentialResult.Preferred
@@ -566,7 +567,7 @@ class FrontendMatterThreadHandlerTest {
         fun `Given adding the credential fails when storing then reports the failure`() = runTest {
             givenStoreReady(ThreadManager.PreflightOutcome.Unknown)
             coEvery {
-                dialogManager.showConfirm(commonR.string.thread_store_unknown_preferred, "MyNetwork", moreInfoUrl = any())
+                dialogManager.showConfirm(commonR.string.thread_store_unknown_preferred, "MyNetwork", moreInfoUrl = any(), buttons = ConfirmButtons.YesNo)
             } returns true
             coEvery { threadManager.addCredentialToDevice(1, tlv, borderAgentId) } throws
                 IllegalStateException("add boom")
@@ -591,6 +592,7 @@ class FrontendMatterThreadHandlerTest {
                     commonR.string.thread_store_unknown_preferred,
                     "MyNetwork",
                     moreInfoUrl = any(),
+                    buttons = ConfirmButtons.YesNo,
                 )
             } coAnswers { awaitCancellation() }
             val handler = createHandler()

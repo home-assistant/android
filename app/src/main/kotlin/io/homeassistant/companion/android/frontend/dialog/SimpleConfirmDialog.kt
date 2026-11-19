@@ -31,10 +31,10 @@ internal fun SimpleConfirmDialog(pendingDialog: FrontendDialog.Confirm, onOpenEx
             }
         },
         confirmButton = {
-            HAPlainButton(stringResource(commonR.string.ok), pendingDialog.onConfirm)
+            HAPlainButton(stringResource(pendingDialog.buttons.confirmLabel), pendingDialog.onConfirm)
         },
         dismissButton = {
-            HAPlainButton(stringResource(commonR.string.cancel), pendingDialog.onCancel)
+            HAPlainButton(stringResource(pendingDialog.buttons.cancelLabel), pendingDialog.onCancel)
         },
     )
 }
@@ -60,6 +60,7 @@ private fun PreviewSimpleConfirmDialogWithMoreInfo() {
                 onConfirm = {},
                 onCancel = {},
                 moreInfoUrl = "https://companion.home-assistant.io/".toUri(),
+                buttons = ConfirmButtons.YesNo,
             ),
             onOpenExternalLink = {},
         )

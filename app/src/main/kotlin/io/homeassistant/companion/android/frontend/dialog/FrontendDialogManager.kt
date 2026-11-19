@@ -46,20 +46,34 @@ internal class FrontendDialogManager @Inject constructor(
      * before returning, including on cancellation of the calling coroutine.
      *
      * Pass [moreInfoUrl] to offer a "Learn more" action that opens documentation without
-     * closing the dialog.
+     * closing the dialog, and [buttons] to change the button labels for messages phrased as a
+     * question.
      */
-    suspend fun showConfirm(message: String, moreInfoUrl: Uri? = null): Boolean = queue.awaitResult { onResult ->
+    suspend fun showConfirm(
+        message: String,
+        moreInfoUrl: Uri? = null,
+        buttons: ConfirmButtons = ConfirmButtons.OkCancel,
+    ): Boolean = queue.awaitResult { onResult ->
         FrontendDialog.Confirm(
             message = message,
             onConfirm = { onResult(true) },
             onCancel = { onResult(false) },
             moreInfoUrl = moreInfoUrl,
+            buttons = buttons,
         )
     }
 
     /** [showConfirm] variant resolving a string resource with optional format arguments. */
-    suspend fun showConfirm(@StringRes messageRes: Int, vararg formatArgs: Any, moreInfoUrl: Uri? = null): Boolean =
-        showConfirm(message = getString(messageRes, formatArgs), moreInfoUrl = moreInfoUrl)
+    suspend fun showConfirm(
+        @StringRes messageRes: Int,
+        vararg formatArgs: Any,
+        moreInfoUrl: Uri? = null,
+        buttons: ConfirmButtons = ConfirmButtons.OkCancel,
+    ): Boolean = showConfirm(
+        message = getString(messageRes, formatArgs),
+        moreInfoUrl = moreInfoUrl,
+        buttons = buttons,
+    )
 
     /**
      * Shows an informational dialog with a single dismiss button and suspends until the user
