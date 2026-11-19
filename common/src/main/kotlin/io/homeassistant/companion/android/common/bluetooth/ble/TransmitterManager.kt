@@ -134,32 +134,31 @@ object TransmitterManager {
             beacon,
             object : AdvertiseCallback() {
                 override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-                    onStartSucceeded(haTransmitter)
+                    onStartResult(context, haTransmitter, beacon, errorCode = null, retryOnAlreadyStarted)
                 }
 
                 override fun onStartFailure(errorCode: Int) {
-                    onStartFailed(context, haTransmitter, beacon, errorCode, retryOnAlreadyStarted)
+                    onStartResult(context, haTransmitter, beacon, errorCode, retryOnAlreadyStarted)
                 }
             },
         )
     }
 
     @Synchronized
-    private fun onStartSucceeded(haTransmitter: IBeaconTransmitter) {
-        startPending = false
-        Timber.d("BLE advertisement started")
-        haTransmitter.transmitting = true
-        haTransmitter.state = "Transmitting"
-    }
-
-    @Synchronized
-    private fun onStartFailed(
+    private fun onStartResult(
         context: Context,
         haTransmitter: IBeaconTransmitter,
         beacon: Beacon,
-        errorCode: Int,
+        errorCode: Int?,
         retryOnAlreadyStarted: Boolean,
     ) {
+        if (errorCode == null) {
+            startPending = false
+            Timber.d("BLE advertisement started")
+            haTransmitter.transmitting = true
+            haTransmitter.state = "Transmitting"
+            return
+        }
         if (errorCode == AdvertiseCallback.ADVERTISE_FAILED_ALREADY_STARTED && retryOnAlreadyStarted) {
             Timber.d("Advertisement already started, retrying with a fresh transmitter")
             // Stop the original before replacing it: it may already be advertising, and
