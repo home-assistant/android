@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings
 
 import android.app.UiModeManager
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -30,6 +31,8 @@ import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.changelog.ChangelogFragment
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.modes.HomeAssistantMode
+import io.homeassistant.companion.android.common.sensors.DNDSensorManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
@@ -38,7 +41,9 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.intentLaunchOnboarding
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
+import io.homeassistant.companion.android.modes.HomeAssistantModeSwitch
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
@@ -75,8 +80,19 @@ class SettingsFragment(
     private val presenter: SettingsPresenter,
     private val langProvider: LanguagesProvider,
     private val defaultAssistantManager: DefaultAssistantManager,
+    private val homeAssistantMode: HomeAssistantMode,
 ) : PreferenceFragmentCompat(),
     SettingsView {
+
+    companion object {
+        internal const val PREF_HOME_ASSISTANT_MODE = "home_assistant_mode"
+        private const val PREF_HOME_ASSISTANT_MODE_CATEGORY = "home_assistant_mode_category"
+        private const val EXTRA_SCROLL_TO_PREFERENCE = "scroll_to_preference"
+        private const val STATE_HOME_ASSISTANT_MODE_PENDING_CHANGE = "home_assistant_mode_pending_change"
+
+        /** @return the arguments to open the settings scrolled to the preference with [key] */
+        internal fun scrollTo(key: String): Bundle = Bundle().apply { putString(EXTRA_SCROLL_TO_PREFERENCE, key) }
+    }
 
     private val activityViewModel: SettingsViewModel by activityViewModels()
 
@@ -84,6 +100,8 @@ class SettingsFragment(
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             updateNotificationChannelPrefs()
         }
+
+    private val homeAssistantModeSwitch = HomeAssistantModeSwitch(homeAssistantMode)
     private var serverAuth: Int? = null
     private val serverMutex = Mutex()
 
@@ -91,6 +109,16 @@ class SettingsFragment(
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         presenter.init(this)
+        homeAssistantModeSwitch.restore(savedInstanceState?.getString(STATE_HOME_ASSISTANT_MODE_PENDING_CHANGE))
+        if (homeAssistantMode.isSupported()) {
+            lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                    activityViewModel.unlockedInForeground.collect { unlocked ->
+                        if (unlocked) homeAssistantModeSwitch.onUnlocked()?.let(::showHomeAssistantModeUpdate)
+                    }
+                }
+            }
+        }
 
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
@@ -268,6 +296,8 @@ class SettingsFragment(
             }
         }
 
+        setupHomeAssistantModePref()
+
         findPreference<PreferenceCategory>("notifications")?.let {
             it.isVisible = true
         }
@@ -431,6 +461,11 @@ class SettingsFragment(
         if (!isAutomotive) {
             setupLauncherPrefs()
         }
+
+        // Only when first opened, so recreating the screen does not undo the user's scrolling
+        if (savedInstanceState == null) {
+            arguments?.getString(EXTRA_SCROLL_TO_PREFERENCE)?.let { scrollToPreference(it) }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -552,6 +587,56 @@ class SettingsFragment(
         }
     }
 
+    private fun setupHomeAssistantModePref() {
+        findPreference<PreferenceCategory>(PREF_HOME_ASSISTANT_MODE_CATEGORY)?.isVisible =
+            homeAssistantMode.isSupported()
+        findPreference<SwitchPreference>(PREF_HOME_ASSISTANT_MODE)?.setOnPreferenceChangeListener { _, newValue ->
+            // The settings can still be touched under the blur of a locked app, where nothing must change
+            if (activityViewModel.unlockedInForeground.value) {
+                lifecycleScope.launch {
+                    showHomeAssistantModeUpdate(homeAssistantModeSwitch.onSwitchChanged(newValue == true))
+                }
+            }
+            // Checked once Android added or removed the mode
+            false
+        }
+    }
+
+    /** Shows the current state of the Home Assistant mode, which the user can change in Android meanwhile. */
+    private fun updateHomeAssistantModePref() {
+        if (!homeAssistantMode.isSupported()) return
+        lifecycleScope.launch { showHomeAssistantModeUpdate(homeAssistantModeSwitch.onResume()) }
+    }
+
+    private fun showHomeAssistantModeUpdate(update: HomeAssistantModeSwitch.Update) {
+        update.display?.let { display ->
+            findPreference<SwitchPreference>(PREF_HOME_ASSISTANT_MODE)?.apply {
+                isChecked = display.checked
+                setSummary(display.summary)
+            }
+        }
+        when (val action = update.action) {
+            HomeAssistantModeSwitch.Action.RequestAccess -> requestHomeAssistantModeAccess()
+            HomeAssistantModeSwitch.Action.ReportChange -> context?.let {
+                SensorReceiver.updateSensor(it, DNDSensorManager.homeAssistantModeSensor.id)
+            }
+            is HomeAssistantModeSwitch.Action.ShowMessage -> view?.let {
+                snackbar = Snackbar.make(it, action.message, Snackbar.LENGTH_LONG).apply { show() }
+            }
+            null -> Unit
+        }
+    }
+
+    /** Opens Android's Do Not Disturb access settings, the change is applied once the user comes back with access. */
+    private fun requestHomeAssistantModeAccess() {
+        try {
+            startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+        } catch (e: ActivityNotFoundException) {
+            Timber.w(e, "No screen to grant the Do Not Disturb access required for the Home Assistant mode")
+            showHomeAssistantModeUpdate(homeAssistantModeSwitch.onAccessScreenUnavailable())
+        }
+    }
+
     private fun onServerLockResult(result: AuthenticationResult): Boolean {
         if (result == AuthenticationResult.SUCCESS && serverAuth != null) {
             activityViewModel.setAppActive(serverAuth, true)
@@ -645,8 +730,14 @@ class SettingsFragment(
         super.onResume()
         activity?.title = getString(commonR.string.companion_app)
         context?.let { presenter.updateSuggestions(it) }
+        updateHomeAssistantModePref()
         findPreference<Preference>("set_launcher_app")?.summary =
             getString(commonR.string.default_launcher_prompt_def, getDefaultLauncherInfo())
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_HOME_ASSISTANT_MODE_PENDING_CHANGE, homeAssistantModeSwitch.savedState)
     }
 
     override fun onDestroy() {

@@ -6,17 +6,20 @@ import android.content.Context
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
 import io.github.timoptr.mdiicons.generated.MinusCircle
 import io.github.timoptr.mdiicons.generated.MinusCircleOff
+import io.github.timoptr.mdiicons.generated.MinusCircleOffOutline
+import io.github.timoptr.mdiicons.generated.MinusCircleOutline
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.modes.HomeAssistantMode
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.isAutomotive
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import timber.log.Timber
 
 @Singleton
 class DNDSensorManager @Inject constructor(
@@ -26,6 +29,12 @@ class DNDSensorManager @Inject constructor(
     private val homeAssistantMode: HomeAssistantMode,
 ) : SensorManager {
     companion object {
+        /** Attribute of [homeAssistantModeSensor]: whether the mode is in Android's Modes. */
+        internal const val ATTRIBUTE_HOME_ASSISTANT_MODE_ADDED = "added"
+
+        /** Attribute of [homeAssistantModeSensor]: whether the user left the mode enabled in Android. */
+        internal const val ATTRIBUTE_HOME_ASSISTANT_MODE_ENABLED = "enabled"
+
         @ProvidesSensor
         val dndSensor = SensorManager.BasicSensor(
             "dnd_sensor",
@@ -45,8 +54,7 @@ class DNDSensorManager @Inject constructor(
             name = commonR.string.basic_sensor_name_home_assistant_mode,
             descriptionId = commonR.string.sensor_description_home_assistant_mode,
             statelessIcon = Mdi.MinusCircle,
-            // The mode is driven with the command_dnd notification command
-            docsLink = "https://companion.home-assistant.io/docs/notifications/notification-commands#do-not-disturb",
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#home-assistant-mode-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -87,17 +95,6 @@ class DNDSensorManager @Inject constructor(
         updateHomeAssistantMode()
     }
 
-    /** @return `true` if this device supports the Home Assistant mode. */
-    fun isHomeAssistantModeSupported(): Boolean = homeAssistantMode.isSupported()
-
-    /**
-     * Turns the Home Assistant mode on or off, adding it first to turn it on. Android reports the change with
-     * [NotificationManager.ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED], which updates the mode sensor. Requires Do Not
-     * Disturb access.
-     */
-    suspend fun setHomeAssistantModeActive(active: Boolean): HomeAssistantMode.ChangeResult =
-        homeAssistantMode.setActive(active)
-
     override fun hasSensor(): Boolean {
         return !applicationContext.isAutomotive()
     }
@@ -130,27 +127,33 @@ class DNDSensorManager @Inject constructor(
     }
 
     /**
-     * Reports whether the mode is on, adding it while the sensor is enabled. When the user removes the mode from
-     * Android, the sensor is disabled instead of adding the mode back.
+     * Reports whether the Home Assistant mode is on, off while it is not added, with whether it is added and enabled in
+     * Android as attributes: they tell why a command to turn it on or off did nothing.
      */
     private suspend fun updateHomeAssistantMode(): Unit = homeAssistantModeUpdateMutex.withLock {
-        val active = homeAssistantMode.update(
-            isWanted = { sensorRepository.get(homeAssistantModeSensor.id).any { it.enabled } },
-            onRemovedByUser = {
-                // The next sync with the servers tells them the sensor is disabled
-                Timber.i("The Home Assistant mode was removed from Android, disabling its sensor")
-                sensorRepository.setSensorEnabled(
-                    sensorId = homeAssistantModeSensor.id,
-                    serverIds = serverManager.servers().map { it.id },
-                    enabled = false,
-                )
-            },
-        ) ?: return@withLock
+        if (!homeAssistantMode.isSupported() || !isEnabled(homeAssistantModeSensor)) return@withLock
+        val state = homeAssistantMode.getState() ?: return@withLock
+        val active = state.active ?: return@withLock
         onSensorUpdated(
             homeAssistantModeSensor,
             active,
-            if (active) homeAssistantModeSensor.statelessIcon else Mdi.MinusCircleOff,
-            mapOf(),
+            homeAssistantModeIcon(state),
+            mapOf(
+                ATTRIBUTE_HOME_ASSISTANT_MODE_ADDED to state.added,
+                ATTRIBUTE_HOME_ASSISTANT_MODE_ENABLED to state.enabled,
+            ),
         )
+    }
+
+    /**
+     * @return the icon of the mode sensor: a different one for on, off, disabled in Android and not added. A sensor is
+     * only sent to Home Assistant when its state or icon changed, so the icon is also what gets a change to the
+     * attributes alone sent, whatever else is being sent at that moment.
+     */
+    private fun homeAssistantModeIcon(state: HomeAssistantMode.State): MdiIcon = when {
+        !state.added -> Mdi.MinusCircleOutline
+        !state.enabled -> Mdi.MinusCircleOffOutline
+        state.active == true -> homeAssistantModeSensor.statelessIcon
+        else -> Mdi.MinusCircleOff
     }
 }

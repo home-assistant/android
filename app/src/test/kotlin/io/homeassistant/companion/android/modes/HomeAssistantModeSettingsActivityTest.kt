@@ -1,15 +1,15 @@
-package io.homeassistant.companion.android.settings.sensor
+package io.homeassistant.companion.android.modes
 
 import android.app.NotificationManager
 import android.content.Intent
-import android.os.Looper
+import androidx.core.content.IntentCompat
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import io.homeassistant.companion.android.common.sensors.HomeAssistantMode
+import io.homeassistant.companion.android.common.modes.HomeAssistantMode
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
@@ -22,7 +22,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
-private const val MODE_ID = "mode-id"
+private const val SETTINGS_DEEPLINK_EXTRA = "fragment"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -36,31 +36,29 @@ class HomeAssistantModeSettingsActivityTest {
     @JvmField
     val homeAssistantMode: HomeAssistantMode = mockk()
 
-    private val modeLaunch = Intent(NotificationManager.ACTION_AUTOMATIC_ZEN_RULE)
-        .putExtra(NotificationManager.EXTRA_AUTOMATIC_RULE_ID, MODE_ID)
-
-    private fun launch(): HomeAssistantModeSettingsActivity {
-        val activity = Robolectric.buildActivity(HomeAssistantModeSettingsActivity::class.java, modeLaunch)
-            .setup()
-            .get()
-        shadowOf(Looper.getMainLooper()).idle()
-        return activity
-    }
+    private fun launch(): HomeAssistantModeSettingsActivity = Robolectric.buildActivity(
+        HomeAssistantModeSettingsActivity::class.java,
+        Intent(NotificationManager.ACTION_AUTOMATIC_ZEN_RULE),
+    ).setup().get()
 
     @Test
-    fun `Given a launch for the app's mode when created then the sensor settings open and the activity finishes`() {
-        coEvery { homeAssistantMode.isOwnModeLaunch(any()) } returns true
+    fun `Given a device with the mode when launched from the mode's page then the mode setting opens and the activity finishes`() {
+        every { homeAssistantMode.isSupported() } returns true
 
         val activity = launch()
 
         val started = shadowOf(activity).nextStartedActivity
         assertEquals(SettingsActivity::class.java.name, started?.component?.className)
+        assertEquals(
+            SettingsActivity.Deeplink.HomeAssistantMode,
+            IntentCompat.getParcelableExtra(started, SETTINGS_DEEPLINK_EXTRA, SettingsActivity.Deeplink::class.java),
+        )
         assertTrue(activity.isFinishing)
     }
 
     @Test
-    fun `Given a launch for another mode when created then nothing opens and the activity finishes`() {
-        coEvery { homeAssistantMode.isOwnModeLaunch(any()) } returns false
+    fun `Given a device without the mode when launched then nothing opens and the activity finishes`() {
+        every { homeAssistantMode.isSupported() } returns false
 
         val activity = launch()
 

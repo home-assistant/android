@@ -29,6 +29,14 @@ class SensorReceiver : SensorReceiverBase() {
             intent.action = ACTION_UPDATE_SENSORS
             context.sendBroadcast(intent)
         }
+
+        /** Updates only the sensor with [sensorId], and sends it to the servers it is enabled on if it changed. */
+        internal fun updateSensor(context: Context, sensorId: String) {
+            val intent = Intent(context, SensorReceiver::class.java)
+                .setAction(ACTION_UPDATE_SENSOR)
+                .putExtra(EXTRA_SENSOR_ID, sensorId)
+            context.sendBroadcast(intent)
+        }
     }
 
     // Suppress Lint because we only register for the receiver if the android version matches the intent
@@ -67,5 +75,12 @@ class SensorReceiver : SensorReceiverBase() {
             DisplaySensorManager.screenOrientation.id,
             DisplaySensorManager.screenRotation.id,
         ),
+    )
+
+    // Suppress Lint because Android only sends the broadcast on versions that have it
+    @SuppressLint("InlinedApi")
+    override val keptAliveActions = mapOf(
+        // Sent for the app's own Home Assistant mode, also while the app is not running
+        NotificationManager.ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED to DNDSensorManager.homeAssistantModeSensor.id,
     )
 }

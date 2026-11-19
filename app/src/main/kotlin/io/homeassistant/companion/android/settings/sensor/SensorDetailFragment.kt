@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.sensor
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -32,11 +33,14 @@ import io.homeassistant.companion.android.sensors.HealthConnectSensorManager
 import io.homeassistant.companion.android.settings.sensor.views.SensorDetailView
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class SensorDetailFragment : Fragment() {
 
     companion object {
+        private const val STATE_REQUEST_FOR_SERVER = "request_for_server"
+
         fun newInstance(sensorId: String): SensorDetailFragment {
             return SensorDetailFragment().apply {
                 arguments = Bundle().apply { putString("id", sensorId) }
@@ -57,6 +61,9 @@ class SensorDetailFragment : Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // The screen can be recreated while the user grants access in Android's settings; absent for every server
+        requestForServer = savedInstanceState?.takeIf { it.containsKey(STATE_REQUEST_FOR_SERVER) }
+            ?.getInt(STATE_REQUEST_FOR_SERVER)
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 launch {
@@ -133,11 +140,11 @@ class SensorDetailFragment : Fragment() {
             requestForServer = it.serverId
             when {
                 it.permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
-                    activityResultRequest.launch(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                    openSettingsScreen(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
                 it.permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
-                    activityResultRequest.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                    openSettingsScreen(Settings.ACTION_USAGE_ACCESS_SETTINGS)
                 it.permissions.any { perm -> perm == Manifest.permission.ACCESS_NOTIFICATION_POLICY } ->
-                    activityResultRequest.launch(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+                    openSettingsScreen(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
                 it.permissions.any { perm -> perm.startsWith("android.permission.health") } -> {
                     val healthConnectPermissions = it.permissions.filter { perm ->
                         perm.startsWith("android.permission.health")
@@ -187,5 +194,25 @@ class SensorDetailFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         activity?.title = null
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        requestForServer?.let { outState.putInt(STATE_REQUEST_FOR_SERVER, it) }
+    }
+
+    /**
+     * Opens the screen of Android's settings for [action], where the user grants access for the sensor. The access is
+     * checked when they come back, or right away on a device without that screen.
+     */
+    private fun openSettingsScreen(action: String) {
+        try {
+            activityResultRequest.launch(Intent(action))
+            // Handled: a screen recreated while the user is away must not open Android's settings again
+            viewModel.permissionRequests.value = null
+        } catch (e: ActivityNotFoundException) {
+            Timber.w(e, "No screen in Android's settings for $action")
+            viewModel.onActivityResult(requestForServer)
+        }
     }
 }

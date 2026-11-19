@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.launchAsync
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import javax.inject.Inject
@@ -16,7 +17,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
+
+/** Time to update the sensor of a broadcast in `keptAliveActions`, shorter than the limit of [launchAsync]. */
+private val KEPT_ALIVE_UPDATE_TIMEOUT = 20.seconds
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
     companion object {
@@ -70,8 +75,25 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     protected abstract val skippableActions: Map<String, List<String>>
 
+    /**
+     * Broadcasts Android can start the app for, by the id of the one sensor each of them reports. Only that sensor is
+     * updated, within a bounded time during which Android keeps the process of the app: otherwise Android can reclaim
+     * the process before the change is sent, when nothing else of the app is running. A change that could not be sent
+     * in time is sent by the next update of all the sensors.
+     *
+     * These broadcasts need no entry in [skippableActions], and do not go through the deprecated last update sensor.
+     */
+    protected open val keptAliveActions: Map<String, String> = emptyMap()
+
     override fun onReceive(context: Context, intent: Intent) {
         Timber.d("Received intent: ${intent.action}")
+        keptAliveActions[intent.action]?.let { sensorId ->
+            launchAsync(ioScope) {
+                withTimeoutOrNull(KEPT_ALIVE_UPDATE_TIMEOUT) { sensorUpdater.updateSensor(sensorId) }
+                    ?: Timber.w("Updating sensor $sensorId for ${intent.action} took too long, it is sent later")
+            }
+            return
+        }
         ioScope.launch {
             skippableActions[intent.action]?.let { sensors ->
                 val noSensorsEnabled = sensors.none {

@@ -345,6 +345,13 @@
     <string name="high_accuracy_mode_channel_name">High accuracy location</string>
     <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
     <string name="hold_to_reorder">Hold to reorder</string>
+    <string name="home_assistant_mode_access_unavailable">This device has no screen to grant Modes access, also called Do Not Disturb access, which the Home Assistant mode requires</string>
+    <string name="home_assistant_mode_add_failed">Could not add the Home Assistant mode to the Modes of your device</string>
+    <string name="home_assistant_mode_category">Modes</string>
+    <string name="home_assistant_mode_remove_failed">Could not remove the Home Assistant mode from the Modes of your device</string>
+    <string name="home_assistant_mode_summary_no_access">Modes access, also called Do Not Disturb access, is not granted, so the app cannot tell whether the Home Assistant mode is added. Turn this on to grant it. The app then adds the mode, or finds the one already added.</string>
+    <string name="home_assistant_mode_title">Home Assistant mode</string>
+    <string name="home_assistant_mode_summary">Adds a Home Assistant mode to the Modes of your device. Turn it on and off from your device, or from Home Assistant with the command_dnd notification command and mode_on or mode_off. Turning this off removes the mode. Requires Modes access, also called Do Not Disturb access.</string>
     <string name="icon">Icon</string>
     <string name="input_booleans">Input booleans</string>
     <string name="input_buttons">Input buttons</string>
@@ -662,7 +669,7 @@
     <string name="sensor_description_headphone">Whether headphones are plugged into the device</string>
     <string name="sensor_description_headset_mounted">Whether the headset is currently in use</string>
     <string name="sensor_description_high_accuracy_mode">Whether high accuracy mode is active on the device</string>
-    <string name="sensor_description_home_assistant_mode">Reports whether the \"Home Assistant\" mode of your device is on. The mode is added to the Modes of your device when this sensor is enabled, and stays when you disable the sensor until you remove it from your device, which also disables this sensor. Turn it on and off from your device, or from Home Assistant with the command_dnd notification command and mode_on or mode_off (mode_on adds the mode if needed). Requires Do Not Disturb access.</string>
+    <string name="sensor_description_home_assistant_mode">On when the Home Assistant mode of your device is on, off when it is off or not added. Add the mode in the settings of the app, under Modes. Requires Modes access, also called Do Not Disturb access.</string>
     <string name="sensor_description_hotspot">Whether the Wi-Fi hotspot is enabled</string>
     <string name="sensor_description_interactive">Whether the device is in an interactive state</string>
     <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>

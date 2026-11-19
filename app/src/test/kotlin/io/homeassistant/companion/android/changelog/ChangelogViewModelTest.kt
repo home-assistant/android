@@ -2,13 +2,17 @@ package io.homeassistant.companion.android.changelog
 
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.modes.HomeAssistantMode
 import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
@@ -24,7 +28,15 @@ class ChangelogViewModelTest {
     private fun createViewModel(
         isAutomotive: Boolean = false,
         appVersion: AppVersion = AppVersion("2026.7.6-${BuildConfig.FLAVOR}", CURRENT_VERSION_CODE),
-    ) = ChangelogViewModel(prefsRepository, isAutomotive, appVersion)
+        homeAssistantModeSupported: Boolean = true,
+    ) = ChangelogViewModel(
+        prefsRepository,
+        isAutomotive,
+        appVersion,
+        ChangelogActionAvailability(
+            mockk<HomeAssistantMode> { every { isSupported() } returns homeAssistantModeSupported },
+        ),
+    )
 
     @Test
     fun `Given creation when initializing then marks changelog seen with the version code`() = runTest {
@@ -56,5 +68,20 @@ class ChangelogViewModelTest {
 
         assertEquals(platform, state.currentPlatform)
         assertEquals(currentChangelog.toSections(), state.sections)
+    }
+
+    @Test
+    fun `Given device without Modes when reading state then the Home Assistant mode entries show without their action`() {
+        val homeAssistantModeAction = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.HomeAssistantMode)
+
+        val state = createViewModel(homeAssistantModeSupported = false).uiState.value
+
+        val expected = currentChangelog.toSections().map { section ->
+            section.copy(
+                entries = section.entries.map { if (it.action == homeAssistantModeAction) it.copy(action = null) else it },
+            )
+        }
+        assertEquals(expected, state.sections)
+        assertTrue(state.sections.flatMap { it.entries }.none { it.action == homeAssistantModeAction })
     }
 }

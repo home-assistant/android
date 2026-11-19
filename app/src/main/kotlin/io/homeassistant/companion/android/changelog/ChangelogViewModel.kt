@@ -19,7 +19,7 @@ private const val RELEASE_TAG_URL_PREFIX = "https://github.com/home-assistant/an
  * @property versionName The version of the app currently running, without the flavor suffix.
  * @property releaseUrl URL of the GitHub release page of [versionName].
  * @property currentPlatform The platform the app is running on, emphasized on the entries' tags.
- * @property sections The changelog content, in display order.
+ * @property sections The changelog content, in display order, without the actions this device cannot perform.
  */
 data class ChangelogUiState(
     val versionName: String,
@@ -39,6 +39,7 @@ class ChangelogViewModel @Inject constructor(
     prefsRepository: PrefsRepository,
     @IsAutomotive isAutomotive: Boolean,
     appVersion: AppVersion,
+    actionAvailability: ChangelogActionAvailability,
 ) : ViewModel() {
 
     val uiState: StateFlow<ChangelogUiState> = MutableStateFlow(
@@ -48,7 +49,7 @@ class ChangelogViewModel @Inject constructor(
                 versionName = versionWithoutFlavor,
                 releaseUrl = RELEASE_TAG_URL_PREFIX + versionWithoutFlavor,
                 currentPlatform = if (isAutomotive) ChangelogPlatform.AUTOMOTIVE else ChangelogPlatform.APP,
-                sections = currentChangelog.toSections(),
+                sections = currentChangelog.toSections().withoutUnavailableActions(actionAvailability::isAvailable),
             )
         },
     ).asStateFlow()
@@ -58,4 +59,18 @@ class ChangelogViewModel @Inject constructor(
             prefsRepository.markChangelogSeen(appVersion.code)
         }
     }
+}
+
+/**
+ * @return these sections, with the action of each entry that [isAvailable] rejects removed, so the entry is shown
+ * without a link that leads nowhere on this device
+ */
+private fun List<ChangelogSection>.withoutUnavailableActions(
+    isAvailable: (ChangelogAction) -> Boolean,
+): List<ChangelogSection> = map { section ->
+    section.copy(
+        entries = section.entries.map { entry ->
+            if (entry.action?.let(isAvailable) == false) entry.copy(action = null) else entry
+        },
+    )
 }
