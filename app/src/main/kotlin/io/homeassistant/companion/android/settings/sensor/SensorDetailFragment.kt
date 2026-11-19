@@ -206,10 +206,10 @@ class SensorDetailFragment : Fragment() {
      * checked when they come back, or right away on a device without that screen.
      */
     private fun openSettingsScreen(action: String) {
+        // Handled: a screen recreated while the user is away must not open Android's settings again
+        viewModel.permissionRequests.value = null
         try {
             activityResultRequest.launch(Intent(action))
-            // Handled: a screen recreated while the user is away must not open Android's settings again
-            viewModel.permissionRequests.value = null
         } catch (e: ActivityNotFoundException) {
             Timber.w(e, "No screen in Android's settings for $action")
             viewModel.onActivityResult(requestForServer)

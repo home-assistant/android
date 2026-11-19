@@ -19,6 +19,15 @@ class ChangelogActionAvailability @Inject constructor(private val homeAssistantM
     private fun isAvailable(deeplink: SettingsActivity.Deeplink): Boolean = when (deeplink) {
         // The setting is hidden on devices without Modes
         SettingsActivity.Deeplink.HomeAssistantMode -> homeAssistantMode.isSupported()
-        else -> true
+        SettingsActivity.Deeplink.AssistSettings,
+        SettingsActivity.Deeplink.Developer,
+        SettingsActivity.Deeplink.Gestures,
+        is SettingsActivity.Deeplink.HomeNetwork,
+        SettingsActivity.Deeplink.MediaControls,
+        SettingsActivity.Deeplink.NotificationHistory,
+        is SettingsActivity.Deeplink.QSTile,
+        is SettingsActivity.Deeplink.Sensor,
+        SettingsActivity.Deeplink.Websocket,
+        -> true
     }
 }

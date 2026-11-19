@@ -77,9 +77,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     /**
      * Broadcasts Android can start the app for, by the id of the one sensor each of them reports. Only that sensor is
-     * updated, within a bounded time during which Android keeps the process of the app: otherwise Android can reclaim
-     * the process before the change is sent, when nothing else of the app is running. A change that could not be sent
-     * in time is sent by the next update of all the sensors.
+     * updated, and only while it is enabled, within a bounded time during which Android keeps the process of the app:
+     * otherwise Android can reclaim the process before the change is sent, when nothing else of the app is running. A
+     * change that could not be sent in time is sent by the next update of all the sensors.
      *
      * These broadcasts need no entry in [skippableActions], and do not go through the deprecated last update sensor.
      */
@@ -89,8 +89,9 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         Timber.d("Received intent: ${intent.action}")
         keptAliveActions[intent.action]?.let { sensorId ->
             launchAsync(ioScope) {
-                withTimeoutOrNull(KEPT_ALIVE_UPDATE_TIMEOUT) { sensorUpdater.updateSensor(sensorId) }
-                    ?: Timber.w("Updating sensor $sensorId for ${intent.action} took too long, it is sent later")
+                withTimeoutOrNull(KEPT_ALIVE_UPDATE_TIMEOUT) {
+                    if (isSensorEnabled(sensorId)) sensorUpdater.updateSensor(sensorId)
+                } ?: Timber.w("Updating sensor $sensorId for ${intent.action} took too long, it is sent later")
             }
             return
         }

@@ -20,7 +20,6 @@ import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -73,11 +72,6 @@ class HomeAssistantModeTest {
         every { notificationManager.getAutomaticZenRuleState(MODE_ID) } returns Condition.STATE_FALSE
 
         createMode()
-    }
-
-    @After
-    fun tearDown() {
-        SdkVersion.resetSdkInt()
     }
 
     /** Creates a new instance, like after the app process is restarted. */
@@ -215,8 +209,7 @@ class HomeAssistantModeTest {
     }
 
     @Test
-    fun `Given no Do Not Disturb access when using the mode then failure is handled`() = runTest(testDispatcher) {
-        every { notificationManager.automaticZenRules } throws SecurityException("No access")
+    fun `Given no Do Not Disturb access when using the mode then Android is not asked for its modes`() = runTest(testDispatcher) {
         every { notificationManager.isNotificationPolicyAccessGranted } returns false
 
         assertFalse(homeAssistantMode.hasAccess())
@@ -225,6 +218,19 @@ class HomeAssistantModeTest {
         assertFalse(homeAssistantMode.remove())
         assertNull(isActive())
         assertEquals(HomeAssistantMode.ChangeResult.NoAccess, homeAssistantMode.setActive(true))
+        verify(exactly = 0) { notificationManager.automaticZenRules }
+        verify(exactly = 0) { notificationManager.setAutomaticZenRuleState(any(), any()) }
+    }
+
+    @Test
+    fun `Given Do Not Disturb access revoked while using the mode then failure is handled`() = runTest(testDispatcher) {
+        every { notificationManager.automaticZenRules } throws SecurityException("No access")
+
+        assertFalse(homeAssistantMode.add())
+        assertFalse(isAdded())
+        assertFalse(homeAssistantMode.remove())
+        assertNull(isActive())
+        assertEquals(HomeAssistantMode.ChangeResult.Failed, homeAssistantMode.setActive(true))
         verify(exactly = 0) { notificationManager.setAutomaticZenRuleState(any(), any()) }
     }
 

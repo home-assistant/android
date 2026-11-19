@@ -27,7 +27,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -81,11 +80,6 @@ class DNDSensorManagerTest {
 
         homeAssistantMode = HomeAssistantMode(context, notificationManager, testDispatcher)
         manager = DNDSensorManager(context, sensorRepository, serverManager, homeAssistantMode)
-    }
-
-    @After
-    fun tearDown() {
-        SdkVersion.resetSdkInt()
     }
 
     /** Verifies the mode sensor was stored with [state] and [icon]: Home Assistant gets it when either changed. */

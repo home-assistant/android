@@ -187,9 +187,10 @@ class HomeAssistantMode @VisibleForTesting internal constructor(
         return withContext(ioDispatcher) {
             mutex.withLock {
                 try {
-                    block(manager)
+                    // Android refuses all of this without the access, which most users never grant: not worth a log
+                    if (manager.isNotificationPolicyAccessGranted) block(manager) else null
                 } catch (e: SecurityException) {
-                    Timber.w(e, "Failed to $action the Home Assistant mode, Do Not Disturb access is missing")
+                    Timber.w(e, "Failed to $action the Home Assistant mode, Do Not Disturb access was just revoked")
                     null
                 } catch (e: IllegalArgumentException) {
                     Timber.e(e, "Failed to $action the Home Assistant mode for conditionId=$conditionId")

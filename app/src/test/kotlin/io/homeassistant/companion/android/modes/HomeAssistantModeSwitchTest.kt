@@ -9,10 +9,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -31,9 +34,7 @@ class HomeAssistantModeSwitchTest {
 
     private val homeAssistantMode = mockk<HomeAssistantMode> {
         coEvery { hasAccess() } answers { hasAccess }
-        coEvery { getState() } answers {
-            if (hasAccess) HomeAssistantMode.State(added = added, enabled = added, active = false) else null
-        }
+        coEvery { getState() } answers { stateInAndroid() }
         coEvery { add() } answers {
             if (hasAccess && androidAccepts) added = true
             hasAccess && added
@@ -45,6 +46,26 @@ class HomeAssistantModeSwitchTest {
     }
 
     private val modeSwitch = HomeAssistantModeSwitch(homeAssistantMode)
+
+    private fun stateInAndroid(): HomeAssistantMode.State? = if (hasAccess) {
+        HomeAssistantMode.State(added = added, enabled = added, active = false)
+    } else {
+        null
+    }
+
+    /**
+     * Makes the next read of the mode's state wait for [read], and completes [reading] once it started. The reads
+     * after it answer right away.
+     */
+    private fun delayNextStateRead(
+        reading: CompletableDeferred<Unit>,
+        read: CompletableDeferred<HomeAssistantMode.State?>,
+    ) {
+        coEvery { homeAssistantMode.getState() } coAnswers {
+            reading.complete(Unit)
+            read.await()
+        } andThenAnswer { stateInAndroid() }
+    }
 
     /** Changes the switch without access, then comes back to the settings after granting access or not. */
     private suspend fun requestAccessThenReturn(add: Boolean, grant: Boolean) {
@@ -169,6 +190,45 @@ class HomeAssistantModeSwitchTest {
 
         assertEquals(Update(ADDED, Action.ReportChange), modeSwitch.onUnlocked())
         assertNull(modeSwitch.onUnlocked())
+    }
+
+    @Test
+    fun `Given the state is still read after returning when unlocked then the change is made and shown after it`() = runTest {
+        requestAccessThenReturn(add = true, grant = true)
+        val reading = CompletableDeferred<Unit>()
+        val read = CompletableDeferred<HomeAssistantMode.State?>()
+        delayNextStateRead(reading, read)
+        val shown = mutableListOf<Update?>()
+        val resumed = launch { shown += modeSwitch.onResume() }
+        reading.await()
+        val unlocked = launch { shown += modeSwitch.onUnlocked() }
+        yield()
+
+        coVerify(exactly = 0) { homeAssistantMode.add() }
+        read.complete(stateInAndroid())
+        joinAll(resumed, unlocked)
+
+        assertEquals(listOf(Update(NOT_ADDED), Update(ADDED, Action.ReportChange)), shown)
+    }
+
+    @Test
+    fun `Given a request is being dropped without access when the switch is changed then the new request is kept`() = runTest {
+        requestAccessThenReturn(add = true, grant = false)
+        val reading = CompletableDeferred<Unit>()
+        val read = CompletableDeferred<HomeAssistantMode.State?>()
+        delayNextStateRead(reading, read)
+        val unlocked = launch { modeSwitch.onUnlocked() }
+        reading.await()
+        val changed = async { modeSwitch.onSwitchChanged(add = true) }
+        yield()
+
+        read.complete(null)
+        unlocked.join()
+
+        assertEquals(Update(display = null, action = Action.RequestAccess), changed.await())
+        hasAccess = true
+        modeSwitch.onResume()
+        assertEquals(Update(ADDED, Action.ReportChange), modeSwitch.onUnlocked())
     }
 
     @Test

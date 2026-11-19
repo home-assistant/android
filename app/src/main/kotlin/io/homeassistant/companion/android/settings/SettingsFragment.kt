@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.changelog.ChangelogFragment
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.modes.HomeAssistantMode
 import io.homeassistant.companion.android.common.sensors.DNDSensorManager
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -591,9 +592,9 @@ class SettingsFragment(
         findPreference<PreferenceCategory>(PREF_HOME_ASSISTANT_MODE_CATEGORY)?.isVisible =
             homeAssistantMode.isSupported()
         findPreference<SwitchPreference>(PREF_HOME_ASSISTANT_MODE)?.setOnPreferenceChangeListener { _, newValue ->
-            // The settings can still be touched under the blur of a locked app, where nothing must change
-            if (activityViewModel.unlockedInForeground.value) {
-                lifecycleScope.launch {
+            lifecycleScope.launch {
+                // The settings can still be touched under the blur of a locked app, where nothing must change
+                if (!activityViewModel.isAppLocked(ServerManager.SERVER_ID_ACTIVE)) {
                     showHomeAssistantModeUpdate(homeAssistantModeSwitch.onSwitchChanged(newValue == true))
                 }
             }

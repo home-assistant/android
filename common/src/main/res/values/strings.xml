@@ -349,9 +349,9 @@
     <string name="home_assistant_mode_add_failed">Could not add the Home Assistant mode to the Modes of your device</string>
     <string name="home_assistant_mode_category">Modes</string>
     <string name="home_assistant_mode_remove_failed">Could not remove the Home Assistant mode from the Modes of your device</string>
+    <string name="home_assistant_mode_summary">Adds a Home Assistant mode to the Modes of your device. Turn it on and off from your device, or from Home Assistant with the command_dnd notification command and mode_on or mode_off. Turning this off removes the mode. Requires Modes access, also called Do Not Disturb access.</string>
     <string name="home_assistant_mode_summary_no_access">Modes access, also called Do Not Disturb access, is not granted, so the app cannot tell whether the Home Assistant mode is added. Turn this on to grant it. The app then adds the mode, or finds the one already added.</string>
     <string name="home_assistant_mode_title">Home Assistant mode</string>
-    <string name="home_assistant_mode_summary">Adds a Home Assistant mode to the Modes of your device. Turn it on and off from your device, or from Home Assistant with the command_dnd notification command and mode_on or mode_off. Turning this off removes the mode. Requires Modes access, also called Do Not Disturb access.</string>
     <string name="icon">Icon</string>
     <string name="input_booleans">Input booleans</string>
     <string name="input_buttons">Input buttons</string>
