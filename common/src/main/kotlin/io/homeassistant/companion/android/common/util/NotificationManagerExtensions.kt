@@ -4,21 +4,8 @@ import android.app.Notification.FLAG_GROUP_SUMMARY
 import android.app.NotificationManager
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
+import io.homeassistant.companion.android.common.notifications.isSystemGeneratedGroupSummary
 import timber.log.Timber
-
-// Groups are defined here:
-// https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/notification/GroupHelper.java;drc=d5d4670d8a245da5468af767b17d1e57ed7c9278;l=2106
-// Section names are defined here:
-// https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/notification/GroupHelper.java;drc=d5d4670d8a245da5468af767b17d1e57ed7c9278;l=195-199
-private val ANDROID_AUTO_GROUP_SUFFIXES = listOf(
-    "|g:ranker_group",
-    "|g:Aggregate_AlertingSection",
-    "|g:Aggregate_NewsSection",
-    "|g:Aggregate_PromotionsSection",
-    "|g:Aggregate_RecsSection",
-    "|g:Aggregate_SocialSection",
-    "|g:Aggregate_SilentSection",
-)
 
 fun NotificationManagerCompat.getNotificationManager(): NotificationManager {
     val field = this.javaClass.declaredFields
@@ -69,7 +56,7 @@ fun cancelNotificationGroupIfNeeded(
         Timber.d("Notification is in a group ($groupKey). Get all notifications for this group...")
 
         // Check if the group is one of the auto groups of android
-        if (ANDROID_AUTO_GROUP_SUFFIXES.none { groupKey.endsWith(it) }) {
+        if (statusBarNotification.notification?.isSystemGeneratedGroupSummary() == false) {
             // Nope it is a custom group. Get notifications of the group...
             val groupNotifications =
                 currentActiveNotifications.filter { s -> s.groupKey == groupKey }
