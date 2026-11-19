@@ -61,7 +61,7 @@ class FrontendImprovHandlerTest {
     }
     private val serverManager: ServerManager = mockk(relaxed = true)
     private val wifiHelper: WifiHelper = mockk(relaxed = true) {
-        every { getWifiSsid() } returns "\"My SSID\""
+        every { getWifiSsid() } returns "My SSID"
     }
 
     private fun createHandler() = FrontendImprovHandler(
@@ -239,6 +239,7 @@ class FrontendImprovHandlerTest {
         val configuring = state as ImprovUIState.ConfiguringDevice
         assertEquals("Smart Plug", configuring.deviceName)
         assertEquals("AA:BB", configuring.deviceAddress)
+        assertEquals("My SSID", configuring.activeSsid)
         job.cancel()
     }
 
@@ -376,7 +377,7 @@ class FrontendImprovHandlerTest {
     }
 
     @Test
-    fun `Given onDismissed with provisioned domain on old HA then emits ReloadAtPath event`() = runTest {
+    fun `Given onDismissed with provisioned domain on old HA then sends ReloadAtPath event`() = runTest {
         coEvery { serverManager.getServer(1) } returns mockk(relaxed = true) {
             every { version } returns HomeAssistantVersion(year = 2025, month = 5, release = 0)
         }

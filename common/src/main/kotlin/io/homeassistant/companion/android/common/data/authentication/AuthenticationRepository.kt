@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
 import io.homeassistant.companion.android.di.qualifiers.NamedSessionStorage
 import javax.inject.Inject
 import javax.inject.Provider
+import kotlinx.coroutines.flow.Flow
 
 interface AuthenticationRepository {
 
@@ -29,6 +30,12 @@ interface AuthenticationRepository {
     suspend fun isLockEnabledRaw(): Boolean
     suspend fun isLockHomeBypassEnabled(): Boolean
     suspend fun isLockEnabled(): Boolean
+
+    /**
+     * Emits whether app lock is enabled for this server, re-emitting whenever the setting changes
+     * and emitting the current value immediately on collection.
+     */
+    fun lockEnabledRawFlow(): Flow<Boolean>
 }
 
 internal class AuthenticationRepositoryFactory @Inject constructor(

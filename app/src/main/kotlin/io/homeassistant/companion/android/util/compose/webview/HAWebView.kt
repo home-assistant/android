@@ -12,6 +12,7 @@ import androidx.annotation.MainThread
 import androidx.annotation.VisibleForTesting
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.util.FailFast
@@ -37,6 +39,9 @@ import timber.log.Timber
 private val webViewTimersManager = WebViewTimersManager()
 
 const val BLANK_URL = "about:blank"
+
+/** `external_auth` query parameter to signal to the frontend authentication uses app external authentication. */
+const val EXTERNAL_AUTH_QUERY_PARAM = "external_auth"
 
 @VisibleForTesting const val HA_WEBVIEW_TAG = "ha_web_view_tag"
 
@@ -61,6 +66,8 @@ const val BLANK_URL = "about:blank"
  * @param onWebViewCreationFailed Called when the WebView fails to initialize due to a system-level
  *                                issue such as a broken or incompatible WebView provider.
  * @param modifier The modifier to be applied to this WebView.
+ * @param debuggingEnabled Whether WebView contents can be debugged, null leaves the process-wide
+ *                         setting untouched. Ignored in debug builds, which are always debuggable.
  * @param nightModeTheme current [NightModeTheme]
  * @param configure A lambda that allows for customization of the WebView instance.
  * @param factory A lambda that creates the WebView instance. If this returns null, a new
@@ -70,6 +77,7 @@ const val BLANK_URL = "about:blank"
 @Composable
 fun HAWebView(
     onWebViewCreationFailed: (Throwable) -> Unit,
+    debuggingEnabled: Boolean?,
     modifier: Modifier = Modifier,
     configure: WebView.() -> Unit = {},
     factory: () -> WebView? = { null },
@@ -92,6 +100,7 @@ fun HAWebView(
         AndroidView(
             factory = { context ->
                 try {
+                    applyWebContentsDebugging(debuggingEnabled)
                     (factory() ?: WebView(context)).apply {
                         webview = this
                         // We want the modifier to determine the size so the WebView should match the parent
@@ -125,6 +134,11 @@ fun HAWebView(
         )
 
         WebViewLifecycleEffect(webView = webview)
+
+        // The setting is process-wide and can change while the WebView is shown
+        LaunchedEffect(debuggingEnabled, webview) {
+            if (webview != null) applyWebContentsDebugging(debuggingEnabled)
+        }
     }
 
     // To avoid checking doUpdateVisitedHistory from the webViewClient we simply delegate the back button handling
@@ -203,6 +217,13 @@ fun WebView.settings(configureDsl: WebSettings.() -> Unit) {
             e,
             "Failed to configure WebView settings",
         )
+    }
+}
+
+private fun applyWebContentsDebugging(debuggingEnabled: Boolean?) {
+    when {
+        BuildConfig.DEBUG -> WebView.setWebContentsDebuggingEnabled(true)
+        debuggingEnabled != null -> WebView.setWebContentsDebuggingEnabled(debuggingEnabled)
     }
 }
 

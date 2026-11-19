@@ -18,7 +18,7 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
 
     private var velocityTracker: VelocityTracker? = null
     private var downEvent: MotionEvent? = null
-    private var numberOfPointers = 0
+    private var pointerIds = emptyList<Int>()
 
     private var minimumFlingVelocity = 0
     private var maximumFlingVelocity = 0
@@ -38,29 +38,30 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         event?.let { motionEvent ->
+            if (motionEvent.actionMasked == MotionEvent.ACTION_DOWN) cleanup()
             if (velocityTracker == null) velocityTracker = VelocityTracker.obtain()
             velocityTracker?.addMovement(event)
 
             when (motionEvent.action and MotionEvent.ACTION_MASK) {
                 MotionEvent.ACTION_DOWN -> {
-                    downEvent?.recycle()
                     downEvent = MotionEvent.obtain(motionEvent)
-                    numberOfPointers = 1
+                    pointerIds = motionEvent.pointerIds()
                 }
                 MotionEvent.ACTION_POINTER_DOWN -> {
-                    if (motionEvent.pointerCount > numberOfPointers) {
-                        handler.removeCallbacksAndMessages(null)
-                        numberOfPointers = motionEvent.pointerCount
-                    }
+                    handler.removeCallbacksAndMessages(null)
+                    pointerIds = motionEvent.pointerIds()
                 }
                 MotionEvent.ACTION_POINTER_UP -> {
-                    if ((motionEvent.pointerCount - 1) < numberOfPointers) {
+                    val remainingPointerIds = motionEvent.pointerIds().filterIndexed { index, _ ->
+                        index != motionEvent.actionIndex
+                    }
+                    if (remainingPointerIds.size < pointerIds.size) {
                         // Delay lowering the pointer count, to make sure that if all pointers are removed at once
                         // we are still able to give the 'full' count but also don't give a count too high if the user
                         // accidentally had another pointer on screen at the start
                         handler.removeCallbacksAndMessages(null)
                         handler.postDelayed({
-                            numberOfPointers = motionEvent.pointerCount - 1
+                            pointerIds = remainingPointerIds
                         }, 500)
                     }
 
@@ -80,9 +81,9 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
                         val dot = x + y
                         if (dot < 0) {
                             velocityTracker?.clear()
-                            if ((motionEvent.pointerCount - 1) < numberOfPointers) {
+                            if (remainingPointerIds.size < pointerIds.size) {
                                 handler.removeCallbacksAndMessages(null)
-                                numberOfPointers = motionEvent.pointerCount - 1
+                                pointerIds = remainingPointerIds
                             }
                             break
                         }
@@ -96,12 +97,12 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
                     var velocityY = 0f
                     velocityTracker?.let {
                         // Take average of velocities of all pointers to prevent individual outliers
-                        for (i in 0 until numberOfPointers) {
-                            velocityX += it.getXVelocity(i)
-                            velocityY += it.getYVelocity(i)
+                        for (pointerId in pointerIds) {
+                            velocityX += it.getXVelocity(pointerId)
+                            velocityY += it.getYVelocity(pointerId)
                         }
-                        velocityX /= numberOfPointers
-                        velocityY /= numberOfPointers
+                        velocityX /= pointerIds.size
+                        velocityY /= pointerIds.size
                     }
                     if (
                         abs(velocityX) > minimumFlingVelocity ||
@@ -123,7 +124,7 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
                                 },
                             ),
                             direction,
-                            numberOfPointers,
+                            pointerIds.size,
                         )
                     }
                     cleanup()
@@ -142,6 +143,8 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
         }
     }
 
+    private fun MotionEvent.pointerIds(): List<Int> = (0 until pointerCount).map(::getPointerId)
+
     private fun cleanup() {
         handler.removeCallbacksAndMessages(null)
 
@@ -149,7 +152,7 @@ abstract class OnSwipeListener(context: Context?) : View.OnTouchListener {
         velocityTracker = null
         downEvent?.recycle()
         downEvent = null
-        numberOfPointers = 0
+        pointerIds = emptyList()
     }
 
     /**

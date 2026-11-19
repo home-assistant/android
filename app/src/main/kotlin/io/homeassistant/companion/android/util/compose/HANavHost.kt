@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.navOptions
 import io.homeassistant.companion.android.automotive.navigation.carAppActivity
 import io.homeassistant.companion.android.automotive.navigation.navigateToCarAppActivity
+import io.homeassistant.companion.android.changelog.navigation.changelogScreen
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.isAutomotive
@@ -27,7 +28,7 @@ import io.homeassistant.companion.android.onboarding.onboarding
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.navigateToSetHomeNetworkRoute
 import io.homeassistant.companion.android.onboarding.sethomenetwork.navigation.setHomeNetworkScreen
 import io.homeassistant.companion.android.onboarding.wearOnboarding
-import io.homeassistant.companion.android.settings.navigation.navigateToSettings
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.server.ServerChooserFragment
 
 /**
@@ -112,8 +113,8 @@ internal fun HANavHost(
                 onOpenExternalLink = { uri ->
                     navController.navigateToUri(uri.toString(), onShowSnackbar)
                 },
-                onNavigateToSettings = {
-                    navController.navigateToSettings(it)
+                onNavigateToSettings = { deepLink ->
+                    activity?.let { it.startActivity(SettingsActivity.newInstance(it, deepLink)) }
                 },
                 onSecurityLevelHelpClick = {
                     navController.navigateToUri(URL_SECURITY_LEVEL_DOCUMENTATION, onShowSnackbar)
@@ -133,7 +134,12 @@ internal fun HANavHost(
                 onRequestFullscreen = onRequestFullscreen,
                 onPipReadinessChanged = onPipReadinessChanged,
             )
+            changelogScreen(
+                navController = navController,
+                onShowSnackbar = onShowSnackbar,
+            )
             setHomeNetworkScreen(
+                onBackClick = navController::popBackStack,
                 onGotoNextScreen = {
                     navController.popBackStack<FrontendRoute>(inclusive = false)
                 },

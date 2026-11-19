@@ -62,6 +62,9 @@ interface PrefsRepository {
 
     suspend fun getCurrentNightModeTheme(): NightModeTheme?
 
+    /** Emits the current "Theme" preference immediately on collection, then on every change. */
+    suspend fun nightModeThemeFlow(): Flow<NightModeTheme?>
+
     suspend fun saveNightModeTheme(nightModeTheme: NightModeTheme)
 
     suspend fun getCurrentLang(): String?
@@ -141,6 +144,9 @@ interface PrefsRepository {
 
     suspend fun isWebViewDebugEnabled(): Boolean
 
+    /** Emits the current "WebView debug" preference immediately on collection, then on every change. */
+    suspend fun webViewDebugFlow(): Flow<Boolean>
+
     suspend fun setWebViewDebugEnabled(enabled: Boolean)
 
     suspend fun isCrashReporting(): Boolean
@@ -177,6 +183,18 @@ interface PrefsRepository {
 
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
 
+    /**
+     * Returns `true` when the app was updated since the changelog was last marked seen with
+     * [markChangelogSeen].
+     *
+     * A fresh install is not an update: [currentVersionCode] is stored as the baseline to compare
+     * future updates against, and `false` is returned.
+     */
+    suspend fun wasAppUpdatedSinceChangelogSeen(currentVersionCode: Int): Boolean
+
+    /** Stores [currentVersionCode] as the last app version whose changelog was seen. */
+    suspend fun markChangelogSeen(currentVersionCode: Int)
+
     /** Clean up any app-level preferences that might reference servers */
     suspend fun removeServer(serverId: Int)
 
@@ -187,6 +205,11 @@ interface PrefsRepository {
     suspend fun isWakeWordEnabled(): Boolean
 
     suspend fun setWakeWordEnabled(enabled: Boolean)
+
+    /** Whether a chime plays when Assist starts listening hands-free. Enabled by default. */
+    suspend fun isAssistListeningChimeEnabled(): Boolean
+
+    suspend fun setAssistListeningChimeEnabled(enabled: Boolean)
 
     suspend fun getSelectedWakeWord(): String?
 

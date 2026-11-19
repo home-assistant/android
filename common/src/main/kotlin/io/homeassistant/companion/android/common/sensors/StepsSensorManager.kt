@@ -10,6 +10,8 @@ import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Walk
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -39,7 +41,7 @@ class StepsSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_steps,
             commonR.string.sensor_description_steps_sensor,
-            "mdi:walk",
+            Mdi.Walk,
             unitOfMeasurement = "steps",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
         )

@@ -2,8 +2,9 @@ package io.homeassistant.companion.android.widgets.todo
 
 import app.cash.turbine.TurbineTestContext
 import app.cash.turbine.test
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.Icon
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Bookmark
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
@@ -209,12 +210,16 @@ Watch for update
             verifyDaoUpdate(exactly = 2)
             verifyEntityUpdates(exactly = 2) // Subscribe a second time since the configuration changed
 
-            // Every emission is a change of the entity upstream, so each one refreshes the todos
+            // The same display entity again, as a registry update of another entity produces, is skipped
             entityUpdatesEmitter!!.send(loaded(displayEntity))
+            expectNoEvents()
+            verifyDaoUpdate(exactly = 2)
+
+            entityUpdatesEmitter.send(loaded(displayEntity.copy(name = "Renamed list")))
             awaitItem()
             verifyDaoUpdate(exactly = 3)
 
-            entityUpdatesEmitter.send(loaded(displayEntity.copy(name = "Renamed list")))
+            entityUpdatesEmitter.send(loaded(displayEntity.copy(name = "Renamed list", rawState = "2")))
             awaitItem()
             verifyDaoUpdate(exactly = 4)
 
@@ -311,8 +316,8 @@ Watch for update
         }
     }
 
-    private fun fakeEntityDisplay(entityId: String, name: String, icon: IIcon? = null): EntityDisplayWithoutContext {
-        return EntityDisplayWithoutContext(entityId, name, icon ?: Icon.cmd_bookmark)
+    private fun fakeEntityDisplay(entityId: String, name: String, icon: MdiIcon? = null): EntityDisplayWithoutContext {
+        return EntityDisplayWithoutContext(entityId, name, icon ?: Mdi.Bookmark)
     }
 
     private fun verifyEntityUpdates(exactly: Int) {

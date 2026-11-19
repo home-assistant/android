@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.MapClock
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.util.Date
@@ -23,7 +25,7 @@ class TimeZoneManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_current_time_zone,
             commonR.string.sensor_description_current_time_zone,
-            "mdi:map-clock",
+            Mdi.MapClock,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }

@@ -16,14 +16,27 @@ class OutgoingExternalBusMessageTest {
                 id = 1,
                 hasNfc = true,
                 canCommissionMatter = true,
+                canShareMatterDevice = true,
                 canExportThread = true,
                 hasBarCodeScanner = 0,
                 canSetupImprov = true,
                 appVersion = AppVersion.from("1.0.0 (1)"),
+                hasCameraMicrophoneStream = true,
             ),
         )
         assertEquals(
-            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"canTransferThreadCredentialsToKeychain":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true,"hasSplashscreen":true,"hasMatterStatusReport":true},"error":null}""",
+            """{"type":"result","id":1,"success":true,"result":{"hasSettingsScreen":true,"canWriteTag":true,"hasExoPlayer":true,"canCommissionMatter":true,"canImportThreadCredentials":true,"canTransferThreadCredentialsToKeychain":true,"hasAssist":true,"hasBarCodeScanner":0,"canSetupImprov":true,"downloadFileSupported":true,"appVersion":"1.0.0 (1)","hasEntityAddTo":true,"hasAssistSettings":true,"hasSplashscreen":true,"hasMatterStatusReport":true,"canShareMatterDeviceToOtherApps":true,"webrtc":{"hasCameraMicrophoneStream":true}},"error":null}""",
+            json,
+        )
+    }
+
+    @Test
+    fun `Given an error result message when serializing then it carries code and message`() {
+        val json = frontendExternalBusJson.encodeToString<OutgoingExternalBusMessage>(
+            ErrorResultMessage(id = 3, code = "canceled", message = "Cancelled by the user"),
+        )
+        assertEquals(
+            """{"type":"result","id":3,"success":false,"result":null,"error":{"code":"canceled","message":"Cancelled by the user"}}""",
             json,
         )
     }
@@ -35,10 +48,12 @@ class OutgoingExternalBusMessageTest {
                 id = 2,
                 hasNfc = false,
                 canCommissionMatter = false,
+                canShareMatterDevice = false,
                 canExportThread = false,
                 hasBarCodeScanner = 0,
                 canSetupImprov = false,
                 appVersion = AppVersion.from("1.0.0 (1)"),
+                hasCameraMicrophoneStream = false,
             ),
         )
         assertTrue(json.contains(""""canSetupImprov":false"""))
@@ -49,10 +64,12 @@ class OutgoingExternalBusMessageTest {
         val config = ConfigResultMessage.ConfigResult.create(
             hasNfc = false,
             canCommissionMatter = false,
+            canShareMatterDevice = false,
             canExportThread = false,
             hasBarCodeScanner = 0,
             canSetupImprov = true,
             appVersion = AppVersion.from("1.0.0 (1)"),
+            hasCameraMicrophoneStream = true,
         )
 
         assertTrue(config.hasSettingsScreen)
@@ -64,6 +81,7 @@ class OutgoingExternalBusMessageTest {
         assertTrue(config.hasAssistSettings)
         assertTrue(config.hasSplashscreen)
         assertTrue(config.hasMatterStatusReport)
+        assertTrue(config.webrtc.hasCameraMicrophoneStream)
     }
 
     @Test

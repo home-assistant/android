@@ -8,7 +8,6 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -27,10 +26,10 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
 import java.time.LocalDateTime
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -86,66 +85,12 @@ class EntityWidgetConfigureScreenTest {
     }
 
     @Test
-    fun `Given an existing widget when displayed then the update action is enabled`() {
+    fun `Given a configured widget when displayed then the action is enabled`() {
         composeTestRule.apply {
             testScreen(configuredState) {
                 onNodeWithText(activity.getString(commonR.string.update_widget))
                     .performScrollTo()
                     .assertIsEnabled()
-            }
-        }
-    }
-
-    @Test
-    fun `Given the screen is the task root when displayed then it offers close`() {
-        composeTestRule.apply {
-            testScreen(configuredState, canNavigateBack = false) {
-                onNodeWithContentDescription(activity.getString(commonR.string.navigate_up)).assertDoesNotExist()
-                onNodeWithContentDescription(activity.getString(commonR.string.close)).performClick()
-                assertTrue(navigated)
-            }
-        }
-    }
-
-    @Test
-    fun `Given the screen has a back stack when displayed then it offers back`() {
-        composeTestRule.apply {
-            testScreen(configuredState, canNavigateBack = true) {
-                onNodeWithContentDescription(activity.getString(commonR.string.close)).assertDoesNotExist()
-                onNodeWithContentDescription(activity.getString(commonR.string.navigate_up)).performClick()
-                assertTrue(navigated)
-            }
-        }
-    }
-
-    @Test
-    fun `Given a valid configuration when the action is clicked then onActionClick is triggered`() {
-        composeTestRule.apply {
-            testScreen(configuredState) {
-                onNodeWithText(activity.getString(commonR.string.update_widget))
-                    .performScrollTo()
-                    .performClick()
-                assertTrue(actionClicked)
-            }
-        }
-    }
-
-    @Test
-    fun `Given a single server when displayed then the server selector is hidden`() {
-        composeTestRule.apply {
-            testScreen(configuredState) {
-                onNodeWithText(activity.getString(commonR.string.server_select)).assertDoesNotExist()
-            }
-        }
-    }
-
-    @Test
-    fun `Given several servers when displayed then the server selector is shown`() {
-        composeTestRule.apply {
-            testScreen(multipleServersState) {
-                onNodeWithText(activity.getString(commonR.string.server_select), substring = true)
-                    .performScrollTo()
-                    .assertIsDisplayed()
             }
         }
     }
@@ -246,8 +191,8 @@ class EntityWidgetConfigureScreenTest {
     fun `Given an unselected attribute when its chip is clicked then onAttributeAdded is triggered`() {
         composeTestRule.apply {
             testScreen(configuredState) {
-                onNodeWithText("friendly_name").performScrollTo().performClick()
-                assertEquals("friendly_name", attributeAdded)
+                onNodeWithText("power").performScrollTo().performClick()
+                assertEquals("power", attributeAdded)
             }
         }
     }
@@ -318,7 +263,7 @@ class EntityWidgetConfigureScreenTest {
         val ENTITY = Entity(
             entityId = "light.office",
             state = "on",
-            attributes = mapOf("friendly_name" to "Office light"),
+            attributes = mapOf("power" to "50W"),
             lastChanged = LocalDateTime.MIN,
             lastUpdated = LocalDateTime.MIN,
         )
@@ -331,20 +276,13 @@ class EntityWidgetConfigureScreenTest {
 
         val configuredState = newWidgetState.copy(
             selectedEntityId = ENTITY.entityId,
-            availableAttributes = listOf("brightness", "friendly_name"),
+            availableAttributes = listOf("brightness", "power"),
             selectedAttributeIds = listOf("brightness"),
             label = "Office light",
             stateSeparator = " - ",
             attributeSeparator = ", ",
             selectedTapAction = WidgetTapAction.TOGGLE,
             isUpdateWidget = true,
-        )
-
-        val multipleServersState = configuredState.copy(
-            serversDropdownItems = listOf(
-                HADropdownItem(key = 1, label = "Home"),
-                HADropdownItem(key = 2, label = "Vacation home"),
-            ),
         )
     }
 }

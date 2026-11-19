@@ -89,7 +89,7 @@ class MonitoringManager {
             context,
             0,
             StopBeaconScanningReceiver.stopScanningIntent(context),
-            PendingIntent.FLAG_MUTABLE,
+            PendingIntent.FLAG_IMMUTABLE,
         )
         builder.addAction(0, context.getString(R.string.disable), stopScanningPendingIntent)
         beaconManager.enableForegroundServiceScanning(builder.build(), 444)

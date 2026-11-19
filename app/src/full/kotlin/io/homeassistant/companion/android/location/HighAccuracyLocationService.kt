@@ -146,7 +146,12 @@ class HighAccuracyLocationService : Service() {
                 action = HighAccuracyLocationReceiver.HIGH_ACCURACY_LOCATION_DISABLE
             }
 
-            val disablePendingIntent = PendingIntent.getBroadcast(context, 0, disableIntent, PendingIntent.FLAG_MUTABLE)
+            val disablePendingIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                disableIntent,
+                PendingIntent.FLAG_IMMUTABLE,
+            )
 
             notificationBuilder = NotificationCompat.Builder(context, CHANNEL_HIGH_ACCURACY)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)

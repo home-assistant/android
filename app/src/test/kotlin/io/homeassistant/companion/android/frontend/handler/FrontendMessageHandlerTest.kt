@@ -5,7 +5,6 @@ import android.net.Uri
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
@@ -41,6 +40,8 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovCo
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovConfigureDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDeviceMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
@@ -73,6 +74,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
@@ -93,7 +95,7 @@ class FrontendMessageHandlerTest {
     private val packageManager: PackageManager = mockk()
     private val matterManager: MatterManager = mockk()
     private val threadManager: ThreadManager = mockk()
-    private val appVersionProvider: AppVersionProvider = mockk()
+    private val appVersion = AppVersion("1.0.0", 1)
     private val sessionManager: ServerSessionManager = mockk(relaxed = true)
     private val downloadManager: FrontendDownloadManager = mockk(relaxed = true)
     private val bluetoothCapabilities: BluetoothCapabilities = BluetoothCapabilities { true }
@@ -105,9 +107,10 @@ class FrontendMessageHandlerTest {
     fun setup() {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_NFC) } returns false
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
+        every { packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) } returns true
         every { matterManager.appSupportsCommissioning() } returns false
+        every { matterManager.appSupportsSharing() } returns false
         every { threadManager.appSupportsThread() } returns false
-        every { appVersionProvider() } returns AppVersion.from("1.0.0", 1)
         every { externalBusRepository.webViewActions() } returns emptyFlow()
 
         handler = FrontendMessageHandler(
@@ -115,7 +118,7 @@ class FrontendMessageHandlerTest {
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = appVersion,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = bluetoothCapabilities,
@@ -192,15 +195,15 @@ class FrontendMessageHandlerTest {
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_NFC) } returns true
         every { packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) } returns true
         every { matterManager.appSupportsCommissioning() } returns true
+        every { matterManager.appSupportsSharing() } returns true
         every { threadManager.appSupportsThread() } returns true
-        every { appVersionProvider() } returns AppVersion.from("2.0.0", 200)
 
         val testHandler = FrontendMessageHandler(
             externalBusRepository = externalBusRepository,
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = AppVersion("2.0.0", 200),
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = { true },
@@ -223,6 +226,7 @@ class FrontendMessageHandlerTest {
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(true, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(true, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
+        assertEquals(true, configResult["canShareMatterDeviceToOtherApps"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(true, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(1, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
         assertEquals(true, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())
@@ -241,7 +245,7 @@ class FrontendMessageHandlerTest {
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = appVersion,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = { false },
@@ -264,6 +268,7 @@ class FrontendMessageHandlerTest {
         // Field names match ConfigResult serialization: hasNfc -> canWriteTag, canExportThread -> canImportThreadCredentials
         assertEquals(false, configResult["canWriteTag"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canCommissionMatter"]?.jsonPrimitive?.content?.toBoolean())
+        assertEquals(false, configResult["canShareMatterDeviceToOtherApps"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(false, configResult["canImportThreadCredentials"]?.jsonPrimitive?.content?.toBoolean())
         assertEquals(0, configResult["hasBarCodeScanner"]?.jsonPrimitive?.int)
         assertEquals(false, configResult["canSetupImprov"]?.jsonPrimitive?.content?.toBoolean())
@@ -394,6 +399,21 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
+    fun `Given Matter share_device message when messageResults then emits StartMatterSharing`() = runTest {
+        val payload = MatterShareDevicePayload(passcode = 20202021, discriminator = 3840, remainingSeconds = 250)
+        val message = MatterShareDeviceMessage(id = 62, payload = payload)
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            assertEquals(
+                FrontendHandlerEvent.StartMatterSharing(messageId = 62, payload = payload),
+                awaitItem(),
+            )
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun `Given Thread import_credentials message when messageResults then emits ImportThreadCredentials`() = runTest {
         val message = ThreadImportCredentialsMessage(id = 61)
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
@@ -513,7 +533,7 @@ class FrontendMessageHandlerTest {
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = appVersion,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = bluetoothCapabilities,
@@ -546,7 +566,7 @@ class FrontendMessageHandlerTest {
             packageManager = packageManager,
             matterManager = matterManager,
             threadManager = threadManager,
-            appVersionProvider = appVersionProvider,
+            appVersion = appVersion,
             sessionManager = sessionManager,
             downloadManager = downloadManager,
             bluetoothCapabilities = bluetoothCapabilities,
@@ -571,6 +591,24 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
+    fun `Given device without microphone when config get then hasCameraMicrophoneStream is false`() = runTest {
+        every { packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE) } returns false
+        every { externalBusRepository.incomingMessages() } returns flowOf(ConfigGetMessage(id = 1))
+
+        val responseSlot = slot<OutgoingExternalBusMessage>()
+        coEvery { externalBusRepository.send(capture(responseSlot)) } returns Unit
+
+        handler.messageResults().test {
+            awaitItem()
+            expectNoEvents()
+        }
+
+        val configResult = assertInstanceOf(ResultMessage::class.java, responseSlot.captured).result
+        val webrtc = configResult.jsonObject["webrtc"]?.jsonObject
+        assertEquals(false, webrtc?.get("hasCameraMicrophoneStream")?.jsonPrimitive?.boolean)
+    }
+
+    @Test
     fun `Given successful auth when getExternalAuth then evaluates success callback`() = runTest {
         val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
         val authResult = ExternalAuthResult.Success(callbackScript = "externalAuthSetToken(true, {token})")
@@ -584,7 +622,30 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given failed auth with error when getExternalAuth then evaluates callback and emits AuthError`() = runTest {
+    fun `Given two failed auths before collecting when collecting messageResults then both AuthErrors are delivered`() = runTest {
+        val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
+        val error = FrontendConnectionError.AuthRevoked(
+            message = commonR.string.error_connection_failed,
+            errorDetails = "Auth failed",
+            rawErrorType = "ExternalAuthFailed",
+        )
+        coEvery { sessionManager.getExternalAuth(1, authPayload) } returns
+            ExternalAuthResult.Failed(callbackScript = "externalAuthSetToken(false)", error = error)
+        coEvery { externalBusRepository.evaluateScript("externalAuthSetToken(false)") } returns null
+        every { externalBusRepository.incomingMessages() } returns emptyFlow()
+
+        handler.getExternalAuth(authPayload, serverId = 1)
+        handler.getExternalAuth(authPayload, serverId = 1)
+
+        handler.messageResults().test {
+            assertEquals(FrontendHandlerEvent.AuthError(error), awaitItem())
+            assertEquals(FrontendHandlerEvent.AuthError(error), awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given failed auth with error when getExternalAuth then evaluates callback and sends AuthError`() = runTest {
         val authPayload = AuthPayload(callback = "externalAuthSetToken", force = false)
         val error = FrontendConnectionError.AuthRevoked(
             message = commonR.string.error_connection_failed,

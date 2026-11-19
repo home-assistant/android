@@ -16,10 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.SettingsEthernet
-import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -34,6 +30,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Close
+import io.github.timoptr.mdiicons.generated.Ethernet
+import io.github.timoptr.mdiicons.generated.Key
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -57,6 +58,7 @@ internal const val VPN_TAG = "vpn_tag"
 @Composable
 fun SetHomeNetworkScreen(
     onHelpClick: suspend () -> Unit,
+    onBackClick: () -> Unit,
     onGotoNextScreen: () -> Unit,
     viewModel: SetHomeNetworkViewModel,
     modifier: Modifier = Modifier,
@@ -67,6 +69,7 @@ fun SetHomeNetworkScreen(
 
     SetHomeNetworkScreen(
         onHelpClick = onHelpClick,
+        onBackClick = onBackClick,
         onNextClick = {
             viewModel.onNextClick()
             onGotoNextScreen()
@@ -86,6 +89,7 @@ fun SetHomeNetworkScreen(
 @Composable
 internal fun SetHomeNetworkScreen(
     onHelpClick: suspend () -> Unit,
+    onBackClick: () -> Unit,
     onNextClick: () -> Unit,
     currentWifiNetwork: String,
     onCurrentWifiNetworkChange: (String) -> Unit,
@@ -99,7 +103,7 @@ internal fun SetHomeNetworkScreen(
 ) {
     Scaffold(
         modifier = modifier,
-        topBar = { HATopBar(onHelpClick = onHelpClick) },
+        topBar = { HATopBar(onHelpClick = onHelpClick, onBackClick = onBackClick) },
         contentWindowInsets = WindowInsets.safeDrawing,
     ) { contentPadding ->
         SetHomeNetworkContent(
@@ -147,7 +151,7 @@ private fun SetHomeNetworkContent(
                 isUsingVpn,
                 onUsingVpnChange,
                 text = stringResource(commonR.string.manage_ssids_vpn),
-                icon = Icons.Default.VpnKey,
+                icon = Mdi.Key.rememberImageVector(),
                 testTag = VPN_TAG,
             )
         }
@@ -157,7 +161,7 @@ private fun SetHomeNetworkContent(
                 isUsingEthernet,
                 onUsingEthernetChange,
                 text = stringResource(commonR.string.manage_ssids_ethernet),
-                icon = Icons.Default.SettingsEthernet,
+                icon = Mdi.Ethernet.rememberImageVector(),
                 testTag = ETHERNET_TAG,
             )
         }
@@ -205,7 +209,7 @@ private fun WifiNetworkSSIDTextField(currentWifiNetwork: String, onCurrentWifiNe
             if (currentWifiNetwork.isNotEmpty()) {
                 IconButton(onClick = { onCurrentWifiNetworkChange("") }) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = Mdi.Close.rememberImageVector(),
                         contentDescription = stringResource(commonR.string.clear_text),
                     )
                 }
@@ -252,6 +256,7 @@ private fun SetHomeNetworkScreenPreview() {
     HAThemeForPreview {
         SetHomeNetworkScreen(
             onHelpClick = {},
+            onBackClick = {},
             showEthernet = true,
             showVpn = true,
             isUsingVpn = true,

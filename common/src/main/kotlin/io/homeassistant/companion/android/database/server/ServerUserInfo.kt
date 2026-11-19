@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.database.server
 
-import androidx.room.ColumnInfo
+import androidx.room3.ColumnInfo
 
 data class ServerUserInfo(
     @ColumnInfo(name = "user_id")
@@ -11,4 +11,6 @@ data class ServerUserInfo(
     val isOwner: Boolean? = null,
     @ColumnInfo(name = "user_is_admin")
     val isAdmin: Boolean? = null,
+    @ColumnInfo(name = "user_person_picture_path")
+    val picturePath: String? = null,
 )

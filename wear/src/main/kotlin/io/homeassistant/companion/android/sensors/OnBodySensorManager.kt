@@ -7,6 +7,9 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Account
+import io.github.timoptr.mdiicons.generated.AccountOff
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -37,7 +40,7 @@ class OnBodySensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.sensor_name_on_body,
             commonR.string.sensor_description_on_body,
-            "mdi:account",
+            Mdi.Account,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -102,7 +105,7 @@ class OnBodySensorManager @Inject constructor(
                 onSensorUpdated(
                     onBodySensor,
                     state,
-                    if (state) onBodySensor.statelessIcon else "mdi:account-off",
+                    if (state) onBodySensor.statelessIcon else Mdi.AccountOff,
                     mapOf(),
                 )
             }

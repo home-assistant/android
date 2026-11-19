@@ -1,5 +1,5 @@
 <!--
-    Please review the contributing guide before submitting: https://developers.home-assistant.io/docs/android/submit
+    Please review the contributing guide before submitting: https://contributors.home-assistant.io/companion/android/submitting/
     Please, complete the following sections to help the processing and review of your changes.
     Please, DO NOT DELETE ANY TEXT from this template! (unless instructed).
 
@@ -23,11 +23,11 @@
     for before merging your code.
 -->
 
-- [ ] New or updated tests have been added to cover the changes following the testing [guidelines](https://developers.home-assistant.io/docs/android/testing/introduction).
-- [ ] The code follows the project's [code style](https://developers.home-assistant.io/docs/android/codestyle) and [best_practices](https://developers.home-assistant.io/docs/android/best_practices).
+- [ ] New or updated tests have been added to cover the changes following the testing [guidelines](https://contributors.home-assistant.io/companion/android/testing/).
+- [ ] The code follows the project's [code style](https://contributors.home-assistant.io/companion/android/code-style/) and [best_practices](https://contributors.home-assistant.io/companion/android/best-practices/).
 - [ ] The changes have been thoroughly tested, and edge cases have been considered.
 - [ ] Changes are backward compatible whenever feasible. Any breaking changes are documented in the changelog for users and/or in the code for developers depending on the relevance.
-- [ ] I have read the [Open Home Foundation AI Policy](https://developers.home-assistant.io/docs/ai_policy).
+- [ ] I have read the [Open Home Foundation AI Policy](https://contributors.home-assistant.io/start/ai-policy/).
 
 Select exactly one option that describes AI usage in this contribution:
 
@@ -42,33 +42,28 @@ Select exactly one option that describes AI usage in this contribution:
     Note: Remove this section if there are no screenshots.
 -->
 
-## Link to pull request in documentation repositories
-<!-- 
-    This pull request introduces, changes, or removes user-facing functionality.
-    A corresponding update to the Companion App documentation in the documentation repository (https://github.com/home-assistant/companion.home-assistant) is required.
+## Additional information
+<!--
+    A user-facing change needs a pull request in the Companion App documentation
+    (https://github.com/home-assistant/companion.home-assistant). Mark the feature
+    there with the `<span class='beta'>BETA</span> ` flag.
+    A developer-facing change needs a pull request in the contributor documentation
+    (https://github.com/home-assistant/contributors.home-assistant.io).
 
-    Instructions:
-    1. Create a pull request in the documentation repository.
-    2. Add the documentation pull request number after the "#" below.
-    3. Add the `<span class='beta'>BETA</span> ` flag in the documentation to mark it as such.
+    Under "This PR belongs together with", list the pull requests that are
+    part of the same change, in any repository: the code this documents, its
+    documentation or brands, or code that has to be merged together with it.
+    One pull request fits on the line itself; list several as indented
+    bullets below it, as `owner/repo#number` or a link:
 
-    Note: Remove this section if there is no PR.
+    - This PR belongs together with:
+      - home-assistant/core#12345
+      - home-assistant/home-assistant.io#67890
+
+    List this pull request on theirs too. Mention other pull requests and
+    issues, like one this builds on or a revert, in the summary above.
+
+    Add any other information of note below these lines.
 -->
-User Documentation: home-assistant/companion.home-assistant#
-
-<!-- 
-    This pull request introduces, changes, or removes developer-facing functionality.
-    A corresponding update to the Developer documentation in the documentation repository (https://github.com/home-assistant/developers.home-assistant) is required.
-
-    Instructions:
-    1. Create a pull request in the documentation repository.
-    2. Add the documentation pull request number after the "#" below.
-
-    Note: Remove this section if there is no PR.
--->
-Developer Documentation: home-assistant/developers.home-assistant#
-
-## Any other notes
-<!-- 
-    If there is any other information of note, like if this Pull Request is part of a bigger change, please include it here.
--->
+- This PR fixes or closes issue: fixes #
+- This PR belongs together with: 

@@ -1,15 +1,15 @@
 package io.homeassistant.companion.android.database.widget
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MediaPlayerControlsWidgetDao : WidgetDao<MediaPlayerControlsWidgetEntity> {
     @Query("SELECT * FROM media_player_controls_widgets WHERE id = :id")
-    suspend fun get(id: Int): MediaPlayerControlsWidgetEntity?
+    override suspend fun get(id: Int): MediaPlayerControlsWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     override suspend fun add(entity: MediaPlayerControlsWidgetEntity)

@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:AndroidApplicationDependenciesConventionPlugin.kt:AndroidApplicationDependenciesConventionPlugin$override fun apply</ID>
+    <ID>LongMethod:AndroidCommonConventionPlugin.kt:AndroidCommonConventionPlugin$override fun apply</ID>
+    <ID>MagicNumber:AndroidComposeConventionPlugin.kt:AndroidComposeConventionPlugin$0.00025f</ID>
+  </CurrentIssues>
+</SmellBaseline>

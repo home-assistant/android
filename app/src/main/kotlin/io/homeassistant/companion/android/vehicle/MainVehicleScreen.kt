@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.vehicle
 
+import android.graphics.Color
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.car.app.CarContext
@@ -9,13 +10,13 @@ import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridTemplate
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.Template
+import androidx.core.graphics.drawable.IconCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import com.mikepenz.iconics.utils.sizeDp
-import com.mikepenz.iconics.utils.toAndroidIconCompat
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Refresh
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.authentication.SessionState
@@ -195,9 +196,7 @@ class MainVehicleScreen(
         val refreshAction = Action.Builder()
             .setIcon(
                 CarIcon.Builder(
-                    IconicsDrawable(carContext, CommunityMaterial.Icon3.cmd_refresh).apply {
-                        sizeDp = 64
-                    }.toAndroidIconCompat(),
+                    IconCompat.createWithBitmap(Mdi.Refresh.toBitmap(carContext, 64, Color.WHITE)),
                 )
                     .setTint(CarColor.DEFAULT)
                     .build(),

@@ -1,25 +1,17 @@
 package io.homeassistant.companion.android.common.util
 
-import com.mikepenz.iconics.typeface.IIcon
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
 
+/** Prefix of MDI icon names as used by Home Assistant, for instance "mdi:account-alert". */
 const val MDI_PREFIX = "mdi:"
 
-/**
- * Gets the MDI name of an Iconics icon.
- * MDI format is used by Home Assistant (ie "mdi:account-alert"),
- * compared to Iconic's [IIcon.name] format (ie "cmd_account_alert").
- */
-val IIcon.mdiName: String
-    get() = name.replace("${CommunityMaterial.mappingPrefix}_", MDI_PREFIX).replace('_', '-')
+/** The name in the prefixed form used by Home Assistant, for instance "mdi:account-alert". */
+val MdiIcon.mdiName: String
+    get() = "$MDI_PREFIX$name"
 
-/** Resolves an MDI icon name (ie "mdi:account-alert") to its icon, or null when unknown. */
-fun CommunityMaterial.getIconByMdiName(mdiName: String): IIcon? {
-    val name = mdiName.replace(MDI_PREFIX, "${mappingPrefix}_").replace('-', '_')
-    return try {
-        getIcon(name)
-    } catch (e: IllegalArgumentException) {
-        // Icon doesn't exist (anymore)
-        null
-    }
-}
+/**
+ * Resolves an icon name in the prefixed form used by Home Assistant (ie "mdi:account-alert") to
+ * its icon, or null when the name is unknown or was removed from MDI.
+ */
+fun Mdi.fromHaName(haName: String): MdiIcon? = fromMdiName(haName.removePrefix(MDI_PREFIX))

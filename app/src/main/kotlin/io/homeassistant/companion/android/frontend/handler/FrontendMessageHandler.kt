@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.frontend.handler
 import android.content.pm.PackageManager
 import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
-import io.homeassistant.companion.android.common.util.AppVersionProvider
+import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.frontend.EvaluateJavascriptUsage
 import io.homeassistant.companion.android.frontend.WebViewAction
@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovCo
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ImprovScanMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.IncomingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDeviceMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenAssistSettingsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSettingsMessage
@@ -36,6 +37,8 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpd
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadImportCredentialsMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadStoreInPlatformKeychainMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamStartMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamStopMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.EntityAddToActionsResultMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
@@ -49,10 +52,11 @@ import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
 import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.serialization.json.JsonElement
 import timber.log.Timber
 
@@ -76,7 +80,7 @@ class FrontendMessageHandler @Inject constructor(
     private val packageManager: PackageManager,
     private val matterManager: MatterManager,
     private val threadManager: ThreadManager,
-    private val appVersionProvider: AppVersionProvider,
+    private val appVersion: AppVersion,
     private val sessionManager: ServerSessionManager,
     private val downloadManager: FrontendDownloadManager,
     private val bluetoothCapabilities: BluetoothCapabilities,
@@ -85,7 +89,7 @@ class FrontendMessageHandler @Inject constructor(
 ) : FrontendJsHandler,
     FrontendBusObserver {
 
-    private val jsCallbackEvents = MutableSharedFlow<FrontendHandlerEvent>(extraBufferCapacity = 1)
+    private val jsCallbackEvents = Channel<FrontendHandlerEvent>(Channel.BUFFERED)
 
     /**
      * Called when the frontend requests authentication.
@@ -107,7 +111,7 @@ class FrontendMessageHandler @Inject constructor(
 
             is ExternalAuthResult.Failed -> {
                 externalBusRepository.evaluateScript(result.callbackScript)
-                result.error?.let { jsCallbackEvents.tryEmit(FrontendHandlerEvent.AuthError(it)) }
+                result.error?.let { jsCallbackEvents.send(FrontendHandlerEvent.AuthError(it)) }
             }
         }
     }
@@ -148,7 +152,7 @@ class FrontendMessageHandler @Inject constructor(
         val incomingResults = externalBusRepository.incomingMessages().map { message ->
             handleMessage(message)
         }
-        return merge(incomingResults, jsCallbackEvents)
+        return merge(incomingResults, jsCallbackEvents.receiveAsFlow())
     }
 
     override fun webViewActions(): Flow<WebViewAction> = externalBusRepository.webViewActions()
@@ -294,6 +298,11 @@ class FrontendMessageHandler @Inject constructor(
                 FrontendHandlerEvent.StartMatterCommissioning
             }
 
+            is MatterShareDeviceMessage -> {
+                Timber.d("matter/share_device received with id: ${message.id}")
+                FrontendHandlerEvent.StartMatterSharing(messageId = message.id, payload = message.payload)
+            }
+
             is ThreadImportCredentialsMessage -> {
                 Timber.d("thread/import_credentials received with id: ${message.id}")
                 FrontendHandlerEvent.ImportThreadCredentials
@@ -321,6 +330,20 @@ class FrontendMessageHandler @Inject constructor(
                 }
             }
 
+            is WebRtcStreamStartMessage -> {
+                Timber.d("webrtc/stream/start received type=${message.payload.streamType}")
+                FrontendHandlerEvent.StartWebRtcStream(
+                    messageId = message.id,
+                    streamType = message.payload.streamType,
+                    entityId = message.payload.entityId,
+                )
+            }
+
+            is WebRtcStreamStopMessage -> {
+                Timber.d("webrtc/stream/stop received")
+                FrontendHandlerEvent.StopWebRtcStream(message.payload.sessionId)
+            }
+
             is UnknownIncomingMessage -> {
                 Timber.d("Unknown message type received: ${message.content}")
                 FrontendHandlerEvent.UnknownMessage
@@ -331,6 +354,7 @@ class FrontendMessageHandler @Inject constructor(
     private suspend fun sendConfigResponse(messageId: Int?) {
         val hasNfc = packageManager.hasSystemFeature(PackageManager.FEATURE_NFC)
         val canCommissionMatter = matterManager.appSupportsCommissioning()
+        val canShareMatterDevice = matterManager.appSupportsSharing()
         val canExportThread = threadManager.appSupportsThread()
         val hasBarCodeScanner = if (
             packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY) && !isAutomotive
@@ -339,15 +363,18 @@ class FrontendMessageHandler @Inject constructor(
         } else {
             0
         }
+        val hasCameraMicrophoneStream = packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
 
         val response = ConfigResultMessage(
             id = messageId,
             hasNfc = hasNfc,
             canCommissionMatter = canCommissionMatter,
+            canShareMatterDevice = canShareMatterDevice,
             canExportThread = canExportThread,
             hasBarCodeScanner = hasBarCodeScanner,
             canSetupImprov = bluetoothCapabilities.hasBluetoothLe(),
-            appVersion = appVersionProvider(),
+            appVersion = appVersion,
+            hasCameraMicrophoneStream = hasCameraMicrophoneStream,
         )
         externalBusRepository.send(response)
     }

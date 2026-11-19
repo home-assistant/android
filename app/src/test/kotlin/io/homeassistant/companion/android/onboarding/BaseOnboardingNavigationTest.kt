@@ -25,7 +25,9 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 
@@ -52,6 +54,11 @@ internal abstract class BaseOnboardingNavigationTest {
         ApplicationProvider.getApplicationContext<Context>().seedFakeAndroidId()
         mockkStatic(NavController::navigateToUri)
         coEvery { any<NavController>().navigateToUri(any(), any()) } just Runs
+    }
+
+    @After
+    fun baseTearDown() {
+        unmockkAll()
     }
 
     protected fun setContent(
@@ -98,6 +105,7 @@ internal abstract class BaseOnboardingNavigationTest {
         skipWelcome: Boolean = false,
         hasLocationTracking: Boolean = true,
         fromInvitation: Boolean = false,
+        permissionResultRegistry: ActivityResultRegistry = FakePermissionResultRegistry(grantAll = true),
         testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
     ) {
         setContent(
@@ -106,6 +114,7 @@ internal abstract class BaseOnboardingNavigationTest {
             skipWelcome = skipWelcome,
             hasLocationTracking = hasLocationTracking,
             fromInvitation = fromInvitation,
+            permissionResultRegistry = permissionResultRegistry,
         )
         runTest {
             composeTestRule.testContent()

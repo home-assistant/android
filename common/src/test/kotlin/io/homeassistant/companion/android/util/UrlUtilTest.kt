@@ -1,9 +1,15 @@
 package io.homeassistant.companion.android.util
 
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import java.net.InetAddress
 import java.net.URL
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -29,6 +35,11 @@ class UrlUtilTest {
     @BeforeEach
     fun setUp() {
         baseUrl = URL("https://example.com:8123/")
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkAll()
     }
 
     @ParameterizedTest
@@ -205,8 +216,16 @@ class UrlUtilTest {
 
     @Test
     fun `Given URL with public domain resolving to public IP when checking isPubliclyAccessible then returns true`() = runTest {
-        // Using a well-known public domain that should resolve to public IPs
+        mockkStatic(InetAddress::class)
         val url = URL("https://www.home-assistant.io")
+        every { InetAddress.getAllByName(url.host) } returns arrayOf(
+            mockk<InetAddress>().apply {
+                every { isSiteLocalAddress } returns false
+                every { isLoopbackAddress } returns false
+                every { isLinkLocalAddress } returns false
+                every { isAnyLocalAddress } returns false
+            },
+        )
         assertTrue(url.isPubliclyAccessible())
     }
 

@@ -7,6 +7,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Android
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -32,7 +34,7 @@ class LastAppSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_last_used_app,
             commonR.string.sensor_description_last_used_app,
-            "mdi:android",
+            Mdi.Android,
         )
     }
 

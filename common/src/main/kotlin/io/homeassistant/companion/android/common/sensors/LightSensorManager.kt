@@ -8,6 +8,8 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Brightness5
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
@@ -36,7 +38,7 @@ class LightSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_light,
             commonR.string.sensor_description_light_sensor,
-            "mdi:brightness-5",
+            Mdi.Brightness5,
             deviceClass = "illuminance",
             unitOfMeasurement = "lx",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,

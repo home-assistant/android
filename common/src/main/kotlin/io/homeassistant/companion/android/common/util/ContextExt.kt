@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.AndroidRuntimeException
+import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.BuildConfig
@@ -231,6 +232,23 @@ private suspend fun Context.startActivityOrShowSnackbar(
 ) {
     if (!startActivityCatching(intent)) {
         onShowSnackbar(getString(R.string.fail_to_navigate_to_uri, target), null)
+    }
+}
+
+/**
+ * Launches this launcher with [input], returning `true` on success and `false` (after logging) when no
+ * activity can handle it or launching it isn't allowed.
+ */
+fun <I> ActivityResultLauncher<I>.launchCatching(input: I): Boolean {
+    return try {
+        launch(input)
+        true
+    } catch (e: ActivityNotFoundException) {
+        Timber.e(e.takeIf { BuildConfig.DEBUG }, "No activity found to handle intent")
+        false
+    } catch (e: SecurityException) {
+        Timber.e(e.takeIf { BuildConfig.DEBUG }, "Not allowed to launch intent")
+        false
     }
 }
 

@@ -6,8 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
 import io.homeassistant.companion.android.common.sensors.SensorSettingsIntentProvider
+import io.homeassistant.companion.android.common.sensors.WorkerForegroundStateProvider
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.MessagingTokenProvider
 import javax.inject.Singleton
@@ -17,10 +17,7 @@ import javax.inject.Singleton
 object CommonTestModule {
     @Provides
     @Singleton
-    fun providesAppVersionProviders(): AppVersionProvider {
-        // Unfortunately hilt doesn't support value class yet so we need a provider
-        return AppVersionProvider { AppVersion.from("1.0.0 (1)") }
-    }
+    fun providesAppVersion(): AppVersion = AppVersion.from("1.0.0 (1)")
 
     @Provides
     @Singleton
@@ -40,4 +37,7 @@ object CommonTestModule {
     @Provides
     @Singleton
     fun providesSensorSettingsIntentProvider(): SensorSettingsIntentProvider = SensorSettingsIntentProvider { _, _, _, _ -> null }
+
+    @Provides
+    fun providesWorkerForegroundStateProvider(): WorkerForegroundStateProvider = WorkerForegroundStateProvider { false }
 }

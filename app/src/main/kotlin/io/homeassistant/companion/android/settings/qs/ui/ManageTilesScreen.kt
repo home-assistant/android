@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.qs.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,8 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -40,8 +39,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Undo
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
@@ -59,6 +60,7 @@ import io.homeassistant.companion.android.common.compose.theme.LocalHAColorSchem
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.ManageTilesViewModel
 import io.homeassistant.companion.android.settings.qs.TileId
+import io.homeassistant.companion.android.settings.qs.TileSlotItem
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.icondialog.IconDialog
@@ -276,7 +278,7 @@ private fun ColumnScope.TileConfigContent(
 
 @Composable
 private fun TileIconRow(
-    selectedIcon: IIcon?,
+    selectedIcon: MdiIcon?,
     showResetIcon: Boolean,
     onShowIconDialog: () -> Unit,
     onResetIcon: () -> Unit,
@@ -298,7 +300,7 @@ private fun TileIconRow(
         Spacer(modifier = Modifier.weight(1f))
         if (showResetIcon) {
             HAIconButton(
-                icon = Icons.AutoMirrored.Filled.Undo,
+                icon = Mdi.Undo.rememberImageVector(autoMirror = true),
                 onClick = onResetIcon,
                 contentDescription = stringResource(commonR.string.undo),
             )
@@ -315,7 +317,7 @@ private fun TileIconRow(
         ) {
             if (selectedIcon != null) {
                 Image(
-                    selectedIcon,
+                    imageVector = selectedIcon.rememberImageVector(),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(colorScheme.colorOnPrimaryNormal),
                     modifier = Modifier.size(24.dp),
@@ -418,8 +420,13 @@ private fun LabeledSwitchRowPreview() {
     }
 }
 
+// Explicit slots: the default ones load the tile services, which the preview renderer cannot do
 private val previewState = ManageTilesState(
     selectedTileId = TileId("tile_1"),
+    tileSlotItems = listOf(
+        TileSlotItem(id = TileId("tile_1"), nameRes = commonR.string.tile_1, label = null),
+        TileSlotItem(id = TileId("tile_2"), nameRes = commonR.string.tile_2, label = null),
+    ),
     selectedServerId = 0,
     tileLabel = "",
     tileSubtitle = "",

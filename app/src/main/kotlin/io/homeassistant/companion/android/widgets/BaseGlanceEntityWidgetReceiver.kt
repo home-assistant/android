@@ -4,6 +4,8 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
 import androidx.core.content.ContextCompat
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -12,6 +14,7 @@ import androidx.glance.appwidget.updateAll
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetEntity
 import javax.inject.Inject
@@ -93,9 +96,14 @@ data class EntitiesPerServer(val serverId: Int, val entityIds: List<String>)
 abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetDao<T>> @VisibleForTesting constructor(
     private val widgetScopeProvider: () -> CoroutineScope,
     private val glanceManagerProvider: (Context) -> GlanceAppWidgetManager,
+    private val appWidgetManagerProvider: (Context) -> AppWidgetManager,
 ) : GlanceAppWidgetReceiver() {
 
-    constructor() : this(newCoroutineScopeProvider(), { GlanceAppWidgetManager(it) })
+    constructor() : this(
+        newCoroutineScopeProvider(),
+        { GlanceAppWidgetManager(it) },
+        { AppWidgetManager.getInstance(it) },
+    )
 
     @Inject
     lateinit var dao: DAO
@@ -159,11 +167,18 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
         deleteWidgetsFromDatabase(appWidgetIds)
     }
 
+    fun register(context: Context) {
+        registerReceiver(context)
+        widgetScope.launch {
+            publishPreview(context)
+        }
+    }
+
     /**
      * Register this receiver to receive [Intent.ACTION_SCREEN_ON] and [Intent.ACTION_SCREEN_OFF].
      * It doesn't exported the receiver.
      */
-    fun registerReceiver(context: Context) {
+    private fun registerReceiver(context: Context) {
         ContextCompat.registerReceiver(
             context,
             this,
@@ -173,6 +188,30 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
             },
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
+    }
+
+    private suspend fun publishPreview(context: Context) {
+        if (!SdkVersion.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM)) return
+        if (isPreviewPublished(context)) {
+            Timber.d("Todo widget preview already published")
+            return
+        }
+
+        when (glanceManagerProvider(context).setWidgetPreviews(this::class)) {
+            GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS -> Timber.tag(
+                widgetClassName,
+            ).d("Widget preview published")
+            GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_RATE_LIMITED ->
+                Timber.tag(widgetClassName).w("Widget preview publication rate limited")
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    private fun isPreviewPublished(context: Context): Boolean {
+        val providerInfo = appWidgetManagerProvider(context)
+            .getInstalledProvidersForPackage(context.packageName, null)
+            .firstOrNull { it.provider.className == this::class.java.name }
+        return (providerInfo?.generatedPreviewCategories ?: 0) != 0
     }
 
     private fun deleteWidgetsFromDatabase(appWidgetIds: IntArray) {

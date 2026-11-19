@@ -4,6 +4,10 @@ import android.app.KeyguardManager
 import android.content.Context
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Cellphone
+import io.github.timoptr.mdiicons.generated.CellphoneKey
+import io.github.timoptr.mdiicons.generated.CellphoneLock
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import javax.inject.Inject
@@ -22,7 +26,7 @@ class KeyguardSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_device_locked,
             commonR.string.sensor_description_device_locked,
-            "mdi:cellphone-lock",
+            Mdi.CellphoneLock,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -32,7 +36,7 @@ class KeyguardSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_device_secure,
             commonR.string.sensor_description_device_secure,
-            "mdi:cellphone-key",
+            Mdi.CellphoneKey,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -42,7 +46,7 @@ class KeyguardSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_keyguard_locked,
             commonR.string.sensor_description_keyguard_locked,
-            "mdi:cellphone-lock",
+            Mdi.CellphoneLock,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -52,7 +56,7 @@ class KeyguardSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.basic_sensor_name_keyguard_secure,
             commonR.string.sensor_description_keyguard_secure,
-            "mdi:cellphone-key",
+            Mdi.CellphoneKey,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
@@ -87,7 +91,7 @@ class KeyguardSensorManager @Inject constructor(
         }
 
         val isLocked = km.isDeviceLocked
-        val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
+        val icon = if (isLocked) Mdi.CellphoneLock else Mdi.Cellphone
 
         onSensorUpdated(
             deviceLocked,
@@ -103,7 +107,7 @@ class KeyguardSensorManager @Inject constructor(
         }
 
         val isSecure = km.isDeviceSecure
-        val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
+        val icon = if (isSecure) Mdi.CellphoneKey else Mdi.Cellphone
 
         onSensorUpdated(
             deviceSecure,
@@ -119,7 +123,7 @@ class KeyguardSensorManager @Inject constructor(
         }
 
         val isLocked = km.isKeyguardLocked
-        val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
+        val icon = if (isLocked) Mdi.CellphoneLock else Mdi.Cellphone
 
         onSensorUpdated(
             keyguardLocked,
@@ -135,7 +139,7 @@ class KeyguardSensorManager @Inject constructor(
         }
 
         val isSecure = km.isKeyguardSecure
-        val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
+        val icon = if (isSecure) Mdi.CellphoneKey else Mdi.Cellphone
 
         onSensorUpdated(
             keyguardSecure,

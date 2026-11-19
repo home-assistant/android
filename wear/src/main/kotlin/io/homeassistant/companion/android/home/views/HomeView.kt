@@ -233,7 +233,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val cameraTile = mainViewModel.cameraTiles.value.firstOrNull { it.id == tileId }
                 SetCameraTileView(
                     tile = cameraTile,
-                    entityItem = cameraTile?.entityId?.let { uiState.displayItems[it] },
+                    entityItem = uiState.cameraItems.firstOrNull { it.entityId == cameraTile?.entityId },
                     onSelectEntity = {
                         swipeDismissableNavController.navigate(
                             "$ROUTE_CAMERA_TILE/$tileId/$SCREEN_SET_CAMERA_TILE_ENTITY",
@@ -319,7 +319,7 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                 val thermostatTile = mainViewModel.thermostatTiles.value.firstOrNull { it.id == tileId }
                 SetThermostatTileView(
                     tile = thermostatTile,
-                    entityItem = thermostatTile?.entityId?.let { uiState.displayItems[it] },
+                    entityItem = uiState.climateItems.firstOrNull { it.entityId == thermostatTile?.entityId },
                     onSelectEntity = {
                         swipeDismissableNavController.navigate(
                             "$ROUTE_THERMOSTAT_TILE/$tileId/$SCREEN_SET_THERMOSTAT_TILE_ENTITY",

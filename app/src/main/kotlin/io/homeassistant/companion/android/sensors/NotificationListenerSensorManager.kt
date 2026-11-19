@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
+import android.app.Notification
 import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
@@ -11,41 +12,72 @@ import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.BellRing
+import io.github.timoptr.mdiicons.generated.PlayCircle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
-import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
+ * Mirrors the hidden `Notification.FLAG_AUTOGROUP_SUMMARY` system API. Android sets it on every summary it
+ * creates when auto-grouping an app's notifications since auto-grouping was introduced in API 24, both for the
+ * `ranker_group` group and the `Aggregate_*` groups of Android 16+.
+ *
+ * Defined in [Notification.java](https://cs.android.com/android/platform/superproject/main/+/03b7b057c4e76cafc1f96d349adcd60ac0320a5e:frameworks/base/core/java/android/app/Notification.java;l=708).
+ */
+@VisibleForTesting
+internal const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
+
+/**
  * Sensor manager for the notification sensors. Owns the basic sensors, availability, permission and
  * reporting logic.
  */
 @Singleton
-class NotificationListenerSensorManager @Inject constructor(
-    @ApplicationContext override val applicationContext: Context,
+class NotificationListenerSensorManager @VisibleForTesting internal constructor(
+    override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
     override val serverManager: ServerManager,
+    private val sensorWorkerScopeOverride: CoroutineScope?,
 ) : SensorManager {
+
+    @Inject
+    constructor(
+        @ApplicationContext applicationContext: Context,
+        sensorRepository: SensorRepository,
+        serverManager: ServerManager,
+    ) : this(applicationContext, sensorRepository, serverManager, sensorWorkerScopeOverride = null)
+
+    override val sensorWorkerScope: CoroutineScope
+        get() = sensorWorkerScopeOverride ?: super.sensorWorkerScope
+
     companion object {
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
         private const val SETTING_INCLUDE_CONTENTS_AS_ATTRS = "active_notification_count_content_attrs"
+        private val notificationSettings = listOf(
+            Setting.Apps(SETTING_ALLOW_LIST),
+            Setting.Toggle(SETTING_DISABLE_ALLOW_LIST, default = false),
+        )
 
         @ProvidesSensor
         val lastNotification = SensorManager.BasicSensor(
@@ -53,9 +85,10 @@ class NotificationListenerSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_last_notification,
             commonR.string.sensor_description_last_notification,
-            "mdi:bell-ring",
+            Mdi.BellRing,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
+            settings = notificationSettings,
         )
 
         @ProvidesSensor
@@ -64,9 +97,10 @@ class NotificationListenerSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_last_removed_notification,
             commonR.string.sensor_description_last_removed_notification,
-            "mdi:bell-ring",
+            Mdi.BellRing,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
+            settings = notificationSettings,
         )
 
         @ProvidesSensor
@@ -75,11 +109,14 @@ class NotificationListenerSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_active_notification_count,
             commonR.string.sensor_description_active_notification_count,
-            "mdi:bell-ring",
+            Mdi.BellRing,
             unitOfMeasurement = "notifications",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
+            settings = listOf(
+                Setting.Toggle(SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = false),
+            ),
         )
 
         @ProvidesSensor
@@ -88,7 +125,7 @@ class NotificationListenerSensorManager @Inject constructor(
             "sensor",
             commonR.string.basic_sensor_name_media_session,
             commonR.string.sensor_description_media_session,
-            "mdi:play-circle",
+            Mdi.PlayCircle,
             deviceClass = "enum",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#media-session-sensor",
         )
@@ -128,10 +165,6 @@ class NotificationListenerSensorManager @Inject constructor(
     }
 
     override suspend fun requestSensorUpdate() {
-        // Load settings to persist their defaults before the sensor detail screen observes them.
-        listOf(lastNotification, lastRemovedNotification)
-            .filter { isEnabled(it) }
-            .forEach { getNotificationSettings(it) }
         updateMediaSession()
     }
 
@@ -149,7 +182,7 @@ class NotificationListenerSensorManager @Inject constructor(
                 return@launch
             }
 
-            if (sbn.notification.group == "ranker_group") {
+            if (sbn.notification.isSystemGeneratedGroupSummary()) {
                 return@launch
             }
 
@@ -189,6 +222,10 @@ class NotificationListenerSensorManager @Inject constructor(
 
         sensorWorkerScope.launch {
             if (!shouldProcessNotification(lastRemovedNotification, sbn.packageName)) {
+                return@launch
+            }
+
+            if (sbn.notification.isSystemGeneratedGroupSummary()) {
                 return@launch
             }
 
@@ -233,7 +270,6 @@ class NotificationListenerSensorManager @Inject constructor(
                     getToggleSetting(
                         activeNotificationCount,
                         SETTING_INCLUDE_CONTENTS_AS_ATTRS,
-                        default = true,
                     )
                 val attrs = if (includeContentsAsAttrsSetting) {
                     buildMap {
@@ -328,13 +364,10 @@ class NotificationListenerSensorManager @Inject constructor(
         val allowPackages = getSetting(
             sensor,
             SETTING_ALLOW_LIST,
-            SensorSettingType.LIST_APPS,
-            default = "",
         ).split(", ").filter { it.isNotBlank() }
         val disableAllowListRequirement = getToggleSetting(
             sensor,
             SETTING_DISABLE_ALLOW_LIST,
-            default = false,
         )
 
         return NotificationSettings(allowPackages, disableAllowListRequirement)
@@ -352,6 +385,14 @@ class NotificationListenerSensorManager @Inject constructor(
     }
 
     private data class NotificationSettings(val allowPackages: List<String>, val disableAllowListRequirement: Boolean)
+
+    /**
+     * Whether this notification is a group summary that Android generated on behalf of the app.
+     *
+     * Such summaries carry no content of their own and are posted right after the real notification, so reporting
+     * them would replace the real notification data with an empty one.
+     */
+    private fun Notification.isSystemGeneratedGroupSummary(): Boolean = (flags and FLAG_AUTOGROUP_SUMMARY) != 0
 
     private fun getPlaybackState(state: Int?): String {
         return mediaStates.getOrDefault(state ?: PlaybackState.STATE_NONE, STATE_UNKNOWN)

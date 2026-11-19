@@ -8,6 +8,8 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Gauge
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.math.RoundingMode
@@ -36,7 +38,7 @@ class PressureSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_pressure,
             commonR.string.sensor_description_pressure_sensor,
-            "mdi:gauge",
+            Mdi.Gauge,
             deviceClass = "atmospheric_pressure",
             unitOfMeasurement = "hPa",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,

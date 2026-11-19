@@ -10,8 +10,15 @@ name: Update Screenshots
 on: # yamllint disable-line rule:truthy
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # Never cancel a screenshot push in flight
+
+permissions: {}
+
 jobs:
   update_screenshots:
+    name: Update Screenshots
     runs-on: ubuntu-latest
     permissions:
       contents: write # To push to the current branch
@@ -20,13 +27,15 @@ jobs:
         with:
           persist-credentials: true # Needed to be able to push screenshots
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Update Screenshots
-        run: ./gradlew updateDebugScreenshotTest updateFullDebugScreenshotTest
+        uses: $/.github/actions/monitor-resources
+        with:
+          run: ./gradlew updateDebugScreenshotTestDefaultTestSuite updateFullDebugScreenshotTestDefaultTestSuite
 
       - name: Commit and push changes
         run: |

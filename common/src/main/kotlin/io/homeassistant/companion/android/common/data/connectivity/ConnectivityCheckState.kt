@@ -9,7 +9,12 @@ sealed interface ConnectivityCheckResult {
     data object Pending : ConnectivityCheckResult
     data object InProgress : ConnectivityCheckResult
     data class Success(@StringRes val messageResId: Int, val details: String? = null) : ConnectivityCheckResult
-    data class Failure(@StringRes val messageResId: Int) : ConnectivityCheckResult
+
+    /**
+     * @param messageResId Message describing the failure, optionally a format string taking [details].
+     * @param details Value for the format argument of [messageResId], such as an HTTP status code.
+     */
+    data class Failure(@StringRes val messageResId: Int, val details: String? = null) : ConnectivityCheckResult
     data class NotApplicable(@StringRes val messageResId: Int) : ConnectivityCheckResult
 }
 

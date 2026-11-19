@@ -9,9 +9,6 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,12 +16,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ArrowLeft
+import io.github.timoptr.mdiicons.generated.HelpCircleOutline
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.nfc.NfcViewModel
@@ -41,6 +43,7 @@ fun LoadNfcView(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
 
     val navController = rememberNavController()
     val canNavigateUp = remember { mutableStateOf(false) }
@@ -62,7 +65,7 @@ fun LoadNfcView(
     LaunchedEffect("snackbar") {
         viewModel.nfcResultSnackbar.onEach {
             if (it != 0) {
-                scaffoldState.snackbarHostState.showSnackbar(context.getString(it))
+                scaffoldState.snackbarHostState.showSnackbar(resources.getString(it))
             }
         }.launchIn(this)
     }
@@ -90,7 +93,7 @@ fun LoadNfcView(
                         },
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            imageVector = Mdi.ArrowLeft.rememberImageVector(autoMirror = true),
                             contentDescription = stringResource(commonR.string.navigate_up),
                         )
                     }
@@ -107,7 +110,7 @@ fun LoadNfcView(
                         },
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.HelpOutline,
+                            imageVector = Mdi.HelpCircleOutline.rememberImageVector(autoMirror = true),
                             contentDescription = stringResource(commonR.string.get_help),
                             tint = colorResource(commonR.color.colorOnBackground),
                         )

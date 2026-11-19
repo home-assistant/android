@@ -17,7 +17,7 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
+import kotlinx.serialization.json.JsonPrimitive
 import timber.log.Timber
 
 /**
@@ -160,8 +160,8 @@ class FrontendDownloadManager @Inject constructor(
         val fallbackFilename = withContext(Dispatchers.IO) {
             URLUtil.guessFileName(url, contentDisposition, mimetype)
         }
-        val safeUrl = JSONObject.quote(url)
-        val safeFallbackFilename = JSONObject.quote(fallbackFilename)
+        val safeUrl = JsonPrimitive(url)
+        val safeFallbackFilename = JsonPrimitive(fallbackFilename)
         val blobCallback = externalBusCallback(
             jsonPayload = "{type:'handleBlob',data:reader.result,filename:$safeFallbackFilename}",
         )
@@ -171,7 +171,7 @@ class FrontendDownloadManager @Inject constructor(
                         const response = await fetch($safeUrl);
                         if (!response.ok) {
                             console.error('Blob download failed: HTTP ' + response.status + ' for ${
-            sensitive(safeUrl)
+            sensitive(safeUrl.toString())
         }');
                             return;
                         }

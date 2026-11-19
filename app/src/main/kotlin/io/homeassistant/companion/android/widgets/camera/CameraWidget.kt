@@ -19,6 +19,7 @@ import coil3.size.Size
 import coil3.toBitmap
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.FailFast
@@ -124,12 +125,9 @@ class CameraWidget : AppWidgetProvider() {
                     val urlState = serverManager.connectionStateProvider(
                         widget.serverId,
                     ).urlFlow().first()
-                    if (urlState is UrlState.HasUrl) {
-                        val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
-                        url = "$baseUrl$entityPictureUrl"
-                    } else {
-                        throw IllegalStateException("No URL available to retrieve picture")
-                    }
+                    check(urlState is UrlState.HasUrl) { "No URL available to retrieve picture" }
+                    val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
+                    url = "$baseUrl$entityPictureUrl"
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -210,7 +208,7 @@ class CameraWidget : AppWidgetProvider() {
 
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
         val entity = serverManager.integrationRepository(serverId).getEntity(entityId)
-        return entity?.attributes?.get("entity_picture")?.toString()
+        return entity?.entityPicturePath()
     }
 
     override fun onReceive(context: Context, intent: Intent) {

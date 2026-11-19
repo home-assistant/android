@@ -12,6 +12,7 @@ import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNames
+import kotlinx.serialization.json.JsonNull
 
 /**
  * Represents a single event emitted in a `subscribe_entities` websocket subscription. One event can
@@ -58,31 +59,18 @@ data class CompressedEntityState(
 ) {
     /**
      * Convert a compressed entity state to a normal [Entity]. This function can be used for new
-     * entities that are delivered in a compressed format.
+     * entities that are delivered in a compressed format. A state that isn't a string, or is
+     * missing, falls back to an empty one like when parsing an [Entity].
      */
     fun toEntity(entityId: String): Entity {
+        val lastChanged = checkNotNull(lastChanged) { "lastChanged must not be null" }
         return Entity(
             entityId = entityId,
-            state = checkNotNull(state) { "State must not be null" },
+            state = state ?: JsonNull,
             attributes = attributes,
-            lastChanged = LocalDateTime.ofEpochSecond(
-                round(
-                    checkNotNull(lastChanged) {
-                        "lastChanged must not be null"
-                    },
-                ).toLong(),
-                0,
-                ZoneOffset.UTC,
-            ),
-            lastUpdated = LocalDateTime.ofEpochSecond(
-                if (lastUpdated != null) {
-                    round(lastUpdated * 1000).toLong()
-                } else {
-                    round(lastChanged * 1000).toLong()
-                },
-                0,
-                ZoneOffset.UTC,
-            ),
+            lastChanged = LocalDateTime.ofEpochSecond(round(lastChanged).toLong(), 0, ZoneOffset.UTC),
+            // The subscription omits lastUpdated when it equals lastChanged
+            lastUpdated = LocalDateTime.ofEpochSecond(round(lastUpdated ?: lastChanged).toLong(), 0, ZoneOffset.UTC),
         )
     }
 }

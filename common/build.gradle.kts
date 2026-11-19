@@ -31,6 +31,8 @@ ksp {
 }
 
 dependencies {
+    api(libs.mdi.icons)
+
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
     implementation(libs.kotlinx.coroutines.core)
@@ -41,7 +43,6 @@ dependencies {
     implementation(libs.androidx.media)
 
     api(libs.androidx.room.runtime)
-    api(libs.androidx.room.ktx)
     api(libs.androidx.room.paging)
     ksp(libs.androidx.room.compiler)
     ksp(project(":provides-sensor-processor"))
@@ -57,15 +58,14 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.android.beacon.library)
 
-    implementation(libs.iconics.core)
-    implementation(libs.community.material.typeface)
-
     implementation(libs.emojiJava) {
         exclude(group = "org.json", module = "json")
     }
 
     androidTestImplementation(libs.bundles.androidx.test)
     androidTestImplementation(libs.androidx.room.testing)
+
+    testImplementation(libs.androidx.work.testing)
 
     // This fix an issue: provided Metadata instance has version 2.1.0, while maximum supported version is 2.0.0. To support newer versions, update the kotlinx-metadata-jvm library
     lintChecks(libs.androidx.runtime.lint)
@@ -81,7 +81,7 @@ dependencies {
     implementation(libs.media3.datasource.cronet) {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
-    implementation(libs.cronet.api)
+    implementation(libs.cronet)
 
     // Force patched protobuf-javalite version to fix CVE-2024-7254 (DoS via StackOverflow in nested groups/map fields)
     implementation(libs.protobuf.javalite)

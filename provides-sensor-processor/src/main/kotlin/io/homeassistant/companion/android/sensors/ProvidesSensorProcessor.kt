@@ -21,7 +21,6 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.ksp.KotlinPoetKspPreview
 import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.writeTo
 
@@ -108,7 +107,6 @@ class ProvidesSensorProcessor(
         type.resolve().declaration.qualifiedName?.asString() == BASIC_SENSOR_FQN
 
     /** Resolves how to reference the property from generated code, or null if it isn't statically reachable. */
-    @OptIn(KotlinPoetKspPreview::class)
     private fun referenceOrNull(property: KSPropertyDeclaration): CodeBlock? {
         // A private val is only visible within its own file/class, so the generated set builder (a
         // separate file) cannot reach it regardless of where it is declared.
@@ -125,7 +123,6 @@ class ProvidesSensorProcessor(
         }
     }
 
-    @OptIn(KotlinPoetKspPreview::class)
     private fun generateSet(references: List<CodeBlock>, originatingFiles: Array<KSFile>) {
         val objectName = GENERATED_OBJECT_PREFIX + moduleSuffix.replaceFirstChar { it.uppercase() }
 

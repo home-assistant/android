@@ -12,12 +12,6 @@ private const val DEFAULT_HTTP_PORT = 80
 private const val DEFAULT_HTTPS_PORT = 443
 private const val HTTPS_PROTOCOL = "https"
 
-private enum class SkipReason {
-    AFTER_DNS_FAILURE,
-    AFTER_SERVER_FAILURE,
-    INVALID_URL,
-}
-
 private data class ConnectionUrl(val hostname: String, val port: Int, val isHttps: Boolean)
 
 /**
@@ -46,12 +40,8 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
         // TLS Check
         state = tlsCheckOrEmitNotApplicable(state, isHttps, url)
 
-        // Server Connection Check
-        state = serverCheckEmitSkipIfFailed(state, url)
-        if (state.serverConnection is ConnectivityCheckResult.Failure) return@flow
-
-        // Home Assistant Verification Check
-        state = homeAssistantCheckAndEmit(state, url)
+        // Server Connection and Home Assistant Verification Checks, both answered by the manifest request
+        state = manifestCheckAndEmit(state, url)
     }
 
     /**
@@ -64,11 +54,11 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
      * @param check The suspend function that performs the actual connectivity check
      * @return The updated state after the check completes
      */
-    private suspend fun FlowCollector<ConnectivityCheckState>.runCheck(
+    private suspend fun <T> FlowCollector<ConnectivityCheckState>.runCheck(
         currentState: ConnectivityCheckState,
         setInProgress: (ConnectivityCheckState) -> ConnectivityCheckState,
-        setResult: (ConnectivityCheckState, ConnectivityCheckResult) -> ConnectivityCheckState,
-        check: suspend () -> ConnectivityCheckResult,
+        setResult: (ConnectivityCheckState, T) -> ConnectivityCheckState,
+        check: suspend () -> T,
     ): ConnectivityCheckState {
         val inProgressState = setInProgress(currentState)
         emit(inProgressState)
@@ -96,7 +86,7 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
                     dnsResolution = ConnectivityCheckResult.Failure(
                         commonR.string.connection_check_error_invalid_url,
                     ),
-                ).skip(SkipReason.INVALID_URL),
+                ).skipChecksAfterDns(),
             )
         }
 
@@ -110,7 +100,7 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
         check = { checker.dns(hostname) },
     ).let { updated ->
         updated.takeUnless { it.dnsResolution is ConnectivityCheckResult.Failure }
-            ?: updated.skip(SkipReason.AFTER_DNS_FAILURE).also { emit(it) }
+            ?: updated.skipChecksAfterDns().also { emit(it) }
     }
 
     private suspend fun FlowCollector<ConnectivityCheckState>.portCheckAndEmit(
@@ -141,50 +131,58 @@ internal class ConnectivityCheckRepositoryImpl @Inject constructor(private val c
         ),
     ).also { emit(it) }
 
-    private suspend fun FlowCollector<ConnectivityCheckState>.serverCheckEmitSkipIfFailed(
+    /**
+     * Runs the single manifest request behind the server connection and the Home Assistant verification
+     * checks, so the two can never contradict each other.
+     */
+    private suspend fun FlowCollector<ConnectivityCheckState>.manifestCheckAndEmit(
         state: ConnectivityCheckState,
         url: String,
     ): ConnectivityCheckState = runCheck(
         currentState = state,
-        setInProgress = { it.copy(serverConnection = ConnectivityCheckResult.InProgress) },
-        setResult = { s, r -> s.copy(serverConnection = r) },
-        check = { checker.server(url) },
-    ).let { updated ->
-        updated.takeUnless { it.serverConnection is ConnectivityCheckResult.Failure }
-            ?: updated.skip(SkipReason.AFTER_SERVER_FAILURE).also { emit(it) }
-    }
-
-    private suspend fun FlowCollector<ConnectivityCheckState>.homeAssistantCheckAndEmit(
-        state: ConnectivityCheckState,
-        url: String,
-    ): ConnectivityCheckState = runCheck(
-        currentState = state,
-        setInProgress = { it.copy(homeAssistantVerification = ConnectivityCheckResult.InProgress) },
-        setResult = { s, r -> s.copy(homeAssistantVerification = r) },
+        setInProgress = {
+            it.copy(
+                serverConnection = ConnectivityCheckResult.InProgress,
+                homeAssistantVerification = ConnectivityCheckResult.InProgress,
+            )
+        },
+        setResult = { s, r -> s.withManifestResult(r) },
         check = { checker.homeAssistant(url) },
     )
 
-    /**
-     * Marks remaining connectivity checks as skipped based on which check failed.
-     *
-     * - [SkipReason.AFTER_DNS_FAILURE]: Skips port, TLS, server, and Home Assistant checks.
-     * - [SkipReason.AFTER_SERVER_FAILURE]: Skips only the Home Assistant verification check.
-     */
-    private fun ConnectivityCheckState.skip(reason: SkipReason): ConnectivityCheckState {
-        val skipped = ConnectivityCheckResult.Failure(commonR.string.connection_check_skipped)
-        return when (reason) {
-            SkipReason.INVALID_URL,
-            SkipReason.AFTER_DNS_FAILURE,
-            -> copy(
-                portReachability = skipped,
-                tlsCertificate = skipped,
-                serverConnection = skipped,
-                homeAssistantVerification = skipped,
+    private fun ConnectivityCheckState.withManifestResult(result: ManifestCheckResult): ConnectivityCheckState {
+        val answered = ConnectivityCheckResult.Success(commonR.string.connection_check_server_success)
+        return when (result) {
+            is ManifestCheckResult.NotReached -> copy(
+                serverConnection = result.failure,
+                homeAssistantVerification = ConnectivityCheckResult.Failure(commonR.string.connection_check_skipped),
             )
-            SkipReason.AFTER_SERVER_FAILURE -> copy(
-                homeAssistantVerification = skipped,
+            is ManifestCheckResult.NotVerified -> copy(
+                serverConnection = answered,
+                homeAssistantVerification = result.failure,
+            )
+            ManifestCheckResult.Verified -> copy(
+                serverConnection = answered,
+                homeAssistantVerification = ConnectivityCheckResult.Success(
+                    commonR.string.connection_check_home_assistant_success,
+                ),
             )
         }
+    }
+
+    /**
+     * Marks every check that needs a resolved hostname as skipped. Only valid once the DNS resolution
+     * has been settled as a failure, either because the URL is invalid or because the hostname does
+     * not resolve.
+     */
+    private fun ConnectivityCheckState.skipChecksAfterDns(): ConnectivityCheckState {
+        val skipped = ConnectivityCheckResult.Failure(commonR.string.connection_check_skipped)
+        return copy(
+            portReachability = skipped,
+            tlsCertificate = skipped,
+            serverConnection = skipped,
+            homeAssistantVerification = skipped,
+        )
     }
 
     /**

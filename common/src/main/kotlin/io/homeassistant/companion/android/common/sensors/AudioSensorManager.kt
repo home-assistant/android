@@ -7,6 +7,26 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Alarm
+import io.github.timoptr.mdiicons.generated.Assistant
+import io.github.timoptr.mdiicons.generated.BellRing
+import io.github.timoptr.mdiicons.generated.CellphoneSound
+import io.github.timoptr.mdiicons.generated.Headphones
+import io.github.timoptr.mdiicons.generated.HeadphonesOff
+import io.github.timoptr.mdiicons.generated.Human
+import io.github.timoptr.mdiicons.generated.MessageVideo
+import io.github.timoptr.mdiicons.generated.Microphone
+import io.github.timoptr.mdiicons.generated.MicrophoneMessage
+import io.github.timoptr.mdiicons.generated.MicrophoneOff
+import io.github.timoptr.mdiicons.generated.Music
+import io.github.timoptr.mdiicons.generated.MusicOff
+import io.github.timoptr.mdiicons.generated.Phone
+import io.github.timoptr.mdiicons.generated.PhoneRing
+import io.github.timoptr.mdiicons.generated.Vibrate
+import io.github.timoptr.mdiicons.generated.VolumeHigh
+import io.github.timoptr.mdiicons.generated.VolumeLow
+import io.github.timoptr.mdiicons.generated.VolumeOff
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
@@ -35,7 +55,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_ringer_mode,
             commonR.string.sensor_description_audio_sensor,
-            "mdi:volume-high",
+            Mdi.VolumeHigh,
             deviceClass = "enum",
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -46,7 +66,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_audio_mode,
             commonR.string.sensor_description_audio_mode,
-            "mdi:volume-high",
+            Mdi.VolumeHigh,
             deviceClass = "enum",
         )
 
@@ -56,7 +76,7 @@ class AudioSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.sensor_name_headphone,
             commonR.string.sensor_description_headphone,
-            "mdi:headphones",
+            Mdi.Headphones,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
 
@@ -66,7 +86,7 @@ class AudioSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.sensor_name_mic_muted,
             commonR.string.sensor_description_mic_muted,
-            "mdi:microphone-off",
+            Mdi.MicrophoneOff,
             updateType =
             if (SdkVersion.isAtLeast(Build.VERSION_CODES.P)) {
                 SensorManager.BasicSensor.UpdateType.INTENT
@@ -81,7 +101,7 @@ class AudioSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.sensor_name_music_active,
             commonR.string.sensor_description_music_active,
-            "mdi:music",
+            Mdi.Music,
         )
 
         @ProvidesSensor
@@ -90,7 +110,7 @@ class AudioSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.sensor_name_speakerphone,
             commonR.string.sensor_description_speakerphone,
-            "mdi:volume-high",
+            Mdi.VolumeHigh,
             updateType =
             if (SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
                 SensorManager.BasicSensor.UpdateType.INTENT
@@ -105,7 +125,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_volume_alarm,
             commonR.string.sensor_description_volume_alarm,
-            "mdi:alarm",
+            Mdi.Alarm,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -116,7 +136,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_volume_call,
             commonR.string.sensor_description_volume_call,
-            "mdi:phone",
+            Mdi.Phone,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -127,7 +147,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_volume_music,
             commonR.string.sensor_description_volume_music,
-            "mdi:music",
+            Mdi.Music,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -138,7 +158,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_volume_ring,
             commonR.string.sensor_description_volume_ring,
-            "mdi:phone-ring",
+            Mdi.PhoneRing,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -149,7 +169,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_volume_notification,
             commonR.string.sensor_description_volume_notification,
-            "mdi:bell-ring",
+            Mdi.BellRing,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -160,7 +180,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_volume_system,
             commonR.string.sensor_description_volume_system,
-            "mdi:cellphone-sound",
+            Mdi.CellphoneSound,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -171,7 +191,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_volume_accessibility,
             commonR.string.sensor_description_volume_accessibility,
-            "mdi:human",
+            Mdi.Human,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -182,7 +202,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_volume_dtmf,
             commonR.string.sensor_description_volume_dtmf,
-            "mdi:volume-high",
+            Mdi.VolumeHigh,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -193,7 +213,7 @@ class AudioSensorManager @Inject constructor(
             "sensor",
             commonR.string.sensor_name_volume_assistant,
             commonR.string.sensor_description_volume_assistant,
-            "mdi:assistant",
+            Mdi.Assistant,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
@@ -264,10 +284,10 @@ class AudioSensorManager @Inject constructor(
         }
 
         val icon = when (audioManager.ringerMode) {
-            AudioManager.RINGER_MODE_NORMAL -> "mdi:volume-high"
-            AudioManager.RINGER_MODE_SILENT -> "mdi:volume-off"
-            AudioManager.RINGER_MODE_VIBRATE -> "mdi:vibrate"
-            else -> "mdi:volume-low"
+            AudioManager.RINGER_MODE_NORMAL -> Mdi.VolumeHigh
+            AudioManager.RINGER_MODE_SILENT -> Mdi.VolumeOff
+            AudioManager.RINGER_MODE_VIBRATE -> Mdi.Vibrate
+            else -> Mdi.VolumeLow
         }
 
         onSensorUpdated(
@@ -297,15 +317,15 @@ class AudioSensorManager @Inject constructor(
         }
 
         val icon = when (audioManager.mode) {
-            AudioManager.MODE_NORMAL -> "mdi:volume-high"
-            AudioManager.MODE_RINGTONE -> "mdi:phone-ring"
-            AudioManager.MODE_IN_CALL -> "mdi:phone"
-            AudioManager.MODE_IN_COMMUNICATION -> "mdi:message-video"
-            AudioManager.MODE_CALL_SCREENING -> "mdi:microphone-message"
-            AudioManager.MODE_CALL_REDIRECT -> "mdi:phone"
-            AudioManager.MODE_COMMUNICATION_REDIRECT -> "mdi:message-video"
-            AudioManager.MODE_ASSISTANT_CONVERSATION -> "mdi:assistant"
-            else -> "mdi:volume-low"
+            AudioManager.MODE_NORMAL -> Mdi.VolumeHigh
+            AudioManager.MODE_RINGTONE -> Mdi.PhoneRing
+            AudioManager.MODE_IN_CALL -> Mdi.Phone
+            AudioManager.MODE_IN_COMMUNICATION -> Mdi.MessageVideo
+            AudioManager.MODE_CALL_SCREENING -> Mdi.MicrophoneMessage
+            AudioManager.MODE_CALL_REDIRECT -> Mdi.Phone
+            AudioManager.MODE_COMMUNICATION_REDIRECT -> Mdi.MessageVideo
+            AudioManager.MODE_ASSISTANT_CONVERSATION -> Mdi.Assistant
+            else -> Mdi.VolumeLow
         }
 
         onSensorUpdated(
@@ -343,7 +363,7 @@ class AudioSensorManager @Inject constructor(
             }
         }
 
-        val icon = if (isHeadphones) "mdi:headphones" else "mdi:headphones-off"
+        val icon = if (isHeadphones) Mdi.Headphones else Mdi.HeadphonesOff
 
         onSensorUpdated(
             headphoneState,
@@ -360,7 +380,7 @@ class AudioSensorManager @Inject constructor(
 
         val isMicMuted = audioManager.isMicrophoneMute
 
-        val icon = if (!isMicMuted) "mdi:microphone" else "mdi:microphone-off"
+        val icon = if (!isMicMuted) Mdi.Microphone else Mdi.MicrophoneOff
 
         onSensorUpdated(
             micMuted,
@@ -377,7 +397,7 @@ class AudioSensorManager @Inject constructor(
 
         val isMusicActive = audioManager.isMusicActive
 
-        val icon = if (isMusicActive) "mdi:music" else "mdi:music-off"
+        val icon = if (isMusicActive) Mdi.Music else Mdi.MusicOff
 
         onSensorUpdated(
             musicActive,
@@ -396,7 +416,7 @@ class AudioSensorManager @Inject constructor(
         @Suppress("DEPRECATION")
         val isSpeakerOn = audioManager.isSpeakerphoneOn
 
-        val icon = if (isSpeakerOn) "mdi:volume-high" else "mdi:volume-off"
+        val icon = if (isSpeakerOn) Mdi.VolumeHigh else Mdi.VolumeOff
 
         onSensorUpdated(
             speakerphoneState,

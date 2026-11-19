@@ -14,14 +14,14 @@ import io.homeassistant.companion.android.util.previewEntity2
 class EntityListViewPreviewsTest {
 
     @PreviewTest
-    @Preview(device = WearDevices.LARGE_ROUND)
+    @Preview(device = WearDevices.LARGE_ROUND, showBackground = true, backgroundColor = 0xFF000000)
     @Composable
     private fun PreviewEntityListView() {
         EntityViewList(
             entityLists = mapOf(
                 stringResource(R.string.lights) to listOf(
-                    EntityDisplayWithoutContext(previewEntity1),
-                    EntityDisplayWithoutContext(previewEntity2),
+                    EntityDisplayWithoutContext(previewEntity1, name = "Main"),
+                    EntityDisplayWithoutContext(previewEntity2, name = "Floor secondary"),
                 ),
             ),
             entityListsOrder = listOf(stringResource(R.string.lights)),

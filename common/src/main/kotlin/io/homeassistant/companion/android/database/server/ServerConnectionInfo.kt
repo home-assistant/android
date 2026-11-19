@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.database.server
 
-import androidx.room.ColumnInfo
-import androidx.room.Ignore
-import androidx.room.TypeConverter
+import androidx.room3.ColumnInfo
+import androidx.room3.ColumnTypeConverter
+import androidx.room3.Ignore
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.util.hasSameOrigin
 import kotlinx.serialization.SerializationException
@@ -86,6 +86,15 @@ data class ServerConnectionInfo(
         )
     }
 
+    @get:Ignore
+    internal val frontendHttpUrls: List<HttpUrl> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        listOfNotNull(
+            externalHttpUrl,
+            internalHttpUrl,
+            cloudHttpUrl,
+        )
+    }
+
     /**
      * Indicates whether at least one URL is configured and parsable.
      */
@@ -153,16 +162,27 @@ data class ServerConnectionInfo(
         val httpUrl = url.toHttpUrlOrNull() ?: return false
         return httpUrls.any { httpUrl.hasSameOrigin(it) }
     }
+
+    /**
+     * Checks if the given URL belongs to a frontend origin of this server..
+     *
+     * @param url the URL to check (must be a valid URL string)
+     * @return `true` if the URL belongs to one of this server's frontend origins
+     */
+    fun isFrontendUrl(url: String): Boolean {
+        val httpUrl = url.toHttpUrlOrNull() ?: return false
+        return frontendHttpUrls.any { httpUrl.hasSameOrigin(it) }
+    }
 }
 
 /**
- * Room [TypeConverter] for serializing SSID lists to/from JSON strings.
+ * Room [ColumnTypeConverter] for serializing SSID lists to/from JSON strings.
  *
  * Converts `List<String>` to a JSON array string for database storage and vice versa.
  * Handles edge cases like empty lists, blank strings, and invalid JSON gracefully.
  */
-class InternalSsidTypeConverter {
-    @TypeConverter
+class InternalSsidColumnTypeConverter {
+    @ColumnTypeConverter
     fun fromStringToList(value: String): List<String> {
         return if (value == "[]" || value.isBlank()) {
             emptyList()
@@ -175,7 +195,7 @@ class InternalSsidTypeConverter {
         }
     }
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromListToString(value: List<String>): String {
         return if (value.isEmpty()) {
             "[]"

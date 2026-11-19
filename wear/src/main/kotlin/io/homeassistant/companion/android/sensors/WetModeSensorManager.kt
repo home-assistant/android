@@ -3,6 +3,9 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Water
+import io.github.timoptr.mdiicons.generated.WaterOff
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
@@ -24,7 +27,7 @@ class WetModeSensorManager @Inject constructor(
             "binary_sensor",
             commonR.string.sensor_name_wet_mode,
             commonR.string.sensor_description_wet_mode,
-            "mdi:water-off",
+            Mdi.WaterOff,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT_ONLY,
         )
@@ -71,7 +74,7 @@ class WetModeSensorManager @Inject constructor(
         onSensorUpdated(
             wetModeSensor,
             wetModeEnabled,
-            if (wetModeEnabled) "mdi:water" else wetModeSensor.statelessIcon,
+            if (wetModeEnabled) Mdi.Water else wetModeSensor.statelessIcon,
             mapOf(),
         )
     }

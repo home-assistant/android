@@ -21,7 +21,6 @@ interface IntegrationRepository {
 
     suspend fun registerDevice(deviceRegistration: DeviceRegistration)
     suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean = true)
-    suspend fun getRegistration(): DeviceRegistration
     suspend fun deletePreferences()
 
     suspend fun getNotificationRateLimits(): RateLimitResponse
@@ -38,8 +37,6 @@ interface IntegrationRepository {
 
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
-
-    suspend fun setSessionExpireMillis(value: Long)
 
     suspend fun getHomeAssistantVersion(): String
     suspend fun isHomeAssistantVersionAtLeast(year: Int, month: Int, release: Int): Boolean

@@ -6,7 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -20,11 +21,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -50,6 +49,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Check
+import io.github.timoptr.mdiicons.generated.Microphone
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.assist.wakeword.MicroWakeWordModelConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
@@ -132,6 +135,7 @@ fun AssistSettingsScreen(viewModel: AssistSettingsViewModel, modifier: Modifier 
             onSetDefaultAssistant = {
                 roleRequestLauncher.launch(viewModel.getSetDefaultAssistantIntent())
             },
+            onToggleListeningChime = viewModel::onToggleListeningChime,
             onToggleWakeWord = { enabled ->
                 if (enabled && !togglePermissionState.status.isGranted) {
                     togglePermissionState.launchPermissionRequest()
@@ -153,6 +157,7 @@ internal fun AssistSettingsContent(
     uiState: AssistSettingsUiState,
     hasAudioPermission: Boolean,
     onSetDefaultAssistant: () -> Unit,
+    onToggleListeningChime: (Boolean) -> Unit,
     onToggleWakeWord: (Boolean) -> Unit,
     onSelectWakeWord: (MicroWakeWordModelConfig) -> Unit,
     onStartTestWakeWord: () -> Unit,
@@ -177,6 +182,15 @@ internal fun AssistSettingsContent(
             DefaultAssistantCard(
                 isDefault = uiState.isDefaultAssistant,
                 onSetDefault = onSetDefaultAssistant,
+            )
+
+            Spacer(modifier = Modifier.height(HADimens.SPACE2))
+
+            SettingsSwitchRow(
+                text = stringResource(commonR.string.assist_listening_chime_enable),
+                checked = uiState.isListeningChimeEnabled,
+                canToggle = true,
+                onToggle = onToggleListeningChime,
             )
 
             Spacer(modifier = Modifier.height(HADimens.SPACE2))
@@ -224,9 +238,10 @@ private fun ColumnScope.WakeWordSection(
     onStopTestWakeWord: () -> Unit,
 ) {
     val isWakeWordEnabled = uiState.isWakeWordEnabled && hasAudioPermission
-    WakeWordEnableRow(
-        enabled = isWakeWordEnabled,
-        canEnable = uiState.isDefaultAssistant,
+    SettingsSwitchRow(
+        text = stringResource(commonR.string.assist_wake_word_enable),
+        checked = isWakeWordEnabled,
+        canToggle = uiState.isDefaultAssistant,
         onToggle = onToggleWakeWord,
     )
 
@@ -270,7 +285,7 @@ private fun DefaultAssistantCard(isDefault: Boolean, onSetDefault: () -> Unit) {
             ) {
                 if (isDefault) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = Mdi.Check.rememberImageVector(),
                         contentDescription = null,
                         tint = colorScheme.colorOnSuccessNormal,
                         modifier = Modifier.size(24.dp),
@@ -300,13 +315,21 @@ private fun DefaultAssistantCard(isDefault: Boolean, onSetDefault: () -> Unit) {
 }
 
 @Composable
-private fun WakeWordEnableRow(enabled: Boolean, canEnable: Boolean, onToggle: (Boolean) -> Unit) {
+private fun SettingsSwitchRow(text: String, checked: Boolean, canToggle: Boolean, onToggle: (Boolean) -> Unit) {
     val colorScheme = LocalHAColorScheme.current
+    val interactionSource = remember { MutableInteractionSource() }
 
     HASettingsCard(
+        // One accessibility node announcing the label and the on/off state together
         modifier = Modifier.clip(RoundedCornerShape(HARadius.XL))
-            .clickable(role = Role.Switch) { onToggle(!enabled) }.takeIf { canEnable }
-            ?: Modifier,
+            .toggleable(
+                value = checked && canToggle,
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                enabled = canToggle,
+                role = Role.Switch,
+                onValueChange = onToggle,
+            ),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -314,16 +337,17 @@ private fun WakeWordEnableRow(enabled: Boolean, canEnable: Boolean, onToggle: (B
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(commonR.string.assist_wake_word_enable),
+                text = text,
                 style = HATextStyle.Body,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Start,
-                color = if (canEnable) colorScheme.colorTextPrimary else colorScheme.colorTextDisabled,
+                color = if (canToggle) colorScheme.colorTextPrimary else colorScheme.colorTextDisabled,
             )
             HASwitch(
-                checked = enabled && canEnable,
-                onCheckedChange = onToggle,
-                enabled = canEnable,
+                checked = checked && canToggle,
+                onCheckedChange = null,
+                enabled = canToggle,
+                interactionSource = interactionSource,
             )
         }
     }
@@ -378,7 +402,7 @@ private fun WakeWordTestSection(
                 onClick = if (isTesting) onStopTest else onStartTest,
                 prefix = {
                     Icon(
-                        imageVector = Icons.Default.Mic,
+                        imageVector = Mdi.Microphone.rememberImageVector(),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
                     )
@@ -403,7 +427,7 @@ private fun WakeWordTestSection(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Check,
+                        imageVector = Mdi.Check.rememberImageVector(),
                         contentDescription = null,
                         tint = colorScheme.colorOnSuccessNormal,
                         modifier = Modifier.size(24.dp),
@@ -435,6 +459,7 @@ private fun AssistSettingsContentPreview() {
             ),
             hasAudioPermission = true,
             onSetDefaultAssistant = {},
+            onToggleListeningChime = {},
             onToggleWakeWord = {},
             onSelectWakeWord = {},
             onStartTestWakeWord = {},
@@ -457,6 +482,7 @@ private fun AssistSettingsContentNotDefaultPreview() {
             ),
             hasAudioPermission = false,
             onSetDefaultAssistant = {},
+            onToggleListeningChime = {},
             onToggleWakeWord = {},
             onSelectWakeWord = {},
             onStartTestWakeWord = {},
@@ -479,6 +505,7 @@ private fun AssistSettingsContentUnsupportedDevicePreview() {
             ),
             hasAudioPermission = true,
             onSetDefaultAssistant = {},
+            onToggleListeningChime = {},
             onToggleWakeWord = {},
             onSelectWakeWord = {},
             onStartTestWakeWord = {},

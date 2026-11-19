@@ -5,8 +5,9 @@ import android.os.Build
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.turbineScope
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import dagger.hilt.android.testing.HiltTestApplication
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Account
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
@@ -14,7 +15,7 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.mdiName
 import io.homeassistant.companion.android.database.qs.TileDao
 import io.homeassistant.companion.android.database.qs.TileEntity
@@ -132,7 +133,7 @@ class ManageTilesViewModelTest {
     }
 
     @Test
-    fun `Given a saved tile id when created then that tile is selected and tile_data_missing is emitted`() = runTest {
+    fun `Given a saved tile id when created then that tile is selected and tile_data_missing is sent`() = runTest {
         val targetId = tileSlots[1].id
 
         turbineScope {
@@ -143,6 +144,22 @@ class ManageTilesViewModelTest {
             assertEquals(tileSlots[1].id, viewModel.state.value.selectedTileId)
             assertEquals(commonR.string.tile_data_missing, snackbar.awaitItem())
             snackbar.cancelAndConsumeRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given tile_data_missing already shown when the screen collects again then it is not shown again`() = runTest {
+        val viewModel = createViewModel(SavedStateHandle(mapOf("id" to tileSlots[1].id.value)))
+        advanceUntilIdle()
+
+        turbineScope {
+            val snackbar = viewModel.tileInfoSnackbar.testIn(backgroundScope)
+            assertEquals(commonR.string.tile_data_missing, snackbar.awaitItem())
+            snackbar.cancelAndIgnoreRemainingEvents()
+        }
+        // A new collector, e.g. the screen after a rotation, must not show the snackbar again
+        turbineScope {
+            viewModel.tileInfoSnackbar.testIn(backgroundScope).expectNoEvents()
         }
     }
 
@@ -243,7 +260,7 @@ class ManageTilesViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        val icon = CommunityMaterial.getIconByMdiName("mdi:account")!!
+        val icon = Mdi.Account
         viewModel.selectIcon(icon)
 
         assertTrue(viewModel.state.value.customIcon === icon)
@@ -280,7 +297,7 @@ class ManageTilesViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        val icon = CommunityMaterial.getIconByMdiName("mdi:account")!!
+        val icon = Mdi.Account
         viewModel.selectIcon(icon)
         viewModel.selectEntityId("light.y")
 
@@ -289,7 +306,7 @@ class ManageTilesViewModelTest {
     }
 
     @Test
-    fun `Given current state when addTile then tileDao receives a TileEntity with the mapped fields and tile_updated is emitted`() = runTest {
+    fun `Given current state when addTile then tileDao receives a TileEntity with the mapped fields and tile_updated is sent`() = runTest {
         // Store a tile so that selectedTileId is populated from the DB primary key.
         val tileId = tileSlots[0].id.value
         val storedTile = fakeTile(
@@ -310,7 +327,7 @@ class ManageTilesViewModelTest {
         viewModel.selectEntityId("light.z")
         viewModel.setShouldVibrate(true)
         viewModel.setAuthRequired(true)
-        viewModel.selectIcon(CommunityMaterial.getIconByMdiName("mdi:account")!!)
+        viewModel.selectIcon(Mdi.fromHaName("mdi:account")!!)
 
         turbineScope {
             // Subscribe before calling addTile so we don't miss the emission.
@@ -320,7 +337,7 @@ class ManageTilesViewModelTest {
             advanceUntilIdle()
 
             // On SDK S (31 < TIRAMISU 33) the StatusBarManager branch is skipped and
-            // tile_updated is emitted unconditionally.
+            // tile_updated is sent unconditionally.
             coVerify(exactly = 1) {
                 tileDao.add(
                     match {
@@ -502,7 +519,7 @@ class ManageTilesViewModelTest {
         // reach the final state, while the second (newer) server resolves quickly with the entity
         // that is expected to win. Without cancelling the stale in-flight collection, the slow flow
         // would emit last and clobber the fresh one.
-        val icon = CommunityMaterial.getIconByMdiName("mdi:account")!!
+        val icon = Mdi.Account
         every { entitiesForDisplayManager.snapshotInContext(1, any<(Entity) -> Boolean>()) } returns flow {
             emit(EntityDisplayState.Loading)
             delay(100.milliseconds)

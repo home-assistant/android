@@ -33,4 +33,20 @@ class ProvidedSensorSetTest {
         assertTrue(ids.contains("car_fuel"))
         assertTrue(ids.contains("car_speed"))
     }
+
+    // A duplicated setting name resolves inconsistently: SensorRepository keys declarations by name
+    // and keeps the last, while SensorManager.getSetting keeps the first.
+    @Test
+    fun `Given hilt graph then every sensor declares its settings with unique names`() {
+        hilt.inject()
+        val duplicatesBySensor = sensors
+            .associate { sensor -> sensor.id to sensor.settings.groupBy { it.name }.filterValues { it.size > 1 }.keys }
+            .filterValues { it.isNotEmpty() }
+
+        assertEquals(
+            "Sensor(s) declaring the same setting name twice: $duplicatesBySensor",
+            emptyMap<String, Set<String>>(),
+            duplicatesBySensor,
+        )
+    }
 }

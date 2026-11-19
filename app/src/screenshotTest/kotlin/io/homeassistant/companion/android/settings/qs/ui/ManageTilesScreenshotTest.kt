@@ -4,13 +4,14 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.android.tools.screenshot.PreviewTest
-import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.github.timoptr.mdiicons.Mdi
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
-import io.homeassistant.companion.android.common.util.getIconByMdiName
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.TileId
+import io.homeassistant.companion.android.settings.qs.TileSlotItem
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
 class ManageTilesScreenshotTest {
@@ -83,7 +84,7 @@ class ManageTilesScreenshotTest {
             ManageTilesContent(
                 snackbarHostState = remember { SnackbarHostState() },
                 state = addTileState.copy(
-                    customIcon = CommunityMaterial.getIconByMdiName("mdi:account"),
+                    customIcon = Mdi.fromHaName("mdi:account"),
                     selectedEntityId = "light.living_room",
                 ),
                 submitEnabled = false,
@@ -104,6 +105,11 @@ class ManageTilesScreenshotTest {
     private companion object {
         val addTileState = ManageTilesState(
             selectedTileId = TileId("tile_1"),
+            // Explicit slots: the default ones load the tile services, which the renderer cannot do
+            tileSlotItems = listOf(
+                TileSlotItem(id = TileId("tile_1"), nameRes = commonR.string.tile_1, label = null),
+                TileSlotItem(id = TileId("tile_2"), nameRes = commonR.string.tile_2, label = null),
+            ),
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
             tileLabel = "",

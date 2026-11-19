@@ -10,9 +10,17 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.HiltComponentActivity
 import io.homeassistant.companion.android.common.util.FailFast
+import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.runs
+import io.mockk.unmockkAll
 import io.mockk.verify
 import io.mockk.verifyOrder
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -33,6 +41,58 @@ class HAWebViewTest {
 
     private val webView = mockk<WebView>(relaxed = true)
     private val manager = mockk<WebViewTimersManager>(relaxed = true)
+
+    @After
+    fun tearDown() {
+        unmockkAll()
+    }
+
+    // region Debugging toggle
+
+    @Test
+    fun `Given debugging enabled when the WebView is created then contents debugging is enabled first`() {
+        mockkStatic(WebView::class)
+        every { WebView.setWebContentsDebuggingEnabled(any()) } just runs
+        var failure: Throwable? = null
+
+        composeTestRule.setContent {
+            HAWebView(onWebViewCreationFailed = { failure = it }, debuggingEnabled = true)
+        }
+        composeTestRule.waitForIdle()
+
+        assertNull(failure)
+        verify { WebView.setWebContentsDebuggingEnabled(true) }
+    }
+
+    @Test
+    fun `Given debugging unknown when the WebView is created then contents debugging is never disabled`() {
+        mockkStatic(WebView::class)
+        every { WebView.setWebContentsDebuggingEnabled(any()) } just runs
+
+        composeTestRule.setContent {
+            HAWebView(onWebViewCreationFailed = {}, debuggingEnabled = null)
+        }
+        composeTestRule.waitForIdle()
+
+        verify(exactly = 0) { WebView.setWebContentsDebuggingEnabled(false) }
+    }
+
+    @Test
+    fun `Given the WebView provider fails to start when the WebView is created then the failure is reported`() {
+        // Chromium refuses to start when another process of the app still holds the data-directory lock
+        mockkStatic(WebView::class)
+        every { WebView.setWebContentsDebuggingEnabled(any()) } throws RuntimeException("lock owner unknown")
+        var failure: Throwable? = null
+
+        composeTestRule.setContent {
+            HAWebView(onWebViewCreationFailed = { failure = it }, debuggingEnabled = true)
+        }
+        composeTestRule.waitForIdle()
+
+        assertEquals("lock owner unknown", failure?.message)
+    }
+
+    // endregion
 
     // region WebViewTimersManager
 
