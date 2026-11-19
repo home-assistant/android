@@ -26,6 +26,12 @@ fun NotificationManagerCompat.getActiveNotification(tag: String?, id: Int): Stat
 fun NotificationManagerCompat.getActiveNotificationGroup(tag: String?, id: Int): String? =
     getActiveNotification(tag, id)?.notification?.group?.takeIf { it.isNotBlank() }
 
+/**
+ * Check if the notification with the given [tag] and [id] is part of a group, and if it is cancel
+ * the related group if it is the last notification part of that group.
+ *
+ * @return `true` if a group notification was canceled
+ */
 fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolean = cancelNotificationGroupIfNeeded(
     this.getNotificationManager(),
     tag,
@@ -81,7 +87,7 @@ fun cancelNotificationGroupIfNeeded(
                 !isGroupSummary &&
                 groupNotifications.size == 2
             ) {
-                val group = groupNotifications[0].notification.group
+                val group = statusBarNotification.notification.group
 
                 if (isGroupSummary) {
                     Timber.d(
