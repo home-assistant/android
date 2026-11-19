@@ -256,8 +256,8 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     /**
      * Drive the HA → device Thread credential add flow triggered by the frontend Thread panel.
      *
-     * Unlike [onImportThreadCredentials], this flow does not launch a Play Services
-     * `IntentSender` — the credential is added directly via [ThreadManager.addCredentialToDevice].
+     * Unlike [onImportThreadCredentials], this flow does not launch an `IntentSender` — the
+     * credential is added directly via [ThreadManager.addCredentialToDevice].
      * The shape is therefore:
      *  1. progress dialog while [ThreadManager.predictPreferredOutcome] reads the stored
      *     credentials state;
