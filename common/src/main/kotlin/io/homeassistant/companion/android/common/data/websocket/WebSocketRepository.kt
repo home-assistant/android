@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket
 
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
@@ -41,7 +42,14 @@ interface WebSocketRepository {
     suspend fun sendPing(): Boolean
     suspend fun getCurrentUser(): CurrentUserResponse?
     suspend fun getConfig(): GetConfigResponse?
-    suspend fun getStates(): List<EntityResponse>?
+
+    /**
+     * Current state of the entities selected by [filter], or of every entity when it is empty, as
+     * the server treats an empty filter. The server only sends the selected states when it supports
+     * it (2022.4 for entity ids, 2024.9 for domains), otherwise every state is fetched and filtered
+     * on the device.
+     */
+    suspend fun getStates(filter: EntityFilter = EntityFilter()): List<EntityResponse>?
     suspend fun getAreaRegistry(): List<AreaRegistryResponse>?
     suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>?
     suspend fun getEntityRegistry(): List<EntityRegistryResponse>?
@@ -63,8 +71,13 @@ interface WebSocketRepository {
     suspend fun getServices(): List<DomainResponse>?
     suspend fun getStateChanges(): Flow<StateChangedEvent>?
     suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>?
-    suspend fun getCompressedStateAndChanges(): Flow<CompressedStateChangedEvent>?
-    suspend fun getCompressedStateAndChanges(entityIds: List<String>): Flow<CompressedStateChangedEvent>?
+
+    /**
+     * State changes of the entities selected by [filter], or of every entity when it is empty, as
+     * the server treats an empty filter. The filtering is left to the server: requires Home
+     * Assistant 2022.4 or later, and 2024.9 or later when [filter] selects domains.
+     */
+    suspend fun getCompressedStateAndChanges(filter: EntityFilter = EntityFilter()): Flow<CompressedStateChangedEvent>?
     suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>?
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?

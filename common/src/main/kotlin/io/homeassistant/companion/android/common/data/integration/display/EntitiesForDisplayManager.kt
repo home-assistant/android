@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.integration.display
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.integrationRepositoryOrNull
@@ -274,7 +275,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
             if (entityIds == null) {
                 integrationRepository.getEntityUpdates()
             } else {
-                integrationRepository.getEntityUpdates(entityIds)
+                integrationRepository.getEntityUpdates(EntityFilter(entityIds = entityIds.toSet()))
             }
         }
 

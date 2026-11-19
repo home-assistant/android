@@ -80,6 +80,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -684,6 +685,11 @@ internal class WebSocketCoreImpl(
             }
             (existingFlow ?: createSubscriptionFlow<T>(subscribeMessage, timeout, reconnectPolicy)) as? Flow<T>
         }
+    }
+
+    override suspend fun <T : Any> firstEventOf(type: String, data: Map<String, Any?>): T? {
+        // Never shared and not restored: the event is the answer to this one request
+        return subscribeTo<T>(type, data, reconnectPolicy = SubscriptionReconnectPolicy.Complete)?.firstOrNull()
     }
 
     override fun shutdown() {

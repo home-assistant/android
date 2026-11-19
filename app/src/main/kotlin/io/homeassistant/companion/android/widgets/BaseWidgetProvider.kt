@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.WidgetDao
@@ -116,7 +117,9 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
                 val (serverId, entities) = pair.first to pair.second
                 val entityUpdates =
                     if (serverManager.getServer(serverId) != null) {
-                        serverManager.integrationRepository(serverId).getEntityUpdates(entities)
+                        serverManager.integrationRepository(
+                            serverId,
+                        ).getEntityUpdates(EntityFilter(entityIds = entities.toSet()))
                     } else {
                         null
                     }

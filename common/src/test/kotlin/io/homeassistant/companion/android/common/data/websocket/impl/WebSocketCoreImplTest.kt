@@ -54,6 +54,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.WebSocket
@@ -1170,6 +1171,65 @@ class WebSocketCoreImplTest {
             }
             advanceUntilIdle()
 
+            coVerify {
+                mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") })
+            }
+            assertTrue(webSocketCore.activeMessages.isEmpty())
+        }
+
+        @Test
+        fun `Given a subscription delivering an event When asking for its first event Then the event is returned and it unsubscribes`() = runTest {
+            // The unsubscribe is sent from the background so we need to control it
+            val subscriptionScope = TestScope(UnconfinedTestDispatcher())
+            setupServer(backgroundScope = subscriptionScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            // The server confirms the subscription and sends its first event right away
+            every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } answers {
+                webSocketListener.onMessage(mockConnection, """{"id":2,"type":"result","success":true,"result":{}}""")
+                webSocketListener.onMessage(mockConnection, """{"id":2, "type":"event", "event":{"a":{"light.bed":{"s":"on","lc":1700000000.0}}}}""")
+                true
+            }
+            // Answer to the unsubscribe sent from the background
+            mockResultSuccessForId(3)
+
+            val event = webSocketCore.firstEventOf<CompressedStateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                mapOf("entity_ids" to listOf("light.bed")),
+            )
+            subscriptionScope.advanceUntilIdle()
+            advanceUntilIdle()
+
+            assertEquals(setOf("light.bed"), event?.added?.keys)
+            coVerify {
+                mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") })
+            }
+            assertTrue(webSocketCore.activeMessages.isEmpty())
+        }
+
+        @Test
+        fun `Given a subscription without event When the caller stops waiting for its first event Then it unsubscribes`() = runTest {
+            // The unsubscribe is sent from the background so we need to control it
+            val subscriptionScope = TestScope(UnconfinedTestDispatcher())
+            setupServer(backgroundScope = subscriptionScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            mockResultSuccessForId(2)
+            // Answer to the unsubscribe sent from the background
+            mockResultSuccessForId(3)
+
+            val event = withTimeoutOrNull(5.seconds) {
+                webSocketCore.firstEventOf<CompressedStateChangedEvent>(
+                    SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                    mapOf("entity_ids" to listOf("light.bed")),
+                )
+            }
+            subscriptionScope.advanceUntilIdle()
+            advanceUntilIdle()
+
+            assertNull(event)
             coVerify {
                 mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") })
             }

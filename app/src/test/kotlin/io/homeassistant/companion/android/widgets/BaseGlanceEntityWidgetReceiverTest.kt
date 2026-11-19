@@ -13,6 +13,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
@@ -127,7 +128,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = setOf("entity1"))) } returns channelFlow {
             close()
         }
         coJustRun { mockedDao.deleteAll(any()) }
@@ -165,11 +166,11 @@ class BaseGlanceEntityWidgetReceiverTest {
         coJustRun { mockedWidget.update(context, any()) }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = setOf("entity1"))) } returns channelFlow {
             widget1EntityProducer = this
             awaitClose()
         }
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity2")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = setOf("entity2"))) } returns channelFlow {
             widget2EntityProducer = this
             awaitClose()
         }
@@ -238,7 +239,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = setOf("entity1"))) } returns channelFlow {
             producer = this
             awaitClose()
         }
