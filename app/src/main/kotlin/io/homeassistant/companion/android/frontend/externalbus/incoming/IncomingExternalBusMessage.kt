@@ -370,7 +370,7 @@ data class ThreadStoreInPlatformKeychainPayload(
     @SerialName("mac_extended_address") val macExtendedAddress: String? = null,
     @SerialName("border_agent_id") val borderAgentId: String? = null,
     @SerialName("active_operational_dataset") val activeOperationalDataset: String,
-    @SerialName("extended_pan_id") val extendedPanId: String? = null,
+    @SerialName("extended_pan_id") val extendedPanId: String,
 )
 
 /**
