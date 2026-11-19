@@ -13,6 +13,7 @@ import androidx.wear.compose.material3.Text
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.Alphabetical
 import io.github.timoptr.mdiicons.generated.AlphabeticalOff
+import io.github.timoptr.mdiicons.generated.Power
 import io.github.timoptr.mdiicons.generated.Thermostat
 import io.github.timoptr.mdiicons.generated.TimerCog
 import io.github.timoptr.mdiicons.rememberImageVector
@@ -36,6 +37,7 @@ fun SetThermostatTileView(
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit,
     onNameEnabled: (Int, Boolean) -> Unit,
+    onPowerButtonEnabled: (Int, Boolean) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -112,6 +114,24 @@ fun SetThermostatTileView(
                                     Mdi.AlphabeticalOff
                                 }
                                 ).rememberImageVector(),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
+                        )
+                    },
+                    colors = getSwitchButtonColors(),
+                )
+            }
+            item {
+                SwitchButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = tile?.showPowerButton == true,
+                    onCheckedChange = {
+                        onPowerButtonEnabled(tile?.id.toString().toInt(), it)
+                    },
+                    label = { Text(stringResource(commonR.string.setting_thermostat_power_button_on_tile)) },
+                    icon = {
+                        Image(
+                            imageVector = Mdi.Power.rememberImageVector(),
                             contentDescription = null,
                             colorFilter = ColorFilter.tint(wearColorScheme.onSurface),
                         )

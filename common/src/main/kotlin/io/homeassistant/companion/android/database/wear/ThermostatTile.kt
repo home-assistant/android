@@ -26,4 +26,7 @@ data class ThermostatTile(
     /** Whether or not to show the entity name on the tile. */
     @ColumnInfo(name = "show_entity_name")
     val showEntityName: Boolean? = true,
+    /** Whether or not to show the power button on the tile. Tiles added before it existed don't show it. */
+    @ColumnInfo(name = "show_power_button")
+    val showPowerButton: Boolean? = true,
 )

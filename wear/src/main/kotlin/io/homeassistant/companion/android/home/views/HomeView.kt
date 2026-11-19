@@ -333,6 +333,12 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     onNameEnabled = { tileIdToggle, showName ->
                         mainViewModel.setThermostatTileShowName(tileIdToggle, showName)
                     },
+                    onPowerButtonEnabled = { tileIdToggle, showPowerButton ->
+                        mainViewModel.setThermostatTileShowPowerButton(tileIdToggle, showPowerButton)
+                            .invokeOnCompletion {
+                                TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java)
+                            }
+                    },
                 )
             }
             composable(

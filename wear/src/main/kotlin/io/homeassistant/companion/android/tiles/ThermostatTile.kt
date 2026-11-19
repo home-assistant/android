@@ -1,16 +1,8 @@
 package io.homeassistant.companion.android.tiles
 
 import androidx.wear.protolayout.ActionBuilders
-import androidx.wear.protolayout.ColorBuilders
-import androidx.wear.protolayout.DimensionBuilders
-import androidx.wear.protolayout.LayoutElementBuilders
-import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
-import androidx.wear.protolayout.ModifiersBuilders.Clickable
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
-import androidx.wear.protolayout.TimelineBuilders.Timeline
-import androidx.wear.protolayout.material.Button
-import androidx.wear.protolayout.material.ButtonColors
 import androidx.wear.tiles.EventBuilders
 import androidx.wear.tiles.RequestBuilders
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
@@ -22,33 +14,34 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.home.HomeActivity
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/** How often and how long to poll for the new state after a power toggle, as the server reports it late. */
+private const val TOGGLE_REFRESH_ATTEMPTS = 4
+private val TOGGLE_REFRESH_DELAY = 500.milliseconds
+
 @AndroidEntryPoint
 class ThermostatTile : TileService() {
-
-    companion object {
-        private const val TAG = "ThermostatTile"
-        const val DEFAULT_REFRESH_INTERVAL = 600L
-        const val TAP_ACTION_UP = "Up"
-        const val TAP_ACTION_DOWN = "Down"
-    }
 
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
@@ -105,15 +98,14 @@ class ThermostatTile : TileService() {
                     ).build()
                 } else {
                     try {
+                        val lastId = requestParams.currentState.lastClickableId
+                        val isTap = lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN || lastId == TAP_ACTION_TOGGLE
                         val entity = tileConfig.entityId?.let {
-                            entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(it))
-                                .awaitLoadedOrNull()
-                                ?.entity(it)
+                            fetchEntity(tileId, it, tileConfig.showEntityName == true, isTap)
                         }
                         checkNotNull(entity)
                         val climateControls = entity.climateControls
 
-                        val lastId = requestParams.currentState.lastClickableId
                         var targetTemp = tileConfig.targetTemperature ?: climateControls?.targetTemperature
 
                         val config = serverManager.webSocketRepository().getConfig()
@@ -140,15 +132,29 @@ class ThermostatTile : TileService() {
                             thermostatTileDao.add(updated)
                         }
 
-                        val name = if (tileConfig.showEntityName == true) entity.name else ""
+                        var shownEntity = entity
+                        if (lastId == TAP_ACTION_TOGGLE) {
+                            serverManager.integrationRepository().callAction(
+                                entity.domain,
+                                if (entity.rawState == "off") "turn_on" else "turn_off",
+                                hashMapOf("entity_id" to entity.entityId),
+                            )
+                            shownEntity = awaitUpdatedEntity(entity)
+                            targetTemp = shownEntity.climateControls?.targetTemperature
+                        }
+
+                        val name = shownEntity.name.takeIf { tileConfig.showEntityName == true }
 
                         tile.setTileTimeline(
-                            timeline(
-                                tileConfig,
-                                entity,
-                                name,
-                                targetTemp,
-                                temperatureUnit,
+                            thermostatTimeline(
+                                this@ThermostatTile,
+                                ThermostatTileContent(
+                                    entity = shownEntity,
+                                    entityName = name,
+                                    targetTemperature = targetTemp,
+                                    temperatureUnit = temperatureUnit,
+                                    showPowerButton = tileConfig.showPowerButton == true,
+                                ),
                             ),
                         ).build()
                     } catch (e: CancellationException) {
@@ -171,6 +177,39 @@ class ThermostatTile : TileService() {
             }
         }
 
+    /**
+     * Fetches [entityId] for display. A tap only needs the entity itself, so it skips the entity
+     * registry the display snapshot fetches, using the name cached by the last full fetch.
+     */
+    private suspend fun fetchEntity(tileId: Int, entityId: String, showName: Boolean, isTap: Boolean): EntityDisplay? {
+        val cachedName = entityNames[tileId]?.takeIf { it.first == entityId }?.second
+        if (isTap && (!showName || cachedName != null)) {
+            val entity = serverManager.integrationRepository().getEntity(entityId)
+            if (entity != null) return EntityDisplayWithoutContext(entity = entity, name = cachedName.orEmpty())
+        }
+
+        val display = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
+            .awaitLoadedOrNull()
+            ?.entity(entityId)
+        if (display != null) entityNames[tileId] = entityId to display.name
+        return display
+    }
+
+    /**
+     * Waits briefly for the server to report the new state after a toggle, so the tile doesn't
+     * redraw the previous one. Falls back to [entity] when the state doesn't change in time.
+     */
+    private suspend fun awaitUpdatedEntity(entity: EntityDisplay): EntityDisplay {
+        repeat(TOGGLE_REFRESH_ATTEMPTS) {
+            delay(TOGGLE_REFRESH_DELAY)
+            val updated = serverManager.integrationRepository().getEntity(entity.entityId)
+            if (updated != null && updated.state != entity.rawState) {
+                return EntityDisplayWithoutContext(entity = updated, name = entity.name)
+            }
+        }
+        return entity
+    }
+
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
             Resources.Builder()
@@ -181,6 +220,15 @@ class ThermostatTile : TileService() {
                         .setAndroidResourceByResId(
                             ResourceBuilders.AndroidImageResourceByResId.Builder()
                                 .setResourceId(R.drawable.ic_refresh)
+                                .build(),
+                        ).build(),
+                )
+                .addIdToImageMapping(
+                    RESOURCE_POWER,
+                    ResourceBuilders.ImageResource.Builder()
+                        .setAndroidResourceByResId(
+                            ResourceBuilders.AndroidImageResourceByResId.Builder()
+                                .setResourceId(R.drawable.ic_power)
                                 .build(),
                         ).build(),
                 )
@@ -197,6 +245,7 @@ class ThermostatTile : TileService() {
 
     override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
         withContext(Dispatchers.IO) {
+            entityNames.remove(requestParams.tileId)
             thermostatTileDao.delete(requestParams.tileId)
         }
     }
@@ -206,145 +255,14 @@ class ThermostatTile : TileService() {
         serviceScope.cancel()
     }
 
-    private fun timeline(
-        tileConfig: ThermostatTile,
-        entity: EntityDisplay,
-        entityName: String,
-        targetTemperature: Float?,
-        temperatureUnit: String,
-    ): Timeline = Timeline.fromLayoutElement(
-        LayoutElementBuilders.Box.Builder().apply {
-            val currentTemperature = entity.climateControls?.currentTemperature
-            val hvacAction = entity.climateControls?.hvacAction.toString()
+    companion object {
+        private const val TAG = "ThermostatTile"
+        const val DEFAULT_REFRESH_INTERVAL = 600L
+        const val TAP_ACTION_UP = "Up"
+        const val TAP_ACTION_DOWN = "Down"
+        const val TAP_ACTION_TOGGLE = "Toggle"
 
-            val hvacActionColor = when (hvacAction) {
-                "heating" -> getColor(commonR.color.colorDeviceControlsThermostatHeat)
-                "cooling" -> getColor(commonR.color.colorDeviceControlsDefaultOn)
-                else -> 0x00000000
-            }
-
-            val friendlyHvacAction = when (hvacAction) {
-                "heating" -> getString(commonR.string.climate_heating)
-                "cooling" -> getString(commonR.string.climate_cooling)
-                "idle" -> getString(commonR.string.state_idle)
-                "off" -> getString(commonR.string.state_off)
-                else -> hvacAction.replaceFirstChar { it.uppercase() }
-            }
-
-            addContent(
-                LayoutElementBuilders.Column.Builder()
-                    .addContent(
-                        LayoutElementBuilders.Text.Builder()
-                            .setText(friendlyHvacAction)
-                            .build(),
-                    )
-                    .addContent(
-                        LayoutElementBuilders.Text.Builder()
-                            .setText(
-                                if (targetTemperature ==
-                                    null
-                                ) {
-                                    "-- $temperatureUnit"
-                                } else {
-                                    "$targetTemperature $temperatureUnit"
-                                },
-                            )
-                            .setFontStyle(
-                                LayoutElementBuilders.FontStyle.Builder().setSize(
-                                    DimensionBuilders.sp(30f),
-                                ).build(),
-                            )
-                            .build(),
-                    )
-                    .addContent(
-                        LayoutElementBuilders.Text.Builder()
-                            .setText(
-                                if (currentTemperature ==
-                                    null
-                                ) {
-                                    "-- $temperatureUnit"
-                                } else {
-                                    "$currentTemperature $temperatureUnit"
-                                },
-                            )
-                            .build(),
-                    )
-                    .addContent(
-                        LayoutElementBuilders.Spacer.Builder()
-                            .setHeight(DimensionBuilders.dp(10f)).build(),
-                    )
-                    .addContent(
-                        LayoutElementBuilders.Row.Builder()
-                            .addContent(
-                                getTempButton(hvacAction != "off" && entity.rawState != "unavailable", TAP_ACTION_DOWN),
-                            )
-                            .addContent(
-                                LayoutElementBuilders.Spacer.Builder()
-                                    .setWidth(DimensionBuilders.dp(20f)).build(),
-                            )
-                            .addContent(
-                                getTempButton(hvacAction != "off" && entity.rawState != "unavailable", TAP_ACTION_UP),
-                            )
-                            .build(),
-                    )
-                    .build(),
-            )
-            addContent(
-                LayoutElementBuilders.Arc.Builder()
-                    .addContent(
-                        LayoutElementBuilders.ArcLine.Builder()
-                            .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
-                            .setThickness(DimensionBuilders.DpProp.Builder(2f).build())
-                            .setColor(ColorBuilders.argb(hvacActionColor))
-                            .build(),
-                    )
-                    .build(),
-            )
-            if (tileConfig.showEntityName == true) {
-                addContent(
-                    LayoutElementBuilders.Arc.Builder()
-                        .setAnchorAngle(
-                            DimensionBuilders.DegreesProp.Builder(180f).build(),
-                        )
-                        .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
-                        .addContent(
-                            LayoutElementBuilders.ArcLine.Builder()
-                                .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
-                                .setThickness(DimensionBuilders.DpProp.Builder(30f).build())
-                                .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
-                                .build(),
-                        )
-                        .addContent(
-                            LayoutElementBuilders.ArcText.Builder()
-                                .setText(entityName)
-                                .build(),
-                        )
-                        .build(),
-                )
-            }
-            // Refresh button
-            addContent(getRefreshButton())
-            setModifiers(getRefreshModifiers())
-        }.build(),
-    )
-
-    private fun getTempButton(enabled: Boolean, action: String): LayoutElement {
-        val clickable = Clickable.Builder()
-        if (enabled) {
-            clickable.setOnClick(ActionBuilders.LoadAction.Builder().build())
-                .setId(action)
-        }
-
-        return Button.Builder(this, clickable.build())
-            .setTextContent(if (action == TAP_ACTION_DOWN) "—" else "+")
-            .setButtonColors(
-                ButtonColors(
-                    ColorBuilders.argb(
-                        getColor(if (enabled) commonR.color.colorPrimary else commonR.color.colorDeviceControlsOff),
-                    ),
-                    ColorBuilders.argb(getColor(commonR.color.colorWidgetButtonLabelBlack)),
-                ),
-            )
-            .build()
+        /** Entity id and name per tile, as of the last full fetch, so a tap doesn't fetch the registry. */
+        private val entityNames = ConcurrentHashMap<Int, Pair<String, String>>()
     }
 }

@@ -29,6 +29,10 @@ internal val currentChangelog = Changelog(
             contentRes = commonR.string.changelog_entry_two_way_audio,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_thermostat_tile_power,
+            platforms = setOf(ChangelogPlatform.WEAR),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(
