@@ -168,6 +168,10 @@ internal class WebSocketCoreImpl(
 
     private val connectionHolder = AtomicReference<ConnectionHolder?>(null)
 
+    /**
+     * Replaced only while holding [connectedMutex]. OkHttp callbacks and [getConnectionState]
+     * can read this reference without acquiring the mutex.
+     */
     @Volatile
     private var currentAttempt = SocketAttempt()
 
