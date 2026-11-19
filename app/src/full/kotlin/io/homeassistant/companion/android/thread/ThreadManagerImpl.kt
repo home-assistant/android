@@ -407,18 +407,22 @@ class ThreadManagerImpl @Inject constructor(
             }
             throw e
         }
-        return try {
-            if (isPreferredCredentials(credentials)) {
-                ThreadManager.AddCredentialResult.Preferred
-            } else {
-                ThreadManager.AddCredentialResult.NotPreferred
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.w(e, "Thread: post-add preferred check failed")
-            ThreadManager.AddCredentialResult.PreferredUnknown
+        return preferredStateAfterAdd(credentials)
+    }
+
+    private suspend fun preferredStateAfterAdd(
+        credentials: ThreadNetworkCredentials,
+    ): ThreadManager.AddCredentialResult = try {
+        if (isPreferredCredentials(credentials)) {
+            ThreadManager.AddCredentialResult.Preferred
+        } else {
+            ThreadManager.AddCredentialResult.NotPreferred
         }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.w(e, "Thread: post-add preferred check failed")
+        ThreadManager.AddCredentialResult.PreferredUnknown
     }
 
     private suspend fun deleteOrphanedThreadCredentials(serverId: Int) {
