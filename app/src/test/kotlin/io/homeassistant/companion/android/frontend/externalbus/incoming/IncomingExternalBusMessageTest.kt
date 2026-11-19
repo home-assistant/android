@@ -309,15 +309,15 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
-    fun `Given Thread store_in_platform_keychain JSON with only the dataset then parses with null fields`() {
+    fun `Given Thread store_in_platform_keychain JSON with only the required fields then parses with null optional fields`() {
         val json =
-            """{"type":"thread/store_in_platform_keychain","payload":{"active_operational_dataset":"0e080000000000010000"}}"""
+            """{"type":"thread/store_in_platform_keychain","payload":{"active_operational_dataset":"0e080000000000010000","extended_pan_id":"1111111122222222"}}"""
 
         val message = assertInstanceOf(ThreadStoreInPlatformKeychainMessage::class.java, frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json))
         assertNull(message.id)
         assertNull(message.payload.macExtendedAddress)
         assertNull(message.payload.borderAgentId)
-        assertNull(message.payload.extendedPanId)
+        assertEquals("1111111122222222", message.payload.extendedPanId)
     }
 
     @Test

@@ -434,6 +434,7 @@ class FrontendMessageHandlerTest {
             payload = ThreadStoreInPlatformKeychainPayload(
                 borderAgentId = "0123456789abcdef0123456789abcdef",
                 activeOperationalDataset = "0e08",
+                extendedPanId = "1111111122222222",
             ),
         )
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
@@ -456,6 +457,7 @@ class FrontendMessageHandlerTest {
             payload = ThreadStoreInPlatformKeychainPayload(
                 borderAgentId = "0123456789abcdef0123456789abcdef",
                 activeOperationalDataset = "not-hex",
+                extendedPanId = "1111111122222222",
             ),
         )
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
@@ -470,7 +472,10 @@ class FrontendMessageHandlerTest {
     fun `Given Thread store_in_platform_keychain message without border agent ID when messageResults then emits UnknownMessage`() = runTest {
         val message = ThreadStoreInPlatformKeychainMessage(
             id = 62,
-            payload = ThreadStoreInPlatformKeychainPayload(activeOperationalDataset = "0e08"),
+            payload = ThreadStoreInPlatformKeychainPayload(
+                activeOperationalDataset = "0e08",
+                extendedPanId = "1111111122222222",
+            ),
         )
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
