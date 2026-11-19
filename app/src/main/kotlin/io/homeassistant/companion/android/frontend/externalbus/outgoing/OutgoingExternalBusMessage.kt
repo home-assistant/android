@@ -148,8 +148,6 @@ object ConfigResultMessage {
                 canCommissionMatter = canCommissionMatter,
                 canShareMatterDeviceToOtherApps = canShareMatterDevice,
                 canImportThreadCredentials = canExportThread,
-                // Same gate as canImportThreadCredentials: the HA -> Phone direction works on the
-                // same Android builds that already support the Phone -> HA direction.
                 canTransferThreadCredentialsToKeychain = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
                 canSetupImprov = canSetupImprov,

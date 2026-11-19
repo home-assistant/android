@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.frontend.dialog
 
-import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -18,7 +17,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -42,6 +40,7 @@ class SimpleConfirmDialogTest {
                         onConfirm = {},
                         onCancel = {},
                     ),
+                    onOpenExternalLink = {},
                 )
             }
 
@@ -64,6 +63,7 @@ class SimpleConfirmDialogTest {
                         onConfirm = { confirmCalled = true },
                         onCancel = {},
                     ),
+                    onOpenExternalLink = {},
                 )
             }
 
@@ -83,6 +83,7 @@ class SimpleConfirmDialogTest {
                         onConfirm = {},
                         onCancel = {},
                     ),
+                    onOpenExternalLink = {},
                 )
             }
 
@@ -91,7 +92,9 @@ class SimpleConfirmDialogTest {
     }
 
     @Test
-    fun `Given dialog with moreInfoUrl when Learn more clicked then URL opens and dialog stays`() {
+    fun `Given dialog with moreInfoUrl when Learn more clicked then link opens and dialog stays`() {
+        var openedUrl: String? = null
+
         composeTestRule.apply {
             setContent {
                 SimpleConfirmDialog(
@@ -101,14 +104,13 @@ class SimpleConfirmDialogTest {
                         onCancel = {},
                         moreInfoUrl = "https://example.com/docs",
                     ),
+                    onOpenExternalLink = { openedUrl = it },
                 )
             }
 
             onNodeWithText(stringResource(commonR.string.learn_more)).performClick()
 
-            val startedIntent = Shadows.shadowOf(activity).nextStartedActivity
-            assertEquals(Intent.ACTION_VIEW, startedIntent.action)
-            assertEquals("https://example.com/docs", startedIntent.data.toString())
+            assertEquals("https://example.com/docs", openedUrl)
             onNodeWithText("Are you sure?").assertIsDisplayed()
         }
     }
@@ -125,6 +127,7 @@ class SimpleConfirmDialogTest {
                         onConfirm = {},
                         onCancel = { cancelCalled = true },
                     ),
+                    onOpenExternalLink = {},
                 )
             }
 

@@ -30,7 +30,7 @@ class FrontendHttpAuthHandlerTest {
 
     private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
     private val clock = FakeClock()
-    private val dialogManager = FrontendDialogManager()
+    private val dialogManager = FrontendDialogManager(mockk(relaxed = true))
     private val handler = FrontendHttpAuthHandler(
         authenticationDao = authenticationDao,
         clock = clock,

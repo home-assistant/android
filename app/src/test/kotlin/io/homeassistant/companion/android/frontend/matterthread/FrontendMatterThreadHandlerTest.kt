@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
 import app.cash.turbine.test
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
@@ -61,7 +62,6 @@ class FrontendMatterThreadHandlerTest {
         dialogManager = dialogManager,
         externalBusRepository = externalBusRepository,
         serverManager = serverManager,
-        applicationContext = mockk(relaxed = true),
     )
 
     private fun givenServerVersion(version: HomeAssistantVersion?) {
@@ -466,6 +466,125 @@ class FrontendMatterThreadHandlerTest {
         private fun givenSharingInFlight(outcome: MatterManager.SharingRequestResult) {
             coEvery { matterManager.prepareDeviceSharing(any()) } returns MatterManager.CommissioningResult.Ready(mockk())
             every { matterManager.parseSharingIntentResult(any()) } returns outcome
+        }
+    }
+
+    @Nested
+    inner class StoreThreadCredentials {
+
+        private val tlv = byteArrayOf(1, 2, 3)
+        private val borderAgentId = "0123456789abcdef0123456789abcdef"
+
+        private fun givenStoreReady(outcome: ThreadManager.PreflightOutcome) {
+            every { threadManager.appSupportsThread() } returns true
+            every { threadManager.networkNameFromTlv(tlv) } returns "MyNetwork"
+            coEvery { threadManager.predictPreferredOutcome(tlv) } returns outcome
+        }
+
+        private suspend fun store(handler: FrontendMatterThreadHandler = createHandler()) {
+            handler.onStoreThreadCredentialsInPlatformKeychain(serverId = 1, borderAgentId = borderAgentId, tlv = tlv)
+        }
+
+        @Test
+        fun `Given app without Thread support when storing then shows unsupported and does not add`() = runTest {
+            every { threadManager.appSupportsThread() } returns false
+
+            store()
+
+            coVerify {
+                dialogManager.showInformation(commonR.string.thread_store_unsupported, moreInfoUrl = any())
+            }
+            coVerify(exactly = 0) { threadManager.addCredentialToDevice(any(), any(), any()) }
+        }
+
+        @Test
+        fun `Given credential already preferred when storing then informs and does not add`() = runTest {
+            givenStoreReady(ThreadManager.PreflightOutcome.AlreadyPreferred)
+
+            store()
+
+            coVerify {
+                dialogManager.showInformation(
+                    commonR.string.thread_store_already_preferred,
+                    "MyNetwork",
+                    moreInfoUrl = any(),
+                )
+            }
+            coVerify(exactly = 0) { threadManager.addCredentialToDevice(any(), any(), any()) }
+        }
+
+        @Test
+        fun `Given user declines the preflight confirmation when storing then does not add`() = runTest {
+            givenStoreReady(ThreadManager.PreflightOutcome.LikelyToBecomePreferred)
+            coEvery {
+                dialogManager.showConfirm(commonR.string.thread_store_likely_preferred, "MyNetwork", moreInfoUrl = any())
+            } returns false
+
+            store()
+
+            coVerify(exactly = 0) { threadManager.addCredentialToDevice(any(), any(), any()) }
+        }
+
+        @Test
+        fun `Given user confirms and credential becomes preferred when storing then reports preferred`() = runTest {
+            givenStoreReady(ThreadManager.PreflightOutcome.LikelyToBecomePreferred)
+            coEvery {
+                dialogManager.showConfirm(commonR.string.thread_store_likely_preferred, "MyNetwork", moreInfoUrl = any())
+            } returns true
+            coEvery { threadManager.addCredentialToDevice(1, tlv, borderAgentId) } returns
+                ThreadManager.AddCredentialResult.Preferred
+
+            store()
+
+            coVerify {
+                dialogManager.showInformation(
+                    commonR.string.thread_store_added_preferred,
+                    "MyNetwork",
+                    moreInfoUrl = any(),
+                )
+            }
+        }
+
+        @Test
+        fun `Given adding the credential fails when storing then reports the failure`() = runTest {
+            givenStoreReady(ThreadManager.PreflightOutcome.Unknown)
+            coEvery {
+                dialogManager.showConfirm(commonR.string.thread_store_unknown_preferred, "MyNetwork", moreInfoUrl = any())
+            } returns true
+            coEvery { threadManager.addCredentialToDevice(1, tlv, borderAgentId) } throws
+                IllegalStateException("add boom")
+
+            store()
+
+            coVerify {
+                dialogManager.showInformation(
+                    commonR.string.thread_store_failed,
+                    "MyNetwork",
+                    "add boom",
+                    moreInfoUrl = any(),
+                )
+            }
+        }
+
+        @Test
+        fun `Given store flow awaiting confirmation when a stale intent result arrives then other flows stay blocked`() = runTest {
+            givenStoreReady(ThreadManager.PreflightOutcome.Unknown)
+            coEvery {
+                dialogManager.showConfirm(
+                    commonR.string.thread_store_unknown_preferred,
+                    "MyNetwork",
+                    moreInfoUrl = any(),
+                )
+            } coAnswers { awaitCancellation() }
+            val handler = createHandler()
+            val storeJob = launch { store(handler) }
+            advanceUntilIdle()
+
+            handler.onMatterThreadIntentResult(ActivityResult(Activity.RESULT_OK, null))
+            handler.onStartMatterCommissioning()
+
+            coVerify(exactly = 0) { matterManager.prepareMatterDeviceCommissioning() }
+            storeJob.cancel()
         }
     }
 

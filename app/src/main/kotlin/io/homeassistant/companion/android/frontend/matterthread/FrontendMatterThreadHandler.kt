@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.frontend.matterthread
 
-import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -64,6 +62,7 @@ private const val THREAD_DOCS_URL = "https://companion.home-assistant.io/docs/in
  * the Matter commissioning flow on every outcome so the frontend's add-device dialog can hide its
  * spinner, and the result of a `matter/share_device` request.
  */
+@Suppress("TooManyFunctions")
 @ViewModelScoped
 internal class FrontendMatterThreadHandler @Inject constructor(
     private val matterManager: MatterManager,
@@ -71,7 +70,6 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     private val dialogManager: FrontendDialogManager,
     private val externalBusRepository: FrontendExternalBusRepository,
     private val serverManager: ServerManager,
-    @param:ApplicationContext private val applicationContext: Context,
 ) {
 
     /**
@@ -175,48 +173,40 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         }
         var awaitingIntentResult = false
         try {
-            supervisorScope {
-                // Show the progress dialog from a child coroutine so we can dismiss it
-                // programmatically by cancelling the job when the flow advances.
-                val progressJob = launch { dialogManager.showMatterThreadProgress() }
+            val result = withProgress {
                 try {
-                    val result = try {
-                        threadManager.exportPreferredDataset(serverId)
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Error while trying to export preferred dataset")
-                        null
+                    threadManager.exportPreferredDataset(serverId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Error while trying to export preferred dataset")
+                    null
+                }
+            }
+            when (result) {
+                is ThreadManager.SyncResult.OnlyOnDevice -> {
+                    val intent = result.exportIntent
+                    if (intent != null) {
+                        awaitingIntentResult = true
+                        _events.send(Event.LaunchIntent(intent))
+                    } else {
+                        showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
                     }
-                    progressJob.cancel()
-                    when (result) {
-                        is ThreadManager.SyncResult.OnlyOnDevice -> {
-                            val intent = result.exportIntent
-                            if (intent != null) {
-                                awaitingIntentResult = true
-                                _events.send(Event.LaunchIntent(intent))
-                            } else {
-                                showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
-                            }
-                        }
+                }
 
-                        is ThreadManager.SyncResult.NoneHaveCredentials,
-                        is ThreadManager.SyncResult.OnlyOnServer,
-                        -> showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
+                is ThreadManager.SyncResult.NoneHaveCredentials,
+                is ThreadManager.SyncResult.OnlyOnServer,
+                -> showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
 
-                        is ThreadManager.SyncResult.NotConnected ->
-                            showTerminal(MatterThreadTerminal.Dialog.ThreadNotConnected)
+                is ThreadManager.SyncResult.NotConnected ->
+                    showTerminal(MatterThreadTerminal.Dialog.ThreadNotConnected)
 
-                        is ThreadManager.SyncResult.AppUnsupported,
-                        is ThreadManager.SyncResult.ServerUnsupported,
-                        null,
-                        -> {
-                            Timber.w("Thread export returned unsupported variant: $result")
-                            showTerminal(MatterThreadTerminal.Snackbar.ThreadError)
-                        }
-                    }
-                } finally {
-                    progressJob.cancel()
+                is ThreadManager.SyncResult.AppUnsupported,
+                is ThreadManager.SyncResult.ServerUnsupported,
+                null,
+                -> {
+                    Timber.w("Thread export returned unsupported variant: $result")
+                    showTerminal(MatterThreadTerminal.Snackbar.ThreadError)
                 }
             }
         } catch (e: CancellationException) {
@@ -244,15 +234,19 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             Timber.w("Matter/Thread intent result received but nothing is in-flight; ignoring")
             return
         }
+        if (current is InFlight.ThreadStore) {
+            // The store flow never launches an IntentSender, so this result is stale. Leave
+            // inFlight alone: clearing it here would drop the mutual-exclusion guard while the
+            // store flow is still running.
+            Timber.w("Matter/Thread intent result received during a ThreadStore flow; ignoring")
+            return
+        }
         try {
             when (current) {
                 is InFlight.Matter -> handleMatterIntentResult(result)
                 is InFlight.MatterShare -> handleMatterShareIntentResult(result, current.messageId)
                 is InFlight.Thread -> handleThreadIntentResult(result, current.serverId)
-                is InFlight.ThreadStore -> Timber.w(
-                    "Matter/Thread intent result received during a ThreadStore flow; ignoring " +
-                        "(this flow does not launch an IntentSender)",
-                )
+                is InFlight.ThreadStore -> Unit // Returned above before entering the try block.
             }
         } finally {
             inFlight.set(null)
@@ -260,8 +254,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     }
 
     /**
-     * Drive the HA → Phone Thread credential add flow triggered by the frontend Thread panel's
-     * "Send credentials to phone" button.
+     * Drive the HA → device Thread credential add flow triggered by the frontend Thread panel.
      *
      * Unlike [onImportThreadCredentials], this flow does not launch a Play Services
      * `IntentSender` — the credential is added directly via [ThreadManager.addCredentialToDevice].
@@ -270,7 +263,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
      *     credentials state;
      *  2. preflight confirm/information dialog based on the prediction (4 variants);
      *  3. progress dialog while [ThreadManager.addCredentialToDevice] writes;
-     *  4. result information dialog reporting whether Play Services prefers the just-added
+     *  4. result information dialog reporting whether the device prefers the just-added
      *     credential.
      *
      * The result is always reported via [FrontendDialogManager.showInformation] (not a terminal
@@ -285,87 +278,117 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             return
         }
         try {
-            if (!threadManager.appSupportsThread()) {
-                dialogManager.showInformation(
-                    message = applicationContext.getString(commonR.string.thread_store_unsupported),
-                    moreInfoUrl = THREAD_DOCS_URL,
-                )
-                return
-            }
-            val networkName = threadManager.networkNameFromTlv(tlv)
-            if (networkName == null) {
-                dialogManager.showInformation(
-                    applicationContext.getString(commonR.string.thread_store_invalid_payload),
-                )
-                return
-            }
-            val outcome = withProgress { threadManager.predictPreferredOutcome(tlv) }
-            val proceed = when (outcome) {
-                ThreadManager.PreflightOutcome.AlreadyPreferred -> {
-                    dialogManager.showInformation(
-                        message = applicationContext.getString(
-                            commonR.string.thread_store_already_preferred,
-                            networkName,
-                        ),
-                        moreInfoUrl = THREAD_DOCS_URL,
-                    )
-                    return
-                }
-                is ThreadManager.PreflightOutcome.DifferentAppPreferred ->
-                    dialogManager.showConfirm(
-                        message = applicationContext.getString(
-                            commonR.string.thread_store_different_preferred,
-                            networkName,
-                            outcome.networkName,
-                        ),
-                        moreInfoUrl = THREAD_DOCS_URL,
-                    )
-                ThreadManager.PreflightOutcome.LikelyToBecomePreferred ->
-                    dialogManager.showConfirm(
-                        message = applicationContext.getString(
-                            commonR.string.thread_store_likely_preferred,
-                            networkName,
-                        ),
-                        moreInfoUrl = THREAD_DOCS_URL,
-                    )
-                ThreadManager.PreflightOutcome.Unknown ->
-                    dialogManager.showConfirm(
-                        message = applicationContext.getString(
-                            commonR.string.thread_store_unknown_preferred,
-                            networkName,
-                        ),
-                        moreInfoUrl = THREAD_DOCS_URL,
-                    )
-            }
-            if (!proceed) return
-
-            val resultMessage = try {
-                val isPreferred = withProgress {
-                    threadManager.addCredentialToDevice(serverId = serverId, tlv = tlv, borderAgentId = borderAgentId)
-                }
-                Timber.d("Thread store: added '%s' (preferred=%s)", networkName, isPreferred)
-                when (isPreferred) {
-                    true -> applicationContext.getString(commonR.string.thread_store_added_preferred, networkName)
-                    false -> applicationContext.getString(commonR.string.thread_store_added_not_preferred, networkName)
-                    null -> applicationContext.getString(commonR.string.thread_store_added_unknown, networkName)
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.w(e, "Thread store: failed to add credential '%s'", networkName)
-                applicationContext.getString(commonR.string.thread_store_failed, networkName, e.message ?: "")
-            }
-            dialogManager.showInformation(message = resultMessage, moreInfoUrl = THREAD_DOCS_URL)
+            storeThreadCredentials(serverId = serverId, borderAgentId = borderAgentId, tlv = tlv)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Unexpected error storing Thread credentials on the device")
-            dialogManager.showInformation(
-                message = applicationContext.getString(commonR.string.thread_store_failed_unknown),
-                moreInfoUrl = THREAD_DOCS_URL,
-            )
+            dialogManager.showInformation(commonR.string.thread_store_failed_unknown, moreInfoUrl = THREAD_DOCS_URL)
         } finally {
             inFlight.set(null)
+        }
+    }
+
+    private suspend fun storeThreadCredentials(serverId: Int, borderAgentId: String, tlv: ByteArray) {
+        if (!threadManager.appSupportsThread()) {
+            dialogManager.showInformation(commonR.string.thread_store_unsupported, moreInfoUrl = THREAD_DOCS_URL)
+            return
+        }
+        val networkName = threadManager.networkNameFromTlv(tlv)
+        if (networkName == null) {
+            dialogManager.showInformation(commonR.string.thread_store_invalid_payload, moreInfoUrl = THREAD_DOCS_URL)
+            return
+        }
+        val outcome = withProgress { threadManager.predictPreferredOutcome(tlv) }
+        if (confirmPreflight(outcome, networkName)) {
+            addCredentialAndReport(
+                serverId = serverId,
+                borderAgentId = borderAgentId,
+                tlv = tlv,
+                networkName = networkName,
+            )
+        }
+    }
+
+    /**
+     * Surface the [outcome] of the preflight check to the user.
+     *
+     * @return `true` if the add should proceed, `false` if the user declined or there is nothing
+     *   to do.
+     */
+    private suspend fun confirmPreflight(outcome: ThreadManager.PreflightOutcome, networkName: String): Boolean =
+        when (outcome) {
+            ThreadManager.PreflightOutcome.AlreadyPreferred -> {
+                dialogManager.showInformation(
+                    commonR.string.thread_store_already_preferred,
+                    networkName,
+                    moreInfoUrl = THREAD_DOCS_URL,
+                )
+                false
+            }
+            is ThreadManager.PreflightOutcome.AppCredentialPreferred ->
+                dialogManager.showConfirm(
+                    commonR.string.thread_store_different_preferred,
+                    networkName,
+                    outcome.networkName,
+                    moreInfoUrl = THREAD_DOCS_URL,
+                )
+            ThreadManager.PreflightOutcome.LikelyToBecomePreferred ->
+                dialogManager.showConfirm(
+                    commonR.string.thread_store_likely_preferred,
+                    networkName,
+                    moreInfoUrl = THREAD_DOCS_URL,
+                )
+            ThreadManager.PreflightOutcome.Unknown ->
+                dialogManager.showConfirm(
+                    commonR.string.thread_store_unknown_preferred,
+                    networkName,
+                    moreInfoUrl = THREAD_DOCS_URL,
+                )
+        }
+
+    /** Add the credential to the device and report the outcome with an information dialog. */
+    private suspend fun addCredentialAndReport(
+        serverId: Int,
+        borderAgentId: String,
+        tlv: ByteArray,
+        networkName: String,
+    ) {
+        try {
+            val result = withProgress {
+                threadManager.addCredentialToDevice(serverId = serverId, tlv = tlv, borderAgentId = borderAgentId)
+            }
+            Timber.d("Thread store: added '$networkName' ($result)")
+            when (result) {
+                ThreadManager.AddCredentialResult.Preferred ->
+                    dialogManager.showInformation(
+                        commonR.string.thread_store_added_preferred,
+                        networkName,
+                        moreInfoUrl = THREAD_DOCS_URL,
+                    )
+                ThreadManager.AddCredentialResult.NotPreferred ->
+                    dialogManager.showInformation(
+                        commonR.string.thread_store_added_not_preferred,
+                        networkName,
+                        moreInfoUrl = THREAD_DOCS_URL,
+                    )
+                ThreadManager.AddCredentialResult.PreferredUnknown ->
+                    dialogManager.showInformation(
+                        commonR.string.thread_store_added_unknown,
+                        networkName,
+                        moreInfoUrl = THREAD_DOCS_URL,
+                    )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Thread store: failed to add credential '$networkName'")
+            dialogManager.showInformation(
+                commonR.string.thread_store_failed,
+                networkName,
+                e.message.orEmpty(),
+                moreInfoUrl = THREAD_DOCS_URL,
+            )
         }
     }
 

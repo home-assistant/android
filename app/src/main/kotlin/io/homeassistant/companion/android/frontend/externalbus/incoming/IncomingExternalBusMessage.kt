@@ -345,18 +345,18 @@ data class MatterShareDevicePayload(
 data class ThreadImportCredentialsMessage(override val id: Int? = null) : IncomingExternalBusMessage
 
 /**
- * Inverse of [ThreadImportCredentialsMessage]: the frontend Thread panel's "Send credentials to
- * phone" button on a preferred dataset row fires this with the active operational dataset
+ * Inverse of [ThreadImportCredentialsMessage]: the frontend Thread panel's "Send credentials
+ * to the app" button on a preferred dataset row fires this with the active operational dataset
  * already inlined.
  *
- * The app stores the credential in the device's Thread credential storage (Google Play
- * Services); the message name follows the frontend/iOS naming, where the credentials land in
- * the Apple Keychain. All
- * fields are hex strings as sent by the frontend; the [activeOperationalDataset] decodes to the
- * raw Thread TLV.
+ * The app stores the credential in the device's Thread credential storage; the message name
+ * follows the frontend/iOS naming, where the credentials land in the Apple Keychain. All fields
+ * are hex strings as sent by the frontend; the [activeOperationalDataset] decodes to the raw
+ * Thread TLV.
  *
  * Will not be sent by the frontend when the device reports
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canTransferThreadCredentialsToKeychain] = `false`.
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canTransferThreadCredentialsToKeychain]
+ * = `false`.
  *
  * @see <a href="https://github.com/home-assistant/frontend/blob/dev/src/panels/config/integrations/integration-panels/thread/thread-config-panel.ts">thread-config-panel.ts</a>
  */
@@ -369,10 +369,10 @@ data class ThreadStoreInPlatformKeychainMessage(
 
 @Serializable
 data class ThreadStoreInPlatformKeychainPayload(
-    @SerialName("mac_extended_address") val macExtendedAddress: String,
-    @SerialName("border_agent_id") val borderAgentId: String,
+    @SerialName("mac_extended_address") val macExtendedAddress: String? = null,
+    @SerialName("border_agent_id") val borderAgentId: String? = null,
     @SerialName("active_operational_dataset") val activeOperationalDataset: String,
-    @SerialName("extended_pan_id") val extendedPanId: String,
+    @SerialName("extended_pan_id") val extendedPanId: String? = null,
 )
 
 /**

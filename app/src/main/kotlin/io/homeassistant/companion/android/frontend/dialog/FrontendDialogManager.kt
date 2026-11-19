@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.frontend.dialog
 
 import android.content.Context
+import androidx.annotation.StringRes
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
 import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
@@ -27,7 +29,9 @@ internal sealed interface HttpAuthOutcome {
  * never see [FrontendDialog] internals.
  */
 @ViewModelScoped
-internal class FrontendDialogManager @Inject constructor() {
+internal class FrontendDialogManager @Inject constructor(
+    @param:ApplicationContext private val applicationContext: Context,
+) {
 
     private val queue = SingleSlotQueue<FrontendDialog>()
 
@@ -52,6 +56,10 @@ internal class FrontendDialogManager @Inject constructor() {
         )
     }
 
+    /** [showConfirm] variant resolving a string resource with optional format arguments. */
+    suspend fun showConfirm(@StringRes messageRes: Int, vararg formatArgs: Any, moreInfoUrl: String? = null): Boolean =
+        showConfirm(message = getString(messageRes, formatArgs), moreInfoUrl = moreInfoUrl)
+
     /**
      * Shows an informational dialog with a single dismiss button and suspends until the user
      * dismisses it. There is no result to return; callers use this purely to surface a message
@@ -69,6 +77,18 @@ internal class FrontendDialogManager @Inject constructor() {
                 moreInfoUrl = moreInfoUrl,
             )
         }
+    }
+
+    /** [showInformation] variant resolving a string resource with optional format arguments. */
+    suspend fun showInformation(@StringRes messageRes: Int, vararg formatArgs: Any, moreInfoUrl: String? = null) {
+        showInformation(message = getString(messageRes, formatArgs), moreInfoUrl = moreInfoUrl)
+    }
+
+    @Suppress("SpreadOperator")
+    private fun getString(@StringRes messageRes: Int, formatArgs: Array<out Any>): String = if (formatArgs.isEmpty()) {
+        applicationContext.getString(messageRes)
+    } else {
+        applicationContext.getString(messageRes, *formatArgs)
     }
 
     /**

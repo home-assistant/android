@@ -131,8 +131,7 @@ sealed interface FrontendHandlerEvent {
 
     /**
      * Inverse of [ImportThreadCredentials]: the frontend Thread panel asked the app to store a
-     * Thread Active Operational Dataset in the device's Thread credential storage (Google Play
-     * Services).
+     * Thread Active Operational Dataset in the device's Thread credential storage.
      *
      * @param borderAgentId Hex string identifying the preferred border router that owns the
      *   network on the server side; the credential is added under this BA so the orphan path
@@ -140,15 +139,7 @@ sealed interface FrontendHandlerEvent {
      * @param tlv Decoded raw Thread Active Operational Dataset bytes.
      */
     data class StoreThreadCredentialsInPlatformKeychain(val borderAgentId: String, val tlv: ByteArray) :
-        FrontendHandlerEvent {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (other !is StoreThreadCredentialsInPlatformKeychain) return false
-            return borderAgentId == other.borderAgentId && tlv.contentEquals(other.tlv)
-        }
-
-        override fun hashCode(): Int = 31 * borderAgentId.hashCode() + tlv.contentHashCode()
-    }
+        FrontendHandlerEvent
 
     /**
      * Frontend requested the app to open the barcode scanner overlay.

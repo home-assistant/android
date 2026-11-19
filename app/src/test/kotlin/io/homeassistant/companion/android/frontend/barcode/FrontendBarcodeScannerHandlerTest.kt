@@ -24,7 +24,7 @@ import org.junit.jupiter.api.assertNull
 class FrontendBarcodeScannerHandlerTest {
 
     private val externalBusRepository: FrontendExternalBusRepository = mockk(relaxed = true)
-    private val dialogManager = FrontendDialogManager()
+    private val dialogManager = FrontendDialogManager(mockk(relaxed = true))
     private val manager = FrontendBarcodeScannerHandler(externalBusRepository, dialogManager)
 
     @Test

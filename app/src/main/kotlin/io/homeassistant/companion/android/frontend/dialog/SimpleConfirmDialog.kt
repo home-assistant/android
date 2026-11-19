@@ -12,14 +12,16 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 
 @Composable
-internal fun SimpleConfirmDialog(pendingDialog: FrontendDialog.Confirm) {
+internal fun SimpleConfirmDialog(pendingDialog: FrontendDialog.Confirm, onOpenExternalLink: (String) -> Unit) {
     AlertDialog(
         onDismissRequest = pendingDialog.onCancel,
         title = { Text(text = stringResource(commonR.string.app_name), style = HATextStyle.HeadlineMedium) },
         text = {
             Column {
                 Text(text = pendingDialog.message, style = HATextStyle.Body)
-                MoreInfoButton(pendingDialog.moreInfoUrl)
+                pendingDialog.moreInfoUrl?.let { url ->
+                    HAPlainButton(stringResource(commonR.string.learn_more), { onOpenExternalLink(url) })
+                }
             }
         },
         confirmButton = {
@@ -35,7 +37,10 @@ internal fun SimpleConfirmDialog(pendingDialog: FrontendDialog.Confirm) {
 @Preview
 private fun PreviewSimpleConfirmDialog() {
     HAThemeForPreview {
-        SimpleConfirmDialog(FrontendDialog.Confirm("Hello world", onConfirm = {}, onCancel = {}))
+        SimpleConfirmDialog(
+            FrontendDialog.Confirm("Hello world", onConfirm = {}, onCancel = {}),
+            onOpenExternalLink = {},
+        )
     }
 }
 
@@ -45,11 +50,12 @@ private fun PreviewSimpleConfirmDialogWithMoreInfo() {
     HAThemeForPreview {
         SimpleConfirmDialog(
             FrontendDialog.Confirm(
-                "\"My network\" will be added to the Thread credentials stored on this phone. Continue?",
+                "\"My network\" will be added to the Thread credentials stored on this device. Continue?",
                 onConfirm = {},
                 onCancel = {},
                 moreInfoUrl = "https://companion.home-assistant.io/",
             ),
+            onOpenExternalLink = {},
         )
     }
 }

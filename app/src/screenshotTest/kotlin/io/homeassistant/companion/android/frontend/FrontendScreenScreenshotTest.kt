@@ -214,6 +214,74 @@ class FrontendScreenScreenshotTest {
     @PreviewTest
     @HAPreviews
     @Composable
+    fun `FrontendScreen Content with confirm dialog with more info link`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                pendingDialog = FrontendDialog.Confirm(
+                    message = "\"My network\" will be added to the Thread credentials stored on this device. " +
+                        "Whether it becomes the preferred network depends on other Thread apps on this device " +
+                        "and any Thread border routers nearby. Continue?",
+                    onConfirm = {},
+                    onCancel = {},
+                    moreInfoUrl = "https://companion.home-assistant.io/docs/integrations/thread",
+                ),
+                getWebViewClient = { WebViewClient() },
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
+    fun `FrontendScreen Content with information dialog with more info link`() {
+        HAThemeForPreview {
+            FrontendScreenContent(
+                viewState = FrontendViewState.Content(
+                    serverId = 1,
+                    url = "https://example.com",
+                ),
+                pendingDialog = FrontendDialog.Information(
+                    message = "\"My network\" has been added, but this device still prefers a different " +
+                        "Thread network.",
+                    onDismiss = {},
+                    moreInfoUrl = "https://companion.home-assistant.io/docs/integrations/thread",
+                ),
+                getWebViewClient = { WebViewClient() },
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+            )
+        }
+    }
+
+    @PreviewTest
+    @HAPreviews
+    @Composable
     fun `FrontendScreen Error`() {
         HAThemeForPreview {
             FrontendScreenContent(

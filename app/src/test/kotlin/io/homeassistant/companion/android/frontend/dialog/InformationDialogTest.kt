@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.frontend.dialog
 
-import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -17,7 +16,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -37,6 +35,7 @@ class InformationDialogTest {
             setContent {
                 InformationDialog(
                     FrontendDialog.Information(message = "Something happened", onDismiss = {}),
+                    onOpenExternalLink = {},
                 )
             }
 
@@ -54,6 +53,7 @@ class InformationDialogTest {
             setContent {
                 InformationDialog(
                     FrontendDialog.Information(message = "Something happened", onDismiss = { dismissed = true }),
+                    onOpenExternalLink = {},
                 )
             }
 
@@ -69,6 +69,7 @@ class InformationDialogTest {
             setContent {
                 InformationDialog(
                     FrontendDialog.Information(message = "Something happened", onDismiss = {}),
+                    onOpenExternalLink = {},
                 )
             }
 
@@ -77,7 +78,9 @@ class InformationDialogTest {
     }
 
     @Test
-    fun `Given dialog with moreInfoUrl when Learn more clicked then URL opens and dialog stays`() {
+    fun `Given dialog with moreInfoUrl when Learn more clicked then link opens and dialog stays`() {
+        var openedUrl: String? = null
+
         composeTestRule.apply {
             setContent {
                 InformationDialog(
@@ -86,14 +89,13 @@ class InformationDialogTest {
                         onDismiss = {},
                         moreInfoUrl = "https://example.com/docs",
                     ),
+                    onOpenExternalLink = { openedUrl = it },
                 )
             }
 
             onNodeWithText(stringResource(commonR.string.learn_more)).performClick()
 
-            val startedIntent = Shadows.shadowOf(activity).nextStartedActivity
-            assertEquals(Intent.ACTION_VIEW, startedIntent.action)
-            assertEquals("https://example.com/docs", startedIntent.data.toString())
+            assertEquals("https://example.com/docs", openedUrl)
             onNodeWithText("Something happened").assertIsDisplayed()
         }
     }

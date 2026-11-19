@@ -310,21 +310,20 @@ class FrontendMessageHandler @Inject constructor(
 
             is ThreadStoreInPlatformKeychainMessage -> {
                 Timber.d(
-                    "thread/store_in_platform_keychain received with id: %s (BA=%s)",
-                    message.id,
-                    message.payload.borderAgentId,
+                    "thread/store_in_platform_keychain received with id: ${message.id} (BA=${message.payload.borderAgentId})",
                 )
                 val tlv = try {
-                    decodeHex(message.payload.activeOperationalDataset)
-                } catch (e: Exception) {
+                    message.payload.activeOperationalDataset.hexToByteArray()
+                } catch (e: IllegalArgumentException) {
                     Timber.w(e, "thread/store_in_platform_keychain: cannot decode TLV hex")
                     null
                 }
-                if (tlv == null || message.payload.borderAgentId.isBlank()) {
+                val borderAgentId = message.payload.borderAgentId
+                if (tlv == null || borderAgentId.isNullOrBlank()) {
                     FrontendHandlerEvent.UnknownMessage
                 } else {
                     FrontendHandlerEvent.StoreThreadCredentialsInPlatformKeychain(
-                        borderAgentId = message.payload.borderAgentId,
+                        borderAgentId = borderAgentId,
                         tlv = tlv,
                     )
                 }
@@ -378,7 +377,4 @@ class FrontendMessageHandler @Inject constructor(
         )
         externalBusRepository.send(response)
     }
-
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun decodeHex(hex: String): ByteArray = hex.hexToByteArray()
 }

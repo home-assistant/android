@@ -296,6 +296,31 @@ class IncomingExternalBusMessageTest {
     }
 
     @Test
+    fun `Given Thread store_in_platform_keychain JSON then parses to ThreadStoreInPlatformKeychainMessage`() {
+        val json =
+            """{"type":"thread/store_in_platform_keychain","id":62,"payload":{"mac_extended_address":"aabbccddeeff0011","border_agent_id":"0123456789abcdef0123456789abcdef","active_operational_dataset":"0e080000000000010000","extended_pan_id":"1111111122222222"}}"""
+
+        val message = assertInstanceOf(ThreadStoreInPlatformKeychainMessage::class.java, frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json))
+        assertEquals(62, message.id)
+        assertEquals("aabbccddeeff0011", message.payload.macExtendedAddress)
+        assertEquals("0123456789abcdef0123456789abcdef", message.payload.borderAgentId)
+        assertEquals("0e080000000000010000", message.payload.activeOperationalDataset)
+        assertEquals("1111111122222222", message.payload.extendedPanId)
+    }
+
+    @Test
+    fun `Given Thread store_in_platform_keychain JSON with only the dataset then parses with null fields`() {
+        val json =
+            """{"type":"thread/store_in_platform_keychain","payload":{"active_operational_dataset":"0e080000000000010000"}}"""
+
+        val message = assertInstanceOf(ThreadStoreInPlatformKeychainMessage::class.java, frontendExternalBusJson.decodeFromString<IncomingExternalBusMessage>(json))
+        assertNull(message.id)
+        assertNull(message.payload.macExtendedAddress)
+        assertNull(message.payload.borderAgentId)
+        assertNull(message.payload.extendedPanId)
+    }
+
+    @Test
     fun `Given bar_code scan JSON with full payload then parses to BarcodeScanMessage`() {
         val json =
             """{"type":"bar_code/scan","id":60,"payload":{"title":"Scan code","description":"Point the camera","alternative_option_label":"Enter manually"}}"""
