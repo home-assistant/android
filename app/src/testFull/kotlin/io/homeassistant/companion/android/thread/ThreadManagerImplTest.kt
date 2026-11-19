@@ -12,6 +12,7 @@ import com.google.android.gms.threadnetwork.IsPreferredCredentialsResult
 import com.google.android.gms.threadnetwork.ThreadNetworkClient
 import com.google.android.gms.threadnetwork.ThreadNetworkCredentials
 import com.google.android.gms.threadnetwork.ThreadNetworkStatusCodes
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
@@ -19,11 +20,15 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -670,6 +675,57 @@ class ThreadManagerImplTest {
             } catch (_: IllegalStateException) {
             }
         }
+
+        @Test
+        fun `Given the device refuses the credential when add then the ID is tracked and dropped again`() = runTest {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } returns credentials
+            mockOrphanCleanup()
+            every { threadNetworkClient.addCredentials(any(), credentials) } returns
+                failureTask(IllegalStateException("add boom"))
+            val repository: IntegrationRepository = mockk(relaxed = true)
+            coEvery { serverManager.integrationRepository(1) } returns repository
+            coEvery { repository.getThreadBorderAgentIds() } returnsMany listOf(
+                listOf("existing-id"),
+                listOf("existing-id"),
+                listOf("existing-id", borderAgentId),
+            )
+
+            runCatching {
+                createManager().addCredentialToDevice(serverId = 1, tlv = byteArrayOf(1), borderAgentId = borderAgentId)
+            }
+
+            coVerifyOrder {
+                repository.setThreadBorderAgentIds(listOf("existing-id", borderAgentId))
+                repository.setThreadBorderAgentIds(listOf("existing-id"))
+            }
+        }
+
+        @Test
+        fun `Given add is cancelled before the device answers when add then the ID stays tracked`() = runTest {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } returns credentials
+            mockOrphanCleanup()
+            every { threadNetworkClient.addCredentials(any(), credentials) } returns pendingTask()
+            val repository: IntegrationRepository = mockk(relaxed = true)
+            coEvery { serverManager.integrationRepository(1) } returns repository
+            coEvery { repository.getThreadBorderAgentIds() } returns listOf("existing-id")
+            val manager = createManager()
+
+            val job = launch {
+                manager.addCredentialToDevice(serverId = 1, tlv = byteArrayOf(1), borderAgentId = borderAgentId)
+            }
+            advanceUntilIdle()
+            job.cancelAndJoin()
+
+            coVerify(exactly = 1) { repository.setThreadBorderAgentIds(any()) }
+            coVerify { repository.setThreadBorderAgentIds(listOf("existing-id", borderAgentId)) }
+        }
+    }
+
+    private fun <T> pendingTask(): Task<T> = mockk {
+        every { addOnSuccessListener(any()) } returns this@mockk
+        every { addOnFailureListener(any()) } returns this@mockk
     }
 
     private fun dataset(datasetId: String, preferred: Boolean, source: String = "HomeAssistant") = ThreadDatasetResponse(

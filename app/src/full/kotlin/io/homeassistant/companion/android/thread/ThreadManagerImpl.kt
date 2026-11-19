@@ -384,17 +384,29 @@ class ThreadManagerImpl @Inject constructor(
 
         val threadBorderAgent = ThreadBorderAgent.newBuilder(borderAgentId.hexToByteArray()).build()
         val credentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
-        suspendCancellableCoroutine { cont ->
-            threadNetworkClient
-                .addCredentials(threadBorderAgent, credentials)
-                .addOnSuccessListener { if (cont.isActive) cont.resume(Unit) }
-                .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
+        // Track the border agent ID before the write so the orphan path can clean it up if this
+        // server is later removed. The device may still complete the write after this coroutine
+        // is cancelled, so the ID is only dropped again when the write is known to have failed.
+        val repository = serverManager.integrationRepository(serverId)
+        val alreadyTracked = borderAgentId in repository.getThreadBorderAgentIds()
+        if (!alreadyTracked) {
+            repository.setThreadBorderAgentIds(repository.getThreadBorderAgentIds() + borderAgentId)
         }
-        // Track the border agent ID so the orphan path can clean it up if this server is later
-        // removed.
-        serverManager.integrationRepository(serverId).setThreadBorderAgentIds(
-            (serverManager.integrationRepository(serverId).getThreadBorderAgentIds() + borderAgentId).distinct(),
-        )
+        try {
+            suspendCancellableCoroutine<Unit> { cont ->
+                threadNetworkClient
+                    .addCredentials(threadBorderAgent, credentials)
+                    .addOnSuccessListener { if (cont.isActive) cont.resume(Unit) }
+                    .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (!alreadyTracked) {
+                repository.setThreadBorderAgentIds(repository.getThreadBorderAgentIds() - borderAgentId)
+            }
+            throw e
+        }
         return try {
             if (isPreferredCredentials(credentials)) {
                 ThreadManager.AddCredentialResult.Preferred

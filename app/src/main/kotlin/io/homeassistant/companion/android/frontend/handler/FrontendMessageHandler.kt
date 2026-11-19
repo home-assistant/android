@@ -309,9 +309,7 @@ class FrontendMessageHandler @Inject constructor(
             }
 
             is ThreadStoreInPlatformKeychainMessage -> {
-                Timber.d(
-                    "thread/store_in_platform_keychain received with id: ${message.id} (BA=${message.payload.borderAgentId})",
-                )
+                Timber.d("thread/store_in_platform_keychain received with id: ${message.id}")
                 val tlv = try {
                     message.payload.activeOperationalDataset.hexToByteArray()
                 } catch (e: IllegalArgumentException) {

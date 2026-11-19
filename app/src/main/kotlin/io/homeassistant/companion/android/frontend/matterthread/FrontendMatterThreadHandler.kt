@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.frontend.externalbus.outgoing.MatterCo
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
+import io.homeassistant.companion.android.util.sensitive
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -358,7 +359,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             val result = withProgress {
                 threadManager.addCredentialToDevice(serverId = serverId, tlv = tlv, borderAgentId = borderAgentId)
             }
-            Timber.d("Thread store: added '$networkName' ($result)")
+            Timber.d("Thread store: added '${sensitive(networkName)}' ($result)")
             when (result) {
                 ThreadManager.AddCredentialResult.Preferred ->
                     dialogManager.showInformation(
@@ -382,7 +383,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Timber.w(e, "Thread store: failed to add credential '$networkName'")
+            Timber.w(e, "Thread store: failed to add credential '${sensitive(networkName)}'")
             dialogManager.showInformation(
                 commonR.string.thread_store_failed,
                 networkName,
