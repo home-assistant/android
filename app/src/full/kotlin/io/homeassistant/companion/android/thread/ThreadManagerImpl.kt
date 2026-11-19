@@ -101,9 +101,8 @@ class ThreadManagerImpl @Inject constructor(
                     serverId,
                 )
                 coreThreadDataset.preferredBorderAgentId?.let {
-                    // Append rather than overwrite: the device may hold other, non-preferred
-                    // credentials this app added; dropping their IDs would hide them from the
-                    // orphan cleanup forever.
+                    // The device may hold other, non-preferred credentials this app stored. Their
+                    // IDs must stay tracked for the orphan cleanup to find them.
                     val repository = serverManager.integrationRepository(serverId)
                     repository.setThreadBorderAgentIds((repository.getThreadBorderAgentIds() + it).distinct())
                 } // else added using placeholder, will be removed when core is updated
