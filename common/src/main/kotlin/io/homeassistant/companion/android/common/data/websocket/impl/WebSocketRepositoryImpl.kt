@@ -50,6 +50,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Th
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.toDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.webRtcJsonMapper
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toHexString
@@ -221,9 +222,13 @@ class WebSocketRepositoryImpl internal constructor(
         return mapResponse(socketResponse)
     }
 
-    override suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
-        if (!isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY)) return null
+    override suspend fun getEntityRegistryDisplay(entityIds: List<String>): EntityRegistryDisplayResponse? = when {
+        !isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY) -> null
+        entityIds.isEmpty() -> getWholeEntityRegistryDisplay()
+        else -> getEntityRegistryDisplayEntries(entityIds)
+    }
 
+    private suspend fun getWholeEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "config/entity_registry/list_for_display",
@@ -231,6 +236,19 @@ class WebSocketRepositoryImpl internal constructor(
         )
 
         return mapResponse(socketResponse)
+    }
+
+    private suspend fun getEntityRegistryDisplayEntries(entityIds: List<String>): EntityRegistryDisplayResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "config/entity_registry/get_entries",
+                "entity_ids" to entityIds,
+            ),
+        )
+        // The entry of an entity the registry doesn't know is null
+        return socketResponse?.takeIf { it.success == true }
+            ?.let { mapResponse<Map<String, EntityRegistryResponse?>>(it) }
+            ?.values?.filterNotNull()?.toDisplayResponse()
     }
 
     override suspend fun getFloorRegistry(): List<FloorRegistryResponse>? {

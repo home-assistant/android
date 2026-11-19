@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ca
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayEntry
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcConfiguration
@@ -509,6 +510,67 @@ class WebSocketRepositoryImplTest {
             assertNull(repository.getEntityRegistryDisplay())
 
             coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
+        }
+
+        @Test
+        fun `Given entity ids When getting entity registry display Then only their entries are requested and converted for display`() = runTest {
+            val messageSlot = captureSentMessage(
+                """
+                {
+                  "sensor.power": {
+                    "entity_id": "sensor.power", "name": null, "original_name": "Power", "icon": "mdi:flash",
+                    "area_id": "kitchen", "device_id": "plug", "hidden_by": "user", "entity_category": "diagnostic",
+                    "labels": ["energy"], "options": {"sensor": {"suggested_display_precision": 1}}
+                  },
+                  "light.bed": {"entity_id": "light.bed", "name": "Bed", "original_name": "Light", "hidden_by": null},
+                  "light.unknown": null
+                }
+                """.trimIndent(),
+            )
+
+            val response = checkNotNull(repository.getEntityRegistryDisplay(listOf("sensor.power", "light.bed", "light.unknown")))
+
+            assertEquals("config/entity_registry/get_entries", messageSlot.captured["type"])
+            assertEquals(listOf("sensor.power", "light.bed", "light.unknown"), messageSlot.captured["entity_ids"])
+            assertEquals(
+                listOf(
+                    EntityRegistryDisplayEntry(
+                        entityId = "sensor.power",
+                        areaId = "kitchen",
+                        deviceId = "plug",
+                        labels = listOf("energy"),
+                        icon = "mdi:flash",
+                        entityCategory = 0,
+                        hidden = true,
+                        name = "Power",
+                        displayPrecision = 1,
+                    ),
+                    EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed"),
+                ),
+                response.entities,
+            )
+            assertEquals(mapOf(0 to "diagnostic"), response.entityCategories)
+        }
+
+        @Test
+        fun `Given a server older than 2024 10 When getting entity registry display for ids Then returns null without sending`() = runTest {
+            captureSentMessage("""{}""", version = "2024.9.3")
+
+            assertNull(repository.getEntityRegistryDisplay(listOf("light.bed")))
+
+            coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
+        }
+
+        @Test
+        fun `Given a failed command When getting entity registry display for ids Then returns null`() = runTest {
+            coEvery { webSocketCore.server() } returns createServer(version = "2025.1.0")
+            coEvery { webSocketCore.sendMessage(any<Map<String, Any?>>()) } returns MessageSocketResponse(
+                id = 1,
+                success = false,
+                error = kotlinJsonMapper.parseToJsonElement("""{"code": "unknown_command"}"""),
+            )
+
+            assertNull(repository.getEntityRegistryDisplay(listOf("light.bed")))
         }
 
         @Test

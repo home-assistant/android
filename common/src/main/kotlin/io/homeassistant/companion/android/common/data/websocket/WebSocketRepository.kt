@@ -55,12 +55,14 @@ interface WebSocketRepository {
     suspend fun getEntityRegistry(): List<EntityRegistryResponse>?
 
     /**
-     * Return [EntityRegistryDisplayResponse], a bandwidth-efficient version of the
-     * entity registry meant for display.
-     * Requires Home Assistant 2023.3 or later. Some fields may require later
-     * versions of Home Assistant, see [EntityRegistryDisplayEntry].
+     * Return [EntityRegistryDisplayResponse], a bandwidth-efficient version of the entity registry
+     * meant for display, limited to [entityIds] or holding every entity when it is empty. Pass the
+     * entity ids whenever they are known, so the whole registry isn't downloaded to resolve a few
+     * entities; the ones without a registry entry are omitted.
+     * Requires Home Assistant 2024.10 or later, null is returned for older servers. Some fields may
+     * require later versions of Home Assistant, see [EntityRegistryDisplayEntry].
      */
-    suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse?
+    suspend fun getEntityRegistryDisplay(entityIds: List<String> = emptyList()): EntityRegistryDisplayResponse?
     suspend fun getEntityRegistryFor(entityId: String): EntityRegistryResponse?
 
     /**
