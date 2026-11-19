@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.frontend.dialog
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import io.homeassistant.companion.android.common.R as commonR
@@ -17,7 +20,8 @@ internal fun SimpleConfirmDialog(pendingDialog: FrontendDialog.Confirm, onOpenEx
         onDismissRequest = pendingDialog.onCancel,
         title = { Text(text = stringResource(commonR.string.app_name), style = HATextStyle.HeadlineMedium) },
         text = {
-            Column {
+            // Long messages can exceed the dialog height on small screens or with large fonts.
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 Text(text = pendingDialog.message, style = HATextStyle.Body)
                 pendingDialog.moreInfoUrl?.let { url ->
                     HAPlainButton(stringResource(commonR.string.learn_more), { onOpenExternalLink(url) })
