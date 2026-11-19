@@ -106,13 +106,14 @@ interface ThreadManager {
          * This is a best-effort prediction: the device only exposes credentials owned by the
          * calling app, so a preferred network owned by another app — or established by the
          * system from a border router set up with the user's account — is invisible here and
-         * would win over ours.
+         * would win over the credential being added.
          */
         object LikelyToBecomePreferred : PreflightOutcome
 
         /**
-         * The device has Thread credentials but our app has none preferred. Another app may
-         * own the preferred credential; the outcome of adding ours is ambiguous.
+         * This app has credentials stored on the device but none of them is preferred, or the
+         * stored credentials could not be read. Another app may own the preferred credential;
+         * the outcome of adding one more is ambiguous.
          */
         object Unknown : PreflightOutcome
     }
