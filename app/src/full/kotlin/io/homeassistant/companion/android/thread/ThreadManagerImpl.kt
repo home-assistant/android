@@ -373,7 +373,6 @@ class ThreadManagerImpl @Inject constructor(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     override suspend fun addCredentialToDevice(
         serverId: Int,
         tlv: ByteArray,
