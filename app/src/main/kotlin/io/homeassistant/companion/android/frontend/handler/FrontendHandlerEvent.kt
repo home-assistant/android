@@ -134,8 +134,8 @@ sealed interface FrontendHandlerEvent {
      * Thread Active Operational Dataset in the device's Thread credential storage.
      *
      * @param borderAgentId Hex string identifying the preferred border router that owns the
-     *   network on the server side; the credential is added under this BA so the orphan path
-     *   can later remove it.
+     *   network on the server side; the credential should be added under this BA so it can be
+     *   removed later if the server is removed.
      * @param tlv Decoded raw Thread Active Operational Dataset bytes.
      */
     data class StoreThreadCredentialsInPlatformKeychain(val borderAgentId: String, val tlv: ByteArray) :
