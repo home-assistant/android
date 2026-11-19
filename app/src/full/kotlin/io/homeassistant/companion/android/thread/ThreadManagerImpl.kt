@@ -69,7 +69,7 @@ class ThreadManagerImpl @Inject constructor(
 
         if (getDeviceDataset == null) return ThreadManager.SyncResult.NoneHaveCredentials
 
-        val appIsDevicePreferred = appAddedIsPreferredCredentials()
+        val appIsDevicePreferred = appPreferredCredential() != null
         Timber.d("Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer"} dataset from app")
         return if (appIsDevicePreferred) {
             ThreadManager.SyncResult.OnlyOnServer(imported = false)
@@ -101,7 +101,11 @@ class ThreadManagerImpl @Inject constructor(
                     serverId,
                 )
                 coreThreadDataset.preferredBorderAgentId?.let {
-                    serverManager.integrationRepository(serverId).setThreadBorderAgentIds(listOf(it))
+                    // Append rather than overwrite: the device may hold other, non-preferred
+                    // credentials this app added; dropping their IDs would hide them from the
+                    // orphan cleanup forever.
+                    val repository = serverManager.integrationRepository(serverId)
+                    repository.setThreadBorderAgentIds((repository.getThreadBorderAgentIds() + it).distinct())
                 } // else added using placeholder, will be removed when core is updated
                 Timber.d("Thread import to device completed")
                 ThreadManager.SyncResult.OnlyOnServer(imported = true)
@@ -120,7 +124,7 @@ class ThreadManagerImpl @Inject constructor(
                 Timber.d(
                     "Thread: device ${if (coreIsDevicePreferred) "prefers" else "doesn't prefer"} core preferred dataset",
                 )
-                val appIsDevicePreferred = coreIsDevicePreferred || appAddedIsPreferredCredentials()
+                val appIsDevicePreferred = coreIsDevicePreferred || appPreferredCredential() != null
                 Timber.d(
                     "Thread: device ${if (appIsDevicePreferred) "prefers" else "doesn't prefer"} dataset from app",
                 )
@@ -138,45 +142,42 @@ class ThreadManagerImpl @Inject constructor(
                                 serverManager.integrationRepository(it.id).getThreadBorderAgentIds()
                             }
                             updated = if (coreThreadDataset.source != "Google") { // Credential from HA, update
-                                localIds.filter { it != coreThreadDataset.preferredBorderAgentId }.forEach { baId ->
-                                    try {
-                                        deleteThreadCredential(baId)
-                                    } catch (e: CancellationException) {
-                                        throw e
-                                    } catch (e: Exception) {
-                                        Timber.e(e, "Unable to delete credential for border agent ID $baId")
-                                    }
-                                }
+                                val deleted = deleteThreadCredentials(
+                                    localIds.filter { it != coreThreadDataset.preferredBorderAgentId },
+                                )
                                 importDatasetFromServer(
                                     coreThreadDataset.datasetId,
                                     coreThreadDataset.preferredBorderAgentId,
                                     serverId,
                                 )
                                 serverManager.servers().forEach {
-                                    serverManager.integrationRepository(it.id).setThreadBorderAgentIds(
+                                    // Keep tracking IDs whose deletion failed so the orphan
+                                    // cleanup can retry them later.
+                                    val repository = serverManager.integrationRepository(it.id)
+                                    val kept = repository.getThreadBorderAgentIds() - deleted
+                                    repository.setThreadBorderAgentIds(
                                         if (it.id == serverId && coreThreadDataset.preferredBorderAgentId != null) {
-                                            listOf(coreThreadDataset.preferredBorderAgentId!!)
+                                            (kept + coreThreadDataset.preferredBorderAgentId!!).distinct()
                                         } else {
-                                            emptyList()
+                                            kept
                                         },
                                     )
                                 }
-                                Timber.d("Thread update device completed: deleted ${localIds.size} datasets, updated 1")
+                                Timber.d(
+                                    "Thread update device completed: deleted ${deleted.size} datasets, updated 1",
+                                )
                                 true
                             } else { // Core prefers imported from other app, this shouldn't be managed by HA
-                                localIds.forEach { baId ->
-                                    try {
-                                        deleteThreadCredential(baId)
-                                    } catch (e: CancellationException) {
-                                        throw e
-                                    } catch (e: Exception) {
-                                        Timber.e(e, "Unable to delete credential for border agent ID $baId")
-                                    }
-                                }
+                                val deleted = deleteThreadCredentials(localIds)
                                 serverManager.servers().forEach {
-                                    serverManager.integrationRepository(it.id).setThreadBorderAgentIds(emptyList())
+                                    // Keep tracking IDs whose deletion failed so the orphan
+                                    // cleanup can retry them later.
+                                    val repository = serverManager.integrationRepository(it.id)
+                                    repository.setThreadBorderAgentIds(
+                                        repository.getThreadBorderAgentIds() - deleted,
+                                    )
                                 }
-                                Timber.d("Thread update device completed: deleted ${localIds.size} datasets")
+                                Timber.d("Thread update device completed: deleted ${deleted.size} datasets")
                                 false
                             }
                         } catch (e: CancellationException) {
@@ -256,31 +257,36 @@ class ThreadManagerImpl @Inject constructor(
         }
     }
 
-    private suspend fun appAddedIsPreferredCredentials(): Boolean = appAddedPreferredCredential() != null
+    /** All Thread credentials this app has stored on the device, or `null` if they couldn't be read. */
+    private suspend fun getAllCredentials(): List<ThreadNetworkCredentials>? = suspendCancellableCoroutine { cont ->
+        threadNetworkClient
+            .allCredentials
+            .addOnSuccessListener { if (cont.isActive) cont.resume(it) }
+            .addOnFailureListener {
+                Timber.w(it, "Thread: cannot read app credentials")
+                if (cont.isActive) cont.resume(null)
+            }
+    }
+
+    private suspend fun appPreferredCredential(): ThreadNetworkCredentials? =
+        preferredCredentialAmong(getAllCredentials())
 
     @OptIn(ExperimentalStdlibApi::class)
-    private suspend fun appAddedPreferredCredential(): ThreadNetworkCredentials? {
-        val appCredentials = suspendCancellableCoroutine { cont ->
-            threadNetworkClient
-                .allCredentials
-                .addOnSuccessListener { if (cont.isActive) cont.resume(it) }
-                .addOnFailureListener { if (cont.isActive) cont.resume(null) }
+    private suspend fun preferredCredentialAmong(
+        credentials: List<ThreadNetworkCredentials>?,
+    ): ThreadNetworkCredentials? = try {
+        credentials?.firstOrNull { isPreferredCredentials(it) }?.also {
+            Timber.d(
+                "Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${
+                    it.extendedPanId.toHexString(HexFormat.UpperCase)
+                })",
+            )
         }
-        return try {
-            appCredentials?.firstOrNull { isPreferredCredentials(it) }?.also {
-                Timber.d(
-                    "Thread device prefers app added dataset: %s (PAN %s, EXTPAN %s)",
-                    it.networkName,
-                    it.panId,
-                    it.extendedPanId.toHexString(HexFormat.UpperCase),
-                )
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.e(e, "Thread app added credentials preferred check failed")
-            null
-        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Thread app added credentials preferred check failed")
+        null
     }
 
     private suspend fun isPreferredCredentials(credentials: ThreadNetworkCredentials): Boolean =
@@ -326,57 +332,53 @@ class ThreadManagerImpl @Inject constructor(
             ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
         } catch (e: Exception) {
             Timber.w(e, "Thread preflight: cannot parse TLV")
-            return ThreadManager.PreflightOutcome.Unknown
+            null
         }
-        val alreadyPreferred = try {
-            isPreferredCredentials(prospective)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.w(e, "Thread preflight: isPreferredCredentials failed")
-            return ThreadManager.PreflightOutcome.Unknown
+        val alreadyPreferred = prospective?.let {
+            try {
+                isPreferredCredentials(it)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w(e, "Thread preflight: isPreferredCredentials failed")
+                null
+            }
         }
-        if (alreadyPreferred) return ThreadManager.PreflightOutcome.AlreadyPreferred
+        return when {
+            prospective == null || alreadyPreferred == null -> ThreadManager.PreflightOutcome.Unknown
+            alreadyPreferred -> ThreadManager.PreflightOutcome.AlreadyPreferred
+            else -> predictAmongAppCredentials()
+        }
+    }
 
-        val ourPreferred = try {
-            appAddedPreferredCredential()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.w(e, "Thread preflight: appAddedPreferredCredential failed")
-            return ThreadManager.PreflightOutcome.Unknown
-        }
-        if (ourPreferred != null) {
-            return ThreadManager.PreflightOutcome.DifferentAppPreferred(ourPreferred.networkName)
-        }
-
-        // No app-owned preferred credential. Probe how many credentials are stored to distinguish
-        // "nothing stored" (this add will likely become preferred) from "we own credentials but
-        // none is preferred — another app may own the preferred one" (ambiguous).
-        val ownedCount = suspendCancellableCoroutine { cont ->
-            threadNetworkClient
-                .allCredentials
-                .addOnSuccessListener { if (cont.isActive) cont.resume(it?.size ?: 0) }
-                .addOnFailureListener {
-                    Timber.w(it, "Thread preflight: allCredentials failed")
-                    if (cont.isActive) cont.resume(-1)
-                }
-        }
-        return if (ownedCount == 0) {
-            ThreadManager.PreflightOutcome.LikelyToBecomePreferred
-        } else {
-            ThreadManager.PreflightOutcome.Unknown
+    /**
+     * Preflight continuation once the prospective credential is known not to be preferred:
+     * classify the outcome from the app's own stored credentials. Distinguishes "nothing stored"
+     * (this add will likely become preferred) from "we own credentials but none is preferred —
+     * another app may own the preferred one" (ambiguous).
+     */
+    private suspend fun predictAmongAppCredentials(): ThreadManager.PreflightOutcome {
+        val appCredentials = getAllCredentials()
+        val currentAppPreferred = preferredCredentialAmong(appCredentials)
+        return when {
+            currentAppPreferred != null ->
+                ThreadManager.PreflightOutcome.AppCredentialPreferred(currentAppPreferred.networkName)
+            appCredentials == null -> ThreadManager.PreflightOutcome.Unknown
+            appCredentials.isEmpty() -> ThreadManager.PreflightOutcome.LikelyToBecomePreferred
+            else -> ThreadManager.PreflightOutcome.Unknown
         }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    override suspend fun addCredentialToDevice(serverId: Int, tlv: ByteArray, borderAgentId: String): Boolean? {
-        // Sweep stale credentials before adding. Used to run at the top of fullSyncPreferredDataset;
-        // the HA -> Phone path is the natural new home for it.
+    override suspend fun addCredentialToDevice(
+        serverId: Int,
+        tlv: ByteArray,
+        borderAgentId: String,
+    ): ThreadManager.AddCredentialResult {
+        // Sweep stale credentials before adding.
         deleteOrphanedThreadCredentials(serverId)
 
-        val idAsBytes = if (borderAgentId.length == 16) borderAgentId.toByteArray() else borderAgentId.hexToByteArray()
-        val threadBorderAgent = ThreadBorderAgent.newBuilder(idAsBytes).build()
+        val threadBorderAgent = ThreadBorderAgent.newBuilder(borderAgentId.hexToByteArray()).build()
         val credentials = ThreadNetworkCredentials.fromActiveOperationalDataset(tlv)
         suspendCancellableCoroutine { cont ->
             threadNetworkClient
@@ -384,17 +386,22 @@ class ThreadManagerImpl @Inject constructor(
                 .addOnSuccessListener { if (cont.isActive) cont.resume(Unit) }
                 .addOnFailureListener { if (cont.isActive) cont.resumeWithException(it) }
         }
-        // Track the BA so the orphan path can clean it up if this server is later removed.
+        // Track the border agent ID so the orphan path can clean it up if this server is later
+        // removed.
         serverManager.integrationRepository(serverId).setThreadBorderAgentIds(
             (serverManager.integrationRepository(serverId).getThreadBorderAgentIds() + borderAgentId).distinct(),
         )
         return try {
-            isPreferredCredentials(credentials)
+            if (isPreferredCredentials(credentials)) {
+                ThreadManager.AddCredentialResult.Preferred
+            } else {
+                ThreadManager.AddCredentialResult.NotPreferred
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.w(e, "Thread: post-add preferred check failed")
-            null
+            ThreadManager.AddCredentialResult.PreferredUnknown
         }
     }
 
@@ -422,6 +429,27 @@ class ThreadManagerImpl @Inject constructor(
             }
         }
         serverManager.integrationRepository(serverId).clearOrphanedThreadBorderAgentIds()
+    }
+
+    /**
+     * Delete the credentials for the given border agent IDs from the device, logging failures.
+     *
+     * @return the IDs that were actually deleted; failed ones should stay tracked so the orphan
+     *   cleanup can retry them later.
+     */
+    private suspend fun deleteThreadCredentials(borderAgentIds: List<String>): Set<String> {
+        val deleted = mutableSetOf<String>()
+        borderAgentIds.forEach { baId ->
+            try {
+                deleteThreadCredential(baId)
+                deleted += baId
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to delete credential for border agent ID $baId")
+            }
+        }
+        return deleted
     }
 
     private suspend fun deleteThreadCredential(borderAgentId: String) = suspendCancellableCoroutine { cont ->

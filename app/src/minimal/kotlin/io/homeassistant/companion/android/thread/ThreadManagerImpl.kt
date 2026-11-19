@@ -36,5 +36,9 @@ class ThreadManagerImpl @Inject constructor() : ThreadManager {
     override suspend fun predictPreferredOutcome(tlv: ByteArray): ThreadManager.PreflightOutcome =
         ThreadManager.PreflightOutcome.Unknown
 
-    override suspend fun addCredentialToDevice(serverId: Int, tlv: ByteArray, borderAgentId: String): Boolean? = null
+    override suspend fun addCredentialToDevice(
+        serverId: Int,
+        tlv: ByteArray,
+        borderAgentId: String,
+    ): ThreadManager.AddCredentialResult = ThreadManager.AddCredentialResult.PreferredUnknown
 }

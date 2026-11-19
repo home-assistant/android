@@ -84,37 +84,52 @@ interface ThreadManager {
      * Predicted state of the Thread credentials stored on the device if a given credential were
      * added now.
      *
-     * Surfaced to the user before a write so they understand the post-add state: Play Services
-     * exposes no API to remove "preferred" status from a Thread credential once it has been
+     * Surfaced to the user before a write so they understand the post-add state: the device
+     * exposes no way to remove "preferred" status from a Thread credential once it has been
      * promoted, so a wrongly-promoted credential is hard to recover from inside the app.
      */
-    sealed class PreflightOutcome {
+    sealed interface PreflightOutcome {
         /** The credential being inspected is already this device's preferred Thread credential. */
-        object AlreadyPreferred : PreflightOutcome()
+        object AlreadyPreferred : PreflightOutcome
 
         /**
-         * Another credential the app added is already this device's preferred Thread network.
-         * Play Services typically keeps preferring it; adding a new credential is unlikely to
-         * change which network is preferred.
+         * A different credential owned by this app is already this device's preferred Thread
+         * network. The device typically keeps preferring it; adding a new credential is unlikely
+         * to change which network is preferred.
          */
-        data class DifferentAppPreferred(val networkName: String) : PreflightOutcome()
+        data class AppCredentialPreferred(val networkName: String) : PreflightOutcome
 
         /**
          * The app has no credentials stored on this device. Adding a credential is likely to
-         * make it the device-preferred one (Play Services promotes the first credential added).
+         * make it the device-preferred one (the first credential added gets promoted).
          *
-         * This is a best-effort prediction: the API only exposes credentials owned by the
-         * calling app, so a preferred network owned by another app — or synced by Play Services
-         * from a Google border router set up with the user's account — is invisible here and
+         * This is a best-effort prediction: the device only exposes credentials owned by the
+         * calling app, so a preferred network owned by another app — or established by the
+         * system from a border router set up with the user's account — is invisible here and
          * would win over ours.
          */
-        object LikelyToBecomePreferred : PreflightOutcome()
+        object LikelyToBecomePreferred : PreflightOutcome
 
         /**
          * The device has Thread credentials but our app has none preferred. Another app may
          * own the preferred credential; the outcome of adding ours is ambiguous.
          */
-        object Unknown : PreflightOutcome()
+        object Unknown : PreflightOutcome
+    }
+
+    /**
+     * Outcome of [addCredentialToDevice]: whether the added credential ended up as the device's
+     * preferred Thread credential.
+     */
+    sealed interface AddCredentialResult {
+        /** The added credential is now the device's preferred Thread credential. */
+        object Preferred : AddCredentialResult
+
+        /** The device kept preferring a different Thread credential. */
+        object NotPreferred : AddCredentialResult
+
+        /** The credential was added but the post-add preferred state could not be determined. */
+        object PreferredUnknown : AddCredentialResult
     }
 
     /**
@@ -184,8 +199,8 @@ interface ThreadManager {
      * Predict what state the Thread credentials stored on the device will be in if [tlv] is
      * added now.
      *
-     * Used by the HA → Phone direction (the frontend Thread panel's "Send credentials to phone"
-     * button) to surface a meaningful confirmation before mutating the stored credentials.
+     * Used by the HA → device direction (the frontend Thread panel) to surface a meaningful
+     * confirmation before mutating the stored credentials.
      */
     suspend fun predictPreferredOutcome(tlv: ByteArray): PreflightOutcome
 
@@ -193,13 +208,10 @@ interface ThreadManager {
      * Add the given Thread credential ([tlv]) to the device's credential storage under
      * [borderAgentId].
      *
-     * The BA-ID is appended to the per-server tracked list so the orphan-cleanup path can
-     * remove the credential when [serverId] is later removed. After the add the device's
-     * preferred credential is queried so the caller can report the actual outcome.
-     *
-     * @return `true` if Play Services now reports the just-added credential as preferred,
-     *   `false` if it prefers a different credential, or `null` if the post-add state could not
-     *   be determined.
+     * The [borderAgentId] is appended to the per-server tracked list so the orphan-cleanup path
+     * can remove the credential when [serverId] is later removed. After the add the device's
+     * preferred credential is queried so the caller can report the actual outcome as an
+     * [AddCredentialResult].
      */
-    suspend fun addCredentialToDevice(serverId: Int, tlv: ByteArray, borderAgentId: String): Boolean?
+    suspend fun addCredentialToDevice(serverId: Int, tlv: ByteArray, borderAgentId: String): AddCredentialResult
 }
