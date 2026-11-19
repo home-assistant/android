@@ -1148,6 +1148,24 @@ class FrontendScreenTest {
         }
     }
 
+    @Test
+    fun `Given a server handling insets when the IME opens then the reported bottom inset drops to zero`() {
+        val reportedInsets = mutableListOf<SafeAreaInsets>()
+        composeTestRule.apply {
+            setFrontendScreenWithSystemBars(
+                viewState = { contentState(serverHandleTopInsets = false) },
+                onSafeAreaInsetsChanged = { reportedInsets += it },
+            )
+
+            runOnIdle { assertEquals(toDp(NAVIGATION_BAR_HEIGHT_PX), reportedInsets.last().bottom, POSITION_TOLERANCE_DP) }
+
+            dispatchWindowInsets(imeHeightPx = IME_HEIGHT_PX)
+            waitForIdle()
+
+            runOnIdle { assertEquals(0f, reportedInsets.last().bottom, POSITION_TOLERANCE_DP) }
+        }
+    }
+
     private fun contentState(serverHandleTopInsets: Boolean) = FrontendViewState.Content(
         serverId = 1,
         url = "https://example.com",

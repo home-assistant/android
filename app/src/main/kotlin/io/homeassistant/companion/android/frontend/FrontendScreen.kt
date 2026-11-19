@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
@@ -853,12 +854,14 @@ private fun ReportSafeAreaInsetsEffect(
     onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
 ) {
     val insets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+    val imeInsets = WindowInsets.ime
     val density = LocalDensity.current
     val displayMetrics = LocalResources.current.displayMetrics
     val layoutDirection = LocalLayoutDirection.current
 
     val top = if (serverHandleTopInsets) pxToDp(insets.getTop(density).toFloat(), displayMetrics) else 0f
-    val bottom = pxToDp(insets.getBottom(density).toFloat(), displayMetrics)
+    val bottomPx = (insets.getBottom(density) - imeInsets.getBottom(density)).coerceAtLeast(0)
+    val bottom = pxToDp(bottomPx.toFloat(), displayMetrics)
     val left = pxToDp(insets.getLeft(density, layoutDirection).toFloat(), displayMetrics)
     val right = pxToDp(insets.getRight(density, layoutDirection).toFloat(), displayMetrics)
 
