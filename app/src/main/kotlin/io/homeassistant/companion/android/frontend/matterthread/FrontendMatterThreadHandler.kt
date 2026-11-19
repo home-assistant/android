@@ -31,7 +31,7 @@ private const val SHARE_ERROR_CANCELED = "canceled"
 private const val SHARE_ERROR_FAILED = "failed"
 
 /**
- * Companion documentation for Thread credential management, linked from the HA → Phone store
+ * Companion documentation for Thread credential management, linked from the HA → device store
  * dialogs so users can read up on how Android's preferred Thread network behaves.
  */
 private const val THREAD_DOCS_URL = "https://companion.home-assistant.io/docs/integrations/thread"
@@ -496,10 +496,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         data class Thread(val serverId: Int) : InFlight
 
         /**
-         * HA → Phone Thread credential add flow. No payload here: this flow does not produce an
-         * IntentSender, so [onMatterThreadIntentResult] never needs to dispatch on it. The
-         * variant only exists to occupy [inFlight] and block other flows from running
-         * concurrently.
+         * Flow to store Thread credentials from Home Assistant in the device's credential store.
          */
         data object ThreadStore : InFlight
     }

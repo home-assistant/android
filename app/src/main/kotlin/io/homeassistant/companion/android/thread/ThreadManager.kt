@@ -199,9 +199,6 @@ interface ThreadManager {
     /**
      * Predict what state the Thread credentials stored on the device will be in if [tlv] is
      * added now.
-     *
-     * Used by the HA → device direction (the frontend Thread panel) to surface a meaningful
-     * confirmation before mutating the stored credentials.
      */
     suspend fun predictPreferredOutcome(tlv: ByteArray): PreflightOutcome
 

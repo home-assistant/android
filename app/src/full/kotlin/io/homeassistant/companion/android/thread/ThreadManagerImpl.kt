@@ -454,8 +454,8 @@ class ThreadManagerImpl @Inject constructor(
     /**
      * Delete the credentials for the given border agent IDs from the device, logging failures.
      *
-     * @return the IDs that were actually deleted; failed ones should stay tracked so the orphan
-     *   cleanup can retry them later.
+     * @return the IDs that were actually deleted; failed ones should stay tracked so they can be
+     *   retried later.
      */
     private suspend fun deleteThreadCredentials(borderAgentIds: List<String>): Set<String> {
         val deleted = mutableSetOf<String>()

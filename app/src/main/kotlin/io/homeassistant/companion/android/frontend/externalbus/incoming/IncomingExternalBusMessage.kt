@@ -349,10 +349,8 @@ data class ThreadImportCredentialsMessage(override val id: Int? = null) : Incomi
  * to the app" button on a preferred dataset row fires this with the active operational dataset
  * already inlined.
  *
- * The app stores the credential in the device's Thread credential storage; the message name
- * follows the frontend/iOS naming, where the credentials land in the Apple Keychain. All fields
- * are hex strings as sent by the frontend; the [activeOperationalDataset] decodes to the raw
- * Thread TLV.
+ * The app stores the credential in the device's Thread credential storage. All fields are hex strings
+ * as sent by the frontend; the [activeOperationalDataset] decodes to the raw Thread TLV.
  *
  * Will not be sent by the frontend when the device reports
  * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canTransferThreadCredentialsToKeychain]
