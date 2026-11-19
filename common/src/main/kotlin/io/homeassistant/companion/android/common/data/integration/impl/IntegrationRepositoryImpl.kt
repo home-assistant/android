@@ -498,7 +498,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
     }
 
     override suspend fun getEntityUpdates(filter: EntityFilter): Flow<Entity>? = when {
-        // Filtered by the server for any user. The state trigger used for older servers below requires admin rights.
         supportsFilteringOnServer(filter) ->
             webSocketRepository().getCompressedStateAndChanges(filter)?.toEntityUpdates(filter)
         supportsCompressedStateChanges() ->

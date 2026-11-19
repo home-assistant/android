@@ -544,7 +544,7 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     /**
-     * Data of a `subscribe_entities` command limited to this filter, none when it is empty. Ids
+     * Data of a `subscribe_entities` command limited to this filter, none when it is empty. Filter options
      * are sorted so that the same selection always shares the same subscription.
      */
     private fun EntityFilter.toSubscribeEntitiesData(): Map<String, Any?> = when {
