@@ -41,6 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,6 +58,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
@@ -77,6 +79,7 @@ import org.junit.jupiter.params.provider.ValueSource
 class WebSocketCoreImplTest {
     private lateinit var mockOkHttpClient: OkHttpClient
     private lateinit var mockConnection: WebSocket
+    private lateinit var mockAuthenticationRepository: AuthenticationRepository
     private lateinit var webSocketCore: WebSocketCoreImpl
     private lateinit var webSocketListener: WebSocketListener
 
@@ -99,7 +102,7 @@ class WebSocketCoreImplTest {
     ) {
         mockOkHttpClient = mockk<OkHttpClient>(relaxed = true)
         val mockServerManager = mockk<ServerManager>(relaxed = true)
-        val mockAuthenticationRepository = mockk<AuthenticationRepository>(relaxed = true)
+        mockAuthenticationRepository = mockk(relaxed = true)
         val mockConnectionStateProvider = mockk<ServerConnectionStateProvider>(relaxed = true)
 
         val testServerId = 1
@@ -130,22 +133,27 @@ class WebSocketCoreImplTest {
             this,
             backgroundScope,
         )
-        webSocketListener = webSocketCore
-        every {
-            mockOkHttpClient.newWebSocket(
-                any(),
-                webSocketListener,
-            )
-        } returns mockConnection
+        useSocket()
+    }
+
+    private fun useSocket(socket: WebSocket = mockConnection, onCreate: () -> Unit = {}) {
+        every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+            val request = firstArg<Request>()
+            webSocketListener = secondArg()
+            every { socket.request() } returns request
+            onCreate()
+            socket
+        }
     }
 
     private fun prepareAuthenticationAnswer(
         haVersion: String = "2025.4.1",
         successfulAuth: Boolean = true,
+        socket: WebSocket = mockConnection,
     ) {
         // Simulate that the server receive the auth message and answer that it is accepted
         every {
-            mockConnection.send(
+            socket.send(
                 match<String> { message ->
                     message.contains(""""type":"auth"""") &&
                         message.contains(""""access_token":"mock_access_token"""")
@@ -153,10 +161,10 @@ class WebSocketCoreImplTest {
             )
         } answers {
             // Trigger onOpen to set state to Authenticating (in real OkHttp this happens async)
-            webSocketListener.onOpen(mockConnection, mockk(relaxed = true))
+            webSocketListener.onOpen(socket, mockk(relaxed = true))
             assertEquals(WebSocketState.Authenticating, webSocketCore.getConnectionState())
             webSocketListener.onMessage(
-                mockConnection,
+                socket,
                 """{"type":"${if (successfulAuth) "auth_ok" else "auth_invalid"}","ha_version":"$haVersion"}""",
             )
             true
@@ -354,10 +362,7 @@ class WebSocketCoreImplTest {
             assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
 
             var reconnectAttempts = false
-            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
-                reconnectAttempts = true
-                mockConnection
-            }
+            useSocket { reconnectAttempts = true }
 
             urlStateFlow.value = UrlState.InsecureState
             advanceUntilIdle()
@@ -481,59 +486,6 @@ class WebSocketCoreImplTest {
         }
 
         @Test
-        fun `Given a replacement socket awaiting auth When the old socket fails Then the replacement still connects`() = runTest {
-            setupServer()
-            every { mockConnection.send(any<String>()) } returns true
-            assertFalse(webSocketCore.connect()) // Let the first handshake time out.
-
-            val replacement = mockk<WebSocket>(relaxed = true)
-            every { mockOkHttpClient.newWebSocket(any(), any()) } returns replacement
-            every { replacement.send(any<String>()) } returns true
-            val attempt = async { webSocketCore.connect() }
-            runCurrent()
-            verify { replacement.send(any<String>()) }
-
-            webSocketListener.onFailure(mockConnection, IOException("Cancelled"), null)
-            webSocketListener.onMessage(replacement, """{"type":"auth_ok","ha_version":"2025.4.1"}""")
-            runCurrent()
-
-            assertTrue(attempt.await())
-            assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
-        }
-
-        @Test
-        fun `Given queued cleanup for a timed out socket When its replacement authenticates Then it stays connected`() = runTest {
-            var retrying = false
-            val url = UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl())
-            setupServer(
-                urlFlow = flow {
-                    // Queue cleanup while the old socket is still current, just before the retry opens its socket.
-                    if (retrying) webSocketListener.onFailure(mockConnection, IOException("Cancelled"), null)
-                    emit(url)
-                },
-            )
-            every { mockConnection.send(any<String>()) } returns true
-            assertFalse(webSocketCore.connect())
-
-            retrying = true
-            val replacement = mockk<WebSocket>(relaxed = true)
-            every { mockOkHttpClient.newWebSocket(any(), any()) } returns replacement
-            every { replacement.send(any<String>()) } returns true
-            val attempt = async { webSocketCore.connect() }
-            runCurrent()
-            verify { replacement.send(any<String>()) }
-
-            // The retry holds the connection mutex until this response completes authentication.
-            webSocketListener.onMessage(replacement, """{"type":"auth_ok","ha_version":"2025.4.1"}""")
-            runCurrent()
-
-            assertTrue(attempt.await())
-            assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
-            assertTrue(webSocketCore.connect())
-            verify(exactly = 2) { mockOkHttpClient.newWebSocket(any(), any()) }
-        }
-
-        @Test
         fun `Given auth timeout When 30 seconds pass without auth response Then connect fails`() = runTest {
             setupServer()
 
@@ -570,6 +522,139 @@ class WebSocketCoreImplTest {
             assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
 
             closeConnection()
+        }
+
+        @Test
+        fun `Given a replacement socket awaiting auth When the old socket fails Then the replacement still connects`() = runTest {
+            setupServer()
+            every { mockConnection.send(any<String>()) } returns true
+            assertFalse(webSocketCore.connect()) // Let the first handshake time out.
+            val oldListener = webSocketListener
+
+            val replacement = mockk<WebSocket>(relaxed = true)
+            useSocket(replacement)
+            every { replacement.send(any<String>()) } returns true
+            val attempt = async { webSocketCore.connect() }
+            runCurrent()
+            verify { replacement.send(any<String>()) }
+
+            oldListener.onFailure(mockConnection, IOException("Cancelled"), null)
+            webSocketListener.onMessage(replacement, """{"type":"auth_ok","ha_version":"2025.4.1"}""")
+            runCurrent()
+
+            assertTrue(attempt.await())
+            assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
+        }
+
+        @Test
+        fun `Given queued cleanup for a timed out socket When its replacement authenticates Then it stays connected`() = runTest {
+            var retrying = false
+            val url = UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl())
+            setupServer(
+                urlFlow = flow {
+                    // Queue cleanup while the old socket is still current, just before the retry opens its socket.
+                    if (retrying) webSocketListener.onFailure(mockConnection, IOException("Cancelled"), null)
+                    emit(url)
+                },
+            )
+            every { mockConnection.send(any<String>()) } returns true
+            assertFalse(webSocketCore.connect())
+
+            retrying = true
+            val replacement = mockk<WebSocket>(relaxed = true)
+            useSocket(replacement)
+            every { replacement.send(any<String>()) } returns true
+            val attempt = async { webSocketCore.connect() }
+            runCurrent()
+            verify { replacement.send(any<String>()) }
+
+            // The retry holds the connection mutex until this response completes authentication.
+            webSocketListener.onMessage(replacement, """{"type":"auth_ok","ha_version":"2025.4.1"}""")
+            runCurrent()
+
+            assertTrue(attempt.await())
+            assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
+            assertTrue(webSocketCore.connect())
+            verify(exactly = 2) { mockOkHttpClient.newWebSocket(any(), any()) }
+        }
+
+        @Test
+        fun `Given a socket that opens before the factory returns When connecting Then the listener sees the open`() = runTest {
+            setupServer()
+            useSocket { webSocketListener.onOpen(mockConnection, mockk(relaxed = true)) }
+            every { mockConnection.send(any<String>()) } returns true
+
+            val attempt = async { webSocketCore.connect() }
+            runCurrent()
+
+            assertEquals(WebSocketState.Authenticating, webSocketCore.getConnectionState())
+            webSocketListener.onMessage(mockConnection, """{"type":"auth_ok","ha_version":"2025.4.1"}""")
+            assertTrue(attempt.await())
+        }
+
+        @Test
+        fun `Given a pending handshake When the server closes Then connect fails without waiting for the timeout`() = runTest {
+            setupServer()
+            every { mockConnection.send(any<String>()) } returns true
+            val attempt = async { webSocketCore.connect() }
+            runCurrent()
+
+            webSocketListener.onClosing(mockConnection, 1000, "Closing")
+            runCurrent()
+
+            assertTrue(attempt.isCompleted)
+            assertFalse(attempt.await())
+            assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
+        }
+
+        @Test
+        fun `Given a timed out socket When a late auth response arrives Then it stays closed`() = runTest {
+            setupServer()
+            every { mockConnection.send(any<String>()) } returns true
+            assertFalse(webSocketCore.connect())
+
+            webSocketListener.onMessage(mockConnection, """{"type":"auth_ok","ha_version":"2025.4.1"}""")
+
+            assertEquals(WebSocketState.ClosedOther, webSocketCore.getConnectionState())
+        }
+
+        @Test
+        fun `Given a pending access token When the URL becomes unavailable Then the partially opened socket is cancelled`() = runTest {
+            val urls = MutableStateFlow(UrlState.HasUrl("https://io.ha".toHttpUrlOrNull()?.toUrl()))
+            setupServer(urlFlow = urls)
+            coEvery { mockAuthenticationRepository.retrieveAccessToken() } coAnswers { awaitCancellation() }
+
+            val attempt = async { webSocketCore.connect() }
+            runCurrent()
+            coVerify { mockAuthenticationRepository.retrieveAccessToken() }
+            urls.value = UrlState.HasUrl(null)
+
+            assertFalse(attempt.await())
+            verify(exactly = 1) { mockConnection.cancel() }
+            verify(exactly = 0) { mockConnection.send(any<String>()) }
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = ["auth_ok", "auth_invalid"])
+        fun `Given an expired handshake When its auth response arrives Then it cannot complete the retry`(response: String) = runTest {
+            setupServer()
+            every { mockConnection.send(any<String>()) } returns true
+            assertFalse(webSocketCore.connect())
+            val oldListener = webSocketListener
+
+            val replacement = mockk<WebSocket>(relaxed = true)
+            useSocket(replacement)
+            every { replacement.send(any<String>()) } returns true
+            val retry = async { webSocketCore.connect() }
+            runCurrent()
+            webSocketListener.onOpen(replacement, mockk(relaxed = true))
+            oldListener.onMessage(mockConnection, """{"type":"$response","ha_version":"2025.4.1"}""")
+            runCurrent()
+
+            assertFalse(retry.isCompleted)
+            assertEquals(WebSocketState.Authenticating, webSocketCore.getConnectionState())
+            webSocketListener.onMessage(replacement, """{"type":"auth_ok","ha_version":"2025.4.1"}""")
+            assertTrue(retry.await())
         }
     }
 
@@ -1553,10 +1638,11 @@ class WebSocketCoreImplTest {
             every {
                 mockConnection.close(1001, "Session removed from app.")
             } answers {
+                val closingListener = webSocketListener
                 backgroundScope.launch {
                     // Simulate queue delay before onClosed is called after close
                     delay(100)
-                    webSocketListener.onClosed(mockConnection, 1001, "Session removed from app.")
+                    closingListener.onClosed(mockConnection, 1001, "Session removed from app.")
                 }
                 true
             }
@@ -1564,7 +1650,7 @@ class WebSocketCoreImplTest {
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
             // Should connect for the first time
-            verify(exactly = 1) { mockOkHttpClient.newWebSocket(any(), webSocketListener) }
+            verify(exactly = 1) { mockOkHttpClient.newWebSocket(any(), any()) }
 
             advanceTimeBy(100)
 
@@ -1574,10 +1660,14 @@ class WebSocketCoreImplTest {
 
             advanceTimeBy(50)
 
+            val replacement = mockk<WebSocket>(relaxed = true)
+            useSocket(replacement)
+            prepareAuthenticationAnswer(socket = replacement)
             assertTrue(webSocketCore.connect())
-            advanceUntilIdle()
-            // Should connect again
-            verify(exactly = 2) { mockOkHttpClient.newWebSocket(any(), webSocketListener) }
+            advanceTimeBy(50)
+            runCurrent()
+            assertEquals(WebSocketState.Active, webSocketCore.getConnectionState())
+            verify(exactly = 2) { mockOkHttpClient.newWebSocket(any(), any()) }
         }
 
         @Test
@@ -1599,10 +1689,7 @@ class WebSocketCoreImplTest {
 
             // URL changes after shutdown should not affect anything
             var reconnectAttempts = false
-            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
-                reconnectAttempts = true
-                mockConnection
-            }
+            useSocket { reconnectAttempts = true }
 
             urlFlow.value = UrlState.HasUrl("https://new.url".toHttpUrlOrNull()?.toUrl())
             advanceUntilIdle()
@@ -1673,10 +1760,7 @@ class WebSocketCoreImplTest {
 
                 // Track reconnection attempts (first call was during initial connect)
                 var reconnectAttemptCount = 0
-                every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
-                    reconnectAttemptCount++
-                    mockConnection
-                }
+                useSocket { reconnectAttemptCount++ }
 
                 // Simulate URL change - should trigger immediate reconnection (no 10s delay)
                 urlFlow.value = UrlState.HasUrl("https://new.url".toHttpUrlOrNull()?.toUrl())
@@ -1712,10 +1796,7 @@ class WebSocketCoreImplTest {
 
                 // Track reconnection attempts (first call was during initial connect)
                 var reconnectAttemptCount = 0
-                every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
-                    reconnectAttemptCount++
-                    mockConnection
-                }
+                useSocket { reconnectAttemptCount++ }
 
                 // Normal disconnection (not URL change)
                 closeConnection()
@@ -1792,10 +1873,7 @@ class WebSocketCoreImplTest {
                 ),
             )
             var reconnectAttemptCount = 0
-            every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
-                reconnectAttemptCount++
-                mockConnection
-            }
+            useSocket { reconnectAttemptCount++ }
 
             subscription.test {
                 webSocketListener.onMessage(
@@ -1894,10 +1972,7 @@ class WebSocketCoreImplTest {
                 // The server becomes unavailable: the auth message cannot be sent anymore
                 every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } returns false
                 var connectionAttemptCount = 0
-                every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
-                    connectionAttemptCount++
-                    mockConnection
-                }
+                useSocket { connectionAttemptCount++ }
                 closeConnection()
 
                 // The first attempt after the delay fails, the subscription is kept and retries continue
@@ -2143,10 +2218,7 @@ class WebSocketCoreImplTest {
 
             subscription.test {
                 var connectionAttempts = 0
-                every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
-                    connectionAttempts++
-                    mockConnection
-                }
+                useSocket { connectionAttempts++ }
 
                 // Both terminal callbacks of the same closing arrive before the launched cleanup
                 // coroutines get to run; the second one must neither suppress the reconnect
@@ -2180,10 +2252,7 @@ class WebSocketCoreImplTest {
                 // The server becomes unavailable: the auth message cannot be sent anymore
                 every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } returns false
                 var connectionAttemptCount = 0
-                every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
-                    connectionAttemptCount++
-                    mockConnection
-                }
+                useSocket { connectionAttemptCount++ }
                 closeConnection()
 
                 // The restore loop is retrying while the server stays unreachable
@@ -2359,10 +2428,7 @@ class WebSocketCoreImplTest {
                 // The server becomes unavailable: the auth message cannot be sent anymore
                 every { mockConnection.send(match<String> { it.contains(""""type":"auth"""") }) } returns false
                 var connectionAttemptCount = 0
-                every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
-                    connectionAttemptCount++
-                    mockConnection
-                }
+                useSocket { connectionAttemptCount++ }
                 closeConnection()
 
                 // Attempts follow the backoff schedule: first after 10s, then spaced by
