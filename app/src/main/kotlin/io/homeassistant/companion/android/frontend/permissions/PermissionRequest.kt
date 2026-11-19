@@ -80,6 +80,10 @@ internal sealed interface PermissionRequest {
     class Camera(override val onResult: (Boolean) -> Unit) :
         SinglePermission(permission = Manifest.permission.CAMERA)
 
+    /** A request for [Manifest.permission.RECORD_AUDIO]. */
+    class Microphone(override val onResult: (Boolean) -> Unit) :
+        SinglePermission(permission = Manifest.permission.RECORD_AUDIO)
+
     /** A request for [Manifest.permission.WRITE_EXTERNAL_STORAGE]. */
     class ExternalStorage(override val onResult: (Boolean) -> Unit) :
         SinglePermission(permission = Manifest.permission.WRITE_EXTERNAL_STORAGE)

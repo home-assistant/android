@@ -26,6 +26,10 @@ internal val currentChangelog = Changelog(
             actionRequiresPlatform = true,
         ),
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_two_way_audio,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_home_assistant_mode,
             platforms = setOf(ChangelogPlatform.APP),
         ),

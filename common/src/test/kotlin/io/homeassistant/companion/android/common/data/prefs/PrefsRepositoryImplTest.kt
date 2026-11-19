@@ -11,6 +11,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlin.collections.forEach
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
@@ -131,6 +133,26 @@ class PrefsRepositoryImplTest {
 
     @Nested
     inner class SettingFlows {
+        @Test
+        fun `Given collecting flow when theme key changes then updated value is emitted`() = runTest {
+            coEvery { localStorage.getString("theme") } returns ""
+
+            repository.nightModeThemeFlow().test {
+                assertNull(awaitItem())
+
+                NightModeTheme.entries
+                    .map { it.storageValue }
+                    .forEach { theme ->
+                        coEvery { localStorage.getString("theme") } returns theme
+                        keyChangesFlow.emit("theme")
+
+                        assertEquals(NightModeTheme.fromStorageValue(theme), awaitItem())
+                    }
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
         @Test
         fun `Given collecting flow when autoplay key changes then updated value is emitted`() = runTest {
             coEvery { localStorage.getBoolean("autoplay_video") } returns false

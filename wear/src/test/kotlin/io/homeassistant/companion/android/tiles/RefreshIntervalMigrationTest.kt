@@ -29,7 +29,6 @@ class RefreshIntervalMigrationTest {
 
     @AfterEach
     fun tearDown() {
-        SdkVersion.resetSdkInt()
         unmockkAll()
     }
 
