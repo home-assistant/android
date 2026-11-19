@@ -118,7 +118,8 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
                 val serverItems = servers.map { server ->
                     async {
                         val items = try {
-                            entitiesForDisplayManager.snapshotInContext(server.id)
+                            entitiesForDisplayManager
+                                .snapshotInContext(server.id, EntityFilter(domains = getSupportedDomains().toSet()))
                                 .awaitLoadedOrNull()
                                 ?.entities
                                 ?.sortedWith(compareBy(nullsLast()) { it.areaName })
