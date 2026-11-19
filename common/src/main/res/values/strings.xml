@@ -1259,7 +1259,6 @@
     <string name="thread_store_added_not_preferred">\"%1$s\" has been added, but this device still prefers a different Thread network.</string>
     <string name="thread_store_added_unknown">\"%1$s\" has been added. The device\'s preferred Thread network couldn\'t be confirmed.</string>
     <string name="thread_store_failed">Couldn\'t add \"%1$s\" to this device: %2$s.</string>
-    <string name="thread_store_failed_unknown">Couldn\'t add the Thread credential to this device.</string>
     <string name="matter_thread_working">Working…</string>
     <string name="tile_vibrate">Vibrate when selected</string>
     <string name="tile_auth_required">Requires unlocked device</string>

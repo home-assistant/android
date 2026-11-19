@@ -585,6 +585,57 @@ class FrontendMatterThreadHandlerTest {
         }
 
         @Test
+        fun `Given adding the credential fails without a message when storing then reports the exception type`() = runTest {
+            givenStoreReady(ThreadManager.PreflightOutcome.Unknown)
+            coEvery {
+                dialogManager.showConfirm(commonR.string.thread_store_unknown_preferred, "MyNetwork", moreInfoUrl = any(), buttons = ConfirmButtons.YesNo)
+            } returns true
+            coEvery { threadManager.addCredentialToDevice(1, tlv, borderAgentId) } throws IllegalStateException()
+
+            store()
+
+            coVerify {
+                dialogManager.showInformation(
+                    commonR.string.thread_store_failed,
+                    "MyNetwork",
+                    "IllegalStateException",
+                    moreInfoUrl = any(),
+                )
+            }
+        }
+
+        @Test
+        fun `Given the preflight check throws when storing then reports the failure with the network name`() = runTest {
+            every { threadManager.appSupportsThread() } returns true
+            every { threadManager.networkNameFromTlv(tlv) } returns "MyNetwork"
+            coEvery { threadManager.predictPreferredOutcome(tlv) } throws IllegalStateException("preflight boom")
+
+            store()
+
+            coVerify {
+                dialogManager.showInformation(
+                    commonR.string.thread_store_failed,
+                    "MyNetwork",
+                    "preflight boom",
+                    moreInfoUrl = any(),
+                )
+            }
+            coVerify(exactly = 0) { threadManager.addCredentialToDevice(any(), any(), any()) }
+        }
+
+        @Test
+        fun `Given an unexpected error and an unreadable network name when storing then reports an invalid payload`() = runTest {
+            every { threadManager.appSupportsThread() } throws IllegalStateException("boom")
+            every { threadManager.networkNameFromTlv(tlv) } returns null
+
+            store()
+
+            coVerify {
+                dialogManager.showInformation(commonR.string.thread_store_invalid_payload, moreInfoUrl = any())
+            }
+        }
+
+        @Test
         fun `Given store flow awaiting confirmation when a stale intent result arrives then other flows stay blocked`() = runTest {
             givenStoreReady(ThreadManager.PreflightOutcome.Unknown)
             coEvery {

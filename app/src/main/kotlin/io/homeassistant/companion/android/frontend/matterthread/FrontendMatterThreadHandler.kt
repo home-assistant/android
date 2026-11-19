@@ -287,7 +287,12 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Unexpected error storing Thread credentials on the device")
-            showThreadInformation(commonR.string.thread_store_failed_unknown)
+            val networkName = threadManager.networkNameFromTlv(tlv)
+            if (networkName == null) {
+                showThreadInformation(commonR.string.thread_store_invalid_payload)
+            } else {
+                reportStoreFailure(networkName, e)
+            }
         } finally {
             inFlight.set(null)
         }
@@ -377,8 +382,17 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             throw e
         } catch (e: Exception) {
             Timber.w(e, "Thread store: failed to add credential '${sensitive(networkName)}'")
-            showThreadInformation(commonR.string.thread_store_failed, networkName, e.message.orEmpty())
+            reportStoreFailure(networkName, e)
         }
+    }
+
+    /** Tell the user that storing [networkName] failed, with the reason taken from [error]. */
+    private suspend fun reportStoreFailure(networkName: String, error: Exception) {
+        showThreadInformation(
+            commonR.string.thread_store_failed,
+            networkName,
+            error.message ?: error.javaClass.simpleName,
+        )
     }
 
     /**
