@@ -419,6 +419,52 @@ class ThreadManagerImplTest {
             assertEquals(false, result.updated)
             assertNull(result.exportIntent)
         }
+
+        @Test
+        fun `Given another tracked border agent ID when sync imports the server dataset then both IDs stay tracked`() = runTest {
+            stubServerSupport(coreSupports = true)
+            mockOrphanCleanup()
+            mockPreferredCredentials(intentSender = null)
+            val serverBorderAgentId = "0123456789abcdef0123456789abcdef"
+            coEvery { webSocketRepository.getThreadDatasets() } returns listOf(
+                dataset(datasetId = "server", preferred = true).copy(preferredBorderAgentId = serverBorderAgentId),
+            )
+            // No TLV on the server, so the import is a no-op that completes successfully
+            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
+            coEvery { serverManager.integrationRepository(1).getThreadBorderAgentIds() } returns
+                listOf("stored-earlier")
+
+            createManager().syncPreferredDataset(serverId = 1, scope = this)
+
+            coVerify {
+                serverManager.integrationRepository(1).setThreadBorderAgentIds(
+                    listOf("stored-earlier", serverBorderAgentId),
+                )
+            }
+        }
+
+        @Test
+        fun `Given a credential that cannot be deleted when sync removes app credentials then its ID stays tracked`() = runTest {
+            stubServerSupport(coreSupports = true)
+            mockPreferredCredentials(intentSender = mockk())
+            coEvery { webSocketRepository.getThreadDatasets() } returns
+                listOf(dataset(datasetId = "server", preferred = true, source = "Google"))
+            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
+            mockDeviceCredentialPrefersApp()
+            val deletableId = "aaaaaaaaaaaaaaaa"
+            val stuckId = "bbbbbbbbbbbbbbbb"
+            coEvery { serverManager.servers() } returns listOf(mockk(relaxed = true) { every { id } returns 1 })
+            coEvery { serverManager.integrationRepository(1).getThreadBorderAgentIds() } returns
+                listOf(deletableId, stuckId)
+            every { threadNetworkClient.removeCredentials(any()) } returns voidSuccessTask()
+            every {
+                threadNetworkClient.removeCredentials(match { String(it.id) == stuckId })
+            } returns failureTask(IllegalStateException("delete boom"))
+
+            createManager().syncPreferredDataset(serverId = 1, scope = this)
+
+            coVerify { serverManager.integrationRepository(1).setThreadBorderAgentIds(listOf(stuckId)) }
+        }
     }
 
     @Nested
