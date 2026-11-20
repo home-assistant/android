@@ -74,12 +74,14 @@ internal abstract class DataModule {
             @ApplicationContext appContext: Context,
             okHttpClientProvider: SuspendProvider<OkHttpClient>,
             clientCertificateManager: ClientCertificateManager,
+            keyStoreRepository: KeyStoreRepository,
         ): SuspendProvider<DataSource.Factory> = SuspendProvider {
             val clientCert = clientCertificateManager.getClientCertProvider()
+            val serverTrustAnchor = keyStoreRepository.getServerTrustAnchorProvider()
             MtlsAwareDataSourceFactory(
                 context = appContext,
                 okHttpClient = okHttpClientProvider(),
-                usesMtls = { clientCert.certificate != null },
+                requiresOkHttp = { clientCert.certificate != null || serverTrustAnchor.certificate != null },
             )
         }
 
