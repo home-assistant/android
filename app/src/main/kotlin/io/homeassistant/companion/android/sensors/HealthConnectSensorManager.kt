@@ -102,6 +102,7 @@ class HealthConnectSensorManager @Inject constructor(
             Mdi.Fire,
             "energy",
             unitOfMeasurement = "kcal",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
 
@@ -664,19 +665,17 @@ class HealthConnectSensorManager @Inject constructor(
 
     private suspend fun updateActiveCaloriesBurnedSensor() {
         val healthConnectClient = getOrCreateHealthConnectClient() ?: return
-        val activeCaloriesBurnedRequest = buildReadRecordsRequest(ActiveCaloriesBurnedRecord::class)
-        val response = healthConnectClient.readRecordsOrNull(activeCaloriesBurnedRequest)
-        if (response == null || response.records.isEmpty()) {
-            return
-        }
+        val activeCaloriesBurnedResult =
+            healthConnectClient.aggregateOrNull(
+                buildAggregationRequest(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL),
+            ) ?: return
+        val energy =
+            activeCaloriesBurnedResult[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories ?: 0.0
         onSensorUpdated(
             activeCaloriesBurned,
-            BigDecimal(response.records.last().energy.inKilocalories).setScale(2, RoundingMode.HALF_EVEN),
+            BigDecimal(energy).setScale(2, RoundingMode.HALF_EVEN),
             activeCaloriesBurned.statelessIcon,
-            attributes = mapOf(
-                "endTime" to response.records.last().endTime,
-                "source" to response.records.last().metadata.dataOrigin.packageName,
-            ),
+            attributes = buildAggregationAttributes(activeCaloriesBurnedResult),
         )
     }
 
