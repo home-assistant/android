@@ -37,6 +37,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 /**
@@ -68,6 +70,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
         )
     }
     private var isServiceReady = false
+    private val resumeMutex = Mutex()
 
     /** One-way latch set once the service has begun tearing down (via [onShutdown] or [onDestroy]). */
     private var isTornDown = false
@@ -175,11 +178,15 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
             return
         }
 
-        serviceScope.launch {
-            wakeWordListener.stop()
-            val model = loadWakeWordModel()
-            wakeWordListener.start(this, model)
-        }
+        serviceScope.launch { restartListener() }
+    }
+
+    /** Stops the current detection, if any, and starts a new one with the currently selected model. */
+    @SuppressLint("MissingPermission")
+    private suspend fun restartListener() {
+        wakeWordListener.stop()
+        val model = loadWakeWordModel()
+        wakeWordListener.start(serviceScope, model)
     }
 
     private suspend fun loadWakeWordModel(): MicroWakeWordModelConfig {
@@ -222,8 +229,15 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
      */
     private fun resumeListening() {
         serviceScope.launch {
-            if (assistConfigManager.isWakeWordEnabled()) {
-                startListening()
+            if (assistConfigManager.isWakeWordEnabled() && hasRecordAudioPermission()) {
+                // Closing the Assist screen asks to resume from several places at once, so only
+                // restart the listener when it is not already running instead of restarting it
+                // once per request.
+                resumeMutex.withLock {
+                    if (!wakeWordListener.isListening) {
+                        restartListener()
+                    }
+                }
             }
         }
     }
