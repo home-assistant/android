@@ -53,12 +53,15 @@ interface IntegrationRepository {
     suspend fun getEntities(filter: EntityFilter = EntityFilter()): List<Entity>?
     suspend fun getEntity(entityId: String): Entity?
 
-    /**
-     * State changes of the entities selected by [filter], or of every entity when it is empty. Pass
-     * a filter whenever possible: servers supporting it (2022.4 for ids, 2024.9 for domains) only
-     * send the selected changes. Returns null when the changes can't be followed.
-     */
+    /** Same as [getEntityChanges], without the removals of the entities from the server. */
     suspend fun getEntityUpdates(filter: EntityFilter = EntityFilter()): Flow<Entity>?
+
+    /**
+     * State changes and removals of the entities selected by [filter], or of every entity when it
+     * is empty. Pass a filter whenever possible: servers supporting it (2022.4 for ids, 2024.9 for
+     * domains) only send the selected changes. Returns null when the changes can't be followed.
+     */
+    suspend fun getEntityChanges(filter: EntityFilter = EntityFilter()): Flow<EntityChange>?
 
     suspend fun callAction(domain: String, action: String, actionData: Map<String, Any?>)
 

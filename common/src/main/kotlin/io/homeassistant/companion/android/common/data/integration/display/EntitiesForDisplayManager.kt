@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.integration.display
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -57,7 +58,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * be retrieved. A new snapshot is emitted on every state change of the observed entities and
      * on every entity registry update, even when it resolves to the same items, so consumers that
      * refresh on the entities themselves see each change; apply `distinctUntilChanged` when only
-     * the resolved values matter.
+     * the resolved values matter. An entity removed from the server leaves the snapshot.
      *
      * The flow completes with [EntityDisplayState.Error] when none of the entities can be
      * retrieved, and completes after the initial snapshot when the state changes cannot be
@@ -88,6 +89,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         observeEntityEvents(serverId, webSocketRepository, filter).collect { event ->
             when (event) {
                 is ObserveEvent.EntityEvent.StateChanged -> entities[event.entity.entityId] = event.entity
+                is ObserveEvent.EntityEvent.Removed -> entities.remove(event.entityId)
                 ObserveEvent.EntityEvent.EntityRegistryChanged -> {
                     registryEntries = webSocketRepository.fetchEntityRegistryEntries(filter.registryEntityIds())
                 }
@@ -127,8 +129,9 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      * state changes or an area, device, or entity registry update changes the resolved items, so
      * each emission is the current display truth (including the state-dependent
      * [EntityDisplayWithoutContext.icon] and [EntityDisplayWithoutContext.state]). Updates that
-     * leave the items unchanged are skipped. Since emissions are complete snapshots, slow consumers
-     * can safely `conflate()` the flow and only render the latest one.
+     * leave the items unchanged are skipped, and an entity removed from the server leaves the items.
+     * Since emissions are complete snapshots, slow consumers can safely `conflate()` the flow and
+     * only render the latest one.
      *
      * Only the selected states are requested from the server and followed, and entities that start
      * being selected by [filter] are added to the items.
@@ -154,6 +157,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         observeContextEvents(serverId, webSocketRepository, filter).collect { event ->
             when (event) {
                 is ObserveEvent.EntityEvent.StateChanged -> entities[event.entity.entityId] = event.entity
+                is ObserveEvent.EntityEvent.Removed -> entities.remove(event.entityId)
                 ObserveEvent.AreaRegistryChanged -> webSocketRepository?.let {
                     snapshot = snapshot.copy(areas = it.fetchAreas(), floors = it.fetchFloors())
                 }
@@ -198,9 +202,9 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         webSocketRepository: WebSocketRepository?,
         entityFilter: EntityFilter,
     ): Flow<ObserveEvent.EntityEvent> {
-        val stateChanges = stateChanges(serverId, entityFilter) ?: return emptyFlow()
+        val entityChanges = entityChanges(serverId, entityFilter) ?: return emptyFlow()
         return listOfNotNull(
-            stateChanges,
+            entityChanges,
             webSocketRepository?.entityRegistryChanges(),
         ).merge()
     }
@@ -226,9 +230,9 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         webSocketRepository: WebSocketRepository?,
         entityFilter: EntityFilter,
     ): Flow<ObserveEvent> {
-        val stateChanges = stateChanges(serverId, entityFilter) ?: return emptyFlow()
+        val entityChanges = entityChanges(serverId, entityFilter) ?: return emptyFlow()
         return listOfNotNull(
-            stateChanges,
+            entityChanges,
             webSocketRepository?.areaRegistryChanges(),
             webSocketRepository?.deviceRegistryChanges(),
             webSocketRepository?.entityRegistryChanges(),
@@ -236,14 +240,17 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     }
 
     /**
-     * Subscription to the state changes of the entities selected by [entityFilter], or of every
-     * entity of the server when it is empty, and null when it cannot be established.
+     * Subscription to the state changes and removals of the entities selected by [entityFilter], or
+     * of every entity of the server when it is empty, and null when it cannot be established.
      */
-    private suspend fun stateChanges(serverId: Int, entityFilter: EntityFilter): Flow<ObserveEvent.EntityEvent>? {
+    private suspend fun entityChanges(serverId: Int, entityFilter: EntityFilter): Flow<ObserveEvent.EntityEvent>? {
         val integrationRepository = serverManager.integrationRepositoryOrNull(serverId) ?: return null
-        val updates = orNull("entity updates") { integrationRepository.getEntityUpdates(entityFilter) }
-
-        return updates?.map { ObserveEvent.EntityEvent.StateChanged(it) }
+        return orNull("entity changes") { integrationRepository.getEntityChanges(entityFilter) }?.map { change ->
+            when (change) {
+                is EntityChange.StateChanged -> ObserveEvent.EntityEvent.StateChanged(change.entity)
+                is EntityChange.Removed -> ObserveEvent.EntityEvent.Removed(change.entityId)
+            }
+        }
     }
 
     private suspend fun WebSocketRepository.areaRegistryChanges(): Flow<ObserveEvent>? =
@@ -432,6 +439,9 @@ private sealed interface ObserveEvent {
     sealed interface EntityEvent : ObserveEvent {
         /** An entity state changed. */
         data class StateChanged(val entity: Entity) : EntityEvent
+
+        /** An entity was removed from the server. */
+        data class Removed(val entityId: String) : EntityEvent
 
         /** An entity registry entry changed. */
         data object EntityRegistryChanged : EntityEvent

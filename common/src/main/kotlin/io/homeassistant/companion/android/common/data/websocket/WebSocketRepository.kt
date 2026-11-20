@@ -71,13 +71,23 @@ interface WebSocketRepository {
      */
     suspend fun getFloorRegistry(): List<FloorRegistryResponse>?
     suspend fun getServices(): List<DomainResponse>?
+
+    /**
+     * State changes of every entity of the server.
+     * Prefer [getCompressedStateAndChanges] on servers supporting it.
+     */
     suspend fun getStateChanges(): Flow<StateChangedEvent>?
+
+    /**
+     * State changes of [entityIds], filtered by the server.
+     * Requires the current user to be an admin.
+     * Prefer [getCompressedStateAndChanges] on servers supporting it.
+     */
     suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>?
 
     /**
-     * State changes of the entities selected by [filter], or of every entity when it is empty, as
-     * the server treats an empty filter. The filtering is left to the server: requires Home
-     * Assistant 2022.4 or later, and 2024.9 or later when [filter] selects domains.
+     * State changes of the entities selected by [filter], or of every entity when it is empty.
+     * It requires Home Assistant 2022.4 or later, and 2024.9 or later when [filter] selects domains.
      */
     suspend fun getCompressedStateAndChanges(filter: EntityFilter = EntityFilter()): Flow<CompressedStateChangedEvent>?
     suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>?
