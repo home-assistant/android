@@ -65,7 +65,6 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -522,11 +521,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         )
         return response
     }
-
-    override suspend fun getEntityUpdates(filter: EntityFilter): Flow<Entity>? =
-        getEntityChanges(filter)?.filterIsInstance<EntityChange.StateChanged>()?.map {
-            it.entity
-        }
 
     override suspend fun getEntityChanges(filter: EntityFilter): Flow<EntityChange>? = when {
         supportsFilteringOnServer(filter) ->
