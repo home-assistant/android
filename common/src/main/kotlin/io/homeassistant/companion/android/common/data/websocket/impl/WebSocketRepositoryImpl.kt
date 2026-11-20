@@ -152,6 +152,44 @@ class WebSocketRepositoryImpl internal constructor(
         return response?.success == true
     }
 
+    override suspend fun addTodo(entityId: String, item: String): Boolean {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "call_service",
+                "domain" to TODO_DOMAIN,
+                "service" to "add_item",
+                "target" to mapOf("entity_id" to entityId),
+                "service_data" to mapOf("item" to item),
+            ),
+        )
+        return response?.success == true
+    }
+
+    override suspend fun removeTodo(entityId: String, todoItem: String): Boolean {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "call_service",
+                "domain" to TODO_DOMAIN,
+                "service" to "remove_item",
+                "target" to mapOf("entity_id" to entityId),
+                "service_data" to mapOf("item" to todoItem),
+            ),
+        )
+        return response?.success == true
+    }
+
+    override suspend fun removeCompletedTodos(entityId: String): Boolean {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "call_service",
+                "domain" to TODO_DOMAIN,
+                "service" to "remove_completed_items",
+                "target" to mapOf("entity_id" to entityId),
+            ),
+        )
+        return response?.success == true
+    }
+
     override suspend fun getCurrentUser(): CurrentUserResponse? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(

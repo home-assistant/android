@@ -40,6 +40,8 @@ import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
+import io.homeassistant.companion.android.database.wear.TodoListTile
+import io.homeassistant.companion.android.database.wear.TodoListTileDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
@@ -57,7 +59,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionColumnT
 import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 
 @VisibleForTesting
-const val DATABASE_VERSION = 56
+const val DATABASE_VERSION = 57
 
 @Database(
     entities = [
@@ -78,6 +80,7 @@ const val DATABASE_VERSION = 56
         FavoriteCaches::class,
         CameraTile::class,
         ThermostatTile::class,
+        TodoListTile::class,
         EntityStateComplications::class,
         Server::class,
         Setting::class,
@@ -114,6 +117,7 @@ const val DATABASE_VERSION = 56
         AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
         AutoMigration(from = 53, to = 54),
         AutoMigration(from = 54, to = 55),
+        AutoMigration(from = 56, to = 57),
     ],
 )
 @ColumnTypeConverters(
@@ -141,6 +145,8 @@ internal abstract class AppDatabase : RoomDatabase() {
     abstract fun favoriteCachesDao(): FavoriteCachesDao
     abstract fun cameraTileDao(): CameraTileDao
     abstract fun thermostatTileDao(): ThermostatTileDao
+
+    abstract fun todoListTileDao(): TodoListTileDao
     abstract fun entityStateComplicationsDao(): EntityStateComplicationsDao
     abstract fun serverDao(): ServerDao
     abstract fun settingsDao(): SettingsDao

@@ -25,6 +25,7 @@ class OpenTileSettingsActivity : AppCompatActivity() {
         const val CONFIG_SHORTCUT_TILE = "ConfigShortcutsTile"
         const val CONFIG_TEMPLATE_TILE = "ConfigTemplateTile"
         const val CONFIG_THERMOSTAT_TILE = "ConfigThermostatTile"
+        const val CONFIG_TODO_LIST_TILE = "ConfigTodoListTile"
 
         fun newInstance(context: ComponentActivity, action: String, tileId: Int): Intent {
             return Intent(
@@ -71,6 +72,11 @@ class OpenTileSettingsActivity : AppCompatActivity() {
                 }
                 CONFIG_THERMOSTAT_TILE ->
                     HomeActivity.getThermostatTileSettingsIntent(
+                        context = this,
+                        tileId = it,
+                    )
+                CONFIG_TODO_LIST_TILE ->
+                    HomeActivity.getTodoListTileSettingsIntent(
                         context = this,
                         tileId = it,
                     )
