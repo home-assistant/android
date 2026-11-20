@@ -23,6 +23,7 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import java.time.LocalDateTime
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -38,6 +39,7 @@ private const val ENTITY_ID = "light.kitchen"
 private val TILE_ID = TileId("tile_1")
 private const val MDI_BITMAP_FACADE = "io.github.timoptr.mdiicons.MdiIconBitmapKt"
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TileExtensionsTest {
 
     @JvmField
