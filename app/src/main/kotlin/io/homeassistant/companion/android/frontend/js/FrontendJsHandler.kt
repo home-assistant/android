@@ -31,6 +31,7 @@ interface FrontendJsHandler {
      * Called when the frontend sends a message through the external bus.
      *
      * @param message Already-parsed JSON element containing the bus message
+     * @param navigationId The navigation that was active when the bridge received the message
      */
-    suspend fun externalBus(message: JsonElement)
+    suspend fun externalBus(message: JsonElement, navigationId: Long?)
 }

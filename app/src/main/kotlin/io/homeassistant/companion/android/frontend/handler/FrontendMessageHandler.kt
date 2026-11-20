@@ -136,9 +136,9 @@ class FrontendMessageHandler @Inject constructor(
         }
     }
 
-    override suspend fun externalBus(message: JsonElement) {
+    override suspend fun externalBus(message: JsonElement, navigationId: Long?) {
         Timber.v("External bus message received: ${sensitive { message.toString() }}")
-        externalBusRepository.onMessageReceived(message)
+        externalBusRepository.onMessageReceived(message, navigationId)
     }
 
     /**
@@ -148,28 +148,28 @@ class FrontendMessageHandler @Inject constructor(
      * download results) into a single stream of [FrontendHandlerEvent].
      */
     override fun messageResults(): Flow<FrontendHandlerEvent> {
-        val incomingResults = externalBusRepository.incomingMessages().map { message ->
-            handleMessage(message)
+        val incomingResults = externalBusRepository.incomingMessages().map { (message, navigationId) ->
+            handleMessage(message, navigationId)
         }
         return merge(incomingResults, jsCallbackEvents.receiveAsFlow())
     }
 
     override fun webViewActions(): Flow<WebViewAction> = externalBusRepository.webViewActions()
 
-    private suspend fun handleMessage(message: IncomingExternalBusMessage): FrontendHandlerEvent {
+    private suspend fun handleMessage(message: IncomingExternalBusMessage, navigationId: Long?): FrontendHandlerEvent {
         return when (message) {
             is ConnectionStatusMessage -> {
                 val isConnected = message.payload.isConnected
                 Timber.d("Connection status: ${if (isConnected) "connected" else "disconnected"}")
                 if (isConnected) {
-                    FrontendHandlerEvent.Connected
+                    FrontendHandlerEvent.Connected(navigationId)
                 } else {
                     FrontendHandlerEvent.Disconnected
                 }
             }
             is FrontendLoaded -> {
                 Timber.d("Frontend is loaded and ready to be displayed")
-                FrontendHandlerEvent.Loaded
+                FrontendHandlerEvent.Loaded(navigationId)
             }
 
             is ConfigGetMessage -> {

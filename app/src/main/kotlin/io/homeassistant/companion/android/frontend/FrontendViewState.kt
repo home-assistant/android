@@ -31,6 +31,9 @@ sealed interface FrontendViewState {
      */
     val url: String
 
+    /** Identifies an explicit navigation even when it resolves to the same URL. */
+    val navigationId: Long get() = 0
+
     /**
      * Initial state before the URL is determined.
      *
@@ -59,6 +62,7 @@ sealed interface FrontendViewState {
         override val url: String,
         val target: FrontendTarget = FrontendTarget.Default,
         val connected: Boolean = false,
+        override val navigationId: Long = 0,
     ) : FrontendViewState
 
     /**
@@ -77,6 +81,7 @@ sealed interface FrontendViewState {
         val exoPlayerState: ExoPlayerUiState? = null,
         val improvUiState: ImprovUIState? = null,
         val barcodeScanner: BarcodeScannerUiState? = null,
+        override val navigationId: Long = 0,
     ) : FrontendViewState
 
     /**
@@ -89,6 +94,7 @@ sealed interface FrontendViewState {
         override val url: String,
         val error: FrontendConnectionError,
         val actions: List<ErrorAction> = emptyList(),
+        override val navigationId: Long = 0,
     ) : FrontendViewState
 
     /**

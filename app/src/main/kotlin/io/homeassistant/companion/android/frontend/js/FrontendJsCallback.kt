@@ -21,6 +21,9 @@ interface FrontendJsCallback {
      */
     suspend fun attachToWebView(webView: WebView)
 
+    /** Records the navigation passed to [WebView.loadUrl], or null for the blank page. */
+    fun onNavigationStarted(navigationId: Long?)
+
     /**
      * Unregisters the JavaScript callbacks from the given [webView].
      *

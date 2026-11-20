@@ -123,6 +123,14 @@ class FrontendJsBridge @AssistedInject constructor(
         data object V2 : BridgeVersion
     }
 
+    // V1 callbacks arrive on the WebView bridge thread, while loadUrl runs on the main thread.
+    @Volatile
+    private var startedNavigationId: Long? = null
+
+    override fun onNavigationStarted(navigationId: Long?) {
+        startedNavigationId = navigationId
+    }
+
     /** The bridge version currently registered, or null when nothing is attached. */
     private var attachedVersion: BridgeVersion? = null
 
@@ -166,6 +174,7 @@ class FrontendJsBridge @AssistedInject constructor(
     @SuppressLint("RequiresFeature")
     override fun detachFromWebView(webView: WebView) {
         attachedVersion = null
+        startedNavigationId = null
         val webMessageListenerSupported = WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
         webView.removeJavascriptInterface(EXTERNAL_APP_V1)
         if (webMessageListenerSupported) {
@@ -179,7 +188,7 @@ class FrontendJsBridge @AssistedInject constructor(
      * Validates auth callback names at this layer before forwarding to the handler.
      * This is the shared routing logic used by both V1 and V2 protocols.
      */
-    private fun dispatchToHandler(message: BridgeMessage) {
+    private fun dispatchToHandler(message: BridgeMessage, navigationId: Long? = null) {
         scope.launch {
             when (message) {
                 is BridgeMessage.GetExternalAuth -> {
@@ -202,7 +211,7 @@ class FrontendJsBridge @AssistedInject constructor(
                     handler.revokeExternalAuth(message.payload, stateProvider().serverId)
                 }
 
-                is BridgeMessage.ExternalBus -> handler.externalBus(message.payload)
+                is BridgeMessage.ExternalBus -> handler.externalBus(message.payload, navigationId)
 
                 is BridgeMessage.Unknown -> FailFast.fail {
                     "Unknown bridge message type '${message.discriminator}' content ${
@@ -239,8 +248,9 @@ class FrontendJsBridge @AssistedInject constructor(
 
                 @JavascriptInterface
                 fun externalBus(message: String) {
+                    val navigationId = startedNavigationId
                     val json = parseJsonElement(message) ?: return
-                    dispatchToHandler(BridgeMessage.ExternalBus(payload = json))
+                    dispatchToHandler(BridgeMessage.ExternalBus(payload = json), navigationId)
                 }
             },
             EXTERNAL_APP_V1,
@@ -265,6 +275,7 @@ class FrontendJsBridge @AssistedInject constructor(
             EXTERNAL_APP_V2_LISTENER,
             setOf("*"),
         ) { _, message, sourceOrigin, isMainFrame, _ ->
+            val navigationId = startedNavigationId
             if (!isMainFrame) {
                 Timber.w("Ignored message from iframe")
                 return@addWebMessageListener
@@ -283,7 +294,7 @@ class FrontendJsBridge @AssistedInject constructor(
 
             val data = message.data ?: return@addWebMessageListener
             val bridgeMessage = parseBridgeMessage(data) ?: return@addWebMessageListener
-            dispatchToHandler(bridgeMessage)
+            dispatchToHandler(bridgeMessage, navigationId)
         }
         Timber.d("JS $EXTERNAL_APP_V2_LISTENER listener added")
     }
@@ -371,6 +382,7 @@ class FrontendJsBridge @AssistedInject constructor(
         /** A no-op implementation for use in tests and previews. */
         val noOp = object : FrontendJsCallback {
             override suspend fun attachToWebView(webView: WebView) {}
+            override fun onNavigationStarted(navigationId: Long?) {}
             override fun detachFromWebView(webView: WebView) {}
         }
     }

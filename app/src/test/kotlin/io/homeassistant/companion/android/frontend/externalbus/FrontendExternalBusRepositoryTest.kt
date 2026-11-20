@@ -37,9 +37,11 @@ class FrontendExternalBusRepositoryTest {
         val json = Json.parseToJsonElement("""{"type":"connection-status","id":1,"payload":{"event":"connected"}}""")
 
         repository.incomingMessages().test {
-            repository.onMessageReceived(json)
+            repository.onMessageReceived(json, navigationId = 1L)
 
-            val message = assertInstanceOf(ConnectionStatusMessage::class.java, awaitItem())
+            val received = awaitItem()
+            assertEquals(1L, received.navigationId)
+            val message = assertInstanceOf(ConnectionStatusMessage::class.java, received.message)
             assertEquals(1, message.id)
             assertTrue(message.payload.isConnected)
         }
@@ -50,9 +52,9 @@ class FrontendExternalBusRepositoryTest {
         val json = Json.parseToJsonElement("""{"type":"config/get","id":42}""")
 
         repository.incomingMessages().test {
-            repository.onMessageReceived(json)
+            repository.onMessageReceived(json, navigationId = 1L)
 
-            val message = assertInstanceOf(ConfigGetMessage::class.java, awaitItem())
+            val message = assertInstanceOf(ConfigGetMessage::class.java, awaitItem().message)
             assertEquals(42, message.id)
         }
     }
@@ -62,9 +64,9 @@ class FrontendExternalBusRepositoryTest {
         val json = Json.parseToJsonElement("""{"type":"future-feature","id":99,"payload":{"data":"something"}}""")
 
         repository.incomingMessages().test {
-            repository.onMessageReceived(json)
+            repository.onMessageReceived(json, navigationId = 1L)
 
-            val message = assertInstanceOf(UnknownIncomingMessage::class.java, awaitItem())
+            val message = assertInstanceOf(UnknownIncomingMessage::class.java, awaitItem().message)
             assertTrue(message.content.toString().contains("future-feature"))
         }
     }
@@ -72,7 +74,7 @@ class FrontendExternalBusRepositoryTest {
     @Test
     fun `Given non-object JsonElement when received then do not emit`() = runTest {
         repository.incomingMessages().test {
-            repository.onMessageReceived(JsonNull)
+            repository.onMessageReceived(JsonNull, navigationId = 1L)
 
             expectNoEvents()
         }
@@ -83,9 +85,9 @@ class FrontendExternalBusRepositoryTest {
         val json = buildJsonObject { put("data", "value") }
 
         repository.incomingMessages().test {
-            repository.onMessageReceived(json)
+            repository.onMessageReceived(json, navigationId = 1L)
 
-            assertInstanceOf(UnknownIncomingMessage::class.java, awaitItem())
+            assertInstanceOf(UnknownIncomingMessage::class.java, awaitItem().message)
         }
     }
 
@@ -94,9 +96,9 @@ class FrontendExternalBusRepositoryTest {
         val json = Json.parseToJsonElement("""{"type":"config/get"}""")
 
         repository.incomingMessages().test {
-            repository.onMessageReceived(json)
+            repository.onMessageReceived(json, navigationId = 1L)
 
-            val message = awaitItem() as ConfigGetMessage
+            val message = awaitItem().message as ConfigGetMessage
             assertEquals(null, message.id)
         }
     }

@@ -6,6 +6,7 @@ import android.util.Rational
 import android.view.View
 import android.webkit.PermissionRequest as WebViewPermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
@@ -31,6 +32,7 @@ import androidx.core.graphics.Insets
 import androidx.core.util.TypedValueCompat.pxToDp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.allViews
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.google.zxing.BarcodeFormat
 import com.wifi.improv.ErrorState
@@ -52,6 +54,7 @@ import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
+import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
 import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.launch.PipReadiness
@@ -62,6 +65,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -99,6 +103,41 @@ class FrontendScreenTest {
 
             assertIsLoading(true)
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given the same URL when navigation is retried then the WebView loads it again`() {
+        val loading = FrontendViewState.Loading(serverId = 1, url = "https://example.com/")
+        val state = mutableStateOf<FrontendViewState>(loading)
+        val primed = CompletableDeferred<Unit>()
+        val bridge = mockk<FrontendJsCallback>(relaxed = true)
+        composeTestRule.apply {
+            setFrontendScreen(
+                viewState = loading,
+                currentState = { state.value },
+                prepareUrlLoad = { if (state.value.navigationId == 1L) primed.await() },
+                frontendJsCallback = bridge,
+            )
+            val webView = runOnIdle { activity.window.decorView.allViews.filterIsInstance<WebView>().single() }
+            val otherPage = "https://example.com/other"
+            runOnIdle {
+                assertEquals(loading.url, webView.url)
+                webView.loadUrl(otherPage)
+                state.value = loading.copy(navigationId = 1)
+            }
+            runOnIdle {
+                assertEquals(otherPage, webView.url)
+                verify(exactly = 0) { bridge.onNavigationStarted(1L) }
+                primed.complete(Unit)
+            }
+            runOnIdle {
+                verify(exactly = 1) { bridge.onNavigationStarted(1L) }
+                assertEquals(loading.url, webView.url)
+                webView.loadUrl(otherPage)
+                state.value = FrontendViewState.Content(serverId = 1, url = loading.url, navigationId = 1)
+            }
+            runOnIdle { assertEquals(otherPage, webView.url) }
         }
     }
 
@@ -526,14 +565,18 @@ class FrontendScreenTest {
         onImprovRestart: () -> Unit = {},
         onImprovDismiss: () -> Unit = {},
         registry: ActivityResultRegistry? = null,
+        currentState: () -> FrontendViewState = { viewState },
+        prepareUrlLoad: suspend (String) -> Unit = {},
+        frontendJsCallback: FrontendJsCallback = FrontendJsBridge.noOp,
     ) {
         setContent {
             val content: @Composable () -> Unit = {
                 FrontendScreenContent(
-                    viewState = viewState,
+                    viewState = currentState(),
+                    prepareUrlLoad = prepareUrlLoad,
                     getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
-                    frontendJsCallback = FrontendJsBridge.noOp,
+                    frontendJsCallback = frontendJsCallback,
                     errorStateProvider = errorStateProvider,
                     pendingPermissionRequest = pendingPermissionRequest,
                     onBlockInsecureRetry = onBlockInsecureRetry,
