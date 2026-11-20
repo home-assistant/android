@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
+import io.homeassistant.companion.android.tiles.MAX_SHORTCUTS_PER_TILE
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
 import io.homeassistant.companion.android.views.ListHeader
@@ -71,7 +72,7 @@ fun SetShortcutsTileView(shortcutEntities: List<SimplifiedEntity>, onShortcutEnt
                     colors = getFilledTonalButtonColors(),
                 )
             }
-            if (shortcutEntities.size < 7) {
+            if (shortcutEntities.size < MAX_SHORTCUTS_PER_TILE) {
                 item {
                     FilledIconButton(
                         modifier = Modifier.padding(
