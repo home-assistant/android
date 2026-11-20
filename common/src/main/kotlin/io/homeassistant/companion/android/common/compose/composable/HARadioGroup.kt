@@ -19,6 +19,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -209,6 +210,7 @@ private fun HARadioButton(
 }
 
 @Composable
+@ReadOnlyComposable
 private fun radioButtonColors(): RadioButtonColors {
     return RadioButtonColors(
         selectedColor = LocalHAColorScheme.current.colorOnPrimaryNormal,
