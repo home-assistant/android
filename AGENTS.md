@@ -13,7 +13,7 @@ Detailed developer documentation lives at https://contributors.home-assistant.io
 ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --continue  # Check code style
 ./gradlew detektMain :build-logic:convention:detektMain --continue  # Detekt static analysis (same as CI)
 ./gradlew lint --continue                                  # Android linter
-./gradlew validateDebugScreenshotTest                      # Screenshot tests
+./gradlew testDebugScreenshotTestDefaultTestSuite testFullDebugScreenshotTestDefaultTestSuite  # Screenshot tests
 ./gradlew alldependencies --write-locks                    # Update dependency locks after any dependency change
 ```
 

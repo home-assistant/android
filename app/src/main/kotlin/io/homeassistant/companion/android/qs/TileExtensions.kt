@@ -25,6 +25,7 @@ import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.integration.isActive
 import io.homeassistant.companion.android.common.data.integration.onEntityPressedWithoutState
@@ -116,7 +117,7 @@ internal abstract class TileExtensions : TileService() {
                 ) {
                     serverManager.integrationRepository(
                         tileData.serverId,
-                    ).getEntityUpdates(listOf(tileData.entityId))?.collect {
+                    ).getEntityUpdates(EntityFilter(entityIds = setOf(tileData.entityId)))?.collect {
                         tile.state =
                             if (it.isActive()) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                         getTileIcon(tileData.iconName, it, applicationContext)?.let { icon ->

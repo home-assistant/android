@@ -181,6 +181,7 @@ fun FanSpeedSlider(
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+    val sliderName = stringResource(R.string.slider_fan_speed)
     val position = controls.speed
     val steps = controls.steps
 
@@ -199,7 +200,7 @@ fun FanSpeedSlider(
                     isToastEnabled,
                     isHapticEnabled,
                     it > position.value,
-                    context.getString(R.string.slider_fan_speed),
+                    sliderName,
                     context,
                     haptic,
                 )
@@ -237,6 +238,7 @@ fun BrightnessSlider(
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+    val sliderName = stringResource(R.string.slider_light_brightness)
 
     Column {
         Text(
@@ -253,7 +255,7 @@ fun BrightnessSlider(
                     isToastEnabled,
                     isHapticEnabled,
                     brightness > position.value,
-                    context.getString(R.string.slider_light_brightness),
+                    sliderName,
                     context,
                     haptic,
                 )
@@ -291,6 +293,7 @@ fun ColorTempSlider(
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
+    val sliderName = stringResource(R.string.slider_light_colortemp)
 
     val useKelvin = controls.isKelvin
     val minValue = controls.min
@@ -315,7 +318,7 @@ fun ColorTempSlider(
                     isToastEnabled,
                     isHapticEnabled,
                     it > currentValue,
-                    context.getString(R.string.slider_light_colortemp),
+                    sliderName,
                     context,
                     haptic,
                 )

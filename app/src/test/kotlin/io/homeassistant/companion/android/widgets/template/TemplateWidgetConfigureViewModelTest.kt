@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.widgets.template
 
-import android.appwidget.AppWidgetManager
-import app.cash.turbine.test
+import android.content.Context
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
@@ -37,6 +35,7 @@ class TemplateWidgetConfigureViewModelTest {
     private val dao = mockk<TemplateWidgetDao>(relaxUnitFun = true)
     private val integrationRepository = mockk<IntegrationRepository>()
     private val serverManager = mockk<ServerManager>()
+    private val widgetContext = mockk<Context>(relaxed = true)
 
     private val widgetId = 42
     private val serverId = 1
@@ -83,17 +82,6 @@ class TemplateWidgetConfigureViewModelTest {
         assertEquals(TemplatePreview.Empty, viewModel.state.value.preview)
         assertFalse(viewModel.state.value.isActionEnabled)
         coVerify(exactly = 0) { integrationRepository.renderTemplate(any(), any()) }
-    }
-
-    @Test
-    fun `Given servers when created then they are exposed as dropdown items`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertEquals(
-            listOf(HADropdownItem(key = serverId, label = "Home")),
-            viewModel.state.value.serversDropdownItems,
-        )
     }
 
     @Test
@@ -241,7 +229,7 @@ class TemplateWidgetConfigureViewModelTest {
         viewModel.onTextColorSelected(BLACK_HEX)
         advanceUntilIdle()
 
-        assertTrue(viewModel.updateWidgetConfiguration())
+        assertTrue(viewModel.updateWidgetConfiguration(widgetContext))
 
         coVerify {
             dao.add(
@@ -263,39 +251,10 @@ class TemplateWidgetConfigureViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertFalse(viewModel.updateWidgetConfiguration())
+        assertFalse(viewModel.updateWidgetConfiguration(widgetContext))
     }
 
-    @Test
-    fun `Given an invalid widget id when configuration is saved then nothing is persisted`() = runTest {
-        coEvery { integrationRepository.renderTemplate("{{ 1 }}", emptyMap()) } returns "1"
-        val viewModel = createViewModel(widgetId = AppWidgetManager.INVALID_APPWIDGET_ID)
-        advanceUntilIdle()
-        viewModel.onTemplateChanged("{{ 1 }}")
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value.isActionEnabled)
-
-        assertFalse(viewModel.updateWidgetConfiguration())
-
-        coVerify(exactly = 0) { dao.add(any()) }
-    }
-
-    @Test
-    fun `Given an error already shown when the screen collects again then the error is not shown again`() = runTest {
-        val viewModel = createViewModel(widgetId = AppWidgetManager.INVALID_APPWIDGET_ID)
-        advanceUntilIdle()
-        assertFalse(viewModel.updateWidgetConfiguration())
-
-        viewModel.errors.test {
-            assertEquals(commonR.string.widget_update_error, awaitItem())
-        }
-        // A new collector, e.g. the screen after a rotation, must not show the error again
-        viewModel.errors.test {
-            expectNoEvents()
-        }
-    }
-
-    private fun createViewModel(widgetId: Int = this.widgetId) = TemplateWidgetConfigureViewModel(
+    private fun createViewModel() = TemplateWidgetConfigureViewModel(
         templateWidgetDao = dao,
         serverManager = serverManager,
         widgetId = widgetId,

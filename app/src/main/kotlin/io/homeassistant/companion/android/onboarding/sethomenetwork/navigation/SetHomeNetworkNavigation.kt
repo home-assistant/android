@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.sethomenetwork.navigation
 
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -22,9 +23,9 @@ internal fun NavGraphBuilder.setHomeNetworkScreen(
 ) {
     composable<SetHomeNetworkRoute> {
         SetHomeNetworkScreen(
-            onGotoNextScreen = onGotoNextScreen,
+            onGotoNextScreen = dropUnlessResumed(block = onGotoNextScreen),
             onHelpClick = onHelpClick,
-            onBackClick = onBackClick,
+            onBackClick = dropUnlessResumed(block = onBackClick),
             viewModel = hiltViewModel(),
         )
     }

@@ -58,6 +58,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -106,6 +107,7 @@ fun SensorDetailView(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     var sensorUpdateTypeInfo by remember { mutableStateOf(false) }
 
     val sensor by viewModel.sensor.collectAsStateWithLifecycle()
@@ -128,8 +130,8 @@ fun SensorDetailView(
     LaunchedEffect("snackbar") {
         viewModel.permissionSnackbar.onEach {
             scaffoldState.snackbarHostState.showSnackbar(
-                context.getString(it.message),
-                context.getString(commonR.string.settings),
+                resources.getString(it.message),
+                resources.getString(commonR.string.settings),
             ).let { result ->
                 if (result == SnackbarResult.ActionPerformed) {
                     if (it.actionOpensSettings) {

@@ -7,6 +7,8 @@ import io.homeassistant.companion.android.common.compose.composable.HADropdownIt
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.widgets.configure.WidgetConfigureState
+import io.homeassistant.companion.android.widgets.configure.defaultWidgetBackgroundType
+import io.homeassistant.companion.android.widgets.configure.dynamicColorAvailable
 
 /** What the template preview area shows. */
 internal sealed interface TemplatePreview {
@@ -29,11 +31,11 @@ internal data class TemplateWidgetConfigureState(
     /** Whether a render for the current [template] is still in flight. */
     val isRenderingPreview: Boolean = false,
     val textSize: String = DEFAULT_TEXT_SIZE,
-    val selectedBackgroundType: WidgetBackgroundType = WidgetBackgroundType.DAYNIGHT,
+    val selectedBackgroundType: WidgetBackgroundType = defaultWidgetBackgroundType(),
     val textColorHex: String? = null,
-    val dynamicColorAvailable: Boolean = false,
+    val dynamicColorAvailable: Boolean = dynamicColorAvailable(),
     override val isUpdateWidget: Boolean = false,
-) : WidgetConfigureState {
+) : WidgetConfigureState<TemplateWidgetConfigureState> {
     @StringRes
     val textSizeError = commonR.string.widget_text_size_error.takeIf { validTextSize == null }
 
@@ -47,6 +49,16 @@ internal data class TemplateWidgetConfigureState(
 
     private val validTextSize: Float?
         get() = textSize.toFloatOrNull()?.takeIf { it.isFinite() && it > 0 }
+
+    override fun withServersDropdownItems(items: List<HADropdownItem<Int>>) = copy(serversDropdownItems = items)
+
+    override fun withSelectedServerId(serverId: Int) = copy(selectedServerId = serverId)
+
+    override fun withBackgroundType(backgroundType: WidgetBackgroundType) =
+        copy(selectedBackgroundType = backgroundType)
+
+    /** The template is re-rendered against the new server by the ViewModel's reload. */
+    override fun changeServer(serverId: Int) = copy(selectedServerId = serverId)
 }
 
 private const val DEFAULT_TEXT_SIZE = "12"

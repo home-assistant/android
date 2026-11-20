@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.home
 
 import android.app.Application
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import java.time.LocalDateTime
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -54,23 +53,15 @@ class MainViewModelTest {
         application = mockk<Application>(relaxed = true),
     )
 
-    private fun fakeEntity(entityId: String) = Entity(
-        entityId = entityId,
-        state = "",
-        attributes = emptyMap(),
-        lastChanged = LocalDateTime.MIN,
-        lastUpdated = LocalDateTime.MIN,
-    )
-
     private fun fakeItem(entityId: String) = EntityDisplayWithContext(
         EntityDisplayWithoutContext(entityId = entityId, name = entityId, icon = mockk()),
     )
 
-    /** Makes the manager emit the given entities that pass the filter of the caller, as the real one does. */
+    /** Makes the manager emit the given entities selected by the filter of the caller, as the real one does. */
     private fun givenServerEntities(vararg entityIds: String) {
-        every { entitiesForDisplayManager.observeInContext(ServerManager.SERVER_ID_ACTIVE, any<(Entity) -> Boolean>()) } answers {
-            val filter = secondArg<(Entity) -> Boolean>()
-            val items = entityIds.filter { filter(fakeEntity(it)) }.map { fakeItem(it) }
+        every { entitiesForDisplayManager.observeInContext(ServerManager.SERVER_ID_ACTIVE, any()) } answers {
+            val filter = secondArg<EntityFilter>()
+            val items = entityIds.filter { filter.matches(it) }.map { fakeItem(it) }
             flowOf(EntityDisplayState.Loaded(items))
         }
     }

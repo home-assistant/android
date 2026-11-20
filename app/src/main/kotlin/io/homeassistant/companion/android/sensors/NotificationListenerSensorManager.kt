@@ -11,6 +11,7 @@ import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -19,6 +20,7 @@ import io.github.timoptr.mdiicons.generated.BellRing
 import io.github.timoptr.mdiicons.generated.PlayCircle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.notifications.isSystemGeneratedGroupSummary
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
@@ -30,6 +32,7 @@ import io.homeassistant.companion.android.common.util.isAutomotive
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,11 +43,23 @@ import timber.log.Timber
  * reporting logic.
  */
 @Singleton
-class NotificationListenerSensorManager @Inject constructor(
-    @ApplicationContext override val applicationContext: Context,
+class NotificationListenerSensorManager @VisibleForTesting internal constructor(
+    override val applicationContext: Context,
     override val sensorRepository: SensorRepository,
     override val serverManager: ServerManager,
+    private val sensorWorkerScopeOverride: CoroutineScope?,
 ) : SensorManager {
+
+    @Inject
+    constructor(
+        @ApplicationContext applicationContext: Context,
+        sensorRepository: SensorRepository,
+        serverManager: ServerManager,
+    ) : this(applicationContext, sensorRepository, serverManager, sensorWorkerScopeOverride = null)
+
+    override val sensorWorkerScope: CoroutineScope
+        get() = sensorWorkerScopeOverride ?: super.sensorWorkerScope
+
     companion object {
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
         private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
@@ -90,7 +105,7 @@ class NotificationListenerSensorManager @Inject constructor(
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
             settings = listOf(
-                Setting.Toggle(SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = true),
+                Setting.Toggle(SETTING_INCLUDE_CONTENTS_AS_ATTRS, default = false),
             ),
         )
 
@@ -157,7 +172,7 @@ class NotificationListenerSensorManager @Inject constructor(
                 return@launch
             }
 
-            if (sbn.notification.group == "ranker_group") {
+            if (sbn.notification.isSystemGeneratedGroupSummary()) {
                 return@launch
             }
 
@@ -197,6 +212,10 @@ class NotificationListenerSensorManager @Inject constructor(
 
         sensorWorkerScope.launch {
             if (!shouldProcessNotification(lastRemovedNotification, sbn.packageName)) {
+                return@launch
+            }
+
+            if (sbn.notification.isSystemGeneratedGroupSummary()) {
                 return@launch
             }
 

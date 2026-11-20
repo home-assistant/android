@@ -1,8 +1,7 @@
 package io.homeassistant.companion.android.widgets.entity
 
-import app.cash.turbine.test
+import android.content.Context
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
@@ -43,6 +42,7 @@ class EntityWidgetConfigureViewModelTest {
     private val dao = mockk<StaticWidgetDao>(relaxUnitFun = true)
     private val integrationRepository = mockk<IntegrationRepository>()
     private val serverManager = mockk<ServerManager>()
+    private val widgetContext = mockk<Context>(relaxed = true)
     private val entitiesForDisplayManager = mockk<EntitiesForDisplayManager>()
 
     private val widgetId = 42
@@ -65,7 +65,7 @@ class EntityWidgetConfigureViewModelTest {
         coEvery { serverManager.getServer() } returns server
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { dao.get(any()) } returns null
-        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns flowOf(displayStateOf(entity.toDisplayItem("Office light")))
+        every { entitiesForDisplayManager.snapshotInContext(any(), any()) } returns flowOf(displayStateOf(entity.toDisplayItem("Office light")))
     }
 
     @Test
@@ -91,17 +91,6 @@ class EntityWidgetConfigureViewModelTest {
     }
 
     @Test
-    fun `Given servers when created then they are exposed as dropdown items`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertEquals(
-            listOf(HADropdownItem(key = serverId, label = "Home")),
-            viewModel.state.value.serversDropdownItems,
-        )
-    }
-
-    @Test
     fun `Given a selected entity when attributes are loaded then they are sorted and exposed`() = runTest {
         val viewModel = createViewModel(entity.entityId)
         advanceUntilIdle()
@@ -124,7 +113,7 @@ class EntityWidgetConfigureViewModelTest {
         viewModel.onTextColorSelected(BLACK_HEX)
         advanceUntilIdle()
 
-        assertTrue(viewModel.updateWidgetConfiguration())
+        assertTrue(viewModel.updateWidgetConfiguration(widgetContext))
 
         coVerify {
             dao.add(
@@ -150,7 +139,7 @@ class EntityWidgetConfigureViewModelTest {
     fun `Given a generated label when entity changes then label follows the selected entity`() = runTest {
         val secondEntity = createEntity(entityId = "switch.fan", attributes = emptyMap())
         coEvery { integrationRepository.getEntity(secondEntity.entityId) } returns secondEntity
-        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns
+        every { entitiesForDisplayManager.snapshotInContext(any(), any()) } returns
             flowOf(displayStateOf(entity.toDisplayItem("Office light"), secondEntity.toDisplayItem("Fan")))
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -224,21 +213,6 @@ class EntityWidgetConfigureViewModelTest {
         viewModel.onTextSizeChanged("24")
 
         assertNull(viewModel.state.value.textSizeError)
-    }
-
-    @Test
-    fun `Given an error already shown when the screen collects again then the error is not shown again`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-        assertFalse(viewModel.updateWidgetConfiguration())
-
-        viewModel.errors.test {
-            assertEquals(commonR.string.widget_update_error, awaitItem())
-        }
-        // A new collector, e.g. the screen after a rotation, must not show the error again
-        viewModel.errors.test {
-            expectNoEvents()
-        }
     }
 
     private fun createViewModel(preselectedEntityId: String? = null) = EntityWidgetConfigureViewModel(

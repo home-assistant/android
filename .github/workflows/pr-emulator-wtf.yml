@@ -149,12 +149,12 @@ jobs:
             echo 'DEVICES_EOF'
           } >> "$GITHUB_OUTPUT"
 
-      - uses: emulator-wtf/actions/configure-credentials@ea9ab3501ee2b780179a15e7584ffdbd15a5c744 # v1.2.5
+      - uses: emulator-wtf/actions/configure-credentials@0d2c74736a40b078ff88fabb2bf76f0ab8c5d18c # v1.2.6
         with:
           oidc-configuration-id: ${{ vars.EMULATOR_WTF_OIDC_CONFIGURATION_ID }}
 
       - name: Run tests full
-        uses: emulator-wtf/actions/run-tests@ea9ab3501ee2b780179a15e7584ffdbd15a5c744 # v1.2.5
+        uses: emulator-wtf/actions/run-tests@0d2c74736a40b078ff88fabb2bf76f0ab8c5d18c # v1.2.6
         with:
           devices: ${{ steps.devices.outputs.list }}
           app: emulator-wtf-inputs/app/build/outputs/apk/full/debug/app-full-debug.apk
@@ -162,7 +162,7 @@ jobs:
           outputs-dir: build/test-results/full
 
       - name: Run tests minimal
-        uses: emulator-wtf/actions/run-tests@ea9ab3501ee2b780179a15e7584ffdbd15a5c744 # v1.2.5
+        uses: emulator-wtf/actions/run-tests@0d2c74736a40b078ff88fabb2bf76f0ab8c5d18c # v1.2.6
         with:
           devices: ${{ steps.devices.outputs.list }}
           app: emulator-wtf-inputs/app/build/outputs/apk/minimal/debug/app-minimal-debug.apk
@@ -269,7 +269,7 @@ jobs:
             '{pull_request: {head: {repo: {full_name: $head}}}}' > event.json
 
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@7622c5bf3d112a72ab4fa3951c2aa5723d8ab92d # v2.25.0
+        uses: EnricoMi/publish-unit-test-result-action@da5b7be67623cd59bbbd1a0ce4f022050a55605f # v2.26.0
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_name: ${{ github.event.workflow_run.event }}

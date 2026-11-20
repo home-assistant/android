@@ -19,6 +19,7 @@ import coil3.size.Size
 import coil3.toBitmap
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.FailFast
@@ -207,7 +208,7 @@ class CameraWidget : AppWidgetProvider() {
 
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
         val entity = serverManager.integrationRepository(serverId).getEntity(entityId)
-        return entity?.attributes?.get("entity_picture")?.toString()
+        return entity?.entityPicturePath()
     }
 
     override fun onReceive(context: Context, intent: Intent) {

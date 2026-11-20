@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.containsWithAccuracy
+import io.homeassistant.companion.android.common.data.integration.getCoordinates
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
@@ -60,7 +61,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
+
+/** The maximum amount of geofences that may be registered on [GeofencingClient]. */
+private const val MAX_GEOFENCES_COUNT = 100
 
 @Singleton
 class LocationSensorManager @Inject constructor(
@@ -724,6 +730,7 @@ class LocationSensorManager @Inject constructor(
             val intent = getLocationUpdateIntent(true)
             val geofencingRequest = createGeofencingRequest()
             if (geofencingRequest != null) {
+                Timber.d("Adding ${geofencingRequest.geofences.count()} geofences for zones")
                 geofencingClient?.addGeofences(
                     geofencingRequest,
                     intent,
@@ -1090,25 +1097,27 @@ class LocationSensorManager @Inject constructor(
         val highAccuracyTriggerRange = getHighAccuracyModeTriggerRange()
         val highAccuracyZones = getHighAccuracyModeZones(false)
 
+        // Protects geofenceCount, geofencingRequestBuilder and geofenceRegistered, shared by the per-server coroutines
+        val geofenceMutex = Mutex()
         var geofenceCount = 0
         getEnabledServers(zoneLocation).map { serverId ->
             ioScope.async {
                 val configuredZones = getZones(serverId, forceRefresh = true)
-                configuredZones.forEach {
-                    addGeofenceToBuilder(geofencingRequestBuilder, serverId, it)
-                    geofenceCount++
-                    if (geofenceCount >= 100) {
-                        return@async
-                    }
-                    if (highAccuracyTriggerRange > 0 && highAccuracyZones.contains("${serverId}_${it.entityId}")) {
-                        addGeofenceToBuilder(geofencingRequestBuilder, serverId, it, highAccuracyTriggerRange)
-                        geofenceCount++
-                        if (geofenceCount >= 100) {
-                            return@async
+                geofenceMutex.withLock {
+                    for (zone in configuredZones) {
+                        if (geofenceCount >= MAX_GEOFENCES_COUNT) break
+                        if (addGeofenceToBuilder(geofencingRequestBuilder, serverId, zone)) geofenceCount++
+                        val expand = highAccuracyTriggerRange > 0 &&
+                            "${serverId}_${zone.entityId}" in highAccuracyZones
+                        if (expand &&
+                            geofenceCount < MAX_GEOFENCES_COUNT &&
+                            addGeofenceToBuilder(geofencingRequestBuilder, serverId, zone, highAccuracyTriggerRange)
+                        ) {
+                            geofenceCount++
                         }
                     }
+                    geofenceRegistered.add(serverId)
                 }
-                geofenceRegistered.add(serverId)
             }
         }.awaitAll()
         return if (geofenceCount > 0) geofencingRequestBuilder.build() else null
@@ -1129,26 +1138,35 @@ class LocationSensorManager @Inject constructor(
         return results[0]
     }
 
+    /**
+     * Add a geofence for [zone] to the provided [geofencingRequestBuilder].
+     * @return `true` if added, `false` if skipped due to invalid values.
+     */
     private fun addGeofenceToBuilder(
         geofencingRequestBuilder: GeofencingRequest.Builder,
         serverId: Int,
         zone: Entity,
         triggerRange: Int = 0,
-    ) {
+    ): Boolean {
+        val coordinates = zone.getCoordinates()
+        val radius = (zone.attributes["radius"] as? Number)?.toFloat()
+        if (coordinates == null || radius == null) return false
+
         val postRequestId = if (triggerRange > 0) "_expanded" else ""
         geofencingRequestBuilder
             .addGeofence(
                 Geofence.Builder()
                     .setRequestId("${serverId}_" + zone.entityId + postRequestId)
                     .setCircularRegion(
-                        (zone.attributes["latitude"] as Number).toDouble(),
-                        (zone.attributes["longitude"] as Number).toDouble(),
-                        (zone.attributes["radius"] as Number).toFloat() + triggerRange,
+                        coordinates.latitude,
+                        coordinates.longitude,
+                        radius + triggerRange,
                     )
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
                     .build(),
             )
+        return true
     }
 
     private suspend fun getHighAccuracyModeTriggerRange(): Int {

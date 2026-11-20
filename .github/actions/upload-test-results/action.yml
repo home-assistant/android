@@ -20,6 +20,7 @@ runs:
         path: |
           **/build/test-results/**/TEST-*.xml
           **/build/test-results/**/results.xml
+          **/build/intermediates/*/*TestSuite/results/TEST-*.xml
           **/build/outputs/*/connected/*
 
     - name: Upload test reports
@@ -29,3 +30,4 @@ runs:
         name: ${{ inputs.test-name }} reports
         path: |
           **/build/reports/**
+          **/build/intermediates/*/*TestSuite/results/**

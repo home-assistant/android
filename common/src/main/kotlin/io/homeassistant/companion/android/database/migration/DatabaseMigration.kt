@@ -40,6 +40,7 @@ internal fun migrationPath(context: Context): Array<Migration> = arrayOf(
     MIGRATION_23_24,
     Migration37to38(context),
     Migration40to41(context),
+    MIGRATION_55_56,
 )
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -808,3 +809,21 @@ private class Migration40to41(private val context: Context) : Migration(40, 41) 
     toColumnName = "name",
 )
 internal class Migration52to53 : AutoMigrationSpec
+
+/**
+ * The notification contents setting of the active notification count sensor now defaults to off.
+ * It was on unless stored otherwise, so store it as on for anyone with the sensor enabled and
+ * no stored choice. A stored choice is never overwritten.
+ */
+private val MIGRATION_55_56 = object : Migration(55, 56) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "INSERT OR IGNORE INTO `sensor_settings` " +
+                "(`sensor_id`, `name`, `value`, `value_type`, `enabled`, `entries`) " +
+                "SELECT 'active_notification_count', 'active_notification_count_content_attrs', " +
+                "'true', 'toggle', 1, '' " +
+                "WHERE EXISTS (SELECT 1 FROM `sensors` " +
+                "WHERE `id` = 'active_notification_count' AND `enabled` = 1)",
+        )
+    }
+}

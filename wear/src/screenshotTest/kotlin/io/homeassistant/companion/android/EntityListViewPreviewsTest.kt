@@ -14,7 +14,7 @@ import io.homeassistant.companion.android.util.previewEntity2
 class EntityListViewPreviewsTest {
 
     @PreviewTest
-    @Preview(device = WearDevices.LARGE_ROUND)
+    @Preview(device = WearDevices.LARGE_ROUND, showBackground = true, backgroundColor = 0xFF000000)
     @Composable
     private fun PreviewEntityListView() {
         EntityViewList(

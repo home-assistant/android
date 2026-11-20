@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.settings.qs.ManageTilesState
 import io.homeassistant.companion.android.settings.qs.TileId
+import io.homeassistant.companion.android.settings.qs.TileSlotItem
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
 class ManageTilesScreenshotTest {
@@ -104,6 +105,11 @@ class ManageTilesScreenshotTest {
     private companion object {
         val addTileState = ManageTilesState(
             selectedTileId = TileId("tile_1"),
+            // Explicit slots: the default ones load the tile services, which the renderer cannot do
+            tileSlotItems = listOf(
+                TileSlotItem(id = TileId("tile_1"), nameRes = commonR.string.tile_1, label = null),
+                TileSlotItem(id = TileId("tile_2"), nameRes = commonR.string.tile_2, label = null),
+            ),
             serversDropdownItems = listOf(HADropdownItem(key = 1, label = "Home")),
             selectedServerId = 1,
             tileLabel = "",

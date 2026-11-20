@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
@@ -42,6 +43,7 @@ fun LoadNfcView(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
 
     val navController = rememberNavController()
     val canNavigateUp = remember { mutableStateOf(false) }
@@ -63,7 +65,7 @@ fun LoadNfcView(
     LaunchedEffect("snackbar") {
         viewModel.nfcResultSnackbar.onEach {
             if (it != 0) {
-                scaffoldState.snackbarHostState.showSnackbar(context.getString(it))
+                scaffoldState.snackbarHostState.showSnackbar(resources.getString(it))
             }
         }.launchIn(this)
     }

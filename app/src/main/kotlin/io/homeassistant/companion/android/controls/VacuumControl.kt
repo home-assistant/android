@@ -20,7 +20,7 @@ object VacuumControl : HaControl {
 
     private val entitySupportsTurnOn = ConcurrentHashMap<EntityKey, Boolean>()
 
-    override fun provideControlFeatures(
+    override suspend fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         item: EntityDisplayWithContext,

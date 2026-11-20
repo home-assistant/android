@@ -40,7 +40,7 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 @Composable
 internal fun WidgetConfigureScaffold(
     @StringRes title: Int,
-    state: WidgetConfigureState,
+    state: WidgetConfigureState<*>,
     snackbarHostState: SnackbarHostState,
     canNavigateBack: Boolean,
     onNavigate: () -> Unit,

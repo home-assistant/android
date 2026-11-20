@@ -16,6 +16,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -106,9 +107,9 @@ class ManageControlsViewModel @VisibleForTesting constructor(
                 async {
                     // The flow completes with a terminal state after Loading, failures surface as Error
                     // and leave the server out of the list to not block configuration of other server's entities
-                    val displayState = entitiesForDisplayManager.snapshotInContext(server.id) {
-                        it.domain in supportedDomains
-                    }.last()
+                    val displayState = entitiesForDisplayManager
+                        .snapshotInContext(server.id, EntityFilter(domains = supportedDomains.toSet()))
+                        .last()
                     if (displayState is EntityDisplayState.Loaded) {
                         entitiesList[server.id] = withContext(backgroundDispatcher) {
                             displayState.entities

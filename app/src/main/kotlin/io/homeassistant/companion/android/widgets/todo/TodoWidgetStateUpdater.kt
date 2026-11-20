@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.todo
 
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -55,7 +56,7 @@ internal class TodoWidgetStateUpdater @Inject constructor(
 
                 // The manager re-emits on every registry update of the server, so only a change of
                 // the list entity itself or of its display information refreshes the todos
-                entitiesForDisplayManager.observe(serverId, listOf(listEntityId))
+                entitiesForDisplayManager.observe(serverId, EntityFilter(entityIds = setOf(listEntityId)))
                     .distinctUntilChanged()
                     .map { state ->
                         val displayEntity = when (state) {

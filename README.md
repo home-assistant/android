@@ -32,7 +32,7 @@ Looking for help? Check out the [Home Assistant Companion Documentation](https:/
 
 Found a bug or have an idea for a new feature? Let us know!
 
-- **[Open a Bug Report](https://github.com/home-assistant/android/issues/new?template=Bug_report.md)**
+- **[Open a Bug Report](https://github.com/home-assistant/android/issues/new?template=bug_report.yml)**
 - **[Request a Feature](https://github.com/home-assistant/android/issues/new?template=feature_request.md)**
 
 We appreciate your feedback and contributions to make the app even better!

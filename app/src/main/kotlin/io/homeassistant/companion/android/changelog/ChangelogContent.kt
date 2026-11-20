@@ -15,10 +15,19 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 internal val currentChangelog = Changelog(
     new = listOf(
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_edge_gestures,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.Gestures),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_assist_listening_chime,
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
             actionRequiresPlatform = true,
+        ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_two_way_audio,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
     ),
     improved = listOf(),

@@ -25,6 +25,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.As
 import io.homeassistant.companion.android.common.util.AudioUrlPlayer
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -54,13 +56,23 @@ sealed interface AssistTrigger {
 }
 
 @HiltViewModel(assistedFactory = AssistViewModel.Factory::class)
-class AssistViewModel @AssistedInject internal constructor(
+class AssistViewModel internal constructor(
     serverManager: ServerManager,
-    @Assisted initialAudioStrategy: AssistAudioStrategy,
+    initialAudioStrategy: AssistAudioStrategy,
     audioUrlPlayer: AudioUrlPlayer,
     private val chimeUseCase: AssistChimeUseCase,
     application: Application,
-) : AssistViewModelBase(serverManager, initialAudioStrategy, audioUrlPlayer, application) {
+    audioDispatcher: CoroutineDispatcher,
+) : AssistViewModelBase(serverManager, initialAudioStrategy, audioUrlPlayer, application, audioDispatcher) {
+
+    @AssistedInject
+    internal constructor(
+        serverManager: ServerManager,
+        @Assisted initialAudioStrategy: AssistAudioStrategy,
+        audioUrlPlayer: AudioUrlPlayer,
+        chimeUseCase: AssistChimeUseCase,
+        application: Application,
+    ) : this(serverManager, initialAudioStrategy, audioUrlPlayer, chimeUseCase, application, Dispatchers.Default)
 
     @AssistedFactory
     interface Factory {
