@@ -9,6 +9,7 @@ import io.github.timoptr.mdiicons.generated.Heart
 import io.github.timoptr.mdiicons.generated.Robot
 import io.github.timoptr.mdiicons.generated.RobotOff
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.getIcon
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -79,9 +80,23 @@ class EntitiesForDisplayManagerTest {
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.webSocketRepository(serverId) } returns webSocketRepository
         coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
+        coEvery { integrationRepository.getEntities(any()) } coAnswers {
+            val filter = firstArg<EntityFilter>()
+            integrationRepository.getEntities()?.filter { filter.matches(it.entityId) }
+        }
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
-        coEvery { integrationRepository.getEntityUpdates(entityIds) } returns entityUpdates
+        coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = entityIds.toSet())) } returns entityUpdates
         coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
+        coEvery { webSocketRepository.getEntityRegistryDisplay(any()) } coAnswers {
+            val ids = firstArg<List<String>>()
+            if (ids.isEmpty()) {
+                null
+            } else {
+                webSocketRepository.getEntityRegistryDisplay()?.let { response ->
+                    response.copy(entities = response.entities.filter { it.entityId in ids })
+                }
+            }
+        }
     }
 
     private fun givenRegistryName(name: String) {
@@ -108,7 +123,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given a registry name when snapshotting then it is used over the friendly name`() = runTest {
         givenRegistryName("Bed")
 
-        val items = manager.snapshot(serverId, listOf("light.bed")).awaitLoadedOrNull()?.entities.orEmpty()
+        val items = manager.snapshot(serverId, EntityFilter(entityIds = setOf("light.bed"))).awaitLoadedOrNull()?.entities.orEmpty()
 
         assertEquals(listOf("Bed"), items.map { it.name })
     }
@@ -117,7 +132,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given no display registry when snapshotting then the friendly name is used`() = runTest {
         coEvery { webSocketRepository.getEntityRegistryDisplay() } returns null
 
-        val items = manager.snapshot(serverId, listOf("light.bed")).awaitLoadedOrNull()?.entities.orEmpty()
+        val items = manager.snapshot(serverId, EntityFilter(entityIds = setOf("light.bed"))).awaitLoadedOrNull()?.entities.orEmpty()
 
         assertEquals(listOf("Bed Light"), items.map { it.name })
     }
@@ -127,7 +142,7 @@ class EntitiesForDisplayManagerTest {
         givenRegistryName("Bed")
         coEvery { integrationRepository.getEntities() } returns listOf(entity("switch.fan", "Fan"))
 
-        val items = manager.snapshot(serverId, listOf("switch.fan")).awaitLoadedOrNull()?.entities.orEmpty()
+        val items = manager.snapshot(serverId, EntityFilter(entityIds = setOf("switch.fan"))).awaitLoadedOrNull()?.entities.orEmpty()
 
         assertEquals(listOf("Fan"), items.map { it.name })
     }
@@ -137,7 +152,7 @@ class EntitiesForDisplayManagerTest {
         givenRegistryName("Bed")
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed"), entity("switch.fan", "Fan"))
 
-        val items = manager.snapshot(serverId, listOf("light.bed", "switch.fan")).awaitLoadedOrNull()?.entities.orEmpty()
+        val items = manager.snapshot(serverId, EntityFilter(entityIds = setOf("light.bed", "switch.fan"))).awaitLoadedOrNull()?.entities.orEmpty()
 
         assertEquals(listOf("Bed", "Fan"), items.map { it.name })
         coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay() }
@@ -148,7 +163,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given no registered server when snapshotting then the flow completes with Error`() = runTest {
         coEvery { serverManager.isRegistered() } returns false
 
-        manager.snapshot(serverId, listOf("light.bed")).test {
+        manager.snapshot(serverId, EntityFilter(entityIds = setOf("light.bed"))).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
             assertEquals(EntityDisplayState.Error, awaitItem())
             awaitComplete()
@@ -161,7 +176,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given no entity that can be retrieved when snapshotting then the flow completes with Error`() = runTest {
         coEvery { integrationRepository.getEntities() } returns emptyList()
 
-        manager.snapshot(serverId, listOf("light.bed")).test {
+        manager.snapshot(serverId, EntityFilter(entityIds = setOf("light.bed"))).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
             assertEquals(EntityDisplayState.Error, awaitItem())
             awaitComplete()
@@ -172,7 +187,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given no registered server when observing then the flow completes with Error without asking the server`() = runTest {
         coEvery { serverManager.isRegistered() } returns false
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
             assertEquals(EntityDisplayState.Error, awaitItem())
             awaitComplete()
@@ -187,7 +202,7 @@ class EntitiesForDisplayManagerTest {
             "Impossible to determine the serverID from -1",
         )
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
             assertEquals(EntityDisplayState.Error, awaitItem())
             awaitComplete()
@@ -198,7 +213,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given a registry name when observing then it is emitted over the friendly name`() = runTest {
         givenRegistryName("Bed")
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             assertEquals("Bed", awaitInitialLoad().entities.single().name)
             cancelAndIgnoreRemainingEvents()
         }
@@ -208,7 +223,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given no display registry when observing then the friendly name is emitted`() = runTest {
         coEvery { webSocketRepository.getEntityRegistryDisplay() } returns null
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             assertEquals("Bed Light", awaitInitialLoad().entity("light.bed")?.name)
             cancelAndIgnoreRemainingEvents()
         }
@@ -218,7 +233,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given an entity state change when observing then a snapshot is emitted again`() = runTest {
         givenRegistryName("Bed")
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             awaitInitialLoad()
             entityUpdates.awaitSubscribed()
 
@@ -234,7 +249,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given a registry rename when observing then the tracked entity is emitted again`() = runTest {
         givenRegistryName("Bed")
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             assertEquals("Bed", awaitInitialLoad().entities.single().name)
             entityRegistryUpdates.awaitSubscribed()
             givenRegistryName("Renamed bed")
@@ -250,7 +265,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given a registry update that renames nothing when observing then the same snapshot is emitted`() = runTest {
         givenRegistryName("Bed")
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             val initial = awaitInitialLoad()
             entityRegistryUpdates.awaitSubscribed()
 
@@ -266,7 +281,7 @@ class EntitiesForDisplayManagerTest {
     fun `Given entity ids when observing then the devices areas and floors are not fetched`() = runTest {
         givenRegistryName("Bed")
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             awaitInitialLoad()
             entityUpdates.awaitSubscribed()
             cancelAndIgnoreRemainingEvents()
@@ -301,7 +316,16 @@ class EntitiesForDisplayManagerTest {
 
         // Subscribed to every entity, not to a filtered id list
         coVerify(exactly = 1) { integrationRepository.getEntityUpdates() }
-        coVerify(exactly = 0) { integrationRepository.getEntityUpdates(any<List<String>>()) }
+    }
+
+    @Test
+    fun `Given entity ids when snapshotting then only their states and registry entries are requested`() = runTest {
+        givenRegistryName("Bed")
+
+        manager.snapshot(serverId, EntityFilter(entityIds = entityIds.toSet())).awaitLoadedOrNull()
+
+        coVerify(exactly = 1) { integrationRepository.getEntities(EntityFilter(entityIds = setOf("light.bed"))) }
+        coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay(entityIds) }
     }
 
     @Test
@@ -309,7 +333,7 @@ class EntitiesForDisplayManagerTest {
         givenRegistryName("Bed")
         coEvery { integrationRepository.getEntities() } returns null
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
             assertEquals(EntityDisplayState.Error, awaitItem())
             awaitComplete()
@@ -321,7 +345,7 @@ class EntitiesForDisplayManagerTest {
         givenRegistryName("Bed")
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.other"))
 
-        manager.observe(serverId, entityIds).test {
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
             assertEquals(EntityDisplayState.Loading, awaitItem())
             assertEquals(EntityDisplayState.Error, awaitItem())
             awaitComplete()
@@ -338,9 +362,9 @@ class EntitiesForDisplayManagerTest {
             ),
         )
         coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"), entity("switch.fan"))
-        coEvery { integrationRepository.getEntityUpdates(ids) } returns entityUpdates
+        coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = ids.toSet())) } returns entityUpdates
 
-        manager.observe(serverId, ids).test {
+        manager.observe(serverId, EntityFilter(entityIds = ids.toSet())).test {
             assertEquals(listOf("Bed", "Fan"), awaitInitialLoad().entities.map { it.name })
             entityUpdates.awaitSubscribed()
 
@@ -536,16 +560,20 @@ class EntitiesForDisplayManagerTest {
         }
 
         @Test
-        fun `Given a filter when invoking without list then only matching entities are resolved`() = runTest {
+        fun `Given domains when invoking then only their states are requested and resolved`() = runTest {
+            val filter = EntityFilter(domains = setOf("light"))
             coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
             coEvery { integrationRepository.getEntities() } returns listOf(
                 entity("light.bed", "Bed Light"),
                 entity("switch.fan", "Fan"),
             )
 
-            val items = manager.snapshotInContext(serverId = serverId) { it.domain == "light" }.awaitLoaded()
+            val items = manager.snapshotInContext(serverId = serverId, filter = filter).awaitLoaded()
 
             assertEquals(listOf("light.bed"), items.map { it.entityId })
+            coVerify(exactly = 1) { integrationRepository.getEntities(filter) }
+            // The registry can't be limited to domains
+            coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay() }
         }
 
         @Test
@@ -1061,30 +1089,15 @@ class EntitiesForDisplayManagerTest {
             }
 
             @Test
-            fun `Given a filter when observing then non matching updates are ignored`() = runTest {
-                manager.observeInContext(serverId) { it.domain == "light" }.test {
-                    awaitInitialLoad()
-                    entityUpdates.awaitSubscribed()
-
-                    entityUpdates.emit(entity("switch.fan", "Fan"))
-                    entityUpdates.emit(entity("light.bed", "Renamed Light"))
-
-                    // Only the light update emits: the switch was filtered out
-                    val updated = EntityDisplayState.Loaded(awaitLoaded().toList())
-                    assertEquals(listOf("Renamed Light"), updated.entities.map { it.name })
-                    cancelAndIgnoreRemainingEvents()
-                }
-            }
-
-            @Test
-            fun `Given entity ids when observing then only their state changes are subscribed`() = runTest {
+            fun `Given domains when observing then only their states are requested and followed`() = runTest {
+                val filter = EntityFilter(domains = setOf("light"))
                 coEvery { integrationRepository.getEntities() } returns listOf(
                     entity("light.bed", "Bed Light"),
                     entity("switch.fan", "Fan"),
                 )
-                coEvery { integrationRepository.getEntityUpdates(entityIds) } returns entityUpdates
+                coEvery { integrationRepository.getEntityUpdates(filter) } returns entityUpdates
 
-                manager.observeInContext(serverId, entityIds).test {
+                manager.observeInContext(serverId, filter).test {
                     assertEquals(listOf("light.bed"), awaitInitialLoad().map { it.entityId })
                     entityUpdates.awaitSubscribed()
 
@@ -1093,8 +1106,31 @@ class EntitiesForDisplayManagerTest {
                     assertEquals(listOf("Renamed Light"), awaitLoaded().map { it.name })
                     cancelAndIgnoreRemainingEvents()
                 }
-                coVerify(exactly = 1) { integrationRepository.getEntityUpdates(entityIds) }
+                coVerify(exactly = 1) { integrationRepository.getEntities(filter) }
+                coVerify(exactly = 1) { integrationRepository.getEntityUpdates(filter) }
                 coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+            }
+
+            @Test
+            fun `Given entity ids when observing then only their state changes are subscribed`() = runTest {
+                coEvery { integrationRepository.getEntities() } returns listOf(
+                    entity("light.bed", "Bed Light"),
+                    entity("switch.fan", "Fan"),
+                )
+                coEvery { integrationRepository.getEntityUpdates(EntityFilter(entityIds = entityIds.toSet())) } returns entityUpdates
+
+                manager.observeInContext(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
+                    assertEquals(listOf("light.bed"), awaitInitialLoad().map { it.entityId })
+                    entityUpdates.awaitSubscribed()
+
+                    entityUpdates.emit(entity("light.bed", "Renamed Light"))
+
+                    assertEquals(listOf("Renamed Light"), awaitLoaded().map { it.name })
+                    cancelAndIgnoreRemainingEvents()
+                }
+                coVerify(exactly = 1) { integrationRepository.getEntityUpdates(EntityFilter(entityIds = entityIds.toSet())) }
+                coVerify(exactly = 0) { integrationRepository.getEntityUpdates() }
+                coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay(entityIds) }
             }
 
             @Test

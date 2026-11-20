@@ -12,6 +12,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.updateAll
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -242,7 +243,9 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
             val entitiesId = entitiesPerServer.entityIds
 
             val entityUpdatesFlow = if (serverManager.getServer(serverId) != null) {
-                serverManager.integrationRepository(serverId).getEntityUpdates(entitiesId)
+                serverManager.integrationRepository(
+                    serverId,
+                ).getEntityUpdates(EntityFilter(entityIds = entitiesId.toSet()))
             } else {
                 null
             }

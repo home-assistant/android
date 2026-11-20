@@ -5,7 +5,6 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -84,7 +83,7 @@ class ManageControlsViewModelTest {
     @Test
     fun `Given resolved entities when created then hidden entities are included and the rest sorted by display name`() = runTest {
         coEvery { serverManager.servers() } returns listOf(fakeServer(1))
-        every { entitiesForDisplayManager.snapshotInContext(1, any<(Entity) -> Boolean>()) } returns flowOf(
+        every { entitiesForDisplayManager.snapshotInContext(1, any()) } returns flowOf(
             EntityDisplayState.Loading,
             EntityDisplayState.Loaded(
                 listOf(
@@ -105,11 +104,11 @@ class ManageControlsViewModelTest {
     @Test
     fun `Given a server failing to resolve entities when created then that server is left out but loading completes`() = runTest {
         coEvery { serverManager.servers() } returns listOf(fakeServer(1), fakeServer(2))
-        every { entitiesForDisplayManager.snapshotInContext(1, any<(Entity) -> Boolean>()) } returns flowOf(
+        every { entitiesForDisplayManager.snapshotInContext(1, any()) } returns flowOf(
             EntityDisplayState.Loading,
             EntityDisplayState.Error,
         )
-        every { entitiesForDisplayManager.snapshotInContext(2, any<(Entity) -> Boolean>()) } returns flowOf(
+        every { entitiesForDisplayManager.snapshotInContext(2, any()) } returns flowOf(
             EntityDisplayState.Loading,
             EntityDisplayState.Loaded(listOf(fakeItem("light.bulb", name = "Bulb"))),
         )

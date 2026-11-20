@@ -80,8 +80,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -297,7 +299,6 @@ internal class WebSocketCoreImpl(
         // Track pending connection state locally within the urlObserverJob scope.
         // This is read across collectLatest invocations to cancel partial connections on URL change.
         var pendingWebSocket: WebSocket? = null
-        var urlObserverJob: Job? = null
 
         connectedMutex.withLock {
             // Already connected?
@@ -317,31 +318,31 @@ internal class WebSocketCoreImpl(
             // Cancel any existing URL observer
             connectionHolder.get()?.urlObserverJob?.cancel()
 
-            urlObserverJob = wsScope.launch {
+            wsScope.launch {
+                val urlObserverJob = coroutineContext.job
                 connectionStateProvider().urlFlow()
                     .collectLatest { urlState ->
                         connectedMutex.withLock {
                             // This lock might wait for the first withLock to finish but it should be fast
                             val url = (urlState as? UrlState.HasUrl)?.url
                             if (!connectDeferred.isCompleted) {
-                                handleNewConnectionAttempt(
+                                val connected = handleNewConnectionAttempt(
                                     url = url,
                                     pendingWebSocket = pendingWebSocket,
-                                    connectDeferred = connectDeferred,
-                                    urlObserverJob = urlObserverJob!!,
+                                    urlObserverJob = urlObserverJob,
                                     setPendingWebSocket = { pendingWebSocket = it },
                                 )
+                                connectDeferred.complete(connected)
+                                if (!connected) urlObserverJob.cancel()
                             } else if (url != connectionHolder.get()?.url) {
                                 // Already connected but URL changed
                                 handleUrlChangeWhileConnected(urlState)
                             }
                         }
                     }
-            }.apply {
-                invokeOnCompletion {
-                    if (!connectDeferred.isCompleted) {
-                        connectDeferred.complete(false)
-                    }
+            }.invokeOnCompletion {
+                if (!connectDeferred.isCompleted) {
+                    connectDeferred.complete(false)
                 }
             }
         }
@@ -370,16 +371,16 @@ internal class WebSocketCoreImpl(
     }
 
     /**
-     * Handles a new connection attempt when not yet connected.
-     * This is called when the URL flow emits before [connectDeferred] is completed.
+     * Cancels any [pendingWebSocket] and tries to connect to [url].
+     *
+     * @return `true` when the socket is authenticated and its [ConnectionHolder] is stored, `false` on failure.
      */
     private suspend fun handleNewConnectionAttempt(
         url: URL?,
         pendingWebSocket: WebSocket?,
-        connectDeferred: CompletableDeferred<Boolean>,
         urlObserverJob: Job,
         setPendingWebSocket: (WebSocket?) -> Unit,
-    ) {
+    ): Boolean {
         // Clean up any partial connection before using this URL.
         currentAttempt = SocketAttempt()
         pendingCloseReason = null
@@ -390,16 +391,13 @@ internal class WebSocketCoreImpl(
         if (url == null) {
             Timber.w("No URL available to open WebSocket connection")
             currentAttempt.transitionTo(WebSocketState.ClosedOther)
-            connectDeferred.complete(false)
-            urlObserverJob.cancel()
-            return
+            return false
         }
 
-        when (val attemptResult = attemptWebSocketConnection(url)) {
+        return when (val attemptResult = attemptWebSocketConnection(url)) {
             is ConnectionAttemptResult.Failed -> {
                 currentAttempt.transitionTo(WebSocketState.ClosedOther)
-                connectDeferred.complete(false)
-                urlObserverJob.cancel()
+                false
             }
 
             is ConnectionAttemptResult.Success -> {
@@ -412,7 +410,7 @@ internal class WebSocketCoreImpl(
                     urlObserverJob = urlObserverJob,
                 )
                 if (authSuccess) restoreLeftoverSubscriptions()
-                connectDeferred.complete(authSuccess)
+                authSuccess
             }
         }
     }
@@ -646,6 +644,11 @@ internal class WebSocketCoreImpl(
             }
             (existingFlow ?: createSubscriptionFlow<T>(subscribeMessage, timeout, reconnectPolicy)) as? Flow<T>
         }
+    }
+
+    override suspend fun <T : Any> firstEventOf(type: String, data: Map<String, Any?>): T? {
+        // Never shared and not restored: the event is the answer to this one request
+        return subscribeTo<T>(type, data, reconnectPolicy = SubscriptionReconnectPolicy.Complete)?.firstOrNull()
     }
 
     override fun shutdown() {

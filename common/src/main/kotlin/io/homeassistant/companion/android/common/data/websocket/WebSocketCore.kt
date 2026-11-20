@@ -86,6 +86,20 @@ internal interface WebSocketCore {
         reconnectPolicy: SubscriptionReconnectPolicy = SubscriptionReconnectPolicy.Resubscribe,
     ): Flow<T>?
 
+    /**
+     * Starts a subscription of its own, returns the first event it delivers and ends it. Use it
+     * for commands answering with the events of a subscription, like the states `subscribe_entities`
+     * starts with, which an existing subscription shared through [subscribeTo] doesn't replay.
+     *
+     * The event is waited for as long as the connection lasts: callers bound the wait themselves,
+     * the subscription ends when they are cancelled.
+     *
+     * @param type value for the `type` key in the subscription message
+     * @param data a key/value map of additional data to be included in the subscription message
+     * @return the first event, or `null` if the subscription failed or ended without an event
+     */
+    suspend fun <T : Any> firstEventOf(type: String, data: Map<String, Any?> = mapOf()): T?
+
     fun shutdown()
 
     suspend fun server(): Server?
