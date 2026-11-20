@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Modifier
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 
@@ -47,6 +48,7 @@ fun HACheckbox(
 }
 
 @Composable
+@ReadOnlyComposable
 private fun checkboxColors(): CheckboxColors {
     val scheme = LocalHAColorScheme.current
     return with(scheme) {
