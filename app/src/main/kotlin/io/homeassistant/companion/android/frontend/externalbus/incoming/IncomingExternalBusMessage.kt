@@ -331,7 +331,7 @@ data class MatterShareDevicePayload(
 
 /**
  * Message requesting the app to share its locally-stored Thread credentials with the Home Assistant
- * server.
+ * server. Inverse of [ThreadStoreInPlatformKeychainMessage].
  *
  * The app is expected to push the credentials to the server and send back a
  * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage] correlated by
@@ -343,6 +343,35 @@ data class MatterShareDevicePayload(
 @Serializable
 @SerialName("thread/import_credentials")
 data class ThreadImportCredentialsMessage(override val id: Int? = null) : IncomingExternalBusMessage
+
+/**
+ * The frontend Thread panel's "Send credentials to the app" button on a preferred dataset is pressed
+ * and fires this with the active operational dataset for the Thread network. Inverse of
+ * [ThreadImportCredentialsMessage].
+ *
+ * The app stores the credential in the device's Thread credential storage. All fields are hex strings
+ * as sent by the frontend; the [activeOperationalDataset] decodes to the raw Thread TLV.
+ *
+ * Will not be sent by the frontend when the device reports
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult.canTransferThreadCredentialsToKeychain]
+ * = `false`.
+ *
+ * @see <a href="https://github.com/home-assistant/frontend/blob/dev/src/panels/config/integrations/integration-panels/thread/thread-config-panel.ts">thread-config-panel.ts</a>
+ */
+@Serializable
+@SerialName("thread/store_in_platform_keychain")
+data class ThreadStoreInPlatformKeychainMessage(
+    override val id: Int? = null,
+    val payload: ThreadStoreInPlatformKeychainPayload,
+) : IncomingExternalBusMessage
+
+@Serializable
+data class ThreadStoreInPlatformKeychainPayload(
+    @SerialName("mac_extended_address") val macExtendedAddress: String? = null,
+    @SerialName("border_agent_id") val borderAgentId: String? = null,
+    @SerialName("active_operational_dataset") val activeOperationalDataset: String,
+    @SerialName("extended_pan_id") val extendedPanId: String,
+)
 
 /**
  * Message requesting the app to open the in-app barcode scanner overlay.

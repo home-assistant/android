@@ -130,6 +130,18 @@ sealed interface FrontendHandlerEvent {
     data object ImportThreadCredentials : FrontendHandlerEvent
 
     /**
+     * Inverse of [ImportThreadCredentials]: the frontend Thread panel asked the app to store a
+     * Thread Active Operational Dataset in the device's Thread credential storage.
+     *
+     * @param borderAgentId Hex string identifying the preferred border router that owns the
+     *   network on the server side; the credential should be added under this BA so it can be
+     *   removed later if the server is removed.
+     * @param tlv Decoded raw Thread Active Operational Dataset bytes.
+     */
+    data class StoreThreadCredentialsInPlatformKeychain(val borderAgentId: String, val tlv: ByteArray) :
+        FrontendHandlerEvent
+
+    /**
      * Frontend requested the app to open the barcode scanner overlay.
      *
      * Carries the original message [messageId] (required — the frontend correlates the eventual

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.frontend.dialog
 
 import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -17,7 +18,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given confirm shown when user confirms then suspend returns true and slot clears`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async { manager.showConfirm("Are you sure?") }
         advanceUntilIdle()
@@ -34,8 +35,30 @@ class FrontendDialogManagerTest {
     }
 
     @Test
+    fun `Given confirm shown without buttons then the dialog uses OK and Cancel`() = runTest {
+        val manager = FrontendDialogManager(mockk(relaxed = true))
+
+        val outcome = async { manager.showConfirm("Are you sure?") }
+        advanceUntilIdle()
+
+        assertEquals(ConfirmButtons.OkCancel, (manager.pendingDialog.value as FrontendDialog.Confirm).buttons)
+        outcome.cancel()
+    }
+
+    @Test
+    fun `Given confirm shown with YesNo buttons then the dialog carries them`() = runTest {
+        val manager = FrontendDialogManager(mockk(relaxed = true))
+
+        val outcome = async { manager.showConfirm("Continue?", buttons = ConfirmButtons.YesNo) }
+        advanceUntilIdle()
+
+        assertEquals(ConfirmButtons.YesNo, (manager.pendingDialog.value as FrontendDialog.Confirm).buttons)
+        outcome.cancel()
+    }
+
+    @Test
     fun `Given confirm shown when user cancels then suspend returns false and slot clears`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async { manager.showConfirm("Discard?") }
         advanceUntilIdle()
@@ -48,7 +71,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given confirm in flight when scope cancels then slot is cleared`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async { manager.showConfirm("Confirm?") }
         advanceUntilIdle()
@@ -62,7 +85,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given dialog shown when second show then it queues until first completes`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val first = async { manager.showConfirm("first") }
         advanceUntilIdle()
@@ -84,7 +107,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given information shown when user dismisses then suspend returns and slot clears`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async { manager.showInformation("Already paired") }
         advanceUntilIdle()
@@ -102,7 +125,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given HTTP auth shown when user proceeds then suspend returns Proceed with credentials`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async {
             manager.showHttpAuth(host = "example.com", message = { "auth required" }, isAuthError = false)
@@ -122,7 +145,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given HTTP auth shown when user cancels then suspend returns Cancel`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async {
             manager.showHttpAuth(host = "example.com", message = { "auth required" }, isAuthError = false)
@@ -137,7 +160,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given isAuthError true when HTTP auth shown then dialog carries the flag`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async {
             manager.showHttpAuth(host = "example.com", message = { "auth required" }, isAuthError = true)
@@ -154,7 +177,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given showMatterThreadProgress when called then exposes the progress dialog and does not complete`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async { manager.showMatterThreadProgress() }
         advanceUntilIdle()
@@ -168,7 +191,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given showMatterThreadProgress in flight when caller is cancelled then slot is cleared`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async { manager.showMatterThreadProgress() }
         advanceUntilIdle()
@@ -182,7 +205,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given showMatterThreadTerminal when shown then exposes the terminal dialog carrying the variant`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async { manager.showMatterThreadTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset) }
         advanceUntilIdle()
@@ -198,7 +221,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given showMatterThreadTerminal shown when user dismisses then suspend returns and slot clears`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async { manager.showMatterThreadTerminal(MatterThreadTerminal.Dialog.ThreadNotConnected) }
         advanceUntilIdle()
@@ -211,7 +234,7 @@ class FrontendDialogManagerTest {
 
     @Test
     fun `Given showMatterThreadTerminal in flight when caller is cancelled then slot is cleared`() = runTest {
-        val manager = FrontendDialogManager()
+        val manager = FrontendDialogManager(mockk(relaxed = true))
 
         val outcome = async { manager.showMatterThreadTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset) }
         advanceUntilIdle()

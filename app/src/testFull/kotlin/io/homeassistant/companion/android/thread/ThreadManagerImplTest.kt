@@ -12,17 +12,23 @@ import com.google.android.gms.threadnetwork.IsPreferredCredentialsResult
 import com.google.android.gms.threadnetwork.ThreadNetworkClient
 import com.google.android.gms.threadnetwork.ThreadNetworkCredentials
 import com.google.android.gms.threadnetwork.ThreadNetworkStatusCodes
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -418,6 +424,308 @@ class ThreadManagerImplTest {
             assertEquals(false, result.updated)
             assertNull(result.exportIntent)
         }
+
+        @Test
+        fun `Given another tracked border agent ID when sync imports the server dataset then both IDs stay tracked`() = runTest {
+            stubServerSupport(coreSupports = true)
+            mockOrphanCleanup()
+            mockPreferredCredentials(intentSender = null)
+            val serverBorderAgentId = "0123456789abcdef0123456789abcdef"
+            coEvery { webSocketRepository.getThreadDatasets() } returns listOf(
+                dataset(datasetId = "server", preferred = true).copy(preferredBorderAgentId = serverBorderAgentId),
+            )
+            // No TLV on the server, so the import is a no-op that completes successfully
+            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
+            coEvery { serverManager.integrationRepository(1).getThreadBorderAgentIds() } returns
+                listOf("stored-earlier")
+
+            createManager().syncPreferredDataset(serverId = 1, scope = this)
+
+            coVerify {
+                serverManager.integrationRepository(1).setThreadBorderAgentIds(
+                    listOf("stored-earlier", serverBorderAgentId),
+                )
+            }
+        }
+
+        @Test
+        fun `Given a credential that cannot be deleted when sync removes app credentials then its ID stays tracked`() = runTest {
+            stubServerSupport(coreSupports = true)
+            mockPreferredCredentials(intentSender = mockk())
+            coEvery { webSocketRepository.getThreadDatasets() } returns
+                listOf(dataset(datasetId = "server", preferred = true, source = "Google"))
+            coEvery { webSocketRepository.getThreadDatasetTlv(any()) } returns null
+            mockDeviceCredentialPrefersApp()
+            val deletableId = "aaaaaaaaaaaaaaaa"
+            val stuckId = "bbbbbbbbbbbbbbbb"
+            coEvery { serverManager.servers() } returns listOf(mockk(relaxed = true) { every { id } returns 1 })
+            coEvery { serverManager.integrationRepository(1).getThreadBorderAgentIds() } returns
+                listOf(deletableId, stuckId)
+            every { threadNetworkClient.removeCredentials(any()) } returns voidSuccessTask()
+            every {
+                threadNetworkClient.removeCredentials(match { String(it.id) == stuckId })
+            } returns failureTask(IllegalStateException("delete boom"))
+
+            createManager().syncPreferredDataset(serverId = 1, scope = this)
+
+            coVerify { serverManager.integrationRepository(1).setThreadBorderAgentIds(listOf(stuckId)) }
+        }
+    }
+
+    @Nested
+    inner class NetworkNameFromTlvTests {
+
+        @Test
+        fun `Given a valid TLV when networkNameFromTlv then returns the embedded network name`() {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } returns mockk(relaxed = true) {
+                every { networkName } returns "MyNetwork"
+            }
+
+            assertEquals("MyNetwork", createManager().networkNameFromTlv(byteArrayOf(1, 2, 3)))
+        }
+
+        @Test
+        fun `Given a malformed TLV when networkNameFromTlv then returns null`() {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } throws
+                IllegalArgumentException("bad TLV")
+
+            assertNull(createManager().networkNameFromTlv(byteArrayOf(1, 2, 3)))
+        }
+    }
+
+    @Nested
+    inner class PredictPreferredOutcomeTests {
+
+        private val prospective: ThreadNetworkCredentials = mockk(relaxed = true)
+
+        private fun mockProspective() {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } returns prospective
+        }
+
+        @Test
+        fun `Given a malformed TLV when predict then returns Unknown`() = runTest {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } throws
+                IllegalArgumentException("bad TLV")
+
+            val result = createManager().predictPreferredOutcome(byteArrayOf(1))
+
+            assertInstanceOf(ThreadManager.PreflightOutcome.Unknown::class.java, result)
+        }
+
+        @Test
+        fun `Given the credential is already preferred when predict then returns AlreadyPreferred`() = runTest {
+            mockProspective()
+            every { threadNetworkClient.isPreferredCredentials(prospective) } returns
+                successTask(IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_MATCHED)
+
+            val result = createManager().predictPreferredOutcome(byteArrayOf(1))
+
+            assertInstanceOf(ThreadManager.PreflightOutcome.AlreadyPreferred::class.java, result)
+        }
+
+        @Test
+        fun `Given the preferred check fails when predict then returns Unknown`() = runTest {
+            mockProspective()
+            every { threadNetworkClient.isPreferredCredentials(prospective) } returns
+                failureTask(IllegalStateException("boom"))
+
+            val result = createManager().predictPreferredOutcome(byteArrayOf(1))
+
+            assertInstanceOf(ThreadManager.PreflightOutcome.Unknown::class.java, result)
+        }
+
+        @Test
+        fun `Given the app owns a different preferred credential when predict then returns AppCredentialPreferred`() = runTest {
+            mockProspective()
+            every { threadNetworkClient.isPreferredCredentials(prospective) } returns
+                successTask(IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_NOT_MATCHED)
+            val appCredential: ThreadNetworkCredentials = mockk(relaxed = true) {
+                every { networkName } returns "OtherNetwork"
+            }
+            every { threadNetworkClient.allCredentials } returns successTask(listOf(appCredential))
+            every { threadNetworkClient.isPreferredCredentials(appCredential) } returns
+                successTask(IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_MATCHED)
+
+            val result = assertInstanceOf(
+                ThreadManager.PreflightOutcome.AppCredentialPreferred::class.java,
+                createManager().predictPreferredOutcome(byteArrayOf(1)),
+            )
+            assertEquals("OtherNetwork", result.networkName)
+        }
+
+        @Test
+        fun `Given the app owns no credentials when predict then returns LikelyToBecomePreferred`() = runTest {
+            mockProspective()
+            every { threadNetworkClient.isPreferredCredentials(prospective) } returns
+                successTask(IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_NOT_MATCHED)
+            every { threadNetworkClient.allCredentials } returns successTask(emptyList())
+
+            val result = createManager().predictPreferredOutcome(byteArrayOf(1))
+
+            assertInstanceOf(ThreadManager.PreflightOutcome.LikelyToBecomePreferred::class.java, result)
+        }
+
+        @Test
+        fun `Given the app owns only non-preferred credentials when predict then returns Unknown`() = runTest {
+            mockProspective()
+            every { threadNetworkClient.isPreferredCredentials(prospective) } returns
+                successTask(IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_NOT_MATCHED)
+            val appCredential: ThreadNetworkCredentials = mockk(relaxed = true)
+            every { threadNetworkClient.allCredentials } returns successTask(listOf(appCredential))
+            every { threadNetworkClient.isPreferredCredentials(appCredential) } returns
+                successTask(IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_NOT_MATCHED)
+
+            val result = createManager().predictPreferredOutcome(byteArrayOf(1))
+
+            assertInstanceOf(ThreadManager.PreflightOutcome.Unknown::class.java, result)
+        }
+
+        @Test
+        fun `Given the app credentials cannot be read when predict then returns Unknown`() = runTest {
+            mockProspective()
+            every { threadNetworkClient.isPreferredCredentials(prospective) } returns
+                successTask(IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_NOT_MATCHED)
+            every { threadNetworkClient.allCredentials } returns failureTask(IllegalStateException("boom"))
+
+            val result = createManager().predictPreferredOutcome(byteArrayOf(1))
+
+            assertInstanceOf(ThreadManager.PreflightOutcome.Unknown::class.java, result)
+        }
+    }
+
+    @Nested
+    inner class AddCredentialToDeviceTests {
+
+        private val borderAgentId = "0123456789abcdef0123456789abcdef"
+        private val credentials: ThreadNetworkCredentials = mockk(relaxed = true)
+
+        private fun mockAdd(postAddResult: Int?) {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } returns credentials
+            mockOrphanCleanup()
+            every { threadNetworkClient.addCredentials(any(), credentials) } returns voidSuccessTask()
+            every { threadNetworkClient.isPreferredCredentials(credentials) } returns if (postAddResult != null) {
+                successTask(postAddResult)
+            } else {
+                failureTask(IllegalStateException("boom"))
+            }
+        }
+
+        @Test
+        fun `Given the added credential becomes preferred when add then returns Preferred and tracks the ID`() = runTest {
+            mockAdd(postAddResult = IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_MATCHED)
+            coEvery { serverManager.integrationRepository(1).getThreadBorderAgentIds() } returns
+                listOf("existing-id")
+
+            val result = createManager().addCredentialToDevice(
+                serverId = 1,
+                tlv = byteArrayOf(1),
+                borderAgentId = borderAgentId,
+            )
+
+            assertInstanceOf(ThreadManager.AddCredentialResult.Preferred::class.java, result)
+            coVerify {
+                serverManager.integrationRepository(1).setThreadBorderAgentIds(
+                    listOf("existing-id", borderAgentId),
+                )
+            }
+        }
+
+        @Test
+        fun `Given the device keeps another preferred credential when add then returns NotPreferred`() = runTest {
+            mockAdd(postAddResult = IsPreferredCredentialsResult.PREFERRED_CREDENTIALS_NOT_MATCHED)
+
+            val result = createManager().addCredentialToDevice(
+                serverId = 1,
+                tlv = byteArrayOf(1),
+                borderAgentId = borderAgentId,
+            )
+
+            assertInstanceOf(ThreadManager.AddCredentialResult.NotPreferred::class.java, result)
+        }
+
+        @Test
+        fun `Given the post-add check fails when add then returns PreferredUnknown`() = runTest {
+            mockAdd(postAddResult = null)
+
+            val result = createManager().addCredentialToDevice(
+                serverId = 1,
+                tlv = byteArrayOf(1),
+                borderAgentId = borderAgentId,
+            )
+
+            assertInstanceOf(ThreadManager.AddCredentialResult.PreferredUnknown::class.java, result)
+        }
+
+        @Test
+        fun `Given the device refuses the credential when add then the exception propagates`() = runTest {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } returns credentials
+            mockOrphanCleanup()
+            every { threadNetworkClient.addCredentials(any(), credentials) } returns
+                failureTask(IllegalStateException("add boom"))
+
+            try {
+                createManager().addCredentialToDevice(serverId = 1, tlv = byteArrayOf(1), borderAgentId = borderAgentId)
+                fail { "Should have failed" }
+            } catch (_: IllegalStateException) {
+            }
+        }
+
+        @Test
+        fun `Given the device refuses the credential when add then the ID is tracked and dropped again`() = runTest {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } returns credentials
+            mockOrphanCleanup()
+            every { threadNetworkClient.addCredentials(any(), credentials) } returns
+                failureTask(IllegalStateException("add boom"))
+            val repository: IntegrationRepository = mockk(relaxed = true)
+            coEvery { serverManager.integrationRepository(1) } returns repository
+            coEvery { repository.getThreadBorderAgentIds() } returnsMany listOf(
+                listOf("existing-id"),
+                listOf("existing-id"),
+                listOf("existing-id", borderAgentId),
+            )
+
+            runCatching {
+                createManager().addCredentialToDevice(serverId = 1, tlv = byteArrayOf(1), borderAgentId = borderAgentId)
+            }
+
+            coVerifyOrder {
+                repository.setThreadBorderAgentIds(listOf("existing-id", borderAgentId))
+                repository.setThreadBorderAgentIds(listOf("existing-id"))
+            }
+        }
+
+        @Test
+        fun `Given add is cancelled before the device answers when add then the ID stays tracked`() = runTest {
+            mockkStatic(ThreadNetworkCredentials::class)
+            every { ThreadNetworkCredentials.fromActiveOperationalDataset(any()) } returns credentials
+            mockOrphanCleanup()
+            every { threadNetworkClient.addCredentials(any(), credentials) } returns pendingTask()
+            val repository: IntegrationRepository = mockk(relaxed = true)
+            coEvery { serverManager.integrationRepository(1) } returns repository
+            coEvery { repository.getThreadBorderAgentIds() } returns listOf("existing-id")
+            val manager = createManager()
+
+            val job = launch {
+                manager.addCredentialToDevice(serverId = 1, tlv = byteArrayOf(1), borderAgentId = borderAgentId)
+            }
+            advanceUntilIdle()
+            job.cancelAndJoin()
+
+            coVerify(exactly = 1) { repository.setThreadBorderAgentIds(any()) }
+            coVerify { repository.setThreadBorderAgentIds(listOf("existing-id", borderAgentId)) }
+        }
+    }
+
+    private fun <T> pendingTask(): Task<T> = mockk {
+        every { addOnSuccessListener(any()) } returns this@mockk
+        every { addOnFailureListener(any()) } returns this@mockk
     }
 
     private fun dataset(datasetId: String, preferred: Boolean, source: String = "HomeAssistant") = ThreadDatasetResponse(

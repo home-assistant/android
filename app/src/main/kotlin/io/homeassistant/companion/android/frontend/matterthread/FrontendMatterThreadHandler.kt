@@ -2,8 +2,12 @@ package io.homeassistant.companion.android.frontend.matterthread
 
 import android.content.IntentSender
 import androidx.activity.result.ActivityResult
+import androidx.annotation.StringRes
+import androidx.core.net.toUri
 import dagger.hilt.android.scopes.ViewModelScoped
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.frontend.dialog.ConfirmButtons
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialogManager
 import io.homeassistant.companion.android.frontend.externalbus.FrontendExternalBusRepository
 import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
@@ -12,6 +16,7 @@ import io.homeassistant.companion.android.frontend.externalbus.outgoing.MatterCo
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.SuccessResultMessage
 import io.homeassistant.companion.android.matter.MatterManager
 import io.homeassistant.companion.android.thread.ThreadManager
+import io.homeassistant.companion.android.util.sensitive
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
@@ -24,6 +29,12 @@ import timber.log.Timber
 
 private const val SHARE_ERROR_CANCELED = "canceled"
 private const val SHARE_ERROR_FAILED = "failed"
+
+/**
+ * Companion documentation for Thread credential management, linked from the HA → device store
+ * dialogs so users can read up on how Android's preferred Thread network behaves.
+ */
+private const val THREAD_DOCS_URL = "https://companion.home-assistant.io/docs/integrations/thread"
 
 /**
  * Coordinates the Matter commissioning, Matter sharing and Thread credential export flows.
@@ -55,6 +66,7 @@ private const val SHARE_ERROR_FAILED = "failed"
  * the Matter commissioning flow on every outcome so the frontend's add-device dialog can hide its
  * spinner, and the result of a `matter/share_device` request.
  */
+@Suppress("TooManyFunctions")
 @ViewModelScoped
 internal class FrontendMatterThreadHandler @Inject constructor(
     private val matterManager: MatterManager,
@@ -165,48 +177,40 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         }
         var awaitingIntentResult = false
         try {
-            supervisorScope {
-                // Show the progress dialog from a child coroutine so we can dismiss it
-                // programmatically by cancelling the job when the flow advances.
-                val progressJob = launch { dialogManager.showMatterThreadProgress() }
+            val result = withProgress {
                 try {
-                    val result = try {
-                        threadManager.exportPreferredDataset(serverId)
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(e, "Error while trying to export preferred dataset")
-                        null
+                    threadManager.exportPreferredDataset(serverId)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "Error while trying to export preferred dataset")
+                    null
+                }
+            }
+            when (result) {
+                is ThreadManager.SyncResult.OnlyOnDevice -> {
+                    val intent = result.exportIntent
+                    if (intent != null) {
+                        awaitingIntentResult = true
+                        _events.send(Event.LaunchIntent(intent))
+                    } else {
+                        showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
                     }
-                    progressJob.cancel()
-                    when (result) {
-                        is ThreadManager.SyncResult.OnlyOnDevice -> {
-                            val intent = result.exportIntent
-                            if (intent != null) {
-                                awaitingIntentResult = true
-                                _events.send(Event.LaunchIntent(intent))
-                            } else {
-                                showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
-                            }
-                        }
+                }
 
-                        is ThreadManager.SyncResult.NoneHaveCredentials,
-                        is ThreadManager.SyncResult.OnlyOnServer,
-                        -> showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
+                is ThreadManager.SyncResult.NoneHaveCredentials,
+                is ThreadManager.SyncResult.OnlyOnServer,
+                -> showTerminal(MatterThreadTerminal.Dialog.ThreadNoDataset)
 
-                        is ThreadManager.SyncResult.NotConnected ->
-                            showTerminal(MatterThreadTerminal.Dialog.ThreadNotConnected)
+                is ThreadManager.SyncResult.NotConnected ->
+                    showTerminal(MatterThreadTerminal.Dialog.ThreadNotConnected)
 
-                        is ThreadManager.SyncResult.AppUnsupported,
-                        is ThreadManager.SyncResult.ServerUnsupported,
-                        null,
-                        -> {
-                            Timber.w("Thread export returned unsupported variant: $result")
-                            showTerminal(MatterThreadTerminal.Snackbar.ThreadError)
-                        }
-                    }
-                } finally {
-                    progressJob.cancel()
+                is ThreadManager.SyncResult.AppUnsupported,
+                is ThreadManager.SyncResult.ServerUnsupported,
+                null,
+                -> {
+                    Timber.w("Thread export returned unsupported variant: $result")
+                    showTerminal(MatterThreadTerminal.Snackbar.ThreadError)
                 }
             }
         } catch (e: CancellationException) {
@@ -234,14 +238,175 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             Timber.w("Matter/Thread intent result received but nothing is in-flight; ignoring")
             return
         }
+        if (current is InFlight.ThreadStore) {
+            // The store flow never launches an IntentSender, so this result is stale. Leave
+            // inFlight alone: clearing it here would drop the mutual-exclusion guard while the
+            // store flow is still running.
+            Timber.w("Matter/Thread intent result received during a ThreadStore flow; ignoring")
+            return
+        }
         try {
             when (current) {
                 is InFlight.Matter -> handleMatterIntentResult(result)
                 is InFlight.MatterShare -> handleMatterShareIntentResult(result, current.messageId)
                 is InFlight.Thread -> handleThreadIntentResult(result, current.serverId)
+                is InFlight.ThreadStore -> Unit // Returned above before entering the try block.
             }
         } finally {
             inFlight.set(null)
+        }
+    }
+
+    /**
+     * Drive the HA → device Thread credential add flow triggered by the frontend Thread panel.
+     *
+     * Unlike [onImportThreadCredentials], this flow does not launch an `IntentSender` — the
+     * credential is added directly via [ThreadManager.addCredentialToDevice].
+     * The shape is therefore:
+     *  1. progress dialog while [ThreadManager.predictPreferredOutcome] reads the stored
+     *     credentials state;
+     *  2. preflight confirm/information dialog based on the prediction (4 variants);
+     *  3. progress dialog while [ThreadManager.addCredentialToDevice] writes;
+     *  4. result information dialog reporting whether the device prefers the just-added
+     *     credential.
+     *
+     * The result is always reported via [FrontendDialogManager.showInformation] (not a terminal
+     * dialog/snackbar) because every message references the network name, which the
+     * @StringRes-only [MatterThreadTerminal] cannot interpolate.
+     *
+     * No-op if another flow is already in-flight.
+     */
+    suspend fun onStoreThreadCredentialsInPlatformKeychain(serverId: Int, borderAgentId: String, tlv: ByteArray) {
+        if (!inFlight.compareAndSet(null, InFlight.ThreadStore)) {
+            Timber.w("thread/store_in_platform_keychain ignored: another flow is in-flight")
+            return
+        }
+        try {
+            storeThreadCredentials(serverId = serverId, borderAgentId = borderAgentId, tlv = tlv)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Unexpected error storing Thread credentials on the device")
+            val networkName = threadManager.networkNameFromTlv(tlv)
+            if (networkName == null) {
+                showThreadInformation(commonR.string.thread_store_invalid_payload)
+            } else {
+                reportStoreFailure(networkName, e)
+            }
+        } finally {
+            inFlight.set(null)
+        }
+    }
+
+    private suspend fun storeThreadCredentials(serverId: Int, borderAgentId: String, tlv: ByteArray) {
+        if (!threadManager.appSupportsThread()) {
+            showThreadInformation(commonR.string.thread_store_unsupported)
+            return
+        }
+        val networkName = threadManager.networkNameFromTlv(tlv)
+        if (networkName == null) {
+            showThreadInformation(commonR.string.thread_store_invalid_payload)
+            return
+        }
+        val outcome = withProgress { threadManager.predictPreferredOutcome(tlv) }
+        if (confirmPreflight(outcome, networkName)) {
+            addCredentialAndReport(
+                serverId = serverId,
+                borderAgentId = borderAgentId,
+                tlv = tlv,
+                networkName = networkName,
+            )
+        }
+    }
+
+    /**
+     * Surface the [outcome] of the preflight check to the user.
+     *
+     * @return `true` if the add should proceed, `false` if the user declined or there is nothing
+     *   to do.
+     */
+    private suspend fun confirmPreflight(outcome: ThreadManager.PreflightOutcome, networkName: String): Boolean =
+        when (outcome) {
+            ThreadManager.PreflightOutcome.AlreadyPreferred -> {
+                showThreadInformation(commonR.string.thread_store_already_preferred, networkName)
+                false
+            }
+            is ThreadManager.PreflightOutcome.AppCredentialPreferred ->
+                showThreadConfirm(commonR.string.thread_store_different_preferred, networkName, outcome.networkName)
+            ThreadManager.PreflightOutcome.LikelyToBecomePreferred ->
+                showThreadConfirm(commonR.string.thread_store_likely_preferred, networkName)
+            ThreadManager.PreflightOutcome.Unknown ->
+                showThreadConfirm(commonR.string.thread_store_unknown_preferred, networkName)
+        }
+
+    /**
+     * [FrontendDialogManager.showConfirm] for a yes/no question, with a "Learn more" link to the
+     * Thread documentation.
+     */
+    @Suppress("SpreadOperator")
+    private suspend fun showThreadConfirm(@StringRes messageRes: Int, vararg formatArgs: Any): Boolean =
+        dialogManager.showConfirm(
+            messageRes,
+            *formatArgs,
+            moreInfoUrl = THREAD_DOCS_URL.toUri(),
+            buttons = ConfirmButtons.YesNo,
+        )
+
+    /** [FrontendDialogManager.showInformation] with a "Learn more" link to the Thread documentation. */
+    @Suppress("SpreadOperator")
+    private suspend fun showThreadInformation(@StringRes messageRes: Int, vararg formatArgs: Any) {
+        dialogManager.showInformation(messageRes, *formatArgs, moreInfoUrl = THREAD_DOCS_URL.toUri())
+    }
+
+    /** Add the credential to the device and report the outcome with an information dialog. */
+    private suspend fun addCredentialAndReport(
+        serverId: Int,
+        borderAgentId: String,
+        tlv: ByteArray,
+        networkName: String,
+    ) {
+        try {
+            val result = withProgress {
+                threadManager.addCredentialToDevice(serverId = serverId, tlv = tlv, borderAgentId = borderAgentId)
+            }
+            Timber.d("Thread store: added '${sensitive(networkName)}' ($result)")
+            when (result) {
+                ThreadManager.AddCredentialResult.Preferred ->
+                    showThreadInformation(commonR.string.thread_store_added_preferred, networkName)
+                ThreadManager.AddCredentialResult.NotPreferred ->
+                    showThreadInformation(commonR.string.thread_store_added_not_preferred, networkName)
+                ThreadManager.AddCredentialResult.PreferredUnknown ->
+                    showThreadInformation(commonR.string.thread_store_added_unknown, networkName)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Thread store: failed to add credential '${sensitive(networkName)}'")
+            reportStoreFailure(networkName, e)
+        }
+    }
+
+    /** Tell the user that storing [networkName] failed, with the reason taken from [error]. */
+    private suspend fun reportStoreFailure(networkName: String, error: Exception) {
+        showThreadInformation(
+            commonR.string.thread_store_failed,
+            networkName,
+            error.message ?: error.javaClass.simpleName,
+        )
+    }
+
+    /**
+     * Run [block] with the Matter/Thread progress dialog on screen for its duration. The
+     * progress dialog is dismissed by cancelling its job — the [FrontendDialogManager] frees the
+     * slot from [SingleSlotQueue.awaitResult]'s cancellation handler so the next dialog can
+     * follow immediately.
+     */
+    private suspend fun <T> withProgress(block: suspend () -> T): T = supervisorScope {
+        val job = launch { dialogManager.showMatterThreadProgress() }
+        try {
+            block()
+        } finally {
+            job.cancel()
         }
     }
 
@@ -343,5 +508,10 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         data object Matter : InFlight
         data class MatterShare(val messageId: Int) : InFlight
         data class Thread(val serverId: Int) : InFlight
+
+        /**
+         * Flow to store Thread credentials from Home Assistant in the device's credential store.
+         */
+        data object ThreadStore : InFlight
     }
 }

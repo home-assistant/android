@@ -1,7 +1,24 @@
 package io.homeassistant.companion.android.frontend.dialog
 
 import android.content.Context
+import android.net.Uri
+import androidx.annotation.StringRes
+import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
+
+/**
+ * The pair of button labels shown by a [FrontendDialog.Confirm].
+ *
+ * @param confirmLabel Label of the button that confirms
+ * @param cancelLabel Label of the button that cancels
+ */
+enum class ConfirmButtons(@StringRes val confirmLabel: Int, @StringRes val cancelLabel: Int) {
+    /** OK / Cancel, matching the semantics of a JavaScript `confirm()`. */
+    OkCancel(confirmLabel = commonR.string.ok, cancelLabel = commonR.string.cancel),
+
+    /** Yes / No, for messages phrased as a question. */
+    YesNo(confirmLabel = commonR.string.confirm_positive, cancelLabel = commonR.string.confirm_negative),
+}
 
 /**
  * Represents a dialog to be displayed.
@@ -14,16 +31,28 @@ sealed interface FrontendDialog {
      * @param message The message displayed in the dialog
      * @param onConfirm Called when the user taps confirm
      * @param onCancel Called when the user taps Cancel or dismisses
+     * @param moreInfoUrl Optional URL to documentation; when set, the dialog shows a
+     *   "Learn more" action that opens it without closing the dialog
+     * @param buttons The labels of the confirm and cancel buttons
      */
-    data class Confirm(val message: String, val onConfirm: () -> Unit, val onCancel: () -> Unit) : FrontendDialog
+    data class Confirm(
+        val message: String,
+        val onConfirm: () -> Unit,
+        val onCancel: () -> Unit,
+        val moreInfoUrl: Uri? = null,
+        val buttons: ConfirmButtons = ConfirmButtons.OkCancel,
+    ) : FrontendDialog
 
     /**
      * An informational dialog with a message and a single dismiss button.
      *
      * @param message The message displayed in the dialog
      * @param onDismiss Called when the user dismisses the dialog (button tap or outside tap)
+     * @param moreInfoUrl Optional URL to documentation; when set, the dialog shows a
+     *   "Learn more" action that opens it without closing the dialog
      */
-    data class Information(val message: String, val onDismiss: () -> Unit) : FrontendDialog
+    data class Information(val message: String, val onDismiss: () -> Unit, val moreInfoUrl: Uri? = null) :
+        FrontendDialog
 
     /**
      * An HTTP Basic Auth dialog with username, password, and remember fields.

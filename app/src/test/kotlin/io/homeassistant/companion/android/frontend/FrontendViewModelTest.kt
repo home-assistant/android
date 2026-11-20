@@ -171,7 +171,7 @@ class FrontendViewModelTest {
     private fun createViewModel(
         serverId: Int = this.serverId,
         path: String? = null,
-        dialogManager: FrontendDialogManager = FrontendDialogManager(),
+        dialogManager: FrontendDialogManager = FrontendDialogManager(mockk(relaxed = true)),
         fileChooserHandler: FrontendFileChooserHandler = FrontendFileChooserHandler(
             cameraCaptureRepository = mockk(relaxed = true),
             permissionManager = permissionManager,
@@ -1522,7 +1522,7 @@ class FrontendViewModelTest {
     inner class HttpAuth {
 
         private val authenticationDao: AuthenticationDao = mockk(relaxed = true)
-        private val dialogManager = FrontendDialogManager()
+        private val dialogManager = FrontendDialogManager(mockk(relaxed = true))
         private val httpAuthHandler = FrontendHttpAuthHandler(
             authenticationDao = authenticationDao,
             clock = FakeClock(),

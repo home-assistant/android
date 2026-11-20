@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.frontend.dialog
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import io.homeassistant.companion.android.frontend.matterthread.ui.MatterThreadProgressDialogContent
 import io.homeassistant.companion.android.frontend.matterthread.ui.MatterThreadTerminalDialogContent
+import kotlinx.coroutines.launch
 
 /**
  * Routes the current [FrontendDialog] to the appropriate Compose dialog.
@@ -14,15 +17,18 @@ import io.homeassistant.companion.android.frontend.matterthread.ui.MatterThreadT
  * New dialog types (e.g. alert, prompt) can be added as new branches.
  *
  * @param pendingDialog The current dialog to show, or null if none
+ * @param onOpenExternalLink Opens a dialog's "Learn more" documentation link in the browser
  */
 @Composable
-internal fun PendingDialogHandler(pendingDialog: FrontendDialog?) {
+internal fun PendingDialogHandler(pendingDialog: FrontendDialog?, onOpenExternalLink: suspend (Uri) -> Unit) {
+    val scope = rememberCoroutineScope()
+    val openExternalLink: (Uri) -> Unit = { uri -> scope.launch { onOpenExternalLink(uri) } }
     when (pendingDialog) {
         is FrontendDialog.Confirm -> {
-            SimpleConfirmDialog(pendingDialog)
+            SimpleConfirmDialog(pendingDialog, onOpenExternalLink = openExternalLink)
         }
         is FrontendDialog.Information -> {
-            InformationDialog(pendingDialog)
+            InformationDialog(pendingDialog, onOpenExternalLink = openExternalLink)
         }
         is FrontendDialog.HttpAuth -> {
             HttpAuthDialog(

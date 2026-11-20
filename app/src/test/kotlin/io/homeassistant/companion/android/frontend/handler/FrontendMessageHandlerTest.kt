@@ -50,6 +50,8 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWrite
 import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWritePayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadImportCredentialsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadStoreInPlatformKeychainMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadStoreInPlatformKeychainPayload
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.OutgoingExternalBusMessage
 import io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage
@@ -81,6 +83,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -420,6 +423,64 @@ class FrontendMessageHandlerTest {
 
         handler.messageResults().test {
             assertInstanceOf(FrontendHandlerEvent.ImportThreadCredentials::class.java, awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given Thread store_in_platform_keychain message when messageResults then emits store event with decoded TLV`() = runTest {
+        val message = ThreadStoreInPlatformKeychainMessage(
+            id = 62,
+            payload = ThreadStoreInPlatformKeychainPayload(
+                borderAgentId = "0123456789abcdef0123456789abcdef",
+                activeOperationalDataset = "0e08",
+                extendedPanId = "1111111122222222",
+            ),
+        )
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            val event = assertInstanceOf(
+                FrontendHandlerEvent.StoreThreadCredentialsInPlatformKeychain::class.java,
+                awaitItem(),
+            )
+            assertEquals("0123456789abcdef0123456789abcdef", event.borderAgentId)
+            assertArrayEquals(byteArrayOf(0x0e, 0x08), event.tlv)
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given Thread store_in_platform_keychain message with invalid TLV hex when messageResults then emits UnknownMessage`() = runTest {
+        val message = ThreadStoreInPlatformKeychainMessage(
+            id = 62,
+            payload = ThreadStoreInPlatformKeychainPayload(
+                borderAgentId = "0123456789abcdef0123456789abcdef",
+                activeOperationalDataset = "not-hex",
+                extendedPanId = "1111111122222222",
+            ),
+        )
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            assertInstanceOf(FrontendHandlerEvent.UnknownMessage::class.java, awaitItem())
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `Given Thread store_in_platform_keychain message without border agent ID when messageResults then emits UnknownMessage`() = runTest {
+        val message = ThreadStoreInPlatformKeychainMessage(
+            id = 62,
+            payload = ThreadStoreInPlatformKeychainPayload(
+                activeOperationalDataset = "0e08",
+                extendedPanId = "1111111122222222",
+            ),
+        )
+        every { externalBusRepository.incomingMessages() } returns flowOf(message)
+
+        handler.messageResults().test {
+            assertInstanceOf(FrontendHandlerEvent.UnknownMessage::class.java, awaitItem())
             expectNoEvents()
         }
     }
