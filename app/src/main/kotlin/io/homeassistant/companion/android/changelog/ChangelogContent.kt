@@ -29,6 +29,13 @@ internal val currentChangelog = Changelog(
             contentRes = commonR.string.changelog_entry_two_way_audio,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_home_assistant_mode,
+            platforms = setOf(ChangelogPlatform.APP),
+            // Removed on devices without Modes, see ChangelogActionAvailability
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.HomeAssistantMode),
+            actionRequiresPlatform = true,
+        ),
     ),
     improved = listOf(),
     fixed = listOf(

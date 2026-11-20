@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.applock.AppLockStateManager
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -16,6 +19,20 @@ import kotlinx.coroutines.launch
  */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(private val appLockStateManager: AppLockStateManager) : ViewModel() {
+
+    private val _unlockedInForeground = MutableStateFlow(false)
+
+    /**
+     * Whether the settings are in the foreground and unlocked: `true` once the user unlocked them or no unlock was
+     * needed, `false` again when they leave the foreground. A change the user started before leaving for another
+     * screen waits for it.
+     */
+    val unlockedInForeground: StateFlow<Boolean> = _unlockedInForeground.asStateFlow()
+
+    /** Records whether the settings are in the foreground and unlocked, see [unlockedInForeground]. */
+    fun setUnlockedInForeground(unlocked: Boolean) {
+        _unlockedInForeground.value = unlocked
+    }
 
     fun setAppActive(serverId: Int?, active: Boolean) {
         viewModelScope.launch {
