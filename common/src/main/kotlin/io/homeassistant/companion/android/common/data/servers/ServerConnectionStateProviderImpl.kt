@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.database.server.ServerConnectionInfo
 import io.homeassistant.companion.android.database.server.ServerDao
 import java.net.URL
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +28,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onEach
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
@@ -162,7 +160,7 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
         return merge(
             flowOf(Unit), // Used to trigger a getUrl
             observeLocationState(),
-            networkChangeObserver.observerNetworkChange.onEach { urlReachabilityChecker.invalidate() },
+            networkChangeObserver.observerNetworkChange,
             observeConnectionInfoChanges(),
         ).map {
             val connection = connection()
@@ -194,9 +192,14 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
     }
 
     /**
-     * When the user configured extra URLs, probes the preferred URL followed by the external URL and the
-     * extra URLs, in order, and returns the first one that answers. Falls back to the preferred URL when
-     * none answers so the usual connection error is shown. Without extra URLs nothing is probed.
+     * When the user configured extra URLs, probes the preferred URL followed by the cloud URL (if the
+     * cloud is enabled), the external URL and the extra URLs, in order, and returns the first one that
+     * answers. Falls back to the preferred URL when none answers so the usual connection error is shown.
+     * Without extra URLs nothing is probed.
+     *
+     * All candidates are probed at the same time but evaluated in priority order: a reachable preferred
+     * URL is returned as soon as it answers, without waiting for slower fallbacks, and the probes that are
+     * still running are cancelled.
      *
      * @param allowHttp whether plain HTTP URLs may be used right now.
      */
@@ -204,15 +207,17 @@ internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
         if (connection.extraHttpUrls.isEmpty()) return this
         val candidates = buildList {
             this@firstReachableOrSelf?.toString()?.toHttpUrlOrNull()?.let(::add)
+            if (connection.useCloud) connection.cloudHttpUrl?.let(::add)
             connection.externalHttpUrl?.let(::add)
             addAll(connection.extraHttpUrls)
         }.distinct().filter { allowHttp || it.isHttps }
 
-        // Probe in parallel so the wait is at most one timeout, then honor the configured priority.
-        val reachable = coroutineScope {
-            candidates.map { async { urlReachabilityChecker.isReachable(it) } }.awaitAll()
+        return coroutineScope {
+            val probes = candidates.map { async { urlReachabilityChecker.isReachable(it) } }
+            val reachable = candidates.zip(probes).firstOrNull { (_, probe) -> probe.await() }?.first
+            probes.forEach { it.cancel() }
+            reachable?.toUrl() ?: this@firstReachableOrSelf
         }
-        return candidates.zip(reachable).firstOrNull { it.second }?.first?.toUrl() ?: this
     }
 
     private fun observeConnectionInfoChanges(): Flow<ServerConnectionInfo> {

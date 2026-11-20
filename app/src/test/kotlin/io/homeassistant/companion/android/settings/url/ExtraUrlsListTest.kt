@@ -34,6 +34,27 @@ class ExtraUrlsListTest {
     }
 
     @Test
+    fun `Given known URL stored as typed by the user when adding the same URL then result is Duplicate`() {
+        // The internal URL is stored verbatim, without the trailing slash of the normalized form.
+        assertEquals(
+            AddExtraUrlResult.Duplicate,
+            ExtraUrlsList.add(emptyList(), "https://ha.local:8123/", known = listOf("https://ha.local:8123")),
+        )
+        assertEquals(
+            AddExtraUrlResult.Duplicate,
+            ExtraUrlsList.add(emptyList(), "https://ha.local:8123", known = listOf("https://ha.local:8123/lovelace")),
+        )
+    }
+
+    @Test
+    fun `Given invalid known URL when adding then it is ignored`() {
+        assertEquals(
+            AddExtraUrlResult.Added(listOf("https://a.example.com/")),
+            ExtraUrlsList.add(emptyList(), "https://a.example.com", known = listOf("not a url", "")),
+        )
+    }
+
+    @Test
     fun `Given list when removing then only that entry is removed`() {
         assertEquals(listOf("a", "c"), ExtraUrlsList.remove(listOf("a", "b", "c"), 1))
         assertEquals(listOf("a", "b"), ExtraUrlsList.remove(listOf("a", "b"), 5))

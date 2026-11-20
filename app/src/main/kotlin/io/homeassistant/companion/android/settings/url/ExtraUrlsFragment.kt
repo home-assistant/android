@@ -4,13 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.settings.url.views.ExtraUrlsView
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 
 @AndroidEntryPoint
 class ExtraUrlsFragment : Fragment() {
@@ -24,13 +26,13 @@ class ExtraUrlsFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                HomeAssistantAppTheme {
+                HATheme {
+                    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                     ExtraUrlsView(
-                        urls = viewModel.urls,
-                        error = viewModel.error,
+                        uiState = uiState,
                         onAdd = viewModel::addUrl,
-                        onRemove = { viewModel.removeUrl(it) },
-                        onMove = { index, offset -> viewModel.moveUrl(index, offset) },
+                        onRemove = viewModel::removeUrl,
+                        onMove = viewModel::moveUrl,
                         onInputChanged = viewModel::clearError,
                     )
                 }

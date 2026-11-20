@@ -337,6 +337,62 @@ class ServerConnectionInfoTest {
     }
 
     @Nested
+    inner class ExtraUrls {
+
+        @Test
+        fun `Given an HTTP extra URL then hasPlainTextUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                extraUrls = listOf("https://vpn.example.com", "http://192.168.1.2:8123"),
+            )
+
+            assertTrue(connection.hasPlainTextUrl)
+        }
+
+        @Test
+        fun `Given only HTTPS extra URLs then hasPlainTextUrl is false`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                extraUrls = listOf("https://vpn.example.com"),
+            )
+
+            assertFalse(connection.hasPlainTextUrl)
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = ["https://vpn.example.com/api/states", "http://192.168.1.2:8123/api/webhook/abc"])
+        fun `Given URL on an extra origin then isKnownUrl and isFrontendUrl return true`(url: String) {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                extraUrls = listOf("https://vpn.example.com", "http://192.168.1.2:8123"),
+            )
+
+            assertTrue(connection.isKnownUrl(url))
+            assertTrue(connection.isFrontendUrl(url))
+        }
+
+        @Test
+        fun `Given an invalid extra URL then it is ignored when parsing`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "https://example.com",
+                extraUrls = listOf("not-a-url", "https://vpn.example.com"),
+            )
+
+            assertEquals(listOf("https://vpn.example.com/"), connection.extraHttpUrls.map { it.toString() })
+        }
+
+        @Test
+        fun `Given invalid main URLs but a valid extra URL then hasAtLeastOneUrl is true`() {
+            val connection = ServerConnectionInfo(
+                externalUrl = "not-a-url",
+                extraUrls = listOf("https://vpn.example.com"),
+            )
+
+            assertTrue(connection.hasAtLeastOneUrl)
+        }
+    }
+
+    @Nested
     inner class InternalSsidColumnTypeConverterTest {
 
         private val converter = InternalSsidColumnTypeConverter()

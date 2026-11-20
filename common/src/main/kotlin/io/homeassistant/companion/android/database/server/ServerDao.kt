@@ -37,6 +37,13 @@ interface ServerDao {
     @Update
     suspend fun update(servers: List<Server>)
 
+    /**
+     * Replaces only the extra URLs of a server, leaving every other column untouched. Unlike [update] this
+     * cannot overwrite concurrent changes of other fields, such as a refreshed session token.
+     */
+    @Query("UPDATE servers SET extra_urls = :extraUrls WHERE id = :id")
+    suspend fun updateExtraUrls(id: Int, extraUrls: List<String>)
+
     @Query("DELETE FROM servers WHERE id = :id")
     suspend fun delete(id: Int)
 

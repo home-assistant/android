@@ -20,6 +20,7 @@ import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -741,6 +742,94 @@ class ServerConnectionStateProviderImplTest {
             provider.urlFlow().first()
 
             io.mockk.coVerify(exactly = 0) { urlReachabilityChecker.isReachable(any()) }
+        }
+
+        @Test
+        fun `Given insecure extra URL and insecure not allowed when collecting urlFlow then it is neither probed nor selected`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                allowInsecureConnection = false,
+                extraUrls = listOf("http://plain.example.com", "https://vpn.example.com"),
+            )
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+            coEvery { urlReachabilityChecker.isReachable(any()) } answers {
+                firstArg<okhttp3.HttpUrl>().host != "external.example.com"
+            }
+
+            val result = provider.urlFlow().first()
+
+            assertEquals("https://vpn.example.com/", (result as UrlState.HasUrl).url?.toString())
+            io.mockk.coVerify(exactly = 0) {
+                urlReachabilityChecker.isReachable(match { it.host == "plain.example.com" })
+            }
+        }
+
+        @Test
+        fun `Given insecure extra URL and insecure allowed when collecting urlFlow then it can be selected`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                allowInsecureConnection = true,
+                extraUrls = listOf("http://plain.example.com"),
+            )
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+            coEvery { urlReachabilityChecker.isReachable(any()) } answers {
+                firstArg<okhttp3.HttpUrl>().host == "plain.example.com"
+            }
+
+            val result = provider.urlFlow().first()
+
+            assertEquals("http://plain.example.com/", (result as UrlState.HasUrl).url?.toString())
+        }
+
+        @Test
+        fun `Given several reachable extra URLs when collecting urlFlow then the first one in order wins`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                extraUrls = listOf("https://first.example.com", "https://second.example.com"),
+            )
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+            coEvery { urlReachabilityChecker.isReachable(any()) } answers {
+                firstArg<okhttp3.HttpUrl>().host != "external.example.com"
+            }
+
+            val result = provider.urlFlow().first()
+
+            assertEquals("https://first.example.com/", (result as UrlState.HasUrl).url?.toString())
+        }
+
+        @Test
+        fun `Given reachable preferred URL and a slow extra URL when collecting urlFlow then it does not wait for the extra URL`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                extraUrls = listOf("https://slow.example.com"),
+            )
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+            coEvery { urlReachabilityChecker.isReachable(any()) } coAnswers {
+                if (firstArg<okhttp3.HttpUrl>().host == "slow.example.com") awaitCancellation() else true
+            }
+
+            val result = provider.urlFlow().first()
+
+            assertEquals("https://external.example.com/", (result as UrlState.HasUrl).url?.toString())
+        }
+
+        @Test
+        fun `Given internal and external URLs down and cloud enabled when collecting urlFlow then the cloud URL is used`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+                internalUrl = "https://internal.example.com",
+                cloudUrl = "https://cloud.example.com",
+                useCloud = true,
+                extraUrls = listOf("https://vpn.example.com"),
+            )
+            every { serverDao.getFlow(serverId) } returns flowOf(null)
+            coEvery { urlReachabilityChecker.isReachable(any()) } answers {
+                firstArg<okhttp3.HttpUrl>().host == "cloud.example.com"
+            }
+
+            val result = provider.urlFlow(isInternalOverride = { true }).first()
+
+            assertEquals("https://cloud.example.com/", (result as UrlState.HasUrl).url?.toString())
         }
     }
 

@@ -66,6 +66,7 @@ private object PreviewServerManager : ServerManager {
     override suspend fun getServer(webhookId: String): Server? = error("preview-only")
     override suspend fun activateServer(id: Int) = error("preview-only")
     override suspend fun updateServer(server: Server) = error("preview-only")
+    override suspend fun updateExtraUrls(serverId: Int, extraUrls: List<String>) = error("preview-only")
     override suspend fun removeServer(id: Int) = error("preview-only")
     override suspend fun authenticationRepository(serverId: Int): AuthenticationRepository = error("preview-only")
     override suspend fun integrationRepository(serverId: Int): IntegrationRepository = error("preview-only")

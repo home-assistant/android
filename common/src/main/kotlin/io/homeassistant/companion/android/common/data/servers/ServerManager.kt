@@ -70,6 +70,16 @@ interface ServerManager {
     suspend fun updateServer(server: Server)
 
     /**
+     * Replaces the additional URLs of a server without touching any other field of it. Prefer this over
+     * [updateServer] when only the URLs change, as [updateServer] writes the whole server from a snapshot
+     * and can overwrite concurrent changes such as a refreshed session token.
+     *
+     * @param serverId the ID of the server to update
+     * @param extraUrls the new ordered list of additional URLs
+     */
+    suspend fun updateExtraUrls(serverId: Int, extraUrls: List<String>)
+
+    /**
      * Removes the server for the provided ID from the database and cleans up all related resources
      * such as authentication tokens and cached data.
      *

@@ -20,17 +20,25 @@ internal object ExtraUrlsList {
      * Normalizes [input] to scheme, host and port and appends it to [current].
      *
      * @param known URLs already used by the server (external, internal) that must not be repeated.
+     *   They are stored as the user typed them (for example without a trailing slash), so they are
+     *   normalized the same way as [input] before comparing.
      */
     fun add(current: List<String>, input: String, known: List<String> = emptyList()): AddExtraUrlResult {
-        val normalized = try {
-            UrlUtil.extractBaseUrl(input.trim())
-        } catch (_: MalformedHttpUrlException) {
-            return AddExtraUrlResult.Invalid
-        }
-        return if (normalized in current || normalized in known) {
+        val normalized = normalize(input) ?: return AddExtraUrlResult.Invalid
+        val alreadyUsed = (current + known).mapNotNull(::normalize)
+        return if (normalized in alreadyUsed) {
             AddExtraUrlResult.Duplicate
         } else {
             AddExtraUrlResult.Added(current + normalized)
+        }
+    }
+
+    /** @return [url] reduced to scheme, host and port, or `null` when it is not a valid URL. */
+    private fun normalize(url: String): String? {
+        return try {
+            UrlUtil.extractBaseUrl(url.trim())
+        } catch (_: MalformedHttpUrlException) {
+            null
         }
     }
 

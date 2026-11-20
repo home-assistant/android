@@ -132,6 +132,10 @@ internal class ServerManagerImpl @Inject constructor(
         serverDao.update(server)
     }
 
+    override suspend fun updateExtraUrls(serverId: Int, extraUrls: List<String>) {
+        serverDao.updateExtraUrls(serverId, extraUrls)
+    }
+
     override suspend fun removeServer(id: Int) {
         authenticationRepository(id).deletePreferences()
         integrationRepository(id).deletePreferences()
