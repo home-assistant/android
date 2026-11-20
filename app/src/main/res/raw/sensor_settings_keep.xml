@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sensor setting labels are resolved by name at runtime (see SensorDetailViewModel), so the resource shrinker cannot see them being used. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/sensor_setting_*"/>

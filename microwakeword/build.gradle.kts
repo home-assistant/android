@@ -10,6 +10,8 @@ android {
     defaultConfig {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        consumerProguardFiles("consumer-rules.pro")
+
         externalNativeBuild {
             cmake {
                 // Enable flexible page sizes for Android 15+ compatibility

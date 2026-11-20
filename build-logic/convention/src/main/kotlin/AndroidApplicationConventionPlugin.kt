@@ -80,6 +80,13 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                         isDebuggable = false
                         isJniDebuggable = false
                         signingConfig = signingConfigs.getByName("release")
+                        optimization {
+                            enable = true
+                        }
+                        proguardFiles(
+                            rootProject.file(".r8/apps.pro"),
+                            "proguard-rules.pro",
+                        )
                     }
                 }
 
