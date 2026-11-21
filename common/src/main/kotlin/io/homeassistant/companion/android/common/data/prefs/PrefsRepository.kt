@@ -171,6 +171,14 @@ interface PrefsRepository {
 
     suspend fun setLocationHistoryEnabled(enabled: Boolean)
 
+    /**
+     * Whether the "Location is disabled" warning notification is shown when location is off
+     * while sensors or settings require it. Enabled by default.
+     */
+    suspend fun isLocationWarningEnabled(): Boolean
+
+    suspend fun setLocationWarningEnabled(enabled: Boolean)
+
     suspend fun getImprovPermissionDisplayedCount(): Int
 
     suspend fun addImprovPermissionDisplayedCount()

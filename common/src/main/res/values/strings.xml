@@ -445,6 +445,8 @@
     <string name="location_tracking">Location tracking</string>
     <string name="location_tracking_summary">View a history of location tracking updates to troubleshoot the device tracker</string>
     <string name="location_warn_channel">Location disabled</string>
+    <string name="location_warn_setting">Location disabled warning</string>
+    <string name="location_warn_setting_summary">Show a persistent notification when location is off but sensors or settings require it</string>
     <string name="location">Location</string>
     <string name="lock_summary">Use biometric or screen lock credentials to unlock app</string>
     <string name="lock_title">Lock app</string>

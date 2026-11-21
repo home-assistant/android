@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.util
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -20,15 +21,21 @@ import kotlinx.coroutines.withContext
 class CheckLocationDisabledUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
     private val serverManager: ServerManager,
+    private val prefsRepository: PrefsRepository,
     private val managers: Set<@JvmSuppressWildcards SensorManager>,
 ) {
 
     /**
      * Evaluates whether location is required by any active feature and manages
      * the location-disabled notification.
+     *
+     * Does nothing when the user disabled the warning in the settings.
      */
     suspend operator fun invoke() = withContext(Dispatchers.Default) {
-        if (DisabledLocationHandler.isLocationEnabled(context)) {
+        if (
+            DisabledLocationHandler.isLocationEnabled(context) ||
+            !prefsRepository.isLocationWarningEnabled()
+        ) {
             DisabledLocationHandler.removeLocationDisabledWarning(context)
             return@withContext
         }

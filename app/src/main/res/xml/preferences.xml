@@ -34,6 +34,12 @@
             android:icon="@drawable/ic_clock_fast"
             android:title="@string/sensor_update_frequency"
             android:summary="@string/sensor_update_frequency_summary" />
+        <SwitchPreference
+            android:key="location_warn"
+            android:icon="@drawable/ic_location_tracking"
+            android:title="@string/location_warn_setting"
+            android:summary="@string/location_warn_setting_summary"
+            android:defaultValue="true" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/other_settings">

@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.FlaskEmpty
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor
@@ -32,6 +33,7 @@ class CheckLocationDisabledUseCaseTest {
 
     private val context: Context = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk(relaxed = true)
+    private val prefsRepository: PrefsRepository = mockk()
 
     private lateinit var useCase: CheckLocationDisabledUseCase
 
@@ -41,6 +43,7 @@ class CheckLocationDisabledUseCaseTest {
         mockkObject(DisabledLocationHandler)
         every { DisabledLocationHandler.removeLocationDisabledWarning(any()) } just runs
         every { DisabledLocationHandler.showLocationDisabledNotification(any(), any()) } just runs
+        coEvery { prefsRepository.isLocationWarningEnabled() } returns true
         useCase = buildUseCase()
     }
 
@@ -52,12 +55,27 @@ class CheckLocationDisabledUseCaseTest {
     private fun buildUseCase(managers: Set<SensorManager> = emptySet()) = CheckLocationDisabledUseCase(
         context = context,
         serverManager = serverManager,
+        prefsRepository = prefsRepository,
         managers = managers,
     )
 
     @Test
     fun `Given location is enabled when invoked then removes warning`() = runTest {
         every { DisabledLocationHandler.isLocationEnabled(context) } returns true
+
+        useCase()
+
+        coVerify { DisabledLocationHandler.removeLocationDisabledWarning(context) }
+        coVerify(exactly = 0) {
+            DisabledLocationHandler.showLocationDisabledNotification(any(), any())
+        }
+    }
+
+    @Test
+    fun `Given warning is disabled in settings when invoked then removes warning`() = runTest {
+        every { DisabledLocationHandler.isLocationEnabled(context) } returns false
+        coEvery { prefsRepository.isLocationWarningEnabled() } returns false
+        coEvery { serverManager.getServer(any<Int>()) } returns serverWithSsids(listOf("HomeWifi"))
 
         useCase()
 

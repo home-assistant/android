@@ -38,6 +38,7 @@ private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
 private const val PREF_IGNORED_SUGGESTIONS = "ignored_suggestions"
 private const val PREF_AUTO_FAVORITES = "auto_favorites"
 private const val PREF_LOCATION_HISTORY_DISABLED = "location_history"
+private const val PREF_LOCATION_WARN_ENABLED = "location_warn_enabled"
 private const val PREF_IMPROV_PERMISSION_DISPLAYED = "improv_permission_displayed"
 private const val PREF_GESTURE_ACTION_PREFIX = "gesture_action"
 private const val PREF_CHANGE_LOG_POPUP_ENABLED = "change_log_popup_enabled"
@@ -364,6 +365,14 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun setLocationHistoryEnabled(enabled: Boolean) {
         localStorage().putBoolean(PREF_LOCATION_HISTORY_DISABLED, !enabled)
+    }
+
+    override suspend fun isLocationWarningEnabled(): Boolean {
+        return localStorage().getBooleanOrNull(PREF_LOCATION_WARN_ENABLED) ?: true
+    }
+
+    override suspend fun setLocationWarningEnabled(enabled: Boolean) {
+        localStorage().putBoolean(PREF_LOCATION_WARN_ENABLED, enabled)
     }
 
     override suspend fun getImprovPermissionDisplayedCount(): Int {
