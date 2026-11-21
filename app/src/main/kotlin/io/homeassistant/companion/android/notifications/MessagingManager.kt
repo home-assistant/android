@@ -81,7 +81,11 @@ import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.getIntOrNull
+import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.jsonArrayOrNull
+import io.homeassistant.companion.android.common.util.jsonObjectOrNull
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import io.homeassistant.companion.android.common.util.toJsonObject
@@ -121,6 +125,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -311,7 +316,6 @@ class MessagingManager @Inject constructor(
         // Values for temporarily added keys
         const val THIS_SERVER_ID = "server_id"
 
-        private val lenientJson = Json { isLenient = true }
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1227,20 +1231,33 @@ class MessagingManager @Inject constructor(
         val segmentsData = data[PROGRESS_SEGMENTS] ?: ""
         if (segmentsData.isNotBlank()) {
             try {
-                val segments: List<Map<String, String>> = lenientJson.decodeFromString(segmentsData)
-                for (segment in segments) {
-                    val length = segment[PROGRESS_SEGMENTS_LENGTH]?.toIntOrNull() ?: 0
-                    val color = segment[PROGRESS_SEGMENTS_COLOR]
+                val segments = Json.parseToJsonElement(segmentsData).jsonArrayOrNull()
+                if (segments == null) {
+                    Timber.w("Notification progress segments is not a JSON array: ${sensitive(segmentsData)}")
+                    return false
+                }
+                var added = false
+                for (element in segments) {
+                    val segment = element.jsonObjectOrNull()
+                    if (segment == null) {
+                        Timber.w("Ignoring invalid notification progress segment: ${sensitive(element.toString())}")
+                        continue
+                    }
+                    val length = segment.getIntOrNull(PROGRESS_SEGMENTS_LENGTH)
+                    if (length == null || length <= 0) {
+                        Timber.w("Ignoring progress segment with invalid length: ${sensitive(segment.toString())}")
+                        continue
+                    }
+                    val color = segment.getStringOrNull(PROGRESS_SEGMENTS_COLOR)
                     val progressSegment = NotificationCompat.ProgressStyle.Segment(length)
                     if (color != null) {
                         progressSegment.setColor(parseColor(context, color, accentColor))
                     }
                     style.addProgressSegment(progressSegment)
+                    added = true
                 }
-                if (segments.isNotEmpty()) {
-                    return true
-                }
-            } catch (e: kotlinx.serialization.SerializationException) {
+                return added
+            } catch (e: SerializationException) {
                 Timber.e(e, "Error while parsing notification progress segments")
             }
         }
@@ -1255,20 +1272,33 @@ class MessagingManager @Inject constructor(
         val pointsData = data[PROGRESS_POINTS] ?: ""
         if (pointsData.isNotBlank()) {
             try {
-                val points: List<Map<String, String>> = lenientJson.decodeFromString(pointsData)
-                for (point in points) {
-                    val position = point[PROGRESS_POINTS_POSITION]?.toIntOrNull() ?: 0
-                    val color = point[PROGRESS_POINTS_COLOR]
+                val points = Json.parseToJsonElement(pointsData).jsonArrayOrNull()
+                if (points == null) {
+                    Timber.w("Notification progress points is not a JSON array: ${sensitive(pointsData)}")
+                    return false
+                }
+                var added = false
+                for (element in points) {
+                    val point = element.jsonObjectOrNull()
+                    if (point == null) {
+                        Timber.w("Ignoring invalid notification progress point: ${sensitive(element.toString())}")
+                        continue
+                    }
+                    val position = point.getIntOrNull(PROGRESS_POINTS_POSITION)
+                    if (position == null || position <= 0) {
+                        Timber.w("Ignoring progress point with invalid position: ${sensitive(point.toString())}")
+                        continue
+                    }
+                    val color = point.getStringOrNull(PROGRESS_POINTS_COLOR)
                     val progressPoint = NotificationCompat.ProgressStyle.Point(position)
                     if (color != null) {
                         progressPoint.setColor(parseColor(context, color, accentColor))
                     }
                     style.addProgressPoint(progressPoint)
+                    added = true
                 }
-                if (points.isNotEmpty()) {
-                    return true
-                }
-            } catch (e: kotlinx.serialization.SerializationException) {
+                return added
+            } catch (e: SerializationException) {
                 Timber.e(e, "Error while parsing notification progress points")
             }
         }
