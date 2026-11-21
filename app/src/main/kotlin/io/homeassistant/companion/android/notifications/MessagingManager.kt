@@ -43,6 +43,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
 import androidx.core.content.withStyledAttributes
+import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
@@ -315,6 +316,10 @@ class MessagingManager @Inject constructor(
 
         // Values for temporarily added keys
         const val THIS_SERVER_ID = "server_id"
+
+        // Values for progress style notifications
+        const val PROGRESS_ICON_SIZE = 20 // Taken from "Progress-centric notifications" in Android docs
+        const val PROGRESS_ICON_PADDING = 3 // Ensures that a square fits inside the circular background
 
     }
 
@@ -1356,21 +1361,21 @@ class MessagingManager @Inject constructor(
         iconString: String,
         iconColor: Int,
         backgroundColor: Int? = null,
-    ): androidx.core.graphics.drawable.IconCompat? {
+    ): IconCompat? {
         if (!iconString.startsWith("mdi:") || iconString.substringAfter("mdi:").isBlank()) {
             return null
         }
 
         val iconName = iconString.split(":")[1]
         val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
-            sizeDp = 20
+            sizeDp = PROGRESS_ICON_SIZE
             colorFilter = PorterDuffColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
 
             // Apply a circular background if a background color is provided
             backgroundColor?.let {
                 backgroundColorRes = it
-                roundedCornersDp = 10
-                paddingDp = 4
+                roundedCornersDp = PROGRESS_ICON_SIZE / 2
+                paddingDp = PROGRESS_ICON_PADDING
             }
         }
 
