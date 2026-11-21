@@ -22,4 +22,14 @@ object WIPFeature {
      * This flag is only enabled in DEBUG builds during development.
      */
     val USE_FRONTEND_V2: Boolean = BuildConfig.DEBUG
+
+    /**
+     * Enables the new shortcuts v2 implementation.
+     *
+     * When true, the settings entry navigates to [io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment].
+     * When false, the settings entry navigates to [io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsSettingsFragment].
+     *
+     * This flag is only enabled in DEBUG builds during development.
+     */
+    val USE_SHORTCUTS_V2: Boolean = BuildConfig.DEBUG
 }

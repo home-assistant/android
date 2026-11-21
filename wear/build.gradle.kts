@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.homeassistant.android.application)
-    alias(libs.plugins.google.services)
 }
 
 android {

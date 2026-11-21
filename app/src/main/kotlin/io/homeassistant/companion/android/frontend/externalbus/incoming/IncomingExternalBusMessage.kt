@@ -278,9 +278,7 @@ data class EntityAddToPayload(
 /**
  * Message requesting the app to start the Matter device commissioning flow.
  *
- * The app is expected to run the commissioning flow and, once it resolves, send back a
- * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ResultMessage]
- * correlated by [id] (success or failure).
+ * The app is expected to run the commissioning flow.
  *
  * Will not be sent by the frontend when the device reports
  * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResult.canCommissionMatter] = `false`.

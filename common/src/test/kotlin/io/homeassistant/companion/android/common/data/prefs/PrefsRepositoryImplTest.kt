@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.common.data.prefs
 
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.data.LocalStorage
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl.Companion.MIGRATION_PREF
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl.Companion.MIGRATION_VERSION
 import io.homeassistant.companion.android.common.util.GestureAction
 import io.homeassistant.companion.android.common.util.HAGesture
 import io.mockk.coEvery

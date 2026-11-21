@@ -939,7 +939,12 @@ class LocationSensorManager :
                 .filter {
                     val radius = it.attributes["radius"] as? Number
                     return@filter radius != null && it.containsWithAccuracy(location)
-                }.sortedBy { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
+                }.sortedWith(
+                    // Smallest zone (radius) first; when two zones share the same radius, prefer the one
+                    // whose center is closest to the current location to break the tie deterministically.
+                    compareBy<Entity> { (it.attributes["radius"] as? Number ?: Int.MAX_VALUE).toFloat() }
+                        .thenBy { distanceToZoneCenter(location, it) },
+                )
             val locationZone = inZones.firstOrNull { it.attributes["passive"] as? Boolean == false }
 
             val locationName = locationZone?.entityId?.split(".")?.getOrNull(1) ?: ZONE_NAME_NOT_HOME
@@ -1147,6 +1152,21 @@ class LocationSensorManager :
             }
         }.awaitAll()
         return if (geofenceCount > 0) geofencingRequestBuilder.build() else null
+    }
+
+    /**
+     * Distance in meters between [location] and the center of [zone], used as a tiebreaker when
+     * several zones share the same radius. Returns [Float.MAX_VALUE] when the zone has no
+     * coordinates so it sorts last.
+     */
+    private fun distanceToZoneCenter(location: Location, zone: Entity): Float {
+        val zoneLatitude = (zone.attributes["latitude"] as? Number)?.toDouble()
+        val zoneLongitude = (zone.attributes["longitude"] as? Number)?.toDouble()
+        if (zoneLatitude == null || zoneLongitude == null) return Float.MAX_VALUE
+
+        val results = FloatArray(1)
+        Location.distanceBetween(location.latitude, location.longitude, zoneLatitude, zoneLongitude, results)
+        return results[0]
     }
 
     private fun addGeofenceToBuilder(

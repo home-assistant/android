@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.websocket
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCoreImpl
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import javax.inject.Provider
@@ -74,13 +75,13 @@ internal interface WebSocketCore {
 }
 
 internal class WebSocketCoreFactory @Inject constructor(
-    private val okHttpClient: OkHttpClient,
-    // Use a Provider to avoid a dependency circle since serverManager needs WebSocketCoreFactory
+    private val okHttpClientProvider: SuspendProvider<OkHttpClient>,
+    // Use a Provider to avoid a dependency circle since serverManager needs the factory
     private val serverManagerProvider: Provider<ServerManager>,
 ) {
 
-    fun create(serverId: Int): WebSocketCore {
-        return WebSocketCoreImpl(okHttpClient, serverManagerProvider.get(), serverId)
+    suspend fun create(serverId: Int): WebSocketCore {
+        return WebSocketCoreImpl(okHttpClientProvider(), serverManagerProvider.get(), serverId)
     }
 }
 

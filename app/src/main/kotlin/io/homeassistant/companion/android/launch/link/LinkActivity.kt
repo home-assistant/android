@@ -5,29 +5,34 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.launch.startLaunchInvitation
 import io.homeassistant.companion.android.launch.startLaunchWithNavigateTo
-import io.homeassistant.companion.android.settings.server.ServerChooserFragment
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
-import javax.inject.Inject
+import io.homeassistant.companion.android.settings.server.ServerChooser
+import io.homeassistant.companion.android.settings.server.ServerChooserItem
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -43,11 +48,7 @@ class LinkActivity : BaseActivity() {
         }
     }
 
-    @Inject
-    lateinit var serverManager: ServerManager
-
-    @Inject
-    lateinit var linkHandler: LinkHandler
+    private val viewModel: LinkViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,61 +56,62 @@ class LinkActivity : BaseActivity() {
         // We display the Icon of the app since this screen might be displayed when the user has to choose a server
         // before proceeding with the link.
         setContent {
-            LinkActivityScreen()
+            HATheme {
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                LinkActivityScreen(
+                    uiState = uiState,
+                    onServerSelected = viewModel::onServerSelected,
+                    onServerChooserDismissed = viewModel::onServerChooserDismissed,
+                )
+            }
         }
 
-        val dataUri = intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data
-
-        if (dataUri == null) {
-            FailFast.fail { "Missing data in caller Intent" }
-        } else {
-            lifecycleScope.launch {
-                when (val destination = linkHandler.handleLink(dataUri)) {
-                    LinkDestination.NoDestination -> finish()
-                    is LinkDestination.Onboarding -> {
-                        startLaunchInvitation(destination.serverUrl)
-                        finish()
-                    }
-
-                    is LinkDestination.Webview -> {
-                        startLaunchWithNavigateTo(destination.path, destination.serverId)
-                        finish()
-                    }
-                    is LinkDestination.ServerPicker -> {
-                        openServerChooser(destination.path)
-                    }
-                }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.navigationEvents.collect(::handleNavigationEvent)
             }
+        }
+
+        // The destination is resolved once per launch. On recreation the destination is already
+        // reflected in the ViewModel state, so we must not re-handle the intent.
+        if (savedInstanceState == null) {
+            viewModel.onLinkReceived(intent?.takeIf { it.action == Intent.ACTION_VIEW }?.data)
         }
     }
 
-    private fun openServerChooser(path: String) {
-        supportFragmentManager.setFragmentResultListener(ServerChooserFragment.RESULT_KEY, this) { _, bundle ->
-            if (bundle.containsKey(ServerChooserFragment.RESULT_SERVER)) {
-                startLaunchWithNavigateTo(path, bundle.getInt(ServerChooserFragment.RESULT_SERVER))
-                finish()
-            }
-            supportFragmentManager.clearFragmentResultListener(ServerChooserFragment.RESULT_KEY)
+    private fun handleNavigationEvent(event: LinkNavigationEvent) {
+        when (event) {
+            LinkNavigationEvent.Finish -> Unit
+            is LinkNavigationEvent.OpenInvitation -> startLaunchInvitation(event.serverUrl)
+            is LinkNavigationEvent.NavigateToWebView -> startLaunchWithNavigateTo(event.path, event.serverId)
         }
-        ServerChooserFragment().apply {
-            // To avoid being stuck on an empty screen by mistake we make the dialog not cancelable.
-            // The counterpart is that it forces the user to select a server.
-            isCancelable = false
-        }.show(supportFragmentManager, ServerChooserFragment.TAG)
+        finish()
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @VisibleForTesting
-fun LinkActivityScreen(modifier: Modifier = Modifier) {
-    HomeAssistantAppTheme {
-        Box(modifier = modifier.fillMaxSize()) {
-            Image(
-                imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(112.dp)
-                    .align(Alignment.Center),
+fun LinkActivityScreen(
+    uiState: LinkUiState,
+    onServerSelected: (Int) -> Unit,
+    onServerChooserDismissed: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Image(
+            imageVector = ImageVector.vectorResource(R.drawable.app_icon_launch),
+            contentDescription = null,
+            modifier = Modifier
+                .size(112.dp)
+                .align(Alignment.Center),
+        )
+
+        if (uiState is LinkUiState.ChoosingServer) {
+            ServerChooser(
+                items = uiState.items,
+                onServerSelected = onServerSelected,
+                onDismissRequest = onServerChooserDismissed,
             )
         }
     }
@@ -118,5 +120,17 @@ fun LinkActivityScreen(modifier: Modifier = Modifier) {
 @Preview
 @Composable
 private fun LinkActivityScreenPreview() {
-    LinkActivityScreen()
+    HAThemeForPreview {
+        LinkActivityScreen(
+            uiState = LinkUiState.ChoosingServer(
+                items = listOf(
+                    ServerChooserItem(serverId = 1, userName = "Alice Smith", serverName = "Home"),
+                    ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Friends home"),
+                ),
+                path = "/lovelace",
+            ),
+            onServerSelected = {},
+            onServerChooserDismissed = {},
+        )
+    }
 }

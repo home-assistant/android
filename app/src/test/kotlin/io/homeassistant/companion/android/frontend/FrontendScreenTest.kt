@@ -511,7 +511,6 @@ class FrontendScreenTest {
         setContent {
             val content: @Composable () -> Unit = {
                 FrontendScreenContent(
-                    onBackClick = {},
                     viewState = viewState,
                     webViewClient = WebViewClient(),
                     webChromeClient = WebChromeClient(),
@@ -563,7 +562,6 @@ class FrontendScreenTest {
         setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 FrontendScreenContent(
-                    onBackClick = {},
                     viewState = FrontendViewState.Content(
                         serverId = 1,
                         url = "https://example.com",
@@ -676,7 +674,6 @@ class FrontendScreenTest {
         composeTestRule.apply {
             setContent {
                 FrontendScreenContent(
-                    onBackClick = {},
                     viewState = FrontendViewState.Error(
                         serverId = 1,
                         url = "https://example.com",
@@ -722,7 +719,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             val context = LocalContext.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -767,7 +763,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             val context = androidx.compose.ui.platform.LocalContext.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -801,7 +796,6 @@ class FrontendScreenTest {
 
         composeTestRule.setContent {
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(
                     serverId = 1,
                     url = "https://example.com",
@@ -834,7 +828,6 @@ class FrontendScreenTest {
         val orientationState = mutableStateOf(ScreenOrientation.SYSTEM)
         composeTestRule.setContent {
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -880,7 +873,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             if (visible.value) {
                 FrontendScreenContent(
-                    onBackClick = {},
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                     webViewClient = WebViewClient(),
                     webChromeClient = WebChromeClient(),
@@ -920,7 +912,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             capturedView = LocalView.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -950,7 +941,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             capturedView = LocalView.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -984,7 +974,6 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             capturedView = LocalView.current
             FrontendScreenContent(
-                onBackClick = {},
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                 webViewClient = WebViewClient(),
                 webChromeClient = WebChromeClient(),
@@ -1020,7 +1009,6 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             if (visible.value) {
                 FrontendScreenContent(
-                    onBackClick = {},
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
                     webViewClient = WebViewClient(),
                     webChromeClient = WebChromeClient(),

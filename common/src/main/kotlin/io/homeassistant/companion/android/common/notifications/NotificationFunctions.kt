@@ -55,6 +55,7 @@ object NotificationData {
     const val DTMF_STREAM = "dtmf_stream"
 
     const val MEDIA_STREAM = "media_stream"
+    const val ASSISTANT_STREAM = "assistant_stream"
     val ALARM_STREAMS = listOf(ALARM_STREAM, ALARM_STREAM_MAX)
 
     // special action constants

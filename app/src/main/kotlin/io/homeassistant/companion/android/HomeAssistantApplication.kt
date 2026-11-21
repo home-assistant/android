@@ -15,7 +15,6 @@ import android.webkit.WebView
 import androidx.core.content.ContextCompat
 import androidx.webkit.WebViewCompat
 import coil3.ImageLoader
-import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dagger.hilt.android.HiltAndroidApp
@@ -27,6 +26,7 @@ import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
@@ -55,9 +55,7 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 
 @HiltAndroidApp
-open class HomeAssistantApplication :
-    Application(),
-    SingletonImageLoader.Factory {
+open class HomeAssistantApplication : Application() {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
@@ -69,7 +67,7 @@ open class HomeAssistantApplication :
     lateinit var keyChainRepository: KeyChainRepository
 
     @Inject
-    lateinit var okHttpClient: OkHttpClient
+    lateinit var okHttpClientProvider: SuspendProvider<OkHttpClient>
 
     @Inject
     lateinit var languagesManager: LanguagesManager
@@ -108,6 +106,19 @@ open class HomeAssistantApplication :
                 prefsRepository.isCrashReporting(),
             )
             initCrashSaving(applicationContext)
+            val okHttpClient = okHttpClientProvider()
+
+            SingletonImageLoader.setSafe {
+                ImageLoader.Builder(this@HomeAssistantApplication)
+                    .components {
+                        add(
+                            OkHttpNetworkFetcherFactory(
+                                callFactory = okHttpClient,
+                            ),
+                        )
+                    }
+                    .build()
+            }
 
             configureWebViewDebugging(enabled = BuildConfig.DEBUG || prefsRepository.isWebViewDebugEnabled())
 
@@ -369,16 +380,6 @@ open class HomeAssistantApplication :
             )
         }
     }
-
-    override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
-        .components {
-            add(
-                OkHttpNetworkFetcherFactory(
-                    callFactory = okHttpClient,
-                ),
-            )
-        }
-        .build()
 
     /**
      * Enables WebView contents debugging and logs the current WebView package.

@@ -138,11 +138,11 @@ interface WebSocketRepository {
 
 internal class WebSocketRepositoryFactory @Inject internal constructor(
     private val coreFactory: WebSocketCoreFactory,
-    // Use a Provider to avoid a dependency circle since serverManager needs WebSocketCoreFactory
+    // Use a Provider to avoid a dependency circle since serverManager needs the factory
     private val serverManagerProvider: Provider<ServerManager>,
 ) {
 
-    fun create(serverId: Int): WebSocketRepository {
+    suspend fun create(serverId: Int): WebSocketRepository {
         return WebSocketRepositoryImpl(coreFactory.create(serverId), serverManagerProvider.get())
     }
 }

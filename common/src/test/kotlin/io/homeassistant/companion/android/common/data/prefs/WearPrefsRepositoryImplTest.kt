@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepositoryI
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.mockk.coEvery
 import io.mockk.coJustRun
+import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
@@ -53,5 +54,22 @@ class WearPrefsRepositoryImplTest {
             ),
             result,
         )
+    }
+
+    @Test
+    fun `Given migration already at current version when accessing prefs multiple times then migration check only runs once`() = runTest {
+        // Migration is already current: the lazy check should run once on first access and never
+        // touch the integration storage, and subsequent accesses must skip it via the fast path.
+        initRepository(version = MIGRATION_VERSION)
+        coEvery { localStorage.getBoolean(any()) } returns true
+
+        repository.getShowShortcutText()
+        repository.getWearHapticFeedback()
+        repository.getWearToastConfirmation()
+
+        // The migration version is read only on the first access, not on every call.
+        coVerify(exactly = 1) { localStorage.getInt(MIGRATION_PREF) }
+        // No migration was needed, so the integration storage was never consulted.
+        coVerify(exactly = 0) { integrationStorage.getString(any()) }
     }
 }

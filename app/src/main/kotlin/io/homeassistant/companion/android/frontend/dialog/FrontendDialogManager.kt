@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.frontend.dialog
 import android.content.Context
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
+import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 
@@ -83,4 +84,23 @@ internal class FrontendDialogManager @Inject constructor() {
                 onCancel = { onResult(HttpAuthOutcome.Cancel) },
             )
         }
+
+    /**
+     * Shows the non-dismissable Matter/Thread progress dialog and suspends until the caller's
+     * coroutine is cancelled.
+     *
+     * The slot is freed by [SingleSlotQueue.awaitResult]'s cancellation handling.
+     */
+    suspend fun showMatterThreadProgress(): Nothing = queue.awaitResult { _ ->
+        FrontendDialog.MatterThreadProgressDialog
+    }
+
+    /**
+     * Shows a Matter/Thread terminal Dialog and suspends until the user dismisses it.
+     */
+    suspend fun showMatterThreadTerminal(terminal: MatterThreadTerminal.Dialog) {
+        queue.awaitResult { onResult ->
+            FrontendDialog.MatterThreadTerminalDialog(terminal = terminal, onDismiss = { onResult(Unit) })
+        }
+    }
 }

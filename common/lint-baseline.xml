@@ -118,7 +118,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/authentication/impl/AuthenticationRepositoryImpl.kt"
-            line="55"
+            line="41"
             column="13"/>
     </issue>
 
@@ -151,13 +151,13 @@
         errorLine2="                ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="534"
+            line="549"
             column="17"/>
     </issue>
 
     <issue
         id="ComposeRedundantComposable"
-        message="This declaration is annotated with @Composable but doesn&apos;t call any other @Composable functions or read any @Composable properties (like a CompositionLocal&apos;s current), so it doesn&apos;t use the composition and the @Composable annotation can be removed. See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
+        message="This declaration is annotated with @Composable but doesn&apos;t call any other @Composable functions or read any @Composable properties (like a CompositionLocal&apos;s current), so it doesn&apos;t use the composition and the @Composable annotation can be removed.&#xA;&#xA;See https://slackhq.github.io/compose-lints/rules/#remove-unnecessary-composable-annotations for more information."
         errorLine1="        @Composable"
         errorLine2="        ~~~~~~~~~~~">
         <location

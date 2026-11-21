@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.homeassistant.android.flavor)
     alias(libs.plugins.firebase.appdistribution)
-    alias(libs.plugins.google.services)
     alias(libs.plugins.homeassistant.android.dependencies)
     alias(libs.plugins.kotlin.parcelize)
 }
@@ -51,9 +50,4 @@ firebaseAppDistributionDefault {
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:automotive` module.
     "fullImplementation"(libs.car.projected)
-}
-
-// Disable to fix memory leak and be compatible with the configuration cache.
-googleServices {
-    disableVersionCheck = true
 }

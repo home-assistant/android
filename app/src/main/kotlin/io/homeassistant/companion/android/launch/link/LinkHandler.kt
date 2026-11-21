@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.database.server.Server
 import javax.inject.Inject
 import timber.log.Timber
 
@@ -36,7 +37,10 @@ sealed interface LinkDestination {
      */
     data class Webview(val path: String, val serverId: Int) : LinkDestination
 
-    data class ServerPicker(val path: String) : LinkDestination
+    /**
+     * Let the user pick one of the registered [servers] before opening the WebView at [path].
+     */
+    data class ServerPicker(val path: String, val servers: List<Server>) : LinkDestination
 
     /**
      * Nowhere to go from this link.
@@ -75,10 +79,15 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
     }
 
     private suspend fun webviewDestination(path: String, serverId: Int? = null): LinkDestination {
-        return if (serverId != null || serverManager.servers().size <= 1) {
-            LinkDestination.Webview(path, serverId ?: ServerManager.SERVER_ID_ACTIVE)
+        if (serverId != null) {
+            return LinkDestination.Webview(path, serverId)
+        }
+
+        val servers = serverManager.servers()
+        return if (servers.size <= 1) {
+            LinkDestination.Webview(path, ServerManager.SERVER_ID_ACTIVE)
         } else {
-            LinkDestination.ServerPicker(path)
+            LinkDestination.ServerPicker(path, servers)
         }
     }
 

@@ -193,7 +193,6 @@ class FrontendScreenImprovScreenshotTest {
         pendingPermissionRequest: PermissionRequest? = null,
     ) {
         FrontendScreenContent(
-            onBackClick = {},
             viewState = FrontendViewState.Content(
                 serverId = 1,
                 url = "https://example.com",

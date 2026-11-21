@@ -12,6 +12,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import javax.inject.Singleton
 
 @Module
@@ -38,6 +39,7 @@ object UtilModule {
     @Singleton
     fun provideAudioUrlPlayer(
         @ApplicationContext appContext: Context,
-        dataSourceFactory: DataSource.Factory,
-    ): AudioUrlPlayer = AudioUrlPlayer(appContext, appContext.getSystemService<AudioManager>(), dataSourceFactory)
+        dataSourceFactoryProvider: SuspendProvider<DataSource.Factory>,
+    ): AudioUrlPlayer =
+        AudioUrlPlayer(appContext, appContext.getSystemService<AudioManager>(), dataSourceFactoryProvider)
 }
