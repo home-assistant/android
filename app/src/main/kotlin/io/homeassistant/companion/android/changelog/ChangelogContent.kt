@@ -29,6 +29,10 @@ internal val currentChangelog = Changelog(
             contentRes = commonR.string.changelog_entry_two_way_audio,
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_location_warn_setting,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(
