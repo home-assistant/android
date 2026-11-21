@@ -7,8 +7,12 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
+import android.os.PowerManager
 import android.view.View
 import android.widget.RemoteViews
+import androidx.annotation.MainThread
+import androidx.annotation.VisibleForTesting
+import androidx.core.content.getSystemService
 import androidx.core.os.BundleCompat
 import coil3.imageLoader
 import coil3.request.CachePolicy
@@ -19,10 +23,15 @@ import coil3.size.Size
 import coil3.toBitmap
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.EntityChange
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
+import io.homeassistant.companion.android.common.util.STATE_UNKNOWN
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
@@ -32,24 +41,41 @@ import io.homeassistant.companion.android.util.hasActiveConnection
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlin.math.sqrt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @AndroidEntryPoint
-class CameraWidget : AppWidgetProvider() {
+class CameraWidget @VisibleForTesting internal constructor(private val widgetScope: CoroutineScope) :
+    AppWidgetProvider() {
+
+    constructor() : this(defaultWidgetScope)
 
     companion object {
         internal const val UPDATE_IMAGE =
             "io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE"
         private var lastIntent = ""
-        private var widgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        private val defaultWidgetScope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+        // Looks up the image widgets to watch, only accessed on the main thread
+        private var imageEntitiesJob: Job? = null
+
+        // The watch of each image widget by widget id while the screen is on, only accessed on the main thread
+        private val imageWatches = mutableMapOf<Int, ImageWatch>()
+
+        // The entity state each widget was last drawn with, by widget id. For an image entity the
+        // state is the time its image last changed, so a new state means a new image to fetch.
+        private val drawnEntityStates = ConcurrentHashMap<Int, String>()
     }
 
     @Inject
@@ -114,13 +140,16 @@ class CameraWidget : AppWidgetProvider() {
         val widget = cameraWidgetDao.get(appWidgetId)
         var widgetCameraError = false
         var url: String? = null
+        var entityState: String? = null
         if (widget != null) {
             if (serverManager.getServer(widget.serverId) == null) {
                 Timber.w("Widget is attached to a server that has been removed")
                 widgetCameraError = true
             } else {
                 try {
-                    val entityPictureUrl = retrieveCameraImageUrl(widget.serverId, widget.entityId)
+                    val entity = serverManager.integrationRepository(widget.serverId).getEntity(widget.entityId)
+                    entityState = entity?.state
+                    val entityPictureUrl = entity?.entityPicturePath()
 
                     val urlState = serverManager.connectionStateProvider(
                         widget.serverId,
@@ -173,6 +202,7 @@ class CameraWidget : AppWidgetProvider() {
                                 .build(),
                         ).image?.toBitmap()?.let {
                             setImageViewBitmap(R.id.widgetCameraImage, it)
+                            entityState?.let { state -> drawnEntityStates[appWidgetId] = state }
                         }
                     } catch (e: CancellationException) {
                         throw e
@@ -206,9 +236,53 @@ class CameraWidget : AppWidgetProvider() {
         return views
     }
 
-    private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
-        val entity = serverManager.integrationRepository(serverId).getEntity(entityId)
-        return entity?.entityPicturePath()
+    /**
+     * Redraws the widgets showing an image entity when the image changes, until
+     * [stopWatchingImageEntities]. Camera entities keep only the periodic update and the tap to
+     * refresh, because their state does not change with the picture.
+     */
+    @MainThread
+    private fun watchImageEntities(context: Context) {
+        imageEntitiesJob?.cancel()
+        imageEntitiesJob = widgetScope.launch {
+            if (!serverManager.isRegistered()) return@launch
+            val imageWidgets = cameraWidgetDao.getAll().filter {
+                it.entityId.substringBefore('.') == IMAGE_DOMAIN && serverManager.getServer(it.serverId) != null
+            }
+            withContext(Dispatchers.Main) {
+                // A lookup finishing after the screen turned off must not start watches
+                if (context.getSystemService<PowerManager>()?.isInteractive != true) return@withContext
+                // Keep the unchanged watches: the websocket closes when its last subscription stops,
+                // which would drop a subscription started at the same time. Restart the ones that ended.
+                val widgetsById = imageWidgets.associateBy { it.id }
+                imageWatches.filter { (id, watch) -> !watch.isFor(widgetsById[id]) || !watch.job.isActive }.keys
+                    .forEach { imageWatches.remove(it)?.job?.cancel() }
+                imageWidgets.filter { it.id !in imageWatches }.forEach { widget ->
+                    val job = widgetScope.launch {
+                        serverManager.integrationRepository(widget.serverId)
+                            .getEntityChanges(EntityFilter(entityIds = setOf(widget.entityId)))
+                            ?.filterIsInstance<EntityChange.StateChanged>()
+                            ?.collect { change ->
+                                // Attribute only changes, like the access token rotation, keep the same image
+                                val state = change.entity.state
+                                if (state !in STATES_WITHOUT_IMAGE && state != drawnEntityStates[widget.id]) {
+                                    updateAppWidget(context, widget.id)
+                                }
+                            }
+                    }
+                    imageWatches[widget.id] = ImageWatch(widget.serverId, widget.entityId, job)
+                }
+            }
+        }
+    }
+
+    /** Stops what [watchImageEntities] started, when the screen turns off. */
+    @MainThread
+    private fun stopWatchingImageEntities() {
+        imageEntitiesJob?.cancel()
+        imageEntitiesJob = null
+        imageWatches.values.forEach { it.job.cancel() }
+        imageWatches.clear()
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -224,11 +298,14 @@ class CameraWidget : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (lastIntent) {
             UPDATE_IMAGE -> widgetScope.launch { updateAppWidget(context, appWidgetId) }
-            UPDATE_WIDGETS, Intent.ACTION_SCREEN_ON -> widgetScope.launch {
-                updateAllWidgets(
-                    context,
-                )
+            UPDATE_WIDGETS -> widgetScope.launch {
+                updateAllWidgets(context)
+                withContext(Dispatchers.Main) { watchImageEntities(context) }
             }
+
+            Intent.ACTION_SCREEN_ON -> watchImageEntities(context)
+
+            Intent.ACTION_SCREEN_OFF -> stopWatchingImageEntities()
 
             ACTION_APPWIDGET_CREATED -> {
                 widgetScope.launch {
@@ -247,6 +324,7 @@ class CameraWidget : AppWidgetProvider() {
                         } ?: FailFast.fail { "Missing $EXTRA_WIDGET_ENTITY or it's of the wrong type in intent." }
                     }
                     updateAllWidgets(context)
+                    withContext(Dispatchers.Main) { watchImageEntities(context) }
                 }
             }
         }
@@ -254,7 +332,9 @@ class CameraWidget : AppWidgetProvider() {
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         // When the user deletes the widget, delete the preference associated with it.
+        appWidgetIds.forEach { drawnEntityStates.remove(it) }
         widgetScope.launch {
+            withContext(Dispatchers.Main) { appWidgetIds.forEach { imageWatches.remove(it)?.job?.cancel() } }
             cameraWidgetDao.deleteAll(appWidgetIds)
         }
     }
@@ -319,4 +399,13 @@ class CameraWidget : AppWidgetProvider() {
             Size(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1))
         }
     }
+}
+
+// States of an image entity that carry no image, for example while Home Assistant restarts
+private val STATES_WITHOUT_IMAGE = setOf(STATE_UNAVAILABLE, STATE_UNKNOWN)
+
+/** The watch of the image entity [entityId] on server [serverId], see [CameraWidget.watchImageEntities]. */
+private data class ImageWatch(val serverId: Int, val entityId: String, val job: Job) {
+    /** Whether this watch is for the entity [widget] shows. */
+    fun isFor(widget: CameraWidgetEntity?): Boolean = widget?.serverId == serverId && widget.entityId == entityId
 }

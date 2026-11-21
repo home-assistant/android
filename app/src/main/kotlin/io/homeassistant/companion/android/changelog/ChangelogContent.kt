@@ -30,7 +30,13 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
     ),
-    improved = listOf(),
+    improved = listOf(
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_picture_widget_image_updates,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenWidgetConfig(WidgetType.Camera),
+        ),
+    ),
     fixed = listOf(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_fix_media_player_widget,

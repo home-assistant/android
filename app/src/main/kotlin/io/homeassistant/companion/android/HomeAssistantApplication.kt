@@ -45,6 +45,7 @@ import io.homeassistant.companion.android.util.threadPolicyIgnoredViolationRules
 import io.homeassistant.companion.android.util.vmPolicyIgnoredViolationRules
 import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
+import io.homeassistant.companion.android.widgets.camera.CameraWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.mediaplayer.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
@@ -348,6 +349,7 @@ open class HomeAssistantApplication : Application() {
         if (!isAutomotive()) {
             // Update widgets when the screen turns on, updates are skipped if widgets were not added
             val buttonWidget = ButtonWidget()
+            val cameraWidget = CameraWidget()
             val entityWidget = EntityWidget()
             val mediaPlayerWidget = MediaPlayerControlsWidget()
             val templateWidget = TemplateWidget()
@@ -358,6 +360,7 @@ open class HomeAssistantApplication : Application() {
             screenIntentFilter.addAction(Intent.ACTION_SCREEN_OFF)
 
             ContextCompat.registerReceiver(this, buttonWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            ContextCompat.registerReceiver(this, cameraWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(this, entityWidget, screenIntentFilter, ContextCompat.RECEIVER_NOT_EXPORTED)
             ContextCompat.registerReceiver(
                 this,
