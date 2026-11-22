@@ -28,6 +28,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.MediaPlaybackState
 import io.homeassistant.companion.android.common.data.integration.MediaRepeatMode
@@ -368,7 +369,7 @@ class HaMediaSession @AssistedInject constructor(
         var artworkCache = ArtworkCache()
         // Emits null while the entity cannot be resolved, and completes when it can no longer be
         // followed, which ends the session
-        entitiesForDisplayManager.observe(config.serverId, listOf(config.entityId))
+        entitiesForDisplayManager.observe(config.serverId, EntityFilter(entityIds = setOf(config.entityId)))
             .map { (it as? EntityDisplayState.Loaded)?.entity(config.entityId) }
             .distinctUntilChanged()
             .onCompletion { cause ->

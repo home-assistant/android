@@ -1242,10 +1242,6 @@ private fun Entity.getIcon(compareState: String?): MdiIcon {
     }
 }
 
-fun Entity.isUsableInTile(): Boolean {
-    return domain in EntityExt.APP_PRESS_ACTION_DOMAINS
-}
-
 private fun binarySensorIcon(state: String?, entity: Entity): MdiIcon {
     val isOff = state == "off"
 

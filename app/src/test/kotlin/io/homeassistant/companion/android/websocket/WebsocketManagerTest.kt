@@ -5,8 +5,12 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
+import androidx.test.core.app.ApplicationProvider
 import androidx.work.ListenableWorker
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import androidx.work.testing.TestListenableWorkerBuilder
+import androidx.work.testing.WorkManagerTestInitHelper
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -29,16 +33,20 @@ import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.unmockkAll
 import io.mockk.verify
-import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -80,8 +88,12 @@ class WebsocketManagerTest {
         )
     }
 
+    // Real context backing the WorkManager used by the tests going through the companion object
+    private val applicationContext = ApplicationProvider.getApplicationContext<Context>()
+
     @Before
     fun setup() {
+        WorkManagerTestInitHelper.initializeTestWorkManager(applicationContext)
         mockkStatic(EntryPointAccessors::class)
         every {
             EntryPointAccessors.fromApplication(any(), WebsocketManager.WebsocketManagerEntryPoint::class.java)
@@ -91,7 +103,42 @@ class WebsocketManagerTest {
 
     @After
     fun tearDown() {
+        WorkManager.getInstance(applicationContext).cancelAllWork()
         unmockkAll()
+    }
+
+    @Test
+    fun `Given worker never started when checking isRunning then returns false`() = runTest {
+        assertFalse(WebsocketManager.isRunning(applicationContext))
+    }
+
+    @Test
+    fun `Given worker started when checking isRunning then returns true`() = runTest {
+        startWorkerAndAwaitRunning()
+
+        assertTrue(WebsocketManager.isRunning(applicationContext))
+    }
+
+    @Test
+    fun `Given worker cancelled when checking isRunning then returns false`() = runTest {
+        startWorkerAndAwaitRunning()
+        WorkManager.getInstance(applicationContext).cancelAllWork()
+        awaitWorkerState(WorkInfo.State.CANCELLED)
+
+        assertFalse(WebsocketManager.isRunning(applicationContext))
+    }
+
+    private suspend fun startWorkerAndAwaitRunning() {
+        // Keeps the worker suspended on its first check so it stays running
+        coEvery { entryPoint.checkLocalNetworkPermission.invoke() } coAnswers { awaitCancellation() }
+        WebsocketManager.start(applicationContext)
+        awaitWorkerState(WorkInfo.State.RUNNING)
+    }
+
+    private suspend fun awaitWorkerState(state: WorkInfo.State) {
+        WorkManager.getInstance(applicationContext)
+            .getWorkInfosByTagFlow(WebsocketManager::class.java.name)
+            .first { workInfos -> workInfos.any { it.state == state } }
     }
 
     @Test
@@ -253,6 +300,46 @@ class WebsocketManagerTest {
 
         // The next supervision interval restarts the stopped collector
         testScheduler.advanceTimeBy(31_000)
+        testScheduler.runCurrent()
+        coVerify(exactly = 2) { repository.getNotifications() }
+
+        work.cancelAndJoin()
+    }
+
+    @Test
+    fun `Given the device registered again when listening for notifications then the collector is restarted with the new webhook ID`() = runTest {
+        mockSetting(WebsocketSetting.ALWAYS)
+        every { context.hasActiveConnection() } returns true
+        coEvery { entryPoint.serverManager.isRegistered() } returns true
+
+        mockkConstructor(NotificationCompat.Builder::class)
+        every { anyConstructed<NotificationCompat.Builder>().build() } returns mockk<Notification>()
+
+        val server = mockk<Server>(relaxed = true)
+        every { server.connection.webhookId } returns "old_webhook_id"
+        coEvery { entryPoint.serverManager.servers() } returns listOf(server)
+        coEvery { entryPoint.serverManager.getServer(any<Int>()) } returns server
+
+        val repository = mockk<WebSocketRepository>(relaxed = true)
+        coEvery { entryPoint.serverManager.webSocketRepository(any()) } returns repository
+        coEvery { repository.getNotifications() } returns MutableSharedFlow<Map<String, Any>>()
+
+        val worker = spyk(TestListenableWorkerBuilder<WebsocketManager>(context).build())
+        coJustRun { worker.setForeground(any()) }
+        worker.dispatcher = StandardTestDispatcher(testScheduler)
+
+        val work = launch { worker.doWork() }
+        testScheduler.runCurrent()
+        coVerify(exactly = 1) { repository.getNotifications() }
+
+        // Same registration, the live collector is kept
+        testScheduler.advanceTimeBy(31_000)
+        testScheduler.runCurrent()
+        coVerify(exactly = 1) { repository.getNotifications() }
+
+        // The subscription is bound to the webhook ID, a new registration needs a new one
+        every { server.connection.webhookId } returns "new_webhook_id"
+        testScheduler.advanceTimeBy(30_000)
         testScheduler.runCurrent()
         coVerify(exactly = 2) { repository.getNotifications() }
 

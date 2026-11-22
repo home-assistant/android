@@ -29,6 +29,10 @@ internal val currentChangelog = Changelog(
             action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.AssistSettings),
             actionRequiresPlatform = true,
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_two_way_audio,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(

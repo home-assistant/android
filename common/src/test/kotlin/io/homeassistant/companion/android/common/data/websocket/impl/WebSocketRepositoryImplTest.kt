@@ -1,13 +1,18 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.SubscriptionReconnectPolicy
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraStreamType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayEntry
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcConfiguration
@@ -28,7 +33,11 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.unmockkAll
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -61,6 +70,154 @@ class WebSocketRepositoryImplTest {
     @AfterEach
     fun tearDown() {
         unmockkAll()
+    }
+
+    @Nested
+    inner class FilteredStates {
+        private val subscribeData = slot<Map<String, Any?>>()
+
+        @BeforeEach
+        fun setUpServer() {
+            coEvery { webSocketCore.server() } returns createServer(version = "2024.9.0")
+        }
+
+        private fun givenAllStates(vararg entityIds: String): CapturingSlot<Map<String, Any?>> {
+            val messageSlot = slot<Map<String, Any?>>()
+            val states = entityIds.joinToString { entityId ->
+                """{"entity_id": "$entityId", "state": "on", "attributes": {}, "last_changed": "2024-01-01T12:00:00+00:00", "last_updated": "2024-01-01T12:00:00+00:00"}"""
+            }
+            coEvery { webSocketCore.sendMessage(capture(messageSlot)) } returns MessageSocketResponse(
+                id = 1,
+                success = true,
+                result = kotlinJsonMapper.parseToJsonElement("[$states]"),
+            )
+            return messageSlot
+        }
+
+        private fun givenInitialStates(event: CompressedStateChangedEvent?) {
+            coEvery {
+                webSocketCore.firstEventOf<CompressedStateChangedEvent>(
+                    type = SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                    data = capture(subscribeData),
+                )
+            } returns event
+        }
+
+        private fun addedEvent(vararg entityIds: String) = CompressedStateChangedEvent(
+            added = entityIds.associateWith {
+                CompressedEntityState(state = JsonPrimitive("on"), lastChanged = 1_700_000_000.0)
+            },
+        )
+
+        @Test
+        fun `Given a filter on ids When getting states Then the states a subscription starts with are returned`() = runTest {
+            givenInitialStates(addedEvent("light.bed"))
+
+            val states = repository.getStates(EntityFilter(entityIds = setOf("switch.fan", "light.bed")))
+
+            assertEquals(listOf("light.bed"), states?.map { it.entityId })
+            // Sorted, so the same selection always shares the same subscription
+            assertEquals(mapOf("entity_ids" to listOf("light.bed", "switch.fan")), subscribeData.captured)
+        }
+
+        @Test
+        fun `Given a filter on domains When getting states Then the include filter is sent`() = runTest {
+            givenInitialStates(addedEvent())
+
+            val states = repository.getStates(EntityFilter(domains = setOf("switch", "light"), entityIds = setOf("camera.door")))
+
+            assertEquals(emptyList<String>(), states?.map { it.entityId })
+            assertEquals(
+                mapOf("include" to mapOf("domains" to listOf("light", "switch"), "entities" to listOf("camera.door"))),
+                subscribeData.captured,
+            )
+        }
+
+        @Test
+        fun `Given no initial states When getting states Then null is returned`() = runTest {
+            givenInitialStates(null)
+
+            assertNull(repository.getStates(EntityFilter(entityIds = setOf("light.bed"))))
+        }
+
+        @Test
+        fun `Given states that never arrive When getting states Then null is returned after 30 seconds`() = runTest {
+            coEvery { webSocketCore.firstEventOf<CompressedStateChangedEvent>(any(), any()) } coAnswers { awaitCancellation() }
+
+            assertNull(repository.getStates(EntityFilter(entityIds = setOf("light.bed"))))
+
+            assertEquals(30.seconds, testScheduler.currentTime.milliseconds)
+        }
+
+        @Test
+        fun `Given a server not filtering domains When getting states for domains Then every state is fetched and filtered on the device`() = runTest {
+            coEvery { webSocketCore.server() } returns createServer(version = "2024.8.3")
+            val messageSlot = givenAllStates("light.bed", "sensor.power")
+
+            val states = repository.getStates(EntityFilter(domains = setOf("light")))
+
+            assertEquals(listOf("light.bed"), states?.map { it.entityId })
+            assertEquals("get_states", messageSlot.captured["type"])
+            coVerify(exactly = 0) { webSocketCore.firstEventOf<CompressedStateChangedEvent>(any(), any()) }
+        }
+
+        @Test
+        fun `Given no filter When getting states Then every state is fetched`() = runTest {
+            val messageSlot = givenAllStates("light.bed", "sensor.power")
+
+            val states = repository.getStates()
+
+            assertEquals(listOf("light.bed", "sensor.power"), states?.map { it.entityId })
+            assertEquals("get_states", messageSlot.captured["type"])
+        }
+
+        @Test
+        fun `Given an empty filter When getting states Then every state is fetched as the server would`() = runTest {
+            val messageSlot = givenAllStates("light.bed", "sensor.power")
+
+            val states = repository.getStates(EntityFilter())
+
+            assertEquals(listOf("light.bed", "sensor.power"), states?.map { it.entityId })
+            assertEquals("get_states", messageSlot.captured["type"])
+            coVerify(exactly = 0) { webSocketCore.firstEventOf<CompressedStateChangedEvent>(any(), any()) }
+        }
+
+        @Test
+        fun `Given an empty filter When following state changes Then the subscription isn't limited`() = runTest {
+            coEvery {
+                webSocketCore.subscribeTo<CompressedStateChangedEvent>(
+                    type = SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                    data = capture(subscribeData),
+                    timeout = any(),
+                    reconnectPolicy = SubscriptionReconnectPolicy.Resubscribe,
+                )
+            } returns emptyFlow()
+
+            repository.getCompressedStateAndChanges()
+
+            assertEquals(emptyMap<String, Any?>(), subscribeData.captured)
+        }
+
+        @Test
+        fun `Given a filter When following state changes Then the shared subscription is limited to it`() = runTest {
+            val events = flowOf(addedEvent("light.bed"))
+            coEvery {
+                webSocketCore.subscribeTo<CompressedStateChangedEvent>(
+                    type = SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                    data = capture(subscribeData),
+                    timeout = any(),
+                    reconnectPolicy = SubscriptionReconnectPolicy.Resubscribe,
+                )
+            } returns events
+
+            val changes = repository.getCompressedStateAndChanges(EntityFilter(domains = setOf("light")))
+
+            assertEquals(events, changes)
+            assertEquals(
+                mapOf("include" to mapOf("domains" to listOf("light"), "entities" to emptyList<String>())),
+                subscribeData.captured,
+            )
+        }
     }
 
     @Nested
@@ -353,6 +510,67 @@ class WebSocketRepositoryImplTest {
             assertNull(repository.getEntityRegistryDisplay())
 
             coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
+        }
+
+        @Test
+        fun `Given entity ids When getting entity registry display Then only their entries are requested and converted for display`() = runTest {
+            val messageSlot = captureSentMessage(
+                """
+                {
+                  "sensor.power": {
+                    "entity_id": "sensor.power", "name": null, "original_name": "Power", "icon": "mdi:flash",
+                    "area_id": "kitchen", "device_id": "plug", "hidden_by": "user", "entity_category": "diagnostic",
+                    "labels": ["energy"], "options": {"sensor": {"suggested_display_precision": 1}}
+                  },
+                  "light.bed": {"entity_id": "light.bed", "name": "Bed", "original_name": "Light", "hidden_by": null},
+                  "light.unknown": null
+                }
+                """.trimIndent(),
+            )
+
+            val response = checkNotNull(repository.getEntityRegistryDisplay(listOf("sensor.power", "light.bed", "light.unknown")))
+
+            assertEquals("config/entity_registry/get_entries", messageSlot.captured["type"])
+            assertEquals(listOf("sensor.power", "light.bed", "light.unknown"), messageSlot.captured["entity_ids"])
+            assertEquals(
+                listOf(
+                    EntityRegistryDisplayEntry(
+                        entityId = "sensor.power",
+                        areaId = "kitchen",
+                        deviceId = "plug",
+                        labels = listOf("energy"),
+                        icon = "mdi:flash",
+                        entityCategory = 0,
+                        hidden = true,
+                        name = "Power",
+                        displayPrecision = 1,
+                    ),
+                    EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed"),
+                ),
+                response.entities,
+            )
+            assertEquals(mapOf(0 to "diagnostic"), response.entityCategories)
+        }
+
+        @Test
+        fun `Given a server older than 2024 10 When getting entity registry display for ids Then returns null without sending`() = runTest {
+            captureSentMessage("""{}""", version = "2024.9.3")
+
+            assertNull(repository.getEntityRegistryDisplay(listOf("light.bed")))
+
+            coVerify(exactly = 0) { webSocketCore.sendMessage(any<Map<String, Any?>>()) }
+        }
+
+        @Test
+        fun `Given a failed command When getting entity registry display for ids Then returns null`() = runTest {
+            coEvery { webSocketCore.server() } returns createServer(version = "2025.1.0")
+            coEvery { webSocketCore.sendMessage(any<Map<String, Any?>>()) } returns MessageSocketResponse(
+                id = 1,
+                success = false,
+                error = kotlinJsonMapper.parseToJsonElement("""{"code": "unknown_command"}"""),
+            )
+
+            assertNull(repository.getEntityRegistryDisplay(listOf("light.bed")))
         }
 
         @Test
