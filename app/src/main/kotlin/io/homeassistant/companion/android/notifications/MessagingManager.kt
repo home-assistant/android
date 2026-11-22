@@ -13,8 +13,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
@@ -28,6 +28,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
+import android.util.TypedValue
 import android.view.KeyEvent
 import android.widget.RemoteViews
 import android.widget.Toast
@@ -43,6 +44,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
 import androidx.core.content.withStyledAttributes
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
@@ -58,13 +60,9 @@ import coil3.request.allowHardware
 import coil3.size.Size
 import coil3.toBitmap
 import com.google.android.material.color.DynamicColors
-import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.utils.backgroundColorRes
-import com.mikepenz.iconics.utils.paddingDp
-import com.mikepenz.iconics.utils.roundedCornersDp
-import com.mikepenz.iconics.utils.sizeDp
-import com.mikepenz.iconics.utils.toAndroidIconCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
@@ -90,10 +88,12 @@ import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.FailFast
+import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.getActiveNotificationGroup
 import io.homeassistant.companion.android.common.util.getIntOrNull
 import io.homeassistant.companion.android.common.util.getStringOrNull
@@ -1391,28 +1391,38 @@ class MessagingManager @Inject constructor(
         iconColor: Int,
         backgroundColor: Int? = null,
     ): IconCompat? {
-        if (!iconString.startsWith("mdi:") || iconString.substringAfter("mdi:").isBlank()) {
-            return null
-        }
+        val icon = if (iconString.startsWith(MDI_PREFIX)) Mdi.fromHaName(iconString) else null
+        if (icon == null) return null
 
-        val iconName = iconString.split(":")[1]
-        val iconDrawable = IconicsDrawable(context, "cmd-$iconName").apply {
-            sizeDp = PROGRESS_ICON_SIZE
-            colorFilter = PorterDuffColorFilter(iconColor, PorterDuff.Mode.SRC_IN)
+        val bitmap = if (backgroundColor != null) {
+            // Create a canvas with a circular background and the padded MDI icon
+            val sizePx = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                PROGRESS_ICON_SIZE.toFloat(),
+                context.resources.displayMetrics,
+            ).toInt()
+            val paddingPx = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                PROGRESS_ICON_PADDING.toFloat(),
+                context.resources.displayMetrics,
+            ).toInt()
+            val iconBitmap = icon.toBitmap(sizePx - 2 * paddingPx, iconColor)
 
-            // Apply a circular background if a background color is provided
-            backgroundColor?.let {
-                backgroundColorRes = it
-                roundedCornersDp = PROGRESS_ICON_SIZE / 2
-                paddingDp = PROGRESS_ICON_PADDING
+            createBitmap(sizePx, sizePx).apply {
+                val canvas = Canvas(this)
+                val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = ContextCompat.getColor(context, backgroundColor)
+                }
+                val radius = sizePx / 2f
+                canvas.drawCircle(radius, radius, radius, backgroundPaint)
+                canvas.drawBitmap(iconBitmap, paddingPx.toFloat(), paddingPx.toFloat(), null)
             }
+        } else {
+            // Return just the bitmap if no background is required
+            icon.toBitmap(context, PROGRESS_ICON_SIZE, iconColor)
         }
 
-        return if (iconDrawable.icon != null) {
-            iconDrawable.toAndroidIconCompat()
-        } else {
-            null
-        }
+        return IconCompat.createWithBitmap(bitmap)
     }
 
     private fun handleLive(builder: NotificationCompat.Builder, data: Map<String, String>) {
