@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.WIPFeature
 import io.homeassistant.companion.android.authenticator.Authenticator.Companion.AuthenticationResult
 import io.homeassistant.companion.android.changelog.ChangelogFragment
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.push.PushProviderManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.common.util.isIgnoringBatteryOptimizations
@@ -40,6 +41,7 @@ import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.intentLaunchOnboarding
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.push.WebSocketPushProvider
 import io.homeassistant.companion.android.settings.assist.AssistSettingsFragment
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.controls.ManageControlsSettingsFragment
@@ -71,13 +73,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class SettingsFragment(
     private val presenter: SettingsPresenter,
     private val langProvider: LanguagesProvider,
     private val defaultAssistantManager: DefaultAssistantManager,
+    private val pushProviderManager: PushProviderManager,
 ) : PreferenceFragmentCompat(),
     SettingsView {
 
@@ -563,40 +565,37 @@ class SettingsFragment(
             // handling requires a coroutine for server-side registration.
             pref.preferenceDataStore = null
             pref.setOnPreferenceChangeListener { _, newValue ->
-                val value = newValue as? String
-                lifecycleScope.launch(Dispatchers.IO) {
-                    presenter.handlePushProviderChange(value)
-                }
-                if (value == "WebSocket") {
-                    Toast.makeText(
-                        requireContext(),
-                        commonR.string.push_provider_websocket_enabled,
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                    WebsocketManager.restart(requireContext())
+                val value = newValue as? String ?: return@setOnPreferenceChangeListener false
+                val context = requireContext().applicationContext
+                lifecycleScope.launch {
+                    pushProviderManager.selectProvider(value)
+                    if (value == WebSocketPushProvider.NAME) {
+                        Toast.makeText(
+                            context,
+                            commonR.string.push_provider_websocket_enabled,
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        WebsocketManager.restart(context)
+                    }
                 }
                 true
             }
 
-            lifecycleScope.launch(Dispatchers.IO) {
-                val providerNames = presenter.getAvailablePushProviders()
-                val values = providerNames.toMutableList()
-                val entries = providerNames.map { name ->
+            lifecycleScope.launch {
+                val values = pushProviderManager.getAllProviders().map { it.name }
+                val entries = values.map { name ->
                     when (name) {
                         "FCM" -> getString(commonR.string.push_provider_fcm)
-                        "WebSocket" -> getString(commonR.string.push_provider_websocket)
+                        WebSocketPushProvider.NAME -> getString(commonR.string.push_provider_websocket)
                         else -> name
                     }
-                }.toMutableList()
+                }
+                val activeValue = pushProviderManager.getSelectedProviderName() ?: WebSocketPushProvider.NAME
 
-                val activeValue = presenter.getActivePushProviderValue()
-
-                withContext(Dispatchers.Main) {
-                    pref.entries = entries.toTypedArray()
-                    pref.entryValues = values.toTypedArray()
-                    if (pref.value == null || pref.value !in values) {
-                        pref.value = activeValue
-                    }
+                pref.entries = entries.toTypedArray()
+                pref.entryValues = values.toTypedArray()
+                if (pref.value == null || pref.value !in values) {
+                    pref.value = activeValue
                 }
             }
         }

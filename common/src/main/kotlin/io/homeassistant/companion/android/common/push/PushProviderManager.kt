@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.push
 
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.MessagingToken
 import javax.inject.Inject
@@ -18,6 +19,7 @@ import timber.log.Timber
 class PushProviderManager @Inject constructor(
     private val providers: Set<@JvmSuppressWildcards PushProvider>,
     private val serverManager: ServerManager,
+    private val prefsRepository: PrefsRepository,
 ) {
 
     /**
@@ -43,13 +45,9 @@ class PushProviderManager @Inject constructor(
      * @return the [PushRegistrationResult] from the newly active provider, or null if registration failed.
      */
     suspend fun selectAndRegister(providerName: String): PushRegistrationResult? {
-        val target = getProvider(providerName)
+        val target = getProvider(providerName)?.takeIf { it.isAvailable() }
         if (target == null) {
-            Timber.w("Provider '$providerName' not found")
-            return null
-        }
-        if (!target.isAvailable()) {
-            Timber.w("Provider '$providerName' is not available")
+            Timber.w("Provider '$providerName' not found or not available")
             return null
         }
 
@@ -66,6 +64,24 @@ class PushProviderManager @Inject constructor(
     }
 
     /**
+     * Get the name of the provider the user selected, falling back to the first registered
+     * provider when nothing has been selected yet.
+     */
+    suspend fun getSelectedProviderName(): String? =
+        prefsRepository.getSelectedPushProvider() ?: getAllProviders().firstOrNull()?.name
+
+    /**
+     * Persist the user's provider choice, register it, and update every default server with
+     * the resulting registration.
+     *
+     * @param providerName The name of the provider the user selected.
+     */
+    suspend fun selectProvider(providerName: String) {
+        prefsRepository.setSelectedPushProvider(providerName)
+        selectAndRegister(providerName)?.let { updateServerRegistration(it) }
+    }
+
+    /**
      * Update the server registration with the given push registration result.
      *
      * @param result The registration result from a push provider.
@@ -79,7 +95,7 @@ class PushProviderManager @Inject constructor(
 
         val deviceRegistration = DeviceRegistration(
             pushToken = MessagingToken(result.pushToken),
-            pushUrl = result.pushUrl ?: "",
+            pushUrl = result.pushUrl.orEmpty(),
             pushEncrypt = result.encrypt,
         )
 

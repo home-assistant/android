@@ -23,7 +23,4 @@ interface SettingsPresenter {
     suspend fun getNotificationRateLimits(): RateLimitResponse?
     suspend fun isChangeLogPopupEnabled(): Boolean
     suspend fun setChangeLogPopupEnabled(enabled: Boolean)
-    fun getAvailablePushProviders(): List<String>
-    suspend fun getActivePushProviderValue(): String
-    suspend fun handlePushProviderChange(value: String?)
 }

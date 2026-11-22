@@ -13,9 +13,9 @@ import io.homeassistant.companion.android.common.push.PushProvider
  */
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class PushProviderModule {
+interface PushProviderModule {
 
     @Binds
     @IntoSet
-    abstract fun bindWebSocketPushProvider(provider: WebSocketPushProvider): PushProvider
+    fun bindWebSocketPushProvider(provider: WebSocketPushProvider): PushProvider
 }

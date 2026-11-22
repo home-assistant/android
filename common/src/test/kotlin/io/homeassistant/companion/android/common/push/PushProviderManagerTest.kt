@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.push
 
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
 import io.mockk.Runs
@@ -20,11 +21,14 @@ class PushProviderManagerTest {
 
     private lateinit var serverManager: ServerManager
     private lateinit var integrationRepository: IntegrationRepository
+    private lateinit var prefsRepository: PrefsRepository
 
     @Before
     fun setUp() {
         serverManager = mockk(relaxed = true)
         integrationRepository = mockk(relaxed = true)
+        prefsRepository = mockk(relaxed = true)
+        coEvery { prefsRepository.getSelectedPushProvider() } returns null
         coEvery { serverManager.isRegistered() } returns true
         coEvery { serverManager.integrationRepository(any()) } returns integrationRepository
         coEvery { integrationRepository.updateRegistration(any(), any()) } just Runs
@@ -47,7 +51,7 @@ class PushProviderManagerTest {
     fun `getActiveProvider returns the active provider`() = runTest {
         val provider1 = createProvider("FCM", active = false)
         val provider2 = createProvider("UnifiedPush", active = true)
-        val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
+        val manager = PushProviderManager(setOf(provider1, provider2), serverManager, prefsRepository)
 
         val active = manager.getActiveProvider()
         assertNotNull(active)
@@ -58,7 +62,7 @@ class PushProviderManagerTest {
     fun `getActiveProvider returns null when no provider is active`() = runTest {
         val provider1 = createProvider("FCM", active = false)
         val provider2 = createProvider("UnifiedPush", active = false)
-        val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
+        val manager = PushProviderManager(setOf(provider1, provider2), serverManager, prefsRepository)
 
         assertNull(manager.getActiveProvider())
     }
@@ -68,7 +72,7 @@ class PushProviderManagerTest {
         val result = PushRegistrationResult("token123", "https://push.example.com", true)
         val provider1 = createProvider("FCM", available = true, registrationResult = PushRegistrationResult("fcm-token", ""))
         val provider2 = createProvider("UnifiedPush", available = true, registrationResult = result)
-        val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
+        val manager = PushProviderManager(setOf(provider1, provider2), serverManager, prefsRepository)
 
         val reg = manager.selectAndRegister("UnifiedPush")
         assertNotNull(reg)
@@ -80,7 +84,7 @@ class PushProviderManagerTest {
     fun `selectAndRegister returns null when requested provider unavailable`() = runTest {
         val provider1 = createProvider("FCM", available = true, registrationResult = PushRegistrationResult("fcm-token", ""))
         val provider2 = createProvider("UnifiedPush", available = false)
-        val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
+        val manager = PushProviderManager(setOf(provider1, provider2), serverManager, prefsRepository)
 
         val reg = manager.selectAndRegister("UnifiedPush")
         assertNull(reg)
@@ -89,7 +93,7 @@ class PushProviderManagerTest {
     @Test
     fun `selectAndRegister returns null when provider not found`() = runTest {
         val provider1 = createProvider("FCM", available = true)
-        val manager = PushProviderManager(setOf(provider1), serverManager)
+        val manager = PushProviderManager(setOf(provider1), serverManager, prefsRepository)
 
         assertNull(manager.selectAndRegister("UnifiedPush"))
     }
@@ -99,7 +103,7 @@ class PushProviderManagerTest {
         val provider1 = createProvider("WebSocket")
         val provider2 = createProvider("FCM")
         val provider3 = createProvider("UnifiedPush")
-        val manager = PushProviderManager(setOf(provider1, provider2, provider3), serverManager)
+        val manager = PushProviderManager(setOf(provider1, provider2, provider3), serverManager, prefsRepository)
 
         val all = manager.getAllProviders()
         assertEquals(3, all.size)
@@ -109,7 +113,7 @@ class PushProviderManagerTest {
     fun `getProvider returns provider by name`() {
         val provider1 = createProvider("FCM")
         val provider2 = createProvider("UnifiedPush")
-        val manager = PushProviderManager(setOf(provider1, provider2), serverManager)
+        val manager = PushProviderManager(setOf(provider1, provider2), serverManager, prefsRepository)
 
         val found = manager.getProvider("FCM")
         assertNotNull(found)
@@ -119,7 +123,7 @@ class PushProviderManagerTest {
     @Test
     fun `getProvider returns null for unknown name`() {
         val provider1 = createProvider("FCM")
-        val manager = PushProviderManager(setOf(provider1), serverManager)
+        val manager = PushProviderManager(setOf(provider1), serverManager, prefsRepository)
 
         assertNull(manager.getProvider("UnifiedPush"))
     }
@@ -130,7 +134,7 @@ class PushProviderManagerTest {
         val server2 = mockk<Server>(relaxed = true) { every { id } returns 2 }
         coEvery { serverManager.servers() } returns listOf(server1, server2)
 
-        val manager = PushProviderManager(emptySet(), serverManager)
+        val manager = PushProviderManager(emptySet(), serverManager, prefsRepository)
         val result = PushRegistrationResult("token", "https://push.example.com", true)
 
         manager.updateServerRegistration(result)
@@ -145,7 +149,7 @@ class PushProviderManagerTest {
         val server = mockk<Server>(relaxed = true) { every { id } returns 42 }
         coEvery { serverManager.getServer(42) } returns server
 
-        val manager = PushProviderManager(emptySet(), serverManager)
+        val manager = PushProviderManager(emptySet(), serverManager, prefsRepository)
         val result = PushRegistrationResult("token", "", false)
 
         manager.updateServerRegistration(result, serverId = 42)
@@ -158,7 +162,7 @@ class PushProviderManagerTest {
     fun `updateServerRegistration skips when not authenticated`() = runTest {
         coEvery { serverManager.isRegistered() } returns false
 
-        val manager = PushProviderManager(emptySet(), serverManager)
+        val manager = PushProviderManager(emptySet(), serverManager, prefsRepository)
         val result = PushRegistrationResult("token", "", false)
 
         manager.updateServerRegistration(result)
@@ -187,7 +191,7 @@ class PushProviderManagerTest {
             override suspend fun unregister() {}
         }
 
-        val manager = PushProviderManager(setOf(currentProvider, newProvider), serverManager)
+        val manager = PushProviderManager(setOf(currentProvider, newProvider), serverManager, prefsRepository)
         val reg = manager.selectAndRegister("UnifiedPush")
 
         assertEquals(true, unregistered)
@@ -200,5 +204,51 @@ class PushProviderManagerTest {
         val result = PushRegistrationResult("token")
         assertNull(result.pushUrl)
         assertEquals(false, result.encrypt)
+    }
+
+    @Test
+    fun `getSelectedProviderName returns the persisted choice`() = runTest {
+        coEvery { prefsRepository.getSelectedPushProvider() } returns "WebSocket"
+        val manager = PushProviderManager(setOf(createProvider("FCM"), createProvider("WebSocket")), serverManager, prefsRepository)
+
+        assertEquals("WebSocket", manager.getSelectedProviderName())
+    }
+
+    @Test
+    fun `getSelectedProviderName falls back to the first provider when nothing is persisted`() = runTest {
+        val manager = PushProviderManager(setOf(createProvider("WebSocket"), createProvider("FCM")), serverManager, prefsRepository)
+
+        assertEquals("FCM", manager.getSelectedProviderName())
+    }
+
+    @Test
+    fun `getSelectedProviderName returns null without providers or a persisted choice`() = runTest {
+        val manager = PushProviderManager(emptySet(), serverManager, prefsRepository)
+
+        assertNull(manager.getSelectedProviderName())
+    }
+
+    @Test
+    fun `selectProvider persists the choice and updates the server registration`() = runTest {
+        val result = PushRegistrationResult("token", "https://push.example.com")
+        val manager = PushProviderManager(setOf(createProvider("FCM", registrationResult = result)), serverManager, prefsRepository)
+        val server = mockk<Server>(relaxed = true)
+        every { server.id } returns 1
+        coEvery { serverManager.servers() } returns listOf(server)
+
+        manager.selectProvider("FCM")
+
+        coVerify { prefsRepository.setSelectedPushProvider("FCM") }
+        coVerify { integrationRepository.updateRegistration(any(), allowReregistration = false) }
+    }
+
+    @Test
+    fun `selectProvider persists the choice but skips the server when registration fails`() = runTest {
+        val manager = PushProviderManager(setOf(createProvider("FCM", available = false)), serverManager, prefsRepository)
+
+        manager.selectProvider("FCM")
+
+        coVerify { prefsRepository.setSelectedPushProvider("FCM") }
+        coVerify(exactly = 0) { integrationRepository.updateRegistration(any(), any()) }
     }
 }

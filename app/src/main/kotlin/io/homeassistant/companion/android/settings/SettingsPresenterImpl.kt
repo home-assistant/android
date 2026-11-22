@@ -14,11 +14,9 @@ import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.push.PushProviderManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.settings.SettingsDao
-import io.homeassistant.companion.android.push.WebSocketPushProvider
 import io.homeassistant.companion.android.settings.assist.DefaultAssistantManager
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.NightModeManager
@@ -42,7 +40,6 @@ class SettingsPresenterImpl @Inject constructor(
     private val langsManager: LanguagesManager,
     private val settingsDao: SettingsDao,
     private val defaultAssistantManager: DefaultAssistantManager,
-    private val pushProviderManager: PushProviderManager,
 ) : PreferenceDataStore(),
     SettingsPresenter {
 
@@ -214,26 +211,6 @@ class SettingsPresenterImpl @Inject constructor(
             suggestionFlow.emit(filteredSuggestions.randomOrNull())
         } else if (filteredSuggestions.none { it.id == suggestionFlow.value?.id }) {
             suggestionFlow.emit(null)
-        }
-    }
-
-    override fun getAvailablePushProviders(): List<String> {
-        return pushProviderManager.getAllProviders().map { it.name }
-    }
-
-    override suspend fun getActivePushProviderValue(): String {
-        val persisted = prefsRepository.getSelectedPushProvider()
-        if (persisted != null) return persisted
-        return pushProviderManager.getAllProviders().firstOrNull()?.name
-            ?: WebSocketPushProvider.NAME
-    }
-
-    override suspend fun handlePushProviderChange(value: String?) {
-        if (value == null) return
-        prefsRepository.setSelectedPushProvider(value)
-        val result = pushProviderManager.selectAndRegister(value)
-        if (result != null) {
-            pushProviderManager.updateServerRegistration(result)
         }
     }
 
