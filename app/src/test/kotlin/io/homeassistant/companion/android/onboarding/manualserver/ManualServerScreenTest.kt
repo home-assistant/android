@@ -46,7 +46,7 @@ class ManualServerScreenTest {
 
                 onNodeWithText(stringResource(commonR.string.manual_server_wrong_url)).assertIsNotDisplayed()
 
-                onNodeWithText("http://homeassistant.local").assertIsDisplayed()
+                onNodeWithText("homeassistant.local:8123").assertIsDisplayed()
                 onNodeWithContentDescription(stringResource(commonR.string.clear_text)).assertIsNotDisplayed()
             }
         }

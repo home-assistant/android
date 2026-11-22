@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.toRoute
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.R as commonR
@@ -25,6 +26,7 @@ import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import io.mockk.coVerify
 import junit.framework.TestCase.assertTrue
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -46,7 +48,7 @@ internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
             waitForIdle()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
 
-            onNodeWithText("http://homeassistant.local").performTextInput("http://ha.local")
+            onNodeWithText("homeassistant.local:8123").performTextInput("http://ha.local")
             onNodeWithText(stringResource(commonR.string.connect))
                 .performScrollTo()
                 .performTwoQuickClicks()
@@ -80,7 +82,7 @@ internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
             onNodeWithContentDescription(stringResource(commonR.string.get_help)).performClick()
             coVerify { any<NavController>().navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, any()) }
 
-            onNodeWithText("http://homeassistant.local").performTextInput("http://ha.local")
+            onNodeWithText("homeassistant.local:8123").performTextInput("http://ha.local")
 
             onNodeWithText(stringResource(commonR.string.connect))
                 .performScrollTo()
@@ -96,6 +98,27 @@ internal class ManualServerNavigationTest : BaseOnboardingNavigationTest() {
             waitForIdle()
 
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
+        }
+    }
+
+    @Test
+    fun `Given enter manual address without scheme when clicking connect then https is assumed with http fallback`() {
+        testNavigation {
+            mockCheckPermission(true)
+            navController.navigateToManualServer()
+            waitForIdle()
+
+            onNodeWithText("homeassistant.local:8123").performTextInput("ha.local")
+
+            onNodeWithText(stringResource(commonR.string.connect))
+                .performScrollTo()
+                .assertIsEnabled()
+                .performClick()
+
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ConnectionRoute>() == true)
+            val route = navController.currentBackStackEntry?.toRoute<ConnectionRoute>()
+            assertEquals("https://ha.local/", route?.url)
+            assertEquals(true, route?.fallbackToPlainHttp)
         }
     }
 }

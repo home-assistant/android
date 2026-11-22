@@ -7,8 +7,8 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import io.homeassistant.companion.android.onboarding.manualserver.ManualServerScreen
+import io.homeassistant.companion.android.onboarding.manualserver.ManualServerUrl
 import io.homeassistant.companion.android.util.compose.dropUnlessResumed
-import java.net.URL
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -20,7 +20,7 @@ internal fun NavController.navigateToManualServer(navOptions: NavOptions? = null
 
 internal fun NavGraphBuilder.manualServerScreen(
     onBackClick: () -> Unit,
-    onConnectTo: (URL) -> Unit,
+    onConnectTo: (ManualServerUrl) -> Unit,
     onHelpClick: suspend () -> Unit,
 ) {
     composable<ManualServerRoute> {

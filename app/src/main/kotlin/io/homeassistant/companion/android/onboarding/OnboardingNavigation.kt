@@ -302,7 +302,10 @@ private fun NavGraphBuilder.commonScreens(
             }
         },
         onConnectTo = {
-            navController.navigateToConnection(it.toString())
+            navController.navigateToConnection(
+                url = it.url.toString(),
+                fallbackToPlainHttp = it.fallbackToPlainHttp,
+            )
         },
         onHelpClick = {
             navController.navigateToUri(URL_GETTING_STARTED_DOCUMENTATION, onShowSnackbar)

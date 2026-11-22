@@ -30,7 +30,12 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
     ),
-    improved = listOf(),
+    improved = listOf(
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_server_url_scheme,
+            platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
+        ),
+    ),
     fixed = listOf(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_fix_media_player_widget,

@@ -6,6 +6,9 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
+import android.webkit.WebViewClient.ERROR_AUTHENTICATION
+import android.webkit.WebViewClient.ERROR_CONNECT
+import android.webkit.WebViewClient.ERROR_FAILED_SSL_HANDSHAKE
 import android.webkit.WebViewClient.ERROR_HOST_LOOKUP
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.turbineScope
@@ -829,5 +832,171 @@ class ConnectionViewModelTest {
 
         verify { filePathCallback.onReceiveValue(null) }
         assertNull(viewModel.pendingFileChooser.value)
+    }
+
+    @Test
+    fun `Given an assumed https url when the webview fails with ssl then connection retries over plain http`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "https://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserHandler,
+            permissionManager,
+            prefsRepository,
+            fallbackToPlainHttp = true,
+        )
+        val webView = mockWebView()
+        advanceUntilIdle()
+        assertTrue(viewModel.urlFlow.value!!.startsWith("https://homeassistant.local:8123/"))
+
+        fireWebViewError(viewModel, webView, ERROR_FAILED_SSL_HANDSHAKE)
+        advanceUntilIdle()
+
+        val retriedUrl = viewModel.urlFlow.value
+        assertNotNull(retriedUrl)
+        assertTrue(retriedUrl.startsWith("http://homeassistant.local:8123/"))
+        assertNull(viewModel.errorFlow.value)
+        assertTrue(viewModel.isLoadingFlow.value)
+        verify(exactly = 0) { connectivityCheckRepository.runChecks(any()) }
+    }
+
+    @Test
+    fun `Given the http fallback also fails when the webview errors then error is emitted and checks run on the http url`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "https://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserHandler,
+            permissionManager,
+            prefsRepository,
+            fallbackToPlainHttp = true,
+        )
+        val webView = mockWebView()
+        advanceUntilIdle()
+
+        fireWebViewError(viewModel, webView, ERROR_FAILED_SSL_HANDSHAKE)
+        advanceUntilIdle()
+        fireWebViewError(viewModel, webView, ERROR_CONNECT)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.errorFlow.value is FrontendConnectionError.Unreachable)
+        verify(exactly = 1) { connectivityCheckRepository.runChecks("http://homeassistant.local:8123") }
+    }
+
+    @Test
+    fun `Given an explicit https url when the webview fails with ssl then there is no http retry`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "https://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserHandler,
+            permissionManager,
+            prefsRepository,
+            fallbackToPlainHttp = false,
+        )
+        val webView = mockWebView()
+        advanceUntilIdle()
+
+        fireWebViewError(viewModel, webView, ERROR_FAILED_SSL_HANDSHAKE)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.errorFlow.value is FrontendConnectionError.SslError)
+        assertTrue(viewModel.urlFlow.value!!.startsWith("https://"))
+        verify(exactly = 1) { connectivityCheckRepository.runChecks("https://homeassistant.local:8123") }
+    }
+
+    @Test
+    fun `Given an assumed http url when the webview fails to connect then error is emitted without retry`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "http://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserHandler,
+            permissionManager,
+            prefsRepository,
+            fallbackToPlainHttp = true,
+        )
+        val webView = mockWebView()
+        advanceUntilIdle()
+
+        fireWebViewError(viewModel, webView, ERROR_CONNECT)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.errorFlow.value is FrontendConnectionError.Unreachable)
+        verify(exactly = 1) { connectivityCheckRepository.runChecks("http://homeassistant.local:8123") }
+    }
+
+    @Test
+    fun `Given an assumed https url when the webview fails with an auth error then there is no http retry`() = runTest {
+        val viewModel = ConnectionViewModel(
+            "https://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserHandler,
+            permissionManager,
+            prefsRepository,
+            fallbackToPlainHttp = true,
+        )
+        val webView = mockWebView()
+        advanceUntilIdle()
+
+        fireWebViewError(viewModel, webView, ERROR_AUTHENTICATION)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.errorFlow.value is FrontendConnectionError.AuthRevoked)
+        assertTrue(viewModel.urlFlow.value!!.startsWith("https://"))
+    }
+
+    @Test
+    fun `Given the http fallback succeeded when auth completes then Authenticated url is the http origin`() = runTest {
+        val authCode = "test_auth_code"
+        val request = mockAuthCodeRequest(scheme = "homeassistant", host = "auth-callback", authCode = authCode)
+        val viewModel = ConnectionViewModel(
+            "https://homeassistant.local:8123",
+            webViewClientFactory,
+            connectivityCheckRepository,
+            fileChooserHandler,
+            permissionManager,
+            prefsRepository,
+            fallbackToPlainHttp = true,
+        )
+        val webView = mockWebView()
+        advanceUntilIdle()
+
+        fireWebViewError(viewModel, webView, ERROR_FAILED_SSL_HANDSHAKE)
+        advanceUntilIdle()
+
+        turbineScope {
+            val navigationEventsFlow = viewModel.navigationEventsFlow.testIn(backgroundScope)
+
+            viewModel.getWebViewClient().onPageFinished(null, "http://homeassistant.local:8123/auth/authorize")
+
+            assertTrue(viewModel.getWebViewClient().shouldOverrideUrlLoading(null, request))
+
+            val event = navigationEventsFlow.awaitItem()
+            assertTrue(event is ConnectionNavigationEvent.Authenticated)
+            assertEquals("http://homeassistant.local:8123", (event as ConnectionNavigationEvent.Authenticated).url)
+        }
+    }
+
+    /**
+     * Simulates a main-frame WebView error for the auth URL currently loaded by [viewModel].
+     */
+    private suspend fun fireWebViewError(viewModel: ConnectionViewModel, webView: WebView, errorCode: Int) {
+        val authUrl = viewModel.urlFlow.value
+        assertNotNull(authUrl)
+        val request = mockk<WebResourceRequest> {
+            every { url } returns mockk<Uri> {
+                every { this@mockk.toString() } returns authUrl
+            }
+        }
+        viewModel.getWebViewClient().onReceivedError(
+            webView,
+            request,
+            mockk<WebResourceError> {
+                every { this@mockk.errorCode } returns errorCode
+                every { description } returns "error"
+            },
+        )
     }
 }

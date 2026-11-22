@@ -72,6 +72,7 @@ internal sealed interface ConnectionNavigationEvent {
 private const val AUTH_CALLBACK_SCHEME = "homeassistant"
 private const val AUTH_CALLBACK_HOST = "auth-callback"
 private const val AUTH_CALLBACK = "$AUTH_CALLBACK_SCHEME://$AUTH_CALLBACK_HOST"
+private const val HTTP_SCHEME = "http"
 
 @Suppress("LongParameterList")
 @HiltViewModel
@@ -82,6 +83,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     fileChooserHandler: FrontendFileChooserHandler,
     permissionManager: PermissionManager,
     prefsRepository: PrefsRepository,
+    private val fallbackToPlainHttp: Boolean = false,
 ) : ViewModel(),
     FrontendConnectionErrorStateProvider {
 
@@ -94,12 +96,13 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
         permissionManager: PermissionManager,
         prefsRepository: PrefsRepository,
     ) : this(
-        savedStateHandle.toRoute<ConnectionRoute>().url,
-        webViewClientFactory,
-        connectivityCheckRepository,
-        fileChooserHandler,
-        permissionManager,
-        prefsRepository,
+        rawUrl = savedStateHandle.toRoute<ConnectionRoute>().url,
+        webViewClientFactory = webViewClientFactory,
+        connectivityCheckRepository = connectivityCheckRepository,
+        fileChooserHandler = fileChooserHandler,
+        permissionManager = permissionManager,
+        prefsRepository = prefsRepository,
+        fallbackToPlainHttp = savedStateHandle.toRoute<ConnectionRoute>().fallbackToPlainHttp,
     )
 
     /** Whether the WebView is debuggable per the developer setting, null until the pref is read. */
@@ -114,6 +117,12 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
      * server (same host) from external links that should open in a browser.
      */
     private val rawHttpUrl: HttpUrl? = rawUrl.toHttpUrlOrNull()
+
+    /**
+     * The origin currently being tried. Starts as [rawHttpUrl] and switches to `http` when the
+     * plain-HTTP fallback kicks in, which also makes the fallback run at most once.
+     */
+    private var attemptedHttpUrl: HttpUrl? = rawHttpUrl
 
     /**
      * The base URL the app should store for this server, normalized to its origin
@@ -233,17 +242,17 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
      *
      * The WebView's `onPageFinished` reports the final URL once any redirect chain (e.g. the landing page on
      * `:8123` handing over to the freshly installed core on `:80`) has resolved. When that origin
-     * is on the same host as the initial URL but a different scheme or port, [effectiveUrl] is
+     * is on the same host as the attempted URL but a different scheme or port, [effectiveUrl] is
      * updated so the correct URL is stored once authentication completes. Navigations to a different
-     * host are ignored, keeping the initial URL.
+     * host are ignored, keeping the attempted URL.
      */
     private fun updateEffectiveBaseUrl(url: String?) {
         val navigated = url?.toHttpUrlOrNull() ?: return
-        val initial = rawHttpUrl ?: return
-        if (navigated.host != initial.host) return
-        // Never downgrade a secure connection: if the screen was opened on https, ignore a redirect to
+        val attempted = attemptedHttpUrl ?: return
+        if (navigated.host != attempted.host) return
+        // Never downgrade a secure connection: while https is attempted, ignore a redirect to
         // http and keep the original URL rather than silently storing a plaintext origin.
-        if (initial.isHttps && !navigated.isHttps) {
+        if (attempted.isHttps && !navigated.isHttps) {
             Timber.w("Ignoring an https to http downgrade during onboarding, keeping the original URL")
             return
         }
@@ -275,7 +284,7 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
                 Timber.w("Auth code is missing from the auth callback")
                 false // Not intercepted: Auth code missing
             }
-        } else if (url.host != rawHttpUrl?.host) {
+        } else if (url.host != attemptedHttpUrl?.host) {
             Timber.d("${sensitive(url.toString())} URL is not from the server, opening it in an external browser")
             viewModelScope.launch {
                 _navigationEventsFlow.send(ConnectionNavigationEvent.OpenExternalLink(url))
@@ -299,9 +308,42 @@ internal class ConnectionViewModel @VisibleForTesting constructor(
     }
 
     private fun onError(error: FrontendConnectionError) {
+        if (error.shouldRetryOverPlainHttp()) {
+            retryOverPlainHttp()
+            return
+        }
         _errorFlow.update { error }
         // Automatically run connectivity checks when an error occurs
         runConnectivityChecks()
+    }
+
+    /**
+     * Whether this failure deserves a retry of the connection over plain `http`.
+     *
+     * Only when the `https` scheme was assumed (see [ConnectionRoute.fallbackToPlainHttp]) and the
+     * failure means no proper connection happened: host lookup/connect failures, timeouts and SSL
+     * errors — an SSL error typically means the port actually speaks plain `http`. Errors proving
+     * that a TLS endpoint answered (client-certificate requirements, revoked auth) or non-network
+     * errors are surfaced directly.
+     */
+    private fun FrontendConnectionError.shouldRetryOverPlainHttp(): Boolean = fallbackToPlainHttp &&
+        attemptedHttpUrl?.isHttps == true &&
+        (
+            this is FrontendConnectionError.Unreachable ||
+                this is FrontendConnectionError.Timeout ||
+                this is FrontendConnectionError.SslError
+            )
+
+    /** Retries the connection once over plain `http` after the assumed `https` attempt failed. */
+    private fun retryOverPlainHttp() {
+        val httpUrl = attemptedHttpUrl?.newBuilder()?.scheme(HTTP_SCHEME)?.build() ?: return
+        Timber.d("Connection over https failed, retrying onboarding over plain http")
+        attemptedHttpUrl = httpUrl
+        effectiveUrl.value = httpUrl.toBaseUrl()
+        _isLoadingFlow.value = true
+        viewModelScope.launch {
+            buildAuthUrl(httpUrl.toString())
+        }
     }
 }
 

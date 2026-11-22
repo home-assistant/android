@@ -16,11 +16,21 @@ import io.homeassistant.companion.android.onboarding.connection.ConnectionScreen
 import io.homeassistant.companion.android.onboarding.connection.ConnectionViewModel
 import kotlinx.serialization.Serializable
 
+/**
+ * @property url The server URL to connect to.
+ * @property fallbackToPlainHttp Retry once over plain `http` when the `https` connection fails.
+ * Only set when the scheme of [url] was assumed — never for an explicit `https://` URL, which
+ * must not silently downgrade.
+ */
 @Serializable
-internal data class ConnectionRoute(val url: String)
+internal data class ConnectionRoute(val url: String, val fallbackToPlainHttp: Boolean = false)
 
-internal fun NavController.navigateToConnection(url: String, navOptions: NavOptions? = null) {
-    navigate(route = ConnectionRoute(url), navOptions)
+internal fun NavController.navigateToConnection(
+    url: String,
+    fallbackToPlainHttp: Boolean = false,
+    navOptions: NavOptions? = null,
+) {
+    navigate(route = ConnectionRoute(url, fallbackToPlainHttp), navOptions)
 }
 
 internal fun NavGraphBuilder.connectionScreen(

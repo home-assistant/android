@@ -45,7 +45,6 @@ import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.util.compose.HAPreviews
-import java.net.URL
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 
@@ -54,24 +53,23 @@ private val delayBeforeError = 500.milliseconds
 @Composable
 internal fun ManualServerScreen(
     onBackClick: () -> Unit,
-    onConnectTo: (URL) -> Unit,
+    onConnectTo: (ManualServerUrl) -> Unit,
     onHelpClick: suspend () -> Unit,
     viewModel: ManualServerViewModel,
     modifier: Modifier = Modifier,
 ) {
     val serverUrl by viewModel.serverUrlFlow.collectAsStateWithLifecycle()
-    val isServerUrlValid by viewModel.isServerUrlValidFlow.collectAsStateWithLifecycle()
+    val resolvedUrl by viewModel.resolvedUrlFlow.collectAsStateWithLifecycle()
 
     ManualServerScreen(
         onConnectClick = {
-            val url = URL(serverUrl)
-            onConnectTo(url)
+            resolvedUrl?.let { onConnectTo(it) }
         },
         onHelpClick = onHelpClick,
         onBackClick = onBackClick,
         serverUrl = serverUrl,
         onServerUrlChange = viewModel::onServerUrlChange,
-        isServerUrlValid = isServerUrlValid,
+        isServerUrlValid = resolvedUrl != null,
         modifier = modifier,
     )
 }
@@ -176,7 +174,7 @@ private fun ServerUrlTextField(
         },
         placeholder = {
             Text(
-                text = "http://homeassistant.local",
+                text = "homeassistant.local:8123",
                 style = HATextStyle.UserInput,
                 color = LocalHAColorScheme.current.colorOnNeutralNormal,
             )
