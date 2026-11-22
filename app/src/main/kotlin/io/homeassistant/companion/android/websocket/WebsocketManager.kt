@@ -80,6 +80,17 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                 .any { it.state == WorkInfo.State.RUNNING }
         }
 
+        fun restart(context: Context) {
+            val websocketNotifications =
+                PeriodicWorkRequestBuilder<WebsocketManager>(15, TimeUnit.MINUTES)
+                    .build()
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                UNIQUE_WORK_NAME,
+                ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
+                websocketNotifications,
+            )
+        }
+
         suspend fun start(context: Context) {
             val websocketNotifications =
                 PeriodicWorkRequestBuilder<WebsocketManager>(15, TimeUnit.MINUTES)

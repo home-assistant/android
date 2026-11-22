@@ -47,6 +47,7 @@ private const val PREF_WAKE_WORD_ENABLED = "wake_word_enabled"
 private const val PREF_SELECTED_WAKE_WORD = "selected_wake_word"
 private const val PREF_ASSIST_LISTENING_CHIME_ENABLED = "assist_listening_chime_enabled"
 private const val PREF_ALLOWED_TAGS = "allowed_tags"
+private const val PREF_SELECTED_PUSH_PROVIDER = "selected_push_provider"
 
 /**
  * This class ensure that when we use the local storage in [PrefsRepositoryImpl] the migrations has been made
@@ -478,5 +479,13 @@ internal class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun clearAllowedTags() {
         localStorage().remove(PREF_ALLOWED_TAGS)
+    }
+
+    override suspend fun getSelectedPushProvider(): String? {
+        return localStorage().getString(PREF_SELECTED_PUSH_PROVIDER)
+    }
+
+    override suspend fun setSelectedPushProvider(provider: String) {
+        localStorage().putString(PREF_SELECTED_PUSH_PROVIDER, provider)
     }
 }

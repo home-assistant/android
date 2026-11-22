@@ -220,4 +220,7 @@ interface PrefsRepository {
     suspend fun getAllowedTags(): Set<String>
 
     suspend fun clearAllowedTags()
+    suspend fun getSelectedPushProvider(): String?
+
+    suspend fun setSelectedPushProvider(provider: String)
 }

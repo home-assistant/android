@@ -131,6 +131,11 @@
             app:enableCopying="true"
             android:icon="@drawable/ic_notifications"
             android:summary="@string/rate_limit_summary"/>
+        <ListPreference
+            android:key="notification_push_provider"
+            android:title="@string/push_provider"
+            android:icon="@drawable/ic_notifications"
+            app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/assist"

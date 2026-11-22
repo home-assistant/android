@@ -31,10 +31,10 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
 
     private suspend fun createRegistration(deviceName: String): DeviceRegistration {
         return DeviceRegistration(
-            appVersion,
-            deviceName,
-            messagingTokenProvider(),
-            false,
+            appVersion = appVersion,
+            deviceName = deviceName,
+            pushToken = messagingTokenProvider(),
+            pushWebsocket = false,
         )
     }
 
