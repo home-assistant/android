@@ -22,12 +22,15 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedEntityState
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.util.STATE_UNAVAILABLE
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
@@ -46,6 +49,8 @@ import java.io.IOException
 import java.net.URL
 import java.time.LocalDateTime
 import javax.inject.Inject
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -53,9 +58,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonPrimitive
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -102,10 +109,19 @@ class CameraWidgetTest {
     private val context: Context = RuntimeEnvironment.getApplication()
     private val appWidgetManager = mockk<AppWidgetManager>()
     private val repositories = mapOf(SERVER_ID to mockk<IntegrationRepository>(), OTHER_SERVER_ID to mockk())
-    private val entityChanges = mutableMapOf<String, MutableSharedFlow<EntityChange>>()
+    private val webSocketRepositories = mapOf(SERVER_ID to mockk<WebSocketRepository>(), OTHER_SERVER_ID to mockk())
+    private val entityChanges = mutableMapOf<String, MutableSharedFlow<CompressedStateChangedEvent>>()
     private val entityStates = mutableMapOf<String, String>()
+    private val entityQueries = Channel<String>(Channel.UNLIMITED)
     private val draws = Channel<Int>(Channel.UNLIMITED)
     private var imageFetchFails = false
+    private var imagePublishFails = false
+    private var holdNextImageFetch = false
+    private var imageFetchStarted: CompletableDeferred<Unit>? = null
+    private var releaseImageFetch: CompletableDeferred<Unit>? = null
+    private var blockNextEntityFetch = false
+    private var entityFetchStarted: CompletableDeferred<Unit>? = null
+    private var releaseEntityFetch: CompletableDeferred<Unit>? = null
 
     @Before
     fun setUp() {
@@ -118,6 +134,7 @@ class CameraWidgetTest {
         every { appWidgetManager.getAppWidgetIds(any()) } returns intArrayOf(WIDGET_A, WIDGET_B)
         every { appWidgetManager.getAppWidgetOptions(any()) } returns Bundle()
         every { appWidgetManager.updateAppWidget(any<Int>(), any<RemoteViews>()) } answers {
+            if (imagePublishFails) throw IllegalStateException("Widget host unavailable")
             draws.trySend(firstArg())
         }
 
@@ -128,11 +145,18 @@ class CameraWidgetTest {
         coEvery { serverManager.connectionStateProvider(any()) } returns connectionStateProvider
         repositories.forEach { (serverId, repository) ->
             coEvery { serverManager.integrationRepository(serverId) } returns repository
-            coEvery { repository.getEntity(any()) } answers {
+            coEvery { serverManager.webSocketRepository(serverId) } returns webSocketRepositories.getValue(serverId)
+            coEvery { repository.getEntity(any()) } coAnswers {
                 val entityId = firstArg<String>()
+                if (blockNextEntityFetch) {
+                    blockNextEntityFetch = false
+                    entityFetchStarted?.complete(Unit)
+                    releaseEntityFetch?.await()
+                }
+                entityQueries.trySend(entityId)
                 entityStates[entityId]?.let { entity(entityId, it) }
             }
-            coEvery { repository.getEntityChanges(any()) } answers {
+            coEvery { webSocketRepositories.getValue(serverId).getCompressedStateAndChanges(any()) } answers {
                 changesOf(firstArg<EntityFilter>().entityIds.single())
             }
         }
@@ -141,6 +165,11 @@ class CameraWidgetTest {
             ImageLoader.Builder(context).components {
                 add(
                     Interceptor { chain ->
+                        if (holdNextImageFetch) {
+                            holdNextImageFetch = false
+                            imageFetchStarted?.complete(Unit)
+                            releaseImageFetch?.await()
+                        }
                         if (imageFetchFails) {
                             ErrorResult(null, chain.request, IOException("Image unavailable"))
                         } else {
@@ -159,9 +188,11 @@ class CameraWidgetTest {
     @After
     fun tearDown() {
         // The watches and drawn states are shared by every instance, forget them for the next test
-        CameraWidget(TestScope()).apply {
-            onReceive(context, Intent(Intent.ACTION_SCREEN_OFF))
-            onDeleted(context, intArrayOf(WIDGET_A, WIDGET_B))
+        runTest {
+            CameraWidget(this).apply {
+                onReceive(context, Intent(Intent.ACTION_SCREEN_OFF))
+                onDeleted(context, intArrayOf(WIDGET_A, WIDGET_B))
+            }
         }
         SingletonImageLoader.reset()
         unmockkAll()
@@ -174,6 +205,7 @@ class CameraWidgetTest {
 
         widget.onReceive(context, Intent(Intent.ACTION_SCREEN_ON))
         changesOf(IMAGE_A).subscriptionCount.first { it == 1 }
+        entityQueries.receive()
         changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, FIRST_IMAGE))
         settle(IMAGE_A)
 
@@ -190,13 +222,31 @@ class CameraWidgetTest {
     }
 
     @Test
+    fun `Given image changes while widget watch is stopped when watch restarts then latest image is drawn`() = runTest {
+        val widget = configureImageWidget()
+        widget.onReceive(context, Intent(Intent.ACTION_SCREEN_OFF))
+        runCurrent()
+        entityStates[IMAGE_A] = SECOND_IMAGE
+
+        widget.onReceive(context, Intent(Intent.ACTION_SCREEN_ON))
+        changesOf(IMAGE_A).subscriptionCount.first { it == 1 }
+        entityQueries.receive()
+
+        assertEquals(WIDGET_A, draws.receive())
+        settle(IMAGE_A)
+        assertNoDraw()
+    }
+
+    @Test
     fun `Given image widget watched when only the attributes change then widget is not redrawn`() = runTest {
         configureImageWidget()
+        coVerify(exactly = 2) { repositories.getValue(SERVER_ID).getEntity(IMAGE_A) }
 
-        changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, FIRST_IMAGE, token = "rotated"))
+        changesOf(IMAGE_A).emit(attributeChanged(IMAGE_A))
         settle(IMAGE_A)
 
         assertNoDraw()
+        coVerify(exactly = 2) { repositories.getValue(SERVER_ID).getEntity(IMAGE_A) }
     }
 
     @Test
@@ -213,7 +263,7 @@ class CameraWidgetTest {
     fun `Given image widget watched when the entity is removed then widget is not redrawn`() = runTest {
         configureImageWidget()
 
-        changesOf(IMAGE_A).emit(EntityChange.Removed(IMAGE_A))
+        changesOf(IMAGE_A).emit(removedEvent(IMAGE_A))
         settle(IMAGE_A)
 
         assertNoDraw()
@@ -241,7 +291,7 @@ class CameraWidgetTest {
         awaitWidgetWork(except = watching)
 
         assertEquals(1, changesOf(IMAGE_A).subscriptionCount.value)
-        coVerify(exactly = 1) { repositories.getValue(SERVER_ID).getEntityChanges(any()) }
+        coVerify(exactly = 1) { webSocketRepositories.getValue(SERVER_ID).getCompressedStateAndChanges(any()) }
     }
 
     @Test
@@ -255,7 +305,7 @@ class CameraWidgetTest {
         assertEquals(WIDGET_A, draws.receive())
         awaitWidgetWork()
 
-        coVerify(exactly = 0) { repositories.getValue(SERVER_ID).getEntityChanges(any()) }
+        coVerify(exactly = 0) { webSocketRepositories.getValue(SERVER_ID).getCompressedStateAndChanges(any()) }
     }
 
     @Test
@@ -269,21 +319,119 @@ class CameraWidgetTest {
         widget.onReceive(context, Intent(Intent.ACTION_SCREEN_ON))
         awaitWidgetWork()
 
-        coVerify(exactly = 0) { repositories.getValue(SERVER_ID).getEntityChanges(any()) }
+        coVerify(exactly = 0) { webSocketRepositories.getValue(SERVER_ID).getCompressedStateAndChanges(any()) }
     }
 
     @Test
-    fun `Given image fetch failed when the same state comes again then widget retries`() = runTest {
+    fun `Given reconfigured image fetch fails with same timestamp when watch restarts then it retries`() = runTest {
+        val widget = configureImageWidget()
+        widget.onReceive(context, Intent(Intent.ACTION_SCREEN_OFF))
+        changesOf(IMAGE_A).subscriptionCount.first { it == 0 }
+        dao.add(widgetEntity(WIDGET_A, IMAGE_B))
+        entityStates[IMAGE_B] = FIRST_IMAGE
+        context.getSystemService<PowerManager>()?.let { shadowOf(it).turnScreenOn(false) }
         imageFetchFails = true
-        configureImageWidget()
+        widget.onReceive(context, Intent(UPDATE_WIDGETS))
+        assertEquals(WIDGET_A, draws.receive())
+        awaitWidgetWork()
 
         imageFetchFails = false
-        changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, FIRST_IMAGE, token = "rotated"))
+        context.getSystemService<PowerManager>()?.let { shadowOf(it).turnScreenOn(true) }
+        widget.onReceive(context, Intent(Intent.ACTION_SCREEN_ON))
+        changesOf(IMAGE_B).subscriptionCount.first { it == 1 }
         assertEquals(WIDGET_A, draws.receive())
-        changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, FIRST_IMAGE, token = "rotated again"))
+    }
+
+    @Test
+    fun `Given image never fetched when an attribute update arrives then image fetch is retried`() = runTest {
+        imageFetchFails = true
+        dao.add(widgetEntity(WIDGET_A, IMAGE_A))
+        entityStates[IMAGE_A] = FIRST_IMAGE
+        val widget = CameraWidget(backgroundScope)
+        widget.onReceive(context, Intent(UPDATE_WIDGETS))
+        assertEquals(WIDGET_A, draws.receive())
+        changesOf(IMAGE_A).subscriptionCount.first { it == 1 }
+        assertEquals(WIDGET_A, draws.receive())
+
+        imageFetchFails = false
+        changesOf(IMAGE_A).emit(attributeChanged(IMAGE_A))
+
+        assertEquals(WIDGET_A, draws.receive())
+    }
+
+    @Test
+    fun `Given same image refetch fails after a successful draw when same state returns then image fetch is retried`() = runTest {
+        val widget = configureImageWidget()
+        imageFetchFails = true
+        widget.onReceive(
+            context,
+            Intent(CameraWidget.UPDATE_IMAGE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, WIDGET_A),
+        )
+        assertEquals(WIDGET_A, draws.receive())
+
+        imageFetchFails = false
+        changesOf(IMAGE_A).emit(attributeChanged(IMAGE_A))
+
+        assertEquals(WIDGET_A, draws.receive())
+    }
+
+    @Test
+    fun `Given a render overlaps an image event when the first draw publishes then the queued event does not redraw it`() = runTest {
+        val widget = configureImageWidget()
+        entityStates[IMAGE_A] = SECOND_IMAGE
+        imageFetchStarted = CompletableDeferred()
+        releaseImageFetch = CompletableDeferred()
+        holdNextImageFetch = true
+
+        widget.onReceive(context, Intent(UPDATE_WIDGETS))
+        imageFetchStarted?.await()
+        val event = backgroundScope.launch { changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, SECOND_IMAGE)) }
+        runCurrent()
+
+        releaseImageFetch?.complete(Unit)
+        assertEquals(WIDGET_A, draws.receive())
+        event.join()
         settle(IMAGE_A)
 
         assertNoDraw()
+    }
+
+    @Test
+    fun `Given a no replay watcher receives a change during its initial state check then it draws the latest state once`() = runTest {
+        val widget = configureImageWidget()
+        widget.onReceive(context, Intent(Intent.ACTION_SCREEN_OFF))
+        changesOf(IMAGE_A).subscriptionCount.first { it == 0 }
+        entityFetchStarted = CompletableDeferred()
+        releaseEntityFetch = CompletableDeferred()
+        blockNextEntityFetch = true
+
+        widget.onReceive(context, Intent(Intent.ACTION_SCREEN_ON))
+        changesOf(IMAGE_A).subscriptionCount.first { it == 1 }
+        entityFetchStarted?.await()
+        entityStates[IMAGE_A] = SECOND_IMAGE
+        val event = backgroundScope.launch { changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, SECOND_IMAGE)) }
+        runCurrent()
+
+        releaseEntityFetch?.complete(Unit)
+        entityQueries.receive()
+        assertEquals(WIDGET_A, draws.receive())
+        event.join()
+        settle(IMAGE_A)
+        assertNoDraw()
+    }
+
+    @Test
+    fun `Given widget host rejects a state refresh when same change arrives again then watch stays alive and retries`() = runTest {
+        configureImageWidget()
+        entityStates[IMAGE_A] = SECOND_IMAGE
+        imagePublishFails = true
+        changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, SECOND_IMAGE))
+        settle(IMAGE_A)
+        assertNoDraw()
+
+        imagePublishFails = false
+        changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, SECOND_IMAGE))
+        assertEquals(WIDGET_A, draws.receive())
     }
 
     @Test
@@ -294,7 +442,6 @@ class CameraWidgetTest {
 
         widget.onReceive(context, Intent(Intent.ACTION_SCREEN_ON))
         changesOf(IMAGE_A).subscriptionCount.first { it == 1 }
-        changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, FIRST_IMAGE))
         assertEquals(WIDGET_A, draws.receive())
         changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, FIRST_IMAGE))
         settle(IMAGE_A)
@@ -342,8 +489,10 @@ class CameraWidgetTest {
         assertEquals(WIDGET_A, draws.receive())
         changesOf(IMAGE_A).subscriptionCount.first { it == 0 }
         runCurrent()
+        changesOf(IMAGE_A).emit(stateChanged(IMAGE_A, SECOND_IMAGE))
+        assertNoDraw()
 
-        coVerify(exactly = 0) { repositories.getValue(SERVER_ID).getEntityChanges(EntityFilter(entityIds = setOf(CAMERA))) }
+        coVerify(exactly = 0) { webSocketRepositories.getValue(SERVER_ID).getCompressedStateAndChanges(EntityFilter(entityIds = setOf(CAMERA))) }
     }
 
     @Test
@@ -364,17 +513,19 @@ class CameraWidgetTest {
         settle(IMAGE_A)
         settle(IMAGE_B)
         assertNoDraw()
-        coVerify { repositories.getValue(OTHER_SERVER_ID).getEntityChanges(EntityFilter(entityIds = setOf(IMAGE_B))) }
+        coVerify { webSocketRepositories.getValue(OTHER_SERVER_ID).getCompressedStateAndChanges(EntityFilter(entityIds = setOf(IMAGE_B))) }
     }
 
     /** Configures a widget on [IMAGE_A] through the configure screen broadcast and waits for its draw and watch. */
-    private suspend fun TestScope.configureImageWidget(): CameraWidget {
+    private suspend fun TestScope.configureImageWidget(scope: CoroutineScope = backgroundScope): CameraWidget {
         dao.add(widgetEntity(WIDGET_A, IMAGE_A))
         entityStates[IMAGE_A] = FIRST_IMAGE
-        val widget = CameraWidget(backgroundScope)
+        val widget = CameraWidget(scope)
         widget.onReceive(context, Intent(UPDATE_WIDGETS))
         assertEquals(WIDGET_A, draws.receive())
+        assertEquals(IMAGE_A, entityQueries.receive())
         changesOf(IMAGE_A).subscriptionCount.first { it == 1 }
+        assertEquals(IMAGE_A, entityQueries.receive())
         return widget
     }
 
@@ -391,7 +542,7 @@ class CameraWidgetTest {
      * the watch only takes the next change, here a removal it ignores, after finishing the previous one.
      */
     private suspend fun settle(entityId: String) {
-        changesOf(entityId).emit(EntityChange.Removed(entityId))
+        changesOf(entityId).emit(removedEvent(entityId))
     }
 
     private suspend fun changeImage(entityId: String, state: String) {
@@ -405,7 +556,23 @@ class CameraWidgetTest {
 
     private fun changesOf(entityId: String) = entityChanges.getOrPut(entityId) { MutableSharedFlow() }
 
-    private fun stateChanged(entityId: String, state: String, token: String = "initial") = EntityChange.StateChanged(entity(entityId, state, token))
+    private fun stateChanged(entityId: String, state: String, token: String = "initial") = CompressedStateChangedEvent(
+        changed = mapOf(
+            entityId to CompressedStateDiff(
+                plus = CompressedEntityState(
+                    state = JsonPrimitive(state),
+                    attributes = mapOf("token" to token),
+                    lastChanged = 1_700_000_000.0,
+                ),
+            ),
+        ),
+    )
+
+    private fun attributeChanged(entityId: String) = CompressedStateChangedEvent(
+        changed = mapOf(entityId to CompressedStateDiff(plus = CompressedEntityState(attributes = mapOf("token" to "rotated")))),
+    )
+
+    private fun removedEvent(entityId: String) = CompressedStateChangedEvent(removed = listOf(entityId))
 
     private fun entity(entityId: String, state: String, token: String = "initial") = Entity(
         entityId = entityId,
