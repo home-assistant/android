@@ -147,6 +147,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
@@ -347,7 +348,6 @@ class MessagingManager @Inject constructor(
         // Values for progress style notifications
         const val PROGRESS_ICON_SIZE = 20 // Taken from "Progress-centric notifications" in Android docs
         const val PROGRESS_ICON_PADDING = 3 // Ensures that a square fits inside the circular background
-
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1262,40 +1262,49 @@ class MessagingManager @Inject constructor(
         accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
-        val segmentsData = data[PROGRESS_SEGMENTS] ?: ""
-        if (segmentsData.isNotBlank()) {
-            try {
-                val segments = Json.parseToJsonElement(segmentsData).jsonArrayOrNull()
-                if (segments == null) {
-                    Timber.w("Notification progress segments is not a JSON array: ${sensitive(segmentsData)}")
-                    return false
+        val segmentsData = data[PROGRESS_SEGMENTS]
+        if (segmentsData.isNullOrBlank()) return false
+
+        return try {
+            val segments = Json.parseToJsonElement(segmentsData).jsonArrayOrNull()
+            if (segments == null) {
+                Timber.w("Notification progress segments is not a JSON array: ${sensitive(segmentsData)}")
+                false
+            } else {
+                segments
+                    .mapNotNull { parseProgressSegment(it, accentColor) }
+                    .onEach(style::addProgressSegment)
+                    .isNotEmpty()
+            }
+        } catch (e: SerializationException) {
+            Timber.e(e, "Error while parsing notification progress segments")
+            false
+        }
+    }
+
+    private fun parseProgressSegment(
+        element: JsonElement,
+        accentColor: Int,
+    ): NotificationCompat.ProgressStyle.Segment? {
+        val segment = element.jsonObjectOrNull()
+        val length = segment?.getIntOrNull(PROGRESS_SEGMENTS_LENGTH)
+        return when {
+            segment == null -> {
+                Timber.w("Ignoring invalid notification progress segment: ${sensitive(element.toString())}")
+                null
+            }
+            length == null || length <= 0 -> {
+                Timber.w("Ignoring progress segment with invalid length: ${sensitive(segment.toString())}")
+                null
+            }
+            else -> {
+                val progressSegment = NotificationCompat.ProgressStyle.Segment(length)
+                segment.getStringOrNull(PROGRESS_SEGMENTS_COLOR)?.let { color ->
+                    progressSegment.setColor(parseColor(context, color, accentColor))
                 }
-                var added = false
-                for (element in segments) {
-                    val segment = element.jsonObjectOrNull()
-                    if (segment == null) {
-                        Timber.w("Ignoring invalid notification progress segment: ${sensitive(element.toString())}")
-                        continue
-                    }
-                    val length = segment.getIntOrNull(PROGRESS_SEGMENTS_LENGTH)
-                    if (length == null || length <= 0) {
-                        Timber.w("Ignoring progress segment with invalid length: ${sensitive(segment.toString())}")
-                        continue
-                    }
-                    val color = segment.getStringOrNull(PROGRESS_SEGMENTS_COLOR)
-                    val progressSegment = NotificationCompat.ProgressStyle.Segment(length)
-                    if (color != null) {
-                        progressSegment.setColor(parseColor(context, color, accentColor))
-                    }
-                    style.addProgressSegment(progressSegment)
-                    added = true
-                }
-                return added
-            } catch (e: SerializationException) {
-                Timber.e(e, "Error while parsing notification progress segments")
+                progressSegment
             }
         }
-        return false
     }
 
     private fun applyProgressPoints(
@@ -1303,40 +1312,46 @@ class MessagingManager @Inject constructor(
         accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
-        val pointsData = data[PROGRESS_POINTS] ?: ""
-        if (pointsData.isNotBlank()) {
-            try {
-                val points = Json.parseToJsonElement(pointsData).jsonArrayOrNull()
-                if (points == null) {
-                    Timber.w("Notification progress points is not a JSON array: ${sensitive(pointsData)}")
-                    return false
+        val pointsData = data[PROGRESS_POINTS]
+        if (pointsData.isNullOrBlank()) return false
+
+        return try {
+            val points = Json.parseToJsonElement(pointsData).jsonArrayOrNull()
+            if (points == null) {
+                Timber.w("Notification progress points is not a JSON array: ${sensitive(pointsData)}")
+                false
+            } else {
+                points
+                    .mapNotNull { parseProgressPoint(it, accentColor) }
+                    .onEach(style::addProgressPoint)
+                    .isNotEmpty()
+            }
+        } catch (e: SerializationException) {
+            Timber.e(e, "Error while parsing notification progress points")
+            false
+        }
+    }
+
+    private fun parseProgressPoint(element: JsonElement, accentColor: Int): NotificationCompat.ProgressStyle.Point? {
+        val point = element.jsonObjectOrNull()
+        val position = point?.getIntOrNull(PROGRESS_POINTS_POSITION)
+        return when {
+            point == null -> {
+                Timber.w("Ignoring invalid notification progress point: ${sensitive(element.toString())}")
+                null
+            }
+            position == null || position <= 0 -> {
+                Timber.w("Ignoring progress point with invalid position: ${sensitive(point.toString())}")
+                null
+            }
+            else -> {
+                val progressPoint = NotificationCompat.ProgressStyle.Point(position)
+                point.getStringOrNull(PROGRESS_POINTS_COLOR)?.let { color ->
+                    progressPoint.setColor(parseColor(context, color, accentColor))
                 }
-                var added = false
-                for (element in points) {
-                    val point = element.jsonObjectOrNull()
-                    if (point == null) {
-                        Timber.w("Ignoring invalid notification progress point: ${sensitive(element.toString())}")
-                        continue
-                    }
-                    val position = point.getIntOrNull(PROGRESS_POINTS_POSITION)
-                    if (position == null || position <= 0) {
-                        Timber.w("Ignoring progress point with invalid position: ${sensitive(point.toString())}")
-                        continue
-                    }
-                    val color = point.getStringOrNull(PROGRESS_POINTS_COLOR)
-                    val progressPoint = NotificationCompat.ProgressStyle.Point(position)
-                    if (color != null) {
-                        progressPoint.setColor(parseColor(context, color, accentColor))
-                    }
-                    style.addProgressPoint(progressPoint)
-                    added = true
-                }
-                return added
-            } catch (e: SerializationException) {
-                Timber.e(e, "Error while parsing notification progress points")
+                progressPoint
             }
         }
-        return false
     }
 
     private fun applyProgressTrackerIcon(
@@ -1344,9 +1359,9 @@ class MessagingManager @Inject constructor(
         accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
-        val progressTrackerIcon = data[PROGRESS_TRACKER_ICON] ?: ""
+        val progressTrackerIcon = data[PROGRESS_TRACKER_ICON].orEmpty()
         val progressTrackerColor =
-            parseColor(context, data[PROGRESS_TRACKER_COLOR] ?: "", commonR.color.colorPrimary)
+            parseColor(context, data[PROGRESS_TRACKER_COLOR].orEmpty(), commonR.color.colorPrimary)
         val icon = createProgressIcon(context, progressTrackerIcon, progressTrackerColor, accentColor)
         if (icon != null) {
             style.setProgressTrackerIcon(icon)
@@ -1360,8 +1375,8 @@ class MessagingManager @Inject constructor(
         accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
-        val progressStartIcon = data[PROGRESS_START_ICON] ?: ""
-        val progressStartColor = parseColor(context, data[PROGRESS_START_COLOR] ?: "", accentColor)
+        val progressStartIcon = data[PROGRESS_START_ICON].orEmpty()
+        val progressStartColor = parseColor(context, data[PROGRESS_START_COLOR].orEmpty(), accentColor)
         val icon = createProgressIcon(context, progressStartIcon, progressStartColor)
         if (icon != null) {
             style.setProgressStartIcon(icon)
@@ -1375,8 +1390,8 @@ class MessagingManager @Inject constructor(
         accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
-        val progressEndIcon = data[PROGRESS_END_ICON] ?: ""
-        val progressEndColor = parseColor(context, data[PROGRESS_END_COLOR] ?: "", accentColor)
+        val progressEndIcon = data[PROGRESS_END_ICON].orEmpty()
+        val progressEndColor = parseColor(context, data[PROGRESS_END_COLOR].orEmpty(), accentColor)
         val icon = createProgressIcon(context, progressEndIcon, progressEndColor)
         if (icon != null) {
             style.setProgressEndIcon(icon)

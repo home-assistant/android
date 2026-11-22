@@ -26,10 +26,12 @@ import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AnySerializer
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET_ISSUES
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -46,8 +48,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONObject
 import timber.log.Timber
 
 /** A running collection of the notifications of a server, with the webhook ID it subscribed with. */
@@ -237,39 +237,44 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                     Timber.e(e, "Unable to confirm received notification")
                 }
             }
-            val flattened = mutableMapOf<String, String>()
-            if (it.containsKey("data")) {
-                for ((key, value) in it["data"] as Map<*, *>) {
-                    if (key == "actions" && value is List<*>) {
-                        value.forEachIndexed { i, action ->
-                            if (action is Map<*, *>) {
-                                flattened["action_${i + 1}_key"] = action["action"].toString()
-                                flattened["action_${i + 1}_title"] = action["title"].toString()
-                                for (key in ACTION_EXTRA_KEYS) {
-                                    action[key]?.let { value -> flattened["action_${i + 1}_$key"] = value.toString() }
-                                }
-                            }
-                        }
-                    } else if (value is Map<*, *>) {
-                        flattened[key.toString()] = JSONObject(value).toString()
-                    } else if (value is Iterable<*>) {
-                        flattened[key.toString()] = JSONArray(value.toList()).toString()
-                    } else {
-                        flattened[key.toString()] = value.toString()
-                    }
-                }
-            }
-            // Message and title are in the root unlike all the others.
-            listOf("message", "title").forEach { key ->
-                if (it.containsKey(key)) {
-                    flattened[key] = it[key].toString()
-                }
-            }
+            val flattened = flattenNotification(it)
             serverManager.getServer(serverId)?.let { server ->
                 flattened["webhook_id"] = server.connection.webhookId.toString()
             }
             messagingManager.handleMessage(flattened, SOURCE)
         }
+    }
+
+    private fun flattenNotification(notification: Map<String, Any>): MutableMap<String, String> {
+        val flattened = mutableMapOf<String, String>()
+        if (notification.containsKey("data")) {
+            for ((key, value) in notification["data"] as Map<*, *>) {
+                if (key == "actions" && value is List<*>) {
+                    value.forEachIndexed { i, action ->
+                        if (action is Map<*, *>) {
+                            flattened["action_${i + 1}_key"] = action["action"].toString()
+                            flattened["action_${i + 1}_title"] = action["title"].toString()
+                            for (key in ACTION_EXTRA_KEYS) {
+                                action[key]?.let { value -> flattened["action_${i + 1}_$key"] = value.toString() }
+                            }
+                        }
+                    }
+                } else if (value is Map<*, *>) {
+                    flattened[key.toString()] = kotlinJsonMapper.encodeToString(AnySerializer, value)
+                } else if (value is Iterable<*>) {
+                    flattened[key.toString()] = kotlinJsonMapper.encodeToString(AnySerializer, value.toList())
+                } else {
+                    flattened[key.toString()] = value.toString()
+                }
+            }
+        }
+        // Message and title are in the root unlike all the others.
+        listOf("message", "title").forEach { key ->
+            if (notification.containsKey(key)) {
+                flattened[key] = notification[key].toString()
+            }
+        }
+        return flattened
     }
 
     /**
