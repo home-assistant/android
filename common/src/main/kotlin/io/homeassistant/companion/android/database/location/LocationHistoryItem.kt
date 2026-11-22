@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.database.location
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import androidx.room.TypeConverter
-import androidx.room.TypeConverters
+import androidx.room3.ColumnInfo
+import androidx.room3.ColumnTypeConverter
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -23,10 +23,10 @@ data class LocationHistoryItem(
     val locationName: String?,
     /**
      * Full zone entity IDs the device was in when this row was logged. Stored as a JSON string
-     * via [LocationHistoryInZonesConverter]; empty list means the device was in no zone.
+     * via [LocationHistoryInZonesColumnTypeConverter]; empty list means the device was in no zone.
      */
     @ColumnInfo(name = "in_zones", defaultValue = "[]")
-    @param:TypeConverters(LocationHistoryInZonesConverter::class)
+    @param:ColumnTypeConverters(LocationHistoryInZonesColumnTypeConverter::class)
     val inZones: List<String> = emptyList(),
     val accuracy: Int?,
     val data: String?,
@@ -49,11 +49,11 @@ data class LocationHistoryItem(
 }
 
 /**
- * Room [TypeConverter] for serializing the `in_zones` column (a list of zone entity IDs) to/from
+ * Room [ColumnTypeConverter] for serializing the `in_zones` column (a list of zone entity IDs) to/from
  * JSON strings.
  */
-class LocationHistoryInZonesConverter {
-    @TypeConverter
+class LocationHistoryInZonesColumnTypeConverter {
+    @ColumnTypeConverter
     fun fromStringToList(value: String): List<String> {
         if (value.isBlank()) return emptyList()
         return try {
@@ -63,7 +63,7 @@ class LocationHistoryInZonesConverter {
         }
     }
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromListToString(value: List<String>): String = try {
         kotlinJsonMapper.encodeToString(value)
     } catch (_: SerializationException) {

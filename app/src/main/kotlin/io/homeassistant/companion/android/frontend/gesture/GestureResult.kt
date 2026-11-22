@@ -25,6 +25,9 @@ sealed interface GestureResult {
     /** The gesture requires navigating to the server's default dashboard. */
     data object NavigateToDefaultDashboard : GestureResult
 
+    /** The gesture requires opening the webview's current page in the device's browser app. */
+    data object OpenInBrowser : GestureResult
+
     /** The gesture requires switching the active server. The ViewModel should switch to [serverId]. */
     data class SwitchServer(val serverId: Int) : GestureResult
 }

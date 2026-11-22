@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,6 +17,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
@@ -28,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -36,9 +39,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.mikepenz.iconics.compose.IconicsPainter
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget.Companion.toRawPath
+import io.homeassistant.companion.android.launch.link.isValidFrontendRawPath
 import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.legacy.ManageShortcutsViewModel
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
@@ -48,7 +55,7 @@ import io.homeassistant.companion.android.util.safeBottomPaddingValues
 
 @RequiresApi(Build.VERSION_CODES.N_MR1)
 @Composable
-fun ManageShortcutsView(
+internal fun ManageShortcutsView(
     viewModel: ManageShortcutsViewModel,
     showIconDialog: (tag: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -91,8 +98,11 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
     val index = i + 1
     val shortcut = viewModel.shortcuts[i]
     val shortcutId = ManageShortcutsSettingsFragment.SHORTCUT_PREFIX + "_" + index
+    val pinnedIdReserved =
+        index == ManageShortcutsSettingsFragment.PINNED_SHORTCUT_INDEX &&
+            viewModel.isReservedShortcutId(shortcut.id.value.orEmpty())
     Text(
-        text = if (index < 6) {
+        text = if (index < ManageShortcutsSettingsFragment.PINNED_SHORTCUT_INDEX) {
             stringResource(id = R.string.shortcut) + " $index"
         } else {
             stringResource(
@@ -167,8 +177,16 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             label = {
                 Text(stringResource(id = R.string.shortcut_pinned_id))
             },
+            isError = pinnedIdReserved,
             modifier = Modifier.fillMaxWidth(),
         )
+        if (pinnedIdReserved) {
+            Text(
+                text = stringResource(id = R.string.shortcut_pinned_id_reserved),
+                fontSize = 12.sp,
+                color = MaterialTheme.colors.error,
+            )
+        }
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -184,7 +202,7 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
         ) {
             val icon = viewModel.shortcuts[i].selectedIcon.value
             val painter = if (icon != null) {
-                remember(icon) { IconicsPainter(icon) }
+                rememberVectorPainter(icon.rememberImageVector())
             } else {
                 painterResource(R.drawable.ic_stat_ic_notification_blue)
             }
@@ -253,33 +271,42 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
     }
 
     if (viewModel.shortcuts[i].type.value == "lovelace") {
+        val path = viewModel.shortcuts[i].path.value
+        val pathValid = path.isEmpty() || isValidFrontendRawPath(path)
         TextField(
-            value = viewModel.shortcuts[i].path.value,
+            value = path,
             onValueChange = { viewModel.shortcuts[i].path.value = it },
             label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
+            isError = !pathValid,
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Done,
                 autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Uri,
             ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
+            modifier = Modifier.fillMaxWidth(),
         )
+        if (!pathValid) {
+            Text(
+                text = stringResource(id = R.string.shortcut_path_invalid),
+                color = MaterialTheme.colors.error,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        Spacer(modifier = Modifier.padding(bottom = 16.dp))
     } else {
         // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6258
         HATheme {
             EntityPicker(
-                entities = viewModel.entities[shortcut.serverId.value].orEmpty(),
-                entityRegistry = viewModel.entityRegistry[shortcut.serverId.value],
-                deviceRegistry = viewModel.deviceRegistry[shortcut.serverId.value],
-                areaRegistry = viewModel.areaRegistry[shortcut.serverId.value],
-                selectedEntityId = viewModel.shortcuts[i].path.value.split(":").getOrNull(1),
-                onEntitySelectedId = { entityId ->
-                    viewModel.shortcuts[i].path.value = "entityId:$entityId"
-                },
-                onEntityCleared = {
-                    viewModel.shortcuts[i].path.value = ""
+                displayState = viewModel.displayEntities[shortcut.serverId.value] ?: EntityDisplayState.Loading,
+                selectedEntityId = (
+                    FrontendTarget.fromRawPath(viewModel.shortcuts[i].path.value)
+                        as? FrontendTarget.EntityMoreInfo
+                    )?.entityId,
+                onSelectionChanged = { entityId ->
+                    viewModel.shortcuts[i].path.value = entityId
+                        ?.let { FrontendTarget.EntityMoreInfo(it).toRawPath() }
+                        .orEmpty()
                 },
                 modifier = Modifier.padding(bottom = 16.dp),
             )
@@ -308,10 +335,11 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, show
             )
         },
         enabled =
-        (index < 6 || !shortcut.id.value.isNullOrEmpty()) &&
+        (index < 6 || (!shortcut.id.value.isNullOrEmpty() && !pinnedIdReserved)) &&
             shortcut.label.value.isNotEmpty() &&
             shortcut.desc.value.isNotEmpty() &&
             shortcut.path.value.isNotEmpty() &&
+            isValidFrontendRawPath(shortcut.path.value) &&
             viewModel.servers.any { it.id == shortcut.serverId.value },
     ) {
         Text(

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.microwakeword
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.nio.ByteBuffer
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -12,7 +13,7 @@ class MicroWakeWordInstrumentedTest {
     @Test
     fun createWithInvalidModelThrows() {
         val invalidModel = ByteBuffer.allocateDirect(64)
-        assertThrows(IllegalStateException::class.java) {
+        val exception = assertThrows(IllegalStateException::class.java) {
             MicroWakeWord(
                 modelBuffer = invalidModel,
                 featureStepSizeMs = 10,
@@ -20,12 +21,13 @@ class MicroWakeWordInstrumentedTest {
                 slidingWindowSize = 20,
             )
         }
+        assertEquals("Failed to create native MicroWakeWord engine", exception.message)
     }
 
     @Test
     fun createWithEmptyModelThrows() {
         val emptyModel = ByteBuffer.allocateDirect(0)
-        assertThrows(IllegalStateException::class.java) {
+        val exception = assertThrows(IllegalStateException::class.java) {
             MicroWakeWord(
                 modelBuffer = emptyModel,
                 featureStepSizeMs = 10,
@@ -33,6 +35,7 @@ class MicroWakeWordInstrumentedTest {
                 slidingWindowSize = 20,
             )
         }
+        assertEquals("Failed to create native MicroWakeWord engine", exception.message)
     }
 
     @Test

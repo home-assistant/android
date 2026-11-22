@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.database.settings
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 
 @Entity(tableName = "settings")
 data class Setting(
@@ -10,7 +10,7 @@ data class Setting(
     @ColumnInfo(name = "id")
     val id: Int,
     @ColumnInfo(name = "websocket_setting")
-    var websocketSetting: WebsocketSetting,
+    val websocketSetting: WebsocketSetting,
     @ColumnInfo(name = "sensor_update_frequency")
-    var sensorUpdateFrequency: SensorUpdateFrequencySetting,
+    val sensorUpdateFrequency: SensorUpdateFrequencySetting,
 )

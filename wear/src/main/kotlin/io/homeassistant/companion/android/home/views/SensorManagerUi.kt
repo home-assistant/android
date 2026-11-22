@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.CircularProgressIndicator
@@ -34,9 +35,9 @@ fun SensorManagerUi(
                 ListHeader(id = sensorManager.name)
             }
             val currentSensors = allSensors?.filter { sensor ->
-                allAvailSensors?.firstOrNull { availableSensor ->
+                allAvailSensors?.any { availableSensor ->
                     sensor.id == availableSensor.id
-                } != null
+                } == true
             }
 
             if (allAvailSensors?.isEmpty() == true) {
@@ -74,6 +75,7 @@ fun SensorManagerUi(
 @Preview(device = WearDevices.LARGE_ROUND)
 @Composable
 private fun PreviewSensorManagerUI() {
+    val batterySensorManager = batterySensorManager(LocalContext.current)
     CompositionLocalProvider {
         SensorManagerUi(
             allSensors = listOf(),

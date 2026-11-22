@@ -1,3 +1,8 @@
+# Compiled by `gh aw compile` from the matching .md file, so style findings
+# there cannot be acted on.
+ignore: |
+  .github/workflows/*.lock.yml
+
 rules:
   braces:
     level: error

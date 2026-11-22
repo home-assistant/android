@@ -5,6 +5,9 @@ import androidx.core.net.toUri
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import timber.log.Timber
 
@@ -15,12 +18,69 @@ private const val NAVIGATE_URL_PATH = "/navigate/"
 private const val MY_BASE_DOMAIN = "my.home-assistant.io"
 private const val BASE_MY_REDIRECT_URL = "https://$MY_BASE_DOMAIN$REDIRECT_URL_PATH"
 
-private const val DEEP_LINK_SCHEME = "homeassistant"
+internal const val HA_DEEP_LINK_SCHEME = "homeassistant"
 
 private const val INTERNAL_MY_REDIRECT_PREFIX = "_my_redirect/"
 
 private const val MOBILE_PARAM = "mobile"
 private const val MOBILE_VALUE = "1"
+
+private const val SERVER_PARAM = "server"
+private const val SERVER_ID_PARAM = "server_id"
+private const val MORE_INFO_ENTITY_ID_PARAM = "more-info-entity-id"
+
+/**
+ * Builds the `homeassistant://navigate` deep link that [LinkHandler] resolves back to [target] on
+ * the server identified by [serverId]. Used for persisted intents (e.g. shortcuts) so they target
+ * the stable, exported [LinkActivity] entry point rather than an internal activity.
+ */
+internal fun navigateDeepLinkUri(target: FrontendTarget, serverId: Int): Uri {
+    val builder = Uri.Builder()
+        .scheme(HA_DEEP_LINK_SCHEME)
+        .authority(NAVIGATE_URL_PATH.removeSurrounding("/"))
+    when (target) {
+        is FrontendTarget.EntityMoreInfo -> builder.appendQueryParameter(MORE_INFO_ENTITY_ID_PARAM, target.entityId)
+        is FrontendTarget.Path -> builder.encodedRawPath(target.path)
+        FrontendTarget.Default -> Unit
+    }
+    return builder.appendQueryParameter(SERVER_ID_PARAM, serverId.toString()).build()
+}
+
+/**
+ * Characters that need no percent-encoding in a URI path (RFC 3986 pchar plus "/"), on top of
+ * [Uri.encode]'s unreserved set. "%" is kept so escapes already present pass through.
+ */
+private const val PATH_ALLOWED_CHARS = "/%:@!$&'()*+,;="
+
+/** Query and fragment additionally allow "?". */
+private const val QUERY_FRAGMENT_ALLOWED_CHARS = "$PATH_ALLOWED_CHARS?"
+
+/**
+ * Whether [rawPath] is already a compliant frontend path in URL form, i.e. the encoding performed
+ * by [Uri.Builder.encodedRawPath] would keep it unchanged. Used by input UIs (e.g. the shortcut
+ * editor) to reject paths before they are persisted.
+ */
+internal fun isValidFrontendRawPath(rawPath: String): Boolean =
+    rawPath == Uri.encode(rawPath, "$QUERY_FRAGMENT_ALLOWED_CHARS#")
+
+/**
+ * Sets [rawPath] — a frontend path in URL form, possibly carrying a query and fragment — on this
+ * builder component by component, so a query like `?kiosk` stays a query instead of being
+ * percent-encoded into the path ([Uri.Builder.path] would store it as `%3Fkiosk`).
+ *
+ * Characters illegal in a component (e.g. spaces in a hand-typed shortcut path or deep link) are
+ * percent-encoded; reserved characters and escapes already present pass through untouched, so a
+ * literal percent must be written `%25`.
+ */
+private fun Uri.Builder.encodedRawPath(rawPath: String): Uri.Builder {
+    val withoutFragment = rawPath.substringBefore('#')
+    encodedPath("/" + Uri.encode(withoutFragment.substringBefore('?').removePrefix("/"), PATH_ALLOWED_CHARS))
+    if ('?' in withoutFragment) {
+        encodedQuery(Uri.encode(withoutFragment.substringAfter('?'), QUERY_FRAGMENT_ALLOWED_CHARS))
+    }
+    if ('#' in rawPath) encodedFragment(Uri.encode(rawPath.substringAfter('#'), QUERY_FRAGMENT_ALLOWED_CHARS))
+    return this
+}
 
 /**
  * Sealed class that represents the destination of a link.
@@ -33,14 +93,14 @@ sealed interface LinkDestination {
     data class Onboarding(val serverUrl: String) : LinkDestination
 
     /**
-     * Open a WebView with the given [path] and an optional [serverId].
+     * Open the frontend at [target] on the server identified by [serverId].
      */
-    data class Webview(val path: String, val serverId: Int) : LinkDestination
+    data class Webview(val target: FrontendTarget, val serverId: Int) : LinkDestination
 
     /**
-     * Let the user pick one of the registered [servers] before opening the WebView at [path].
+     * Let the user pick one of the registered [servers] before opening the frontend at [target].
      */
-    data class ServerPicker(val path: String, val servers: List<Server>) : LinkDestination
+    data class ServerPicker(val target: FrontendTarget, val servers: List<Server>) : LinkDestination
 
     /**
      * Nowhere to go from this link.
@@ -68,7 +128,7 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
     override suspend fun handleLink(uri: Uri): LinkDestination {
         return when (uri.scheme) {
             "https" -> handleUniversalLink(uri)
-            DEEP_LINK_SCHEME -> handleDeepLink(uri)
+            HA_DEEP_LINK_SCHEME -> handleDeepLink(uri)
             else -> {
                 FailFast.fail {
                     "Invalid link scheme: $uri"
@@ -78,16 +138,18 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         }
     }
 
-    private suspend fun webviewDestination(path: String, serverId: Int? = null): LinkDestination {
+    private suspend fun webviewDestination(target: FrontendTarget, serverId: Int? = null): LinkDestination {
         if (serverId != null) {
-            return LinkDestination.Webview(path, serverId)
+            return LinkDestination.Webview(targetOnServer(target) { serverManager.getServer(serverId) }, serverId)
         }
 
         val servers = serverManager.servers()
         return if (servers.size <= 1) {
-            LinkDestination.Webview(path, ServerManager.SERVER_ID_ACTIVE)
+            LinkDestination.Webview(targetOnServer(target) { servers.firstOrNull() }, ServerManager.SERVER_ID_ACTIVE)
         } else {
-            LinkDestination.ServerPicker(path, servers)
+            // The user still has to pick one of these servers, so there is no single origin to validate
+            // against (server is `null`).
+            LinkDestination.ServerPicker(targetOnServer(target) { null }, servers)
         }
     }
 
@@ -181,35 +243,81 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
             .build().toString()
             .replaceFirst(BASE_MY_REDIRECT_URL, INTERNAL_MY_REDIRECT_PREFIX)
 
-        return webviewDestination(path)
+        return webviewDestination(FrontendTarget.Path(path))
     }
 
     /**
      * Handles navigate deep links from `homeassistant://navigate/...`.
      *
-     * Supports server selection via the `server` query parameter:
-     * - No parameter or `server=default`: Uses the default server
+     * Server selection (in order of precedence):
+     * - `server_id=<id>`: Uses the server with that stable id
      * - `server=<name>`: Searches for a server with matching friendly name (case-insensitive)
+     * - No parameter or `server=default`: Uses the active server
+     *
+     * When this resolves to no existing server, the active server or the server picker is used instead
+     * rather than forwarding a server that no longer exists.
+     *
+     * A root-level `more-info-entity-id=<entity>` opens that entity's more-info dialog.
+     *
+     * An absolute URL is only accepted when it belongs to the server, the frontend must never
+     * load a page from another origin. Otherwise the server's default page is opened instead.
      *
      * @param uri The navigate URI to process.
-     * @return [LinkDestination.Webview] with the full URI and resolved serverId, or [LinkDestination.NoDestination]
-     *         if no server is registered.
+     * @return [LinkDestination.Webview] with the resolved target and serverId, or
+     *         [LinkDestination.NoDestination] if no server is registered.
      */
     private suspend fun handleNavigateLink(uri: Uri): LinkDestination {
         if (!requireServerRegistered()) {
             return LinkDestination.NoDestination
         }
 
-        val serverName = uri.getQueryParameter("server").takeIf { !it.isNullOrBlank() }
-        val serverId = when (serverName) {
-            "default", null -> serverManager.getServer()?.id
-            else -> serverManager.servers().find {
-                it.friendlyName.equals(serverName, ignoreCase = true)
-            }?.id
-        }
+        val serverId = resolveNavigateServerId(uri)
 
-        val path = uri.toString()
-        return webviewDestination(path, serverId)
+        // A root-level `more-info-entity-id` maps to FrontendTarget.EntityMoreInfo, which keeps the
+        // server-version handling (URL query parameter on HA 2025.6+, JavaScript dispatch on older
+        // servers). Anything else is a plain path/URL.
+        val moreInfoEntityId = uri.getQueryParameter(MORE_INFO_ENTITY_ID_PARAM)?.takeIf { it.isNotBlank() }
+        val target = if (moreInfoEntityId != null && uri.isNavigateRoot()) {
+            FrontendTarget.EntityMoreInfo(moreInfoEntityId)
+        } else {
+            FrontendTarget.fromRawPath(uri.toFrontendRawPath())
+        }
+        return webviewDestination(target, serverId)
+    }
+
+    /**
+     * Keeps [target] when the frontend may open it, otherwise returns [FrontendTarget.Default]. A
+     * relative path is always kept; an absolute URL must match a frontend origin of [server], which is
+     * only resolved in that case and may be `null`.
+     */
+    private suspend fun targetOnServer(target: FrontendTarget, server: suspend () -> Server?): FrontendTarget {
+        if (target !is FrontendTarget.Path || !UrlUtil.isAbsoluteUrl(target.path)) {
+            return target
+        }
+        return if (server()?.connection?.isFrontendUrl(target.path) == true) {
+            target
+        } else {
+            FailFast.fail {
+                "Navigate deep link outside the server, opening the default page: ${sensitive(target.path)}"
+            }
+            FrontendTarget.Default
+        }
+    }
+
+    /**
+     * Resolves the target server for a navigate link: a stable `server_id` takes precedence,
+     * otherwise the `server` friendly-name lookup (`default`/absent uses the active server). Returns
+     * `null` when it resolves to no existing server.
+     */
+    private suspend fun resolveNavigateServerId(uri: Uri): Int? {
+        uri.getQueryParameter(SERVER_ID_PARAM)?.toIntOrNull()?.let { id ->
+            return serverManager.getServer(id)?.id
+        }
+        val serverName = uri.getQueryParameter(SERVER_PARAM).takeIf { !it.isNullOrBlank() }
+        return when (serverName) {
+            "default", null -> serverManager.getServer()?.id
+            else -> serverManager.servers().find { it.friendlyName.equals(serverName, ignoreCase = true) }?.id
+        }
     }
 
     private suspend fun requireServerRegistered(): Boolean {
@@ -220,3 +328,24 @@ class LinkHandlerImpl @Inject constructor(private val serverManager: ServerManag
         }
     }
 }
+
+/**
+ * Rebuilds the raw frontend path (including query and fragment) from a navigate deep link,
+ * dropping the app's server selection parameters. All components are kept encoded as written,
+ * so the path reaches the frontend exactly as it appears in the link.
+ */
+private fun Uri.toFrontendRawPath(): String = buildString {
+    append(encodedPath.orEmpty().removePrefix("/"))
+    encodedQuery
+        ?.splitToSequence('&')
+        ?.filterNot { param ->
+            val name = param.substringBefore('=')
+            name == SERVER_ID_PARAM || name == SERVER_PARAM
+        }
+        ?.joinToString("&")
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { append('?').append(it) }
+    encodedFragment?.let { append('#').append(it) }
+}
+
+private fun Uri.isNavigateRoot(): Boolean = path.isNullOrEmpty() || path == "/"

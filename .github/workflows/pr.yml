@@ -14,9 +14,10 @@ permissions:
 
 jobs:
   validate_localize_setup:
+    name: "Validate Localize Setup"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -33,7 +34,7 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: ./.github/actions/download-translations
+      - uses: $/.github/actions/download-translations
         if: steps.changes.outputs.skip != 'true'
         name: Download Translations
         with:
@@ -56,15 +57,16 @@ jobs:
 
       - name: Archive Translations
         if: steps.changes.outputs.skip != 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: strings
           path: strings.zip
 
   yamllint:
+    name: yamllint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -76,13 +78,14 @@ jobs:
         run: yamllint --strict --format github .
 
   lockfiles:
+    name: "Check Lockfiles"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -106,25 +109,26 @@ jobs:
           fi
 
   license_check:
+    name: license_check
     needs: [lockfiles]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Generate aboutlibraries JSON
         run: |
-          ./gradlew :app:exportLibraryDefinitionsFullDebug \
-            :app:exportLibraryDefinitionsMinimalDebug \
-            :automotive:exportLibraryDefinitionsFullDebug \
-            :automotive:exportLibraryDefinitionsMinimalDebug \
-            :wear:exportLibraryDefinitionsDebug
+          ./gradlew :app:prepareLibraryDefinitionsFullDebug \
+            :app:prepareLibraryDefinitionsMinimalDebug \
+            :automotive:prepareLibraryDefinitionsFullDebug \
+            :automotive:prepareLibraryDefinitionsMinimalDebug \
+            :wear:prepareLibraryDefinitionsDebug
 
       - name: Check licenses
         run: |
@@ -136,16 +140,17 @@ jobs:
             wear/build/generated/aboutLibraries/debug/res/raw/aboutlibraries.json wearDebug
 
   ktlint:
+    name: ktlint
     needs: [license_check, yamllint, validate_localize_setup]
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      security-events: write # To upload the SARIF report to GitHub code scanning
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -154,22 +159,51 @@ jobs:
       - name: Validate ktlint
         run: ./gradlew ktlintCheck :build-logic:convention:ktlintCheck --continue
 
-      - uses: ./.github/actions/upload-sarif-results
+      - uses: $/.github/actions/upload-sarif-results
         if: always()
         with:
           category: "KTlint"
 
-  lint:
-    needs: [lockfiles, ktlint]
+  detekt:
+    name: "Detekt"
+    needs: [lockfiles, yamllint]
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      security-events: write # To upload the SARIF report to GitHub code scanning
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          mock-google-services: "true"
+
+      # We use detektMain instead of the plain detekt task because it runs with type resolution:
+      # rules that need actual types (UnsafeCallOnNullableType, ImplicitDefaultLocale, ...) are
+      # silently skipped without it. This is also why the build compiles the analyzed variants.
+      # Since `build-logic` is added with `includeBuild` we have to call detektMain explicitly on `:convention`.
+      - name: Validate Detekt
+        run: ./gradlew detektMain :build-logic:convention:detektMain --continue
+
+      - uses: $/.github/actions/upload-sarif-results
+        if: always()
+        with:
+          category: "Detekt"
+
+  lint:
+    name: lint
+    needs: [lockfiles, ktlint]
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write # To upload the SARIF report to GitHub code scanning
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -179,49 +213,62 @@ jobs:
 
       - name: Upload lint reports (HTML)
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lint-reports
           path: "**/build/reports/lint-results-*.html"
 
-      - uses: ./.github/actions/upload-sarif-results
+      - uses: $/.github/actions/upload-sarif-results
         if: always()
         with:
           category: "Android Lint"
 
   screenshot_test:
     name: "Screenshot Tests"
-    needs: [lint, lockfiles, ktlint]
+    needs: [detekt, lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Validate Screenshot Previews - app
-        run: ./gradlew :app:validateFullDebugScreenshotTest
+        uses: $/.github/actions/monitor-resources
+        with:
+          run: ./gradlew :app:testFullDebugScreenshotTestDefaultTestSuite
 
       - name: Validate Screenshot Previews - wear
-        run: ./gradlew :wear:validateDebugScreenshotTest
+        uses: $/.github/actions/monitor-resources
+        with:
+          run: ./gradlew :wear:testDebugScreenshotTestDefaultTestSuite
 
       - name: Validate Screenshot Previews - common
-        run: ./gradlew :common:validateDebugScreenshotTest
+        uses: $/.github/actions/monitor-resources
+        with:
+          run: ./gradlew :common:testDebugScreenshotTestDefaultTestSuite
 
-      - uses: ./.github/actions/upload-test-results
+      - name: Validate Screenshot Previews - webrtc
+        uses: $/.github/actions/monitor-resources
+        with:
+          run: ./gradlew :webrtc:testDebugScreenshotTestDefaultTestSuite
+
+      - uses: $/.github/actions/upload-test-results
         if: always()
         with:
           test-name: Screenshot test
+          job-status: ${{ job.status }}
 
   pr_build:
+    name: pr_build
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -235,7 +282,7 @@ jobs:
             echo -e "\n✔️ No changed database schemas on branch"
           fi
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -258,20 +305,21 @@ jobs:
           fi
 
       - name: Archive Debug Build
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: APKs
           path: ./**/*.apk
 
   pr_build_release:
+    name: pr_build_release
     needs: [lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -287,53 +335,60 @@ jobs:
           -storepass android \
           -keypass android
       - name: Build Release
+        uses: $/.github/actions/monitor-resources
         env:
           KEYSTORE_PATH: /home/runner/work/android/android/ci_dummy_keystore.keystore
           KEYSTORE_ALIAS: androiddebugkey
           KEYSTORE_ALIAS_PASSWORD: android
           KEYSTORE_PASSWORD: android
-        # Disable lint tasks since we have a dedicated job for this in the workflow
-        run: |
-          ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
+        with:
+          run: ./gradlew :common:assemble :app:assembleRelease :wear:assembleRelease :automotive:assembleRelease
 
   unit_tests:
     name: "Unit Tests"
-    needs: [lint, lockfiles, ktlint]
+    needs: [detekt, lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
       - name: Run test
-        # Run testFullDebugUnitTest at the app level since :automotive shares the same sourceSet than app. Minimal and Full are the same in unit tests for now
-        run: ./gradlew testDebugUnitTest :app:testFullDebugUnitTest :lint:test
+        # Only run expected tests to minimize CI usage. `automotive` shares the same sourceSet as `app`.
+        # No minimal flavor specific tests currently exist, but minimal is compiled to avoid breaking
+        # it silently.
+        run: |
+          ./gradlew test \
+            -x :automotive:test \
+            -x :app:testMinimalDebugUnitTest \
+            :app:compileMinimalDebugUnitTestKotlin
 
-      - uses: ./.github/actions/upload-test-results
+      - uses: $/.github/actions/upload-test-results
         if: always()
         with:
           test-name: Unit test
+          job-status: ${{ job.status }}
 
   build_emulator_wtf_apks:
     name: "Build Emulator.wtf APKs"
-    needs: [lint, lockfiles, ktlint]
+    needs: [detekt, lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
 
-      - name: Build x86 APKs
+      - name: Build x86 and x86_64 APKs
         run: ./gradlew :app:assembleDebug :app:assembleAndroidTest -Pabis=x86,x86_64
 
       - name: Build device list
@@ -347,10 +402,12 @@ jobs:
           } > devices.txt
 
       - name: Upload emulator.wtf inputs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: emulator-wtf-inputs
-          retention-days: 1
+          # A partial re-run re-triggers "PR Emulator.wtf" without rebuilding these
+          # APKs, so they must outlive the original run. Past that it skips itself.
+          retention-days: 3
           if-no-files-found: error
           path: |
             app/build/outputs/apk/full/debug/app-full-debug.apk
@@ -361,7 +418,7 @@ jobs:
 
   instrumentation_test:
     name: "Instrumentation Tests"
-    needs: [lint, lockfiles, ktlint]
+    needs: [detekt, lint, lockfiles, ktlint]
     runs-on: ubuntu-latest
     strategy:
       # We want the result of each device to be reported, so we can't fail-fast
@@ -391,18 +448,18 @@ jobs:
             gradle_target: ":wear:connectedDebugAndroidTest :common:connectedDebugAndroidTest"
     steps:
       - name: Delete unnecessary tools 🔧
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
         with:
           android: false # Don't remove Android tools
-          tool-cache: true # Remove image tool cache - rm -rf "$AGENT_TOOLSDIRECTORY"
+          preinstalled-runtimes: true # Remove image tool cache - rm -rf "$AGENT_TOOLSDIRECTORY"
           docker-images: false # Takes 16s, enable if needed in the future
           large-packages: false # includes google-cloud-sdk and it's slow
 
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-build-env
+      - uses: $/.github/actions/setup-build-env
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           mock-google-services: "true"
@@ -415,7 +472,9 @@ jobs:
           ls /dev/kvm
 
       - name: Build projects and run instrumentation tests
-        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        env:
+          MONITOR_LABEL: instrumentation-${{ matrix.configuration.api-level }}-${{ matrix.configuration.profile }}
         with:
           api-level: ${{ matrix.configuration.api-level }}
           arch: ${{ matrix.configuration.arch }}
@@ -427,9 +486,12 @@ jobs:
           profile: ${{ matrix.configuration.profile }}
           target: ${{ matrix.configuration.target }}
           system-image-api-level: ${{ matrix.configuration.system-image-api-level }}
-          script: ./gradlew ${{ matrix.configuration.gradle_target }}
+          # emulator-runner executes every script line in a separate shell, so the monitor
+          # must be started and killed within a single command.
+          script: .github/actions/monitor-resources/monitor.sh ./gradlew ${{ matrix.configuration.gradle_target }}
 
-      - uses: ./.github/actions/upload-test-results
+      - uses: $/.github/actions/upload-test-results
         if: always()
         with:
           test-name: Instrumentation test (API${{ matrix.configuration.api-level }}) ${{ matrix.configuration.target }}
+          job-status: ${{ job.status }}

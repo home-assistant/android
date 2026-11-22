@@ -96,6 +96,36 @@ object ImprovDiscoveredDeviceMessage {
 val ImprovDeviceSetupDoneMessage: OutgoingExternalBusMessage = CommandMessage(command = "improv/device_setup_done")
 
 /**
+ * Reports the outcome of the platform Matter commissioning flow to the frontend.
+ *
+ * Sent after the flow launched for a
+ * [io.homeassistant.companion.android.frontend.externalbus.incoming.MatterCommissionMessage]
+ * finishes, on every outcome: the frontend keeps the add-device dialog on its spinner until this
+ * message arrives (see `hasMatterStatusReport` in
+ * [io.homeassistant.companion.android.frontend.externalbus.outgoing.ConfigResultMessage.ConfigResult]).
+ *
+ * @param name The device name the user entered during the flow, prefilled by the frontend in the
+ *   rename step. `null` when the flow failed or provided no name.
+ * @param success Whether the device was commissioned. On `false` the frontend shows its own
+ *   failure feedback and closes the add-device dialog.
+ *
+ * @see CommandMessage
+ */
+object MatterCommissionFinishMessage {
+    operator fun invoke(name: String?, success: Boolean): OutgoingExternalBusMessage = CommandMessage(
+        command = "matter/commission/finish",
+        payload = frontendExternalBusJson.encodeToJsonElement(
+            CommissionFinishPayload(name = name, success = success),
+        ),
+    )
+
+    fun isAvailable(version: HomeAssistantVersion?): Boolean = version?.isAtLeast(2026, 7, 0) == true
+
+    @Serializable
+    private data class CommissionFinishPayload(val name: String?, val success: Boolean)
+}
+
+/**
  * Notifies the frontend that the user scanned a code.
  *
  * Sent in response to a [io.homeassistant.companion.android.frontend.externalbus.incoming.BarcodeScanMessage].
@@ -143,4 +173,28 @@ object BarcodeScanAbortedMessage {
 
     @Serializable
     private data class ScanAbortedPayload(val reason: String)
+}
+
+/**
+ * Notifies the frontend that an app-provided stream ended without the frontend
+ * stopping it. Carries the reason [code] (from the WebRTC stream error codes) and a fallback [message].
+ * One-way command.
+ *
+ * @see CommandMessage
+ */
+object WebRtcStreamStoppedMessage {
+    operator fun invoke(sessionId: String, code: WebRtcStreamErrorCode, message: String): OutgoingExternalBusMessage =
+        CommandMessage(
+            command = "webrtc/stream/stopped",
+            payload = frontendExternalBusJson.encodeToJsonElement(
+                StoppedPayload(sessionId = sessionId, code = code.value, message = message),
+            ),
+        )
+
+    @Serializable
+    private data class StoppedPayload(
+        @SerialName("session_id") val sessionId: String,
+        val code: String,
+        val message: String,
+    )
 }

@@ -84,11 +84,16 @@ class WearDns @VisibleForTesting constructor(
         } catch (e2: Exception) {
             Timber.v(e, "DNS resolution using the system DNS failed, fallback onto mobile DNS lookup.")
 
-            e2.addSuppressed(e)
+            // OkHttp only handles IOException from Dns.lookup. Anything else (e.g. ApiException
+            // TARGET_NODE_NOT_CONNECTED when the phone is not reachable) is thrown on the OkHttp
+            // dispatcher thread and crashes the app, so report every failure as UnknownHostException.
+            val failure = e2 as? UnknownHostException
+                ?: UnknownHostException("Unable to resolve $hostname via mobile: ${e2.message}").apply { initCause(e2) }
+            failure.addSuppressed(e)
 
-            dnsHelperCache[hostname] = NegativeCacheHit(e2, now)
+            dnsHelperCache[hostname] = NegativeCacheHit(failure, now)
 
-            throw e2
+            throw failure
         }
     }
 

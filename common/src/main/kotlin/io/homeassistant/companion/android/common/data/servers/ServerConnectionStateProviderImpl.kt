@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.merge
 import okhttp3.HttpUrl
 import timber.log.Timber
 
-class ServerConnectionStateProviderImpl @AssistedInject constructor(
+internal class ServerConnectionStateProviderImpl @AssistedInject constructor(
     @param:ApplicationContext private val context: Context,
     private val serverManager: ServerManager,
     private val serverDao: ServerDao,
@@ -135,10 +135,9 @@ class ServerConnectionStateProviderImpl @AssistedInject constructor(
     }
 
     override suspend fun canSafelySendCredentials(url: String): Boolean {
-        if (url.startsWith("https://")) return true
-
         val connection = connection()
         if (!connection.isKnownUrl(url)) return false
+        if (url.startsWith("https://")) return true
 
         // URL is HTTP and belongs to this server - check if it's safe
         val allowInsecure = connection.allowInsecureConnection ?: true

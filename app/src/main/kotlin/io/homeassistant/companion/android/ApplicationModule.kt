@@ -10,12 +10,13 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.data.integration.PushWebsocketSupport
+import io.homeassistant.companion.android.common.sensors.WorkerForegroundStateProvider
 import io.homeassistant.companion.android.common.util.AppVersion
-import io.homeassistant.companion.android.common.util.AppVersionProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
 import io.homeassistant.companion.android.di.qualifiers.LocationTrackingSupport
 import io.homeassistant.companion.android.frontend.permissions.FcmSupport
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import javax.inject.Singleton
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -25,10 +26,7 @@ import kotlin.time.ExperimentalTime
 object ApplicationModule {
     @Provides
     @Singleton
-    fun providesAppVersionProviders(): AppVersionProvider {
-        // Unfortunately hilt doesn't support value class yet so we need a provider
-        return AppVersionProvider { AppVersion.from(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE) }
-    }
+    fun providesAppVersion(): AppVersion = AppVersion(BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
 
     @Provides
     @Singleton
@@ -74,4 +72,8 @@ object ApplicationModule {
     fun providesDownloadManager(@ApplicationContext context: Context): DownloadManager? {
         return context.getSystemService<DownloadManager>()
     }
+
+    @Provides
+    fun providesWorkerForegroundStateProvider(@ApplicationContext context: Context): WorkerForegroundStateProvider =
+        WorkerForegroundStateProvider { WebsocketManager.isRunning(context) }
 }

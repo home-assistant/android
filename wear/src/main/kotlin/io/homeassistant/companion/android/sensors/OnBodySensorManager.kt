@@ -6,8 +6,17 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Account
+import io.github.timoptr.mdiicons.generated.AccountOff
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,23 +24,28 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class OnBodySensorManager :
-    SensorManager,
+@Singleton
+class OnBodySensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager,
     SensorEventListener {
     companion object {
         private var isListenerRegistered = false
-        private val onBodySensor = SensorManager.BasicSensor(
+
+        @ProvidesSensor
+        internal val onBodySensor = SensorManager.BasicSensor(
             "on_body",
             "binary_sensor",
             commonR.string.sensor_name_on_body,
             commonR.string.sensor_description_on_body,
-            "mdi:account",
+            Mdi.Account,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
     }
 
-    private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
@@ -43,30 +57,29 @@ class OnBodySensorManager :
     override val name: Int
         get() = commonR.string.sensor_name_on_body
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(onBodySensor)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        mySensorManager = context.getSystemService()!!
+    override fun hasSensor(): Boolean {
+        mySensorManager = applicationContext.getSystemService()!!
         return mySensorManager.getDefaultSensor(Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT, true) != null
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        latestContext = context
+    override suspend fun requestSensorUpdate() {
         updateOnBodySensor()
     }
 
     private suspend fun updateOnBodySensor() {
-        if (!isEnabled(latestContext, onBodySensor)) {
+        if (!isEnabled(onBodySensor)) {
             return
         }
 
-        mySensorManager = latestContext.getSystemService()!!
+        mySensorManager = applicationContext.getSystemService()!!
 
         val onBodySensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LOW_LATENCY_OFFBODY_DETECT, true)
         if (onBodySensors != null && !isListenerRegistered) {
@@ -90,16 +103,15 @@ class OnBodySensorManager :
             Timber.d("onbody state: $state and ${event.values[0]}")
             ioScope.launch {
                 onSensorUpdated(
-                    latestContext,
                     onBodySensor,
                     state,
-                    if (state) onBodySensor.statelessIcon else "mdi:account-off",
+                    if (state) onBodySensor.statelessIcon else Mdi.AccountOff,
                     mapOf(),
                 )
             }
         }
 
         // Send update immediately
-        SensorReceiver.updateAllSensors(latestContext)
+        SensorReceiver.updateAllSensors(applicationContext)
     }
 }

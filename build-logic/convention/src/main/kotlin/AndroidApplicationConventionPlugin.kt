@@ -20,6 +20,10 @@ private const val APPLICATION_ID = "io.homeassistant.companion.android"
  *
  * The application's `versionCode` can be set via the `VERSION_CODE` environment variable.
  *
+ * The `debugExtraResDir` Gradle property adds a resource directory to the `debug` build type only.
+ * The E2E workflow uses it to build in the trust anchor of its per-run mTLS CA
+ * (see `.github/e2e/mtls/`); a build without the property is unchanged.
+ *
  * A `release` signing configuration is automatically created. The keystore information can be
  * provided through the following environment variables:
  * - `KEYSTORE_PATH`: The path to the keystore file.
@@ -77,6 +81,10 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                         isJniDebuggable = false
                         signingConfig = signingConfigs.getByName("release")
                     }
+                }
+
+                project.findProperty("debugExtraResDir")?.toString()?.takeIf { it.isNotBlank() }?.let { dir ->
+                    sourceSets.getByName("debug").res.srcDir(file(dir))
                 }
             }
         }

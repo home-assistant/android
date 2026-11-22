@@ -265,14 +265,11 @@ private fun toJsonElement(encoder: JsonEncoder, value: Any?): JsonElement {
             is Number -> JsonPrimitive(value)
             is Map<*, *> -> JsonObject(
                 value.mapNotNull { (key, v) ->
-                    if (key is String) {
-                        key to toJsonElement(
-                            encoder,
-                            v,
-                        )
-                    } else {
-                        throw IllegalArgumentException("Unsupported type: ${key?.javaClass} as map key")
-                    }
+                    require(key is String) { "Unsupported type: ${key?.javaClass} as map key" }
+                    key to toJsonElement(
+                        encoder,
+                        v,
+                    )
                 }.toMap(),
             )
 

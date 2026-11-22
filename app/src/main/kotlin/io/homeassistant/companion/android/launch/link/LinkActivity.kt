@@ -29,6 +29,8 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.launch.startLaunchInvitation
 import io.homeassistant.companion.android.launch.startLaunchWithNavigateTo
 import io.homeassistant.companion.android.settings.server.ServerChooser
@@ -52,6 +54,14 @@ class LinkActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Recents relaunches a task whose activities are gone with the intent that created it. The
+        // link was already handled, so open the app instead of replaying it.
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) {
+            startActivity(LaunchActivity.newInstance(this))
+            finish()
+            return
+        }
 
         // We display the Icon of the app since this screen might be displayed when the user has to choose a server
         // before proceeding with the link.
@@ -83,7 +93,7 @@ class LinkActivity : BaseActivity() {
         when (event) {
             LinkNavigationEvent.Finish -> Unit
             is LinkNavigationEvent.OpenInvitation -> startLaunchInvitation(event.serverUrl)
-            is LinkNavigationEvent.NavigateToWebView -> startLaunchWithNavigateTo(event.path, event.serverId)
+            is LinkNavigationEvent.NavigateToWebView -> startLaunchWithNavigateTo(event.target, event.serverId)
         }
         finish()
     }
@@ -127,7 +137,7 @@ private fun LinkActivityScreenPreview() {
                     ServerChooserItem(serverId = 1, userName = "Alice Smith", serverName = "Home"),
                     ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Friends home"),
                 ),
-                path = "/lovelace",
+                target = FrontendTarget.Path("/lovelace"),
             ),
             onServerSelected = {},
             onServerChooserDismissed = {},

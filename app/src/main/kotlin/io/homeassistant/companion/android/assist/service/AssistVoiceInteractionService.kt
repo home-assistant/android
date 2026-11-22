@@ -191,9 +191,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
 
         // Fall back to first available model if none selected
         val availableModels = assistConfigManager.getAvailableModels()
-        if (availableModels.isEmpty()) {
-            throw IllegalStateException("No wake word models found in assets")
-        }
+        check(availableModels.isNotEmpty()) { "No wake word models found in assets" }
 
         val fallbackModel = availableModels.first()
         Timber.d("No model selected, using fallback: ${fallbackModel.wakeWord}")
@@ -263,12 +261,7 @@ class AssistVoiceInteractionService : VoiceInteractionService() {
     }
 
     private fun stopForegroundCompat() {
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } else {
-            @Suppress("DEPRECATION")
-            stopForeground(true)
-        }
+        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
     private fun launchAssist(wakeWord: String? = null) {

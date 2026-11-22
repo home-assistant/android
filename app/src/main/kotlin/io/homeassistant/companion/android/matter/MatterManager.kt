@@ -1,15 +1,18 @@
 package io.homeassistant.companion.android.matter
 
 import android.content.IntentSender
+import androidx.activity.result.ActivityResult
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
+import io.homeassistant.companion.android.frontend.externalbus.incoming.MatterShareDevicePayload
 
 interface MatterManager {
 
     /**
-     * Terminal result of [MatterManager.prepareMatterDeviceCommissioning].
+     * Terminal result of [MatterManager.prepareMatterDeviceCommissioning] and
+     * [MatterManager.prepareDeviceSharing].
      *
-     * Callers launch [Ready.intentSender] to continue the Matter commissioning
-     * flow, or display an error message derived from [Error.cause].
+     * Callers launch [Ready.intentSender] to continue the flow, or report an error derived from
+     * [Error.cause].
      */
     sealed interface CommissioningResult {
 
@@ -25,6 +28,35 @@ interface MatterManager {
          * resolving the request. The caller should surface a user-facing error.
          */
         data class Error(val cause: Throwable) : CommissioningResult
+    }
+
+    /**
+     * Terminal outcome of the platform commissioning request launched from
+     * [CommissioningResult.Ready.intentSender], derived from its `ActivityResult` by
+     * [parseCommissioningIntentResult].
+     */
+    sealed interface CommissioningRequestResult {
+
+        /**
+         * The device was commissioned. [deviceName] is the name the user entered during the
+         * platform request, or `null` when none was provided.
+         */
+        data class Success(val deviceName: String?) : CommissioningRequestResult
+
+        /** The request was cancelled by the user or failed before the device was commissioned. */
+        data object Failed : CommissioningRequestResult
+    }
+
+    /** Outcome of the share sheet, derived from its `ActivityResult` by [parseSharingIntentResult]. */
+    sealed interface SharingRequestResult {
+        /** The sheet finished; Play Services does not say whether a device was added. */
+        data object Shared : SharingRequestResult
+
+        /** The user backed out of the platform sheet. */
+        data object Cancelled : SharingRequestResult
+
+        /** The sheet could not be launched, or Play Services reported an error. */
+        data object Failed : SharingRequestResult
     }
 
     /**
@@ -64,4 +96,33 @@ interface MatterManager {
      * @return [MatterCommissionResponse], or `null` if it wasn't possible to complete the request.
      */
     suspend fun commissionOnNetworkDevice(pin: Long, ip: String, serverId: Int): MatterCommissionResponse?
+
+    /**
+     * Interpret the `ActivityResult` of the commissioning flow launched from
+     * [CommissioningResult.Ready.intentSender].
+     */
+    fun parseCommissioningIntentResult(result: ActivityResult): CommissioningRequestResult
+
+    /**
+     * Indicates if the app on this device can share a commissioned Matter device with another app.
+     * Best effort, like [appSupportsCommissioning]: Play Services can still refuse the share.
+     */
+    fun appSupportsSharing(): Boolean
+
+    /**
+     * Prepare sharing a Matter device from the [payload].
+     *
+     * Returns exactly one [CommissioningResult]:
+     *   - [CommissioningResult.Ready] when Play Services produced an `IntentSender` the caller
+     *     must launch from an Activity to continue the flow.
+     *   - [CommissioningResult.Error] when sharing is unsupported on this device (SDK < O_MR1,
+     *     Automotive, minimal flavor) or Play Services failed to prepare the flow.
+     */
+    suspend fun prepareDeviceSharing(payload: MatterShareDevicePayload): CommissioningResult
+
+    /**
+     * Interpret the `ActivityResult` of the share sheet launched from
+     * [CommissioningResult.Ready.intentSender].
+     */
+    fun parseSharingIntentResult(result: ActivityResult): SharingRequestResult
 }

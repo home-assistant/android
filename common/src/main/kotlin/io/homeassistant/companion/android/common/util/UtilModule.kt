@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.util
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.AssetManager
 import android.media.AudioManager
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -22,6 +23,9 @@ object UtilModule {
     @Provides
     @Singleton
     fun provideVoiceAudioRecorder(): VoiceAudioRecorder = VoiceAudioRecorder()
+
+    @Provides
+    fun provideAssetManager(@ApplicationContext context: Context): AssetManager = context.assets
 
     @Provides
     fun provideNotificationStatusProvider(@ApplicationContext context: Context): NotificationStatusProvider =

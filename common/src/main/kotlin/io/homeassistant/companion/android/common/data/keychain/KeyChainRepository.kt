@@ -1,37 +1,25 @@
 package io.homeassistant.companion.android.common.data.keychain
 
-import android.content.Context
-import java.security.PrivateKey
-import java.security.cert.X509Certificate
-import javax.inject.Qualifier
-
 /**
- * Qualifier for the [KeyChainRepository] used to select the key chain.
+ * Client certificate the user picked from the Android system KeyChain. The selected alias is
+ * persisted and restored across app starts.
  */
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class NamedKeyChain
-
-/**
- * Qualifier for the [KeyChainRepository] used to select the key store.
- */
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class NamedKeyStore
-
 interface KeyChainRepository {
 
+    /**
+     * Returns the live view of the certificate, loading the persisted selection when it is not
+     * loaded yet.
+     */
+    suspend fun getClientCertProvider(): ClientCertProvider
+
+    /**
+     * Persists [alias] as the user's selection and loads its certificate, replacing any previously
+     * loaded one.
+     *
+     * @return the loaded certificate, or `null` when it could not be retrieved from the KeyChain.
+     */
+    suspend fun select(alias: String): ClientCertificate?
+
+    /** Forgets the persisted selection and drops the loaded certificate. */
     suspend fun clear()
-
-    suspend fun load(context: Context, alias: String)
-
-    suspend fun load(context: Context)
-
-    suspend fun setData(alias: String, privateKey: PrivateKey, certificateChain: Array<X509Certificate>)
-
-    fun getAlias(): String?
-
-    fun getPrivateKey(): PrivateKey?
-
-    fun getCertificateChain(): Array<X509Certificate>?
 }

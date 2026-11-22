@@ -8,26 +8,44 @@ import android.provider.Settings
 import android.provider.Settings.Global.getInt
 import android.telephony.TelephonyManager
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.generated.Signal
+import io.github.timoptr.mdiicons.generated.SignalOff
+import io.github.timoptr.mdiicons.generated.ToggleSwitch
+import io.github.timoptr.mdiicons.generated.ToggleSwitchOff
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class MobileDataManager : SensorManager {
+@Singleton
+class MobileDataManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
 
     companion object {
+        @ProvidesSensor
         val mobileDataState = SensorManager.BasicSensor(
             "mobile_data",
             "binary_sensor",
             commonR.string.basic_sensor_name_mobile_data,
             commonR.string.sensor_description_mobile_data,
-            "mdi:signal",
+            Mdi.Signal, // Disabled icon is SignalOff
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
+
+        @ProvidesSensor
         val mobileDataRoaming = SensorManager.BasicSensor(
             "mobile_data_roaming",
             "binary_sensor",
             commonR.string.basic_sensor_name_mobile_data_roaming,
             commonR.string.sensor_description_mobile_data_roaming,
-            "mdi:toggle-switch",
+            Mdi.ToggleSwitch, // Disabled icon is ToggleSwitchOff
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
         )
     }
@@ -39,11 +57,11 @@ class MobileDataManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_mobile_data
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(mobileDataState, mobileDataRoaming)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return if (sensorId == mobileDataRoaming.id || SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
             arrayOf(Manifest.permission.READ_PHONE_STATE)
         } else {
@@ -51,41 +69,49 @@ class MobileDataManager : SensorManager {
         }
     }
 
-    override fun hasSensor(context: Context): Boolean {
-        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+    override fun hasSensor(): Boolean {
+        return applicationContext.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        checkState(context, mobileDataState, "mobile_data", mobileDataState.statelessIcon)
-        checkState(context, mobileDataRoaming, Settings.Global.DATA_ROAMING, mobileDataRoaming.statelessIcon)
+    override suspend fun requestSensorUpdate() {
+        checkState(mobileDataState, "mobile_data", mobileDataState.statelessIcon, Mdi.SignalOff)
+        checkState(
+            mobileDataRoaming,
+            Settings.Global.DATA_ROAMING,
+            mobileDataRoaming.statelessIcon,
+            Mdi.ToggleSwitchOff,
+        )
     }
 
     private suspend fun checkState(
-        context: Context,
         sensor: SensorManager.BasicSensor,
         settingKey: String,
-        icon: String,
+        enabledIcon: MdiIcon,
+        disabledIcon: MdiIcon,
     ) {
-        if (!isEnabled(context, sensor)) {
+        if (!isEnabled(sensor)) {
             return
         }
 
         var enabled = false
-        val telephonyManager = context.applicationContext.getSystemService<TelephonyManager>()
+        val telephonyManager = applicationContext.getSystemService<TelephonyManager>()
         if (telephonyManager?.simState == TelephonyManager.SIM_STATE_READY) {
-            enabled = if (sensor.id == mobileDataRoaming.id && SdkVersion.isAtLeast(Build.VERSION_CODES.Q)) {
-                telephonyManager.isDataRoamingEnabled
-            } else if (sensor.id == mobileDataState.id && SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
-                telephonyManager.isDataEnabled
-            } else {
-                getInt(context.contentResolver, settingKey, 0) == 1
+            enabled = when (sensor.id) {
+                mobileDataRoaming.id if SdkVersion.isAtLeast(Build.VERSION_CODES.Q) -> {
+                    telephonyManager.isDataRoamingEnabled
+                }
+                mobileDataState.id if SdkVersion.isAtLeast(Build.VERSION_CODES.O) -> {
+                    telephonyManager.isDataEnabled
+                }
+                else -> {
+                    getInt(applicationContext.contentResolver, settingKey, 0) == 1
+                }
             }
         }
         onSensorUpdated(
-            context,
             sensor,
             enabled,
-            if (enabled) icon else "$icon-off",
+            if (enabled) enabledIcon else disabledIcon,
             mapOf(),
         )
     }

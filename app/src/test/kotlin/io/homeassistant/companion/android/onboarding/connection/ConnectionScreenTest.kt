@@ -41,9 +41,10 @@ class ConnectionScreenTest {
                     isLoading = false,
                     isError = false,
                     url = null,
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsNotDisplayed()
@@ -59,9 +60,10 @@ class ConnectionScreenTest {
                     isLoading = true,
                     isError = false,
                     url = "",
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
@@ -78,9 +80,10 @@ class ConnectionScreenTest {
                     isLoading = false,
                     isError = false,
                     url = "",
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsDisplayed()
@@ -97,9 +100,10 @@ class ConnectionScreenTest {
                     isLoading = false,
                     isError = true,
                     url = "",
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
             onNodeWithTag(HA_WEBVIEW_TAG).assertIsNotDisplayed()
@@ -120,9 +124,10 @@ class ConnectionScreenTest {
                     isLoading = false,
                     isError = false,
                     url = "",
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     onWebViewCreationFailed = {},
+                    webViewDebugEnabled = null,
                 )
             }
 

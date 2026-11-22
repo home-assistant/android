@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.homeassistant.android.application)
     alias(libs.plugins.homeassistant.android.flavor)
-    alias(libs.plugins.firebase.appdistribution)
     alias(libs.plugins.homeassistant.android.dependencies)
     alias(libs.plugins.kotlin.parcelize)
 }
@@ -41,13 +40,15 @@ android {
     }
 }
 
-firebaseAppDistributionDefault {
-    serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
-    releaseNotesFile = "./app/build/outputs/changelogBeta"
-    groups = "continuous-deployment"
+aboutLibraries {
+    collect {
+        // Third-party assets that are not Gradle dependencies (e.g. the Assist listening chime)
+        configPath = rootProject.file("config/aboutlibraries")
+    }
 }
 
 dependencies {
     // Most of the dependencies are coming from the convention plugin to avoid duplication with `:automotive` module.
     "fullImplementation"(libs.car.projected)
+    ksp(project(":provides-sensor-processor"))
 }

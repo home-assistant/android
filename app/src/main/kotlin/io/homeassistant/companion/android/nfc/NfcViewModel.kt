@@ -15,8 +15,8 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -37,8 +37,8 @@ class NfcViewModel @Inject constructor(private val serverManager: ServerManager,
 
     val navigator = Navigator()
 
-    private val _nfcResultSnackbar = MutableSharedFlow<Int>()
-    var nfcResultSnackbar = _nfcResultSnackbar.asSharedFlow()
+    private val _nfcResultSnackbar = Channel<Int>(Channel.BUFFERED)
+    val nfcResultSnackbar = _nfcResultSnackbar.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -81,10 +81,10 @@ class NfcViewModel @Inject constructor(private val serverManager: ServerManager,
         )
     }
 
-    suspend fun onNfcReadEmpty() = _nfcResultSnackbar.emit(commonR.string.nfc_invalid_tag)
+    suspend fun onNfcReadEmpty() = _nfcResultSnackbar.send(commonR.string.nfc_invalid_tag)
 
     suspend fun onNfcWriteSuccess(identifier: String) {
-        _nfcResultSnackbar.emit(commonR.string.nfc_write_tag_success)
+        _nfcResultSnackbar.send(commonR.string.nfc_write_tag_success)
         nfcTagIdentifier = identifier
 
         navigator.navigateTo(
@@ -95,7 +95,7 @@ class NfcViewModel @Inject constructor(private val serverManager: ServerManager,
         )
     }
 
-    suspend fun onNfcWriteFailure() = _nfcResultSnackbar.emit(commonR.string.nfc_write_tag_error)
+    suspend fun onNfcWriteFailure() = _nfcResultSnackbar.send(commonR.string.nfc_write_tag_error)
 
     fun duplicateNfcTag() {
         nfcIdentifierIsEditable = false
@@ -117,11 +117,11 @@ class NfcViewModel @Inject constructor(private val serverManager: ServerManager,
                     }
                 }
                 if (results.awaitAll().any { it }) {
-                    _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_success)
+                    _nfcResultSnackbar.send(commonR.string.nfc_event_fired_success)
                 } else {
-                    _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_fail)
+                    _nfcResultSnackbar.send(commonR.string.nfc_event_fired_fail)
                 }
-            } ?: _nfcResultSnackbar.emit(commonR.string.nfc_event_fired_fail)
+            } ?: _nfcResultSnackbar.send(commonR.string.nfc_event_fired_fail)
         }
     }
 }

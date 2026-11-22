@@ -47,6 +47,16 @@ import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
 import androidx.core.text.isDigitsOnly
+import coil3.imageLoader
+import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
+import coil3.request.CachePolicy
+import coil3.request.ErrorResult
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.size.Size
+import coil3.toBitmap
 import com.google.android.material.color.DynamicColors
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.backgroundColorRes
@@ -77,11 +87,14 @@ import io.homeassistant.companion.android.common.notifications.handleText
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
+import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
-import io.homeassistant.companion.android.common.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.getActiveNotificationGroup
 import io.homeassistant.companion.android.common.util.getIntOrNull
 import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.isAutomotive
@@ -94,10 +107,14 @@ import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.common.util.tts.TextToSpeechData
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
+import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeSetting
+import io.homeassistant.companion.android.sensors.LocationSensorReceiver
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -106,17 +123,19 @@ import io.homeassistant.companion.android.settings.assist.DefaultAssistantManage
 import io.homeassistant.companion.android.util.FlashlightHelper
 import io.homeassistant.companion.android.util.PermissionRequestMediator
 import io.homeassistant.companion.android.util.UrlUtil
+import io.homeassistant.companion.android.util.fileProviderAuthority
 import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.vehicle.HaCarAppService
 import io.homeassistant.companion.android.websocket.WebsocketManager
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.io.File
+import java.io.IOException
 import java.net.URL
 import java.net.URLDecoder
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -139,13 +158,15 @@ class MessagingManager @Inject constructor(
     private val serverManager: ServerManager,
     private val prefsRepository: PrefsRepository,
     private val notificationDao: NotificationDao,
-    private val sensorDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val settingsDao: SettingsDao,
     private val textToSpeechClient: TextToSpeechClient,
     private val flashlightHelper: FlashlightHelper,
     private val permissionRequestMediator: PermissionRequestMediator,
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
+    private val bluetoothSensorManager: BluetoothSensorManager,
+    private val clock: Clock,
 ) {
     companion object {
         const val APP_PREFIX = "app://"
@@ -317,6 +338,12 @@ class MessagingManager @Inject constructor(
         // Values for temporarily added keys
         const val THIS_SERVER_ID = "server_id"
 
+        private const val HEADER_AUTHORIZATION = "Authorization"
+        private const val MIME_TYPE_GIF = "image/gif"
+        private const val ANIMATED_IMAGE_FOLDER = "animated_notification_image"
+        private val ANIMATED_IMAGE_MAX_AGE = 2.days
+        private const val MAX_NOTIFICATION_IMAGE_SIZE_PX = 1024
+
         // Values for progress style notifications
         const val PROGRESS_ICON_SIZE = 20 // Taken from "Progress-centric notifications" in Android docs
         const val PROGRESS_ICON_PADDING = 3 // Ensures that a square fits inside the circular background
@@ -403,12 +430,13 @@ class MessagingManager @Inject constructor(
                 }
 
                 jsonData[NotificationData.MESSAGE] == REMOVE_CHANNEL &&
-                    !jsonData[NotificationData.CHANNEL].isNullOrBlank() -> {
+                    !jsonData[NotificationData.CHANNEL].isNullOrBlank() &&
+                    allowCommands -> {
                     Timber.d("Removing Notification channel ${jsonData[NotificationData.CHANNEL]}")
                     removeNotificationChannel(jsonData[NotificationData.CHANNEL]!!)
                 }
 
-                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS -> {
+                jsonData[NotificationData.MESSAGE] == TextToSpeechData.TTS && allowCommands -> {
                     textToSpeechClient.speakText(jsonData)
                 }
 
@@ -485,13 +513,13 @@ class MessagingManager @Inject constructor(
                         }
 
                         DeviceCommandData.COMMAND_BLE_TRANSMITTER -> {
-                            if (!commandBleTransmitter(context, jsonData, sensorDao)) {
+                            if (!commandBleTransmitter(jsonData, sensorRepository, bluetoothSensorManager)) {
                                 sendNotification(jsonData)
                             }
                         }
 
                         DeviceCommandData.COMMAND_BEACON_MONITOR -> {
-                            if (!commandBeaconMonitor(context, jsonData)) {
+                            if (!commandBeaconMonitor(jsonData, bluetoothSensorManager)) {
                                 sendNotification(jsonData)
                             }
                         }
@@ -672,7 +700,7 @@ class MessagingManager @Inject constructor(
                 }
 
                 else -> {
-                    Timber.d("Creating notification with following data: $jsonData")
+                    Timber.d("Creating notification with following data: ${sensitive { jsonData.toString() }}")
                     sendNotification(jsonData, notificationId, now)
                 }
             }
@@ -750,8 +778,12 @@ class MessagingManager @Inject constructor(
                     if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty()) {
                         intent.setClassName(packageName, className)
                     }
-                    Timber.d("Sending broadcast intent")
-                    context.sendBroadcast(intent)
+                    if (intent.reachesOwnNonExportedReceiver()) {
+                        FailFast.fail { "Blocked broadcast intent to a non-exported component of the app" }
+                    } else {
+                        Timber.d("Sending broadcast intent")
+                        context.sendBroadcast(intent)
+                    }
                 } catch (e: Exception) {
                     Timber.e(e, "Unable to send broadcast intent please check command format")
                     Handler(Looper.getMainLooper()).post {
@@ -804,15 +836,16 @@ class MessagingManager @Inject constructor(
 
             COMMAND_HIGH_ACCURACY_MODE -> {
                 when (command) {
-                    DeviceCommandData.TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
-                    DeviceCommandData.TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
-                    FORCE_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
-                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(
-                        context,
+                    DeviceCommandData.TURN_OFF -> sensorRepository.setHighAccuracyModeSetting(false)
+                    DeviceCommandData.TURN_ON,
+                    FORCE_ON,
+                    -> sensorRepository.setHighAccuracyModeSetting(true)
+
+                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> sensorRepository.setHighAccuracyModeIntervalSetting(
                         data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt(),
                     )
                 }
-                val intent = Intent(context, LocationSensorManager::class.java)
+                val intent = Intent(context, LocationSensorReceiver::class.java)
                 intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY
                 intent.putExtra("command", command)
                 context.sendBroadcast(intent)
@@ -1074,12 +1107,10 @@ class MessagingManager @Inject constructor(
             group = NotificationData.GROUP_PREFIX + group
             groupId = group.hashCode()
         } else {
-            if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
-                if (notification != null && notification.isGroup) {
-                    previousGroup = NotificationData.GROUP_PREFIX + notification.tag
-                    previousGroupId = previousGroup.hashCode()
-                }
+            val activeGroup = notificationManagerCompat.getActiveNotificationGroup(tag, messageId)
+            if (activeGroup != null) {
+                previousGroup = activeGroup
+                previousGroupId = previousGroup.hashCode()
             }
         }
 
@@ -1179,12 +1210,10 @@ class MessagingManager @Inject constructor(
                 builder.setWhen(notificationWhen)
                 builder.setUsesChronometer(usesChronometer)
 
-                if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-                    val countdown = notificationWhen > System.currentTimeMillis()
-                    // Without this builder.setChronometerCountDown throws a null reference exception
-                    builder.addExtras(Bundle())
-                    builder.setChronometerCountDown(countdown)
-                }
+                val countdown = notificationWhen > System.currentTimeMillis()
+                // Without this builder.setChronometerCountDown throws a null reference exception
+                builder.addExtras(Bundle())
+                builder.setChronometerCountDown(countdown)
             }
         } catch (e: Exception) {
             Timber.e(e, "Error while handling chronometer notification")
@@ -1528,7 +1557,7 @@ class MessagingManager @Inject constructor(
         builder.setAutoCancel(!sticky)
     }
 
-    private fun handleSubject(builder: NotificationCompat.Builder, data: Map<String, String>) {
+    private suspend fun handleSubject(builder: NotificationCompat.Builder, data: Map<String, String>) {
         val subject = data[SUBJECT]
         if (!subject.isNullOrBlank()) {
             builder.setContentText(prepareText(subject))
@@ -1553,7 +1582,15 @@ class MessagingManager @Inject constructor(
             val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
             if (urlState is UrlState.HasUrl) {
                 val url = UrlUtil.handle(urlState.url, dataIcon)
-                val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataIcon))
+                val iconSize = context.resources.getDimensionPixelSize(
+                    android.R.dimen.notification_large_icon_width,
+                )
+                val bitmap = loadImage(
+                    serverId,
+                    url,
+                    !UrlUtil.isAbsoluteUrl(dataIcon),
+                    Size(iconSize, iconSize),
+                )?.image?.toBitmap()
                 if (bitmap != null) {
                     builder.setLargeIcon(bitmap)
                 }
@@ -1569,20 +1606,30 @@ class MessagingManager @Inject constructor(
             val dataImage = imageUrl.trim().replace(" ", "%20")
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val urlState = serverManager.connectionStateProvider(serverId).urlFlow().first()
+            val sdkSupportsAnimatedImages = SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
             if (urlState is UrlState.HasUrl) {
                 val url = UrlUtil.handle(urlState.url, dataImage)
-                val bitmap = getImageBitmap(serverId, url, !UrlUtil.isAbsoluteUrl(dataImage))
-                if (bitmap != null) {
+                // The downloaded file is only needed for animated images
+                val diskCachePolicy = if (sdkSupportsAnimatedImages) {
+                    CachePolicy.WRITE_ONLY
+                } else {
+                    CachePolicy.DISABLED
+                }
+                val image = loadImage(
+                    serverId,
+                    url,
+                    !UrlUtil.isAbsoluteUrl(dataImage),
+                    bigPictureTargetSize(),
+                    diskCachePolicy,
+                )
+                if (image != null) {
+                    val bitmap = image.image.toBitmap()
                     builder
                         .setLargeIcon(bitmap)
                         .setStyle(
                             NotificationCompat.BigPictureStyle().also { style ->
-                                if (SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
-                                    saveTempAnimatedImage(
-                                        serverId,
-                                        url,
-                                        !UrlUtil.isAbsoluteUrl(dataImage),
-                                    )?.let { filePath ->
+                                if (sdkSupportsAnimatedImages) {
+                                    saveTempAnimatedImage(image.diskCacheKey)?.let { filePath ->
                                         style.bigPicture(Icon.createWithContentUri(filePath))
                                     } ?: run { style.bigPicture(bitmap) }
                                 } else {
@@ -1598,67 +1645,115 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private suspend fun getImageBitmap(serverId: Int, url: URL?, requiresAuth: Boolean = false): Bitmap? = withContext(
-        Dispatchers.IO,
-    ) {
-        if (url == null) {
+    /**
+     * Target size for a notification big picture. Vector images (e.g. SVGs) are rasterized at this
+     * resolution and large raster images are downscaled to it, keeping the result crisp while
+     * bounding the memory used by the decoded bitmap.
+     *
+     * The display width gives a crisp result since the big picture spans the notification width; it
+     * is capped by [MAX_NOTIFICATION_IMAGE_SIZE_PX] so large or high-density screens don't produce
+     * excessively large bitmaps.
+     */
+    private fun bigPictureTargetSize(): Size {
+        val dimension = context.resources.displayMetrics.widthPixels
+            .coerceIn(1, MAX_NOTIFICATION_IMAGE_SIZE_PX)
+        return Size(dimension, dimension)
+    }
+
+    /**
+     * Downloads the image at [url], sending the server credentials when [requiresAuth] is set.
+     * Returns `null` when the image cannot be loaded.
+     *
+     * [targetSize] bounds the decoded bitmap. It is required so that vector images (e.g. SVGs) are
+     * rasterized at a resolution matching where the notification displays them instead of their
+     * small intrinsic size, and so that large raster images are downscaled to a reasonable size.
+     *
+     * Use [CachePolicy.WRITE_ONLY] as [diskCachePolicy] to access the downloaded file afterwards.
+     */
+    private suspend fun loadImage(
+        serverId: Int,
+        url: URL?,
+        requiresAuth: Boolean,
+        targetSize: Size,
+        diskCachePolicy: CachePolicy = CachePolicy.DISABLED,
+    ): SuccessResult? {
+        url ?: return null
+        return try {
+            val request = ImageRequest.Builder(context)
+                .data(url.toString())
+                .apply {
+                    if (requiresAuth) {
+                        val token = serverManager.authenticationRepository(serverId).buildBearerToken()
+                        httpHeaders(NetworkHeaders.Builder().add(HEADER_AUTHORIZATION, token).build())
+                    }
+                }
+                .size(targetSize)
+                // The bitmap is sent to the system UI, keep it software-backed
+                .allowHardware(false)
+                // A URL can serve a new image for each notification (e.g. a camera snapshot), so never
+                // read the caches
+                .memoryCachePolicy(CachePolicy.DISABLED)
+                .diskCachePolicy(diskCachePolicy)
+                .build()
+            when (val result = context.imageLoader.execute(request)) {
+                is SuccessResult -> result
+
+                is ErrorResult -> {
+                    Timber.e(result.throwable, "Couldn't download image for notification")
+                    null
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Couldn't download image for notification")
+            null
+        }
+    }
+
+    /**
+     * Copies the downloaded image stored under [diskCacheKey] to a file shareable with the system UI
+     * when it is a GIF. Returns `null` for any other image.
+     */
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private suspend fun saveTempAnimatedImage(diskCacheKey: String?): Uri? = withContext(Dispatchers.IO) {
+        val diskCache = context.imageLoader.diskCache
+        val cacheFolder = context.externalCacheDir?.resolve(ANIMATED_IMAGE_FOLDER)
+        if (diskCacheKey == null || diskCache == null || cacheFolder == null) {
             return@withContext null
         }
 
-        var image: Bitmap? = null
         try {
-            val request = Request.Builder().apply {
-                url(url)
-                if (requiresAuth) {
-                    addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
+            diskCache.openSnapshot(diskCacheKey)?.use { snapshot ->
+                val image = snapshot.data.toFile()
+                if (!image.isGif()) {
+                    return@use null
                 }
-            }.build()
 
-            okHttpClientProvider().newCall(request).execute().use {
-                image = BitmapFactory.decodeStream(it.body.byteStream())
+                // Create folder, if it does not yet exist
+                cacheFolder.mkdir()
+                // Clean up stale images
+                val staleBefore = clock.now() - ANIMATED_IMAGE_MAX_AGE
+                cacheFolder.listFiles()
+                    ?.filter { Instant.fromEpochMilliseconds(it.lastModified()) < staleBefore }
+                    ?.forEach { expired -> expired.delete() }
+
+                val file = File(cacheFolder, "${clock.now().toEpochMilliseconds()}_animated_notification.gif")
+                image.copyTo(file)
+                FileProvider.getUriForFile(context, context.fileProviderAuthority, file)
             }
-        } catch (e: Exception) {
-            Timber.e(e, "Couldn't download image for notification")
+        } catch (e: IOException) {
+            Timber.e(e, "Couldn't save animated image for notification")
+            null
         }
-        return@withContext image
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    private suspend fun saveTempAnimatedImage(serverId: Int, url: URL?, requiresAuth: Boolean = false): Uri? =
-        withContext(
-            Dispatchers.IO,
-        ) {
-            if (url == null || url.path.endsWith("gif").not()) {
-                return@withContext null
-            }
-
-            // delete previous images that are no longer needed
-            val imageCutoff = LocalDateTime.now().minusDays(2)
-            context.externalCacheDir?.listFiles()?.filter { file ->
-                file.absolutePath.endsWith("_animated_notification.gif") &&
-                    imageCutoff.isAfter(
-                        LocalDateTime.ofInstant(Instant.ofEpochMilli(file.lastModified()), ZoneId.systemDefault()),
-                    )
-            }?.forEach { expired -> expired.delete() }
-
-            val file = File(context.externalCacheDir, "${System.currentTimeMillis()}_animated_notification.gif")
-            try {
-                val request = Request.Builder().apply {
-                    url(url)
-                    if (requiresAuth) {
-                        addHeader("Authorization", serverManager.authenticationRepository(serverId).buildBearerToken())
-                    }
-                }.build()
-
-                okHttpClientProvider().newCall(request).execute().use {
-                    val bytes = it.body.bytes()
-                    file.writeBytes(bytes)
-                }
-            } catch (e: Exception) {
-                Timber.e(e, "Couldn't download image for notification")
-            }
-            return@withContext FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
-        }
+    /** Detects a GIF from the content of the file, the URL it comes from does not have to end with `.gif`. */
+    private fun File.isGif(): Boolean {
+        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, options)
+        return options.outMimeType == MIME_TYPE_GIF
+    }
 
     private suspend fun handleVideo(builder: NotificationCompat.Builder, data: Map<String, String>) {
         val videoUrl = data[VIDEO_URL]
@@ -1771,8 +1866,9 @@ class MessagingManager @Inject constructor(
 
                     mediaRetriever.release()
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                e.printStackTrace()
                 Timber.e(e, "Couldn't download video for notification")
             }
 
@@ -1885,10 +1981,16 @@ class MessagingManager @Inject constructor(
                             eventIntent,
                             PendingIntent.FLAG_IMMUTABLE,
                         )
+                        // Intentionally use no icon if the action is first/second, so Android Auto heads-up
+                        // notifications show the action title instead of replacing it with an icon. However, the
+                        // third action MUST have an icon to avoid crashing the Android Auto app.
+                        val actionIcon = if (i == 3) {
+                            IconCompat.createWithResource(context, commonR.drawable.ic_stat_ic_notification)
+                        } else {
+                            null
+                        }
                         val action = NotificationCompat.Action.Builder(
-                            // Intentionally use no icon so Android Auto / heads-up notifications show the action
-                            // title instead of replacing it with an icon
-                            null,
+                            actionIcon,
                             notificationAction.title,
                             actionPendingIntent,
                         )
@@ -1908,7 +2010,7 @@ class MessagingManager @Inject constructor(
         val otherApp = needsPackage || UrlUtil.isAbsoluteUrl(uri) || uri.startsWith(DEEP_LINK_PREFIX)
         val intent = when {
             uri.isBlank() -> {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             }
 
             uri.startsWith(APP_PREFIX) -> {
@@ -1928,7 +2030,7 @@ class MessagingManager @Inject constructor(
                 if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY) {
                     SettingsActivity.newInstance(context, SettingsActivity.Deeplink.NotificationHistory)
                 } else {
-                    WebViewActivity.newInstance(context, null, serverId)
+                    context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
                 }
             }
 
@@ -1943,9 +2045,9 @@ class MessagingManager @Inject constructor(
             }
 
             else -> {
-                WebViewActivity.newInstance(context, uri, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(uri), serverId)
             }
-        } ?: WebViewActivity.newInstance(context, null, serverId)
+        } ?: context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (!otherApp) {
@@ -1983,15 +2085,13 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleReplyHistory(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.N)) {
-            val replies = data.entries
-                .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
-                .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
-            if (replies.any()) {
-                val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
-                builder.setRemoteInputHistory(history)
-                builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
-            }
+        val replies = data.entries
+            .filter { it.key.startsWith(SOURCE_REPLY_HISTORY) }
+            .sortedBy { it.key.substringAfter(SOURCE_REPLY_HISTORY).toInt() }
+        if (replies.any()) {
+            val history = replies.map { it.value }.reversed().toTypedArray() // Reverse to have latest replies first
+            builder.setRemoteInputHistory(history)
+            builder.setOnlyAlertOnce(true) // Overwrites user settings to match system defaults
         }
     }
 
@@ -2163,6 +2263,16 @@ class MessagingManager @Inject constructor(
         )
     }
 
+    private fun Intent.reachesOwnNonExportedActivity(): Boolean {
+        val target = resolveActivityInfo(context.packageManager, 0) ?: return false
+        return target.packageName == context.packageName && !target.exported
+    }
+
+    private fun Intent.reachesOwnNonExportedReceiver(): Boolean =
+        context.packageManager.queryBroadcastReceivers(this, 0).any {
+            it.activityInfo.packageName == context.packageName && !it.activityInfo.exported
+        }
+
     private fun processActivityCommand(data: Map<String, String>) {
         try {
             val packageName = data[INTENT_PACKAGE_NAME]
@@ -2182,6 +2292,12 @@ class MessagingManager @Inject constructor(
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             if (!packageName.isNullOrEmpty()) {
                 intent.setPackage(packageName)
+            }
+            if (intent.reachesOwnNonExportedActivity()) {
+                FailFast.fail { "Blocked activity intent to a non-exported component of the app" }
+                return
+            }
+            if (!packageName.isNullOrEmpty()) {
                 context.startActivity(intent)
             } else if (intent.resolveActivity(context.packageManager) != null) {
                 context.startActivity(intent)
@@ -2210,9 +2326,9 @@ class MessagingManager @Inject constructor(
         try {
             val serverId = data[THIS_SERVER_ID]!!.toInt()
             val intent = if (title.isNullOrEmpty()) {
-                WebViewActivity.newInstance(context, null, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.Default, serverId)
             } else {
-                WebViewActivity.newInstance(context, title, serverId)
+                context.intentLaunchWithNavigateTo(FrontendTarget.fromRawPath(title), serverId)
             }
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
@@ -2271,29 +2387,25 @@ class MessagingManager @Inject constructor(
         when (mode.uppercase()) {
             WebsocketSetting.NEVER.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.NEVER
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.NEVER))
                 }
             }
 
             WebsocketSetting.ALWAYS.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.ALWAYS
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.ALWAYS))
                 }
             }
 
             WebsocketSetting.HOME_WIFI.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.HOME_WIFI
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.HOME_WIFI))
                 }
             }
 
             WebsocketSetting.SCREEN_ON.name -> {
                 settingsDao.get(serverId)?.let {
-                    it.websocketSetting = WebsocketSetting.SCREEN_ON
-                    settingsDao.update(it)
+                    settingsDao.update(it.copy(websocketSetting = WebsocketSetting.SCREEN_ON))
                 }
             }
         }

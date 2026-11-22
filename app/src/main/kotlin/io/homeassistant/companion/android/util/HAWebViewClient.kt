@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.util
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
 import android.webkit.HttpAuthHandler
@@ -10,14 +12,35 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import androidx.core.net.toUri
+import androidx.annotation.VisibleForTesting
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
+import java.lang.ref.WeakReference
 import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 import timber.log.Timber
+
+@VisibleForTesting
+internal const val HISTORY_CHANGED_LISTENER = "androidInternalHaHistoryChanged"
+
+/**
+ * Notifies once when a new document starts in any frame, then on every same-document history change
+ * through the Navigation API.
+ *
+ * The listener is captured before page scripts run, so a page global with the same name cannot replace it.
+ */
+private val HISTORY_CHANGED_SCRIPT = """
+    (() => {
+      const listener = $HISTORY_CHANGED_LISTENER;
+      const notify = () => listener.postMessage("");
+      window.navigation?.addEventListener("currententrychange", notify);
+      notify();
+    })();
+""".trimIndent()
 
 /**
  * Factory for creating [HAWebViewClient] instances dedicated to loading Home Assistant frontend.
@@ -25,7 +48,7 @@ import timber.log.Timber
  * The created clients handle Home Assistant-specific concerns such as TLS client authentication,
  * error mapping to [FrontendConnectionError], and JavaScript injection into the WebView.
  */
-class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyChainRepository: KeyChainRepository) {
+class HAWebViewClientFactory @Inject constructor(private val keyChainRepository: KeyChainRepository) {
     /**
      * Creates a new [HAWebViewClient] with the specified configuration.
      *
@@ -41,9 +64,15 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
      * @param onReceivedHttpAuthRequest Optional callback when the server requests HTTP Basic Auth.
      *        Receives the handler, host, the resource URL that triggered the request, and the realm.
      * @param onCanGoBackChanged Optional callback invoked when the WebView back/forward list changes,
-     *        reporting whether the WebView can currently navigate back.
+     *        reporting whether the WebView can currently navigate back. Covers navigations inside
+     *        iframes too, when the WebView supports it.
+     * @param onSubresourceSslError Optional callback when an SSL error occurs on a resource other than
+     *        the main URL being loaded. Receives the URL of the failing resource. The frontend itself
+     *        is unaffected, so this is a notice rather than a connection error.
+     * @param onPageStarted Optional callback when a main-frame load starts (including a reload of the
+     *        same URL), with the URL being loaded.
      */
-    fun create(
+    suspend fun create(
         currentUrlFlow: StateFlow<String?>,
         onFrontendError: (FrontendConnectionError) -> Unit,
         onCrash: (() -> Unit)? = null,
@@ -58,16 +87,21 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
             ) -> Unit
         )? = null,
         onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
+        onSubresourceSslError: ((url: String?) -> Unit)? = null,
+        onPageStarted: ((url: String?) -> Unit)? = null,
     ): HAWebViewClient {
         return HAWebViewClient(
             keyChainRepository = keyChainRepository,
+            clientCertProvider = keyChainRepository.getClientCertProvider(),
             currentUrlFlow = currentUrlFlow,
             onFrontendError = onFrontendError,
             onCrash = onCrash,
             onUrlIntercepted = onUrlIntercepted,
             onPageFinished = onPageFinished,
+            onPageStarted = onPageStarted,
             onReceivedHttpAuthRequest = onReceivedHttpAuthRequest,
             onCanGoBackChanged = onCanGoBackChanged,
+            onSubresourceSslError = onSubresourceSslError,
         )
     }
 }
@@ -80,19 +114,38 @@ class HAWebViewClientFactory @Inject constructor(@NamedKeyChain private val keyC
  */
 class HAWebViewClient internal constructor(
     keyChainRepository: KeyChainRepository,
+    clientCertProvider: ClientCertProvider,
     private val currentUrlFlow: StateFlow<String?>,
     private val onFrontendError: (FrontendConnectionError) -> Unit,
     private val onCrash: (() -> Unit)?,
     private val onUrlIntercepted: ((uri: Uri, isTLSClientAuthNeeded: Boolean) -> Boolean)?,
     private val onPageFinished: ((url: String?) -> Unit)?,
+    private val onPageStarted: ((url: String?) -> Unit)? = null,
     private val onReceivedHttpAuthRequest: (
         (handler: HttpAuthHandler, host: String, resource: String, realm: String) -> Unit
     )?,
     private val onCanGoBackChanged: ((canGoBack: Boolean) -> Unit)? = null,
-) : TLSWebViewClient(keyChainRepository) {
+    private val onSubresourceSslError: ((url: String?) -> Unit)? = null,
+) : TLSWebViewClient(keyChainRepository, clientCertProvider) {
 
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
     private var lastResourceUrl: String? = null
+
+    /**
+     * Weak reference to the WebView already reporting history changes. This client outlives the WebViews
+     * recreated by the screen, so a new WebView is detected and observed as well.
+     */
+    private var historyObservedWebView: WeakReference<WebView>? = null
+
+    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+        super.onPageStarted(view, url, favicon)
+        onPageStarted?.invoke(url)
+        val onCanGoBackChanged = onCanGoBackChanged
+        if (view != null && onCanGoBackChanged != null && historyObservedWebView?.get() !== view) {
+            historyObservedWebView = WeakReference(view)
+            view.observeHistoryChanges(onCanGoBackChanged)
+        }
+    }
 
     override fun onLoadResource(view: WebView?, url: String?) {
         super.onLoadResource(view, url)
@@ -137,50 +190,48 @@ class HAWebViewClient internal constructor(
         Timber.e("onReceivedError: $errorDetails")
 
         val frontendConnectionError = when (error?.errorCode) {
-            ERROR_FAILED_SSL_HANDSHAKE -> FrontendConnectionError.AuthenticationError(
+            ERROR_FAILED_SSL_HANDSHAKE -> FrontendConnectionError.SslError(
                 message = commonR.string.webview_error_FAILED_SSL_HANDSHAKE,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_AUTHENTICATION -> FrontendConnectionError.AuthenticationError(
+            ERROR_AUTHENTICATION -> FrontendConnectionError.AuthRevoked(
                 message = commonR.string.webview_error_AUTHENTICATION,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_PROXY_AUTHENTICATION -> FrontendConnectionError.AuthenticationError(
+            ERROR_PROXY_AUTHENTICATION -> FrontendConnectionError.AuthRevoked(
                 message = commonR.string.webview_error_PROXY_AUTHENTICATION,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_UNSUPPORTED_AUTH_SCHEME -> FrontendConnectionError.AuthenticationError(
+            ERROR_UNSUPPORTED_AUTH_SCHEME -> FrontendConnectionError.AuthRevoked(
                 message = commonR.string.webview_error_AUTH_SCHEME,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_HOST_LOOKUP -> FrontendConnectionError.UnreachableError(
+            ERROR_HOST_LOOKUP -> FrontendConnectionError.Unreachable(
                 message = commonR.string.webview_error_HOST_LOOKUP,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_TIMEOUT -> FrontendConnectionError.UnreachableError(
-                message = commonR.string.webview_error_TIMEOUT,
+            ERROR_TIMEOUT -> FrontendConnectionError.Timeout(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            ERROR_CONNECT -> FrontendConnectionError.UnreachableError(
+            ERROR_CONNECT -> FrontendConnectionError.Unreachable(
                 message = commonR.string.webview_error_CONNECT,
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
 
-            else -> FrontendConnectionError.UnknownError(
-                message = commonR.string.connection_error_unknown_error,
+            else -> FrontendConnectionError.Unknown(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceError::class.toString(),
             )
@@ -206,20 +257,17 @@ class HAWebViewClient internal constructor(
         Timber.e("onReceivedHttpError: $errorDetails")
 
         val frontendConnectionError = when {
-            isTLSClientAuthNeeded && !isCertificateChainValid -> FrontendConnectionError.AuthenticationError(
-                message = commonR.string.tls_cert_expired_message,
+            isTLSClientAuthNeeded && !isCertificateChainValid -> FrontendConnectionError.TlsCertExpired(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
-            isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> FrontendConnectionError.AuthenticationError(
-                message = commonR.string.tls_cert_not_found_message,
+            isTLSClientAuthNeeded && errorResponse?.statusCode == 400 -> FrontendConnectionError.TlsCertNotFound(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
 
-            else -> FrontendConnectionError.UnknownError(
-                message = commonR.string.connection_error_unknown_error,
+            else -> FrontendConnectionError.Unknown(
                 errorDetails = errorDetails,
                 rawErrorType = WebResourceResponse::class.toString(),
             )
@@ -229,6 +277,17 @@ class HAWebViewClient internal constructor(
 
     override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
         super.onReceivedSslError(view, handler, error)
+
+        // Only fail the connection for the main URL being loaded. An SSL error on any other resource
+        // the page pulls in (a third party script, an image, ...) must not block a working frontend.
+        // The call to super already cancelled the handshake, so the resource simply won't load.
+        val resourceUrl: String? = error?.url
+        if (error != null && resourceUrl != currentUrlFlow.value) {
+            Timber.w("Ignoring SSL error on subresource ${sensitive(resourceUrl.orEmpty())}: $error")
+            onSubresourceSslError?.invoke(resourceUrl)
+            return
+        }
+
         Timber.e("onReceivedSslError: $error")
 
         val messageRes = when (error?.primaryError) {
@@ -241,7 +300,7 @@ class HAWebViewClient internal constructor(
             else -> commonR.string.error_ssl
         }
         onFrontendError(
-            FrontendConnectionError.AuthenticationError(
+            FrontendConnectionError.SslError(
                 message = messageRes,
                 errorDetails = error.toString(),
                 rawErrorType = SslError::class.toString(),
@@ -255,13 +314,8 @@ class HAWebViewClient internal constructor(
         return true
     }
 
-    // Override deprecated method for backward compatibility with API 23 and below.
-    // The non-deprecated shouldOverrideUrlLoading(WebView, WebResourceRequest) is not invoked
-    // on these older Android versions, so this method remains necessary.
-    @Suppress("DEPRECATION")
-    @Deprecated("Deprecated in Java for SDK >= 24", ReplaceWith("shouldOverrideUrlLoading(view, request)"))
-    override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-        return url?.toUri()?.let { onUrlIntercepted?.invoke(it, isTLSClientAuthNeeded) } ?: false
+    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+        return request?.url?.let { onUrlIntercepted?.invoke(it, isTLSClientAuthNeeded) } ?: false
     }
 
     private fun formatErrorDetails(context: Context?, code: Int?, description: String?): String {
@@ -271,5 +325,29 @@ class HAWebViewClient internal constructor(
             description?.takeIf { it.isNotEmpty() }
                 ?: context.getString(commonR.string.no_description),
         ) ?: ""
+    }
+}
+
+/**
+ * Reports [WebView.canGoBack] through [onCanGoBackChanged] when the history entry of any frame changes.
+ *
+ * `doUpdateVisitedHistory` only fires for the main frame, so a script injected in every frame posts an
+ * empty message whenever the frame's history entry changes, triggering a new read of [WebView.canGoBack].
+ * The script only runs in frames that begin loading afterward, so call it from `onPageStarted` at the latest.
+ */
+@SuppressLint("RequiresFeature")
+private fun WebView.observeHistoryChanges(onCanGoBackChanged: (canGoBack: Boolean) -> Unit) {
+    if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) &&
+        WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
+    ) {
+        // Frames (e.g. iframe panels) can be on any origin. The message carries no data and
+        // because of that are safe to accept from all origins.
+        val allowedOriginRules = setOf("*")
+        WebViewCompat.addWebMessageListener(this, HISTORY_CHANGED_LISTENER, allowedOriginRules) { webView, _, _, _, _ ->
+            onCanGoBackChanged(webView.canGoBack())
+        }
+        WebViewCompat.addDocumentStartJavaScript(this, HISTORY_CHANGED_SCRIPT, allowedOriginRules)
+    } else {
+        Timber.w("History changes not observable, back navigation inside iframes may be skipped")
     }
 }

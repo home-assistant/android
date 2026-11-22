@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -24,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +38,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Check
+import io.github.timoptr.mdiicons.generated.ChevronDown
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -98,6 +100,7 @@ fun <T> rememberSelectedDropdownKey(initialKey: T? = null): MutableState<T?> =
  * @param enabled Controls whether the dropdown can be opened. When false, the field is not clickable
  */
 @Composable
+@NonRestartableComposable
 fun <T> HADropdownMenu(
     @SuppressLint("ComposeUnstableCollections") items: List<HADropdownItem<T>>,
     selectedKey: T?,
@@ -215,7 +218,7 @@ private fun DropdownField(
             )
         }
         Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
+            imageVector = Mdi.ChevronDown.rememberImageVector(),
             contentDescription = null,
             tint = if (enabled) colorScheme.colorTextSecondary else colorScheme.colorTextDisabled,
             modifier = Modifier
@@ -267,7 +270,7 @@ private fun <T> DropdownPopupMenu(
                 trailingIcon = if (isSelected) {
                     {
                         Icon(
-                            imageVector = Icons.Default.Check,
+                            imageVector = Mdi.Check.rememberImageVector(),
                             contentDescription = null,
                             tint = colorScheme.colorFillPrimaryLoudResting,
                             modifier = Modifier.size(HADimens.SPACE5),

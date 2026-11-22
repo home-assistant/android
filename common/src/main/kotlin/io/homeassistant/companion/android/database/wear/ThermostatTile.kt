@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.database.wear
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 
 /**
  * Represents the configuration of a thermostat tile.
@@ -23,7 +23,7 @@ data class ThermostatTile(
     /** The target temperature to allow quick repeated changes */
     @ColumnInfo(name = "target_temperature")
     val targetTemperature: Float? = null,
-    /** Whether or not to show the entity friendly name on the tile. */
+    /** Whether or not to show the entity name on the tile. */
     @ColumnInfo(name = "show_entity_name")
     val showEntityName: Boolean? = true,
 )

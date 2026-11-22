@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.views
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,11 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
+import io.github.timoptr.mdiicons.MdiIcon
+import io.github.timoptr.mdiicons.rememberImageVector
 
 @Composable
-fun EmptyState(icon: IIcon, title: String?, subtitle: String?, modifier: Modifier = Modifier) {
+fun EmptyState(icon: MdiIcon, title: String?, subtitle: String?, modifier: Modifier = Modifier) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -29,7 +30,8 @@ fun EmptyState(icon: IIcon, title: String?, subtitle: String?, modifier: Modifie
             .padding(top = 64.dp),
     ) {
         Image(
-            asset = icon,
+            imageVector = icon.rememberImageVector(),
+            contentDescription = null,
             modifier = Modifier.size(48.dp),
             colorFilter = ColorFilter.tint(LocalContentColor.current),
         )

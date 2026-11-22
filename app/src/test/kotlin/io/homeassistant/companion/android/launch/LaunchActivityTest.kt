@@ -4,7 +4,10 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Looper
 import android.util.Rational
+import android.view.WindowManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
@@ -16,11 +19,12 @@ import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import dagger.hilt.android.testing.UninstallModules
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.sensors.SensorWorker
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.di.ServerManagerModule
+import io.homeassistant.companion.android.mediacontrols.HaMediaSessionService
 import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.sensors.SensorWorker
-import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -28,17 +32,17 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkConstructor
 import io.mockk.mockkObject
-import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.verify
+import kotlinx.coroutines.flow.flowOf
 import org.junit.After
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
@@ -66,12 +70,12 @@ class LaunchActivityTest {
         mockkObject(WebsocketManager.Companion)
         mockkObject(SensorReceiver.Companion)
         mockkObject(DisabledLocationHandler)
+        mockkObject(HaMediaSessionService.Companion)
         every { SensorWorker.start(any()) } just Runs
         coEvery { WebsocketManager.start(any()) } just Runs
         every { SensorReceiver.updateAllSensors(any()) } just Runs
+        every { HaMediaSessionService.start(any()) } just Runs
         every { DisabledLocationHandler.isLocationEnabled(any()) } returns true
-        mockkConstructor(ChangeLog::class)
-        coEvery { anyConstructed<ChangeLog>().showChangeLog(any(), any()) } just Runs
     }
 
     @After
@@ -80,16 +84,16 @@ class LaunchActivityTest {
         unmockkObject(WebsocketManager.Companion)
         unmockkObject(SensorReceiver.Companion)
         unmockkObject(DisabledLocationHandler)
-        unmockkConstructor(ChangeLog::class)
+        unmockkObject(HaMediaSessionService.Companion)
     }
 
     @Test
-    fun `Given activity resumes then sensor worker and websocket manager are started and changelog is shown`() {
+    fun `Given activity resumes then sensor worker, websocket manager and media session service are started`() {
         ActivityScenario.launch(LaunchActivity::class.java).use {
             verify { SensorWorker.start(any()) }
             coVerify { WebsocketManager.start(any()) }
+            verify { HaMediaSessionService.start(any()) }
             verify { DisabledLocationHandler.isLocationEnabled(any()) }
-            coVerify { anyConstructed<ChangeLog>().showChangeLog(any(), eq(false)) }
         }
     }
 
@@ -152,6 +156,8 @@ class LaunchActivityTest {
     fun `Given showWhenLocked is true when launched then activity is shown over the lock screen`() {
         val intent = LaunchActivity.newInstance(ApplicationProvider.getApplicationContext(), showWhenLocked = true)
 
+        assertEquals(Intent.ACTION_MAIN, intent.action)
+
         ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
             scenario.onActivity { activity ->
                 assertTrue(shadowOf(activity).showWhenLocked)
@@ -162,6 +168,8 @@ class LaunchActivityTest {
     @Test
     fun `Given showWhenLocked is false when launched then activity is not shown over the lock screen`() {
         val intent = LaunchActivity.newInstance(ApplicationProvider.getApplicationContext(), showWhenLocked = false)
+
+        assertEquals(Intent.ACTION_MAIN, intent.action)
 
         ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
             scenario.onActivity { activity ->
@@ -183,6 +191,38 @@ class LaunchActivityTest {
         ActivityScenario.launch<LaunchActivity>(intent).use { scenario ->
             scenario.onActivity { activity ->
                 assertFalse(shadowOf(activity).showWhenLocked)
+            }
+        }
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.S])
+    fun `Given app lock enabled when launched then the window is marked secure`() {
+        val server = mockk<Server>(relaxed = true) { every { id } returns 1 }
+        every { serverManager.serversFlow } returns flowOf(listOf(server))
+        coEvery { serverManager.getServer(any<Int>()) } returns server
+        coEvery { serverManager.authenticationRepository(any()) } returns mockk {
+            every { lockEnabledRawFlow() } returns flowOf(true)
+        }
+
+        ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                assertTrue(activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0)
+            }
+        }
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.S])
+    fun `Given app lock disabled when launched then the window is not marked secure`() {
+        // No server resolves (see field setup), so app lock is disabled.
+        every { serverManager.serversFlow } returns flowOf(emptyList())
+
+        ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                assertFalse(activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0)
             }
         }
     }

@@ -1,4 +1,5 @@
 import com.android.build.api.dsl.ApplicationExtension
+import com.google.devtools.ksp.gradle.KspExtension
 import io.homeassistant.companion.android.androidConfig
 import io.homeassistant.companion.android.getPluginId
 import java.io.File
@@ -6,6 +7,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.apply
+import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -28,6 +30,15 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
             apply(plugin = libs.plugins.kotlin.serialization.getPluginId())
             apply(plugin = libs.plugins.ksp.getPluginId())
             apply(plugin = libs.plugins.hilt.getPluginId())
+
+            // The provides-sensor KSP processor names its generated object per module via this arg.
+            // Set here so every module applying the processor (`:common`, `:app`, `:wear`, ...) gets a
+            // unique suffix without per-module boilerplate. `:automotive` overrides it to "app" because
+            // it reuses `:app` sources referencing the "app"-suffixed object. Modules that don't depend
+            // on the processor simply ignore this arg, so setting it unconditionally is a no-op for them.
+            extensions.configure<KspExtension> {
+                arg("providesSensorModuleSuffix", project.name)
+            }
 
             // We create a resources directory to put `robolectric.properties` and set the SDK version
             // inspired from https://github.com/PaulWoitaschek/Voice/commit/55505083dd3c3ecfe7b28192d7e9664ebb066399
@@ -72,6 +83,22 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     unitTests {
                         isReturnDefaultValues = true
                         isIncludeAndroidResources = true
+                        all {
+                            // https://robolectric.org/getting-started/#running-with-java-17-and-higher
+                            // the JVM requires --add-opens flags so that Robolectric can access internal
+                            // OpenJDK classes and APIs (java.lang, java.io, jdk.internal.access, etc.)
+                            it.jvmArgs(
+                                "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                                "--add-opens=java.base/java.util=ALL-UNNAMED",
+                                "--add-opens=java.base/java.io=ALL-UNNAMED",
+                                "--add-opens=java.base/java.net=ALL-UNNAMED",
+                                "--add-opens=java.base/java.security=ALL-UNNAMED",
+                                "--add-opens=java.base/java.text=ALL-UNNAMED",
+                                "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
+                                "--add-opens=java.desktop/java.awt.font=ALL-UNNAMED",
+                                "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+                            )
+                        }
                     }
                 }
 
@@ -83,6 +110,9 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
 
                 tasks.withType<Test> {
                     useJUnitPlatform()
+                    // Tests run in a forked JVM that does not inherit `org.gradle.jvmargs` and defaults to
+                    // 512m, which is not enough for our project.
+                    maxHeapSize = "1g"
                 }
 
                 with(lint) {
@@ -120,7 +150,10 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "implementation"(libs.timber)
                     "implementation"(libs.kotlinx.serialization.json)
 
+                    "implementation"(libs.guava)
+
                     "ksp"(libs.hilt.android.compiler)
+                    "kspTest"(libs.hilt.android.compiler)
                     "implementation"(libs.hilt.android)
 
                     "implementation"(libs.core.ktx)
@@ -136,6 +169,8 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
                     "testImplementation"(libs.robolectric)
                     "testImplementation"(libs.turbine)
                     "testImplementation"(libs.hilt.android.testing)
+                    "testImplementation"(libs.classgraph)
+                    "testImplementation"(libs.androidx.test.espresso.core)
 
                     "testImplementation"(project(":testing-unit"))
 

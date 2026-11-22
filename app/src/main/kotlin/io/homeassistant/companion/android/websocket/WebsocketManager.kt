@@ -32,12 +32,13 @@ import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissio
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.hasActiveConnection
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,6 +49,9 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import timber.log.Timber
+
+/** A running collection of the notifications of a server, with the webhook ID it subscribed with. */
+private data class NotificationJob(val job: Job, val webhookId: String?)
 
 class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
@@ -66,6 +70,17 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             WebsocketSetting.ALWAYS
         }
         private val ACTION_EXTRA_KEYS = listOf("uri", "behavior", "authenticationRequired")
+
+        /**
+         * Returns whether the worker is running, in which case it holds the foreground service
+         * that WorkManager shares between all the workers.
+         */
+        suspend fun isRunning(context: Context): Boolean {
+            return WorkManager.getInstance(context)
+                .getWorkInfosForUniqueWork(UNIQUE_WORK_NAME)
+                .await()
+                .any { it.state == WorkInfo.State.RUNNING }
+        }
 
         suspend fun start(context: Context) {
             val websocketNotifications =
@@ -109,6 +124,9 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
     private val checkLocalNetworkPermission: CheckLocalNetworkPermissionUseCase =
         entryPoint.checkLocalNetworkPermission()
 
+    @VisibleForTesting
+    internal var dispatcher: CoroutineDispatcher = Dispatchers.IO
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface WebsocketManagerEntryPoint {
@@ -118,7 +136,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         fun checkLocalNetworkPermission(): CheckLocalNetworkPermissionUseCase
     }
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    override suspend fun doWork(): Result = withContext(dispatcher) {
         if (!checkLocalNetworkPermission()) {
             Timber.d("Skipping websocket work: ACCESS_LOCAL_NETWORK permission missing")
             return@withContext Result.success()
@@ -133,15 +151,15 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
 
         // Start listening for notifications
         Timber.d("Starting to listen to Websocket")
-        val jobs = mutableMapOf<Int, Job>()
+        val jobs = mutableMapOf<Int, NotificationJob>()
         manageServerJobs(jobs, this)
 
         // play ping pong to ensure we have a connection and server changes are handled.
         do {
             delay(30000)
-        } while (jobs.values.any { it.isActive } && isActive && shouldWeRun() && manageServerJobs(jobs, this))
+        } while (isActive && shouldWeRun() && manageServerJobs(jobs, this))
 
-        jobs.forEach { it.value.cancel() }
+        jobs.forEach { it.value.job.cancel() }
         jobs.clear()
 
         Timber.d("Done listening to Websocket")
@@ -175,15 +193,23 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         return true
     }
 
-    private suspend fun manageServerJobs(jobs: MutableMap<Int, Job>, coroutineScope: CoroutineScope): Boolean {
+    private suspend fun manageServerJobs(
+        jobs: MutableMap<Int, NotificationJob>,
+        coroutineScope: CoroutineScope,
+    ): Boolean {
         val servers = serverManager.servers()
 
-        // Clean up...
-        jobs.filter { (serverId, _) ->
-            servers.none { it.id == serverId } || !shouldRunForServer(serverId)
+        // Clean up, including stopped jobs and jobs subscribed with a webhook ID replaced by a new
+        // registration of the device, so they are started again below...
+        jobs.filter { (serverId, notificationJob) ->
+            val server = servers.firstOrNull { it.id == serverId }
+            server == null ||
+                !notificationJob.job.isActive ||
+                server.connection.webhookId != notificationJob.webhookId ||
+                !shouldRunForServer(serverId)
         }
-            .forEach { (serverId, job) ->
-                job.cancel()
+            .forEach { (serverId, notificationJob) ->
+                notificationJob.job.cancel()
                 jobs.remove(serverId)
             }
         // Keep up existing connections...
@@ -193,7 +219,10 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
         // Start new connections...
         servers.filter { it.id !in jobs.keys && shouldRunForServer(it.id) }
             .forEach {
-                jobs[it.id] = coroutineScope.launch { collectNotifications(it.id) }
+                jobs[it.id] = NotificationJob(
+                    job = coroutineScope.launch { collectNotifications(it.id) },
+                    webhookId = it.connection.webhookId,
+                )
             }
 
         return true // for while
@@ -258,7 +287,7 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
             notificationManager.createNotificationChannel(notificationChannel)
         }
 
-        val intent = WebViewActivity.newInstance(applicationContext)
+        val intent = LaunchActivity.newInstance(applicationContext)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)

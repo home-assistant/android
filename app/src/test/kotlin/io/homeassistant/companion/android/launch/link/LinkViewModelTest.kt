@@ -4,8 +4,10 @@ import android.net.Uri
 import app.cash.turbine.test
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.settings.server.ServerChooserItem
 import io.homeassistant.companion.android.settings.server.ServerChooserItemsUseCase
+import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -16,8 +18,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@ExtendWith(MainDispatcherJUnit5Extension::class)
 class LinkViewModelTest {
 
     private val linkHandler: LinkHandler = mockk()
@@ -36,30 +40,30 @@ class LinkViewModelTest {
             ServerChooserItem(serverId = 1, userName = "Alice", serverName = "Home"),
             ServerChooserItem(serverId = 2, userName = "Bob", serverName = "Office"),
         )
-        coEvery { linkHandler.handleLink(any()) } returns LinkDestination.ServerPicker("/lovelace", servers)
+        coEvery { linkHandler.handleLink(any()) } returns LinkDestination.ServerPicker(FrontendTarget.Path("/lovelace"), servers)
         every { serverChooserItems(servers) } returns flowOf(items)
 
         val viewModel = createViewModel()
         viewModel.uiState.test {
             assertEquals(LinkUiState.Loading, awaitItem())
             viewModel.onLinkReceived(uri())
-            assertEquals(LinkUiState.ChoosingServer(items = items, path = "/lovelace"), awaitItem())
+            assertEquals(LinkUiState.ChoosingServer(items = items, target = FrontendTarget.Path("/lovelace")), awaitItem())
         }
     }
 
     @Test
-    fun `Given Webview destination when onLinkReceived then NavigateToWebView event is emitted`() = runTest {
-        coEvery { linkHandler.handleLink(any()) } returns LinkDestination.Webview("/lovelace", serverId = 3)
+    fun `Given Webview destination when onLinkReceived then NavigateToWebView event is sent`() = runTest {
+        coEvery { linkHandler.handleLink(any()) } returns LinkDestination.Webview(FrontendTarget.Path("/lovelace"), serverId = 3)
 
         val viewModel = createViewModel()
         viewModel.navigationEvents.test {
             viewModel.onLinkReceived(uri())
-            assertEquals(LinkNavigationEvent.NavigateToWebView(path = "/lovelace", serverId = 3), awaitItem())
+            assertEquals(LinkNavigationEvent.NavigateToWebView(target = FrontendTarget.Path("/lovelace"), serverId = 3), awaitItem())
         }
     }
 
     @Test
-    fun `Given Onboarding destination when onLinkReceived then OpenInvitation event is emitted`() = runTest {
+    fun `Given Onboarding destination when onLinkReceived then OpenInvitation event is sent`() = runTest {
         coEvery { linkHandler.handleLink(any()) } returns LinkDestination.Onboarding("http://homeassistant.local:8123")
 
         val viewModel = createViewModel()
@@ -70,7 +74,7 @@ class LinkViewModelTest {
     }
 
     @Test
-    fun `Given NoDestination when onLinkReceived then Finish event is emitted`() = runTest {
+    fun `Given NoDestination when onLinkReceived then Finish event is sent`() = runTest {
         coEvery { linkHandler.handleLink(any()) } returns LinkDestination.NoDestination
 
         val viewModel = createViewModel()
@@ -81,7 +85,7 @@ class LinkViewModelTest {
     }
 
     @Test
-    fun `Given a null uri when onLinkReceived then FailFast triggers and a Finish event is emitted`() = runTest {
+    fun `Given a null uri when onLinkReceived then FailFast triggers and a Finish event is sent`() = runTest {
         var failFastTriggered = false
         FailFast.setHandler { _, _ -> failFastTriggered = true }
 
@@ -96,7 +100,7 @@ class LinkViewModelTest {
     @Test
     fun `Given ChoosingServer state when onServerSelected then NavigateToWebView event carries the path and id`() = runTest {
         val servers = listOf<Server>(mockk { every { id } returns 1 }, mockk { every { id } returns 2 })
-        coEvery { linkHandler.handleLink(any()) } returns LinkDestination.ServerPicker("/lovelace", servers)
+        coEvery { linkHandler.handleLink(any()) } returns LinkDestination.ServerPicker(FrontendTarget.Path("/lovelace"), servers)
         every { serverChooserItems(servers) } returns flowOf(
             listOf(
                 ServerChooserItem(serverId = 1, userName = "Alice", serverName = "Home"),
@@ -110,12 +114,12 @@ class LinkViewModelTest {
 
         viewModel.navigationEvents.test {
             viewModel.onServerSelected(serverId = 2)
-            assertEquals(LinkNavigationEvent.NavigateToWebView(path = "/lovelace", serverId = 2), awaitItem())
+            assertEquals(LinkNavigationEvent.NavigateToWebView(target = FrontendTarget.Path("/lovelace"), serverId = 2), awaitItem())
         }
     }
 
     @Test
-    fun `Given no ChoosingServer state when onServerSelected then no event is emitted`() = runTest {
+    fun `Given no ChoosingServer state when onServerSelected then no event is sent`() = runTest {
         val viewModel = createViewModel()
         viewModel.navigationEvents.test {
             viewModel.onServerSelected(serverId = 2)
@@ -124,7 +128,7 @@ class LinkViewModelTest {
     }
 
     @Test
-    fun `When onServerChooserDismissed then Finish event is emitted`() = runTest {
+    fun `When onServerChooserDismissed then Finish event is sent`() = runTest {
         val viewModel = createViewModel()
         viewModel.navigationEvents.test {
             viewModel.onServerChooserDismissed()

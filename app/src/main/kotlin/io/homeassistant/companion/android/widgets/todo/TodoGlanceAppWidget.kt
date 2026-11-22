@@ -90,7 +90,37 @@ class TodoGlanceAppWidget : GlanceAppWidget() {
             }
         }
     }
+
+    override suspend fun providePreview(context: Context, widgetCategory: Int) {
+        val state = previewTodoState(context)
+        provideContent {
+            HomeAssistantGlanceTheme(
+                colors = state.getColors(),
+            ) {
+                ScreenForState(state)
+            }
+        }
+    }
 }
+
+/**
+ * Sample state shown in the widget picker preview and in IDE previews.
+ */
+@VisibleForTesting
+internal fun previewTodoState(context: Context): TodoStateWithData = TodoStateWithData(
+    backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
+    textColor = null,
+    serverId = 1,
+    listEntityId = "",
+    listName = context.getString(commonR.string.widget_todo_preview_list_name),
+    todoItems = listOf(
+        TodoItemState(null, context.getString(commonR.string.widget_todo_preview_item_first), true),
+        TodoItemState(null, context.getString(commonR.string.widget_todo_preview_item_second), false),
+        TodoItemState(null, context.getString(commonR.string.widget_todo_preview_item_third), false),
+    ),
+    outOfSync = false,
+    showComplete = true,
+)
 
 @Composable
 private fun GlanceModifier.todoWidgetBackground(): GlanceModifier {
@@ -252,22 +282,7 @@ private fun TodoItem(todoItem: TodoItemState) {
 @Composable
 private fun ScreenPreview() {
     HomeAssistantGlanceTheme {
-        ScreenForState(
-            TodoStateWithData(
-                backgroundType = WidgetBackgroundType.DYNAMICCOLOR,
-                textColor = null,
-                serverId = 1,
-                listEntityId = "",
-                listName = "Shopping List",
-                todoItems = listOf(
-                    TodoItemState(null, "Eggs", true),
-                    TodoItemState(null, "Milk", false),
-                    TodoItemState(null, "Bread", false),
-                ),
-                outOfSync = false,
-                showComplete = true,
-            ),
-        )
+        ScreenForState(previewTodoState(LocalContext.current))
     }
 }
 

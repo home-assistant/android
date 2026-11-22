@@ -18,8 +18,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.COMPLETED_STATUS
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem.Companion.NEEDS_ACTION_STATUS
 import io.homeassistant.companion.android.database.widget.TodoWidgetDao
-import io.homeassistant.companion.android.util.compose.actionStartWebView
-import io.homeassistant.companion.android.webview.WebViewActivity
+import io.homeassistant.companion.android.util.compose.actionStartFrontend
 import timber.log.Timber
 
 /**
@@ -37,11 +36,11 @@ internal fun actionRefreshTodo(): Action {
 }
 
 /**
- * Get an Action that will open the [WebViewActivity] for the given [listEntityId]
+ * Get an Action that will open the frontend for the given [listEntityId]
  */
 @Composable
 internal fun actionOpenTodolist(listEntityId: String, serverId: Int): Action {
-    return actionStartWebView("todo?entity_id=$listEntityId&add_item=true", serverId)
+    return actionStartFrontend("todo?entity_id=$listEntityId&add_item=true", serverId)
 }
 
 /**

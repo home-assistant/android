@@ -61,10 +61,9 @@ internal class FrontendBarcodeScannerHandler @Inject constructor(
      * A code was scanned: reply with `bar_code/scan_result` (mapping [format] to the frontend's wire
      * string). No-op if no scan is active.
      *
-     * The scanner stays open after reporting a result (matching the legacy `BarcodeScannerActivity`):
-     * the frontend drives what happens next, either dismissing it with `bar_code/close` ([close]) or
-     * surfacing a `bar_code/notify` dialog ([notify]) and letting scanning continue. Duplicate scans
-     * are debounced in the scanner UI.
+     * The scanner stays open after reporting a result: the frontend drives what happens next,
+     * either dismissing it with `bar_code/close` ([close]) or surfacing a `bar_code/notify`
+     * dialog ([notify]) and letting scanning continue. Duplicate scans are debounced in the scanner UI.
      */
     suspend fun onScanned(rawValue: String, format: BarcodeFormat) {
         val currentState = _state.value ?: return

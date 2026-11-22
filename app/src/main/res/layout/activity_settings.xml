@@ -1,34 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <eightbitlab.com.blurview.BlurTarget
+        android:id="@+id/blurTarget"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:elevation="4dp"
-            android:theme="@style/ThemeOverlay.HomeAssistant.ConfigActionBar" />
+            android:layout_height="match_parent">
 
-        <FrameLayout
-            android:id="@+id/content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </LinearLayout>
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:elevation="4dp"
+                android:theme="@style/ThemeOverlay.HomeAssistant.ConfigActionBar" />
 
-    <!-- Useful for screen that already have a topbar built-in -->
-    <FrameLayout
-        android:id="@+id/content_full_screen"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="true" />
+            <FrameLayout
+                android:id="@+id/content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_below="@+id/toolbar"
+                android:layout_alignParentBottom="true"/>
+
+            <!-- Useful for screen that already have a topbar built-in -->
+            <FrameLayout
+                android:id="@+id/content_full_screen"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:elevation="8dp"
+                android:clipToPadding="true" />
+
+        </RelativeLayout>
+
+    </eightbitlab.com.blurview.BlurTarget>
 
     <eightbitlab.com.blurview.BlurView
         android:id="@+id/blurView"

@@ -18,10 +18,11 @@ class ConnectionScreenshotTest {
                 url = "https://www.example.com",
                 isLoading = true,
                 isError = false,
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 onBackClick = {},
                 onWebViewCreationFailed = {},
+                webViewDebugEnabled = null,
             )
         }
     }
@@ -35,10 +36,11 @@ class ConnectionScreenshotTest {
                 url = "https://www.example.com",
                 isLoading = false,
                 isError = false,
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 onBackClick = {},
                 onWebViewCreationFailed = {},
+                webViewDebugEnabled = null,
             )
         }
     }
@@ -52,10 +54,11 @@ class ConnectionScreenshotTest {
                 url = "https://www.example.com",
                 isLoading = false,
                 isError = true,
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 onBackClick = {},
                 onWebViewCreationFailed = {},
+                webViewDebugEnabled = null,
             )
         }
     }

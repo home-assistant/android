@@ -1,12 +1,15 @@
 package io.homeassistant.companion.android.database.location
 
 import androidx.paging.PagingSource
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room3.Dao
+import androidx.room3.DaoReturnTypeConverters
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
+import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 
 @Dao
+@DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
 interface LocationHistoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -2,11 +2,12 @@ package io.homeassistant.companion.android.compose.composable
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.android.tools.screenshot.PreviewTest
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.AccountBox
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
@@ -66,14 +67,14 @@ class HAButtonScreenshotTest {
             Column {
                 ButtonVariant.entries.forEach { variant ->
                     HAIconButton(
-                        icon = Icons.Default.AccountBox,
+                        icon = Mdi.AccountBox.rememberImageVector(),
                         variant = variant,
                         contentDescription = null,
                         onClick = {},
                         enabled = true,
                     )
                     HAIconButton(
-                        icon = Icons.Default.AccountBox,
+                        icon = Mdi.AccountBox.rememberImageVector(),
                         variant = variant,
                         contentDescription = null,
                         onClick = {},

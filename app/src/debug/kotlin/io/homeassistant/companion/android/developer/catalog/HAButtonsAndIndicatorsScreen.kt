@@ -3,19 +3,21 @@ package io.homeassistant.companion.android.developer.catalog
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices.TABLET
 import androidx.compose.ui.tooling.preview.Preview
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.Plus
+import io.github.timoptr.mdiicons.generated.Wrench
+import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.ButtonVariant
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
+import io.homeassistant.companion.android.common.compose.composable.HAFloatingActionButton
 import io.homeassistant.companion.android.common.compose.composable.HAIconButton
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
@@ -28,6 +30,7 @@ fun LazyListScope.catalogButtonsAndIndicatorsSection(variant: ButtonVariant) {
     buttonSection(variant = variant, enabled = false)
     buttonsWithIcon(variant = variant)
     buttonsWithBigContent(variant = variant)
+    floatingActionButtons(variant = variant)
 }
 
 private fun LazyListScope.buttonSection(variant: ButtonVariant, enabled: Boolean) {
@@ -61,7 +64,7 @@ private fun LazyListScope.buttonSection(variant: ButtonVariant, enabled: Boolean
                 )
             }
             HAIconButton(
-                Icons.Default.Build,
+                Mdi.Wrench.rememberImageVector(),
                 onClick = {},
                 contentDescription = null,
                 variant = variant,
@@ -74,7 +77,7 @@ private fun LazyListScope.buttonSection(variant: ButtonVariant, enabled: Boolean
 @Composable
 private fun AddIcon() {
     Icon(
-        imageVector = Icons.Default.Add,
+        imageVector = Mdi.Plus.rememberImageVector(),
         contentDescription = null,
         modifier = Modifier.fillMaxSize(),
     )
@@ -165,6 +168,19 @@ private fun LazyListScope.buttonsWithBigContent(variant: ButtonVariant) {
                 suffix = { AddIcon() },
                 maxLines = 1,
                 textOverflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+private fun LazyListScope.floatingActionButtons(variant: ButtonVariant) {
+    catalogSection(title = "Floating action buttons") {
+        CatalogRow {
+            HAFloatingActionButton(
+                icon = Mdi.Plus.rememberImageVector(),
+                onClick = {},
+                contentDescription = null,
+                variant = variant,
             )
         }
     }

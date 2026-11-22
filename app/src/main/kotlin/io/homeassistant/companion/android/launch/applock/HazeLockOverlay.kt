@@ -5,11 +5,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.hazeBlur
+import dev.chrisbanes.haze.blur.materials.HazeMaterials
 import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
 
 /**
  * Full-screen overlay that blurs the content marked with `hazeSource` and blocks all touch events.
@@ -20,19 +21,15 @@ import dev.chrisbanes.haze.materials.HazeMaterials
  * reach the composables underneath while the app is locked.
  *
  * @param hazeState shared state that connects this overlay to the content marked with `hazeSource`.
- *   When `blurEnabled` is `false`, the overlay is not composed at all.
  * @param modifier optional modifier for the overlay
  * @param style the blur style to apply, defaults to [HazeMaterials.thin]
  */
-@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 internal fun HazeLockOverlay(
     hazeState: HazeState,
     modifier: Modifier = Modifier,
-    style: HazeStyle = HazeMaterials.thin(),
+    style: HazeBlurStyle = HazeMaterials.thin(),
 ) {
-    if (!hazeState.blurEnabled) return
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -43,6 +40,6 @@ internal fun HazeLockOverlay(
                     }
                 }
             }
-            .hazeEffect(hazeState, style = style),
+            .hazeBlur(input = HazeInput.Sources(hazeState), style = style),
     )
 }

@@ -646,12 +646,22 @@ class ServerConnectionStateProviderImplTest {
     inner class CanSafelySendCredentials {
 
         @Test
-        fun `Given HTTPS URL when calling canSafelySendCredentials then returns true`() = runTest {
+        fun `Given HTTPS URL belonging to server when calling canSafelySendCredentials then returns true`() = runTest {
             val provider = createServerConnectionStateProvider(
-                externalUrl = "http://external.example.com",
+                externalUrl = "https://external.example.com",
+                allowInsecureConnection = false,
             )
 
-            assertTrue(provider.canSafelySendCredentials("https://any-url.com"))
+            assertTrue(provider.canSafelySendCredentials("https://external.example.com/api"))
+        }
+
+        @Test
+        fun `Given HTTPS URL not belonging to server when calling canSafelySendCredentials then returns false`() = runTest {
+            val provider = createServerConnectionStateProvider(
+                externalUrl = "https://external.example.com",
+            )
+
+            assertFalse(provider.canSafelySendCredentials("https://any-url.com"))
         }
 
         @Test

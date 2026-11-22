@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
     - name: Pull from Lokalise
-      uses: lokalise/lokalise-pull-action@8b802cd5a8f4e739da3aace50cb1ec7aaecab260 # v5.2.3
+      uses: lokalise/lokalise-pull-action@69f4cbcac13b4399429727e38e0dcda4bd68f0a3 # v6.0.0
       with:
         api_token: ${{ inputs.lokalise-token }}
         project_id: ${{ inputs.lokalise-project }}
@@ -45,6 +45,8 @@ runs:
           FOLDER="$(basename $(dirname $i))"
           CODE="${FOLDER#*-}" # remove "values-"
           CODE="${CODE/-r/-}" # replace region "-rXX" with "-XX"
+          CODE="${CODE#b+}" # BCP 47 folder "b+xx+Yyyy" becomes "xx-Yyyy"
+          CODE="${CODE//+/-}"
           if [ "$CODE" == "values" ]; then CODE="en"; fi
           XML_LOCALES="$XML_LOCALES    <locale android:name=\"$CODE\"/>\n"
         done

@@ -2,100 +2,102 @@
 # You need to update the lock if you update or add a dependency
 # you can do that with `./gradlew alldependencies --write-locks`
 [versions]
-aboutlibraries = "14.2.1"
+aboutlibraries = "15.3.0"
 accompanist = "0.37.3"
 activity-compose = "1.13.0"
 androidBeaconLibrary = "2.21.2"
-androidGradlePlugin = "9.2.1"
+androidGradlePlugin = "9.5.1"
 androidNdk = "29.0.14206865"
 androidSdk-compile = "37"
-androidSdk-min = "23"
-androidSdk-target = "36"
+androidSdk-min = "24"
+androidSdk-target = "37"
 androidSdk-automotive-min = "29"
 androidSdk-wear-min = "26"
-androidSdk-wear-target = "34"
-androidTools = "32.2.1"
+androidSdk-wear-target = "36"
+androidTools = "32.5.1"
 androidxConcurrent = "1.3.0"
-androidxHiltNavigationCompose = "1.3.0"
+androidxHiltNavigationCompose = "1.4.0"
 androidxTestCore = "1.7.0"
 androidxTestEspresso = "3.7.0"
 androidxTestExt = "1.3.0"
 androidxTestRules = "1.7.0"
 androidxTestRunner = "1.7.0"
 apacheCommonsText = "1.15.0"
-appcompat = "1.7.1"
+appcompat = "1.8.0"
 biometric = "1.1.0"
-blurView = "version-2.0.6"
+blurView = "version-4.0.0"
 car-versions = "1.7.0"
-changeLog = "3.8.2"
+classgraph = "6.0.2"
 cmake = "4.1.2"
-community-material-typeface = "7.0.96.2-kotlin"
-compose-bom = "2026.06.00"
-composeLintChecks = "1.5.2"
+compose-bom = "2026.09.00"
+composeLintChecks = "1.6.1"
 connectClient = "1.1.0"
-constraintlayout = "2.2.1"
-coreKtx = "1.19.0"
+constraintlayout = "2.2.2"
+coreKtx = "1.19.1"
 core-splashscreen = "1.2.0"
 core-remoteviews = "1.1.0"
-cronet = "143.7445.0"
+cronet = "500.1.0"
+detekt = "2.0.0-alpha.6"
 emojiJava = "5.1.1"
-firebase-bom = "34.15.0"
-firebaseAppdistributionGradle = "5.3.0"
-fragment-ktx = "1.8.9"
-glance = "1.1.1"
-googleServices = "4.5.0"
-guava = "33.4.6-android"
-healthServicesClient = "1.1.0-rc02"
-haze = "1.7.2"
-hilt = "2.59.2"
-iconics = "5.5.0-compose01"
+firebase-bom = "35.2.0"
+fragment-ktx = "1.9.1"
+glance = "1.2.0"
+googleServices = "4.6.0"
+guava = "33.7.2-android"
+healthServicesClient = "1.1.0"
+haze = "2.1.0"
+hilt = "2.60.1"
 improv = "0.1.1"
 javaVersion = "11" # https://developer.android.com/studio/write/java11-minimal-support-table
-junit = "6.1.0"
-kotlin = "2.4.0"
+junit = "6.1.3"
+kotlin = "2.4.21"
+kotlinpoet = "2.4.0"
 kotlinx-coroutines = "1.11.0"
-kotlinx-serialization = "1.11.0"
-ksp = "2.3.9"
+kotlinx-serialization = "1.13.0"
+ksp = "2.3.14"
 ktlint = "14.2.0"
+logback = "1.6.7" # Only used to lift the ktlint CLI tool classpath above versions with reported vulnerabilities
 leakcanaryAndroid = "2.14"
 lifecycle = "2.11.0"
 material = "1.14.0"
+mdi-icons = "0.2.0"
 media = "1.8.0"
-media3 = "1.10.1"
-mockk = "1.14.11"
-navigation-compose = "2.9.8"
-okhttp = "5.4.0"
-paging = "3.5.0"
-coil = "3.5.0"
+media3 = "1.11.1"
+mockk = "1.14.12"
+navigation-compose = "2.10.2"
+okhttp = "5.5.1"
+paging = "3.5.3"
+coil = "3.6.3"
 play-services-threadnetwork = "16.3.0"
 play-services-home = "16.0.0"
-play-services-location = "21.3.0"
+play-services-location = "21.4.0"
 play-services-wearable = "20.0.1"
 preference-ktx = "1.2.1"
-protobuf-javalite = "4.35.1"
+protobuf-javalite = "4.36.2"
 recyclerview = "1.4.0"
 reorderable = "3.1.0"
 retrofit-bom = "3.0.0"
-robolectric = "4.16.1" # Check if robolectric supports a more recent version of the SDK on each update
-robolectric-target-sdk = "36"
-room = "2.8.4"
-runtimeLint = "1.11.3"
-screenshot = "0.0.1-alpha15" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
-sentry-android = "8.44.1"
+robolectric = "4.18" # Check if robolectric supports a more recent version of the SDK on each update
+robolectric-target-sdk = "37"
+room = "3.0.3"
+runtimeLint = "1.12.1"
+screenshot = "0.0.1-alpha17" # On the next update, replace the hack in AndroidComposeConvertionPlugin with the real fix
+sentry-android = "8.65.0"
 timber = "5.0.1"
 tools-desugar-jdk-libs = "2.1.5"
 turbine = "1.2.1"
 watchfaceComplicationsDataSourceKtx = "1.3.0"
 wear = "1.4.0"
-wear-compose = "1.6.2"
-wear-protolayout = "1.4.0"
-wear-tiles = "1.6.0"
+wear-compose = "1.7.1"
+wear-protolayout = "1.4.2"
+wear-tiles = "1.6.2"
 wear-tooling = "1.0.0"
-wearPhoneInteractions = "1.1.0"
+wearPhoneInteractions = "1.1.1"
 wearInput = "1.2.0"
-webkit = "1.15.0"
+webkit = "1.18.0"
+webrtcSdk = "150.7871.04"
 wear-remote-interactions = "1.2.0"
-work = "2.11.2"
+work = "2.12.0"
 zxing = "4.3.0"
 
 [plugins]
@@ -103,15 +105,14 @@ aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.re
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
 android-lint = { id = "com.android.lint", version.ref = "androidGradlePlugin" }
-firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppdistributionGradle" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
-screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }
 
 # Plugins defined by this project in `:build-logic:convention` module.
 homeassistant-android-application = { id = "homeassistant.android.application" }
@@ -128,7 +129,6 @@ activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activ
 android-beacon-library = { module = "org.altbeacon:android-beacon-library", version.ref = "androidBeaconLibrary" }
 android-gradle-plugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
 androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "lifecycle" }
-compose-screenshot-gradle-plugin = { group = "com.android.compose.screenshot", name = "screenshot-test-gradle-plugin", version.ref = "screenshot" }
 androidx-concurrent-ktx = { group = "androidx.concurrent", name = "concurrent-futures-ktx", version.ref = "androidxConcurrent" }
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 androidx-glance-material = { module = "androidx.glance:glance-material", version.ref = "glance" }
@@ -140,11 +140,10 @@ androidx-health-connect-client = { module = "androidx.health.connect:connect-cli
 androidx-health-services-client = { module = "androidx.health:health-services-client", version.ref = "healthServicesClient" }
 androidx-media = { module = "androidx.media:media", version.ref = "media" }
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidxHiltNavigationCompose" }
-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
-androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
-androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
-androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
-androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room" }
+androidx-room-paging = { module = "androidx.room3:room3-paging", version.ref = "room" }
+androidx-room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room" }
+androidx-room-testing = { module = "androidx.room3:room3-testing", version.ref = "room" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
@@ -164,19 +163,16 @@ blurView = { module = "com.github.Dimezis:BlurView", version.ref = "blurView" }
 car-core = { module = "androidx.car.app:app", version.ref = "car-versions" }
 car-automotive = { module = "androidx.car.app:app-automotive", version.ref = "car-versions" }
 car-projected = { module = "androidx.car.app:app-projected", version.ref = "car-versions" }
-changeLog = { module = "com.github.AppDevNext:ChangeLog", version.ref = "changeLog" }
+classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
 coil-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
 coil-views = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
-community-material-typeface = { module = "com.mikepenz:community-material-typeface", version.ref = "community-material-typeface" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 compose-animation = { module = "androidx.compose.animation:animation" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "composeLintChecks" }
 compose-material = { module = "androidx.compose.material:material" }
 compose-material3 = { module = "androidx.compose.material3:material3-android" }
-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 compose-runtime = { module = "androidx.compose.runtime:runtime" }
 compose-ui = { module = "androidx.compose.ui:ui" }
 compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
@@ -185,8 +181,8 @@ compose-ui-testManifest = { group = "androidx.compose.ui", name = "ui-test-manif
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "core-splashscreen" }
 core-remoteviews = { module = "androidx.core:core-remoteviews", version.ref = "core-remoteviews" }
-cronet-api = { module = "org.chromium.net:cronet-api", version.ref = "cronet" }
-cronet-embedded = { module = "org.chromium.net:cronet-embedded", version.ref = "cronet" }
+cronet = { module = "org.chromium.net:cronet", version.ref = "cronet" }
+cronet-bundled = { module = "org.chromium.net:cronet-bundled", version.ref = "cronet" }
 emojiJava = { module = "com.vdurmont:emoji-java", version.ref = "emojiJava" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
@@ -194,12 +190,10 @@ fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragm
 constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
-haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
+haze-blur-materials = { module = "dev.chrisbanes.haze:haze-blur-materials", version.ref = "haze" }
 hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "hilt" }
-iconics-compose = { module = "com.mikepenz:iconics-compose", version.ref = "iconics" }
-iconics-core = { module = "com.mikepenz:iconics-core", version.ref = "iconics" }
 improv = { module = "org.openhomefoundation.improv-wifi:sdk-android", version.ref = "improv" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
@@ -213,20 +207,29 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
+kotlinpoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinpoet" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlin-metadata-jvm = { group = "org.jetbrains.kotlin", name = "kotlin-metadata-jvm", version.ref = "kotlin" }
+ksp-symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+ksp-symbol-processing-aa-embeddable = { module = "com.google.devtools.ksp:symbol-processing-aa-embeddable", version.ref = "ksp" }
+ksp-symbol-processing-common-deps = { module = "com.google.devtools.ksp:symbol-processing-common-deps", version.ref = "ksp" }
+ksp-symbol-processing-gradle-plugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 leakcanary-android-instrumentation = { module = "com.squareup.leakcanary:leakcanary-android-instrumentation", version.ref = "leakcanaryAndroid" }
 lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = "androidTools" }
 lint-checks = { group = "com.android.tools.lint", name = "lint-checks", version.ref = "androidTools" }
 lint-tests = { group = "com.android.tools.lint", name = "lint-tests", version.ref = "androidTools" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
 navigation-test = { module = "androidx.navigation:navigation-testing", version.ref = "navigation-compose" }
 okhttp-android = { module = "com.squareup.okhttp3:okhttp-android" }
 okhttp-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp" }
 okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
+mdi-icons = { module = "io.github.timoptr:mdi-icons", version.ref = "mdi-icons" }
 media3-datasource-cronet = { module = "androidx.media3:media3-datasource-cronet", version.ref = "media3" }
 media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3" }
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
@@ -266,6 +269,7 @@ wear-remote-interactions = { module = "androidx.wear:wear-remote-interactions", 
 wear-tiles = { module = "androidx.wear.tiles:tiles", version.ref = "wear-tiles" }
 wear-tooling = { module = "androidx.wear:wear-tooling-preview", version.ref = "wear-tooling" }
 webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
+webrtc-sdk = { module = "io.github.webrtc-sdk:android-prefixed", version.ref = "webrtcSdk" }
 zxing = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxing" }
 
 [bundles]

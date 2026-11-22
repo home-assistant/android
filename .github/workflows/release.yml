@@ -8,6 +8,10 @@ on: # yamllint disable-line rule:truthy
 env:
   SUPPLY_UPLOAD_MAX_RETRIES: 5
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false # Never cancel a Play Store promotion in flight
+
 permissions:
   contents: read
 
@@ -15,22 +19,22 @@ jobs:
   play_promote_production:
     name: Play Publish Production
     runs-on: ubuntu-latest
+    if: github.repository == 'home-assistant/android'
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: ruby/setup-ruby@9eb537ca036ebaed86729dcb9309076e4c5c3b74 # v1.314.0
+      - uses: ruby/setup-ruby@b3aaceaef7e0ee231b499e7b5f49c03fc1d32199 # v1.338.0
         with:
-          ruby-version: "4.0.5"
+          ruby-version: "4.0.9"
           bundler-cache: false
 
-      - uses: ./.github/actions/inflate-secrets
+      - uses: $/.github/actions/inflate-secrets
         name: Inflate Secrets
         with:
           keystore: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
           google-services: ${{ secrets.GOOGLESERVICES }}
-          firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
       - name: Install Fastlane dependencies

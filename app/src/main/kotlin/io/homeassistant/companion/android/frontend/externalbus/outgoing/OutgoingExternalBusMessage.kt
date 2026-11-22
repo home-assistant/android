@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.frontend.externalbus.outgoing
 
 import androidx.annotation.VisibleForTesting
 import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.frontend.addto.ExternalEntityAddToAction
 import io.homeassistant.companion.android.frontend.externalbus.frontendExternalBusJson
-import io.homeassistant.companion.android.webview.externalbus.ExternalEntityAddToAction
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -17,7 +17,7 @@ import kotlinx.serialization.json.encodeToJsonElement
  * These messages are serialized to JSON and evaluated in the WebView to communicate
  * with the Home Assistant frontend.
  *
- * @see <a href="https://developers.home-assistant.io/docs/frontend/external-bus">External bus documentation</a>
+ * @see <a href="https://contributors.home-assistant.io/frontend/reference/external-bus/">External bus documentation</a>
  */
 @Serializable
 sealed interface OutgoingExternalBusMessage {
@@ -49,6 +49,20 @@ object SuccessResultMessage {
     }
 }
 
+object ErrorResultMessage {
+    /** The frontend branches on [code] and shows its own text; [message] is for the log. */
+    operator fun invoke(id: Int?, code: String, message: String): OutgoingExternalBusMessage {
+        return ResultMessage(
+            id = id,
+            success = false,
+            error = frontendExternalBusJson.encodeToJsonElement(ResultError(code = code, message = message)),
+        )
+    }
+
+    @Serializable
+    private data class ResultError(val code: String, val message: String)
+}
+
 object ConfigResultMessage {
     /**
      * Creates a config response with app capabilities.
@@ -59,10 +73,12 @@ object ConfigResultMessage {
         id: Int?,
         hasNfc: Boolean,
         canCommissionMatter: Boolean,
+        canShareMatterDevice: Boolean,
         canExportThread: Boolean,
         hasBarCodeScanner: Int,
         canSetupImprov: Boolean,
         appVersion: AppVersion,
+        hasCameraMicrophoneStream: Boolean,
     ): OutgoingExternalBusMessage {
         return ResultMessage(
             id = id,
@@ -70,10 +86,12 @@ object ConfigResultMessage {
                 ConfigResult.create(
                     hasNfc,
                     canCommissionMatter,
+                    canShareMatterDevice,
                     canExportThread,
                     hasBarCodeScanner,
                     canSetupImprov,
                     appVersion,
+                    hasCameraMicrophoneStream,
                 ),
             ),
         )
@@ -99,65 +117,69 @@ object ConfigResultMessage {
         val appVersion: String,
         val hasEntityAddTo: Boolean = true,
         val hasAssistSettings: Boolean = true,
+        val hasSplashscreen: Boolean = true,
+        val hasMatterStatusReport: Boolean = true,
+        val canShareMatterDeviceToOtherApps: Boolean,
+        val webrtc: WebRtc,
     ) {
+        /** The app's WebRTC capabilities. */
+        @Serializable
+        data class WebRtc(
+            /**
+             * The app can stream the microphone to a camera itself (`webrtc/stream/start`), used when
+             * the frontend has no secure context. Gated on the device having a microphone.
+             */
+            val hasCameraMicrophoneStream: Boolean,
+        )
+
         companion object {
             fun create(
                 hasNfc: Boolean,
                 canCommissionMatter: Boolean,
+                canShareMatterDevice: Boolean,
                 canExportThread: Boolean,
                 hasBarCodeScanner: Int,
                 canSetupImprov: Boolean,
                 appVersion: AppVersion,
+                hasCameraMicrophoneStream: Boolean,
             ) = ConfigResult(
                 canWriteTag = hasNfc,
                 canCommissionMatter = canCommissionMatter,
+                canShareMatterDeviceToOtherApps = canShareMatterDevice,
                 canImportThreadCredentials = canExportThread,
                 hasBarCodeScanner = hasBarCodeScanner,
                 canSetupImprov = canSetupImprov,
-                appVersion = appVersion.value,
+                appVersion = appVersion.toString(),
+                webrtc = WebRtc(hasCameraMicrophoneStream = hasCameraMicrophoneStream),
             )
         }
     }
 }
 
 /**
- * Configuration result payload for config/get requests.
- *
- * Contains the app's capabilities that the frontend needs to know about.
+ * Reply to a `webrtc/stream/start` request: the app-generated `session_id` once the stream is
+ * connected, or an error ([code] from [WebRtcStreamErrorCode]) when it could not be started.
+ * Correlated to the request by [id].
  */
-@Serializable
-data class ConfigResult(
-    val hasSettingsScreen: Boolean = true,
-    val canWriteTag: Boolean,
-    val hasExoPlayer: Boolean = true,
-    val canCommissionMatter: Boolean,
-    val canImportThreadCredentials: Boolean,
-    val hasAssist: Boolean = true,
-    val hasBarCodeScanner: Int,
-    val canSetupImprov: Boolean = true,
-    val downloadFileSupported: Boolean = true,
-    val appVersion: String,
-    val hasEntityAddTo: Boolean = true,
-    val hasAssistSettings: Boolean = true,
-) {
-    companion object {
-        fun create(
-            hasNfc: Boolean,
-            canCommissionMatter: Boolean,
-            canExportThread: Boolean,
-            hasBarCodeScanner: Int,
-            canSetupImprov: Boolean,
-            appVersion: AppVersion,
-        ) = ConfigResult(
-            canWriteTag = hasNfc,
-            canCommissionMatter = canCommissionMatter,
-            canImportThreadCredentials = canExportThread,
-            hasBarCodeScanner = hasBarCodeScanner,
-            canSetupImprov = canSetupImprov,
-            appVersion = appVersion.value,
-        )
-    }
+object WebRtcStreamResultMessage {
+    operator fun invoke(id: Int?, sessionId: String): OutgoingExternalBusMessage = ResultMessage(
+        id = id,
+        result = frontendExternalBusJson.encodeToJsonElement(SessionIdPayload(sessionId = sessionId)),
+    )
+
+    fun error(id: Int?, code: WebRtcStreamErrorCode, message: String?): OutgoingExternalBusMessage = ResultMessage(
+        id = id,
+        success = false,
+        error = frontendExternalBusJson.encodeToJsonElement(ErrorPayload(code = code.value, message = message)),
+    )
+
+    @Serializable
+    private data class SessionIdPayload(@SerialName("session_id") val sessionId: String)
+
+    @Serializable
+    private data class ErrorPayload(val code: String, val message: String?)
 }
+
 object EntityAddToActionsResultMessage {
     /**
      * Creates a response with available EntityAddTo actions.

@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTopPositionInRootIsEqualTo
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -25,6 +26,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.Insets
+import androidx.core.util.TypedValueCompat.pxToDp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import com.google.zxing.BarcodeFormat
 import com.wifi.improv.ErrorState
@@ -37,10 +43,13 @@ import io.homeassistant.companion.android.common.data.connectivity.ConnectivityC
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
+import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
+import io.homeassistant.companion.android.frontend.error.errorActions
 import io.homeassistant.companion.android.frontend.improv.ImprovUIState
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.permissions.PermissionManager
@@ -66,6 +75,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+
+private const val STATUS_BAR_HEIGHT_PX = 48
+private const val NAVIGATION_BAR_HEIGHT_PX = 24
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -101,18 +113,23 @@ class FrontendScreenTest {
     }
 
     @Test
-    fun `Given Error state then error screen with retry button and webview are displayed`() {
-        var retryCalled = false
-        val error = FrontendConnectionError.UnreachableError(
+    fun `Given Error state then error screen with recovery action and webview are displayed`() {
+        var action: ErrorActionIntent? = null
+        val error = FrontendConnectionError.Unreachable(
             message = commonR.string.webview_error_HOST_LOOKUP,
             errorDetails = "Connection failed",
             rawErrorType = "HostLookupError",
         )
         composeTestRule.apply {
             setFrontendScreen(
-                viewState = FrontendViewState.Error(serverId = 1, url = "https://example.com", error = error),
+                viewState = FrontendViewState.Error(
+                    serverId = 1,
+                    url = "https://example.com",
+                    error = error,
+                    actions = errorActions(error, isInternalConnection = false),
+                ),
                 errorStateProvider = FakeConnectionErrorStateProvider(url = "https://example.com", error = error),
-                onBlockInsecureRetry = { retryCalled = true },
+                onErrorAction = { action = it },
             )
 
             assertIsLoading(false)
@@ -120,8 +137,9 @@ class FrontendScreenTest {
 
             onNodeWithText(stringResource(commonR.string.error_connection_failed)).assertIsDisplayed()
             onNodeWithText(stringResource(commonR.string.webview_error_HOST_LOOKUP)).assertIsDisplayed()
-            onNodeWithText(stringResource(commonR.string.retry)).performScrollTo().performClick()
-            assertTrue("onRetry should be called when retry button is clicked", retryCalled)
+            // The external-connection actions refresh the external URL.
+            onNodeWithText(stringResource(commonR.string.refresh_external)).performScrollTo().performClick()
+            assertEquals(ErrorActionIntent.Refresh, action)
         }
     }
 
@@ -496,6 +514,7 @@ class FrontendScreenTest {
         errorStateProvider: FrontendConnectionErrorStateProvider = FrontendConnectionErrorStateProvider.noOp,
         pendingPermissionRequest: PermissionRequest? = null,
         onBlockInsecureRetry: () -> Unit = {},
+        onErrorAction: (ErrorActionIntent) -> Unit = {},
         onBlockInsecureHelpClick: suspend () -> Unit = {},
         onOpenSettings: () -> Unit = {},
         onChangeSecurityLevel: () -> Unit = {},
@@ -512,12 +531,13 @@ class FrontendScreenTest {
             val content: @Composable () -> Unit = {
                 FrontendScreenContent(
                     viewState = viewState,
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     errorStateProvider = errorStateProvider,
                     pendingPermissionRequest = pendingPermissionRequest,
                     onBlockInsecureRetry = onBlockInsecureRetry,
+                    onErrorAction = onErrorAction,
                     onOpenExternalLink = {},
                     onBlockInsecureHelpClick = onBlockInsecureHelpClick,
                     onOpenSettings = onOpenSettings,
@@ -568,7 +588,7 @@ class FrontendScreenTest {
                         barcodeScanner = barcodeScanner,
                     ),
                     pendingDialog = pendingDialog,
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
@@ -666,9 +686,8 @@ class FrontendScreenTest {
 
     @Test
     fun `Given WebViewCreationError state then error screen with open settings button is displayed`() {
-        var openSettingsCalled = false
-        val error = FrontendConnectionError.UnrecoverableError.WebViewCreationError(
-            message = commonR.string.webview_creation_failed,
+        var action: ErrorActionIntent? = null
+        val error = FrontendConnectionError.Unrecoverable.WebViewCreationError(
             throwable = UnsatisfiedLinkError("dlopen failed: libwebviewchromium.so is 32-bit instead of 64-bit"),
         )
         composeTestRule.apply {
@@ -678,18 +697,20 @@ class FrontendScreenTest {
                         serverId = 1,
                         url = "https://example.com",
                         error = error,
+                        actions = errorActions(error, isInternalConnection = false),
                     ),
                     errorStateProvider = FakeConnectionErrorStateProvider(
                         url = "https://example.com",
                         error = error,
                     ),
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
+                    onErrorAction = { action = it },
                     onOpenExternalLink = {},
                     onBlockInsecureHelpClick = {},
-                    onOpenSettings = { openSettingsCalled = true },
+                    onOpenSettings = {},
                     onChangeSecurityLevel = {},
                     onOpenLocationSettings = {},
                     onConfigureHomeNetwork = { _ -> },
@@ -706,11 +727,12 @@ class FrontendScreenTest {
             onNodeWithText(stringResource(commonR.string.webview_creation_error_title)).assertIsDisplayed()
             // Error message should be displayed
             onNodeWithText(stringResource(commonR.string.webview_creation_failed)).assertIsDisplayed()
-            // Retry button should NOT be displayed
-            onNodeWithText(stringResource(commonR.string.retry)).assertDoesNotExist()
-            // Open Settings button should be displayed
+            // No refresh action for an unrecoverable error
+            onNodeWithText(stringResource(commonR.string.refresh_external)).assertDoesNotExist()
+            onNodeWithText(stringResource(commonR.string.refresh_internal)).assertDoesNotExist()
+            // Open Settings action should be displayed and dispatch GoToSettings
             onNodeWithText(stringResource(commonR.string.open_settings)).performScrollTo().performClick()
-            assertTrue("onOpenSettings should be called when open settings button is clicked", openSettingsCalled)
+            assertEquals(ErrorActionIntent.GoToSettings, action)
         }
     }
 
@@ -724,7 +746,7 @@ class FrontendScreenTest {
                     url = "https://example.com",
                 ),
                 customView = View(context),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -768,7 +790,7 @@ class FrontendScreenTest {
                     url = "https://example.com",
                 ),
                 customView = View(context),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -800,7 +822,7 @@ class FrontendScreenTest {
                     serverId = 1,
                     url = "https://example.com",
                 ),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -829,7 +851,7 @@ class FrontendScreenTest {
         composeTestRule.setContent {
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -874,7 +896,7 @@ class FrontendScreenTest {
             if (visible.value) {
                 FrontendScreenContent(
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
@@ -913,7 +935,7 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -942,7 +964,7 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -975,7 +997,7 @@ class FrontendScreenTest {
             capturedView = LocalView.current
             FrontendScreenContent(
                 viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                webViewClient = WebViewClient(),
+                getWebViewClient = { WebViewClient() },
                 webChromeClient = WebChromeClient(),
                 frontendJsCallback = FrontendJsBridge.noOp,
                 onBlockInsecureRetry = {},
@@ -1010,7 +1032,7 @@ class FrontendScreenTest {
             if (visible.value) {
                 FrontendScreenContent(
                     viewState = FrontendViewState.Content(serverId = 1, url = "https://example.com"),
-                    webViewClient = WebViewClient(),
+                    getWebViewClient = { WebViewClient() },
                     webChromeClient = WebChromeClient(),
                     frontendJsCallback = FrontendJsBridge.noOp,
                     onBlockInsecureRetry = {},
@@ -1046,6 +1068,104 @@ class FrontendScreenTest {
         } else {
             node.assertDoesNotExist()
         }
+    }
+
+    @Test
+    fun `Given a server handling top insets when system bars are present then top inset is reported and webview is drawn behind the status bar`() {
+        val reportedInsets = mutableListOf<SafeAreaInsets>()
+        composeTestRule.apply {
+            setFrontendScreenWithSystemBars(
+                viewState = { contentState(serverHandleTopInsets = true) },
+                onSafeAreaInsetsChanged = { reportedInsets += it },
+            )
+
+            runOnIdle { assertEquals(safeAreaInsets(topPx = STATUS_BAR_HEIGHT_PX), reportedInsets.last()) }
+            onNodeWithTag(HA_WEBVIEW_TAG).assertTopPositionInRootIsEqualTo(0.dp)
+        }
+    }
+
+    @Test
+    fun `Given a server not handling top insets when system bars are present then top inset is reported as zero and webview is drawn below the status bar`() {
+        val reportedInsets = mutableListOf<SafeAreaInsets>()
+        composeTestRule.apply {
+            setFrontendScreenWithSystemBars(
+                viewState = { contentState(serverHandleTopInsets = false) },
+                onSafeAreaInsetsChanged = { reportedInsets += it },
+            )
+
+            runOnIdle { assertEquals(safeAreaInsets(topPx = 0), reportedInsets.last()) }
+            onNodeWithTag(HA_WEBVIEW_TAG).assertTopPositionInRootIsEqualTo(toDp(STATUS_BAR_HEIGHT_PX).dp)
+        }
+    }
+
+    @Test
+    fun `Given loading with system bars present when content of a server handling top insets is shown then top inset is reported`() {
+        val viewState = mutableStateOf<FrontendViewState>(
+            FrontendViewState.Loading(serverId = 1, url = "https://example.com"),
+        )
+        val reportedInsets = mutableListOf<SafeAreaInsets>()
+        composeTestRule.apply {
+            setFrontendScreenWithSystemBars(
+                viewState = { viewState.value },
+                onSafeAreaInsetsChanged = { reportedInsets += it },
+            )
+            runOnIdle { assertEquals(safeAreaInsets(topPx = 0), reportedInsets.last()) }
+
+            viewState.value = contentState(serverHandleTopInsets = true)
+
+            runOnIdle { assertEquals(safeAreaInsets(topPx = STATUS_BAR_HEIGHT_PX), reportedInsets.last()) }
+        }
+    }
+
+    private fun contentState(serverHandleTopInsets: Boolean) = FrontendViewState.Content(
+        serverId = 1,
+        url = "https://example.com",
+        serverHandleInsets = true,
+        serverHandleTopInsets = serverHandleTopInsets,
+    )
+
+    /** The insets expected from the system bars of [setFrontendScreenWithSystemBars], with the given top. */
+    private fun safeAreaInsets(topPx: Int) = SafeAreaInsets(
+        top = toDp(topPx),
+        bottom = toDp(NAVIGATION_BAR_HEIGHT_PX),
+        left = 0f,
+        right = 0f,
+    )
+
+    private fun toDp(px: Int): Float = pxToDp(px.toFloat(), composeTestRule.activity.resources.displayMetrics)
+
+    /**
+     * Renders [FrontendScreenContent] and dispatches a status bar and a navigation bar to the window,
+     * since Robolectric reports no system bars on its own.
+     */
+    private fun AndroidComposeTestRule<ActivityScenarioRule<HiltComponentActivity>, HiltComponentActivity>.setFrontendScreenWithSystemBars(
+        viewState: () -> FrontendViewState,
+        onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
+    ) {
+        setContent {
+            FrontendScreenContent(
+                viewState = viewState(),
+                getWebViewClient = { WebViewClient() },
+                webChromeClient = WebChromeClient(),
+                frontendJsCallback = FrontendJsBridge.noOp,
+                onBlockInsecureRetry = {},
+                onOpenExternalLink = {},
+                onBlockInsecureHelpClick = {},
+                onOpenSettings = {},
+                onChangeSecurityLevel = {},
+                onOpenLocationSettings = {},
+                onConfigureHomeNetwork = { _ -> },
+                onSecurityLevelHelpClick = {},
+                onShowSnackbar = { _, _ -> true },
+                onWebViewCreationFailed = {},
+                onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
+            )
+        }
+        val systemBars = WindowInsetsCompat.Builder()
+            .setInsets(WindowInsetsCompat.Type.statusBars(), Insets.of(0, STATUS_BAR_HEIGHT_PX, 0, 0))
+            .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, 0, 0, NAVIGATION_BAR_HEIGHT_PX))
+            .build()
+        runOnUiThread { ViewCompat.dispatchApplyWindowInsets(activity.window.decorView, systemBars) }
     }
 }
 

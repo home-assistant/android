@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.database.wear
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+import androidx.room3.ColumnInfo
+import androidx.room3.Entity
+import androidx.room3.PrimaryKey
 
 /**
  * Represents a cached favorite entity
@@ -12,8 +12,9 @@ data class FavoriteCaches(
     @PrimaryKey
     @ColumnInfo(name = "id")
     val id: String,
-    @ColumnInfo(name = "friendly_name")
-    val friendlyName: String,
+    /** Name to display for the entity, resolved when it was cached. */
+    @ColumnInfo(name = "name")
+    val name: String,
     @ColumnInfo(name = "icon")
     val icon: String?,
 )

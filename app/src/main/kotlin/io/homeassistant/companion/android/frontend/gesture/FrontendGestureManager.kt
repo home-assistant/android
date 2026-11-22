@@ -80,6 +80,7 @@ class FrontendGestureManager @Inject constructor(
             )
             GestureAction.NAVIGATE_FORWARD -> GestureResult.PerformWebViewAction(WebViewAction.Forward())
             GestureAction.NAVIGATE_RELOAD -> GestureResult.PerformWebViewAction(WebViewAction.Reload())
+            GestureAction.NAVIGATE_OPEN_IN_BROWSER -> GestureResult.OpenInBrowser
             GestureAction.SERVER_LIST -> GestureResult.Navigate(FrontendEvent.ShowServerSwitcher)
             GestureAction.SERVER_NEXT -> switchServerBy(currentServerId = serverId, offset = 1)
             GestureAction.SERVER_PREVIOUS -> switchServerBy(currentServerId = serverId, offset = -1)
@@ -124,7 +125,7 @@ class FrontendGestureManager @Inject constructor(
                 bubbles: true,
                 cancelable: true
             });
-            document.dispatchEvent(event);
+             (document.body || document.documentElement || document).dispatchEvent(event);
         """.trimIndent()
         externalBusRepository.evaluateScript(script)
     }

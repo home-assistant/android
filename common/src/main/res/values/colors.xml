@@ -24,7 +24,8 @@
     <color name="colorWidgetButtonLabelBlack">#3A3A3A</color>
     <color name="colorWidgetButtonLabelWhite">#E6E6E6</color>
     <color name="colorActionBarPopupBackground">@android:color/white</color>
-    <color name="colorLaunchScreenBackground">#fafafa</color>
+    <!-- Must match the design system colorSurfaceDefault (HAColors.White) -->
+    <color name="colorLaunchScreenBackground">#ffffff</color>
     <color name="colorCodeBackground">#f5f5f5</color>
     <color name="colorAlertInfo">#dbeef7</color>
     <color name="colorAlertWarning">#1fffa600</color>

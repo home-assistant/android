@@ -1,12 +1,14 @@
 package io.homeassistant.companion.android.util
 
 import android.net.Uri
+import dagger.hilt.android.testing.HiltTestApplication
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * Tests for [Uri] extension functions defined in UrlUtil.kt.
@@ -16,6 +18,7 @@ import org.robolectric.RobolectricTestRunner
  * JUnit 5 for tests that don't require Android classes.
  */
 @RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
 class UriExtensionsTest {
 
     @Test

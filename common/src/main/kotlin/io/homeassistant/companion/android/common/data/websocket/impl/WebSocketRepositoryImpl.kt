@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
+import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.integration.ActionData
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.data.websocket.SubscriptionReconnectPolicy
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
@@ -13,6 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCo
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_ENTITY_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_STATE_CHANGED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_PUSH_NOTIFICATION_CHANNEL
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_RENDER_TEMPLATE
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
@@ -23,37 +27,70 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraCapabilitiesResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.FloorRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.MatterCommissionResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.PongSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.RawMessageSocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.toDisplayResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.webRtcJsonMapper
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toHexString
 import io.homeassistant.companion.android.database.server.ServerUserInfo
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.intOrNull
 import okhttp3.WebSocketListener
+import timber.log.Timber
 
-private val matterTimeout = 2.minutes
+private val MATTER_TIMEOUT = 2.minutes
+
+/**
+ * Minimum server version to use `config/entity_registry/list_for_display`.
+ *
+ * The command itself exists since 2023.3, but only since 2024.10 (https://github.com/home-assistant/core/pull/125832)
+ * is the `en` field the server-resolved display name (`name or original_name`) and the `hn`
+ * (`has_entity_name`) flag present. Before 2024.10, `en` was only sent for entities with
+ * `has_entity_name` and no user-set name, so it cannot be trusted as the display name. Older
+ * servers use `config/entity_registry/list` instead.
+ */
+private val MIN_VERSION_ENTITY_REGISTRY_DISPLAY = HomeAssistantVersion(year = 2024, month = 10, release = 0)
+
+/** Minimum server version of the `subscribe_entities` command, which can be limited to entity ids. */
+internal val MIN_VERSION_SUBSCRIBE_ENTITIES = HomeAssistantVersion(year = 2022, month = 4, release = 0)
+
+/** Minimum server version to limit `subscribe_entities` to domains (https://github.com/home-assistant/core/pull/124641). */
+private val MIN_VERSION_SUBSCRIBE_ENTITIES_DOMAINS = HomeAssistantVersion(year = 2024, month = 9, release = 0)
+
+/** How long [WebSocketRepositoryImpl.getStates] waits for the states of a filter, like any other request. */
+private val FILTERED_STATES_TIMEOUT = 30.seconds
+
+/** Minimum server version of the `config/floor_registry/list` command (https://github.com/home-assistant/core/pull/110741). */
+private val MIN_VERSION_FLOOR_REGISTRY = HomeAssistantVersion(year = 2024, month = 3, release = 0)
 
 class WebSocketRepositoryImpl internal constructor(
     private val webSocketCore: WebSocketCore,
@@ -69,14 +106,7 @@ class WebSocketRepositoryImpl internal constructor(
         return webSocketCore.shutdown()
     }
 
-    override suspend fun sendPing(): Boolean {
-        val socketResponse = webSocketCore.sendMessage(
-            mapOf(
-                "type" to "ping",
-            ),
-        )
-        return socketResponse is PongSocketResponse
-    }
+    override suspend fun sendPing(): Boolean = webSocketCore.ping()
 
     override suspend fun getConfig(): GetConfigResponse? {
         val socketResponse = webSocketCore.sendMessage(
@@ -134,7 +164,13 @@ class WebSocketRepositoryImpl internal constructor(
         return response
     }
 
-    override suspend fun getStates(): List<EntityResponse>? {
+    override suspend fun getStates(filter: EntityFilter): List<EntityResponse>? = when {
+        filter.isEmpty -> getAllStates()
+        webSocketCore.server()?.version.supportsFilteringEntities(filter) -> getFilteredStates(filter)
+        else -> getAllStates()?.filter { filter.matches(it.entityId) }
+    }
+
+    private suspend fun getAllStates(): List<EntityResponse>? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "get_states",
@@ -142,6 +178,18 @@ class WebSocketRepositoryImpl internal constructor(
         )
 
         return mapResponse(socketResponse)
+    }
+
+    private suspend fun getFilteredStates(filter: EntityFilter): List<EntityResponse>? {
+        // A subscription starts with the states of the entities it follows, filtered by the server
+        val initialStates = withTimeoutOrNull(FILTERED_STATES_TIMEOUT) {
+            webSocketCore.firstEventOf<CompressedStateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                filter.toSubscribeEntitiesData(),
+            )
+        }?.added
+        if (initialStates == null) Timber.w("Unable to fetch the states of the filtered entities")
+        return initialStates?.map { (entityId, state) -> state.toEntity(entityId) }
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
@@ -168,6 +216,47 @@ class WebSocketRepositoryImpl internal constructor(
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "config/entity_registry/list",
+            ),
+        )
+
+        return mapResponse(socketResponse)
+    }
+
+    override suspend fun getEntityRegistryDisplay(entityIds: List<String>): EntityRegistryDisplayResponse? = when {
+        !isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY) -> null
+        entityIds.isEmpty() -> getWholeEntityRegistryDisplay()
+        else -> getEntityRegistryDisplayEntries(entityIds)
+    }
+
+    private suspend fun getWholeEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "config/entity_registry/list_for_display",
+            ),
+        )
+
+        return mapResponse(socketResponse)
+    }
+
+    private suspend fun getEntityRegistryDisplayEntries(entityIds: List<String>): EntityRegistryDisplayResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "config/entity_registry/get_entries",
+                "entity_ids" to entityIds,
+            ),
+        )
+        // The entry of an entity the registry doesn't know is null
+        return socketResponse?.takeIf { it.success == true }
+            ?.let { mapResponse<Map<String, EntityRegistryResponse?>>(it) }
+            ?.values?.filterNotNull()?.toDisplayResponse()
+    }
+
+    override suspend fun getFloorRegistry(): List<FloorRegistryResponse>? {
+        if (!isServerAtLeast(MIN_VERSION_FLOOR_REGISTRY)) return null
+
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "config/floor_registry/list",
             ),
         )
 
@@ -287,11 +376,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>? =
         subscribeToTrigger("state", mapOf("entity_id" to entityIds))
 
-    override suspend fun getCompressedStateAndChanges(): Flow<CompressedStateChangedEvent>? =
-        webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES)
-
-    override suspend fun getCompressedStateAndChanges(entityIds: List<String>): Flow<CompressedStateChangedEvent>? =
-        webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES, mapOf("entity_ids" to entityIds))
+    override suspend fun getCompressedStateAndChanges(filter: EntityFilter): Flow<CompressedStateChangedEvent>? =
+        webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES, filter.toSubscribeEntitiesData())
 
     override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? =
         subscribeToEventsForType(EVENT_AREA_REGISTRY_UPDATED)
@@ -348,7 +434,7 @@ class WebSocketRepositoryImpl internal constructor(
                     "code" to code,
                 ),
                 // Matter commissioning takes at least 60 seconds + interview
-                timeout = matterTimeout,
+                timeout = MATTER_TIMEOUT,
             ),
         )
 
@@ -366,12 +452,12 @@ class WebSocketRepositoryImpl internal constructor(
                 message = buildMap {
                     put("type", "matter/commission_on_network")
                     put("pin", pin)
-                    if (webSocketCore.server()?.version?.isAtLeast(2024, 1) == true) {
+                    if (isServerAtLeast(HomeAssistantVersion(2024, 1, 0))) {
                         put("ip_addr", ip)
                     }
                 },
                 // Matter commissioning takes at least 60 seconds + interview
-                timeout = matterTimeout,
+                timeout = MATTER_TIMEOUT,
             ),
         )
 
@@ -420,25 +506,103 @@ class WebSocketRepositoryImpl internal constructor(
         return response?.success == true
     }
 
+    override suspend fun getCameraCapabilities(entityId: String): CameraCapabilitiesResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "camera/capabilities",
+                "entity_id" to entityId,
+            ),
+        )
+
+        return mapResponse(socketResponse)
+    }
+
+    override suspend fun getCameraWebRtcClientConfig(entityId: String): CameraWebRtcClientConfigResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "camera/webrtc/get_client_config",
+                "entity_id" to entityId,
+            ),
+        )
+
+        // The response follows the camelCase W3C dictionaries so it cannot be decoded with the
+        // shared snake_case mapper used by mapResponse. The success check avoids decoding an
+        // error payload when the camera does not support WebRTC.
+        return socketResponse?.takeIf { it.success == true }?.result?.let {
+            webRtcJsonMapper.decodeFromJsonElement(it)
+        }
+    }
+
+    override suspend fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent>? =
+        webSocketCore.subscribeTo(
+            SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER,
+            mapOf(
+                "entity_id" to entityId,
+                "offer" to offerSdp,
+            ),
+            // The server closes the session with the connection; replaying the offer would open a
+            // new one for a peer connection that is already negotiated
+            reconnectPolicy = SubscriptionReconnectPolicy.Complete,
+        )
+
+    override suspend fun sendCameraWebRtcCandidate(
+        entityId: String,
+        sessionId: String,
+        candidate: WebRtcCandidate,
+    ): Boolean {
+        val response = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "camera/webrtc/candidate",
+                "entity_id" to entityId,
+                "session_id" to sessionId,
+                "candidate" to webRtcJsonMapper.encodeToJsonElement(candidate),
+            ),
+        )
+        return response?.success == true
+    }
+
+    /**
+     * Data of a `subscribe_entities` command limited to this filter, none when it is empty. Filter options
+     * are sorted so that the same selection always shares the same subscription.
+     */
+    private fun EntityFilter.toSubscribeEntitiesData(): Map<String, Any?> = when {
+        isEmpty -> emptyMap()
+        domains.isEmpty() -> mapOf("entity_ids" to entityIds.sorted())
+        else -> mapOf("include" to mapOf("domains" to domains.sorted(), "entities" to entityIds.sorted()))
+    }
+
     /**
      * Update server entry in [serverManager] with information from a [CurrentUserResponse] like user
      * name and admin status.
      */
     private suspend fun updateServerWithUser(user: CurrentUserResponse) {
-        webSocketCore.server()?.let {
+        webSocketCore.server()?.let { server ->
+            val userIdChanged = server.user.id != user.id
             serverManager.updateServer(
-                it.copy(
+                server.copy(
                     user = ServerUserInfo(
                         id = user.id,
                         name = user.name,
                         isOwner = user.isOwner,
                         isAdmin = user.isAdmin,
+                        picturePath = if (userIdChanged) null else server.user.picturePath,
                     ),
                 ),
             )
         }
     }
 
+    /** Whether the server this repository talks to runs at least [version]. */
+    private suspend fun isServerAtLeast(version: HomeAssistantVersion): Boolean =
+        webSocketCore.server()?.version?.isAtLeast(version) == true
+
     private inline fun <reified T> mapResponse(response: RawMessageSocketResponse?): T? =
         response?.result?.run { kotlinJsonMapper.decodeFromJsonElement(this) }
+}
+
+/** Whether a server running this version can limit `subscribe_entities` to [filter] itself. */
+internal fun HomeAssistantVersion?.supportsFilteringEntities(filter: EntityFilter): Boolean {
+    val minimumVersion =
+        if (filter.domains.isEmpty()) MIN_VERSION_SUBSCRIBE_ENTITIES else MIN_VERSION_SUBSCRIBE_ENTITIES_DOMAINS
+    return this?.isAtLeast(minimumVersion) == true
 }

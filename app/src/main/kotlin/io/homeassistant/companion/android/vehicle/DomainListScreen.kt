@@ -8,10 +8,10 @@ import androidx.car.app.model.Template
 import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.util.vehicle.SUPPORTED_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.getDomainList
@@ -27,9 +27,8 @@ class DomainListScreen(
     carContext: CarContext,
     val serverManager: ServerManager,
     private val serverId: StateFlow<Int>,
-    private val allEntities: Flow<Map<String, Entity>>,
+    private val entitiesState: Flow<EntityDisplayState<EntityDisplay>>,
     private val prefsRepository: PrefsRepository,
-    private val entityRegistry: List<EntityRegistryResponse>?,
 ) : BaseVehicleScreen(carContext) {
 
     private val domains = mutableSetOf<String>()
@@ -41,19 +40,37 @@ class DomainListScreen(
 
     init {
         lifecycleScope.launch {
-            allEntities.collect { entities ->
-                val newDomains = entities.values
-                    .map { it.domain }
-                    .distinct()
-                    .filter { it in SUPPORTED_DOMAINS }
-                    .toSet()
-                val invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
-                domains.clear()
-                domains.addAll(newDomains)
-                domainsAdded = true
-                if (invalidate) invalidate()
+            entitiesState.collect { state ->
+                when (state) {
+                    EntityDisplayState.Loading -> {
+                        if (domainsAdded) {
+                            domainsAdded = false
+                            invalidate()
+                        }
+                    }
+                    EntityDisplayState.Error -> {
+                        updateDomains(emptyList())
+                    }
+                    is EntityDisplayState.Loaded -> {
+                        updateDomains(state.entities.toList())
+                    }
+                }
             }
         }
+    }
+
+    /** Recomputes the domains from [entities], invalidating on any change. */
+    private fun updateDomains(entities: List<EntityDisplay>) {
+        val newDomains = entities
+            .map { it.domain }
+            .distinct()
+            .filter { it in SUPPORTED_DOMAINS }
+            .toSet()
+        val invalidate = newDomains.size != domains.size || newDomains != domains || !domainsAdded
+        domains.clear()
+        domains.addAll(newDomains)
+        domainsAdded = true
+        if (invalidate) invalidate()
     }
 
     override fun onGetTemplate(): Template {
@@ -65,8 +82,7 @@ class DomainListScreen(
             serverManager,
             serverId,
             prefsRepository,
-            allEntities,
-            entityRegistry,
+            entitiesState,
             lifecycleScope,
         )
 

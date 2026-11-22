@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.frontend
 
 import android.annotation.SuppressLint
 import android.net.Uri
-import android.view.MotionEvent
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
@@ -11,8 +10,11 @@ import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +33,8 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -38,41 +43,51 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.util.TypedValueCompat.pxToDp
+import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.zxing.BarcodeFormat
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
-import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
+import io.homeassistant.companion.android.common.compose.util.isLight
+import io.homeassistant.companion.android.common.data.prefs.NightModeTheme
 import io.homeassistant.companion.android.common.data.prefs.ScreenOrientation
 import io.homeassistant.companion.android.common.util.GestureDirection
+import io.homeassistant.companion.android.frontend.WebViewAction.ApplySafeAreaInsets.Companion.SafeAreaInsets
 import io.homeassistant.companion.android.frontend.barcode.BarcodeScannerUiState
 import io.homeassistant.companion.android.frontend.barcode.ui.BarcodeScanner
 import io.homeassistant.companion.android.frontend.dialog.FrontendDialog
 import io.homeassistant.companion.android.frontend.dialog.PendingDialogHandler
+import io.homeassistant.companion.android.frontend.error.ErrorAction
+import io.homeassistant.companion.android.frontend.error.ErrorActionIntent
+import io.homeassistant.companion.android.frontend.error.ErrorActions
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionError
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorScreen
 import io.homeassistant.companion.android.frontend.error.FrontendConnectionErrorStateProvider
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserEffect
 import io.homeassistant.companion.android.frontend.filechooser.FileChooserRequest
+import io.homeassistant.companion.android.frontend.gesture.FrontendSwipeListener
 import io.homeassistant.companion.android.frontend.improv.ui.ImprovOverlay
+import io.homeassistant.companion.android.frontend.insecure.BlockInsecureScreen
 import io.homeassistant.companion.android.frontend.js.FrontendJsBridge
 import io.homeassistant.companion.android.frontend.js.FrontendJsCallback
 import io.homeassistant.companion.android.frontend.permissions.PendingPermissionHandler
@@ -82,18 +97,16 @@ import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
-import io.homeassistant.companion.android.util.OnSwipeListener
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
 import io.homeassistant.companion.android.util.sensitive
-import io.homeassistant.companion.android.webview.insecure.BlockInsecureScreen
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import timber.log.Timber
 
-/** Minimum swipe velocity (pixels/second) to trigger a gesture action. */
-private const val MINIMUM_GESTURE_VELOCITY = 75f
+/** Duration of the loading overlay fade-out once the frontend is ready. */
+private const val LOADING_OVERLAY_FADE_OUT_MILLIS = 350
 
 /** Test tag applied to the WebView custom view fullscreen overlay. */
 @VisibleForTesting
@@ -133,6 +146,8 @@ internal fun FrontendScreen(
     val pendingDialog by viewModel.pendingDialog.collectAsStateWithLifecycle()
     val pendingFileChooser by viewModel.pendingFileChooser.collectAsStateWithLifecycle()
     val autoPlayVideoEnabled by viewModel.autoPlayVideoEnabled.collectAsStateWithLifecycle()
+    val webViewDebugEnabled by viewModel.webViewDebugEnabled.collectAsStateWithLifecycle()
+    val nightModeTheme by viewModel.nightModeTheme.collectAsStateWithLifecycle()
     val screenOrientation by viewModel.screenOrientation.collectAsStateWithLifecycle()
     val keepScreenOnEnabled by viewModel.keepScreenOnEnabled.collectAsStateWithLifecycle()
     val improvScanRequested by viewModel.improvScanRequested.collectAsStateWithLifecycle()
@@ -160,7 +175,8 @@ internal fun FrontendScreen(
     FrontendScreenContent(
         viewState = viewState,
         errorStateProvider = viewModel as FrontendConnectionErrorStateProvider,
-        webViewClient = viewModel.webViewClient,
+        getWebViewClient = viewModel::getWebViewClient,
+        prepareUrlLoad = viewModel::prepareUrlLoad,
         webChromeClient = webChromeClient,
         customView = customView,
         frontendJsCallback = viewModel.frontendJsCallback,
@@ -179,8 +195,11 @@ internal fun FrontendScreen(
         onSecurityLevelHelpClick = onSecurityLevelHelpClick,
         onShowSnackbar = onShowSnackbar,
         onWebViewCreationFailed = viewModel::onWebViewCreationFailed,
+        onErrorAction = viewModel::onErrorAction,
         onDownloadRequested = viewModel::onDownloadRequested,
         webViewActions = viewModel.webViewActions,
+        onSafeAreaInsetsChanged = viewModel::onSafeAreaInsetsChanged,
+        onScreenStartedChanged = viewModel::onScreenStartedChanged,
         onGesture = viewModel::onGesture,
         onLeavingApp = viewModel::onLeavingApp,
         onExoPlayerFullscreenChanged = viewModel::onExoPlayerFullscreenChanged,
@@ -190,6 +209,8 @@ internal fun FrontendScreen(
         onBarcodeScanned = viewModel::onBarcodeScanned,
         onBarcodeCancelled = viewModel::onBarcodeCancelled,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
+        webViewDebugEnabled = webViewDebugEnabled,
+        nightModeTheme = nightModeTheme,
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
         onPipReadinessChanged = onPipReadinessChanged,
@@ -202,7 +223,7 @@ internal fun FrontendScreen(
 @Composable
 internal fun FrontendScreenContent(
     viewState: FrontendViewState,
-    webViewClient: WebViewClient,
+    getWebViewClient: suspend () -> WebViewClient,
     webChromeClient: WebChromeClient,
     frontendJsCallback: FrontendJsCallback,
     onBlockInsecureRetry: () -> Unit,
@@ -216,8 +237,11 @@ internal fun FrontendScreenContent(
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
     onWebViewCreationFailed: (Throwable) -> Unit,
     modifier: Modifier = Modifier,
+    onErrorAction: (ErrorActionIntent) -> Unit = {},
     customView: View? = null,
     autoPlayVideoEnabled: Boolean = false,
+    webViewDebugEnabled: Boolean? = null,
+    nightModeTheme: NightModeTheme? = null,
     screenOrientation: ScreenOrientation = ScreenOrientation.SYSTEM,
     keepScreenOnEnabled: Boolean = false,
     pendingPermissionRequest: PermissionRequest? = null,
@@ -228,6 +252,8 @@ internal fun FrontendScreenContent(
     onSecurityLevelDone: () -> Unit = {},
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     webViewActions: Flow<WebViewAction> = emptyFlow(),
+    onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit = {},
+    onScreenStartedChanged: (Boolean) -> Unit = {},
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
     onLeavingApp: (String?) -> Unit = {},
     onExoPlayerFullscreenChanged: (Boolean) -> Unit = {},
@@ -239,15 +265,23 @@ internal fun FrontendScreenContent(
     onImprovDismiss: () -> Unit = {},
     improvScanRequested: Boolean = false,
     processImprovScanRequests: suspend () -> Unit = {},
+    prepareUrlLoad: suspend (String) -> Unit = {},
 ) {
     var webView by remember { mutableStateOf<WebView?>(null) }
+    val content = (viewState as? FrontendViewState.Content)
+
+    // Until the frontend theme is read, fall back to the loading surface color (shown behind the
+    // transparent system bars) so their icons stay legible, mirroring the launch screen.
+    val loadingSurfaceColor = LocalHAColorScheme.current.colorSurfaceDefault
 
     // Consume back only while the dashboard (Content) is shown and the WebView has history to pop.
-    BackHandler(enabled = (viewState as? FrontendViewState.Content)?.canGoBack == true) { webView?.goBack() }
+    BackHandler(enabled = content?.canGoBack == true) { webView?.goBack() }
 
     FrontendScreenEffects(
         webView = webView,
         url = viewState.url,
+        getWebViewClient = getWebViewClient,
+        prepareUrlLoad = prepareUrlLoad,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
         pendingFileChooser = pendingFileChooser,
@@ -257,6 +291,11 @@ internal fun FrontendScreenContent(
         screenOrientation = screenOrientation,
         keepScreenOnEnabled = keepScreenOnEnabled,
         onLeavingApp = onLeavingApp,
+        statusBarColor = content?.statusBarColor ?: loadingSurfaceColor,
+        navigationBarColor = content?.backgroundColor ?: loadingSurfaceColor,
+        serverHandleTopInsets = content?.serverHandleTopInsets ?: false,
+        onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
+        onScreenStartedChanged = onScreenStartedChanged,
     )
 
     FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
@@ -265,13 +304,14 @@ internal fun FrontendScreenContent(
         // Always render WebView at base layer
         SafeHAWebView(
             onWebViewCreated = { webView = it },
-            webViewClient = webViewClient,
             webChromeClient = webChromeClient,
             contentState = viewState as? FrontendViewState.Content,
             onWebViewCreationFailed = onWebViewCreationFailed,
             onDownloadRequested = onDownloadRequested,
             onGesture = onGesture,
             autoPlayVideoEnabled = autoPlayVideoEnabled,
+            webViewDebugEnabled = webViewDebugEnabled,
+            nightModeTheme = nightModeTheme,
         )
 
         PipEligibleOverlays(
@@ -302,6 +342,7 @@ internal fun FrontendScreenContent(
             onConfigureHomeNetwork = onConfigureHomeNetwork,
             onOpenExternalLink = onOpenExternalLink,
             onShowSnackbar = onShowSnackbar,
+            onErrorAction = onErrorAction,
         )
 
         FrontendBarcodeOverlay(
@@ -327,6 +368,8 @@ private fun FrontendScreenHandlers(pendingPermissionRequest: PermissionRequest?,
 private fun FrontendScreenEffects(
     webView: WebView?,
     url: String,
+    getWebViewClient: suspend () -> WebViewClient,
+    prepareUrlLoad: suspend (String) -> Unit,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
     pendingFileChooser: FileChooserRequest?,
@@ -336,7 +379,24 @@ private fun FrontendScreenEffects(
     screenOrientation: ScreenOrientation,
     keepScreenOnEnabled: Boolean,
     onLeavingApp: (String?) -> Unit,
+    statusBarColor: Color?,
+    navigationBarColor: Color?,
+    serverHandleTopInsets: Boolean,
+    onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
+    onScreenStartedChanged: (Boolean) -> Unit,
 ) {
+    SystemBarsAppearanceEffect(
+        statusBarColor = statusBarColor,
+        navigationBarColor = navigationBarColor,
+    )
+
+    ReportSafeAreaInsetsEffect(
+        serverHandleTopInsets = serverHandleTopInsets,
+        onSafeAreaInsetsChanged = onSafeAreaInsetsChanged,
+    )
+
+    ReportScreenStartedEffect(onScreenStartedChanged = onScreenStartedChanged)
+
     ImprovScanLifecycleEffect(
         scanRequested = improvScanRequested,
         processImprovScanRequests = processImprovScanRequests,
@@ -345,6 +405,8 @@ private fun FrontendScreenEffects(
     WebViewEffects(
         webView = webView,
         url = url,
+        getWebViewClient = getWebViewClient,
+        prepareUrlLoad = prepareUrlLoad,
         frontendJsCallback = frontendJsCallback,
         webViewActions = webViewActions,
         autoPlayVideoEnabled = autoPlayVideoEnabled,
@@ -359,6 +421,18 @@ private fun FrontendScreenEffects(
     KeepScreenOnEffect(enabled = keepScreenOnEnabled)
 
     LeavingAppEffect(webView = webView, onLeavingApp = onLeavingApp)
+}
+
+/**
+ * Reports the lifecycle start/stop events to [onScreenStartedChanged] whenever the
+ * [LifecycleStartEffect] changes.
+ */
+@Composable
+private fun ReportScreenStartedEffect(onScreenStartedChanged: (Boolean) -> Unit) {
+    LifecycleStartEffect(Unit) {
+        onScreenStartedChanged(true)
+        onStopOrDispose { onScreenStartedChanged(false) }
+    }
 }
 
 /**
@@ -392,11 +466,14 @@ private fun StateOverlay(
     onConfigureHomeNetwork: (serverId: Int) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
     onShowSnackbar: suspend (message: String, action: String?) -> Boolean,
+    onErrorAction: (ErrorActionIntent) -> Unit,
 ) {
     when (viewState) {
         is FrontendViewState.LoadServer,
         is FrontendViewState.Loading,
-        -> LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault))
+        -> {
+            // Loading overlay rendered below so it can fade out when leaving these states
+        }
 
         is FrontendViewState.Content -> {
             // No overlay for content state to show the underlying WebView
@@ -421,11 +498,20 @@ private fun StateOverlay(
 
         is FrontendViewState.Error -> ErrorOverlay(
             errorStateProvider = errorStateProvider,
-            error = viewState.error,
-            onRetry = onRetry,
-            onOpenSettings = onOpenSettings,
+            actions = viewState.actions,
+            onErrorAction = onErrorAction,
             onOpenExternalLink = onOpenExternalLink,
         )
+    }
+
+    // The loading overlay is rendered on top of the `when` so that on leaving the loading states it
+    // fades out over.
+    AnimatedVisibility(
+        visible = viewState is FrontendViewState.LoadServer || viewState is FrontendViewState.Loading,
+        enter = EnterTransition.None,
+        exit = fadeOut(animationSpec = tween(durationMillis = LOADING_OVERLAY_FADE_OUT_MILLIS)),
+    ) {
+        LoadingScreen(modifier = Modifier.background(LocalHAColorScheme.current.colorSurfaceDefault), showBrand = true)
     }
 }
 
@@ -490,9 +576,8 @@ private fun InsecureOverlay(
 @Composable
 private fun ErrorOverlay(
     errorStateProvider: FrontendConnectionErrorStateProvider,
-    error: FrontendConnectionError?,
-    onRetry: () -> Unit,
-    onOpenSettings: () -> Unit,
+    actions: List<ErrorAction>,
+    onErrorAction: (ErrorActionIntent) -> Unit,
     onOpenExternalLink: suspend (Uri) -> Unit,
 ) {
     FrontendConnectionErrorScreen(
@@ -500,26 +585,11 @@ private fun ErrorOverlay(
         onOpenExternalLink = onOpenExternalLink,
         modifier = Modifier.fillMaxSize(),
         actions = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(HADimens.SPACE4),
-            ) {
-                if (error !is FrontendConnectionError.UnrecoverableError) {
-                    HAAccentButton(
-                        text = stringResource(commonR.string.retry),
-                        onClick = onRetry,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                HAPlainButton(
-                    text = stringResource(commonR.string.open_settings),
-                    onClick = onOpenSettings,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = HADimens.SPACE6),
-                )
-            }
+            ErrorActions(
+                actions = actions,
+                onAction = onErrorAction,
+                modifier = Modifier.padding(bottom = HADimens.SPACE6),
+            )
         },
     )
 }
@@ -530,23 +600,29 @@ private fun ErrorOverlay(
 @Composable
 private fun SafeHAWebView(
     onWebViewCreated: (WebView) -> Unit,
-    webViewClient: WebViewClient,
     contentState: FrontendViewState.Content?,
     onWebViewCreationFailed: (Throwable) -> Unit,
     autoPlayVideoEnabled: Boolean,
+    webViewDebugEnabled: Boolean?,
+    nightModeTheme: NightModeTheme?,
     webChromeClient: WebChromeClient? = null,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit = { _, _, _ -> },
     onGesture: (GestureDirection, Int) -> Unit = { _, _ -> },
 ) {
     val serverHandleInsets = contentState?.serverHandleInsets ?: false
-    val backgroundColor = contentState?.backgroundColor
+    val serverHandleTopInsets = contentState?.serverHandleTopInsets ?: false
     val insets = WindowInsets.safeDrawing
     val insetsPaddingValues = insets.asPaddingValues()
 
+    // Until the frontend theme is read, fall back to the loading surface color so the reserved
+    // system bar areas match the screen behind them instead of leaving the WebView to bleed through.
+    val fallbackColor = LocalHAColorScheme.current.colorSurfaceDefault
+    val statusBarColor = contentState?.statusBarColor ?: fallbackColor
+    val backgroundColor = contentState?.backgroundColor ?: fallbackColor
+
     Column(modifier = Modifier.fillMaxSize()) {
-        // Status bar overlay (when server doesn't handle insets)
-        if (!serverHandleInsets) {
-            contentState?.statusBarColor?.Overlay(
+        if (!serverHandleTopInsets) {
+            statusBarColor.Overlay(
                 modifier = Modifier
                     .height(insetsPaddingValues.calculateTopPadding())
                     .fillMaxWidth()
@@ -559,7 +635,7 @@ private fun SafeHAWebView(
         Row(modifier = Modifier.weight(1f)) {
             // Left safe area
             if (!serverHandleInsets) {
-                backgroundColor?.Overlay(
+                backgroundColor.Overlay(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(insetsPaddingValues.calculateLeftPadding(LayoutDirection.Ltr)),
@@ -567,13 +643,12 @@ private fun SafeHAWebView(
             }
 
             HAWebView(
-                nightModeTheme = contentState?.nightModeTheme,
+                nightModeTheme = nightModeTheme,
                 modifier = Modifier
                     .weight(1f)
                     .background(Color.Transparent),
                 configure = {
                     configureForFrontend(
-                        webViewClient = webViewClient,
                         webChromeClient = webChromeClient,
                         onWebViewCreated = onWebViewCreated,
                         onDownloadRequested = onDownloadRequested,
@@ -582,11 +657,12 @@ private fun SafeHAWebView(
                     )
                 },
                 onWebViewCreationFailed = onWebViewCreationFailed,
+                debuggingEnabled = webViewDebugEnabled,
             )
 
             // Right safe area
             if (!serverHandleInsets) {
-                backgroundColor?.Overlay(
+                backgroundColor.Overlay(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(insetsPaddingValues.calculateRightPadding(LayoutDirection.Ltr)),
@@ -596,7 +672,7 @@ private fun SafeHAWebView(
 
         // Bottom navigation bar overlay (when server doesn't handle insets)
         if (!serverHandleInsets) {
-            backgroundColor?.Overlay(
+            backgroundColor.Overlay(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(insetsPaddingValues.calculateBottomPadding()),
@@ -614,13 +690,10 @@ private fun Color.Overlay(modifier: Modifier = Modifier) {
 /**
  * Applies the WebView configuration required to host the Home Assistant frontend
  *
- * The `ClickableViewAccessibility` lint is suppressed because the touch listener only observes
- * multi-pointer swipe gestures (returning `false` for every event) — clicks still flow through
- * the WebView's built-in handling, so overriding `performClick` would add no accessibility value.
+ * The touch listener observes swipes; the WebView continues to handle clicks and accessibility.
  */
 @SuppressLint("ClickableViewAccessibility")
 private fun WebView.configureForFrontend(
-    webViewClient: WebViewClient,
     webChromeClient: WebChromeClient?,
     onWebViewCreated: (WebView) -> Unit,
     onDownloadRequested: (url: String, contentDisposition: String, mimetype: String) -> Unit,
@@ -628,8 +701,6 @@ private fun WebView.configureForFrontend(
     autoPlayVideoEnabled: Boolean,
 ) {
     onWebViewCreated(this)
-
-    this.webViewClient = webViewClient
 
     webChromeClient?.let { this.webChromeClient = it }
 
@@ -647,24 +718,7 @@ private fun WebView.configureForFrontend(
         onDownloadRequested(url, contentDisposition, mimetype)
     }
 
-    setOnTouchListener(
-        object : OnSwipeListener(context) {
-            override fun onSwipe(
-                e1: MotionEvent,
-                e2: MotionEvent,
-                velocity: Float,
-                direction: GestureDirection,
-                pointerCount: Int,
-            ): Boolean {
-                if (pointerCount > 1 && velocity >= MINIMUM_GESTURE_VELOCITY) {
-                    onGesture(direction, pointerCount)
-                }
-                return false
-            }
-
-            override fun onMotionEventHandled(v: View?, event: MotionEvent?): Boolean = false
-        },
-    )
+    setOnTouchListener(FrontendSwipeListener(view = this, onGesture = onGesture))
 }
 
 /**
@@ -675,13 +729,19 @@ private fun WebView.configureForFrontend(
 private fun WebViewEffects(
     webView: WebView?,
     url: String,
+    getWebViewClient: suspend () -> WebViewClient,
+    prepareUrlLoad: suspend (String) -> Unit,
     frontendJsCallback: FrontendJsCallback,
     webViewActions: Flow<WebViewAction>,
     autoPlayVideoEnabled: Boolean,
 ) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
+            webView.webViewClient = getWebViewClient()
             frontendJsCallback.attachToWebView(webView)
+            // Must run after the WebViewClient is set and before loadUrl, see
+            // FrontendViewModel.prepareUrlLoad.
+            prepareUrlLoad(url)
             Timber.v("Load url ${sensitive(url)}")
             webView.loadUrl(url)
         }
@@ -750,6 +810,58 @@ private fun KeepScreenOnEffect(enabled: Boolean) {
         onDispose {
             view.keepScreenOn = false
         }
+    }
+}
+
+/**
+ * Adjusts the system bar icon appearance (light or dark) to keep the icons legible against the
+ * frontend theme colors: status bar icons contrast with [statusBarColor] and navigation bar icons
+ * with [navigationBarColor].
+ *
+ * The previous appearance is restored on dispose so it does not leak to other screens that share
+ * the hosting activity window.
+ */
+@Composable
+private fun SystemBarsAppearanceEffect(statusBarColor: Color?, navigationBarColor: Color?) {
+    val activity = LocalActivity.current ?: return
+    val view = LocalView.current
+    DisposableEffect(activity, view, statusBarColor, navigationBarColor) {
+        val controller = WindowCompat.getInsetsController(activity.window, view)
+        val previousLightStatusBars = controller.isAppearanceLightStatusBars
+        val previousLightNavigationBars = controller.isAppearanceLightNavigationBars
+
+        statusBarColor?.let { controller.isAppearanceLightStatusBars = it.isLight() }
+        navigationBarColor?.let { controller.isAppearanceLightNavigationBars = it.isLight() }
+
+        onDispose {
+            controller.isAppearanceLightStatusBars = previousLightStatusBars
+            controller.isAppearanceLightNavigationBars = previousLightNavigationBars
+        }
+    }
+}
+
+/**
+ * Reports the device safe-area insets (system bars and display cutouts, in dp) to
+ * [onSafeAreaInsetsChanged] whenever they change, so the ViewModel can forward them to the frontend
+ * for edge-to-edge layout. Reading window insets is a UI concern, so only the reporting lives here.
+ */
+@Composable
+private fun ReportSafeAreaInsetsEffect(
+    serverHandleTopInsets: Boolean,
+    onSafeAreaInsetsChanged: (SafeAreaInsets) -> Unit,
+) {
+    val insets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+    val density = LocalDensity.current
+    val displayMetrics = LocalResources.current.displayMetrics
+    val layoutDirection = LocalLayoutDirection.current
+
+    val top = if (serverHandleTopInsets) pxToDp(insets.getTop(density).toFloat(), displayMetrics) else 0f
+    val bottom = pxToDp(insets.getBottom(density).toFloat(), displayMetrics)
+    val left = pxToDp(insets.getLeft(density, layoutDirection).toFloat(), displayMetrics)
+    val right = pxToDp(insets.getRight(density, layoutDirection).toFloat(), displayMetrics)
+
+    LaunchedEffect(top, bottom, left, right) {
+        onSafeAreaInsetsChanged(SafeAreaInsets(top = top, bottom = bottom, left = left, right = right))
     }
 }
 
@@ -849,6 +961,7 @@ private fun FrontendBarcodeOverlay(
     )
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenLoadingPreview() {
@@ -858,7 +971,7 @@ private fun FrontendScreenLoadingPreview() {
                 serverId = 1,
                 url = "https://example.com",
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},
@@ -875,6 +988,7 @@ private fun FrontendScreenLoadingPreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenErrorPreview() {
@@ -883,13 +997,13 @@ private fun FrontendScreenErrorPreview() {
             viewState = FrontendViewState.Error(
                 serverId = 1,
                 url = "https://example.com",
-                error = FrontendConnectionError.UnreachableError(
+                error = FrontendConnectionError.Unreachable(
                     message = commonR.string.webview_error_HOST_LOOKUP,
                     errorDetails = "Connection timed out",
                     rawErrorType = "HostLookupError",
                 ),
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},
@@ -906,6 +1020,7 @@ private fun FrontendScreenErrorPreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenInsecurePreview() {
@@ -916,7 +1031,7 @@ private fun FrontendScreenInsecurePreview() {
                 missingHomeSetup = true,
                 missingLocation = true,
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},
@@ -933,6 +1048,7 @@ private fun FrontendScreenInsecurePreview() {
     }
 }
 
+@SuppressLint("MissingOnRenderProcessGone")
 @HAPreviews
 @Composable
 private fun FrontendScreenSecurityLevelRequiredPreview() {
@@ -941,7 +1057,7 @@ private fun FrontendScreenSecurityLevelRequiredPreview() {
             viewState = FrontendViewState.SecurityLevelRequired(
                 serverId = 1,
             ),
-            webViewClient = WebViewClient(),
+            getWebViewClient = { WebViewClient() },
             webChromeClient = WebChromeClient(),
             frontendJsCallback = FrontendJsBridge.noOp,
             onBlockInsecureRetry = {},

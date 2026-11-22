@@ -1,16 +1,16 @@
 package io.homeassistant.companion.android.database.widget
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room3.Dao
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TemplateWidgetDao : WidgetDao<TemplateWidgetEntity> {
 
     @Query("SELECT * FROM template_widgets WHERE id = :id")
-    suspend fun get(id: Int): TemplateWidgetEntity?
+    override suspend fun get(id: Int): TemplateWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     override suspend fun add(entity: TemplateWidgetEntity)

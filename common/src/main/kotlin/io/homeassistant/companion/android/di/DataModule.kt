@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.di
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import androidx.media3.datasource.DataSource
@@ -17,11 +18,11 @@ import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
+import io.homeassistant.companion.android.common.data.keychain.ClientCertificateManager
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepositoryImpl
+import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepositoryImpl
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyChain
-import io.homeassistant.companion.android.common.data.keychain.NamedKeyStore
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
@@ -35,6 +36,7 @@ import io.homeassistant.companion.android.common.util.tts.TextToSpeechClient
 import io.homeassistant.companion.android.di.qualifiers.NamedDeviceId
 import io.homeassistant.companion.android.di.qualifiers.NamedInstallId
 import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
+import io.homeassistant.companion.android.di.qualifiers.NamedLegacyChangelogPref
 import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
 import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
@@ -43,6 +45,7 @@ import io.homeassistant.companion.android.di.qualifiers.NamedThemesStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedWearStorage
 import java.util.UUID
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 
 @Module
@@ -70,21 +73,13 @@ internal abstract class DataModule {
         fun providesRealDataSourceFactory(
             @ApplicationContext appContext: Context,
             okHttpClientProvider: SuspendProvider<OkHttpClient>,
-            @NamedKeyChain keyChainRepository: KeyChainRepository,
-            @NamedKeyStore keyStoreRepository: KeyChainRepository,
+            clientCertificateManager: ClientCertificateManager,
         ): SuspendProvider<DataSource.Factory> = SuspendProvider {
+            val clientCert = clientCertificateManager.getClientCertProvider()
             MtlsAwareDataSourceFactory(
                 context = appContext,
                 okHttpClient = okHttpClientProvider(),
-                usesMtls = {
-                    val keyChainHasClientCert =
-                        keyChainRepository.getPrivateKey() != null &&
-                            !keyChainRepository.getCertificateChain().isNullOrEmpty()
-                    val keyStoreHasClientCert =
-                        keyStoreRepository.getPrivateKey() != null &&
-                            !keyStoreRepository.getCertificateChain().isNullOrEmpty()
-                    keyChainHasClientCert || keyStoreHasClientCert
-                },
+                usesMtls = { clientCert.certificate != null },
             )
         }
 
@@ -115,6 +110,17 @@ internal abstract class DataModule {
         fun provideWearPrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage = LocalStorageImpl {
             appContext.getSharedPreferencesSuspend("wear_0")
         }
+
+        // The changelog library (com.github.AppDevNext:ChangeLog) previously used by the app
+        // tracked the last shown version in its own preferences file: the presence of its pref
+        // means the app was updated from a version that used it.
+        @Provides
+        @NamedLegacyChangelogPref
+        @Singleton
+        fun provideLegacyChangelogPref(@ApplicationContext appContext: Context): SuspendProvider<Boolean> =
+            SuspendProvider(Dispatchers.IO) {
+                appContext.getSharedPreferencesSuspend("changelog").contains("ChangeLog_last_version_code")
+            }
 
         @Provides
         @NamedManufacturer
@@ -154,7 +160,7 @@ internal abstract class DataModule {
 
         @Provides
         @Singleton
-        fun packageManager(@ApplicationContext appContext: Context) = appContext.packageManager
+        fun packageManager(@ApplicationContext appContext: Context): PackageManager = appContext.packageManager
 
         @Provides
         @Singleton
@@ -172,13 +178,11 @@ internal abstract class DataModule {
 
     @Binds
     @Singleton
-    @NamedKeyChain
     internal abstract fun bindKeyChainRepository(keyChainRepository: KeyChainRepositoryImpl): KeyChainRepository
 
     @Binds
     @Singleton
-    @NamedKeyStore
-    internal abstract fun bindKeyStore(keyStore: KeyStoreRepositoryImpl): KeyChainRepository
+    internal abstract fun bindKeyStoreRepository(keyStoreRepository: KeyStoreRepositoryImpl): KeyStoreRepository
 
     @Multibinds
     abstract fun bindOkHttpClientConfigurator(): Set<@JvmSuppressWildcards OkHttpConfigurator>

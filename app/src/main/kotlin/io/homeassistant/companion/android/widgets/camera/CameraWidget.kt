@@ -19,14 +19,16 @@ import coil3.size.Size
 import coil3.toBitmap
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.WidgetTapAction
+import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
+import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
 import io.homeassistant.companion.android.util.hasActiveConnection
-import io.homeassistant.companion.android.webview.WebViewActivity
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
@@ -123,12 +125,9 @@ class CameraWidget : AppWidgetProvider() {
                     val urlState = serverManager.connectionStateProvider(
                         widget.serverId,
                     ).urlFlow().first()
-                    if (urlState is UrlState.HasUrl) {
-                        val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
-                        url = "$baseUrl$entityPictureUrl"
-                    } else {
-                        throw IllegalStateException("No URL available to retrieve picture")
-                    }
+                    check(urlState is UrlState.HasUrl) { "No URL available to retrieve picture" }
+                    val baseUrl = urlState.url?.toString()?.removeSuffix("/") ?: ""
+                    url = "$baseUrl$entityPictureUrl"
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -186,7 +185,10 @@ class CameraWidget : AppWidgetProvider() {
                     WidgetTapAction.OPEN -> PendingIntent.getActivity(
                         context,
                         appWidgetId,
-                        WebViewActivity.newInstance(context, "entityId:${widget.entityId}", widget.serverId),
+                        context.intentLaunchWithNavigateTo(
+                            FrontendTarget.EntityMoreInfo(widget.entityId),
+                            widget.serverId,
+                        ),
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                     )
 
@@ -206,7 +208,7 @@ class CameraWidget : AppWidgetProvider() {
 
     private suspend fun retrieveCameraImageUrl(serverId: Int, entityId: String): String? {
         val entity = serverManager.integrationRepository(serverId).getEntity(entityId)
-        return entity?.attributes?.get("entity_picture")?.toString()
+        return entity?.entityPicturePath()
     }
 
     override fun onReceive(context: Context, intent: Intent) {

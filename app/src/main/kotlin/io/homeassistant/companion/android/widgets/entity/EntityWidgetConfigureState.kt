@@ -1,0 +1,73 @@
+package io.homeassistant.companion.android.widgets.entity
+
+import androidx.annotation.StringRes
+import androidx.compose.runtime.Stable
+import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
+import io.homeassistant.companion.android.database.widget.WidgetTapAction
+import io.homeassistant.companion.android.widgets.configure.WidgetConfigureState
+import io.homeassistant.companion.android.widgets.configure.defaultWidgetBackgroundType
+import io.homeassistant.companion.android.widgets.configure.dynamicColorAvailable
+
+private const val DEFAULT_TEXT_SIZE = "30"
+
+@Stable
+internal data class EntityWidgetConfigureState(
+    override val selectedServerId: Int = ServerManager.SERVER_ID_ACTIVE,
+    override val serversDropdownItems: List<HADropdownItem<Int>> = emptyList(),
+    val entityDisplayState: EntityDisplayState<EntityDisplayWithContext> = EntityDisplayState.Loading,
+    val selectedEntityId: String? = null,
+    val availableAttributes: List<String> = emptyList(),
+    val selectedAttributeIds: List<String> = emptyList(),
+    val customAttribute: String = "",
+    val label: String = "",
+    val textSize: String = DEFAULT_TEXT_SIZE,
+    val stateSeparator: String = "",
+    val attributeSeparator: String = "",
+    val selectedTapAction: WidgetTapAction = WidgetTapAction.REFRESH,
+    val selectedBackgroundType: WidgetBackgroundType = defaultWidgetBackgroundType(),
+    val textColorHex: String? = null,
+    val dynamicColorAvailable: Boolean = dynamicColorAvailable(),
+    override val isUpdateWidget: Boolean = false,
+) : WidgetConfigureState<EntityWidgetConfigureState> {
+    val isToggleable = selectedEntityId?.substringBefore('.') in EntityExt.APP_PRESS_ACTION_DOMAINS
+
+    @StringRes
+    val textSizeError = commonR.string.widget_text_size_error
+        .takeIf { textSize.toFloatOrNull()?.let { size -> size.isFinite() && size > 0 } != true }
+
+    val unselectedAttributes = availableAttributes.filterNot(selectedAttributeIds::contains)
+
+    val selectedEntity: EntityDisplay? = selectedEntityId
+        ?.let { (entityDisplayState as? EntityDisplayState.Loaded<*>)?.entity(it) }
+
+    val showConfiguration = selectedEntityId != null
+
+    override val isActionEnabled = selectedEntityId != null && textSizeError == null
+
+    val textSizeOrDefault: Float
+        get() = textSize.toFloatOrNull()?.takeIf { it.isFinite() && it > 0 } ?: DEFAULT_TEXT_SIZE.toFloat()
+
+    override fun withServersDropdownItems(items: List<HADropdownItem<Int>>) = copy(serversDropdownItems = items)
+
+    override fun withSelectedServerId(serverId: Int) = copy(selectedServerId = serverId)
+
+    override fun withBackgroundType(backgroundType: WidgetBackgroundType) =
+        copy(selectedBackgroundType = backgroundType)
+
+    /** Resets the state that only makes sense for the previously selected server. */
+    override fun changeServer(serverId: Int): EntityWidgetConfigureState = copy(
+        selectedServerId = serverId,
+        selectedEntityId = null,
+        selectedAttributeIds = emptyList(),
+        availableAttributes = emptyList(),
+        selectedTapAction = WidgetTapAction.REFRESH,
+        entityDisplayState = EntityDisplayState.Loading,
+    )
+}

@@ -1,13 +1,20 @@
 package io.homeassistant.companion.android.widgets
 
 import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
+import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
@@ -20,6 +27,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,28 +38,42 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNull
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 
 private data class FakeGlanceId(val id: Int) : GlanceId
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(application = HiltTestApplication::class)
 class BaseGlanceEntityWidgetReceiverTest {
 
     val mockedDao: TodoWidgetDao = mockk()
     val mockedServerManager: ServerManager = mockk()
     val mockedWidget: GlanceAppWidget = mockk()
     val glanceManager: GlanceAppWidgetManager = mockk()
+    val appWidgetManager: AppWidgetManager = mockk()
+
+    @After
+    fun tearDown() {
+        unmockkAll()
+    }
 
     private fun TestScope.getReceiver(
         widgetEntitiesByServer: Map<Int, EntitiesPerServer> = emptyMap<Int, EntitiesPerServer>(),
         coroutineScopeProvider: () -> CoroutineScope = { this },
         onEntityUpdateCallback: suspend (Context, Int, Entity) -> Unit = { _, _, _ -> },
     ): BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao> {
-        return object : BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao>(widgetScopeProvider = coroutineScopeProvider, glanceManagerProvider = { glanceManager }) {
+        return object : BaseGlanceEntityWidgetReceiver<TodoWidgetEntity, TodoWidgetDao>(widgetScopeProvider = coroutineScopeProvider, glanceManagerProvider = { glanceManager }, appWidgetManagerProvider = { appWidgetManager }) {
             override suspend fun getWidgetEntitiesByServer(context: Context): Map<Int, EntitiesPerServer> = widgetEntitiesByServer
             override val glanceAppWidget: GlanceAppWidget = mockedWidget
             override suspend fun onEntityUpdate(context: Context, appWidgetId: Int, entity: Entity) {
@@ -107,7 +129,7 @@ class BaseGlanceEntityWidgetReceiverTest {
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityChanges(EntityFilter(entityIds = setOf("entity1"))) } returns channelFlow {
             close()
         }
         coJustRun { mockedDao.deleteAll(any()) }
@@ -135,8 +157,8 @@ class BaseGlanceEntityWidgetReceiverTest {
         )
         val glanceIds = listOf<GlanceId>(FakeGlanceId(1), FakeGlanceId(2))
         val integrationRepository = mockk<IntegrationRepository>()
-        var widget1EntityProducer: ProducerScope<Entity>? = null
-        var widget2EntityProducer: ProducerScope<Entity>? = null
+        var widget1EntityProducer: ProducerScope<EntityChange>? = null
+        var widget2EntityProducer: ProducerScope<EntityChange>? = null
 
         serverRegistered()
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
@@ -145,11 +167,11 @@ class BaseGlanceEntityWidgetReceiverTest {
         coJustRun { mockedWidget.update(context, any()) }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityChanges(EntityFilter(entityIds = setOf("entity1"))) } returns channelFlow {
             widget1EntityProducer = this
             awaitClose()
         }
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity2")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityChanges(EntityFilter(entityIds = setOf("entity2"))) } returns channelFlow {
             widget2EntityProducer = this
             awaitClose()
         }
@@ -160,12 +182,12 @@ class BaseGlanceEntityWidgetReceiverTest {
         assertNull(entityReceived)
 
         val dummyUpdateWidget1: Entity = mockk()
-        widget1EntityProducer!!.send(dummyUpdateWidget1)
+        widget1EntityProducer!!.send(EntityChange.StateChanged(dummyUpdateWidget1))
         advanceUntilIdle()
         assertEquals(dummyUpdateWidget1, entityReceived)
 
         val dummyUpdateWidget2: Entity = mockk()
-        widget2EntityProducer!!.send(dummyUpdateWidget2)
+        widget2EntityProducer!!.send(EntityChange.StateChanged(dummyUpdateWidget2))
         advanceUntilIdle()
         assertEquals(dummyUpdateWidget2, entityReceived)
         advanceUntilIdle()
@@ -178,6 +200,43 @@ class BaseGlanceEntityWidgetReceiverTest {
         // Closing producers to end the test
         widget1EntityProducer.close()
         widget2EntityProducer.close()
+    }
+
+    @Test
+    fun `Given a removed entity when watching for changes then the widget is updated without an entity update`() = runTest {
+        val context: Context = mockk()
+        var entityReceived: Entity? = null
+        val receiver = getReceiver(
+            mapOf(1 to EntitiesPerServer(42, listOf("entity1"))),
+            onEntityUpdateCallback = { _, _, entity ->
+                entityReceived = entity
+            },
+        )
+        val integrationRepository = mockk<IntegrationRepository>()
+        var producer: ProducerScope<EntityChange>? = null
+
+        serverRegistered()
+        coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns listOf<GlanceId>(FakeGlanceId(1))
+        every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
+        every { glanceManager.getGlanceIdBy(any<Int>()) } answers { FakeGlanceId(firstArg()) }
+        coJustRun { mockedWidget.update(context, any()) }
+        coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
+        coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
+        coEvery { integrationRepository.getEntityChanges(EntityFilter(entityIds = setOf("entity1"))) } returns channelFlow {
+            producer = this
+            awaitClose()
+        }
+
+        receiver.onReceive(context, mockIntent(Intent.ACTION_SCREEN_ON))
+        advanceUntilIdle()
+
+        producer!!.send(EntityChange.Removed("entity1"))
+        advanceUntilIdle()
+
+        assertNull(entityReceived)
+        coVerify(exactly = 1) { mockedWidget.update(context, FakeGlanceId(1)) }
+
+        producer.close()
     }
 
     @Test
@@ -211,14 +270,14 @@ class BaseGlanceEntityWidgetReceiverTest {
         val glanceIds = listOf<GlanceId>(FakeGlanceId(1))
         val integrationRepository = mockk<IntegrationRepository>()
 
-        var producer: ProducerScope<Entity>? = null
+        var producer: ProducerScope<EntityChange>? = null
 
         serverRegistered()
         coEvery { glanceManager.getGlanceIds(mockedWidget.javaClass) } returns glanceIds
         every { glanceManager.getAppWidgetId(any()) } answers { firstArg<FakeGlanceId>().id }
         coEvery { mockedServerManager.getServer(any<Int>()) } returns mockk()
         coEvery { mockedServerManager.integrationRepository(any()) } returns integrationRepository
-        coEvery { integrationRepository.getEntityUpdates(listOf("entity1")) } returns channelFlow {
+        coEvery { integrationRepository.getEntityChanges(EntityFilter(entityIds = setOf("entity1"))) } returns channelFlow {
             producer = this
             awaitClose()
         }
@@ -290,5 +349,78 @@ class BaseGlanceEntityWidgetReceiverTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { mockedDao wasNot Called }
+    }
+
+    @Test
+    fun `Given receiver when register then it listens for screen on and off without being exported`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+        installProvider(application, receiver, generatedPreviewCategories = 0)
+        coEvery { glanceManager.setWidgetPreviews(any(), any()) } returns GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS
+
+        receiver.register(application)
+
+        val registration = shadowOf(application).registeredReceivers.single { it.broadcastReceiver === receiver }
+        val actions = (0 until registration.intentFilter.countActions()).map { registration.intentFilter.getAction(it) }
+        assertEquals(setOf(Intent.ACTION_SCREEN_ON, Intent.ACTION_SCREEN_OFF), actions.toSet())
+        assertEquals(ContextCompat.RECEIVER_NOT_EXPORTED, registration.flags)
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    fun `Given SDK below 35 when register then it does not publish the widget preview`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+
+        receiver.register(application)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { glanceManager.setWidgetPreviews(any(), any()) }
+    }
+
+    @Test
+    fun `Given no generated preview when register then it publishes the widget preview`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+        installProvider(application, receiver, generatedPreviewCategories = 0)
+        coEvery { glanceManager.setWidgetPreviews(any(), any()) } returns GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS
+
+        receiver.register(application)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { glanceManager.setWidgetPreviews(receiver::class, any()) }
+    }
+
+    @Test
+    fun `Given generated preview already published when register then it does not publish it again`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+        installProvider(application, receiver, generatedPreviewCategories = AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN)
+
+        receiver.register(application)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { glanceManager.setWidgetPreviews(any(), any()) }
+    }
+
+    @Test
+    fun `Given publication rate limited when register then it does not throw`() = runTest {
+        val application = RuntimeEnvironment.getApplication()
+        val receiver = getReceiver()
+        installProvider(application, receiver, generatedPreviewCategories = 0)
+        coEvery { glanceManager.setWidgetPreviews(any(), any()) } returns GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_RATE_LIMITED
+
+        receiver.register(application)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { glanceManager.setWidgetPreviews(receiver::class, any()) }
+    }
+
+    private fun installProvider(context: Context, receiver: BaseGlanceEntityWidgetReceiver<*, *>, generatedPreviewCategories: Int) {
+        val providerInfo = AppWidgetProviderInfo().apply {
+            provider = ComponentName(context, receiver::class.java)
+            this.generatedPreviewCategories = generatedPreviewCategories
+        }
+        every { appWidgetManager.getInstalledProvidersForPackage(context.packageName, null) } returns listOf(providerInfo)
     }
 }

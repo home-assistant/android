@@ -1,8 +1,9 @@
 package io.homeassistant.companion.android.database.sensor
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.TypeConverter
+import androidx.room3.ColumnInfo
+import androidx.room3.ColumnTypeConverter
+import androidx.room3.Entity
+import kotlin.enums.enumEntries
 
 enum class SensorSettingType(val string: String, val listType: Boolean = false) {
     STRING("string"),
@@ -13,6 +14,9 @@ enum class SensorSettingType(val string: String, val listType: Boolean = false) 
     LIST_BLUETOOTH("list-bluetooth", listType = true),
     LIST_ZONES("list-zones", listType = true),
     LIST_BEACONS("list-beacons", listType = true),
+    ;
+
+    fun isMultiSelect(): Boolean = listType && this != LIST
 }
 
 @Entity(tableName = "sensor_settings", primaryKeys = ["sensor_id", "name"])
@@ -22,7 +26,7 @@ data class SensorSetting(
     @ColumnInfo(name = "name")
     val name: String,
     @ColumnInfo(name = "value")
-    var value: String,
+    val value: String,
     /** Indicates the data type of the `value`. */
     @ColumnInfo(name = "value_type")
     val valueType: SensorSettingType,
@@ -32,26 +36,26 @@ data class SensorSetting(
     val entries: List<String> = arrayListOf(),
 )
 
-class EntriesTypeConverter {
-    @TypeConverter
+class EntriesColumnTypeConverter {
+    @ColumnTypeConverter
     fun fromStringToList(value: String): List<String> {
-        return value.split("|").map { it }
+        return value.split("|")
     }
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun toStringFromList(list: List<String>): String {
         return list.joinToString(separator = "|")
     }
 }
 
-class SensorSettingTypeConverter {
-    @TypeConverter
+class SensorSettingColumnTypeConverter {
+    @ColumnTypeConverter
     fun fromStringToEnum(value: String): SensorSettingType {
-        return enumValues<SensorSettingType>().find { it.string == value }
+        return enumEntries<SensorSettingType>().find { it.string == value }
             ?: SensorSettingType.STRING
     }
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun toStringFromEnum(enum: SensorSettingType): String {
         return enum.string
     }

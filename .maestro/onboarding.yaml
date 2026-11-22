@@ -1,0 +1,8 @@
+# yamllint disable rule:document-start
+appId: io.homeassistant.companion.android.debug
+---
+# Every step lives in subflows/ shared with onboarding-mtls.yaml. subflows/ is a
+# subdirectory so Maestro never runs them as flows of their own.
+- runFlow: subflows/enter-address.yaml
+- runFlow: subflows/login.yaml
+- runFlow: subflows/post-login.yaml

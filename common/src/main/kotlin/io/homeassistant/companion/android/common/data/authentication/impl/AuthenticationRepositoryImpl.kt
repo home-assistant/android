@@ -11,6 +11,9 @@ import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.ServerSessionInfo
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import timber.log.Timber
@@ -154,6 +157,10 @@ class AuthenticationRepositoryImpl internal constructor(
         localStorage.putBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED", enabled)
 
     override suspend fun isLockEnabledRaw(): Boolean = localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_ENABLED")
+
+    override fun lockEnabledRawFlow(): Flow<Boolean> = flow {
+        emitAll(localStorage.observeChanges("${serverId}_$PREF_BIOMETRIC_ENABLED") { isLockEnabledRaw() })
+    }
 
     override suspend fun isLockHomeBypassEnabled(): Boolean =
         localStorage.getBoolean("${serverId}_$PREF_BIOMETRIC_HOME_BYPASS_ENABLED")

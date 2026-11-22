@@ -35,7 +35,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
@@ -125,18 +124,13 @@ class TemplateTile : TileService() {
         }
     }
 
-    override fun onTileEnterEvent(requestParams: EventBuilders.TileEnterEvent) {
-        serviceScope.launch {
-            val tileId = requestParams.tileId
-            val templateTileConfig = getTemplateTileConfig(tileId)
-            if (templateTileConfig.refreshInterval >= 1) {
-                try {
-                    getUpdater(this@TemplateTile).requestUpdate(TemplateTile::class.java)
-                } catch (e: Exception) {
-                    Timber.w(e, "Unable to request tile update on enter")
-                }
-            }
+    override fun onRecentInteractionEventsAsync(
+        events: List<EventBuilders.TileInteractionEvent>,
+    ): ListenableFuture<Void?> = serviceScope.future {
+        requestUpdateOnEnter(events) { tileId ->
+            getTemplateTileConfig(tileId).refreshInterval >= 1
         }
+        null
     }
 
     override fun onDestroy() {

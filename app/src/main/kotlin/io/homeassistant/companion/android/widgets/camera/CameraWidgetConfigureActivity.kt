@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.IMAGE_DOMAIN
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -35,9 +36,9 @@ import timber.log.Timber
 class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEntity, CameraWidgetDao>() {
 
     companion object {
-        fun newInstance(context: Context, entityId: String): Intent {
+        fun newInstance(context: Context, entityId: String? = null): Intent {
             return Intent(context, CameraWidgetConfigureActivity::class.java).apply {
-                putExtra(FOR_ENTITY, entityId)
+                entityId?.let { putExtra(FOR_ENTITY, it) }
                 putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
@@ -142,8 +143,9 @@ class CameraWidgetConfigureActivity : BaseWidgetConfigureActivity<CameraWidgetEn
             serverManager.servers().forEach { server ->
                 launch {
                     try {
-                        val fetchedEntities = serverManager.integrationRepository(server.id).getEntities().orEmpty()
-                            .filter { it.domain == CAMERA_DOMAIN || it.domain == IMAGE_DOMAIN }
+                        val fetchedEntities = serverManager.integrationRepository(server.id)
+                            .getEntities(EntityFilter(domains = setOf(CAMERA_DOMAIN, IMAGE_DOMAIN)))
+                            .orEmpty()
                         entities[server.id] = fetchedEntities
                         if (server.id == selectedServerId) setAdapterEntities(server.id)
                     } catch (e: Exception) {

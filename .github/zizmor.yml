@@ -1,0 +1,6 @@
+# zizmor configuration. See https://docs.zizmor.sh/configuration/
+#
+# Findings are fixed, or suppressed inline with a `# zizmor: ignore[...]`
+# comment and a reason. This file is only for the cases where an inline
+# comment is impossible, each scoped to one exact location.
+rules:

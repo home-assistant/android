@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.serverdiscovery.navigation
 
 import android.os.Build
+import androidx.activity.result.ActivityResultRegistry
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
@@ -41,6 +42,7 @@ import io.homeassistant.companion.android.testing.unit.TestSharedFlow
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.FakePermissionResultRegistry
 import io.homeassistant.companion.android.util.compose.navigateToUri
+import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -52,7 +54,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.test.runTest
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -79,6 +80,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         skipWelcome: Boolean,
         hasLocationTracking: Boolean,
         fromInvitation: Boolean,
+        permissionResultRegistry: ActivityResultRegistry,
         testContent: suspend AndroidComposeTestRule<*, *>.() -> Unit,
     ) {
         setContent(
@@ -87,6 +89,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
             skipWelcome = skipWelcome,
             hasLocationTracking = hasLocationTracking,
             fromInvitation = fromInvitation,
+            permissionResultRegistry = permissionResultRegistry,
         )
         runTest(mainDispatcherRule.testDispatcher) {
             composeTestRule.testContent()
@@ -114,6 +117,8 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         every { errorFlow } returns MutableStateFlow(null)
         every { connectivityCheckState } returns MutableStateFlow(ConnectivityCheckState())
         every { pendingFileChooser } returns MutableStateFlow(null)
+        every { pendingPermissionRequest } returns MutableStateFlow(null)
+        every { webViewDebugEnabled } returns MutableStateFlow(false)
     }
 
     @Test
@@ -123,34 +128,35 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
         }
     }
 
-    /**
-     * On Android 17+, entering the discovery screen requests
-     * `ACCESS_LOCAL_NETWORK`. A denial routes the user directly to ManualServer because
-     * LAN-based discovery cannot succeed without the permission. Pressing back from
-     * ManualServer must not bounce the user back to ServerDiscovery (which would re-detect the
-     * denial and re-redirect) — the discovery destination is popped from the back stack.
-     */
     @Test
-    @Ignore("Robolectric 4.16.1 does not support API 37; re-enable once robolectric-target-sdk reaches 37")
-    @Config(sdk = [Build.VERSION_CODES.CINNAMON_BUN])
-    fun `Given API 37 with denied local network permission when entering ServerDiscovery then routes to ManualServer and back skips ServerDiscovery`() {
-        setContent(
-            skipWelcome = true,
-            permissionResultRegistry = FakePermissionResultRegistry(grantedPermissions = emptySet()),
-        )
-        runTest(mainDispatcherRule.testDispatcher) {
-            composeTestRule.apply {
-                waitForIdle()
-                assertTrue(
-                    navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true,
-                )
-            }
+    fun `Given denied local network permission when entering ServerDiscovery then routes to ManualServer and back skips ServerDiscovery`() {
+        mockCheckPermission(false)
+        testNavigation(skipWelcome = true, permissionResultRegistry = FakePermissionResultRegistry(grantAll = false)) {
+            waitForIdle()
+            assertTrue(
+                navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true,
+            )
+        }
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.BAKLAVA])
+    fun `Given API 36 without local network permission when entering ServerDiscovery then no permission requested and discovery shown`() {
+        val permissionResultRegistry = FakePermissionResultRegistry(grantAll = true)
+        testNavigation(skipWelcome = true, permissionResultRegistry = permissionResultRegistry) {
+            waitForIdle()
+            permissionResultRegistry.assertNoPermissionsRequested()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+            onNodeWithText(stringResource(commonR.string.manual_setup))
+                .performScrollTo()
+                .assertIsDisplayed()
         }
     }
 
     @Test
     fun `Given clicking on connect button when starting the onboarding then show ServerDiscovery then back goes to Welcome`() {
         testNavigation {
+            mockCheckPermission(true)
             onNodeWithText(stringResource(commonR.string.welcome_connect_to_ha))
                 .assertIsDisplayed()
                 .performClick()
@@ -169,6 +175,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
     @Test
     fun `Given clicking on connect button with hide existing server and no server to onboard when starting the onboarding then show Discovery screen with existing server hidden then back goes to Welcome`() {
         testNavigation(hideExistingServers = true) {
+            mockCheckPermission(true)
             onNodeWithText(stringResource(commonR.string.welcome_connect_to_ha))
                 .assertIsDisplayed()
                 .performClick()
@@ -186,8 +193,32 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
     }
 
     @Test
+    fun `Given ServerDiscovery when clicking manual setup then back twice quickly then each navigates only once`() {
+        testNavigation {
+            mockCheckPermission(true)
+            navController.navigateToServerDiscovery()
+
+            onNodeWithText(stringResource(commonR.string.manual_setup))
+                .performScrollTo()
+                .performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ManualServerRoute>() == true)
+
+            // A single back press returning to ServerDiscovery proves ManualServer was only pushed once
+            composeTestRule.activity.onBackPressedDispatcher.onBackPressed()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
+
+            onNodeWithContentDescription(stringResource(commonR.string.navigate_up)).performTwoQuickClicks()
+            waitForIdle()
+            assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<WelcomeRoute>() == true)
+        }
+    }
+
+    @Test
     fun `Given clicking enter manual address button when discovering server then show ManualServer then back goes to ServerDiscovery`() {
         testNavigation {
+            mockCheckPermission(true)
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(commonR.string.manual_setup))
@@ -212,6 +243,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
     fun `Given a server discovered when clicking on it then show ConnectScreen then back goes to ServerDiscovery`() {
         val instanceUrl = "http://ha.local"
         testNavigation {
+            mockCheckPermission(true)
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(commonR.string.manual_setup))
@@ -259,6 +291,7 @@ internal class ServerDiscoveryNavigationTest : BaseOnboardingNavigationTest() {
     fun `Given a server discovered and connecting when authenticated then show NameYourDevice then back goes to ServerDiscovery not ConnectionScreen`() {
         val instanceUrl = "http://ha.local"
         testNavigation {
+            mockCheckPermission(true)
             navController.navigateToServerDiscovery()
             assertTrue(navController.currentBackStackEntry?.destination?.hasRoute<ServerDiscoveryRoute>() == true)
             onNodeWithText(stringResource(commonR.string.manual_setup))

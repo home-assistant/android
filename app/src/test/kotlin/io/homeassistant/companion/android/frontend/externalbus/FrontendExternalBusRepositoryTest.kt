@@ -107,10 +107,12 @@ class FrontendExternalBusRepositoryTest {
             id = 1,
             hasNfc = true,
             canCommissionMatter = false,
+            canShareMatterDevice = false,
             canExportThread = true,
             hasBarCodeScanner = 2,
             canSetupImprov = false,
             appVersion = AppVersion.from("1.0.0 (1)"),
+            hasCameraMicrophoneStream = true,
         )
 
         repository.webViewActions().test {

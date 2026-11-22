@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.nfc.views.LoadNfcView
 import io.homeassistant.companion.android.util.UrlUtil
 import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -36,7 +37,8 @@ class NfcSetupActivity : BaseActivity() {
 
     companion object {
         private const val EXTRA_TAG_VALUE = "tag_value"
-        private const val EXTRA_MESSAGE_ID = "message_id"
+
+        private const val EXTRA_MESSAGE_ID = "io.homeassistant.companion.android.extra.MESSAGE_ID"
 
         const val NAV_WELCOME = "nfc_welcome"
         const val NAV_READ = "nfc_read"
@@ -116,7 +118,8 @@ class NfcSetupActivity : BaseActivity() {
                     }
                 } else {
                     try {
-                        val nfcTagUrl = "https://www.home-assistant.io/tag/$nfcTagToWriteUUID"
+                        val tagIdentifier = requireNotNull(nfcTagToWriteUUID)
+                        val nfcTagUrl = NFCUtil.createTagUrl(tagIdentifier)
                         NFCUtil.createNFCMessage(nfcTagUrl, intent)
                         Timber.d("Wrote nfc tag with url: $nfcTagUrl")
 
@@ -130,8 +133,10 @@ class NfcSetupActivity : BaseActivity() {
                             setResult(messageId)
                             finish()
                         } else {
-                            viewModel.onNfcWriteSuccess(nfcTagToWriteUUID!!)
+                            viewModel.onNfcWriteSuccess(tagIdentifier)
                         }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         viewModel.onNfcWriteFailure()
                         Timber.e(e, "Unable to write tag.")

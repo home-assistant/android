@@ -55,9 +55,7 @@ class MicroWakeWord(
         ensureLibraryLoaded()
         nativeHandle =
             nativeCreate(modelBuffer, DEFAULT_SAMPLE_RATE, featureStepSizeMs, probabilityCutoff, slidingWindowSize)
-        if (nativeHandle == 0L) {
-            throw IllegalStateException("Failed to create native MicroWakeWord engine")
-        }
+        check(nativeHandle != 0L) { "Failed to create native MicroWakeWord engine" }
         Timber.d("MicroWakeWord engine created with handle: $nativeHandle")
     }
 

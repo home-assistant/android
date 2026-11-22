@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketReposit
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.server.TemporaryServer
 import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
 
 interface ServerManager {
 
@@ -111,4 +112,34 @@ interface ServerManager {
      * @throws IllegalStateException if there is no server with the provided ID
      */
     suspend fun connectionStateProvider(serverId: Int = SERVER_ID_ACTIVE): ServerConnectionStateProvider
+}
+
+/**
+ * Same as [ServerManager.integrationRepository], returning null instead of throwing when there is
+ * no server with the provided ID, for callers that degrade instead of failing.
+ *
+ * @param serverId the server ID, or [ServerManager.SERVER_ID_ACTIVE] for the currently active server
+ */
+suspend fun ServerManager.integrationRepositoryOrNull(
+    serverId: Int = ServerManager.SERVER_ID_ACTIVE,
+): IntegrationRepository? = try {
+    integrationRepository(serverId)
+} catch (e: IllegalStateException) {
+    Timber.e(e, "Failed to get IntegrationRepository for server $serverId")
+    null
+}
+
+/**
+ * Same as [ServerManager.webSocketRepository], returning null instead of throwing when there is no
+ * server with the provided ID, for callers that degrade instead of failing.
+ *
+ * @param serverId the server ID, or [ServerManager.SERVER_ID_ACTIVE] for the currently active server
+ */
+suspend fun ServerManager.webSocketRepositoryOrNull(
+    serverId: Int = ServerManager.SERVER_ID_ACTIVE,
+): WebSocketRepository? = try {
+    webSocketRepository(serverId)
+} catch (e: IllegalStateException) {
+    Timber.e(e, "Failed to get WebSocketRepository for server $serverId")
+    null
 }

@@ -3,38 +3,56 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.Context
 import android.os.PowerManager
 import androidx.core.content.getSystemService
+import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.BatteryPlus
+import io.github.timoptr.mdiicons.generated.Cellphone
+import io.github.timoptr.mdiicons.generated.CellphoneOff
+import io.github.timoptr.mdiicons.generated.Sleep
+import io.github.timoptr.mdiicons.generated.SleepOff
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class PowerSensorManager : SensorManager {
+@Singleton
+class PowerSensorManager @Inject constructor(
+    @ApplicationContext override val applicationContext: Context,
+    override val sensorRepository: SensorRepository,
+    override val serverManager: ServerManager,
+) : SensorManager {
     companion object {
-        private const val PACKAGE_NAME = "io.homeassistant.companion.android"
-
+        @ProvidesSensor
         val interactiveDevice = SensorManager.BasicSensor(
             "is_interactive",
             "binary_sensor",
             commonR.string.basic_sensor_name_interactive,
             commonR.string.sensor_description_interactive,
-            "mdi:cellphone",
+            Mdi.Cellphone,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#interactive-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val doze = SensorManager.BasicSensor(
             "is_idle",
             "binary_sensor",
             commonR.string.basic_sensor_name_doze,
             commonR.string.sensor_description_doze,
-            "mdi:sleep",
+            Mdi.Sleep,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#doze-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
         )
+
+        @ProvidesSensor
         val powerSave = SensorManager.BasicSensor(
             "power_save",
             "binary_sensor",
             commonR.string.basic_sensor_name_power_save,
             commonR.string.sensor_description_power_save,
-            "mdi:battery-plus",
+            Mdi.BatteryPlus,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#power-save-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC,
             updateType = SensorManager.BasicSensor.UpdateType.INTENT,
@@ -44,31 +62,30 @@ class PowerSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_power
 
-    override suspend fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
         return listOf(interactiveDevice, doze, powerSave)
     }
 
-    override fun requiredPermissions(context: Context, sensorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
-    override suspend fun requestSensorUpdate(context: Context) {
-        val powerManager = context.getSystemService<PowerManager>()!!
-        updateInteractive(context, powerManager)
-        updatePowerSave(context, powerManager)
-        updateDoze(context, powerManager)
+    override suspend fun requestSensorUpdate() {
+        val powerManager = applicationContext.getSystemService<PowerManager>()!!
+        updateInteractive(powerManager)
+        updatePowerSave(powerManager)
+        updateDoze(powerManager)
     }
 
-    private suspend fun updateInteractive(context: Context, powerManager: PowerManager) {
-        if (!isEnabled(context, interactiveDevice)) {
+    private suspend fun updateInteractive(powerManager: PowerManager) {
+        if (!isEnabled(interactiveDevice)) {
             return
         }
 
         val interactiveState = powerManager.isInteractive
-        val icon = if (interactiveState) "mdi:cellphone" else "mdi:cellphone-off"
+        val icon = if (interactiveState) Mdi.Cellphone else Mdi.CellphoneOff
 
         onSensorUpdated(
-            context,
             interactiveDevice,
             interactiveState,
             icon,
@@ -76,36 +93,34 @@ class PowerSensorManager : SensorManager {
         )
     }
 
-    private suspend fun updateDoze(context: Context, powerManager: PowerManager) {
-        if (!isEnabled(context, doze)) {
+    private suspend fun updateDoze(powerManager: PowerManager) {
+        if (!isEnabled(doze)) {
             return
         }
 
         val dozeState = powerManager.isDeviceIdleMode
-        val icon = if (dozeState) "mdi:sleep" else "mdi:sleep-off"
+        val icon = if (dozeState) Mdi.Sleep else Mdi.SleepOff
 
         onSensorUpdated(
-            context,
             doze,
             dozeState,
             icon,
             mapOf(
                 "ignoring_battery_optimizations" to powerManager.isIgnoringBatteryOptimizations(
-                    PACKAGE_NAME,
+                    applicationContext.packageName,
                 ),
             ),
         )
     }
 
-    private suspend fun updatePowerSave(context: Context, powerManager: PowerManager) {
-        if (!isEnabled(context, powerSave)) {
+    private suspend fun updatePowerSave(powerManager: PowerManager) {
+        if (!isEnabled(powerSave)) {
             return
         }
 
         val powerSaveState = powerManager.isPowerSaveMode
 
         onSensorUpdated(
-            context,
             powerSave,
             powerSaveState,
             powerSave.statelessIcon,

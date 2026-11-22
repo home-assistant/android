@@ -23,9 +23,9 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.SdkVersion
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.homeassistant.companion.android.database.sensor.SensorWithAttributes
@@ -34,26 +34,38 @@ import io.homeassistant.companion.android.database.settings.SensorUpdateFrequenc
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.sensors.LastAppSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.settings.sensor.views.SettingEntry
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import timber.log.Timber
+
+/** Threshold above which the allow-list sheet search field becomes visible. */
+private const val SEARCH_VISIBILITY_THRESHOLD = 10
 
 @HiltViewModel
 class SensorDetailViewModel @Inject constructor(
     state: SavedStateHandle,
+    private val managers: Set<@JvmSuppressWildcards SensorManager>,
     private val serverManager: ServerManager,
-    private val sensorDao: SensorDao,
+    private val sensorRepository: SensorRepository,
     private val settingsDao: SettingsDao,
     private val prefsRepository: PrefsRepository,
     application: Application,
@@ -61,6 +73,9 @@ class SensorDetailViewModel @Inject constructor(
 
     companion object {
         private const val SENSOR_SETTING_TRANS_KEY_PREFIX = "sensor_setting_"
+
+        // Keep the database-backed flows hot briefly across config changes before stopping collection.
+        private val STOP_TIMEOUT = 500.milliseconds
 
         data class PermissionsDialog(val serverId: Int?, val permissions: Array<String>? = null)
         data class LocationPermissionsDialog(
@@ -79,12 +94,15 @@ class SensorDetailViewModel @Inject constructor(
         data class SettingDialogState(
             val setting: SensorSetting,
             /** Indicates if this is still loading entries in the background */
-            val loading: Boolean,
-            /** List of entity ID to entity pairs */
-            val entries: List<Pair<String, String>>,
+            val isLoading: Boolean,
+            /** List of selectable entries */
+            val entries: List<SettingEntry>,
             /** List of selected entity ID */
             val entriesSelected: List<String>,
-        )
+        ) {
+            /** Whether a search field should be shown to help navigate the entry list. */
+            val showSearch: Boolean = entries.size > SEARCH_VISIBILITY_THRESHOLD
+        }
     }
 
     val sensorId: String = state["id"]!!
@@ -92,30 +110,40 @@ class SensorDetailViewModel @Inject constructor(
     val permissionRequests = MutableLiveData<PermissionsDialog?>()
     val locationPermissionRequests = MutableLiveData<LocationPermissionsDialog?>()
 
-    private val _permissionSnackbar = MutableSharedFlow<PermissionSnackbar>()
-    var permissionSnackbar = _permissionSnackbar.asSharedFlow()
+    private val _permissionSnackbar = Channel<PermissionSnackbar>(Channel.BUFFERED)
+    val permissionSnackbar = _permissionSnackbar.receiveAsFlow()
 
     val sensorManager: SensorManager? = runBlocking {
-        SensorReceiver.MANAGERS
+        managers
             .find {
-                it.getAvailableSensors(getApplication()).any { sensor -> sensor.id == sensorId }
+                it.getAvailableSensors().any { sensor -> sensor.id == sensorId }
             }
     }
 
+    @Suppress("ProvidesSensorMissing")
     val basicSensor: SensorManager.BasicSensor? = runBlocking {
-        sensorManager?.getAvailableSensors(getApplication())
+        sensorManager?.getAvailableSensors()
             ?.find { it.id == sensorId }
     }
 
-    /** A list of all sensors (for each server) with states */
-    var sensors by mutableStateOf<List<SensorWithAttributes>>(emptyList())
-        private set
+    /** A list of all sensors (for each server) with states, kept in sync with the database. */
+    val sensors: StateFlow<List<SensorWithAttributes>> =
+        sensorRepository.getFullFlow(sensorId)
+            .map { it.toSensorsWithAttributes() }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT), emptyList())
 
-    /** A sensor for displaying the main state in the UI */
-    var sensor by mutableStateOf<SensorWithAttributes?>(null)
-        private set
+    /** A sensor for displaying the main state in the UI. */
+    val sensor: StateFlow<SensorWithAttributes?> =
+        sensors
+            .map { list -> list.maxByOrNull { it.sensor.enabled } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT), null)
+
     private var sensorCheckedEnabled = false
-    val sensorSettings = sensorDao.getSettingsFlow(sensorId).collectAsState()
+
+    /** The sensor's settings, kept in sync with the database. */
+    val sensorSettings: StateFlow<List<SensorSetting>> =
+        sensorRepository.getSettingsFlow(sensorId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT), emptyList())
     var sensorSettingsDialog by mutableStateOf<SettingDialogState?>(null)
         private set
 
@@ -159,24 +187,20 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     init {
-        val sensorFlow = sensorDao.getFullFlow(sensorId)
         viewModelScope.launch {
             serverNames = serverManager.servers().associate { it.id to it.friendlyName }
+        }
+        viewModelScope.launch {
+            // Drive the one-time permission reconciliation and the multi-server expand state off the
+            // sensor list so both stay in sync with the database.
+            sensors.collect { currentSensors ->
+                if (!sensorCheckedEnabled) checkSensorEnabled(currentSensors)
 
-            sensorFlow.collect { map ->
-                sensors = map.toSensorsWithAttributes()
-                sensor = map.toSensorsWithAttributes().maxByOrNull { it.sensor.enabled }
-                if (!sensorCheckedEnabled) checkSensorEnabled(sensors)
-
-                val expandable =
-                    sensors.size > 1 && (sensors.all { it.sensor.enabled } || sensors.all { !it.sensor.enabled })
+                val expandable = currentSensors.size > 1 &&
+                    (currentSensors.all { it.sensor.enabled } || currentSensors.all { !it.sensor.enabled })
                 _serversShowExpand.emit(expandable)
                 if (!expandable) {
-                    if (sensors.size == 1) {
-                        _serversDoExpand.emit(false)
-                    } else {
-                        _serversDoExpand.emit(true)
-                    }
+                    _serversDoExpand.emit(currentSensors.size != 1)
                 }
             }
         }
@@ -192,7 +216,7 @@ class SensorDetailViewModel @Inject constructor(
     private suspend fun checkSensorEnabled(sensors: List<SensorWithAttributes>) {
         if (sensorManager != null && basicSensor != null && sensors.isNotEmpty()) {
             sensorCheckedEnabled = true
-            val hasPermission = sensorManager.checkPermission(getApplication(), basicSensor.id)
+            val hasPermission = sensorManager.checkPermission(basicSensor.id)
             sensors.forEach { thisSensor ->
                 val enabled = thisSensor.sensor.enabled && hasPermission
                 updateSensorEntity(enabled, thisSensor.sensor.serverId)
@@ -203,7 +227,7 @@ class SensorDetailViewModel @Inject constructor(
     fun setEnabled(isEnabled: Boolean, serverId: Int?) {
         viewModelScope.launch {
             if (isEnabled) {
-                sensorManager?.requiredPermissions(getApplication(), sensorId)?.let { permissions ->
+                sensorManager?.requiredPermissions(sensorId)?.let { permissions ->
                     val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
 
@@ -219,12 +243,12 @@ class SensorDetailViewModel @Inject constructor(
                             LocationPermissionsDialog(block = true, serverId = serverId, sensors = arrayOf(sensorName))
                         return@launch
                     } else {
-                        if (!sensorManager.checkPermission(getApplication(), sensorId)) {
+                        if (!sensorManager.checkPermission(sensorId)) {
                             if (sensorManager is NetworkSensorManager) {
                                 locationPermissionRequests.value =
                                     LocationPermissionsDialog(false, serverId, emptyArray(), permissions)
                             } else if (sensorManager is LastAppSensorManager &&
-                                !sensorManager.checkUsageStatsPermission(getApplication())
+                                !sensorManager.checkUsageStatsPermission()
                             ) {
                                 permissionRequests.value = PermissionsDialog(serverId, permissions)
                             } else {
@@ -240,7 +264,7 @@ class SensorDetailViewModel @Inject constructor(
             updateSensorEntity(isEnabled, serverId)
             if (isEnabled) {
                 try {
-                    sensorManager?.requestSensorUpdate(getApplication())
+                    sensorManager?.requestSensorUpdate()
                 } catch (e: Exception) {
                     Timber.e(e, "Exception while requesting update for sensor $sensorId")
                 }
@@ -256,36 +280,32 @@ class SensorDetailViewModel @Inject constructor(
      * Should trigger a dialog open in view.
      */
     fun onSettingWithDialogPressed(setting: SensorSetting) = viewModelScope.launch {
-        val dialogLoadingJob = launch {
-            // In case getting entries takes too long, display a temporary loading dialog
-            delay(1000L)
-            sensorSettingsDialog = SettingDialogState(
-                setting = setting,
-                loading = true,
-                entries = listOf(),
-                entriesSelected = listOf(),
-            )
-        }
-
-        val listKeys = getSettingKeys(setting)
-        val listEntries = getSettingEntries(setting, null)
-        val state = SettingDialogState(
+        // Open the dialog right away in a loading state; enumerating entries (for example every
+        // installed application) can take seconds and must not block the main thread.
+        sensorSettingsDialog = SettingDialogState(
             setting = setting,
-            loading = false,
-            entries = when {
+            isLoading = true,
+            entries = listOf(),
+            entriesSelected = listOf(),
+        )
+
+        sensorSettingsDialog = withContext(Dispatchers.Default) {
+            val listKeys = getSettingKeys(setting)
+            val listEntries = getSettingEntries(setting, null)
+            val entries = when {
                 setting.valueType == SensorSettingType.LIST ||
                     setting.valueType == SensorSettingType.LIST_APPS ||
                     setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
                     setting.valueType == SensorSettingType.LIST_ZONES ->
-                    listKeys.zip(listEntries)
+                    listKeys.zip(listEntries).map { (id, label) -> SettingEntry(id = id, label = label) }
 
                 setting.valueType.listType ->
-                    listEntries.map { it to it }
+                    listEntries.map { SettingEntry(id = it, label = it) }
 
                 else ->
                     emptyList()
-            },
-            entriesSelected = when {
+            }
+            val entriesSelected = when {
                 setting.valueType == SensorSettingType.LIST ||
                     setting.valueType == SensorSettingType.LIST_APPS ||
                     setting.valueType == SensorSettingType.LIST_BLUETOOTH ||
@@ -297,10 +317,29 @@ class SensorDetailViewModel @Inject constructor(
 
                 else ->
                     emptyList()
-            },
-        )
-        dialogLoadingJob.cancel()
-        sensorSettingsDialog = state
+            }
+            SettingDialogState(
+                setting = setting,
+                isLoading = false,
+                entries = sortSelectedFirst(setting = setting, entries = entries, entriesSelected = entriesSelected),
+                entriesSelected = entriesSelected,
+            )
+        }
+    }
+
+    /**
+     * Moves the selected entries of a multi-select setting to the top of the list, preserving the
+     * existing (alphabetical) order within the selected and unselected groups. Single-select and
+     * non-list settings keep their original order.
+     */
+    private fun sortSelectedFirst(
+        setting: SensorSetting,
+        entries: List<SettingEntry>,
+        entriesSelected: List<String>,
+    ): List<SettingEntry> {
+        if (!setting.valueType.isMultiSelect()) return entries
+        val selected = entriesSelected.toSet()
+        return entries.sortedByDescending { it.id in selected }
     }
 
     fun cancelSettingWithDialog() {
@@ -317,16 +356,23 @@ class SensorDetailViewModel @Inject constructor(
 
     fun submitSettingWithDialog(data: SettingDialogState?) {
         if (data != null) {
-            setSetting(data.setting)
+            val setting = if (data.setting.valueType.isMultiSelect()) {
+                // Multi-select settings keep their selection as a list in the state; serialize it
+                // here into the comma-separated format read back by [onSettingWithDialogPressed]
+                data.setting.copy(value = data.entriesSelected.joinToString())
+            } else {
+                data.setting
+            }
+            setSetting(setting)
         }
         sensorSettingsDialog = null
     }
 
     fun setSetting(setting: SensorSetting) {
         viewModelScope.launch {
-            sensorDao.add(setting)
+            sensorRepository.updateSettingValue(setting.sensorId, setting.name, setting.value)
             try {
-                sensorManager?.requestSensorUpdate(getApplication())
+                sensorManager?.requestSensorUpdate()
             } catch (e: Exception) {
                 Timber.e(e, "Exception while requesting update for sensor $sensorId")
             }
@@ -341,7 +387,7 @@ class SensorDetailViewModel @Inject constructor(
             } else {
                 listOf(serverId)
             }
-        sensorDao.setSensorEnabled(sensorId, serverIds, isEnabled)
+        sensorRepository.setSensorEnabled(sensorId, serverIds, isEnabled)
         refreshSensorData()
     }
 
@@ -537,9 +583,9 @@ class SensorDetailViewModel @Inject constructor(
         viewModelScope.launch {
             // This is only called when we requested permissions to enable a sensor, so check if
             // we have all permissions and should enable the sensor.
-            val hasPermission = sensorManager?.checkPermission(getApplication(), sensorId) == true
+            val hasPermission = sensorManager?.checkPermission(sensorId) == true
             if (!hasPermission) {
-                _permissionSnackbar.emit(
+                _permissionSnackbar.send(
                     PermissionSnackbar(commonR.string.enable_sensor_missing_permission_general, false),
                 )
             }
@@ -561,9 +607,9 @@ class SensorDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             val hasPermission =
-                results.values.all { it } && sensorManager?.checkPermission(getApplication(), sensorId) == true
+                results.values.all { it } && sensorManager?.checkPermission(sensorId) == true
             if (!hasPermission) {
-                _permissionSnackbar.emit(
+                _permissionSnackbar.send(
                     PermissionSnackbar(
                         when (results.entries.firstOrNull { !it.value }?.key) {
                             Manifest.permission.ACTIVITY_RECOGNITION ->
@@ -602,6 +648,4 @@ class SensorDetailViewModel @Inject constructor(
         }
         return state
     }
-
-    private fun <T> Flow<List<T>>.collectAsState(): State<List<T>> = collectAsState(initial = emptyList())
 }
