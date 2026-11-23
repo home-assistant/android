@@ -32,6 +32,8 @@ import android.util.TypedValue
 import android.view.KeyEvent
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.annotation.ColorInt
+import androidx.annotation.ColorRes
 import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
 import androidx.car.app.notification.CarAppExtender
@@ -88,7 +90,6 @@ import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.FailFast
-import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
@@ -146,7 +147,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -346,8 +346,8 @@ class MessagingManager @Inject constructor(
         private const val MAX_NOTIFICATION_IMAGE_SIZE_PX = 1024
 
         // Values for progress style notifications
-        const val PROGRESS_ICON_SIZE = 20 // Taken from "Progress-centric notifications" in Android docs
-        const val PROGRESS_ICON_PADDING = 3 // Ensures that a square fits inside the circular background
+        private const val PROGRESS_ICON_SIZE_DP = 20 // Taken from "Progress-centric notifications" in Android docs
+        private const val PROGRESS_ICON_PADDING_DP = 3 // Ensures that a square fits inside the circular background
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1237,7 +1237,7 @@ class MessagingManager @Inject constructor(
     private fun handleProgressStyle(builder: NotificationCompat.Builder, data: Map<String, String>) {
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
             val progressStyle = NotificationCompat.ProgressStyle().setStyledByProgress(true)
-                .setProgress(data[PROGRESS]?.toIntOrNull() ?: -1)
+                .setProgress(data[PROGRESS]?.toIntOrNull() ?: 0)
 
             val dynamicColorContext = DynamicColors.wrapContextIfAvailable(context)
             var accentColor = commonR.color.colorAccent
@@ -1259,14 +1259,14 @@ class MessagingManager @Inject constructor(
 
     private fun applyProgressSegments(
         style: NotificationCompat.ProgressStyle,
-        accentColor: Int,
+        @ColorRes accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
         val segmentsData = data[PROGRESS_SEGMENTS]
         if (segmentsData.isNullOrBlank()) return false
 
         return try {
-            val segments = Json.parseToJsonElement(segmentsData).jsonArrayOrNull()
+            val segments = kotlinJsonMapper.parseToJsonElement(segmentsData).jsonArrayOrNull()
             if (segments == null) {
                 Timber.w("Notification progress segments is not a JSON array: ${sensitive(segmentsData)}")
                 false
@@ -1284,7 +1284,7 @@ class MessagingManager @Inject constructor(
 
     private fun parseProgressSegment(
         element: JsonElement,
-        accentColor: Int,
+        @ColorRes accentColor: Int,
     ): NotificationCompat.ProgressStyle.Segment? {
         val segment = element.jsonObjectOrNull()
         val length = segment?.getIntOrNull(PROGRESS_SEGMENTS_LENGTH)
@@ -1309,14 +1309,14 @@ class MessagingManager @Inject constructor(
 
     private fun applyProgressPoints(
         style: NotificationCompat.ProgressStyle,
-        accentColor: Int,
+        @ColorRes accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
         val pointsData = data[PROGRESS_POINTS]
         if (pointsData.isNullOrBlank()) return false
 
         return try {
-            val points = Json.parseToJsonElement(pointsData).jsonArrayOrNull()
+            val points = kotlinJsonMapper.parseToJsonElement(pointsData).jsonArrayOrNull()
             if (points == null) {
                 Timber.w("Notification progress points is not a JSON array: ${sensitive(pointsData)}")
                 false
@@ -1332,7 +1332,10 @@ class MessagingManager @Inject constructor(
         }
     }
 
-    private fun parseProgressPoint(element: JsonElement, accentColor: Int): NotificationCompat.ProgressStyle.Point? {
+    private fun parseProgressPoint(
+        element: JsonElement,
+        @ColorRes accentColor: Int,
+    ): NotificationCompat.ProgressStyle.Point? {
         val point = element.jsonObjectOrNull()
         val position = point?.getIntOrNull(PROGRESS_POINTS_POSITION)
         return when {
@@ -1356,7 +1359,7 @@ class MessagingManager @Inject constructor(
 
     private fun applyProgressTrackerIcon(
         style: NotificationCompat.ProgressStyle,
-        accentColor: Int,
+        @ColorRes accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
         val progressTrackerIcon = data[PROGRESS_TRACKER_ICON].orEmpty()
@@ -1372,7 +1375,7 @@ class MessagingManager @Inject constructor(
 
     private fun applyProgressStartIcon(
         style: NotificationCompat.ProgressStyle,
-        accentColor: Int,
+        @ColorRes accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
         val progressStartIcon = data[PROGRESS_START_ICON].orEmpty()
@@ -1387,7 +1390,7 @@ class MessagingManager @Inject constructor(
 
     private fun applyProgressEndIcon(
         style: NotificationCompat.ProgressStyle,
-        accentColor: Int,
+        @ColorRes accentColor: Int,
         data: Map<String, String>,
     ): Boolean {
         val progressEndIcon = data[PROGRESS_END_ICON].orEmpty()
@@ -1403,22 +1406,22 @@ class MessagingManager @Inject constructor(
     private fun createProgressIcon(
         context: Context,
         iconString: String,
-        iconColor: Int,
-        backgroundColor: Int? = null,
+        @ColorInt iconColor: Int,
+        @ColorRes backgroundColor: Int? = null,
     ): IconCompat? {
-        val icon = if (iconString.startsWith(MDI_PREFIX)) Mdi.fromHaName(iconString) else null
+        val icon = Mdi.fromHaName(iconString)
         if (icon == null) return null
 
         val bitmap = if (backgroundColor != null) {
             // Create a canvas with a circular background and the padded MDI icon
             val sizePx = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
-                PROGRESS_ICON_SIZE.toFloat(),
+                PROGRESS_ICON_SIZE_DP.toFloat(),
                 context.resources.displayMetrics,
             ).toInt()
             val paddingPx = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
-                PROGRESS_ICON_PADDING.toFloat(),
+                PROGRESS_ICON_PADDING_DP.toFloat(),
                 context.resources.displayMetrics,
             ).toInt()
             val iconBitmap = icon.toBitmap(sizePx - 2 * paddingPx, iconColor)
@@ -1434,7 +1437,7 @@ class MessagingManager @Inject constructor(
             }
         } else {
             // Return just the bitmap if no background is required
-            icon.toBitmap(context, PROGRESS_ICON_SIZE, iconColor)
+            icon.toBitmap(context, PROGRESS_ICON_SIZE_DP, iconColor)
         }
 
         return IconCompat.createWithBitmap(bitmap)
