@@ -150,6 +150,10 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
         onSensorUpdated(hingeStatus, status.state, status.icon, mapOf())
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#hinge-sensors"
+    }
+
     /**
      * Requests an update of the sensor each time the device is folded or unfolded, including while
      * the app is in the background. The layout listener is only registered while the sensor is
