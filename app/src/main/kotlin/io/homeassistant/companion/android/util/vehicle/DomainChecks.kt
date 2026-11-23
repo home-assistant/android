@@ -38,11 +38,18 @@ val NOT_ACTIONABLE_DOMAINS = listOf(
     "sensor",
 )
 
-fun isVehicleDomain(entity: Entity): Boolean {
-    return entity.domain in SUPPORTED_DOMAINS ||
-        entity.domain in NOT_ACTIONABLE_DOMAINS ||
-        canNavigate(entity)
-}
+/** Domains whose entities are usable in a vehicle whatever their state. */
+private val ALWAYS_VEHICLE_DOMAINS: Set<String> = SUPPORTED_DOMAINS + NOT_ACTIONABLE_DOMAINS
+
+/**
+ * Every domain an entity matching [isVehicleDomain] can belong to. The [MAP_DOMAINS] ones only
+ * match when the entity can be navigated to.
+ */
+val VEHICLE_DOMAINS: Set<String> = ALWAYS_VEHICLE_DOMAINS + MAP_DOMAINS
+
+fun isVehicleDomain(entity: Entity): Boolean = entity.domain in ALWAYS_VEHICLE_DOMAINS || canNavigate(entity)
+
+fun isVehicleDomain(entity: EntityDisplay): Boolean = entity.domain in ALWAYS_VEHICLE_DOMAINS || canNavigate(entity)
 
 fun canNavigate(entity: Entity): Boolean {
     return (

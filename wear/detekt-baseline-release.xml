@@ -36,7 +36,6 @@
     <ID>InjectDispatcher:ThermostatTile.kt:ThermostatTile$IO</ID>
     <ID>InjectDispatcher:TileActionReceiver.kt:TileActionReceiver$Default</ID>
     <ID>InstanceOfCheckForException:OnboardingActivity.kt:OnboardingActivity$e is RemoteActivityHelper.RemoteIntentException</ID>
-    <ID>LongMethod:CameraTile.kt:CameraTile$override fun onTileResourcesRequest: ListenableFuture&lt;Resources&gt;</ID>
     <ID>LongMethod:ChooseEntityView.kt:@Composable fun ChooseEntityView</ID>
     <ID>LongMethod:ComplicationConfigMainView.kt:@Composable fun MainConfigView</ID>
     <ID>LongMethod:ConversationView.kt:@Composable fun ConversationResultView</ID>

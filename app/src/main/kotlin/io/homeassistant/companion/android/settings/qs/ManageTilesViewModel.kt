@@ -17,8 +17,9 @@ import io.github.timoptr.mdiicons.MdiIcon
 import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
-import io.homeassistant.companion.android.common.data.integration.isUsableInTile
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.fromHaName
@@ -43,6 +44,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 private const val TILE_ICON_SIZE_DP = 48
+
+/** Selects the entities a tile can act on. */
+private val TILE_ENTITY_FILTER = EntityFilter(domains = EntityExt.APP_PRESS_ACTION_DOMAINS.toSet())
 
 @HiltViewModel
 internal class ManageTilesViewModel @Inject constructor(
@@ -174,7 +178,7 @@ internal class ManageTilesViewModel @Inject constructor(
     private fun loadEntities(serverId: Int) {
         loadEntitiesJob?.cancel()
         loadEntitiesJob = viewModelScope.launch {
-            entitiesForDisplayManager.snapshotInContext(serverId) { it.isUsableInTile() }.collect { state ->
+            entitiesForDisplayManager.snapshotInContext(serverId, TILE_ENTITY_FILTER).collect { state ->
                 _state.update { it.copy(entityDisplayState = state) }
             }
         }

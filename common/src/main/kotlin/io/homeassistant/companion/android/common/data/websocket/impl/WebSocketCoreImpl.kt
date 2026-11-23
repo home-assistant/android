@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authorizati
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.data.websocket.HAWebSocketException
+import io.homeassistant.companion.android.common.data.websocket.SubscriptionReconnectPolicy
 import io.homeassistant.companion.android.common.data.websocket.WebSocketCore
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRequest
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -17,6 +18,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketCo
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_ENTITY_REGISTRY_UPDATED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.EVENT_STATE_CHANGED
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_RENDER_TEMPLATE
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketConstants.SUBSCRIBE_TYPE_SUBSCRIBE_TRIGGER
@@ -46,6 +48,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.St
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TemplateUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.UnknownTypeSocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.webRtcJsonMapper
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
@@ -72,13 +76,14 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -121,6 +126,7 @@ private val MAX_DELAY_BEFORE_RECONNECT = 2.minutes
  * #### Reconnection and re-subscription:
  * - On failure or when the socket is closing, if there are active subscriptions created with [subscribeTo], the implementation will automatically retry to open the connection until it succeeds.
  * - Upon reconnection, the implementation resubscribes to all active subscriptions to ensure continuity. Each attempt is tracked as an [ActiveMessage.Reconnecting] entry until the server acknowledges it.
+ * - A subscription created with [SubscriptionReconnectPolicy.Complete] is not restored: its Flow completes when the connection is lost, and it does not keep the connection alive for reconnection.
  * - A subscription the server actively rejects is retried indefinitely with capped backoff — it is never abandoned while its collector is still listening. An attempt that receives no answer cancels the socket so restoration resumes on a clean connection where no ambiguous acceptance can linger.
  * - Restoration always starts when a connection is established, whoever established it: any subscription still tracked from a previous connection is restored (for example after the reconnection loop gave up on an authentication failure and a later [sendMessage] reconnects).
  *
@@ -321,7 +327,6 @@ internal class WebSocketCoreImpl(
         // Track pending connection state locally within the urlObserverJob scope.
         // This is read across collectLatest invocations to cancel partial connections on URL change.
         var pendingWebSocket: WebSocket? = null
-        var urlObserverJob: Job? = null
 
         connectedMutex.withLock {
             // Already connected?
@@ -344,31 +349,31 @@ internal class WebSocketCoreImpl(
             // Cancel any existing URL observer
             connectionHolder.get()?.urlObserverJob?.cancel()
 
-            urlObserverJob = wsScope.launch {
+            wsScope.launch {
+                val urlObserverJob = coroutineContext.job
                 connectionStateProvider().urlFlow()
                     .collectLatest { urlState ->
                         connectedMutex.withLock {
                             // This lock might wait for the first withLock to finish but it should be fast
                             val url = (urlState as? UrlState.HasUrl)?.url
                             if (!connectDeferred.isCompleted) {
-                                handleNewConnectionAttempt(
+                                val connected = handleNewConnectionAttempt(
                                     url = url,
                                     pendingWebSocket = pendingWebSocket,
-                                    connectDeferred = connectDeferred,
-                                    urlObserverJob = urlObserverJob!!,
+                                    urlObserverJob = urlObserverJob,
                                     setPendingWebSocket = { pendingWebSocket = it },
                                 )
+                                connectDeferred.complete(connected)
+                                if (!connected) urlObserverJob.cancel()
                             } else if (url != connectionHolder.get()?.url) {
                                 // Already connected but URL changed
                                 handleUrlChangeWhileConnected(urlState)
                             }
                         }
                     }
-            }.apply {
-                invokeOnCompletion {
-                    if (!connectDeferred.isCompleted) {
-                        connectDeferred.complete(false)
-                    }
+            }.invokeOnCompletion {
+                if (!connectDeferred.isCompleted) {
+                    connectDeferred.complete(false)
                 }
             }
         }
@@ -397,16 +402,16 @@ internal class WebSocketCoreImpl(
     }
 
     /**
-     * Handles a new connection attempt when not yet connected.
-     * This is called when the URL flow emits before [connectDeferred] is completed.
+     * Cancels any [pendingWebSocket] and tries to connect to [url].
+     *
+     * @return `true` when the socket is authenticated and its [ConnectionHolder] is stored, `false` on failure.
      */
     private suspend fun handleNewConnectionAttempt(
         url: URL?,
         pendingWebSocket: WebSocket?,
-        connectDeferred: CompletableDeferred<Boolean>,
         urlObserverJob: Job,
         setPendingWebSocket: (WebSocket?) -> Unit,
-    ) {
+    ): Boolean {
         // Clean up any partial connection before using this URL.
         connectionHolder.set(null)
         pendingWebSocket?.cancel()
@@ -416,17 +421,11 @@ internal class WebSocketCoreImpl(
         if (url == null) {
             Timber.w("No URL available to open WebSocket connection")
             connectionState = WebSocketState.ClosedOther
-            connectDeferred.complete(false)
-            urlObserverJob.cancel()
-            return
+            return false
         }
 
-        when (val attemptResult = attemptWebSocketConnection(url)) {
-            is ConnectionAttemptResult.Failed -> {
-                connectDeferred.complete(false)
-                urlObserverJob.cancel()
-            }
-
+        return when (val attemptResult = attemptWebSocketConnection(url)) {
+            is ConnectionAttemptResult.Failed -> false
             is ConnectionAttemptResult.Success -> {
                 val webSocket = attemptResult.webSocket
                 setPendingWebSocket(webSocket)
@@ -437,7 +436,7 @@ internal class WebSocketCoreImpl(
                     urlObserverJob = urlObserverJob,
                 )
                 if (authSuccess) restoreLeftoverSubscriptions()
-                connectDeferred.complete(authSuccess)
+                authSuccess
             }
         }
     }
@@ -664,7 +663,8 @@ internal class WebSocketCoreImpl(
     override suspend fun <T : Any> subscribeTo(
         type: String,
         data: Map<String, Any?>,
-        timeout: kotlin.time.Duration,
+        timeout: Duration,
+        reconnectPolicy: SubscriptionReconnectPolicy,
     ): Flow<T>? {
         val subscribeMessage = buildMap {
             put("type", type)
@@ -672,11 +672,18 @@ internal class WebSocketCoreImpl(
         }
 
         return eventSubscriptionMutex.withLock<Flow<T>?> {
-            ( // Check for existing subscription before creating a new one
-                findSubscription(subscribeMessage)?.second?.eventFlow
-                    ?: createSubscriptionFlow<T>(subscribeMessage, timeout)
-                ) as? Flow<T>
+            val existingFlow = when (reconnectPolicy) {
+                SubscriptionReconnectPolicy.Resubscribe -> findSharedSubscription(subscribeMessage)?.eventFlow
+                // Its Flow is collected once, so the subscription is never one that already exists
+                SubscriptionReconnectPolicy.Complete -> null
+            }
+            (existingFlow ?: createSubscriptionFlow<T>(subscribeMessage, timeout, reconnectPolicy)) as? Flow<T>
         }
+    }
+
+    override suspend fun <T : Any> firstEventOf(type: String, data: Map<String, Any?>): T? {
+        // Never shared and not restored: the event is the answer to this one request
+        return subscribeTo<T>(type, data, reconnectPolicy = SubscriptionReconnectPolicy.Complete)?.firstOrNull()
     }
 
     override fun shutdown() {
@@ -797,14 +804,24 @@ internal class WebSocketCoreImpl(
         handleClosingSocket()
     }
 
-    private suspend fun <T> createSubscriptionFlow(subscribeMessage: Map<String, Any?>, timeout: Duration): Flow<T>? {
+    private suspend fun <T> createSubscriptionFlow(
+        subscribeMessage: Map<String, Any?>,
+        timeout: Duration,
+        reconnectPolicy: SubscriptionReconnectPolicy,
+    ): Flow<T>? {
         val channel = Channel<T>(capacity = Channel.BUFFERED)
         val flow = callbackFlow<T> {
-            launch { channel.consumeAsFlow().collect(::send) }
+            launch {
+                channel.consumeAsFlow().collect(::send)
+                // Only reached for a completing subscription, once cleanupClosingSocket closed its
+                // channel; a shared one is cancelled with its last collector before the channel closes
+                close()
+            }
             awaitClose {
                 wsScope.launch {
                     eventSubscriptionMutex.withLock {
-                        findSubscription(subscribeMessage)?.let { (subscriptionId, subscription) ->
+                        // Found by its channel: an identical subscription that isn't shared ends its own
+                        findSubscription(channel)?.let { (subscriptionId, subscription) ->
                             Timber.d("Unsubscribing from ${sensitive { subscribeMessage.toString() }}")
                             // Unsubscribe must happen before removing from activeMessages to ensure
                             // the server acknowledges before we stop handling events for this subscription
@@ -831,39 +848,50 @@ internal class WebSocketCoreImpl(
                     }
                 }
             }
-        }.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
+        }
+        val eventFlow: Flow<T> = when (reconnectPolicy) {
+            SubscriptionReconnectPolicy.Resubscribe ->
+                flow.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
+            SubscriptionReconnectPolicy.Complete -> flow
+        }
 
         val response = sendMessage(
             Command.WithAnswer.Subscription(
                 request = WebSocketRequest(message = subscribeMessage),
-                eventFlow = flow as SharedFlow<Any>,
+                eventFlow = eventFlow as Flow<Any>,
                 onEvent = channel as Channel<Any>,
+                reconnectPolicy = reconnectPolicy,
             ),
         )
         if (response == null || response.success != true) {
             Timber.e("Unable to subscribe to ${sensitive { subscribeMessage.toString() }}")
-            findSubscription(subscribeMessage)?.let { (subscriptionId, _) -> activeMessages.remove(subscriptionId) }
+            findSubscription(channel)?.let { (subscriptionId, _) -> activeMessages.remove(subscriptionId) }
             return null
         } else {
-            return flow
+            return eventFlow
         }
     }
 
     /**
-     * Finds the single [ActiveMessage.Subscription] entry and its ID matching [subscribeMessage].
+     * Finds the shared [ActiveMessage.Subscription] matching [subscribeMessage], the only one new
+     * collectors can join.
      *
-     * Resubscription attempts are tracked as [ActiveMessage.Reconnecting] and never match, so one
-     * logical subscription always has exactly one matching entry.
+     * Resubscription attempts are tracked as [ActiveMessage.Reconnecting] and never match, and a
+     * subscription with [SubscriptionReconnectPolicy.Complete] is never shared, so there is at
+     * most one matching entry.
      */
-    private fun findSubscription(subscribeMessage: Map<String, Any?>): Pair<Long, ActiveMessage.Subscription>? {
-        return activeMessages.firstNotNullOfOrNull { (id, message) ->
-            if (message is ActiveMessage.Subscription && message.request.message == subscribeMessage) {
-                id to message
-            } else {
-                null
+    private fun findSharedSubscription(subscribeMessage: Map<String, Any?>): ActiveMessage.Subscription? =
+        activeMessages.values.firstNotNullOfOrNull { message ->
+            (message as? ActiveMessage.Subscription)?.takeIf {
+                it.reconnectPolicy is SubscriptionReconnectPolicy.Resubscribe && it.request.message == subscribeMessage
             }
         }
-    }
+
+    /** Finds the [ActiveMessage.Subscription] entry delivering its events to [onEvent], and its ID. */
+    private fun findSubscription(onEvent: Channel<*>): Pair<Long, ActiveMessage.Subscription>? =
+        activeMessages.firstNotNullOfOrNull { (id, message) ->
+            (message as? ActiveMessage.Subscription)?.takeIf { it.onEvent === onEvent }?.let { id to it }
+        }
 
     private fun handleAuthComplete(successful: Boolean, haVersion: String?) {
         val parsedVersion = haVersion?.let { HomeAssistantVersion.fromString(it) }
@@ -993,6 +1021,13 @@ internal class WebSocketCoreImpl(
                     Timber.w("Received Assist pipeline event without type, skipping")
                     return
                 }
+            } else if (subscriptionType == SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER) {
+                if (response.event != null) {
+                    webRtcJsonMapper.decodeFromJsonElement<WebRtcEvent>(response.event)
+                } else {
+                    Timber.w("Received no event for WebRTC subscription, skipping")
+                    return
+                }
             } else if (eventResponseType != null && (eventResponseType as? JsonPrimitive)?.isString == true) {
                 when (eventResponseType.content) {
                     EVENT_STATE_CHANGED -> {
@@ -1058,6 +1093,8 @@ internal class WebSocketCoreImpl(
         authCompleted.completeExceptionally(IOException("Connection closed"))
         authCompleted = CompletableDeferred()
 
+        completeNonReplayableSubscriptions()
+
         // Complete all pending simple messages and in-flight resubscription attempts with an
         // error; the original subscriptions the attempts point to stay tracked and are restored
         // once a connection is established again
@@ -1070,6 +1107,22 @@ internal class WebSocketCoreImpl(
                     Timber.w("Response deferred was already completed, skipping IOException")
                 }
                 activeMessages.remove(key)
+            }
+    }
+
+    /** Ends every subscription created with [SubscriptionReconnectPolicy.Complete]. */
+    @GuardedBy("connectedMutex")
+    private fun completeNonReplayableSubscriptions() {
+        activeMessages
+            .mapNotNull { (key, activeMessage) ->
+                (activeMessage as? ActiveMessage.Subscription)
+                    ?.takeIf { it.reconnectPolicy is SubscriptionReconnectPolicy.Complete }
+                    ?.let { key to it }
+            }
+            .forEach { (key, subscription) ->
+                activeMessages.remove(key)
+                subscription.responseDeferred.completeExceptionally(IOException("Connection closed"))
+                subscription.onEvent.close()
             }
     }
 
@@ -1305,15 +1358,17 @@ internal sealed interface ActiveMessage {
      * A subscription that receive multiple events over time.
      *
      * @param responseDeferred Completes with the initial subscription confirmation response
-     * @param eventFlow The shared flow that emits events to external subscribers
+     * @param eventFlow The flow that emits events to external subscribers
      * @param onEvent The channel used to send events into the flow
      * @param request The original request, retained for resubscription after reconnection
+     * @param reconnectPolicy Whether the subscription is restored or ended when the connection is lost
      */
     class Subscription(
         override val responseDeferred: CompletableDeferred<RawMessageSocketResponse>,
-        val eventFlow: SharedFlow<Any>,
+        val eventFlow: Flow<Any>,
         val onEvent: Channel<Any>,
         val request: WebSocketRequest,
+        val reconnectPolicy: SubscriptionReconnectPolicy,
     ) : ActiveMessage
 
     /**
@@ -1362,11 +1417,16 @@ private sealed interface Command<T> {
         /**
          * A subscription message that receives multiple events over time.
          *
-         * @param eventFlow The shared flow that emits events to subscribers
+         * @param eventFlow The flow that emits events to subscribers
          * @param onEvent The channel used internally to send events to the flow
+         * @param reconnectPolicy Whether the subscription is restored or ended when the connection is lost
          */
-        class Subscription(request: WebSocketRequest, val eventFlow: SharedFlow<Any>, val onEvent: Channel<Any>) :
-            WithAnswer(request) {
+        class Subscription(
+            request: WebSocketRequest,
+            val eventFlow: Flow<Any>,
+            val onEvent: Channel<Any>,
+            val reconnectPolicy: SubscriptionReconnectPolicy,
+        ) : WithAnswer(request) {
 
             override fun toActiveMessage(): ActiveMessage {
                 return ActiveMessage.Subscription(
@@ -1374,6 +1434,7 @@ private sealed interface Command<T> {
                     eventFlow,
                     onEvent,
                     request,
+                    reconnectPolicy,
                 )
             }
         }

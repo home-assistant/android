@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -44,6 +45,7 @@ fun HASwitch(
 }
 
 @Composable
+@ReadOnlyComposable
 private fun switchColors(): SwitchColors {
     val scheme = LocalHAColorScheme.current
     return with(scheme) {

@@ -9,6 +9,8 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityChange
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
@@ -38,11 +40,15 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
 import io.homeassistant.companion.android.common.data.servers.tryOnUrls
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.MIN_VERSION_SUBSCRIBE_ENTITIES
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEventType
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineIntentEnd
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.supportsFilteringEntities
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.common.util.MessagingToken
 import io.homeassistant.companion.android.common.util.isNullOrBlank
@@ -52,12 +58,16 @@ import io.homeassistant.companion.android.di.qualifiers.NamedIntegrationStorage
 import io.homeassistant.companion.android.di.qualifiers.NamedManufacturer
 import io.homeassistant.companion.android.di.qualifiers.NamedModel
 import io.homeassistant.companion.android.di.qualifiers.NamedOsVersion
+import java.net.HttpURLConnection.HTTP_GONE
+import java.net.HttpURLConnection.HTTP_NOT_FOUND
+import java.net.HttpURLConnection.HTTP_OK
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import okhttp3.HttpUrl
@@ -161,28 +171,46 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration, allowReregistration: Boolean) {
         val request = RegisterDeviceIntegrationRequest(createUpdateRegistrationRequest(deviceRegistration))
-        callWebhookOnUrls(
-            request,
-            onSuccess = { response ->
-                // The server should return a body with the registration, but might return:
-                // 200 with empty body for broken direct webhook
-                // 404 for broken cloudhook
-                // 410 for missing config entry
-                if (response.code() == 200 && response.body()?.contentLength() == 0L) {
-                    Timber.w("update_registration returned empty body")
-                    maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
-                } else if (response.code() == 404 || response.code() == 410) {
-                    Timber.w("update_registration returned HTTP ${response.code()}")
-                    maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
-                } else {
-                    persistDeviceRegistration(deviceRegistration)
+        val response = callUpdateRegistration(request)
+        // The server should return a body with the registration, but might return:
+        // 200 with empty body for broken direct webhook
+        // 404 for broken cloudhook
+        // 410 for missing config entry
+        if (response.code() == HTTP_OK && response.body()?.contentLength() == 0L) {
+            Timber.w("update_registration returned empty body")
+            maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
+        } else if (response.code() == HTTP_NOT_FOUND || response.code() == HTTP_GONE) {
+            Timber.w("update_registration returned HTTP ${response.code()}")
+            maybeReregisterDeviceOnFailedUpdate(deviceRegistration, allowReregistration)
+        } else {
+            persistDeviceRegistration(deviceRegistration)
+        }
+    }
+
+    /**
+     * Sends the registration update to the first URL that answers about the registration itself.
+     *
+     * A 404 only tells that the URL is not usable (e.g. a broken cloudhook) while the registration
+     * can still be valid, so the remaining URLs are tried first. It is returned when none of them
+     * answered. If one answered with another error (e.g. a 500), the state of the registration is
+     * unknown and the call fails instead.
+     */
+    private suspend fun callUpdateRegistration(request: IntegrationRequest): Response<ResponseBody> {
+        var notFoundResponse: Response<ResponseBody>? = null
+        var hasOtherHttpError = false
+        return try {
+            tryOnUrls("update_registration") { url ->
+                val response = integrationService.callWebhook(url, request)
+                when {
+                    response.isSuccessful || response.code() == HTTP_GONE -> return@tryOnUrls response
+                    response.code() == HTTP_NOT_FOUND -> notFoundResponse = response
+                    else -> hasOtherHttpError = true
                 }
-            },
-            isValidResponse = { response ->
-                // when registration was successful or encountered an expected error
-                response.isSuccessful || response.code() == 404 || response.code() == 410
-            },
-        )
+                throw IntegrationException("Error calling webhook", response.code(), response.errorBody())
+            }
+        } catch (e: IntegrationException) {
+            notFoundResponse?.takeUnless { hasOtherHttpError } ?: throw e
+        }
     }
 
     private suspend fun maybeReregisterDeviceOnFailedUpdate(
@@ -475,11 +503,8 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         localStorage.remove(PREF_ORPHANED_THREAD_BORDER_AGENT_IDS)
     }
 
-    override suspend fun getEntities(): List<Entity>? {
-        val response = webSocketRepository().getStates()
-
-        return response?.sortedBy { it.entityId }
-    }
+    override suspend fun getEntities(filter: EntityFilter): List<Entity>? =
+        webSocketRepository().getStates(filter)?.sortedBy { it.entityId }
 
     override suspend fun getEntity(entityId: String): Entity? {
         val url = connectionStateProvider().urlFlow().firstUrlOrNull {
@@ -497,58 +522,67 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         return response
     }
 
-    override suspend fun getEntityUpdates(): Flow<Entity>? {
-        return if (supportsCompressedStateChanges()) {
-            webSocketRepository().getCompressedStateAndChanges()?.toEntityUpdates()
-        } else {
+    override suspend fun getEntityChanges(filter: EntityFilter): Flow<EntityChange>? = when {
+        supportsFilteringOnServer(filter) ->
+            webSocketRepository().getCompressedStateAndChanges(filter)?.toEntityChanges(filter)
+        supportsCompressedStateChanges() ->
+            // The server sends every entity, the selection is done on the device
+            webSocketRepository().getCompressedStateAndChanges()?.map {
+                it.copy(
+                    added = it.added?.filterKeys(filter::matches),
+                    changed = it.changed?.filterKeys(filter::matches),
+                    removed = it.removed?.filter(filter::matches),
+                )
+            }?.toEntityChanges(filter)
+        filter.entityIds.isNotEmpty() && filter.domains.isEmpty() && server().user.isAdmin == true ->
+            webSocketRepository().getStateChanges(filter.entityIds.toList())
+                ?.mapNotNull { it.toEntityChange() }
+        else ->
             webSocketRepository().getStateChanges()
-                ?.filter { it.newState != null }
-                ?.map { it.newState!! }
-        }
+                ?.filter { filter.matches(it.entityId) }
+                ?.map { it.toEntityChange() }
     }
 
-    override suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>? {
-        return if (supportsCompressedStateChanges()) {
-            // Contrary to the state trigger below, the subscription filters server side for any
-            // user, without requiring admin rights
-            webSocketRepository().getCompressedStateAndChanges(entityIds)?.toEntityUpdates(entityIds.toSet())
-        } else if (server().user.isAdmin == true) {
-            webSocketRepository().getStateChanges(entityIds)
-                ?.filter { it.toState != null }
-                ?.map { it.toState!! }
-        } else {
-            webSocketRepository().getStateChanges()
-                ?.filter { it.newState != null && entityIds.contains(it.entityId) }
-                ?.map { it.newState!! }
-        }
+    /** An event without new state is the removal of the entity. */
+    private fun StateChangedEvent.toEntityChange(): EntityChange =
+        newState?.let { EntityChange.StateChanged(it) } ?: EntityChange.Removed(entityId)
+
+    /** An event without new state is the removal of the entity, null for a trigger without entity. */
+    private fun TriggerEvent.toEntityChange(): EntityChange? {
+        val entityId = entityId ?: return null
+        return toState?.let { EntityChange.StateChanged(it) } ?: EntityChange.Removed(entityId)
     }
 
     /** Whether the server supports `subscribe_entities` (compressed state changes), added in 2022.4. */
-    private suspend fun supportsCompressedStateChanges(): Boolean = server().version?.isAtLeast(2022, 4, 0) == true
+    private suspend fun supportsCompressedStateChanges(): Boolean =
+        server().version?.isAtLeast(MIN_VERSION_SUBSCRIBE_ENTITIES) == true
+
+    /** Whether the server can limit `subscribe_entities` to [filter] itself. */
+    private suspend fun supportsFilteringOnServer(filter: EntityFilter): Boolean =
+        server().version.supportsFilteringEntities(filter)
 
     /**
-     * Converts compressed state change events to full [Entity] states, resolving the diffs
-     * against the last known state of each entity. The full states the subscription sends when it
-     * starts are emitted too, so collectors also converge back to the server state after a
-     * reconnection.
+     * Converts compressed state change events to [EntityChange]s, resolving the diffs against the
+     * last known state of each entity. The full states the subscription sends when it starts are
+     * emitted too, so collectors also converge back to the server state after a reconnection.
      */
-    private fun Flow<CompressedStateChangedEvent>.toEntityUpdates(entityIds: Set<String>? = null): Flow<Entity> = flow {
+    private fun Flow<CompressedStateChangedEvent>.toEntityChanges(filter: EntityFilter): Flow<EntityChange> = flow {
         val entities = mutableMapOf<String, Entity>()
         // Seed before collecting: a collector joining an already active shared subscription missed
         // its initial full states, and fetching while handling an event would deadlock because the
         // websocket processes messages sequentially, so the fetch response could never arrive.
-        entities.seedCurrentStates(entityIds)
+        entities.seedCurrentStates(filter)
         collect { event ->
             event.added?.forEach { (entityId, state) ->
                 val entity = state.toEntity(entityId)
                 entities[entityId] = entity
-                emit(entity)
+                emit(EntityChange.StateChanged(entity))
             }
             event.changed?.forEach { (entityId, diff) ->
                 val entity = entities[entityId]?.applyCompressedStateDiff(diff)
                 if (entity != null) {
                     entities[entityId] = entity
-                    emit(entity)
+                    emit(EntityChange.StateChanged(entity))
                 } else {
                     // The entity converges again on its next full state event.
                     Timber.w("Dropping state diff for $entityId without a known state")
@@ -556,24 +590,22 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
             }
             event.removed?.forEach { entityId ->
                 entities.remove(entityId)
+                emit(EntityChange.Removed(entityId))
             }
         }
     }
 
     /**
-     * Seeds with the current state of every subscribed entity, limited to [entityIds]
-     * when not null, fetched on the websocket.
+     * Seeds with the current state of the entities the server limits the subscription to with
+     * [filter], or of every entity when it is empty, fetched on the websocket.
      */
-    private suspend fun MutableMap<String, Entity>.seedCurrentStates(entityIds: Set<String>?) {
-        val states = webSocketRepository().getStates() ?: run {
+    private suspend fun MutableMap<String, Entity>.seedCurrentStates(filter: EntityFilter) {
+        val states = webSocketRepository().getStates(filter)
+        if (states == null) {
             Timber.w("Unable to fetch the current states to resolve state diffs")
             return
         }
-        states.forEach { response ->
-            if (entityIds == null || response.entityId in entityIds) {
-                put(response.entityId, response)
-            }
-        }
+        states.associateByTo(this) { it.entityId }
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
@@ -688,14 +720,11 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
 
     private suspend fun callWebhookOnUrls(
         request: IntegrationRequest,
-        onSuccess: suspend (response: Response<ResponseBody>) -> Unit = {},
         isValidResponse: (response: Response<ResponseBody>) -> Boolean = { it.isSuccessful },
     ) {
-        val response = tryOnUrls("webhook") { url ->
+        tryOnUrls("webhook") { url ->
             val response = integrationService.callWebhook(url, request)
-            if (isValidResponse(response)) {
-                response
-            } else {
+            if (!isValidResponse(response)) {
                 throw IntegrationException(
                     "Error calling webhook",
                     response.code(),
@@ -703,7 +732,6 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
                 )
             }
         }
-        onSuccess(response)
     }
 
     private suspend fun <T> tryOnUrls(requestName: String, action: suspend (HttpUrl) -> T): T =
