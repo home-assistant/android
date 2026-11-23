@@ -56,13 +56,16 @@ interface WebSocketRepository {
 
     /**
      * Return [EntityRegistryDisplayResponse], a bandwidth-efficient version of the entity registry
-     * meant for display, limited to [entityIds] or holding every entity when it is empty. Pass the
-     * entity ids whenever they are known, so the whole registry isn't downloaded to resolve a few
-     * entities; the ones without a registry entry are omitted.
+     * meant for display, limited to the entities selected by [filter] or holding every entity when
+     * it is empty. Pass a filter whenever possible, so the whole registry isn't downloaded to
+     * resolve a few entities; the ones without a registry entry are omitted.
+     *
+     * The server does the filtering since 2026.12. Before that, a filter on entity ids only fetches
+     * their entries, and a filter on domains downloads the whole registry to filter it on the device.
      * Requires Home Assistant 2024.10 or later, null is returned for older servers. Some fields may
      * require later versions of Home Assistant, see [EntityRegistryDisplayEntry].
      */
-    suspend fun getEntityRegistryDisplay(entityIds: List<String> = emptyList()): EntityRegistryDisplayResponse?
+    suspend fun getEntityRegistryDisplay(filter: EntityFilter = EntityFilter()): EntityRegistryDisplayResponse?
     suspend fun getEntityRegistryFor(entityId: String): EntityRegistryResponse?
 
     /**

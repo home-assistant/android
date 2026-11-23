@@ -74,7 +74,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         if (!hasRegisteredServer()) return@flow
 
         val webSocketRepository = serverManager.webSocketRepositoryOrNull(serverId)
-        var registryEntries = webSocketRepository.fetchEntityRegistryEntries(filter.registryEntityIds())
+        var registryEntries = webSocketRepository.fetchEntityRegistryEntries(filter)
 
         val entities = fetchEntities(serverId, filter).orEmpty().associateByTo(LinkedHashMap()) { it.entityId }
         if (entities.isEmpty()) {
@@ -91,7 +91,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
                 is ObserveEvent.EntityEvent.StateChanged -> entities[event.entity.entityId] = event.entity
                 is ObserveEvent.EntityEvent.Removed -> entities.remove(event.entityId)
                 ObserveEvent.EntityEvent.EntityRegistryChanged -> {
-                    registryEntries = webSocketRepository.fetchEntityRegistryEntries(filter.registryEntityIds())
+                    registryEntries = webSocketRepository.fetchEntityRegistryEntries(filter)
                 }
             }
             emit(snapshot())
@@ -119,7 +119,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         }
 
         val registryEntries = serverManager.webSocketRepositoryOrNull(serverId)
-            .fetchEntityRegistryEntries(filter.registryEntityIds())
+            .fetchEntityRegistryEntries(filter)
         emit(EntityDisplayState.Loaded(entities.map { registryEntries.itemFor(it) }))
     }.flowOn(Dispatchers.Default)
 
@@ -150,7 +150,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         val entities = initial.associateByTo(LinkedHashMap()) { it.entityId }
 
         val webSocketRepository = serverManager.webSocketRepositoryOrNull(serverId)
-        var snapshot = fetchRegistrySnapshot(webSocketRepository, filter.registryEntityIds())
+        var snapshot = fetchRegistrySnapshot(webSocketRepository, filter)
         var lastItems = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
         emit(EntityDisplayState.Loaded(lastItems))
 
@@ -165,7 +165,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
                     snapshot = snapshot.copy(devices = it.fetchDevices())
                 }
                 ObserveEvent.EntityEvent.EntityRegistryChanged -> webSocketRepository?.let {
-                    snapshot = snapshot.withEntityEntries(it, filter.registryEntityIds())
+                    snapshot = snapshot.withEntityEntries(it, filter)
                 }
             }
             val items = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
@@ -284,7 +284,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 
         val snapshot = fetchRegistrySnapshot(
             serverManager.webSocketRepositoryOrNull(serverId),
-            filter.registryEntityIds(),
+            filter,
         )
 
         return EntityDisplayState.Loaded(resolveEntityDisplayItems(entities = entities, snapshot = snapshot))
@@ -388,10 +388,10 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         return entities
     }
 
-    /** Fetches the registries, the entity one limited to [entityIds] when not empty. */
+    /** Fetches the registries, the entity one limited to [filter]. */
     private suspend fun fetchRegistrySnapshot(
         webSocketRepository: WebSocketRepository?,
-        entityIds: List<String> = emptyList(),
+        filter: EntityFilter,
     ): RegistrySnapshot = coroutineScope {
         if (webSocketRepository == null) return@coroutineScope RegistrySnapshot()
 
@@ -403,7 +403,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
             devices = devices.await(),
             areas = areas.await(),
             floors = floors.await(),
-        ).withEntityEntries(webSocketRepository, entityIds)
+        ).withEntityEntries(webSocketRepository, filter)
     }
 
     private suspend fun WebSocketRepository.fetchDevices(): Map<String, DeviceRegistryResponse> =
@@ -417,19 +417,13 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 
     /**
      * Returns a copy of the snapshot with freshly fetched entity registry entries, limited to
-     * [entityIds] when not empty.
+     * [filter].
      */
     private suspend fun RegistrySnapshot.withEntityEntries(
         webSocketRepository: WebSocketRepository,
-        entityIds: List<String>,
-    ) = copy(entries = webSocketRepository.fetchEntityRegistryEntries(entityIds))
+        filter: EntityFilter,
+    ) = copy(entries = webSocketRepository.fetchEntityRegistryEntries(filter))
 }
-
-/**
- * The entity ids the entity registry can be limited to for this filter: none, so the whole
- * registry, when it selects whole domains, whose entities aren't known in advance.
- */
-private fun EntityFilter.registryEntityIds(): List<String> = if (domains.isEmpty()) entityIds.toList() else emptyList()
 
 /**
  * Events driving new emissions of [EntitiesForDisplayManager.observe]. Registry events name
@@ -514,14 +508,13 @@ private class EntityRegistryEntries(
 }
 
 /**
- * Fetches the entity registry of the server, limited to [entityIds] when not empty and the server
- * supports it, falling back to the classic registry when the display one is unavailable, and empty
- * when there is no websocket to ask.
+ * Fetches the entity registry of the server, limited to [filter], falling back to the classic
+ * registry when the display one is unavailable, and empty when there is no websocket to ask.
  */
-private suspend fun WebSocketRepository?.fetchEntityRegistryEntries(entityIds: List<String>): EntityRegistryEntries {
+private suspend fun WebSocketRepository?.fetchEntityRegistryEntries(filter: EntityFilter): EntityRegistryEntries {
     if (this == null) return EntityRegistryEntries()
 
-    val displayResponse = orNull("entity display registry") { getEntityRegistryDisplay(entityIds) }
+    val displayResponse = orNull("entity display registry") { getEntityRegistryDisplay(filter) }
     // Fall back to the classic registry when the display command is unavailable or failed
     val classicEntries = if (displayResponse == null) orNull("entity registry") { getEntityRegistry() } else null
 
