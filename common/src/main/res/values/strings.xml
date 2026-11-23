@@ -1474,7 +1474,7 @@
     <string name="todo_lists_empty">No to-do lists found on your server</string>
     <string name="todo_list_add_item">Add item</string>
     <string name="todo_list_new_item_hint">New item</string>
-    <string name="todo_list_completed">Completed</string>
+    <string name="todo_list_completed">Completed (%1$d)</string>
     <string name="todo_list_remove_item">Remove</string>
     <string name="todo_list_clear_completed">Clear completed</string>
     <string name="todo_list_load_failed">Unable to load the list</string>

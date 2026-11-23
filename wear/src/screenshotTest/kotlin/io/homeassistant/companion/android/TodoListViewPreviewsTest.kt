@@ -89,6 +89,33 @@ class TodoListViewPreviewsTest {
         backgroundColor = 0xFF000000,
     )
     @Composable
+    private fun PreviewTodoListCompletedExpanded() {
+        TodoListView(
+            listName = "Groceries",
+            state = TodoListViewModel.UiState(
+                entityId = groceries.entityId,
+                items = listOf(
+                    TodoItem(uid = "1", summary = "Milk", status = TodoItem.NEEDS_ACTION_STATUS),
+                    TodoItem(uid = "3", summary = "Eggs", status = TodoItem.COMPLETED_STATUS),
+                ),
+            ),
+            onSetCompleted = { _, _ -> },
+            onAddItem = {},
+            onRemoveItem = {},
+            onClearCompleted = {},
+            onRetry = {},
+            initiallyShowCompleted = true,
+        )
+    }
+
+    @PreviewTest
+    @Preview(
+        widthDp = PREVIEW_WIDTH_DP,
+        heightDp = PREVIEW_HEIGHT_DP,
+        showBackground = true,
+        backgroundColor = 0xFF000000,
+    )
+    @Composable
     private fun PreviewTodoListEmpty() {
         TodoListView(
             listName = "Groceries",

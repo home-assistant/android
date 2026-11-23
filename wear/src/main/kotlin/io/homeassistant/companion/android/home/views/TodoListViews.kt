@@ -7,7 +7,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -15,12 +20,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.CheckboxButton
+import androidx.wear.compose.material3.CheckboxButtonColors
+import androidx.wear.compose.material3.CheckboxButtonDefaults
+import androidx.wear.compose.material3.ChildButton
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.SwipeToReveal
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.rememberRevealState
 import androidx.wear.input.RemoteInputIntentHelper
 import androidx.wear.tooling.preview.devices.WearDevices
 import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.generated.ChevronDown
+import io.github.timoptr.mdiicons.generated.ChevronUp
 import io.github.timoptr.mdiicons.generated.Delete
 import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R as commonR
@@ -80,8 +92,9 @@ fun TodoListsView(
 }
 
 /**
- * The items of one to-do list: tap to complete or reopen, swipe to remove, a button to clear the completed items, and a button to add
- * an item with the keyboard or voice input of the watch.
+ * The items of one to-do list: tap to complete or reopen, swipe to remove, and a button after them to add an item
+ * with the keyboard or voice input of the watch. The completed items are collapsed until [initiallyShowCompleted]
+ * or a tap on their header, where they can also be cleared.
  */
 @Composable
 fun TodoListView(
@@ -92,13 +105,14 @@ fun TodoListView(
     onRemoveItem: (TodoItem) -> Unit,
     onClearCompleted: () -> Unit,
     onRetry: () -> Unit,
+    initiallyShowCompleted: Boolean = false,
 ) {
+    var showCompleted by rememberSaveable { mutableStateOf(initiallyShowCompleted) }
     val (open, completed) = state.items.partition { it.status != TodoItem.COMPLETED_STATUS }
 
     WearAppTheme {
         ThemeLazyColumn {
             item { ListHeader(listName) }
-            item { AddItemButton(onAddItem) }
             if (state.hasActionError) {
                 item {
                     Text(
@@ -121,18 +135,21 @@ fun TodoListView(
             items(open, key = { "open.${it.uid ?: it.summary}" }) { item ->
                 TodoItemRow(item, checked = false, onSetCompleted = onSetCompleted, onRemove = onRemoveItem)
             }
+            item { AddItemButton(onAddItem) }
             if (completed.isNotEmpty()) {
-                item { ListHeader(commonR.string.todo_list_completed) }
-                item {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(commonR.string.todo_list_clear_completed)) },
-                        onClick = onClearCompleted,
-                        colors = getFilledTonalButtonColors(),
-                    )
-                }
-                items(completed, key = { "done.${it.uid ?: it.summary}" }) { item ->
-                    TodoItemRow(item, checked = true, onSetCompleted = onSetCompleted, onRemove = onRemoveItem)
+                item { CompletedHeader(completed.size, showCompleted) { showCompleted = !showCompleted } }
+                if (showCompleted) {
+                    item {
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text(stringResource(commonR.string.todo_list_clear_completed)) },
+                            onClick = onClearCompleted,
+                            colors = getFilledTonalButtonColors(),
+                        )
+                    }
+                    items(completed, key = { "done.${it.uid ?: it.summary}" }) { item ->
+                        TodoItemRow(item, checked = true, onSetCompleted = onSetCompleted, onRemove = onRemoveItem)
+                    }
                 }
             }
         }
@@ -165,6 +182,34 @@ private fun AddItemButton(onAddItem: (String) -> Unit) {
     )
 }
 
+/** The toggle showing or hiding the completed items, with how many there are. */
+@Composable
+private fun CompletedHeader(count: Int, expanded: Boolean, onClick: () -> Unit) {
+    ChildButton(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = onClick,
+        icon = {
+            Icon(
+                imageVector = (if (expanded) Mdi.ChevronUp else Mdi.ChevronDown).rememberImageVector(),
+                contentDescription = null,
+            )
+        },
+        label = { Text(stringResource(commonR.string.todo_list_completed, count)) },
+    )
+}
+
+/** No background for the items, open or completed, only the checkbox tells them apart. */
+@Composable
+private fun plainCheckboxColors(): CheckboxButtonColors {
+    val content = MaterialTheme.colorScheme.onSurface
+    return CheckboxButtonDefaults.checkboxButtonColors(
+        checkedContainerColor = Color.Transparent,
+        checkedContentColor = content,
+        uncheckedContainerColor = Color.Transparent,
+        uncheckedContentColor = content,
+    )
+}
+
 @Composable
 private fun TodoItemRow(
     item: TodoItem,
@@ -188,6 +233,7 @@ private fun TodoItemRow(
             modifier = Modifier.fillMaxWidth(),
             checked = checked,
             onCheckedChange = { onSetCompleted(item, it) },
+            colors = plainCheckboxColors(),
             label = {
                 Text(
                     text = item.summary.orEmpty(),

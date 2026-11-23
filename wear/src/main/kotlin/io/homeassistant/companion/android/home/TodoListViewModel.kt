@@ -27,6 +27,12 @@ private const val REMOVE_COMPLETED_ACTION = "remove_completed_items"
 private const val KEY_ENTITY_ID = "entity_id"
 private const val KEY_ITEM = "item"
 
+/** Calls a service of the to-do domain, throwing when Home Assistant does not accept it. */
+private suspend fun ServerManager.callTodoAction(action: String, data: Map<String, Any?>): Boolean {
+    integrationRepository().callAction(TODO_DOMAIN, action, data)
+    return true
+}
+
 /** Loads and modifies the items of a Home Assistant to-do list for the list screen. */
 @HiltViewModel
 class TodoListViewModel @Inject constructor(
@@ -133,30 +139,28 @@ class TodoListViewModel @Inject constructor(
     fun addItem(entityId: String, summary: String) {
         val trimmed = summary.trim()
         if (trimmed.isEmpty()) return
-        modify(entityId) { callTodoAction(ADD_ITEM_ACTION, mapOf(KEY_ENTITY_ID to entityId, KEY_ITEM to trimmed)) }
+        modify(entityId) {
+            serverManager.callTodoAction(ADD_ITEM_ACTION, mapOf(KEY_ENTITY_ID to entityId, KEY_ITEM to trimmed))
+        }
     }
 
     fun removeItem(entityId: String, item: TodoItem) {
         val key = item.key() ?: return
         updateOpenList(entityId) { state -> state.copy(items = state.items.filterNot { it.key() == key }) }
-        modify(entityId) { callTodoAction(REMOVE_ITEM_ACTION, mapOf(KEY_ENTITY_ID to entityId, KEY_ITEM to key)) }
+        modify(entityId) {
+            serverManager.callTodoAction(REMOVE_ITEM_ACTION, mapOf(KEY_ENTITY_ID to entityId, KEY_ITEM to key))
+        }
     }
 
     fun clearCompleted(entityId: String) {
         updateOpenList(entityId) { state ->
             state.copy(items = state.items.filterNot { it.status == TodoItem.COMPLETED_STATUS })
         }
-        modify(entityId) { callTodoAction(REMOVE_COMPLETED_ACTION, mapOf(KEY_ENTITY_ID to entityId)) }
+        modify(entityId) { serverManager.callTodoAction(REMOVE_COMPLETED_ACTION, mapOf(KEY_ENTITY_ID to entityId)) }
     }
 
     private fun updateOpenList(entityId: String, transform: (UiState) -> UiState) {
         _uiState.update { if (it.entityId == entityId) transform(it) else it }
-    }
-
-    /** Calls a service of the to-do domain, throwing when Home Assistant does not accept it. */
-    private suspend fun callTodoAction(action: String, data: Map<String, Any?>): Boolean {
-        serverManager.integrationRepository().callAction(TODO_DOMAIN, action, data)
-        return true
     }
 
     private fun modify(entityId: String, call: suspend () -> Boolean) {
