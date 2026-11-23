@@ -8,7 +8,6 @@ import io.homeassistant.companion.android.common.data.integration.display.Entiti
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.servers.ServerManager
-import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -20,6 +19,12 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+private const val ADD_ITEM_ACTION = "add_item"
+private const val REMOVE_ITEM_ACTION = "remove_item"
+private const val REMOVE_COMPLETED_ACTION = "remove_completed_items"
+private const val KEY_ENTITY_ID = "entity_id"
+private const val KEY_ITEM = "item"
 
 /** Loads and modifies the items of a Home Assistant to-do list for the list screen. */
 @HiltViewModel
@@ -121,39 +126,45 @@ class TodoListViewModel @Inject constructor(
         updateOpenList(entityId) { state ->
             state.copy(items = state.items.map { if (it.key() == key) it.copy(status = status) else it })
         }
-        modify(entityId) { it.updateTodo(entityId, key, null, status) }
+        modify(entityId) { serverManager.webSocketRepository().updateTodo(entityId, key, null, status) }
     }
 
     fun addItem(entityId: String, summary: String) {
         val trimmed = summary.trim()
         if (trimmed.isEmpty()) return
-        modify(entityId) { it.addTodo(entityId, trimmed) }
+        modify(entityId) { callTodoAction(ADD_ITEM_ACTION, mapOf(KEY_ENTITY_ID to entityId, KEY_ITEM to trimmed)) }
     }
 
     fun removeItem(entityId: String, item: TodoItem) {
         val key = item.key() ?: return
         updateOpenList(entityId) { state -> state.copy(items = state.items.filterNot { it.key() == key }) }
-        modify(entityId) { it.removeTodo(entityId, key) }
+        modify(entityId) { callTodoAction(REMOVE_ITEM_ACTION, mapOf(KEY_ENTITY_ID to entityId, KEY_ITEM to key)) }
     }
 
     fun clearCompleted(entityId: String) {
         updateOpenList(entityId) { state ->
             state.copy(items = state.items.filterNot { it.status == TodoItem.COMPLETED_STATUS })
         }
-        modify(entityId) { it.removeCompletedTodos(entityId) }
+        modify(entityId) { callTodoAction(REMOVE_COMPLETED_ACTION, mapOf(KEY_ENTITY_ID to entityId)) }
     }
 
     private fun updateOpenList(entityId: String, transform: (UiState) -> UiState) {
         _uiState.update { if (it.entityId == entityId) transform(it) else it }
     }
 
-    private fun modify(entityId: String, call: suspend (WebSocketRepository) -> Boolean) {
+    /** Calls a service of the to-do domain, throwing when Home Assistant does not accept it. */
+    private suspend fun callTodoAction(action: String, data: Map<String, Any?>): Boolean {
+        serverManager.integrationRepository().callAction(TODO_DOMAIN, action, data)
+        return true
+    }
+
+    private fun modify(entityId: String, call: suspend () -> Boolean) {
         val isOpenList = _uiState.value.entityId == entityId
         if (isOpenList) pendingModifications++
         val requestGeneration = generation
         viewModelScope.launch {
             val success = try {
-                call(serverManager.webSocketRepository())
+                call()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.home
 
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -33,8 +34,10 @@ import org.junit.jupiter.api.extension.ExtendWith
 class TodoListViewModelTest {
 
     private val webSocket: WebSocketRepository = mockk(relaxed = true)
+    private val integrationRepository: IntegrationRepository = mockk(relaxed = true)
     private val serverManager: ServerManager = mockk {
         coEvery { webSocketRepository(any()) } returns webSocket
+        coEvery { integrationRepository(any()) } returns integrationRepository
     }
     private val entitiesForDisplayManager: EntitiesForDisplayManager = mockk()
 
@@ -206,7 +209,6 @@ class TodoListViewModelTest {
     @Test
     fun `Given text with spaces when adding an item then it is added trimmed`() = runTest {
         givenItems("todo.shopping")
-        coEvery { webSocket.addTodo("todo.shopping", "Butter") } returns true
         val viewModel = createViewModel()
         viewModel.load("todo.shopping")
         advanceUntilIdle()
@@ -214,7 +216,13 @@ class TodoListViewModelTest {
         viewModel.addItem("todo.shopping", "  Butter ")
         advanceUntilIdle()
 
-        coVerify { webSocket.addTodo("todo.shopping", "Butter") }
+        coVerify {
+            integrationRepository.callAction(
+                "todo",
+                "add_item",
+                mapOf("entity_id" to "todo.shopping", "item" to "Butter"),
+            )
+        }
     }
 
     @Test
@@ -224,13 +232,12 @@ class TodoListViewModelTest {
         viewModel.addItem("todo.shopping", "   ")
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { webSocket.addTodo(any(), any()) }
+        coVerify(exactly = 0) { integrationRepository.callAction(any(), any(), any()) }
     }
 
     @Test
     fun `Given an item when removing it then it disappears and is removed on the server`() = runTest {
         givenItems("todo.shopping", milk, bread)
-        coEvery { webSocket.removeTodo("todo.shopping", "1") } returns true
         val viewModel = createViewModel()
         viewModel.load("todo.shopping")
         advanceUntilIdle()
@@ -239,13 +246,18 @@ class TodoListViewModelTest {
 
         assertEquals(listOf(bread), viewModel.uiState.value.items)
         advanceUntilIdle()
-        coVerify { webSocket.removeTodo("todo.shopping", "1") }
+        coVerify {
+            integrationRepository.callAction(
+                "todo",
+                "remove_item",
+                mapOf("entity_id" to "todo.shopping", "item" to "1"),
+            )
+        }
     }
 
     @Test
     fun `Given completed items when clearing them then only the open items stay`() = runTest {
         givenItems("todo.shopping", milk, eggs)
-        coEvery { webSocket.removeCompletedTodos("todo.shopping") } returns true
         val viewModel = createViewModel()
         viewModel.load("todo.shopping")
         advanceUntilIdle()
@@ -254,7 +266,13 @@ class TodoListViewModelTest {
 
         assertEquals(listOf(milk), viewModel.uiState.value.items)
         advanceUntilIdle()
-        coVerify { webSocket.removeCompletedTodos("todo.shopping") }
+        coVerify {
+            integrationRepository.callAction(
+                "todo",
+                "remove_completed_items",
+                mapOf("entity_id" to "todo.shopping"),
+            )
+        }
     }
 
     @Test
