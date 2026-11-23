@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
@@ -245,11 +246,13 @@ class WebRtcDebugViewModel @VisibleForTesting internal constructor(
             previousAudioMode = manager.mode
         }
         manager.mode = AudioManager.MODE_IN_COMMUNICATION
+        Timber.d("enterCommunicationAudio: mode is now ${manager.mode}, micMuted=${manager.isMicrophoneMute}")
     }
 
     private fun exitCommunicationAudio() {
         val manager = audioManager ?: return
         previousAudioMode?.let { manager.mode = it }
+        Timber.d("exitCommunicationAudio: restored mode ${manager.mode}")
         previousAudioMode = null
     }
 
@@ -268,9 +271,9 @@ class WebRtcDebugViewModel @VisibleForTesting internal constructor(
     private fun loadEntities(serverId: Int) {
         loadEntitiesJob?.cancel()
         loadEntitiesJob = viewModelScope.launch {
-            entitiesForDisplayManager.snapshotInContext(serverId) { it.domain == CAMERA_DOMAIN }.collect { state ->
-                _state.update { it.copy(entityDisplayState = state) }
-            }
+            entitiesForDisplayManager
+                .snapshotInContext(serverId, EntityFilter(domains = setOf(CAMERA_DOMAIN)))
+                .collect { state -> _state.update { it.copy(entityDisplayState = state) } }
         }
     }
 

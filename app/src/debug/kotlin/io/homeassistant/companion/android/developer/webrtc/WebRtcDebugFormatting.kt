@@ -16,7 +16,7 @@ internal fun ConnectionState.toDebugLabel(): String = when (this) {
 }
 
 internal fun SessionFailure.toDebugLabel(): String = when (this) {
-    is SessionFailure.Signaling -> "Signaling(${code ?: "unknown"}) ${message.orEmpty()}"
+    is SessionFailure.Signaling -> "Signaling: ${message.orEmpty()}"
     is SessionFailure.Internal -> "Internal: ${message.orEmpty()}"
     SessionFailure.ConnectionLost -> "ConnectionLost"
 }

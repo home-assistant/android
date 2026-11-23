@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.webrtc.signaling
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
+import io.homeassistant.companion.android.util.sensitive
 import io.homeassistant.companion.android.webrtc.core.signaling.IceCandidateInit
 import io.homeassistant.companion.android.webrtc.core.signaling.RtcClientConfig
 import io.homeassistant.companion.android.webrtc.core.signaling.RtcIceServer
@@ -77,17 +78,29 @@ internal class HaSignalingClient(private val webSocketRepository: WebSocketRepos
 }
 
 private fun WebRtcEvent.toSignalingEvent(): SignalingEvent? = when (this) {
-    is WebRtcEvent.Session -> SignalingEvent.Session(sessionId = WebRtcSessionId(sessionId))
-    is WebRtcEvent.Answer -> SignalingEvent.Answer(sdp = answer)
-    is WebRtcEvent.Candidate -> SignalingEvent.Candidate(
-        candidate = IceCandidateInit(
-            candidate = candidate.candidate,
-            sdpMid = candidate.sdpMid,
-            sdpMLineIndex = candidate.sdpMLineIndex,
-            usernameFragment = candidate.usernameFragment,
-        ),
-    )
-    is WebRtcEvent.Error -> SignalingEvent.Error(code = code, message = message)
+    is WebRtcEvent.Session -> {
+        Timber.d("Signaling event: session $sessionId")
+        SignalingEvent.Session(sessionId = WebRtcSessionId(sessionId))
+    }
+    is WebRtcEvent.Answer -> {
+        Timber.d("Signaling event: answer received")
+        SignalingEvent.Answer(sdp = answer)
+    }
+    is WebRtcEvent.Candidate -> {
+        Timber.d("Signaling event: remote ICE candidate")
+        SignalingEvent.Candidate(
+            candidate = IceCandidateInit(
+                candidate = candidate.candidate,
+                sdpMid = candidate.sdpMid,
+                sdpMLineIndex = candidate.sdpMLineIndex,
+                usernameFragment = candidate.usernameFragment,
+            ),
+        )
+    }
+    is WebRtcEvent.Error -> {
+        Timber.w("Signaling event: error code=$code message=${sensitive { message.toString() }}")
+        SignalingEvent.Error(code = code, message = message)
+    }
     is WebRtcEvent.Unknown -> {
         Timber.d("Ignoring unknown WebRTC signaling event $discriminator")
         null
