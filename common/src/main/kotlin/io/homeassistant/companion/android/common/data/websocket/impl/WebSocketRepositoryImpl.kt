@@ -80,6 +80,12 @@ private val MATTER_TIMEOUT = 2.minutes
  */
 private val MIN_VERSION_ENTITY_REGISTRY_DISPLAY = HomeAssistantVersion(year = 2024, month = 10, release = 0)
 
+/**
+ * Minimum server version to limit `config/entity_registry/list_for_display` to an entity filter
+ * (https://github.com/home-assistant/core/pull/193111).
+ */
+private val MIN_VERSION_ENTITY_REGISTRY_DISPLAY_FILTER = HomeAssistantVersion(year = 2026, month = 12, release = 0)
+
 /** Minimum server version of the `subscribe_entities` command, which can be limited to entity ids. */
 internal val MIN_VERSION_SUBSCRIBE_ENTITIES = HomeAssistantVersion(year = 2022, month = 4, release = 0)
 
@@ -185,7 +191,7 @@ class WebSocketRepositoryImpl internal constructor(
         val initialStates = withTimeoutOrNull(FILTERED_STATES_TIMEOUT) {
             webSocketCore.firstEventOf<CompressedStateChangedEvent>(
                 SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
-                filter.toSubscribeEntitiesData(),
+                filter.toFilterData(),
             )
         }?.added
         if (initialStates == null) Timber.w("Unable to fetch the states of the filtered entities")
@@ -222,17 +228,24 @@ class WebSocketRepositoryImpl internal constructor(
         return mapResponse(socketResponse)
     }
 
-    override suspend fun getEntityRegistryDisplay(entityIds: List<String>): EntityRegistryDisplayResponse? = when {
+    override suspend fun getEntityRegistryDisplay(filter: EntityFilter): EntityRegistryDisplayResponse? = when {
         !isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY) -> null
-        entityIds.isEmpty() -> getWholeEntityRegistryDisplay()
-        else -> getEntityRegistryDisplayEntries(entityIds)
+        filter.isEmpty || isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY_FILTER) ->
+            listEntityRegistryDisplay(filter)
+        filter.domains.isEmpty() -> getEntityRegistryDisplayEntries(filter.entityIds.toList())
+        // The server is too old to do the filtering server side
+        else -> listEntityRegistryDisplay(EntityFilter())?.let { response ->
+            response.copy(entities = response.entities.filter { filter.matches(it.entityId) })
+        }
     }
 
-    private suspend fun getWholeEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
+    /** Lists the display registry, limited by the server to [filter] when it isn't empty. */
+    private suspend fun listEntityRegistryDisplay(filter: EntityFilter): EntityRegistryDisplayResponse? {
         val socketResponse = webSocketCore.sendMessage(
-            mapOf(
-                "type" to "config/entity_registry/list_for_display",
-            ),
+            buildMap {
+                put("type", "config/entity_registry/list_for_display")
+                putAll(filter.toFilterData())
+            },
         )
 
         return mapResponse(socketResponse)
@@ -377,7 +390,7 @@ class WebSocketRepositoryImpl internal constructor(
         subscribeToTrigger("state", mapOf("entity_id" to entityIds))
 
     override suspend fun getCompressedStateAndChanges(filter: EntityFilter): Flow<CompressedStateChangedEvent>? =
-        webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES, filter.toSubscribeEntitiesData())
+        webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES, filter.toFilterData())
 
     override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? =
         subscribeToEventsForType(EVENT_AREA_REGISTRY_UPDATED)
@@ -562,10 +575,11 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     /**
-     * Data of a `subscribe_entities` command limited to this filter, none when it is empty. Filter options
-     * are sorted so that the same selection always shares the same subscription.
+     * Data limiting a `subscribe_entities` or `config/entity_registry/list_for_display` command to
+     * this filter, none when it is empty. Ids are sorted so that the same selection always shares
+     * the same subscription.
      */
-    private fun EntityFilter.toSubscribeEntitiesData(): Map<String, Any?> = when {
+    private fun EntityFilter.toFilterData(): Map<String, Any?> = when {
         isEmpty -> emptyMap()
         domains.isEmpty() -> mapOf("entity_ids" to entityIds.sorted())
         else -> mapOf("include" to mapOf("domains" to domains.sorted(), "entities" to entityIds.sorted()))

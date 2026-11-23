@@ -7,7 +7,10 @@ plugins {
 android {
     namespace = "io.homeassistant.companion.android.testing.unit"
 
-    compileSdk = libs.versions.androidSdk.compile.get().toInt()
+    val mainSdkVersion = libs.versions.androidSdk.compile.get().substringBefore(".").toInt()
+    val minorSdkVersion = libs.versions.androidSdk.compile.get().substringAfter(".", "0").toInt()
+    compileSdk = mainSdkVersion
+    compileSdkMinor = minorSdkVersion
 
     defaultConfig {
         minSdk = libs.versions.androidSdk.min.get().toInt()
