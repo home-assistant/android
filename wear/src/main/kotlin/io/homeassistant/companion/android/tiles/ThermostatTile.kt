@@ -12,6 +12,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
@@ -188,7 +189,10 @@ class ThermostatTile : TileService() {
             if (entity != null) return EntityDisplayWithoutContext(entity = entity, name = cachedName.orEmpty())
         }
 
-        val display = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
+        val display = entitiesForDisplayManager.snapshot(
+            ServerManager.SERVER_ID_ACTIVE,
+            EntityFilter(entityIds = setOf(entityId)),
+        )
             .awaitLoadedOrNull()
             ?.entity(entityId)
         if (display != null) entityNames[tileId] = entityId to display.name

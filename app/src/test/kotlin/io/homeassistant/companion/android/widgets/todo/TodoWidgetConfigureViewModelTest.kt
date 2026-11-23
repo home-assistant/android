@@ -66,7 +66,7 @@ class TodoWidgetConfigureViewModelTest {
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { dao.get(any()) } returns null
         coEvery { webSocketRepository.getTodos(any()) } returns GetTodosResponse(emptyMap())
-        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns
+        every { entitiesForDisplayManager.snapshotInContext(any(), any()) } returns
             flowOf(displayStateOf(shoppingList.toDisplayItem("Shopping List"), chores.toDisplayItem("Chores")))
     }
 

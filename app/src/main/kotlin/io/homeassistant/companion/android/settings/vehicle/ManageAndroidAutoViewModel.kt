@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.vehicle
 import android.app.Application
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -12,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -19,20 +21,34 @@ import io.homeassistant.companion.android.common.data.prefs.AutoFavorite
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.util.vehicle.VEHICLE_DOMAINS
 import io.homeassistant.companion.android.util.vehicle.isVehicleDomain
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
 @HiltViewModel
-class ManageAndroidAutoViewModel @Inject constructor(
+class ManageAndroidAutoViewModel @VisibleForTesting constructor(
     private val serverManager: ServerManager,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
     private val prefsRepository: PrefsRepository,
+    private val backgroundDispatcher: CoroutineDispatcher,
     application: Application,
 ) : AndroidViewModel(application) {
+
+    @Inject
+    constructor(
+        serverManager: ServerManager,
+        entitiesForDisplayManager: EntitiesForDisplayManager,
+        prefsRepository: PrefsRepository,
+        application: Application,
+    ) : this(serverManager, entitiesForDisplayManager, prefsRepository, Dispatchers.Default, application)
 
     val favoritesList = mutableStateListOf<AutoFavorite>()
 
@@ -57,9 +73,13 @@ class ManageAndroidAutoViewModel @Inject constructor(
             servers.map { server ->
                 val serverId = server.id
                 async {
-                    entitiesForDisplayManager.snapshotInContext(serverId) { isVehicleDomain(it) }.collect { state ->
-                        displayEntitiesByServer[serverId] = state
-                    }
+                    entitiesForDisplayManager
+                        .snapshotInContext(serverId, EntityFilter(domains = VEHICLE_DOMAINS))
+                        .map { state ->
+                            state.keepingVehicleEntities()
+                        }
+                        .flowOn(backgroundDispatcher)
+                        .collect { state -> displayEntitiesByServer[serverId] = state }
                 }
             }.awaitAll()
             loadEntities(serverManager.getServer()?.id ?: 0)
@@ -95,4 +115,13 @@ class ManageAndroidAutoViewModel @Inject constructor(
         }
         viewModelScope.launch { prefsRepository.setAutoFavorites(favoritesList.toList()) }
     }
+}
+
+/**
+ * Keeps the entities usable in a vehicle: some of the vehicle domains only are when the entity has
+ * coordinates, which the server can't filter on.
+ */
+private fun EntityDisplayState<EntityDisplayWithContext>.keepingVehicleEntities() = when (this) {
+    is EntityDisplayState.Loaded -> EntityDisplayState.Loaded(entities.filter(::isVehicleDomain))
+    EntityDisplayState.Loading, EntityDisplayState.Error -> this
 }

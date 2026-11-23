@@ -8,6 +8,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -37,7 +38,7 @@ internal class TodoWidgetConfigureViewModel @AssistedInject constructor(
     initialState = TodoWidgetConfigureState(
         selectedEntityId = preselectedEntityId,
     ),
-    entityFilter = { it.domain == TODO_DOMAIN },
+    entityFilter = EntityFilter(domains = setOf(TODO_DOMAIN)),
 ) {
     override val widgetProviderClass: Class<*> = TodoWidget::class.java
 
