@@ -14,6 +14,8 @@ import coil3.request.allowHardware
 import coil3.toBitmap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.integration.isPersonOf
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -89,12 +91,13 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
      * If the server is unavailable, a cached path may be returned.
      */
     private suspend fun findPersonPicturePath(serverId: Int, userId: String): String? {
-        val entities = serverManager.integrationRepository(serverId).getEntities().orEmpty()
-        return if (entities.isEmpty()) { // Read stored path
+        val persons = serverManager.integrationRepository(serverId)
+            .getEntities(EntityFilter(domains = setOf(PERSON_DOMAIN)))
+        return if (persons == null) { // Read stored path
             serverManager.getServer(serverId)?.user?.picturePath
         } else {
             // Read current path, and store in database
-            val path = entities.firstOrNull { it.isPersonOf(userId) }?.entityPicturePath()
+            val path = persons.firstOrNull { it.isPersonOf(userId) }?.entityPicturePath()
             serverManager.getServer(serverId)?.let { server ->
                 serverManager.updateServer(server.copy(user = server.user.copy(picturePath = path)))
             }

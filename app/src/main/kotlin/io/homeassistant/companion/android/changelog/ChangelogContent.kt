@@ -30,6 +30,10 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_hinge_status_sensor,
+            platforms = setOf(ChangelogPlatform.APP),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_wear_todo_lists,
             platforms = setOf(ChangelogPlatform.WEAR),
         ),

@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.widgets.configure
 
 import androidx.lifecycle.viewModelScope
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -23,7 +23,7 @@ internal abstract class BaseEntityWidgetConfigureViewModel<S : WidgetConfigureSt
     dao: WidgetDao<E>,
     private val entitiesForDisplayManager: EntitiesForDisplayManager,
     initialState: S,
-    private val entityFilter: (Entity) -> Boolean = { true },
+    private val entityFilter: EntityFilter = EntityFilter(),
 ) : BaseWidgetConfigureViewModel<S, E>(serverManager, widgetId, dao, initialState) {
 
     private var loadEntitiesJob: Job? = null
@@ -32,7 +32,7 @@ internal abstract class BaseEntityWidgetConfigureViewModel<S : WidgetConfigureSt
         loadEntities()
     }
 
-    /** Loads the entities of the selected server, narrowed by [entityFilter]. */
+    /** Loads the entities of the selected server selected by [entityFilter]. */
     protected fun loadEntities() {
         loadEntitiesJob?.cancel()
         loadEntitiesJob = viewModelScope.launch {
