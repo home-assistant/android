@@ -14,6 +14,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -111,6 +112,30 @@ class BroadcastReceiverExtTest {
 
         assertTrue(completed, "Block should have completed")
         assertNull(failFastException, "FailFast should not have been triggered")
+        verify { pendingResult.finish() }
+    }
+
+    @Test
+    fun `Given a suspended block when launchAsync then finish is not called until the block completes`() = runTest {
+        var blockCompleted = false
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+
+        receiver.launchAsync(this, pendingResult) {
+            gate.await()
+            blockCompleted = true
+        }
+
+        // Run the block up to its suspension point without advancing virtual time past
+        // the broadcast timeout (advanceUntilIdle would fire the 30-second timeout).
+        runCurrent()
+
+        // The block is still suspended, so the pending result must not be finished yet.
+        verify(exactly = 0) { pendingResult.finish() }
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertTrue(blockCompleted, "Block should have completed after the gate was released")
         verify { pendingResult.finish() }
     }
 }

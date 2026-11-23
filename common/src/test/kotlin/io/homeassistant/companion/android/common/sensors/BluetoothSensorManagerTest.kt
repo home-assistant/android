@@ -1,20 +1,27 @@
 package io.homeassistant.companion.android.common.sensors
 
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import dagger.Lazy
+import io.homeassistant.companion.android.common.bluetooth.ble.TransmitterManager
+import io.homeassistant.companion.android.common.data.servers.ServerConnectionStateProvider
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
+import io.homeassistant.companion.android.database.server.Server
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -81,7 +88,7 @@ class BluetoothSensorManagerTest {
     }
 
     @Test
-    fun `Given the transmitter is enabled when restarting then it performs no server sync`() = runTest {
+    fun `Given the transmitter is enabled when restarting then it does not contact the server`() = runTest {
         SdkVersion.sdkInt = ANDROID_12_SDK
         // A strict mock fails the test if the restart touches the server at all:
         // the boot / package-replaced path must stay local-only.
@@ -120,8 +127,110 @@ class BluetoothSensorManagerTest {
                 ),
             )
 
-        assertTrue(localManager.restartTransmitter())
+        localManager.restartTransmitterIfNeeded()
         confirmVerified(strictServerManager)
+    }
+
+    @Test
+    fun `Given Bluetooth is on when restarting then it starts advertising and does not contact the server`() = runTest {
+        SdkVersion.sdkInt = ANDROID_12_SDK
+        // A strict mock fails the test if the restart touches the server at all:
+        // the boot / package-replaced path must stay local-only.
+        val strictServerManager = mockk<ServerManager>()
+        val grantedContext = mockk<Context>(relaxed = true) {
+            every { checkPermission(any(), any(), any()) } returns PackageManager.PERMISSION_GRANTED
+            every { applicationContext } returns this
+            every { getSystemService(BluetoothManager::class.java) } returns mockk<BluetoothManager> {
+                every { adapter } returns mockk<BluetoothAdapter> {
+                    every { isEnabled } returns true
+                }
+            }
+        }
+        val localManager = BluetoothSensorManager(
+            grantedContext,
+            sensorRepository,
+            strictServerManager,
+            mockk<Lazy<SensorUpdater>>(relaxed = true),
+        )
+        stubTransmitterSettings()
+        coEvery { sensorRepository.get(BluetoothSensorManager.bleTransmitter.id) } returns
+            listOf(
+                Sensor(
+                    id = BluetoothSensorManager.bleTransmitter.id,
+                    serverId = 0,
+                    enabled = true,
+                    state = "",
+                ),
+            )
+
+        mockkObject(TransmitterManager)
+        try {
+            coEvery { TransmitterManager.startTransmittingAndAwait(any(), any()) } returns true
+
+            localManager.restartTransmitterIfNeeded()
+
+            coVerify(exactly = 1) { TransmitterManager.startTransmittingAndAwait(any(), any()) }
+            confirmVerified(strictServerManager)
+        } finally {
+            unmockkObject(TransmitterManager)
+        }
+    }
+
+    @Test
+    fun `Given Bluetooth is on but home Wi-Fi only when restarting off the home network then it stops transmitting`() = runTest {
+        SdkVersion.sdkInt = ANDROID_12_SDK
+        val strictServerManager = mockk<ServerManager>()
+        val grantedContext = mockk<Context>(relaxed = true) {
+            every { checkPermission(any(), any(), any()) } returns PackageManager.PERMISSION_GRANTED
+            every { applicationContext } returns this
+            every { getSystemService(BluetoothManager::class.java) } returns mockk<BluetoothManager> {
+                every { adapter } returns mockk<BluetoothAdapter> {
+                    every { isEnabled } returns true
+                }
+            }
+        }
+        val localManager = BluetoothSensorManager(
+            grantedContext,
+            sensorRepository,
+            strictServerManager,
+            mockk<Lazy<SensorUpdater>>(relaxed = true),
+        )
+        // Home Wi-Fi only is on, and the device is not on the home network.
+        stubTransmitterSettings(homeWifiOnly = true)
+        coEvery { sensorRepository.get(BluetoothSensorManager.bleTransmitter.id) } returns
+            listOf(
+                Sensor(
+                    id = BluetoothSensorManager.bleTransmitter.id,
+                    serverId = 0,
+                    enabled = true,
+                    state = "",
+                ),
+            )
+        val server = mockk<Server> { every { id } returns 1 }
+        val connectionStateProvider = mockk<ServerConnectionStateProvider> {
+            coEvery { isInternal(requiresUrl = false) } returns false
+        }
+        coEvery { strictServerManager.servers() } returns listOf(server)
+        coEvery { strictServerManager.connectionStateProvider(1) } returns connectionStateProvider
+
+        mockkObject(TransmitterManager)
+        try {
+            coEvery { TransmitterManager.startTransmittingAndAwait(any(), any()) } returns true
+
+            localManager.restartTransmitterIfNeeded()
+
+            // Not permitted on this network: advertising must not start.
+            coVerify(exactly = 0) { TransmitterManager.startTransmittingAndAwait(any(), any()) }
+            verify(exactly = 1) { TransmitterManager.stopTransmitting(any()) }
+            // Only the local connection-state reads are allowed; nothing else may touch the server.
+            // (The network check runs once for the start decision and once for the stop decision.)
+            coVerify(atLeast = 1) { strictServerManager.servers() }
+            coVerify(atLeast = 1) { strictServerManager.connectionStateProvider(1) }
+            coVerify(atLeast = 1) { connectionStateProvider.isInternal(requiresUrl = false) }
+            confirmVerified(strictServerManager)
+        } finally {
+            unmockkObject(TransmitterManager)
+        }
     }
 
     @Test
@@ -173,6 +282,20 @@ class BluetoothSensorManagerTest {
         assertEquals(1, decimals.size)
         assertEquals(1.05, decimals.single().default)
         assertEquals(SensorSettingType.NUMBER, decimals.single().type)
+    }
+
+    private fun stubTransmitterSettings(homeWifiOnly: Boolean = false) {
+        coEvery { sensorRepository.getSettings(BluetoothSensorManager.bleTransmitter.id) } returns
+            BluetoothSensorManager.bleTransmitter.settings.map { setting ->
+                setting.toSensorSetting(
+                    BluetoothSensorManager.bleTransmitter.id,
+                    value = when (setting.name) {
+                        BluetoothSensorManager.SETTING_BLE_ID1 -> "123e4567-e89b-12d3-a456-426614174000"
+                        BluetoothSensorManager.SETTING_BLE_HOME_WIFI_ONLY -> homeWifiOnly.toString()
+                        else -> setting.defaultValue
+                    },
+                )
+            }
     }
 
     private fun storedSetting(name: String, value: String) {

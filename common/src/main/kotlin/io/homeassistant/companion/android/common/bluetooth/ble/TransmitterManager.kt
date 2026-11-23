@@ -7,6 +7,7 @@ import android.content.Context
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import java.util.UUID
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
@@ -56,8 +57,45 @@ object TransmitterManager {
 
     @Synchronized
     fun startTransmitting(context: Context, haTransmitter: IBeaconTransmitter) {
+        startTransmitting(context, haTransmitter, onResult = null)
+    }
+
+    /**
+     * Starts transmitting and suspends until the advertising callback reports success or failure.
+     *
+     * Returns true if advertising started (or was already started), false otherwise. When the
+     * transmitter is already started and no restart is required, or Bluetooth is off, there is
+     * no new advertising request to wait for and this returns immediately. The Android BLE API
+     * guarantees the [AdvertiseCallback] is invoked once per [BeaconTransmitter.startAdvertising]
+     * call, so the suspension always completes.
+     */
+    suspend fun startTransmittingAndAwait(context: Context, haTransmitter: IBeaconTransmitter): Boolean {
+        return suspendCancellableCoroutine { continuation ->
+            val submitted = startTransmitting(context, haTransmitter) { success ->
+                if (continuation.isActive) {
+                    continuation.resume(success, null)
+                }
+            }
+            if (!submitted && continuation.isActive) {
+                // Already transmitting or Bluetooth off: no callback will fire.
+                continuation.resume(haTransmitter.transmitting, null)
+            }
+        }
+    }
+
+    /**
+     * Starts transmitting. Returns true when a new advertising request was submitted (so
+     * [onResult] will be invoked with the outcome), false when nothing was submitted because
+     * the transmitter is already started, Bluetooth is off, or the inputs are invalid.
+     */
+    @Synchronized
+    private fun startTransmitting(
+        context: Context,
+        haTransmitter: IBeaconTransmitter,
+        onResult: ((Boolean) -> Unit)?,
+    ): Boolean {
         if (!shouldStartTransmitting(haTransmitter)) {
-            return
+            return false
         }
         if (haTransmitter.restartRequired && this::physicalTransmitter.isInitialized) {
             stopTransmitting(haTransmitter)
@@ -68,36 +106,41 @@ object TransmitterManager {
         }
         val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
         val bluetoothOn = bluetoothAdapter?.isEnabled == true
-        if (bluetoothOn) {
+        return if (bluetoothOn && !physicalTransmitter.isStarted) {
             val beacon = buildBeacon(haTransmitter)
-            if (!physicalTransmitter.isStarted) {
-                physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
-                physicalTransmitter.advertiseMode = getAdvertiseMode(haTransmitter)
-                physicalTransmitter.startAdvertising(
-                    beacon,
-                    object : AdvertiseCallback() {
-                        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+            physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
+            physicalTransmitter.advertiseMode = getAdvertiseMode(haTransmitter)
+            physicalTransmitter.startAdvertising(
+                beacon,
+                object : AdvertiseCallback() {
+                    override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+                        haTransmitter.transmitting = true
+                        haTransmitter.state = "Transmitting"
+                        onResult?.invoke(true)
+                    }
+
+                    override fun onStartFailure(errorCode: Int) {
+                        if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
+                            haTransmitter.uuid = ""
+                            haTransmitter.major = ""
+                            haTransmitter.minor = ""
+                            haTransmitter.state = "Unable to transmit"
+                            haTransmitter.transmitting = false
+                            onResult?.invoke(false)
+                        } else {
                             haTransmitter.transmitting = true
                             haTransmitter.state = "Transmitting"
+                            onResult?.invoke(true)
                         }
-
-                        override fun onStartFailure(errorCode: Int) {
-                            if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
-                                haTransmitter.uuid = ""
-                                haTransmitter.major = ""
-                                haTransmitter.minor = ""
-                                haTransmitter.state = "Unable to transmit"
-                                haTransmitter.transmitting = false
-                            } else {
-                                haTransmitter.transmitting = true
-                                haTransmitter.state = "Transmitting"
-                            }
-                        }
-                    },
-                )
-            }
+                    }
+                },
+            )
+            true
         } else {
-            stopTransmitting(haTransmitter)
+            if (!bluetoothOn) {
+                stopTransmitting(haTransmitter)
+            }
+            false
         }
     }
 

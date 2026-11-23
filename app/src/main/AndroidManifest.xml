@@ -191,7 +191,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Restart the BLE transmitter after boot or an app update, without a server sync. -->
+        <!-- Restart the BLE transmitter after boot or an app update. -->
         <receiver
             android:name="io.homeassistant.companion.android.common.sensors.TransmitterRestartReceiver"
             android:exported="true">

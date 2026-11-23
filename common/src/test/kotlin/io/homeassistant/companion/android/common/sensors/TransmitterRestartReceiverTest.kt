@@ -14,7 +14,10 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import org.junit.Before
 import org.junit.Rule
@@ -28,10 +31,11 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Covers [TransmitterRestartReceiver]: only [Intent.ACTION_BOOT_COMPLETED] and
  * [Intent.ACTION_MY_PACKAGE_REPLACED] restart the BLE transmitter, and the restart is a local
- * operation (no server sync) delegated to [BluetoothSensorManager.restartTransmitter].
+ * operation delegated to [BluetoothSensorManager.restartTransmitterIfNeeded].
  *
  * The receiver is exercised through a real Robolectric broadcast dispatch so a genuine
  * [android.content.BroadcastReceiver.PendingResult] is created for it, exactly as the system does.
+ * The receiver runs on a [StandardTestDispatcher] so the test controls when its coroutine runs.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
@@ -53,14 +57,13 @@ class TransmitterRestartReceiverTest {
     }
 
     @Test
-    fun `Given a boot completed broadcast when received then the transmitter is restarted`() {
+    fun `Given a boot completed broadcast when received then the transmitter is restarted`() = runTest {
         val restarted = CompletableDeferred<Unit>()
-        coEvery { bluetoothSensorManager.restartTransmitter() } coAnswers {
+        coEvery { bluetoothSensorManager.restartTransmitterIfNeeded() } coAnswers {
             restarted.complete(Unit)
-            true
         }
 
-        val receiver = TransmitterRestartReceiver()
+        val receiver = TransmitterRestartReceiver(StandardTestDispatcher(testScheduler))
         ContextCompat.registerReceiver(
             context,
             receiver,
@@ -70,23 +73,23 @@ class TransmitterRestartReceiverTest {
         try {
             context.sendBroadcast(Intent(Intent.ACTION_BOOT_COMPLETED))
             shadowOf(getMainLooper()).idle()
-            runBlocking { withTimeout(10.seconds) { restarted.await() } }
+            advanceUntilIdle()
+            withTimeout(10.seconds) { restarted.await() }
 
-            coVerify(exactly = 1) { bluetoothSensorManager.restartTransmitter() }
+            coVerify(exactly = 1) { bluetoothSensorManager.restartTransmitterIfNeeded() }
         } finally {
             context.unregisterReceiver(receiver)
         }
     }
 
     @Test
-    fun `Given a package replaced broadcast when received then the transmitter is restarted`() {
+    fun `Given a package replaced broadcast when received then the transmitter is restarted`() = runTest {
         val restarted = CompletableDeferred<Unit>()
-        coEvery { bluetoothSensorManager.restartTransmitter() } coAnswers {
+        coEvery { bluetoothSensorManager.restartTransmitterIfNeeded() } coAnswers {
             restarted.complete(Unit)
-            true
         }
 
-        val receiver = TransmitterRestartReceiver()
+        val receiver = TransmitterRestartReceiver(StandardTestDispatcher(testScheduler))
         ContextCompat.registerReceiver(
             context,
             receiver,
@@ -96,9 +99,47 @@ class TransmitterRestartReceiverTest {
         try {
             context.sendBroadcast(Intent(Intent.ACTION_MY_PACKAGE_REPLACED))
             shadowOf(getMainLooper()).idle()
-            runBlocking { withTimeout(10.seconds) { restarted.await() } }
+            advanceUntilIdle()
+            withTimeout(10.seconds) { restarted.await() }
 
-            coVerify(exactly = 1) { bluetoothSensorManager.restartTransmitter() }
+            coVerify(exactly = 1) { bluetoothSensorManager.restartTransmitterIfNeeded() }
+        } finally {
+            context.unregisterReceiver(receiver)
+        }
+    }
+
+    @Test
+    fun `Given a restart that suspends when the broadcast is received then the restart is awaited before finishing`() = runTest {
+        val restartStarted = CompletableDeferred<Unit>()
+        val restartGate = CompletableDeferred<Unit>()
+        coEvery { bluetoothSensorManager.restartTransmitterIfNeeded() } coAnswers {
+            restartStarted.complete(Unit)
+            restartGate.await()
+        }
+
+        val receiver = TransmitterRestartReceiver(StandardTestDispatcher(testScheduler))
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            IntentFilter(Intent.ACTION_BOOT_COMPLETED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        try {
+            context.sendBroadcast(Intent(Intent.ACTION_BOOT_COMPLETED))
+            shadowOf(getMainLooper()).idle()
+            // Run the receiver's coroutine up to its suspension point without advancing
+            // virtual time past the broadcast timeout (advanceUntilIdle would fire it).
+            runCurrent()
+
+            // The restart was invoked and is still suspended: the receiver's coroutine
+            // (and therefore the broadcast pending result) must not have finished yet.
+            withTimeout(10.seconds) { restartStarted.await() }
+
+            // Now let the restart complete and confirm it finishes.
+            restartGate.complete(Unit)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { bluetoothSensorManager.restartTransmitterIfNeeded() }
         } finally {
             context.unregisterReceiver(receiver)
         }
@@ -106,7 +147,7 @@ class TransmitterRestartReceiverTest {
 
     @Test
     fun `Given an unrelated broadcast when received then the transmitter is not restarted`() {
-        val receiver = TransmitterRestartReceiver()
+        val receiver = TransmitterRestartReceiver(StandardTestDispatcher())
         ContextCompat.registerReceiver(
             context,
             receiver,
@@ -117,7 +158,7 @@ class TransmitterRestartReceiverTest {
             context.sendBroadcast(Intent(Intent.ACTION_TIME_TICK))
             shadowOf(getMainLooper()).idle()
 
-            coVerify(exactly = 0) { bluetoothSensorManager.restartTransmitter() }
+            coVerify(exactly = 0) { bluetoothSensorManager.restartTransmitterIfNeeded() }
         } finally {
             context.unregisterReceiver(receiver)
         }
