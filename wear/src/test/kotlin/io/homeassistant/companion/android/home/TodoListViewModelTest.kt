@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.home
 
-import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -57,7 +57,7 @@ class TodoListViewModelTest {
 
     private fun givenListsStates(vararg states: EntityDisplayState<EntityDisplayWithContext>) {
         every {
-            entitiesForDisplayManager.observeInContext(ServerManager.SERVER_ID_ACTIVE, any<(Entity) -> Boolean>())
+            entitiesForDisplayManager.observeInContext(ServerManager.SERVER_ID_ACTIVE, any<EntityFilter>())
         } returnsMany states.map { flowOf(it) }
     }
 

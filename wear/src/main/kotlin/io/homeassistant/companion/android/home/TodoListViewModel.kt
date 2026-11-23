@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
@@ -81,7 +82,7 @@ class TodoListViewModel @Inject constructor(
         listsRetry.collectLatest { _ ->
             if (_listsStatus.value != ListsStatus.Loaded) _listsStatus.value = ListsStatus.Loading
             entitiesForDisplayManager
-                .observeInContext(ServerManager.SERVER_ID_ACTIVE) { it.domain == TODO_DOMAIN }
+                .observeInContext(ServerManager.SERVER_ID_ACTIVE, EntityFilter(domains = setOf(TODO_DOMAIN)))
                 .collect { state ->
                     when (state) {
                         is EntityDisplayState.Loaded -> {

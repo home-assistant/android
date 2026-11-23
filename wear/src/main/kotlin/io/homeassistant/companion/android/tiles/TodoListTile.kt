@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
@@ -126,7 +127,8 @@ class TodoListTile : TileService() {
         }
         val items = checkNotNull(webSocket.getTodos(entityId)).response[entityId]?.items.orEmpty()
             .filter { it.status == TodoItem.NEEDS_ACTION_STATUS }
-        val name = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
+        val name = entitiesForDisplayManager
+            .snapshot(ServerManager.SERVER_ID_ACTIVE, EntityFilter(entityIds = setOf(entityId)))
             .awaitLoadedOrNull()
             ?.entity(entityId)
             ?.name ?: entityId
