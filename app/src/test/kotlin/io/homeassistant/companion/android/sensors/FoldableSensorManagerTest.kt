@@ -26,6 +26,7 @@ import io.mockk.runs
 import io.mockk.slot
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,9 +44,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-
-private const val SUPPORTED_WINDOW_EXTENSIONS_VERSION = 2
-
+@OptIn(ExperimentalCoroutinesApi::class)
 class FoldableSensorManagerTest {
 
     private val sensorId = FoldableSensorManager.hingeStatus.id
@@ -67,7 +66,7 @@ class FoldableSensorManagerTest {
         coJustRun { sensorRepository.update(any()) }
         coJustRun { sensorRepository.replaceAllAttributes(any(), any()) }
         mockkObject(SensorReceiver.Companion)
-        every { SensorReceiver.updateSensor(any(), any()) } just runs
+        every { SensorReceiver.updateAllSensors(any()) } just runs
     }
 
     @AfterEach
@@ -153,7 +152,7 @@ class FoldableSensorManagerTest {
         backgroundScope.launch { manager.updateOnFoldChange() }
         runCurrent()
 
-        verify(exactly = 3) { SensorReceiver.updateSensor(context, sensorId) }
+        verify(exactly = 3) { SensorReceiver.updateAllSensors(context) }
     }
 
     @Test
@@ -163,7 +162,7 @@ class FoldableSensorManagerTest {
         backgroundScope.launch { createManager(flowOf(fullyOpenLayout, closedLayout)).updateOnFoldChange() }
         runCurrent()
 
-        verify(exactly = 0) { SensorReceiver.updateSensor(any(), any()) }
+        verify(exactly = 0) { SensorReceiver.updateAllSensors(any()) }
     }
 
     @Test
@@ -190,7 +189,7 @@ class FoldableSensorManagerTest {
         runCurrent()
 
         assertEquals(1, layouts.subscriptionCount.value)
-        verify(exactly = 2) { SensorReceiver.updateSensor(context, sensorId) }
+        verify(exactly = 2) { SensorReceiver.updateAllSensors(context) }
     }
 
     @Test
@@ -205,7 +204,7 @@ class FoldableSensorManagerTest {
         runCurrent()
 
         assertEquals(0, layouts.subscriptionCount.value)
-        verify(exactly = 1) { SensorReceiver.updateSensor(context, sensorId) }
+        verify(exactly = 1) { SensorReceiver.updateAllSensors(context) }
     }
 
     @Test
@@ -218,7 +217,7 @@ class FoldableSensorManagerTest {
         runCurrent()
 
         assertEquals(1, layouts.subscriptionCount.value)
-        verify(exactly = 1) { SensorReceiver.updateSensor(context, sensorId) }
+        verify(exactly = 1) { SensorReceiver.updateAllSensors(context) }
     }
 
     @Test
@@ -227,12 +226,12 @@ class FoldableSensorManagerTest {
 
         createManager(flow { awaitCancellation() }).updateOnFoldChange()
 
-        verify(exactly = 0) { SensorReceiver.updateSensor(any(), any()) }
+        verify(exactly = 0) { SensorReceiver.updateAllSensors(any()) }
     }
 
     private fun createManager(
         windowLayoutInfo: Flow<WindowLayoutInfo> = emptyFlow(),
-        windowExtensionsVersion: Int = SUPPORTED_WINDOW_EXTENSIONS_VERSION,
+        windowExtensionsVersion: Int = WINDOW_CONTEXT_MIN_EXTENSIONS_VERSION,
     ) = FoldableSensorManager(
         applicationContext = context,
         sensorRepository = sensorRepository,

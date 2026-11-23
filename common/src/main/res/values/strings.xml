@@ -1207,7 +1207,7 @@
     <string name="sensor_description_tonal_palette_sensor">The name of the dynamic color palette theme currently in use</string>
     <string name="sensor_name_dynamic_color">Dynamic color</string>
     <string name="sensor_name_foldable">Foldable sensors</string>
-    <string name="sensor_description_hinge_status">Whether the foldable device is closed, partially open or fully open. Updates as soon as the device is folded or unfolded.</string>
+    <string name="sensor_description_hinge_status">Whether the foldable device is closed, partially open or fully open.</string>
     <string name="basic_sensor_name_screen_brightness">Screen brightness</string>
     <string name="sensor_description_screen_brightness">The current screen brightness on the device, an attribute also indicates if auto-brightness is enabled</string>
     <string name="sensor_name_display_sensors">Display sensors</string>

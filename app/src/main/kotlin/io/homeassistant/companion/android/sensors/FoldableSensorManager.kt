@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
@@ -40,7 +41,8 @@ import timber.log.Timber
 private val FOLD_STATE_TIMEOUT = 5.seconds
 
 /** Below this Window SDK extensions version, the window layout of a context that is not an activity is always empty. */
-private const val WINDOW_CONTEXT_MIN_EXTENSIONS_VERSION = 2
+@VisibleForTesting
+const val WINDOW_CONTEXT_MIN_EXTENSIONS_VERSION = 2
 
 /**
  * The position of the hinge of a foldable device, reported as the state of the hinge status sensor.
@@ -154,6 +156,7 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
      * enabled on at least one server. Suspends until cancelled, or returns immediately when the
      * device is not a foldable.
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun updateOnFoldChange() {
         if (!hasSensor()) {
             return
@@ -161,10 +164,7 @@ class FoldableSensorManager @VisibleForTesting internal constructor(
 
         isHingeStatusEnabledFlow
             .flatMapLatest { enabled -> if (enabled) hingeStatusFlow else emptyFlow() }
-            .collect { status ->
-                Timber.d("Hinge status: ${status.state}")
-                SensorReceiver.updateSensor(applicationContext, hingeStatus.id)
-            }
+            .collect { SensorReceiver.updateAllSensors(applicationContext) }
     }
 }
 
