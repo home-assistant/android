@@ -10,11 +10,12 @@ import androidx.wear.protolayout.ModifiersBuilders.Clickable
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import androidx.wear.protolayout.material.Button
 import androidx.wear.protolayout.material.ButtonColors
+import androidx.wear.protolayout.material.ButtonDefaults
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 
 internal const val RESOURCE_POWER = "power"
-private const val BUTTON_SIZE_DP = 40f
+private const val COMPACT_BUTTON_SIZE_DP = 40f
 private const val TARGET_TEMPERATURE_SIZE_SP = 30f
 private const val SPACING_DP = 10f
 private const val NAME_ARC_THICKNESS_DP = 30f
@@ -39,7 +40,6 @@ internal fun thermostatTimeline(context: Context, content: ThermostatTileContent
             addContent(getControlsColumn(context, content))
             addContent(getStatusRing(context, content.entity))
             content.entityName?.let { addContent(getNameArc(it)) }
-            // Refresh button
             addContent(getRefreshButton())
             setModifiers(getRefreshModifiers())
         }.build(),
@@ -85,9 +85,15 @@ private fun getButtonsRow(
     showPowerButton: Boolean,
 ): LayoutElement {
     val buttonsEnabled = hvacAction != "off" && entity.rawState != "unavailable"
+    // The temperature buttons shrink only to make room for the power button
+    val tempButtonSize = if (showPowerButton) {
+        DimensionBuilders.dp(COMPACT_BUTTON_SIZE_DP)
+    } else {
+        ButtonDefaults.DEFAULT_SIZE
+    }
 
     return LayoutElementBuilders.Row.Builder()
-        .addContent(getTempButton(context, buttonsEnabled, ThermostatTile.TAP_ACTION_DOWN))
+        .addContent(getTempButton(context, buttonsEnabled, ThermostatTile.TAP_ACTION_DOWN, tempButtonSize))
         .apply {
             if (showPowerButton) {
                 addContent(getSpacer(SPACING_DP))
@@ -97,7 +103,7 @@ private fun getButtonsRow(
                 addContent(getSpacer(SPACING_DP * 2))
             }
         }
-        .addContent(getTempButton(context, buttonsEnabled, ThermostatTile.TAP_ACTION_UP))
+        .addContent(getTempButton(context, buttonsEnabled, ThermostatTile.TAP_ACTION_UP, tempButtonSize))
         .build()
 }
 
@@ -149,7 +155,12 @@ private fun getNameArc(entityName: String): LayoutElement = LayoutElementBuilder
     )
     .build()
 
-private fun getTempButton(context: Context, enabled: Boolean, action: String): LayoutElement {
+private fun getTempButton(
+    context: Context,
+    enabled: Boolean,
+    action: String,
+    size: DimensionBuilders.DpProp,
+): LayoutElement {
     val clickable = Clickable.Builder()
     if (enabled) {
         clickable.setOnClick(ActionBuilders.LoadAction.Builder().build())
@@ -157,7 +168,7 @@ private fun getTempButton(context: Context, enabled: Boolean, action: String): L
     }
 
     return Button.Builder(context, clickable.build())
-        .setSize(BUTTON_SIZE_DP)
+        .setSize(size)
         .setTextContent(if (action == ThermostatTile.TAP_ACTION_DOWN) "—" else "+")
         .setButtonColors(
             ButtonColors(
@@ -180,7 +191,7 @@ private fun getPowerButton(context: Context, enabled: Boolean): LayoutElement {
     }
 
     return Button.Builder(context, clickable.build())
-        .setSize(BUTTON_SIZE_DP)
+        .setSize(COMPACT_BUTTON_SIZE_DP)
         .setIconContent(RESOURCE_POWER)
         .setContentDescription(context.getString(commonR.string.thermostat_tile_power_button_description))
         .setButtonColors(

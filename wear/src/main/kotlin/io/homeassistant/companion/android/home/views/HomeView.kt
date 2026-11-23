@@ -332,6 +332,9 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     },
                     onNameEnabled = { tileIdToggle, showName ->
                         mainViewModel.setThermostatTileShowName(tileIdToggle, showName)
+                            .invokeOnCompletion {
+                                TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java)
+                            }
                     },
                     onPowerButtonEnabled = { tileIdToggle, showPowerButton ->
                         mainViewModel.setThermostatTileShowPowerButton(tileIdToggle, showPowerButton)
