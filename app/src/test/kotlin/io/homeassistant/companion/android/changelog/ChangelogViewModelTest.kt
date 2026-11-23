@@ -8,7 +8,6 @@ import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -35,7 +34,7 @@ private val plainEntry = ChangelogEntry(
 )
 
 /** A fixed changelog so release-note edits never change what these tests exercise. */
-private val changelog = Changelog(new = listOf(sensorEntry), fixed = listOf(plainEntry))
+private val fixtureChangelog = Changelog(new = listOf(sensorEntry), fixed = listOf(plainEntry))
 
 @ExtendWith(MainDispatcherJUnit5Extension::class)
 class ChangelogViewModelTest {
@@ -76,7 +75,7 @@ class ChangelogViewModelTest {
         val state = resolvedState(createViewModel(isAutomotive = platform == ChangelogPlatform.AUTOMOTIVE))
 
         assertEquals(platform, state.currentPlatform)
-        assertEquals(changelog.toSections(), state.sections)
+        assertEquals(fixtureChangelog.toSections(), state.sections)
     }
 
     @Test
@@ -93,13 +92,25 @@ class ChangelogViewModelTest {
     fun `Given device with the sensor when reading state then the sensor entry keeps its action`() = runTest {
         val state = resolvedState(createViewModel(sensorManagers = setOf(sensorManager(hasSensor = true))))
 
+        assertEquals(fixtureChangelog.toSections(), state.sections)
+    }
+
+    @Test
+    fun `Given changelog without sensor action when reading state then sensor managers are not queried`() = runTest {
+        val sensorManager = sensorManager(hasSensor = true)
+        val changelog = Changelog(fixed = listOf(plainEntry))
+
+        val state = resolvedState(createViewModel(sensorManagers = setOf(sensorManager), changelog = changelog))
+
         assertEquals(changelog.toSections(), state.sections)
+        coVerify(exactly = 0) { sensorManager.hasBasicSensor(any()) }
     }
 
     private fun TestScope.createViewModel(
         isAutomotive: Boolean = false,
         appVersion: AppVersion = AppVersion("2026.7.6-${BuildConfig.FLAVOR}", CURRENT_VERSION_CODE),
         sensorManagers: Set<SensorManager> = setOf(sensorManager(hasSensor = true)),
+        changelog: Changelog = fixtureChangelog,
     ) = ChangelogViewModel(
         prefsRepository = prefsRepository,
         isAutomotive = isAutomotive,
@@ -111,8 +122,7 @@ class ChangelogViewModelTest {
 
     /** A manager owning the sensor targeted by the fixture changelog, present on the device or not. */
     private fun sensorManager(hasSensor: Boolean) = mockk<SensorManager> {
-        every { hasSensor() } returns hasSensor
-        coEvery { getAvailableSensors() } returns listOf(mockk { every { id } returns SENSOR_ID })
+        coEvery { hasBasicSensor(SENSOR_ID) } returns hasSensor
     }
 
     /** The content once the view model resolved it, after letting the test scheduler run. */

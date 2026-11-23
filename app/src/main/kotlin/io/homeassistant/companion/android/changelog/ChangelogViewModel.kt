@@ -68,27 +68,35 @@ class ChangelogViewModel @VisibleForTesting constructor(
     init {
         viewModelScope.launch {
             val versionWithoutFlavor = appVersion.name.removeSuffix("-${BuildConfig.FLAVOR}")
+            val sections = changelog.toSections()
             _uiState.value = ChangelogUiState.Content(
                 versionName = versionWithoutFlavor,
                 releaseUrl = RELEASE_TAG_URL_PREFIX + versionWithoutFlavor,
                 currentPlatform = if (isAutomotive) ChangelogPlatform.AUTOMOTIVE else ChangelogPlatform.APP,
-                sections = changelog.toSections().withSensorActionsFor(availableSensorIds()),
+                sections = sections.withSensorActionsFor(availableSensorIds(sections.sensorIds())),
             )
             prefsRepository.markChangelogSeen(appVersion.code)
         }
     }
 
     /**
-     * Ids of the sensors the device has, the only ones a [ChangelogAction.OpenSensor] may target.
+     * The [sensorIds] the device has, the only ones a [ChangelogAction.OpenSensor] may target.
      * Off the main thread since some managers query the system to know whether they have a sensor.
      */
-    private suspend fun availableSensorIds(): Set<String> = withContext(backgroundDispatcher) {
-        sensorManagers
-            .filter { it.hasSensor() }
-            .flatMap { manager -> manager.getAvailableSensors().map { it.id } }
-            .toSet()
+    private suspend fun availableSensorIds(sensorIds: Set<String>): Set<String> {
+        if (sensorIds.isEmpty()) return emptySet()
+        return withContext(backgroundDispatcher) {
+            sensorIds.filterTo(mutableSetOf()) { sensorId ->
+                sensorManagers.any { it.hasBasicSensor(sensorId) }
+            }
+        }
     }
 }
+
+/** Ids of the sensors targeted by a [ChangelogAction.OpenSensor]. */
+private fun List<ChangelogSection>.sensorIds(): Set<String> = flatMap { it.entries }
+    .mapNotNull { (it.action as? ChangelogAction.OpenSensor)?.sensorId }
+    .toSet()
 
 /** Drops every [ChangelogAction.OpenSensor] whose sensor is not in [availableSensorIds]. */
 private fun List<ChangelogSection>.withSensorActionsFor(availableSensorIds: Set<String>): List<ChangelogSection> =

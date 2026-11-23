@@ -14,6 +14,8 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class SensorManagerTest {
@@ -61,12 +63,37 @@ class SensorManagerTest {
 
         assertEquals("""true""", slot.captured.first().value)
     }
+
+    @Test
+    fun `Given manager owning the sensor on a supporting device when invoking hasBasicSensor then returns true`() = runTest {
+        val sensorManager = FakeSensorManager(availableSensors = listOf(basicSensor))
+
+        assertTrue(sensorManager.hasBasicSensor(basicSensor.id))
+    }
+
+    @Test
+    fun `Given manager owning the sensor on a device not supporting it when invoking hasBasicSensor then returns false`() = runTest {
+        val sensorManager = FakeSensorManager(availableSensors = listOf(basicSensor), hasSensor = false)
+
+        assertFalse(sensorManager.hasBasicSensor(basicSensor.id))
+    }
+
+    @Test
+    fun `Given manager not owning the sensor when invoking hasBasicSensor then returns false`() = runTest {
+        val sensorManager = FakeSensorManager(availableSensors = listOf(basicSensor))
+
+        assertFalse(sensorManager.hasBasicSensor("other"))
+    }
 }
+
+private val basicSensor = SensorManager.BasicSensor("test", "test", statelessIcon = Mdi.FlaskEmpty)
 
 private class FakeSensorManager(
     override val applicationContext: Context = mockk(),
-    override val sensorRepository: SensorRepository,
+    override val sensorRepository: SensorRepository = mockk(),
     override val serverManager: ServerManager = mockk(),
+    private val availableSensors: List<SensorManager.BasicSensor> = emptyList(),
+    private val hasSensor: Boolean = true,
 ) : SensorManager {
     override val name: Int = -1
 
@@ -78,7 +105,7 @@ private class FakeSensorManager(
         TODO("Not needed")
     }
 
-    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> {
-        TODO("Not needed")
-    }
+    override suspend fun getAvailableSensors(): List<SensorManager.BasicSensor> = availableSensors
+
+    override fun hasSensor(): Boolean = hasSensor
 }
