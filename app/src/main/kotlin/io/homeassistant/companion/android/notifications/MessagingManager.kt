@@ -150,6 +150,7 @@ class MessagingManager @Inject constructor(
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
     private val bluetoothSensorManager: BluetoothSensorManager,
+    private val hyperOsAlarmNotificationPlayer: HyperOsAlarmNotificationPlayer,
     private val clock: Clock,
 ) {
     companion object {
@@ -318,6 +319,7 @@ class MessagingManager @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private var alarmPlayback: Job? = null
 
     fun handleMessage(notificationData: Map<String, String>, source: String) {
         mainScope.launch {
@@ -1141,8 +1143,12 @@ class MessagingManager @Inject constructor(
                 notify(tag, messageId, notificationBuilder)
             }
         } else {
-            notificationManagerCompat.apply {
-                notify(tag, messageId, notificationBuilder.build())
+            val notification = notificationBuilder.build()
+            val alarmSound = hyperOsAlarmNotificationPlayer.getSound(notification, tag, messageId)
+            notificationManagerCompat.notify(tag, messageId, notification)
+            if (alarmSound != null) {
+                alarmPlayback?.cancel()
+                alarmPlayback = mainScope.launch { hyperOsAlarmNotificationPlayer.play(alarmSound) }
             }
         }
 
