@@ -446,14 +446,24 @@ class BluetoothSensorManager @Inject constructor(
         }
     }
 
-    private suspend fun updateBLESensor() {
+    /**
+     * Restarts the BLE transmitter if it is enabled and should be transmitting.
+     *
+     * Local only: reads the transmitter settings from the database and starts or stops
+     * advertising. Does not send any sensor state to the server, so it is safe to call
+     * from a broadcast receiver on boot or package replacement, where a server sync
+     * could be slow or dropped.
+     *
+     * @return true if the BLE transmitter sensor is enabled, false otherwise.
+     */
+    suspend fun restartTransmitter(): Boolean {
         // get device details from settings
         updateBLEDevice()
 
         // sensor disabled, stop transmitting if we have been
         if (!isEnabled(bleTransmitter)) {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
-            return
+            return false
         }
         // transmit when BT is on, if we are not already transmitting, or details have changed, and we're permitted on this wifi network
         if (isBtOn()) {
@@ -472,6 +482,11 @@ class BluetoothSensorManager @Inject constructor(
         ) {
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
         }
+        return true
+    }
+
+    private suspend fun updateBLESensor() {
+        if (!restartTransmitter()) return
 
         val lastState =
             sensorRepository.get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN

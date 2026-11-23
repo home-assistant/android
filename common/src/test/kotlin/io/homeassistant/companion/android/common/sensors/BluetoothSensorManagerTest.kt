@@ -1,15 +1,18 @@
 package io.homeassistant.companion.android.common.sensors
 
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import dagger.Lazy
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.sensor.SensorSettingType
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -75,6 +78,50 @@ class BluetoothSensorManagerTest {
                 persistedUuid,
             )
         }
+    }
+
+    @Test
+    fun `Given the transmitter is enabled when restarting then it performs no server sync`() = runTest {
+        SdkVersion.sdkInt = ANDROID_12_SDK
+        // A strict mock fails the test if the restart touches the server at all:
+        // the boot / package-replaced path must stay local-only.
+        val strictServerManager = mockk<ServerManager>()
+        val grantedContext = mockk<Context>(relaxed = true) {
+            every { checkPermission(any(), any(), any()) } returns PackageManager.PERMISSION_GRANTED
+            every { applicationContext } returns this
+            every { getSystemService(BluetoothManager::class.java) } returns mockk<BluetoothManager> {
+                every { adapter } returns null
+            }
+        }
+        val localManager = BluetoothSensorManager(
+            grantedContext,
+            sensorRepository,
+            strictServerManager,
+            mockk<Lazy<SensorUpdater>>(relaxed = true),
+        )
+        coEvery { sensorRepository.getSettings(BluetoothSensorManager.bleTransmitter.id) } returns
+            BluetoothSensorManager.bleTransmitter.settings.map { setting ->
+                setting.toSensorSetting(
+                    BluetoothSensorManager.bleTransmitter.id,
+                    value = if (setting.name == BluetoothSensorManager.SETTING_BLE_ID1) {
+                        "123e4567-e89b-12d3-a456-426614174000"
+                    } else {
+                        setting.defaultValue
+                    },
+                )
+            }
+        coEvery { sensorRepository.get(BluetoothSensorManager.bleTransmitter.id) } returns
+            listOf(
+                Sensor(
+                    id = BluetoothSensorManager.bleTransmitter.id,
+                    serverId = 0,
+                    enabled = true,
+                    state = "",
+                ),
+            )
+
+        assertTrue(localManager.restartTransmitter())
+        confirmVerified(strictServerManager)
     }
 
     @Test

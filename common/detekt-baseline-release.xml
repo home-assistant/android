@@ -69,6 +69,7 @@
     <ID>InjectDispatcher:StepsSensorManager.kt:StepsSensorManager$IO</ID>
     <ID>InjectDispatcher:StopBeaconScanningReceiver.kt:StopBeaconScanningReceiver$Default</ID>
     <ID>InjectDispatcher:TLSHelper.kt:TLSHelper$IO</ID>
+    <ID>InjectDispatcher:TransmitterRestartReceiver.kt:TransmitterRestartReceiver$Default</ID>
     <ID>InjectDispatcher:UrlUtil.kt:IO</ID>
     <ID>InstanceOfCheckForException:SensorUpdater.kt:SensorUpdater$e is IntegrationException</ID>
     <ID>LargeClass:WebSocketCoreImpl.kt:WebSocketCoreImpl : WebSocketListenerWebSocketCore</ID>
