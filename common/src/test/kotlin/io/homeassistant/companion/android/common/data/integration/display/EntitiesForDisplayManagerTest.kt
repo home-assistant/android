@@ -89,12 +89,12 @@ class EntitiesForDisplayManagerTest {
         coEvery { integrationRepository.getEntityChanges(EntityFilter(entityIds = entityIds.toSet())) } returns entityChanges
         coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
         coEvery { webSocketRepository.getEntityRegistryDisplay(any()) } coAnswers {
-            val ids = firstArg<List<String>>()
-            if (ids.isEmpty()) {
+            val filter = firstArg<EntityFilter>()
+            if (filter.isEmpty) {
                 null
             } else {
                 webSocketRepository.getEntityRegistryDisplay()?.let { response ->
-                    response.copy(entities = response.entities.filter { it.entityId in ids })
+                    response.copy(entities = response.entities.filter { filter.matches(it.entityId) })
                 }
             }
         }
@@ -324,7 +324,7 @@ class EntitiesForDisplayManagerTest {
         manager.snapshot(serverId, EntityFilter(entityIds = entityIds.toSet())).awaitLoadedOrNull()
 
         coVerify(exactly = 1) { integrationRepository.getEntities(EntityFilter(entityIds = setOf("light.bed"))) }
-        coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay(entityIds) }
+        coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay(EntityFilter(entityIds = entityIds.toSet())) }
     }
 
     @Test
@@ -588,8 +588,7 @@ class EntitiesForDisplayManagerTest {
 
             assertEquals(listOf("light.bed"), items.map { it.entityId })
             coVerify(exactly = 1) { integrationRepository.getEntities(filter) }
-            // The registry can't be limited to domains
-            coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay() }
+            coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay(filter) }
         }
 
         @Test
@@ -1159,7 +1158,7 @@ class EntitiesForDisplayManagerTest {
                 }
                 coVerify(exactly = 1) { integrationRepository.getEntityChanges(EntityFilter(entityIds = entityIds.toSet())) }
                 coVerify(exactly = 0) { integrationRepository.getEntityChanges() }
-                coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay(entityIds) }
+                coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay(EntityFilter(entityIds = entityIds.toSet())) }
             }
 
             @Test
