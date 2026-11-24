@@ -58,11 +58,4 @@ Connect with other contributors and users in our vibrant **[Discord Community](h
 If you find this project useful, consider giving it a star on GitHub!
 It helps others discover the project and motivates us to keep improving.
 
-<a href="https://next.ossinsight.io/widgets/official/analyze-repo-stars-history?repo_id=179008173" target="_blank" style="display: block" align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://next.ossinsight.io/widgets/official/analyze-repo-stars-history/thumbnail.png?repo_id=179008173&image_size=auto&color_scheme=dark" width="721" height="auto">
-    <img alt="Star History of home-assistant/android" src="https://next.ossinsight.io/widgets/official/analyze-repo-stars-history/thumbnail.png?repo_id=179008173&image_size=auto&color_scheme=light" width="721" height="auto">
-  </picture>
-</a>
-
 [![Home Assistant - A project from the Open Home Foundation](https://www.openhomefoundation.org/badges/home-assistant.png)](https://www.openhomefoundation.org/)
