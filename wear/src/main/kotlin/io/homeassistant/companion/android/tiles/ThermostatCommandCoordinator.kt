@@ -207,6 +207,13 @@ class ThermostatCommandCoordinator @Inject constructor(
         tileId, target, "set_hvac_mode", mapOf("entity_id" to target.entityId, "hvac_mode" to mode), mode,
     ) { entity -> entity.rawState == mode }
 
+    fun submitPower(tileId: Int, target: Target, turnOn: Boolean) = submit(
+        tileId, target, if (turnOn) "turn_on" else "turn_off",
+        mapOf("entity_id" to target.entityId), if (turnOn) "on" else "off",
+    ) { entity ->
+        if (turnOn) entity.rawState !in listOf("off", "unavailable", "unknown") else entity.rawState == "off"
+    }
+
     fun submitFan(tileId: Int, target: Target, mode: String) = submit(
         tileId, target, "set_fan_mode", mapOf("entity_id" to target.entityId, "fan_mode" to mode), mode,
     ) { entity -> entity.climateControls?.fanMode == mode }

@@ -36,7 +36,7 @@ fun SetThermostatTileView(
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit,
     onNameEnabled: (Int, Boolean) -> Unit,
-    onPreferencesChanged: (ThermostatTile) -> Unit,
+    onPreferencesChanged: (Int, (ThermostatTile) -> ThermostatTile) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -110,19 +110,32 @@ fun SetThermostatTileView(
                     },
                     onClick = {
                         tile?.let {
-                            onPreferencesChanged(
-                                it.copy(layoutStyle = if (it.layoutStyle == "enhanced") "classic" else "enhanced"),
-                            )
+                            onPreferencesChanged(it.id) { current ->
+                                current.copy(layoutStyle = if (current.layoutStyle == "enhanced") "classic" else "enhanced")
+                            }
                         }
                     },
                 )
+            }
+            if (tile != null && tile.layoutStyle == "classic") {
+                item {
+                    SwitchButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        checked = tile.showPowerButton,
+                        onCheckedChange = { enabled ->
+                            onPreferencesChanged(tile.id) { it.copy(showPowerButton = enabled) }
+                        },
+                        label = { Text(stringResource(commonR.string.setting_thermostat_power_button_on_tile)) },
+                        colors = getSwitchButtonColors(),
+                    )
+                }
             }
             if (tile?.layoutStyle == "enhanced") {
             item {
                 SwitchButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = tile?.showHvacModes == true,
-                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.copy(showHvacModes = enabled)) } },
+                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.id) { current -> current.copy(showHvacModes = enabled) } } },
                     label = { Text("Show HVAC mode buttons") },
                     colors = getSwitchButtonColors(),
                 )
@@ -131,7 +144,7 @@ fun SetThermostatTileView(
                 SwitchButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = tile?.showFanControl == true,
-                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.copy(showFanControl = enabled)) } },
+                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.id) { current -> current.copy(showFanControl = enabled) } } },
                     label = { Text("Show fan button if supported") },
                     colors = getSwitchButtonColors(),
                 )
@@ -140,7 +153,7 @@ fun SetThermostatTileView(
                 SwitchButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = tile?.showActivity == true,
-                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.copy(showActivity = enabled)) } },
+                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.id) { current -> current.copy(showActivity = enabled) } } },
                     label = { Text("Show HVAC activity") },
                     colors = getSwitchButtonColors(),
                 )
@@ -153,9 +166,11 @@ fun SetThermostatTileView(
                     secondaryLabel = { Text("±${tile?.quickAdjustOne ?: 3}° next to ±1°; tap to change") },
                     onClick = {
                         tile?.let {
-                            val choices = listOf(3, 5, 2, 10)
-                            val next = choices[(choices.indexOf(it.quickAdjustOne) + 1) % choices.size]
-                            onPreferencesChanged(it.copy(quickAdjustOne = next))
+                            onPreferencesChanged(it.id) { current ->
+                                val choices = listOf(3, 5, 2, 10)
+                                val next = choices[(choices.indexOf(current.quickAdjustOne) + 1) % choices.size]
+                                current.copy(quickAdjustOne = next)
+                            }
                         }
                     },
                 )
@@ -166,7 +181,7 @@ fun SetThermostatTileView(
                     modifier = Modifier.fillMaxWidth(),
                     checked = tile?.showEntityName == true,
                     onCheckedChange = {
-                        onNameEnabled(tile?.id.toString().toInt(), it)
+                        tile?.let { current -> onNameEnabled(current.id, it) }
                     },
                     label = { Text(stringResource(commonR.string.setting_entity_name_on_tile)) },
                     icon = {

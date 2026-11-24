@@ -1461,6 +1461,9 @@
     <string name="thermostat_tile_n">Thermostat tile #%d</string>
     <string name="thermostat_tile_log_in">Log in to add a thermostat tile</string>
     <string name="thermostat_tile">Thermostat tile</string>
+    <string name="setting_thermostat_power_button_on_tile">Show power button</string>
+    <string name="thermostat_tile_turn_on">Turn thermostat on</string>
+    <string name="thermostat_tile_turn_off">Turn thermostat off</string>
     <string name="climate_heating">Heating</string>
     <string name="climate_cooling">Cooling</string>
     <string name="launcher">Device home screen</string>

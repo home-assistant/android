@@ -54,6 +54,8 @@ class ThermostatTile : TileService() {
         private const val TAP_ACTION_DOWN = "Down"
         private const val TAP_MODE_PREFIX = "Mode:"
         private const val TAP_FAN = "CycleFan"
+        private const val TAP_POWER_ON = "PowerOn"
+        private const val TAP_POWER_OFF = "PowerOff"
 
         // Stable ProtoLayout resource IDs; the tile's resource version changes only when icons change.
         private const val ICON_HEAT = "thermostat_heat_v1"
@@ -159,7 +161,8 @@ class ThermostatTile : TileService() {
                                 // asynchronously through the same fast coordinator as Enhanced.
                                 tileConfig.layoutStyle == "classic" &&
                                     lastId in listOf(TAP_ACTION_DOWN, TAP_ACTION_UP) &&
-                                    entity.rawState != "off" && controls.targetTemperature != null -> {
+                                    entity.rawState != "off" && controls.targetTemperature != null &&
+                                    waitingCommand?.value !in listOf("on", "off") -> {
                                     val delta = if (lastId == TAP_ACTION_UP) step else -step
                                     val baseline = waitingCommand?.single
                                         ?: controls.targetTemperature!!
@@ -170,13 +173,25 @@ class ThermostatTile : TileService() {
                                         tileId, target, false, null, null, proposed,
                                     )
                                 }
-                                lastId.startsWith(TAP_MODE_PREFIX) -> {
+                                tileConfig.layoutStyle == "classic" && tileConfig.showPowerButton &&
+                                    waitingCommand == null && lastId == TAP_POWER_ON &&
+                                    entity.rawState == "off" && controls.supportsTurnOn -> {
+                                    commandCoordinator.submitPower(tileId, target, true)
+                                }
+                                tileConfig.layoutStyle == "classic" && tileConfig.showPowerButton &&
+                                    waitingCommand == null && lastId == TAP_POWER_OFF &&
+                                    entity.rawState != "off" && controls.supportsTurnOff -> {
+                                    commandCoordinator.submitPower(tileId, target, false)
+                                }
+                                tileConfig.layoutStyle != "classic" && tileConfig.showHvacModes &&
+                                    lastId.startsWith(TAP_MODE_PREFIX) -> {
                                     val mode = lastId.removePrefix(TAP_MODE_PREFIX)
                                     if (mode in controls.hvacModes) {
                                         commandCoordinator.submitHvac(tileId, target, mode)
                                     }
                                 }
-                                lastId == TAP_FAN && controls.fanModes.isNotEmpty() -> {
+                                tileConfig.layoutStyle != "classic" && tileConfig.showFanControl &&
+                                    lastId == TAP_FAN && controls.fanModes.isNotEmpty() -> {
                                     val modes = controls.fanModes
                                     // WearDash uses fan on/auto. Prefer that pair if both are offered.
                                     val nextMode = if ("on" in modes && "auto" in modes) {
@@ -316,6 +331,15 @@ class ThermostatTile : TileService() {
         actionPrefix: String,
     ): Timeline {
         val entityName = if (tileConfig.showEntityName == true) entity.name else ""
+        val controls = entity.climateControls
+        val showPower = tileConfig.showPowerButton &&
+            (controls?.supportsTurnOn == true || controls?.supportsTurnOff == true)
+        val available = entity.rawState !in listOf("unavailable", "unknown")
+        val powerOn = entity.rawState != "off"
+        val powerEnabled = available && pending?.status != ThermostatCommandCoordinator.Pending.Status.WAITING &&
+            (if (powerOn) controls?.supportsTurnOff == true else controls?.supportsTurnOn == true)
+        val temperatureEnabled = available && powerOn && controls?.targetTemperature != null &&
+            !(pending?.status == ThermostatCommandCoordinator.Pending.Status.WAITING && pending.value in listOf("on", "off"))
         val targetTemperature = pending?.single
             ?.takeIf { pending.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
             ?: entity.climateControls?.targetTemperature
@@ -382,16 +406,17 @@ class ThermostatTile : TileService() {
                     )
                     .addContent(
                         LayoutElementBuilders.Row.Builder()
-                            .addContent(
-                                getTempButton(hvacAction != "off" && entity.rawState != "unavailable", TAP_ACTION_DOWN, actionPrefix),
-                            )
-                            .addContent(
-                                LayoutElementBuilders.Spacer.Builder()
-                                    .setWidth(DimensionBuilders.dp(20f)).build(),
-                            )
-                            .addContent(
-                                getTempButton(hvacAction != "off" && entity.rawState != "unavailable", TAP_ACTION_UP, actionPrefix),
-                            )
+                            .addContent(getTempButton(temperatureEnabled, TAP_ACTION_DOWN, actionPrefix, showPower))
+                            .apply {
+                                if (showPower) {
+                                    addContent(horizontalGap(6f))
+                                    addContent(classicPowerButton(powerOn, powerEnabled, actionPrefix))
+                                    addContent(horizontalGap(6f))
+                                } else {
+                                    addContent(horizontalGap(20f))
+                                }
+                            }
+                            .addContent(getTempButton(temperatureEnabled, TAP_ACTION_UP, actionPrefix, showPower))
                             .build(),
                     )
                     .build(),
@@ -437,7 +462,26 @@ class ThermostatTile : TileService() {
 
     }
 
-    private fun getTempButton(enabled: Boolean, action: String, actionPrefix: String): LayoutElement {
+    private fun classicPowerButton(powerOn: Boolean, enabled: Boolean, actionPrefix: String): LayoutElement {
+        val clickable = Clickable.Builder()
+        if (enabled) {
+            clickable.setOnClick(ActionBuilders.LoadAction.Builder().build())
+                .setId(actionPrefix + (if (powerOn) TAP_POWER_OFF else TAP_POWER_ON))
+        }
+        return Button.Builder(this, clickable.build())
+            .setSize(40f)
+            .setIconContent(ICON_POWER)
+            .setContentDescription(getString(if (powerOn) commonR.string.thermostat_tile_turn_off else commonR.string.thermostat_tile_turn_on))
+            .setButtonColors(
+                ButtonColors(
+                    ColorBuilders.argb(getColor(if (enabled && powerOn) commonR.color.colorPrimary else commonR.color.colorDeviceControlsOff)),
+                    ColorBuilders.argb(0xFFFFFFFF.toInt()),
+                ),
+            )
+            .build()
+    }
+
+    private fun getTempButton(enabled: Boolean, action: String, actionPrefix: String, compact: Boolean): LayoutElement {
         val clickable = Clickable.Builder()
         if (enabled) {
             clickable.setOnClick(ActionBuilders.LoadAction.Builder().build())
@@ -445,6 +489,7 @@ class ThermostatTile : TileService() {
         }
 
         return Button.Builder(this, clickable.build())
+            .apply { if (compact) setSize(40f) }
             .setTextContent(if (action == TAP_ACTION_DOWN) "—" else "+")
             .setButtonColors(
                 ButtonColors(

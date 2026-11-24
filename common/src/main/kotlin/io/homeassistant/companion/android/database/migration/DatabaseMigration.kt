@@ -42,6 +42,7 @@ internal fun migrationPath(context: Context): Array<Migration> = arrayOf(
     Migration40to41(context),
     MIGRATION_55_56,
     MIGRATION_57_58,
+    MIGRATION_58_59,
 )
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -834,6 +835,15 @@ private val MIGRATION_57_58 = object : Migration(57, 58) {
     override suspend fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             "ALTER TABLE `thermostat_tiles` ADD COLUMN `layout_style` TEXT NOT NULL DEFAULT 'classic'",
+        )
+    }
+}
+
+/** Keep the power button hidden on existing tiles, including development version 58. */
+private val MIGRATION_58_59 = object : Migration(58, 59) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "ALTER TABLE `thermostat_tiles` ADD COLUMN `show_power_button` INTEGER NOT NULL DEFAULT 0",
         )
     }
 }

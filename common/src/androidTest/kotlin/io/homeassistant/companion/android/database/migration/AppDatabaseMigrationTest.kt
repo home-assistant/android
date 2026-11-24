@@ -73,6 +73,50 @@ class AppDatabaseMigrationTest {
     }
 
     @Test
+    fun thermostatPowerMigrationFromOfficialVersion56PreservesExistingTiles() = runTest {
+        helper.createDatabase(56).use { connection ->
+            connection.execSQL(
+                "INSERT INTO thermostat_tiles (id, entity_id, refresh_interval, show_entity_name) " +
+                    "VALUES (8, 'climate.test', 600, 0)",
+            )
+        }
+        helper.runMigrationsAndValidate(DATABASE_VERSION, migrationPath(context).toList()).use { connection ->
+            connection.prepare(
+                "SELECT entity_id, refresh_interval, show_entity_name, layout_style, show_power_button " +
+                    "FROM thermostat_tiles WHERE id = 8",
+            ).use {
+                assertTrue(it.step())
+                assertEquals("climate.test", it.getText(0))
+                assertEquals(600, it.getInt(1))
+                assertEquals(0, it.getInt(2))
+                assertEquals("classic", it.getText(3))
+                assertEquals(0, it.getInt(4))
+            }
+        }
+    }
+
+    @Test
+    fun thermostatPowerMigrationPreservesExistingTiles() = runTest {
+        helper.createDatabase(58).use { connection ->
+            connection.execSQL(
+                "INSERT INTO thermostat_tiles (id, entity_id, layout_style, quick_adjust_one) " +
+                    "VALUES (7, 'climate.test', 'enhanced', 5)",
+            )
+        }
+        helper.runMigrationsAndValidate(DATABASE_VERSION, migrationPath(context).toList()).use { connection ->
+            connection.prepare(
+                "SELECT entity_id, layout_style, quick_adjust_one, show_power_button FROM thermostat_tiles WHERE id = 7",
+            ).use {
+                assertTrue(it.step())
+                assertEquals("climate.test", it.getText(0))
+                assertEquals("enhanced", it.getText(1))
+                assertEquals(5, it.getInt(2))
+                assertEquals(0, it.getInt(3))
+            }
+        }
+    }
+
+    @Test
     fun migration5to6_restructuresStaticWidgetAndKeepsData() = runTest {
         val connection = openDirectDb()
         connection.use { connection ->

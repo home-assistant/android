@@ -383,6 +383,8 @@ data class ClimateControls(
     val supportsTargetTemperatureRange: Boolean = false,
     val fanMode: String? = null,
     val fanModes: List<String> = emptyList(),
+    val supportsTurnOn: Boolean = false,
+    val supportsTurnOff: Boolean = false,
 )
 
 /** Value range of a number entity, resolved from its state and attributes. */
@@ -482,6 +484,8 @@ object EntityExt {
 
     const val CLIMATE_SUPPORT_TARGET_TEMPERATURE = 1
     const val CLIMATE_SUPPORT_TARGET_TEMPERATURE_RANGE = 2
+    const val CLIMATE_SUPPORT_TURN_OFF = 128
+    const val CLIMATE_SUPPORT_TURN_ON = 256
     const val COVER_SUPPORT_SET_POSITION = 4
     const val FAN_SUPPORT_SET_SPEED = 1
     const val LIGHT_MODE_COLOR_TEMP = "color_temp"
@@ -804,6 +808,8 @@ fun Entity.getClimateControls(): ClimateControls? {
         supportsTargetTemperatureRange = supportsFeature(EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE_RANGE),
         fanMode = attributes["fan_mode"]?.toString(),
         fanModes = (attributes["fan_modes"] as? List<*>)?.filterIsInstance<String>().orEmpty(),
+        supportsTurnOn = supportsFeature(EntityExt.CLIMATE_SUPPORT_TURN_ON),
+        supportsTurnOff = supportsFeature(EntityExt.CLIMATE_SUPPORT_TURN_OFF),
     )
 }
 

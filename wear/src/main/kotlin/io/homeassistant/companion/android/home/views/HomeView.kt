@@ -332,11 +332,9 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     },
                     onNameEnabled = { tileIdToggle, showName ->
                         mainViewModel.setThermostatTileShowName(tileIdToggle, showName)
-                        TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java)
                     },
-                    onPreferencesChanged = { updated ->
-                        mainViewModel.setThermostatTilePreferences(updated)
-                        TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java)
+                    onPreferencesChanged = { id, update ->
+                        mainViewModel.setThermostatTilePreferences(id, update)
                     },
                 )
             }
@@ -357,7 +355,6 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     onEntitySelected = { entity ->
                         tileId?.let {
                             mainViewModel.setThermostatTileEntity(it, entity.entityId)
-                            TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java)
                         }
                         swipeDismissableNavController.navigateUp()
                     },
