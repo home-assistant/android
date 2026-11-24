@@ -13,7 +13,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.EntityFilter
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
@@ -26,16 +25,13 @@ import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.future
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -43,12 +39,6 @@ import timber.log.Timber
 /** How often and how long to poll for the new state after a power toggle, as the server reports it late. */
 private const val TOGGLE_REFRESH_ATTEMPTS = 15
 private val TOGGLE_REFRESH_DELAY = 200.milliseconds
-
-/** Raw state shown while a turn on is not confirmed yet, the climate entity then reports its actual mode. */
-private const val PRESUMED_ON_STATE = "heat"
-
-/** How soon the system asks for the tile again after a toggle, in case the follow-up refresh didn't happen. */
-private val TOGGLE_FALLBACK_REFRESH = 3.seconds
 
 @AndroidEntryPoint
 class ThermostatTile : TileService() {
@@ -155,10 +145,8 @@ class ThermostatTile : TileService() {
                                 if (entity.rawState == "off") "turn_on" else "turn_off",
                                 hashMapOf("entity_id" to entity.entityId),
                             )
-                            // Show the expected state right away instead of waiting for the server to report it
-                            shownEntity = presumedAfterToggle(entity)
-                            confirmToggle(entity)
-                            tile.setFreshnessIntervalMillis(TOGGLE_FALLBACK_REFRESH.inWholeMilliseconds)
+                            shownEntity = awaitUpdatedEntity(entity)
+                            targetTemp = shownEntity.climateControls?.targetTemperature
                         }
 
                         val name = shownEntity.name.takeIf { tileConfig.showEntityName == true }
@@ -195,41 +183,19 @@ class ThermostatTile : TileService() {
             }
         }
 
-    /** The [entity] as it is expected to look once a power toggle went through, until the server confirms it. */
-    private fun presumedAfterToggle(entity: EntityDisplay): EntityDisplay {
-        val turnedOn = entity.rawState == "off"
-        return EntityDisplayWithoutContext(
-            entityId = entity.entityId,
-            name = entity.name,
-            icon = entity.icon,
-            statelessIcon = entity.statelessIcon,
-            rawState = if (turnedOn) PRESUMED_ON_STATE else "off",
-            climateControls = entity.climateControls?.copy(hvacAction = if (turnedOn) "idle" else "off"),
-        )
-    }
-
     /**
-     * Asks for a refresh of this tile once the server reports a state other than the one of [entity],
-     * so the presumed state is replaced by the actual one. The service is destroyed right after it
-     * answers the tile request, so this runs in [confirmationScope] instead of [serviceScope].
+     * Waits briefly for the server to report the new state after a toggle, so the tile doesn't
+     * redraw the previous one. Falls back to [entity] when the state doesn't change in time.
      */
-    private suspend fun confirmToggle(entity: EntityDisplay) {
-        val integrationRepository = serverManager.integrationRepository()
-        val context = applicationContext
-        val tileClass = javaClass
-        confirmationScope.launch {
-            awaitStateChange(integrationRepository, entity)
-            getUpdater(context).requestUpdate(tileClass)
-        }
-    }
-
-    /** Waits until the server reports a state other than the one of [entity], or gives up after a while. */
-    private suspend fun awaitStateChange(integrationRepository: IntegrationRepository, entity: EntityDisplay) {
+    private suspend fun awaitUpdatedEntity(entity: EntityDisplay): EntityDisplay {
         repeat(TOGGLE_REFRESH_ATTEMPTS) {
             delay(TOGGLE_REFRESH_DELAY)
-            val updated = integrationRepository.getEntity(entity.entityId)
-            if (updated != null && updated.state != entity.rawState) return
+            val updated = serverManager.integrationRepository().getEntity(entity.entityId)
+            if (updated != null && updated.state != entity.rawState) {
+                return EntityDisplayWithoutContext(entity = updated, name = entity.name)
+            }
         }
+        return entity
     }
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
@@ -282,8 +248,5 @@ class ThermostatTile : TileService() {
         const val TAP_ACTION_UP = "Up"
         const val TAP_ACTION_DOWN = "Down"
         const val TAP_ACTION_TOGGLE = "Toggle"
-
-        /** Outlives the service, which is destroyed as soon as it answered a tile request. */
-        private val confirmationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     }
 }

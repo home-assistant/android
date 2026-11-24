@@ -125,9 +125,8 @@ fun SetThermostatTileView(
                 SwitchButton(
                     modifier = Modifier.fillMaxWidth(),
                     checked = tile?.showPowerButton == true,
-                    onCheckedChange = {
-                        onPowerButtonEnabled(tile?.id.toString().toInt(), it)
-                    },
+                    enabled = tile != null,
+                    onCheckedChange = { tile?.let { tile -> onPowerButtonEnabled(tile.id, it) } },
                     label = { Text(stringResource(commonR.string.setting_thermostat_power_button_on_tile)) },
                     icon = {
                         Image(
