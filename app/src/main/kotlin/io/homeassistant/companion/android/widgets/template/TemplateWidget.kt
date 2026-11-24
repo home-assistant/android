@@ -29,11 +29,13 @@ import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.U
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -141,15 +143,18 @@ class TemplateWidget : AppWidgetProvider() {
                     }
                 if (templateUpdates != null) {
                     widgetTemplates[widget.id] = widget.template
-                    widgetJobs[widget.id] = widgetScope.launch {
+                    val job = widgetScope.launch(start = CoroutineStart.LAZY) {
                         templateUpdates.collect {
                             onTemplateChanged(context, widget.id, it)
                         }
                         // Only completes when the updates cannot be followed, remove data to make it
-                        // retry on the next update
-                        widgetTemplates.remove(widget.id)
-                        widgetJobs.remove(widget.id)
+                        // retry on the next update, unless a newer job already replaced this one
+                        if (widgetJobs.remove(widget.id, coroutineContext.job)) {
+                            widgetTemplates.remove(widget.id)
+                        }
                     }
+                    widgetJobs[widget.id] = job
+                    job.start()
                 } else { // Remove data to make it retry on the next update
                     widgetTemplates.remove(widget.id)
                     widgetJobs.remove(widget.id)

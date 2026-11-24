@@ -1025,8 +1025,9 @@ class WebSocketCoreImplTest {
             assertTrue(webSocketCore.activeMessages.isEmpty())
         }
 
-        @Test
-        fun `Given a failed shared subscription When its flow is collected again Then it completes and a new attempt is made`() = runTest {
+        @ParameterizedTest
+        @ValueSource(longs = [0, 10])
+        fun `Given a failed shared subscription When its flow is collected again Then it completes and a new attempt is made`(keepAliveSeconds: Long) = runTest {
             setupServer()
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
@@ -1040,17 +1041,22 @@ class WebSocketCoreImplTest {
             val flow = webSocketCore.subscribeTo<StateChangedEvent>(
                 SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
                 mapOf("event_type" to "state_changed"),
+                timeout = keepAliveSeconds.seconds,
             )
 
             flow.test {
                 awaitComplete()
             }
-            // The sharing stops in the background once its last collector left
-            runCurrent()
-            assertTrue(webSocketCore.activeMessages.isEmpty())
 
+            // Collected again right away, while the failed attempt is still kept alive
             flow.test {
+                expectNoEvents()
+
+                // The failed attempt ends once kept alive long enough after its last collector left
+                runCurrent()
+                advanceTimeBy(keepAliveSeconds.seconds)
                 establishSubscription()
+
                 sendStateChangedEvent(subscriptionId = 3, entityId = "light.bed_light")
                 assertEquals("light.bed_light", awaitItem().entityId)
             }
@@ -1677,13 +1683,15 @@ class WebSocketCoreImplTest {
         }
 
         @Test
-        fun `Given a subscription waiting for its confirmation When its collector leaves Then activeMessages is cleaned up`() = runTest {
+        fun `Given a subscription waiting for its confirmation When its collector leaves Then it is unsubscribed and the connection is closed`() = runTest {
             setupServer()
             prepareAuthenticationAnswer()
             assertTrue(webSocketCore.connect())
 
             // Don't mock response so the subscription hangs waiting for confirmation
             every { mockConnection.send(match<String> { it.contains("test_subscription") }) } returns true
+            // Answer to the unsubscribe
+            mockResultSuccessForId(3)
 
             webSocketCore.subscribeTo<String>("test_subscription", emptyMap()).test {
                 runCurrent()
@@ -1698,10 +1706,17 @@ class WebSocketCoreImplTest {
             }
             runCurrent()
 
-            // activeMessages should be cleaned up
+            // The server may have accepted the subscription, so it is unsubscribed
+            verify {
+                mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") })
+            }
             assertTrue(webSocketCore.activeMessages.isEmpty())
+            verify(exactly = 1) { mockConnection.close(1001, "Done listening to subscriptions.") }
 
-            verify(exactly = 3) { mockConnection.send(any<String>()) }
+            // Its confirmation arriving late doesn't bring it back
+            webSocketListener.onMessage(mockConnection, """{"id":2,"type":"result","success":true,"result":{}}""")
+            runCurrent()
+            assertTrue(webSocketCore.activeMessages.isEmpty())
         }
     }
 

@@ -22,11 +22,13 @@ import io.homeassistant.companion.android.database.widget.WidgetEntity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -251,7 +253,7 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
                 null
             }
             if (entityChangesFlow != null) {
-                widgetJobs[appWidgetId] = widgetScope.launch {
+                val job = widgetScope.launch(start = CoroutineStart.LAZY) {
                     Timber.tag(
                         widgetClassName,
                     ).d("Watching changes of entities($entitiesId) for widget $appWidgetId")
@@ -265,8 +267,11 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
                     }
                     // Only completes when the changes cannot be followed
                     Timber.tag(widgetClassName).w("Entity changes ended for widget $appWidgetId not watching")
-                    removeSubscription(appWidgetId)
+                    // A newer job may already have replaced this one
+                    widgetJobs.remove(appWidgetId, coroutineContext.job)
                 }
+                widgetJobs[appWidgetId] = job
+                job.start()
             } else {
                 Timber.tag(widgetClassName).w("Entity changes is null for widget $appWidgetId not watching")
                 // Shouldn't do anything since the job should have been canceled already

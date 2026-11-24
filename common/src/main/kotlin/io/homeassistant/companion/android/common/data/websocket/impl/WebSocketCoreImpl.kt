@@ -614,7 +614,11 @@ internal class WebSocketCoreImpl(
                 command.responseDeferred.await()
             }
         } catch (e: CancellationException) {
-            activeMessages.remove(id)
+            // The server may already have accepted a subscription: it stays tracked for
+            // endSubscription to unsubscribe it, since its collector left
+            if (command !is Command.WithAnswer.Subscription) {
+                activeMessages.remove(id)
+            }
             throw e
         } catch (e: Exception) {
             // Connection closed or other error while waiting for response
@@ -835,6 +839,9 @@ internal class WebSocketCoreImpl(
         }.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
 
         return channelFlow {
+            // An attempt that failed is over once its last collector left: waiting for it before
+            // collecting makes this collector start an attempt of its own
+            failed.first { !it }
             val events = launch { shared.collect(::send) }
             failed.first { it }
             events.cancel()

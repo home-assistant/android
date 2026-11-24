@@ -15,11 +15,13 @@ import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetEntity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -126,7 +128,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
                     }
                 if (entityChanges != null) {
                     widgetEntities[id] = entities
-                    widgetJobs[id] = widgetScope.launch {
+                    val job = widgetScope.launch(start = CoroutineStart.LAZY) {
                         entityChanges.collect { change ->
                             when (change) {
                                 is EntityChange.StateChanged -> onEntityStateChanged(context, id, change.entity)
@@ -135,10 +137,13 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
                             }
                         }
                         // Only completes when the changes cannot be followed, remove data to make it
-                        // retry on the next update
-                        widgetEntities.remove(id)
-                        widgetJobs.remove(id)
+                        // retry on the next update, unless a newer job already replaced this one
+                        if (widgetJobs.remove(id, coroutineContext.job)) {
+                            widgetEntities.remove(id)
+                        }
                     }
+                    widgetJobs[id] = job
+                    job.start()
                 } else { // Remove data to make it retry on the next update
                     widgetEntities.remove(id)
                     widgetJobs.remove(id)
