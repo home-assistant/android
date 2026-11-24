@@ -11,6 +11,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -46,6 +47,10 @@ class ThermostatCommandCoordinator @Inject constructor(
     private val prefs = context.getSharedPreferences("thermostat_tile_commands", Context.MODE_PRIVATE)
     private val latest = mutableMapOf<Int, Long>()
     private val lock = Any()
+    private var nextToken = 0L
+    // Queue service dispatches in submission order for the same entity. The next
+    // service call need not wait for the previous entity-state acknowledgment.
+    private val dispatchTails = mutableMapOf<String, CompletableDeferred<Unit>>()
 
     private data class CachedEntity(val item: EntityDisplayWithoutContext, val receivedAt: Long)
     private val entityCache = ConcurrentHashMap<String, CachedEntity>()
@@ -86,7 +91,7 @@ class ThermostatCommandCoordinator @Inject constructor(
         }
     }
 
-    fun get(tileId: Int): Pending? {
+    fun get(tileId: Int): Pending? = synchronized(lock) {
         val time = prefs.getLong("$tileId.time", 0L)
         if (time == 0L) return null
         val failed = prefs.getBoolean("$tileId.failed", false)
@@ -106,9 +111,24 @@ class ThermostatCommandCoordinator @Inject constructor(
         )
     }
 
-    private fun store(tileId: Int, value: String, failed: Boolean = false) {
-        prefs.edit().putLong("$tileId.time", System.currentTimeMillis())
-            .putString("$tileId.value", value).putBoolean("$tileId.failed", failed).apply()
+    // Called under lock, so a newer request cannot be overwritten by an older reply.
+    private fun store(
+        tileId: Int,
+        value: String,
+        failed: Boolean = false,
+        single: Float? = null,
+        low: Float? = null,
+        high: Float? = null,
+    ) {
+        val edit = prefs.edit().putLong("$tileId.time", System.currentTimeMillis())
+            .putString("$tileId.value", value).putBoolean("$tileId.failed", failed)
+        if (!failed) {
+            edit.remove("$tileId.single").remove("$tileId.low").remove("$tileId.high")
+            if (single != null) edit.putFloat("$tileId.single", single)
+            if (low != null) edit.putFloat("$tileId.low", low)
+            if (high != null) edit.putFloat("$tileId.high", high)
+        }
+        edit.apply()
         refresh()
     }
 
@@ -136,13 +156,8 @@ class ThermostatCommandCoordinator @Inject constructor(
             !isRange && single != null -> mapOf("entity_id" to entityId, "temperature" to single)
             else -> return
         }
-        val edit = prefs.edit().remove("$tileId.single").remove("$tileId.low").remove("$tileId.high")
-        if (single != null) edit.putFloat("$tileId.single", single)
-        if (low != null) edit.putFloat("$tileId.low", low)
-        if (high != null) edit.putFloat("$tileId.high", high)
-        edit.apply()
         val displayValue = if (isRange) "$low–$high°" else "$single°"
-        submit(tileId, entityId, "set_temperature", data, displayValue) { entity ->
+        submit(tileId, entityId, "set_temperature", data, displayValue, single, low, high) { entity ->
             val state = entity.climateControls ?: return@submit false
             if (isRange) {
                 approximately(state.targetTemperatureLow, low) && approximately(state.targetTemperatureHigh, high)
@@ -168,15 +183,31 @@ class ThermostatCommandCoordinator @Inject constructor(
         action: String,
         data: Map<String, Any?>,
         value: String,
+        single: Float? = null,
+        low: Float? = null,
+        high: Float? = null,
         confirmed: (EntityDisplay) -> Boolean,
     ) {
-        val token = System.nanoTime()
-        synchronized(lock) { latest[tileId] = token }
-        store(tileId, value)
+        val dispatched = CompletableDeferred<Unit>()
+        val (token, predecessor) = synchronized(lock) {
+            val token = ++nextToken
+            latest[tileId] = token
+            store(tileId, value, single = single, low = low, high = high)
+            token to dispatchTails.put(entityId, dispatched)
+        }
         scope.launch {
             val started = SystemClock.elapsedRealtime()
             try {
-                serverManager.integrationRepository().callAction("climate", action, data)
+                try {
+                    predecessor?.await()
+                    serverManager.integrationRepository().callAction("climate", action, data)
+                } finally {
+                    // Always release the following command, including after a failed service call.
+                    synchronized(lock) {
+                        if (dispatchTails[entityId] === dispatched) dispatchTails.remove(entityId)
+                        dispatched.complete(Unit)
+                    }
+                }
                 Timber.i("Thermostat %s service accepted after %d ms", action, SystemClock.elapsedRealtime() - started)
                 // Request only the climate entity, not ALL HA states and the entire
                 // entity registry. Acknowledgment polling must be cheap on a watch.
@@ -184,23 +215,30 @@ class ThermostatCommandCoordinator @Inject constructor(
                     if (!isLatest(tileId, token)) return@launch
                     val current = serverManager.integrationRepository().getEntity(entityId)
                         ?.let { EntityDisplayWithoutContext(it) }
-                    if (current != null) {
-                        rememberEntity(current)
-                        if (confirmed(current)) {
-                            Timber.i("Thermostat %s state confirmed after %d ms", action, SystemClock.elapsedRealtime() - started)
-                            if (isLatest(tileId, token)) clear(tileId)
-                            return@launch
+                    synchronized(lock) {
+                        if (latest[tileId] != token) return@launch
+                        if (current != null) {
+                            rememberEntity(current)
+                            if (confirmed(current)) {
+                                Timber.i("Thermostat %s state confirmed after %d ms", action, SystemClock.elapsedRealtime() - started)
+                                clear(tileId)
+                                return@launch
+                            }
                         }
                     }
                     delay(1_500)
                 }
                 Timber.w("Thermostat %s unconfirmed after %d ms", action, SystemClock.elapsedRealtime() - started)
-                if (isLatest(tileId, token)) store(tileId, value, failed = true)
+                synchronized(lock) {
+                    if (latest[tileId] == token) store(tileId, value, failed = true)
+                }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
                 Timber.e(error, "Thermostat tile command failed: %s", action)
-                if (isLatest(tileId, token)) store(tileId, value, failed = true)
+                synchronized(lock) {
+                    if (latest[tileId] == token) store(tileId, value, failed = true)
+                }
             }
         }
     }
