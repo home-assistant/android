@@ -35,10 +35,20 @@ import timber.log.Timber
  * the thermostat's physical relay has already changed state.
  */
 @Singleton
-class ThermostatCommandCoordinator @Inject constructor(
-    @ApplicationContext private val context: Context,
+class ThermostatCommandCoordinator internal constructor(
+    context: Context,
     private val serverManager: ServerManager,
+    private val scope: CoroutineScope,
+    private val requestTileUpdate: () -> Unit,
 ) {
+    @Inject
+    constructor(@ApplicationContext context: Context, serverManager: ServerManager) : this(
+        context,
+        serverManager,
+        CoroutineScope(SupervisorJob() + Dispatchers.IO),
+        { TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java) },
+    )
+
     data class Pending(
         val value: String,
         val status: Status,
@@ -62,7 +72,6 @@ class ThermostatCommandCoordinator @Inject constructor(
         val prefix: String get() = "v2.${target.serverId}.${target.entityId}.$tileId"
     }
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val prefs = context.getSharedPreferences("thermostat_tile_commands", Context.MODE_PRIVATE)
     private val latest = mutableMapOf<PendingKey, Long>()
     private val lock = Any()
@@ -349,6 +358,6 @@ class ThermostatCommandCoordinator @Inject constructor(
     private fun isLatest(key: PendingKey, token: Long): Boolean = synchronized(lock) { latest[key] == token }
 
     private fun refresh() {
-        TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java)
+        requestTileUpdate()
     }
 }
