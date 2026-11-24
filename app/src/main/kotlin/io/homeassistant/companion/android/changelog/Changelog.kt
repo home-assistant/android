@@ -66,12 +66,15 @@ sealed interface ChangelogAction {
  * the entry's [platforms]; on any other platform the entry should be shown without its action. Use it for
  * actions whose target does not exist on every platform, such as a deeplink to a platform-specific
  * sensor or screen.
+ * @property requiresFullFlavor When `true`, the entry is only shown on the `full` flavor. Use it for
+ * changes that rely on Google Play Services.
  */
 data class ChangelogEntry(
     @param:StringRes val contentRes: Int,
     val platforms: Set<ChangelogPlatform>,
     val action: ChangelogAction? = null,
     val actionRequiresPlatform: Boolean = false,
+    val requiresFullFlavor: Boolean = false,
 )
 
 /**
