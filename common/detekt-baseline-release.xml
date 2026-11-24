@@ -128,7 +128,6 @@
     <ID>MagicNumber:ExoPlayerExt.kt:8.0f</ID>
     <ID>MagicNumber:IBeaconMonitor.kt:IBeaconMonitor$0.5</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$1000</ID>
-    <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$2022</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$2023</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$4</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$5</ID>
@@ -259,8 +258,6 @@
     <ID>UnsafeCallOnNullableType:AuthenticationRepositoryImpl.kt:AuthenticationRepositoryImpl$server.session.refreshToken!!</ID>
     <ID>UnsafeCallOnNullableType:BluetoothUtils.kt:BluetoothUtils$context.applicationContext.getSystemService&lt;BluetoothManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:DeviceCommands.kt:data[DeviceCommandData.BLE_MEASURED_POWER]?.toInt()!!</ID>
-    <ID>UnsafeCallOnNullableType:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$it.newState!!</ID>
-    <ID>UnsafeCallOnNullableType:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$it.toState!!</ID>
     <ID>UnsafeCallOnNullableType:KeyguardSensorManager.kt:KeyguardSensorManager$applicationContext.getSystemService&lt;KeyguardManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:LightSensorManager.kt:LightSensorManager$applicationContext.getSystemService()!!</ID>
     <ID>UnsafeCallOnNullableType:MonitoringManager.kt:MonitoringManager$context.getSystemService&lt;NotificationManager&gt;()!!</ID>
@@ -283,7 +280,6 @@
     <ID>UnsafeCallOnNullableType:UrlUtil.kt:UrlUtil$url.toHttpUrlOrNull()!!</ID>
     <ID>UnsafeCallOnNullableType:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$removeTemplateTile(UNKNOWN_TEMPLATE_TILE_ID)!!</ID>
     <ID>UnsafeCallOnNullableType:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$removeTileShortcuts(null)!!</ID>
-    <ID>UnsafeCallOnNullableType:WebSocketCoreImpl.kt:WebSocketCoreImpl$urlObserverJob!!</ID>
     <ID>UnsafeCallOnNullableType:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$it.connection.webhookId!!</ID>
     <ID>UnusedParameter:LastRebootSensorManager.kt:LastRebootSensorManager$applicationContext: Context</ID>
     <ID>UnusedParameter:MonitoringManager.kt:MonitoringManager$context: Context</ID>
