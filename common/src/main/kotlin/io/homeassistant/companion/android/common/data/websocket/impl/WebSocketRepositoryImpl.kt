@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
 import io.homeassistant.companion.android.common.data.integration.ActionData
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.TODO_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -49,6 +50,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Th
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.toDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.webRtcJsonMapper
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.toHexString
@@ -56,14 +58,45 @@ import io.homeassistant.companion.android.database.server.ServerUserInfo
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.intOrNull
 import okhttp3.WebSocketListener
+import timber.log.Timber
 
-private val matterTimeout = 2.minutes
+private val MATTER_TIMEOUT = 2.minutes
+
+/**
+ * Minimum server version to use `config/entity_registry/list_for_display`.
+ *
+ * The command itself exists since 2023.3, but only since 2024.10 (https://github.com/home-assistant/core/pull/125832)
+ * is the `en` field the server-resolved display name (`name or original_name`) and the `hn`
+ * (`has_entity_name`) flag present. Before 2024.10, `en` was only sent for entities with
+ * `has_entity_name` and no user-set name, so it cannot be trusted as the display name. Older
+ * servers use `config/entity_registry/list` instead.
+ */
+private val MIN_VERSION_ENTITY_REGISTRY_DISPLAY = HomeAssistantVersion(year = 2024, month = 10, release = 0)
+
+/**
+ * Minimum server version to limit `config/entity_registry/list_for_display` to an entity filter
+ * (https://github.com/home-assistant/core/pull/193111).
+ */
+private val MIN_VERSION_ENTITY_REGISTRY_DISPLAY_FILTER = HomeAssistantVersion(year = 2026, month = 12, release = 0)
+
+/** Minimum server version of the `subscribe_entities` command, which can be limited to entity ids. */
+internal val MIN_VERSION_SUBSCRIBE_ENTITIES = HomeAssistantVersion(year = 2022, month = 4, release = 0)
+
+/** Minimum server version to limit `subscribe_entities` to domains (https://github.com/home-assistant/core/pull/124641). */
+private val MIN_VERSION_SUBSCRIBE_ENTITIES_DOMAINS = HomeAssistantVersion(year = 2024, month = 9, release = 0)
+
+/** How long [WebSocketRepositoryImpl.getStates] waits for the states of a filter, like any other request. */
+private val FILTERED_STATES_TIMEOUT = 30.seconds
+
+/** Minimum server version of the `config/floor_registry/list` command (https://github.com/home-assistant/core/pull/110741). */
+private val MIN_VERSION_FLOOR_REGISTRY = HomeAssistantVersion(year = 2024, month = 3, release = 0)
 
 class WebSocketRepositoryImpl internal constructor(
     private val webSocketCore: WebSocketCore,
@@ -137,7 +170,13 @@ class WebSocketRepositoryImpl internal constructor(
         return response
     }
 
-    override suspend fun getStates(): List<EntityResponse>? {
+    override suspend fun getStates(filter: EntityFilter): List<EntityResponse>? = when {
+        filter.isEmpty -> getAllStates()
+        webSocketCore.server()?.version.supportsFilteringEntities(filter) -> getFilteredStates(filter)
+        else -> getAllStates()?.filter { filter.matches(it.entityId) }
+    }
+
+    private suspend fun getAllStates(): List<EntityResponse>? {
         val socketResponse = webSocketCore.sendMessage(
             mapOf(
                 "type" to "get_states",
@@ -145,6 +184,18 @@ class WebSocketRepositoryImpl internal constructor(
         )
 
         return mapResponse(socketResponse)
+    }
+
+    private suspend fun getFilteredStates(filter: EntityFilter): List<EntityResponse>? {
+        // A subscription starts with the states of the entities it follows, filtered by the server
+        val initialStates = withTimeoutOrNull(FILTERED_STATES_TIMEOUT) {
+            webSocketCore.firstEventOf<CompressedStateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES,
+                filter.toFilterData(),
+            )
+        }?.added
+        if (initialStates == null) Timber.w("Unable to fetch the states of the filtered entities")
+        return initialStates?.map { (entityId, state) -> state.toEntity(entityId) }
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
@@ -177,16 +228,40 @@ class WebSocketRepositoryImpl internal constructor(
         return mapResponse(socketResponse)
     }
 
-    override suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse? {
-        if (!isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY)) return null
+    override suspend fun getEntityRegistryDisplay(filter: EntityFilter): EntityRegistryDisplayResponse? = when {
+        !isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY) -> null
+        filter.isEmpty || isServerAtLeast(MIN_VERSION_ENTITY_REGISTRY_DISPLAY_FILTER) ->
+            listEntityRegistryDisplay(filter)
+        filter.domains.isEmpty() -> getEntityRegistryDisplayEntries(filter.entityIds.toList())
+        // The server is too old to do the filtering server side
+        else -> listEntityRegistryDisplay(EntityFilter())?.let { response ->
+            response.copy(entities = response.entities.filter { filter.matches(it.entityId) })
+        }
+    }
 
+    /** Lists the display registry, limited by the server to [filter] when it isn't empty. */
+    private suspend fun listEntityRegistryDisplay(filter: EntityFilter): EntityRegistryDisplayResponse? {
         val socketResponse = webSocketCore.sendMessage(
-            mapOf(
-                "type" to "config/entity_registry/list_for_display",
-            ),
+            buildMap {
+                put("type", "config/entity_registry/list_for_display")
+                putAll(filter.toFilterData())
+            },
         )
 
         return mapResponse(socketResponse)
+    }
+
+    private suspend fun getEntityRegistryDisplayEntries(entityIds: List<String>): EntityRegistryDisplayResponse? {
+        val socketResponse = webSocketCore.sendMessage(
+            mapOf(
+                "type" to "config/entity_registry/get_entries",
+                "entity_ids" to entityIds,
+            ),
+        )
+        // The entry of an entity the registry doesn't know is null
+        return socketResponse?.takeIf { it.success == true }
+            ?.let { mapResponse<Map<String, EntityRegistryResponse?>>(it) }
+            ?.values?.filterNotNull()?.toDisplayResponse()
     }
 
     override suspend fun getFloorRegistry(): List<FloorRegistryResponse>? {
@@ -314,11 +389,8 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>? =
         subscribeToTrigger("state", mapOf("entity_id" to entityIds))
 
-    override suspend fun getCompressedStateAndChanges(): Flow<CompressedStateChangedEvent>? =
-        webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES)
-
-    override suspend fun getCompressedStateAndChanges(entityIds: List<String>): Flow<CompressedStateChangedEvent>? =
-        webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES, mapOf("entity_ids" to entityIds))
+    override suspend fun getCompressedStateAndChanges(filter: EntityFilter): Flow<CompressedStateChangedEvent>? =
+        webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES, filter.toFilterData())
 
     override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? =
         subscribeToEventsForType(EVENT_AREA_REGISTRY_UPDATED)
@@ -375,7 +447,7 @@ class WebSocketRepositoryImpl internal constructor(
                     "code" to code,
                 ),
                 // Matter commissioning takes at least 60 seconds + interview
-                timeout = matterTimeout,
+                timeout = MATTER_TIMEOUT,
             ),
         )
 
@@ -398,7 +470,7 @@ class WebSocketRepositoryImpl internal constructor(
                     }
                 },
                 // Matter commissioning takes at least 60 seconds + interview
-                timeout = matterTimeout,
+                timeout = MATTER_TIMEOUT,
             ),
         )
 
@@ -503,6 +575,17 @@ class WebSocketRepositoryImpl internal constructor(
     }
 
     /**
+     * Data limiting a `subscribe_entities` or `config/entity_registry/list_for_display` command to
+     * this filter, none when it is empty. Ids are sorted so that the same selection always shares
+     * the same subscription.
+     */
+    private fun EntityFilter.toFilterData(): Map<String, Any?> = when {
+        isEmpty -> emptyMap()
+        domains.isEmpty() -> mapOf("entity_ids" to entityIds.sorted())
+        else -> mapOf("include" to mapOf("domains" to domains.sorted(), "entities" to entityIds.sorted()))
+    }
+
+    /**
      * Update server entry in [serverManager] with information from a [CurrentUserResponse] like user
      * name and admin status.
      */
@@ -531,16 +614,9 @@ class WebSocketRepositoryImpl internal constructor(
         response?.result?.run { kotlinJsonMapper.decodeFromJsonElement(this) }
 }
 
-/**
- * Minimum server version to use `config/entity_registry/list_for_display`.
- *
- * The command itself exists since 2023.3, but only since 2024.10 (https://github.com/home-assistant/core/pull/125832)
- * is the `en` field the server-resolved display name (`name or original_name`) and the `hn`
- * (`has_entity_name`) flag present. Before 2024.10, `en` was only sent for entities with
- * `has_entity_name` and no user-set name, so it cannot be trusted as the display name. Older
- * servers use `config/entity_registry/list` instead.
- */
-private val MIN_VERSION_ENTITY_REGISTRY_DISPLAY = HomeAssistantVersion(year = 2024, month = 10, release = 0)
-
-/** Minimum server version of the `config/floor_registry/list` command (https://github.com/home-assistant/core/pull/110741). */
-private val MIN_VERSION_FLOOR_REGISTRY = HomeAssistantVersion(year = 2024, month = 3, release = 0)
+/** Whether a server running this version can limit `subscribe_entities` to [filter] itself. */
+internal fun HomeAssistantVersion?.supportsFilteringEntities(filter: EntityFilter): Boolean {
+    val minimumVersion =
+        if (filter.domains.isEmpty()) MIN_VERSION_SUBSCRIBE_ENTITIES else MIN_VERSION_SUBSCRIBE_ENTITIES_DOMAINS
+    return this?.isAtLeast(minimumVersion) == true
+}

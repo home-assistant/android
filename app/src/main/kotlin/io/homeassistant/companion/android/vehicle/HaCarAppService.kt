@@ -15,6 +15,7 @@ import androidx.car.app.validation.HostValidator
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -22,6 +23,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ConnectionAvailability
 import io.homeassistant.companion.android.common.data.servers.ConnectionAvailabilityMonitor
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.util.vehicle.VEHICLE_DOMAINS
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -167,7 +169,8 @@ class HaCarAppService : CarAppService() {
         observeJob?.cancel()
         entitiesState.value = EntityDisplayState.Loading
         observeJob = scope.launch {
-            entitiesForDisplayManager.observe(id).collect { entitiesState.value = it }
+            entitiesForDisplayManager.observe(id, EntityFilter(domains = VEHICLE_DOMAINS))
+                .collect { entitiesState.value = it }
         }
     }
 }

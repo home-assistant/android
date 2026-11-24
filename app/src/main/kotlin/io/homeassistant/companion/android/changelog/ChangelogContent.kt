@@ -30,6 +30,10 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_hinge_status_sensor,
+            platforms = setOf(ChangelogPlatform.APP),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_home_assistant_mode,
             platforms = setOf(ChangelogPlatform.APP),
             // Removed on devices without Modes, see ChangelogActionAvailability

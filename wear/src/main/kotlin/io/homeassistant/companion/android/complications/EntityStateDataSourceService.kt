@@ -14,6 +14,7 @@ import androidx.wear.watchface.complications.datasource.SuspendingComplicationDa
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -45,7 +46,10 @@ class EntityStateDataSourceService : SuspendingComplicationDataSourceService() {
         val entityId = settings?.entityId
             ?: return getErrorComplication(request, R.string.complication_entity_invalid, true)
 
-        val loadedState = entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
+        val loadedState = entitiesForDisplayManager.snapshot(
+            ServerManager.SERVER_ID_ACTIVE,
+            EntityFilter(entityIds = setOf(entityId)),
+        )
             .awaitLoadedOrNull() ?: return getErrorComplication(request, R.string.state_unknown)
 
         val displayEntity = loadedState.entity(entityId)

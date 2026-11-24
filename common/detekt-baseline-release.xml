@@ -43,7 +43,7 @@
     <ID>CyclomaticComplexMethod:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
     <ID>CyclomaticComplexMethod:SensorWithAttributes.kt:SensorWithAttributes$fun toSensorRegistration: SensorRegistration&lt;Any&gt;</ID>
     <ID>CyclomaticComplexMethod:WearPrefsRepositoryImpl.kt:WearLocalStorageWithMigration$private suspend fun checkMigration</ID>
-    <ID>CyclomaticComplexMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
+    <ID>CyclomaticComplexMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private fun handleEvent</ID>
     <ID>ForbiddenComment:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$// TODO: Send default locale of device with request.</ID>
     <ID>ImplicitDefaultLocale:SensorReceiverBase.kt:SensorReceiverBase$String.format( "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update", sensors.toString(), intent.action, )</ID>
     <ID>ImplicitDefaultLocale:StorageSensorManager.kt:StorageSensorManager$String.format("%,d", sizeLong)</ID>
@@ -85,7 +85,7 @@
     <ID>LongMethod:SensorManager.kt:SensorManager$suspend fun onSensorUpdated</ID>
     <ID>LongMethod:SensorReceiverBase.kt:SensorReceiverBase$override fun onReceive</ID>
     <ID>LongMethod:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
-    <ID>LongMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
+    <ID>LongMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private fun handleEvent</ID>
     <ID>LongParameterList:HAColors.kt:HAColorScheme</ID>
     <ID>LongParameterList:IntegrationRepository.kt:IntegrationRepositoryFactory</ID>
     <ID>LongParameterList:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl</ID>
@@ -192,7 +192,7 @@
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun isInternal: Boolean</ID>
     <ID>ReturnCount:TLSHelper.kt:TLSHelper$private fun withUserInstalledCaFallback: X509TrustManager</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun attemptWebSocketConnection: ConnectionAttemptResult</ID>
-    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
+    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private fun handleEvent</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun sendMessage: RawMessageSocketResponse?</ID>
     <ID>SpreadOperator:DatabaseModule.kt:DatabaseModule$(*migrationPath(context))</ID>
     <ID>SuspendFunWithFlowReturnType:AssistAudioStrategy.kt:AssistAudioStrategy$suspend</ID>

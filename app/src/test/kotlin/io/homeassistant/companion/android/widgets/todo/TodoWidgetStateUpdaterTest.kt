@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.github.timoptr.mdiicons.generated.Bookmark
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
@@ -352,7 +353,7 @@ Watch for update
     }
 
     private fun mockDisplayEntities(entityId: String, emissions: suspend ProducerScope<EntityDisplayState<EntityDisplayWithoutContext>>.() -> Unit) {
-        every { entitiesForDisplayManager.observe(any(), listOf(entityId)) } returns channelFlow {
+        every { entitiesForDisplayManager.observe(any(), EntityFilter(entityIds = setOf(entityId))) } returns channelFlow {
             emissions()
         }
     }
