@@ -98,13 +98,13 @@ fun SetThermostatTileView(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     colors = getFilledTonalButtonColors(),
-                    label = { Text("Tile appearance") },
+                    label = { Text(stringResource(commonR.string.setting_thermostat_tile_appearance)) },
                     secondaryLabel = {
                         Text(
                             if (tile?.layoutStyle == "enhanced") {
-                                "Enhanced: direct temperature and mode controls"
+                                stringResource(commonR.string.setting_thermostat_enhanced)
                             } else {
-                                "Classic: original Home Assistant tile"
+                                stringResource(commonR.string.setting_thermostat_classic)
                             },
                         )
                     },
@@ -136,7 +136,7 @@ fun SetThermostatTileView(
                     modifier = Modifier.fillMaxWidth(),
                     checked = tile?.showHvacModes == true,
                     onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.id) { current -> current.copy(showHvacModes = enabled) } } },
-                    label = { Text("Show HVAC mode buttons") },
+                    label = { Text(stringResource(commonR.string.setting_thermostat_hvac_modes)) },
                     colors = getSwitchButtonColors(),
                 )
             }
@@ -145,7 +145,7 @@ fun SetThermostatTileView(
                     modifier = Modifier.fillMaxWidth(),
                     checked = tile?.showFanControl == true,
                     onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.id) { current -> current.copy(showFanControl = enabled) } } },
-                    label = { Text("Show fan button if supported") },
+                    label = { Text(stringResource(commonR.string.setting_thermostat_fan_control)) },
                     colors = getSwitchButtonColors(),
                 )
             }
@@ -154,7 +154,7 @@ fun SetThermostatTileView(
                     modifier = Modifier.fillMaxWidth(),
                     checked = tile?.showActivity == true,
                     onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.id) { current -> current.copy(showActivity = enabled) } } },
-                    label = { Text("Show HVAC activity") },
+                    label = { Text(stringResource(commonR.string.setting_thermostat_activity)) },
                     colors = getSwitchButtonColors(),
                 )
             }
@@ -162,8 +162,8 @@ fun SetThermostatTileView(
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     colors = getFilledTonalButtonColors(),
-                    label = { Text("Secondary temperature step") },
-                    secondaryLabel = { Text("±${tile?.quickAdjustOne ?: 3}° next to ±1°; tap to change") },
+                    label = { Text(stringResource(commonR.string.setting_thermostat_secondary_step)) },
+                    secondaryLabel = { Text(stringResource(commonR.string.setting_thermostat_secondary_step_summary, tile?.quickAdjustOne ?: 3)) },
                     onClick = {
                         tile?.let {
                             onPreferencesChanged(it.id) { current ->

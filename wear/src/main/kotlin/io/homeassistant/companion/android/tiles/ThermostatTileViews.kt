@@ -75,7 +75,7 @@ internal class ThermostatTileViews(private val context: Context) {
         return Timeline.fromLayoutElement(
             LayoutElementBuilders.Box.Builder().apply {
                 val currentTemperature = entity.climateControls?.currentTemperature
-                val hvacAction = entity.climateControls?.hvacAction.toString()
+                val hvacAction = controls?.hvacAction.orEmpty()
 
                 val hvacActionColor = when (hvacAction) {
                     "heating" -> context.getColor(commonR.color.colorDeviceControlsThermostatHeat)
@@ -83,13 +83,7 @@ internal class ThermostatTileViews(private val context: Context) {
                     else -> 0x00000000
                 }
 
-                val friendlyHvacAction = when (hvacAction) {
-                    "heating" -> context.getString(commonR.string.climate_heating)
-                    "cooling" -> context.getString(commonR.string.climate_cooling)
-                    "idle" -> context.getString(commonR.string.state_idle)
-                    "off" -> context.getString(commonR.string.state_off)
-                    else -> hvacAction.replaceFirstChar { it.uppercase() }
-                }
+                val friendlyHvacAction = stateLabel(hvacAction.ifBlank { entity.rawState })
 
                 addContent(
                     LayoutElementBuilders.Column.Builder()
@@ -218,7 +212,12 @@ internal class ThermostatTileViews(private val context: Context) {
 
         return Button.Builder(context, clickable.build())
             .apply { if (compact) setSize(40f) }
-            .setTextContent(if (action == TAP_ACTION_DOWN) "—" else "+")
+            .setTextContent(if (action == TAP_ACTION_DOWN) "−" else "+")
+            .setContentDescription(
+                context.getString(
+                    if (action == TAP_ACTION_DOWN) commonR.string.thermostat_tile_decrease_target else commonR.string.thermostat_tile_increase_target,
+                ),
+            )
             .setButtonColors(
                 ButtonColors(
                     ColorBuilders.argb(
@@ -271,13 +270,7 @@ internal class ThermostatTileViews(private val context: Context) {
         }
         column.addContent(temperatureText("$current $temperatureUnit", if (compact) 27f else 30f, 0xFFFFFFFF.toInt()))
         if (config.showActivity || pending != null) {
-            val displayState = when (state) {
-                "heat" -> "HEAT"
-                "cool" -> "COOL"
-                "heat_cool", "auto" -> "AUTO"
-                "off" -> "OFF"
-                else -> state.uppercase()
-            }
+            val displayState = stateLabel(if (state == "heat_cool") "auto" else state).uppercase(java.util.Locale.getDefault())
             val modeColor = when (state) {
                 "heat" -> 0xFFFFA19A.toInt()
                 "cool" -> 0xFF8DCBFF.toInt()
@@ -285,9 +278,9 @@ internal class ThermostatTileViews(private val context: Context) {
                 else -> 0xFFBFC9D7.toInt()
             }
             val activity = when (pending?.status) {
-                ThermostatCommandCoordinator.Pending.Status.WAITING -> "Awaiting thermostat reply"
-                ThermostatCommandCoordinator.Pending.Status.FAILED -> "Thermostat did not confirm"
-                null -> if (active) "$displayState · $hvacAction" else displayState
+                ThermostatCommandCoordinator.Pending.Status.WAITING -> context.getString(commonR.string.thermostat_tile_waiting)
+                ThermostatCommandCoordinator.Pending.Status.FAILED -> context.getString(commonR.string.thermostat_tile_unconfirmed)
+                null -> if (active) context.getString(commonR.string.thermostat_tile_activity_summary, displayState, stateLabel(hvacAction)) else displayState
             }
             val activityColor = when (pending?.status) {
                 ThermostatCommandCoordinator.Pending.Status.WAITING -> 0xFFFFD778.toInt()
@@ -303,14 +296,14 @@ internal class ThermostatTileViews(private val context: Context) {
                 column.addContent(
                     temperatureRow(
                         "heat", pending?.low?.takeIf { waiting } ?: controls.targetTemperatureLow,
-                        "H", 0xFFFFA19A.toInt(), config.quickAdjustOne, compact, targetRowHeight, actionPrefix,
+                        context.getString(commonR.string.thermostat_tile_heat_short), 0xFFFFA19A.toInt(), config.quickAdjustOne, compact, targetRowHeight, actionPrefix,
                     ),
                 )
                 column.addContent(verticalGap(2f))
                 column.addContent(
                     temperatureRow(
                         "cool", pending?.high?.takeIf { waiting } ?: controls.targetTemperatureHigh,
-                        "C", 0xFF8DCBFF.toInt(), config.quickAdjustOne, compact, targetRowHeight, actionPrefix,
+                        context.getString(commonR.string.thermostat_tile_cool_short), 0xFF8DCBFF.toInt(), config.quickAdjustOne, compact, targetRowHeight, actionPrefix,
                     ),
                 )
             } else if (controls.targetTemperature != null) {
@@ -342,11 +335,13 @@ internal class ThermostatTileViews(private val context: Context) {
                 hasMode = true
             }
             if (config.showHvacModes) {
-                addMode("heat", ICON_HEAT, "Heat mode", 0xFF9A3D40.toInt())
-                addMode("cool", ICON_COOL, "Cool mode", 0xFF286FAD.toInt())
+                addMode("heat", ICON_HEAT, context.getString(commonR.string.thermostat_tile_heat_mode), 0xFF9A3D40.toInt())
+                addMode("cool", ICON_COOL, context.getString(commonR.string.thermostat_tile_cool_mode), 0xFF286FAD.toInt())
                 addMode(
                     if ("heat_cool" in available) "heat_cool" else "auto",
-                    ICON_AUTO_HEAT, "Auto heat and cool mode", 0xFF6961A6.toInt(), ICON_AUTO_COOL,
+                    ICON_AUTO_HEAT, context.getString(
+                        if ("heat_cool" in available) commonR.string.thermostat_tile_heat_cool_mode else commonR.string.thermostat_tile_auto_mode,
+                    ), 0xFF6961A6.toInt(), ICON_AUTO_COOL,
                 )
             }
             if (hasMode) column.addContent(modeRow.build())
@@ -358,7 +353,9 @@ internal class ThermostatTileViews(private val context: Context) {
                 utilityRow.addContent(
                     iconButton(
                         ICON_FAN, actionPrefix + TAP_FAN, on, if (compact) 56f else 65f, utilityHeight,
-                        0xFF277766.toInt(), if (on) "Fan on; tap to change" else "Fan auto; tap to change",
+                        0xFF277766.toInt(), context.getString(
+                            commonR.string.thermostat_tile_fan_mode, stateLabel(controls.fanMode.orEmpty()),
+                        ),
                     ),
                 )
                 utilityRow.addContent(horizontalGap(if (compact) 6f else 8f))
@@ -367,7 +364,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 utilityRow.addContent(
                     iconButton(
                         ICON_POWER, actionPrefix + TAP_MODE_PREFIX + "off", state == "off",
-                        if (compact) 45f else 54f, utilityHeight, 0xFF7A4355.toInt(), "Turn thermostat off",
+                        if (compact) 45f else 54f, utilityHeight, 0xFF7A4355.toInt(), context.getString(commonR.string.thermostat_tile_turn_off),
                     ),
                 )
             }
@@ -402,15 +399,27 @@ internal class ThermostatTileViews(private val context: Context) {
         actionPrefix: String,
     ): LayoutElementBuilders.LayoutElement {
         val extra = secondaryStep.coerceIn(2, 10)
+        val targetDescription = context.getString(
+            when (slot) {
+                "heat" -> commonR.string.thermostat_tile_heat_target
+                "cool" -> commonR.string.thermostat_tile_cool_target
+                else -> commonR.string.thermostat_tile_target
+            },
+        )
+        fun adjustmentDescription(amount: Int): String = context.getString(
+            if (amount < 0) commonR.string.thermostat_tile_decrease else commonR.string.thermostat_tile_increase,
+            targetDescription,
+            kotlin.math.abs(amount),
+        )
         val outerWidth = if (compact) 29f else 32f
         val primaryWidth = if (compact) 33f else 37f
         val valueWidth = if (compact) 42f else 48f
         val gap = if (compact) 1f else 2f
         val row = LayoutElementBuilders.Row.Builder()
             .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
-        row.addContent(button("−$extra", actionPrefix + "Temp:$slot:${-extra}", false, outerWidth, height))
+        row.addContent(button("−$extra", actionPrefix + "Temp:$slot:${-extra}", false, outerWidth, height, adjustmentDescription(-extra)))
         row.addContent(horizontalGap(gap))
-        row.addContent(button("−", actionPrefix + "Temp:$slot:-1", false, primaryWidth, height))
+        row.addContent(button("−", actionPrefix + "Temp:$slot:-1", false, primaryWidth, height, adjustmentDescription(-1)))
         row.addContent(horizontalGap(gap))
         val value = target?.let { nice(it) } ?: "--"
         val shown = if (prefix.isEmpty()) value else "$prefix$value"
@@ -421,12 +430,20 @@ internal class ThermostatTileViews(private val context: Context) {
                 .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
                 .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
                 .addContent(temperatureText("$shown°", 16f, accent))
+                .setModifiers(
+                    ModifiersBuilders.Modifiers.Builder()
+                        .setSemantics(
+                            ModifiersBuilders.Semantics.Builder()
+                                .setContentDescription(context.getString(commonR.string.thermostat_tile_target_value, targetDescription, "$value°"))
+                                .build(),
+                        ).build(),
+                )
                 .build(),
         )
         row.addContent(horizontalGap(gap))
-        row.addContent(button("+", actionPrefix + "Temp:$slot:1", false, primaryWidth, height))
+        row.addContent(button("+", actionPrefix + "Temp:$slot:1", false, primaryWidth, height, adjustmentDescription(1)))
         row.addContent(horizontalGap(gap))
-        row.addContent(button("+$extra", actionPrefix + "Temp:$slot:$extra", false, outerWidth, height))
+        row.addContent(button("+$extra", actionPrefix + "Temp:$slot:$extra", false, outerWidth, height, adjustmentDescription(extra)))
         return row.build()
     }
 
@@ -436,6 +453,7 @@ internal class ThermostatTileViews(private val context: Context) {
         selected: Boolean,
         width: Float,
         height: Float,
+        description: String,
         activeColor: Int = 0xFF35445C.toInt(),
     ): LayoutElementBuilders.LayoutElement =
         LayoutElementBuilders.Box.Builder()
@@ -454,7 +472,9 @@ internal class ThermostatTileViews(private val context: Context) {
                     )
                     .setClickable(
                         Clickable.Builder().setId(action).setOnClick(ActionBuilders.LoadAction.Builder().build()).build(),
-                    ).build(),
+                    )
+                    .setSemantics(ModifiersBuilders.Semantics.Builder().setContentDescription(description).build())
+                    .build(),
             ).build()
 
     /** The five mode/utility buttons use drawables, not font-dependent symbols. */
@@ -498,7 +518,7 @@ internal class ThermostatTileViews(private val context: Context) {
                     )
                     .setSemantics(
                         ModifiersBuilders.Semantics.Builder()
-                            .setContentDescription(if (selected) "$description, selected" else description)
+                            .setContentDescription(if (selected) context.getString(commonR.string.thermostat_tile_selected, description) else description)
                             .build(),
                     )
                     .build(),
@@ -528,6 +548,23 @@ internal class ThermostatTileViews(private val context: Context) {
                     .setColor(ColorBuilders.argb(color))
                     .build(),
             ).build()
+
+    private fun stateLabel(state: String): String = when (state) {
+        "heat" -> context.getString(commonR.string.state_heat)
+        "cool" -> context.getString(commonR.string.state_cool)
+        "heat_cool" -> context.getString(commonR.string.state_heat_cool)
+        "auto" -> context.getString(commonR.string.state_auto)
+        "off" -> context.getString(commonR.string.state_off)
+        "on" -> context.getString(commonR.string.state_on)
+        "idle" -> context.getString(commonR.string.state_idle)
+        "heating" -> context.getString(commonR.string.climate_heating)
+        "cooling" -> context.getString(commonR.string.climate_cooling)
+        "dry", "drying" -> context.getString(commonR.string.state_dry)
+        "fan", "fan_only" -> context.getString(commonR.string.state_fan_only)
+        "unavailable" -> context.getString(commonR.string.state_unavailable)
+        "unknown", "" -> context.getString(commonR.string.state_unknown)
+        else -> state.replace('_', ' ').replaceFirstChar { it.titlecase(java.util.Locale.getDefault()) }
+    }
 
     private fun nice(value: Float): String =
         if (value % 1f == 0f) value.roundToInt().toString() else "%.1f".format(java.util.Locale.US, value)
