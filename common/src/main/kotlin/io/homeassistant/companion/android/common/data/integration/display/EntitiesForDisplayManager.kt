@@ -25,11 +25,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -193,7 +195,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     /**
      * Merges what an [EntityDisplayWithoutContext] depends on into a single [ObserveEvent] flow: the state
      * changes of the entities selected by [entityFilter] and the entity registry updates. The flow
-     * is empty when the state changes cannot be subscribed to, since the registry updates alone
+     * completes when the state changes cannot be subscribed to, since the registry updates alone
      * cannot keep the entities current; a registry subscription that cannot be established is
      * skipped.
      */
@@ -203,10 +205,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         entityFilter: EntityFilter,
     ): Flow<ObserveEvent.EntityEvent> {
         val entityChanges = entityChanges(serverId, entityFilter) ?: return emptyFlow()
-        return listOfNotNull(
-            entityChanges,
-            webSocketRepository?.entityRegistryChanges(),
-        ).merge()
+        return mergeUntilFirstCompletes(entityChanges, listOfNotNull(webSocketRepository?.entityRegistryChanges()))
     }
 
     /**
@@ -221,7 +220,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     /**
      * Merges the state changes of the entities selected by [entityFilter], or of every entity of
      * the server when it is empty, and the registry update events of the server into a single
-     * [ObserveEvent] flow. The flow is empty when the state changes cannot be subscribed to, since
+     * [ObserveEvent] flow. The flow completes when the state changes cannot be subscribed to, since
      * the registry updates alone cannot keep the entities current; a registry subscription that
      * cannot be established is skipped.
      */
@@ -231,17 +230,19 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         entityFilter: EntityFilter,
     ): Flow<ObserveEvent> {
         val entityChanges = entityChanges(serverId, entityFilter) ?: return emptyFlow()
-        return listOfNotNull(
+        return mergeUntilFirstCompletes(
             entityChanges,
-            webSocketRepository?.areaRegistryChanges(),
-            webSocketRepository?.deviceRegistryChanges(),
-            webSocketRepository?.entityRegistryChanges(),
-        ).merge()
+            listOfNotNull(
+                webSocketRepository?.areaRegistryChanges(),
+                webSocketRepository?.deviceRegistryChanges(),
+                webSocketRepository?.entityRegistryChanges(),
+            ),
+        )
     }
 
     /**
      * Subscription to the state changes and removals of the entities selected by [entityFilter], or
-     * of every entity of the server when it is empty, and null when it cannot be established.
+     * of every entity of the server when it is empty, and null when the server cannot be asked for it.
      */
     private suspend fun entityChanges(serverId: Int, entityFilter: EntityFilter): Flow<ObserveEvent.EntityEvent>? {
         val integrationRepository = serverManager.integrationRepositoryOrNull(serverId) ?: return null
@@ -253,15 +254,24 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         }
     }
 
-    private suspend fun WebSocketRepository.areaRegistryChanges(): Flow<ObserveEvent>? =
-        orNull("area registry updates") { getAreaRegistryUpdates() }?.map { ObserveEvent.AreaRegistryChanged }
+    private fun WebSocketRepository.areaRegistryChanges(): Flow<ObserveEvent> =
+        getAreaRegistryUpdates().map { ObserveEvent.AreaRegistryChanged }
 
-    private suspend fun WebSocketRepository.deviceRegistryChanges(): Flow<ObserveEvent>? =
-        orNull("device registry updates") { getDeviceRegistryUpdates() }?.map { ObserveEvent.DeviceRegistryChanged }
+    private fun WebSocketRepository.deviceRegistryChanges(): Flow<ObserveEvent> =
+        getDeviceRegistryUpdates().map { ObserveEvent.DeviceRegistryChanged }
 
-    private suspend fun WebSocketRepository.entityRegistryChanges(): Flow<ObserveEvent.EntityEvent>? =
-        orNull("entity registry updates") { getEntityRegistryUpdates() }
-            ?.map { ObserveEvent.EntityEvent.EntityRegistryChanged }
+    private fun WebSocketRepository.entityRegistryChanges(): Flow<ObserveEvent.EntityEvent> =
+        getEntityRegistryUpdates().map { ObserveEvent.EntityEvent.EntityRegistryChanged }
+
+    /**
+     * Merges [first] and [others] until [first] completes, which a subscription does when it cannot
+     * be established.
+     */
+    private fun <T> mergeUntilFirstCompletes(first: Flow<T>, others: List<Flow<T>>): Flow<T> = channelFlow {
+        val othersJob = launch { others.merge().collect(::send) }
+        first.collect(::send)
+        othersJob.cancel()
+    }
 
     /**
      * Emits [EntityDisplayState.Error] when no server is registered, returning whether one is, so

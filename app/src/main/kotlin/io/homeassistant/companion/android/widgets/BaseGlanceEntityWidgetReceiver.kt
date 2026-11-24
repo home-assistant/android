@@ -263,6 +263,9 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
                         }
                         updateView(context, appWidgetId)
                     }
+                    // Only completes when the changes cannot be followed
+                    Timber.tag(widgetClassName).w("Entity changes ended for widget $appWidgetId not watching")
+                    removeSubscription(appWidgetId)
                 }
             } else {
                 Timber.tag(widgetClassName).w("Entity changes is null for widget $appWidgetId not watching")

@@ -79,24 +79,24 @@ interface WebSocketRepository {
      * State changes of every entity of the server.
      * Prefer [getCompressedStateAndChanges] on servers supporting it.
      */
-    suspend fun getStateChanges(): Flow<StateChangedEvent>?
+    fun getStateChanges(): Flow<StateChangedEvent>
 
     /**
      * State changes of [entityIds], filtered by the server.
      * Requires the current user to be an admin.
      * Prefer [getCompressedStateAndChanges] on servers supporting it.
      */
-    suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>?
+    fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>
 
     /**
      * State changes of the entities selected by [filter], or of every entity when it is empty.
      * It requires Home Assistant 2022.4 or later, and 2024.9 or later when [filter] selects domains.
      */
-    suspend fun getCompressedStateAndChanges(filter: EntityFilter = EntityFilter()): Flow<CompressedStateChangedEvent>?
-    suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>?
-    suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
-    suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?
-    suspend fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>?
+    fun getCompressedStateAndChanges(filter: EntityFilter = EntityFilter()): Flow<CompressedStateChangedEvent>
+    fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>
+    fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>
+    fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>
+    fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>
     suspend fun getNotifications(): Flow<Map<String, Any>>?
     suspend fun ackNotification(confirmId: String): Boolean
 
@@ -164,7 +164,7 @@ interface WebSocketRepository {
         text: String,
         pipelineId: String? = null,
         conversationId: String? = null,
-    ): Flow<AssistPipelineEvent>?
+    ): Flow<AssistPipelineEvent>
 
     /**
      * Run the Assist pipeline for voice input
@@ -176,7 +176,7 @@ interface WebSocketRepository {
         pipelineId: String? = null,
         conversationId: String? = null,
         wakeWordPhrase: String? = null,
-    ): Flow<AssistPipelineEvent>?
+    ): Flow<AssistPipelineEvent>
 
     /**
      * Send voice data for an active Assist pipeline
@@ -213,10 +213,10 @@ interface WebSocketRepository {
      * (there is no dedicated close command). The server also closes the session when the
      * connection is lost and does not reconnect automatically.
      *
-     * @return a Flow that will emit all [WebRtcEvent]s for the session, or `null` if the
-     * subscription could not be started.
+     * @return a Flow that will emit all [WebRtcEvent]s for the session, completing without any
+     * event if the subscription could not be started.
      */
-    suspend fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent>?
+    fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent>
 
     /**
      * Send a local ICE candidate for a WebRTC session previously started with

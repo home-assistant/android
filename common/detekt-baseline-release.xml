@@ -206,8 +206,6 @@
     <ID>SuspendFunWithFlowReturnType:PrefsRepository.kt:PrefsRepository$suspend</ID>
     <ID>SuspendFunWithFlowReturnType:PrefsRepositoryImpl.kt:PrefsRepositoryImpl$suspend</ID>
     <ID>SuspendFunWithFlowReturnType:VoiceAudioRecorder.kt:VoiceAudioRecorder$suspend</ID>
-    <ID>SuspendFunWithFlowReturnType:WebSocketCore.kt:WebSocketCore$suspend</ID>
-    <ID>SuspendFunWithFlowReturnType:WebSocketCoreImpl.kt:WebSocketCoreImpl$suspend</ID>
     <ID>SuspendFunWithFlowReturnType:WebSocketRepository.kt:WebSocketRepository$suspend</ID>
     <ID>SuspendFunWithFlowReturnType:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$suspend</ID>
     <ID>SwallowedException:HomeAssistantApis.kt:HomeAssistantApis$e: Exception</ID>

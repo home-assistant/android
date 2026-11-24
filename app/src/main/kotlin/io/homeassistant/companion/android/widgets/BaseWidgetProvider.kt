@@ -134,6 +134,10 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
                                 is EntityChange.Removed -> updateView(context, id)
                             }
                         }
+                        // Only completes when the changes cannot be followed, remove data to make it
+                        // retry on the next update
+                        widgetEntities.remove(id)
+                        widgetJobs.remove(id)
                     }
                 } else { // Remove data to make it retry on the next update
                     widgetEntities.remove(id)

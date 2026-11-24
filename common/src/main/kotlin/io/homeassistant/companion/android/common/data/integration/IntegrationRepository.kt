@@ -26,7 +26,7 @@ interface IntegrationRepository {
     suspend fun getNotificationRateLimits(): RateLimitResponse
 
     suspend fun renderTemplate(template: String, variables: Map<String, String>): String?
-    suspend fun getTemplateUpdates(template: String): Flow<String?>?
+    suspend fun getTemplateUpdates(template: String): Flow<String?>
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
 
@@ -56,9 +56,9 @@ interface IntegrationRepository {
     /**
      * State changes and removals of the entities selected by [filter], or of every entity when it
      * is empty. Pass a filter whenever possible: servers supporting it (2022.4 for ids, 2024.9 for
-     * domains) only send the selected changes. Returns null when the changes can't be followed.
+     * domains) only send the selected changes. Completes without any change when they can't be followed.
      */
-    suspend fun getEntityChanges(filter: EntityFilter = EntityFilter()): Flow<EntityChange>?
+    suspend fun getEntityChanges(filter: EntityFilter = EntityFilter()): Flow<EntityChange>
 
     suspend fun callAction(domain: String, action: String, actionData: Map<String, Any?>)
 
@@ -79,7 +79,7 @@ interface IntegrationRepository {
         text: String,
         pipelineId: String? = null,
         conversationId: String? = null,
-    ): Flow<AssistPipelineEvent>?
+    ): Flow<AssistPipelineEvent>
 
     suspend fun getLastUsedPipelineId(): String?
 

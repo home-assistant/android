@@ -145,6 +145,10 @@ class TemplateWidget : AppWidgetProvider() {
                         templateUpdates.collect {
                             onTemplateChanged(context, widget.id, it)
                         }
+                        // Only completes when the updates cannot be followed, remove data to make it
+                        // retry on the next update
+                        widgetTemplates.remove(widget.id)
+                        widgetJobs.remove(widget.id)
                     }
                 } else { // Remove data to make it retry on the next update
                     widgetTemplates.remove(widget.id)
