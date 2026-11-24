@@ -145,6 +145,9 @@ class ThermostatTile : TileService() {
                             val step = controls.targetTemperatureStep?.takeIf { it > 0 } ?: 1f
                             val min = controls.minTemperature ?: 7f
                             val max = controls.maxTemperature ?: 35f
+                            // A failed command is not an authoritative temperature baseline.
+                            val waitingCommand = commandCoordinator.get(tileId)
+                                ?.takeIf { it.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
                             when {
                                 // Preserve the Classic tile's original +/- buttons, but dispatch
                                 // asynchronously through the same fast coordinator as Enhanced.
@@ -152,7 +155,7 @@ class ThermostatTile : TileService() {
                                     lastId in listOf(TAP_ACTION_DOWN, TAP_ACTION_UP) &&
                                     entity.rawState != "off" && controls.targetTemperature != null -> {
                                     val delta = if (lastId == TAP_ACTION_UP) step else -step
-                                    val baseline = commandCoordinator.get(tileId)?.single
+                                    val baseline = waitingCommand?.single
                                         ?: controls.targetTemperature!!
                                     val proposed = ThermostatTemperatureLogic.snap(
                                         baseline + delta, step, min, max,
@@ -177,17 +180,18 @@ class ThermostatTile : TileService() {
                                     }
                                     commandCoordinator.submitFan(tileId, entity.entityId, nextMode)
                                 }
-                                lastId.startsWith("Temp:") && entity.rawState != "off" -> {
+                                tileConfig.layoutStyle != "classic" &&
+                                    lastId.startsWith("Temp:") && entity.rawState != "off" -> {
                                     val items = lastId.split(":")
                                     val slot = items.getOrNull(1)
                                     val amount = items.getOrNull(2)?.toFloatOrNull()
-                                    if (amount != null && slot in listOf("single", "heat", "cool")) {
+                                    if (amount != null && amount.isFinite() && slot in listOf("single", "heat", "cool")) {
                                         val range = entity.rawState == "heat_cool" &&
                                             controls.targetTemperatureLow != null && controls.targetTemperatureHigh != null
-                                        if (range) {
-                                            val inFlight = commandCoordinator.get(tileId)
-                                            val currentLow = inFlight?.low ?: controls.targetTemperatureLow!!
-                                            val currentHigh = inFlight?.high ?: controls.targetTemperatureHigh!!
+                                        // Ignore a tap from an outdated layout after a mode change.
+                                        if (range && (slot == "heat" || slot == "cool")) {
+                                            val currentLow = waitingCommand?.low ?: controls.targetTemperatureLow!!
+                                            val currentHigh = waitingCommand?.high ?: controls.targetTemperatureHigh!!
                                             val revised = ThermostatTemperatureLogic.adjustRange(
                                                 if (slot == "heat") currentLow + amount else currentHigh + amount,
                                                 slot == "cool", currentLow, currentHigh, min, max, step,
@@ -195,8 +199,8 @@ class ThermostatTile : TileService() {
                                             commandCoordinator.submitTemperature(
                                                 tileId, entity.entityId, true, revised.first, revised.second, null,
                                             )
-                                        } else if (slot == "single" && controls.targetTemperature != null) {
-                                            val baseline = commandCoordinator.get(tileId)?.single
+                                        } else if (!range && slot == "single" && controls.targetTemperature != null) {
+                                            val baseline = waitingCommand?.single
                                                 ?: controls.targetTemperature!!
                                             val proposed = ThermostatTemperatureLogic.snap(
                                                 baseline + amount, step, min, max,
