@@ -31,6 +31,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
@@ -221,9 +222,11 @@ abstract class AssistViewModelBase(
                         /*No op*/
                     }
                 }
-            } ?: run {
-                onEvent(AssistEvent.Message.Output(app.getString(R.string.assist_error)))
             }
+            // A run that ended cancelled this job, so getting here means the pipeline could not be
+            // started, or its connection was lost before it ended
+            ensureActive()
+            onEvent(AssistEvent.Message.Output(app.getString(R.string.assist_error)))
         }
     }
 
