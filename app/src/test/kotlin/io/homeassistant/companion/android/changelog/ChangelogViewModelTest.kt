@@ -33,7 +33,8 @@ private val plainEntry = ChangelogEntry(
     contentRes = commonR.string.changelog_entry_bug_fixes,
     platforms = setOf(ChangelogPlatform.APP),
 )
-private val fullFlavorEntry = plainEntry.copy(requiresFullFlavor = true)
+private val fullFlavorEntry = plainEntry.copy(requiresFlavor = ChangelogFlavor.FULL)
+private val minimalFlavorEntry = plainEntry.copy(requiresFlavor = ChangelogFlavor.MINIMAL)
 
 /** A fixed changelog so release-note edits never change what these tests exercise. */
 private val fixtureChangelog = Changelog(new = listOf(sensorEntry), fixed = listOf(plainEntry))
@@ -118,21 +119,21 @@ class ChangelogViewModelTest {
     }
 
     @Test
-    fun `Given full flavor when reading state then entries requiring the full flavor are kept`() = runTest {
-        val changelog = Changelog(new = listOf(fullFlavorEntry), fixed = listOf(plainEntry, fullFlavorEntry))
+    fun `Given full flavor when reading state then only entries of other flavors and emptied sections are dropped`() = runTest {
+        val changelog = Changelog(new = listOf(minimalFlavorEntry), fixed = listOf(plainEntry, fullFlavorEntry, minimalFlavorEntry))
 
         val state = resolvedState(createViewModel(flavor = FULL_FLAVOR, changelog = changelog))
 
-        assertEquals(changelog.toSections(), state.sections)
+        assertEquals(Changelog(fixed = listOf(plainEntry, fullFlavorEntry)).toSections(), state.sections)
     }
 
     @Test
-    fun `Given another flavor when reading state then entries requiring the full flavor and emptied sections are dropped`() = runTest {
-        val changelog = Changelog(new = listOf(fullFlavorEntry), fixed = listOf(plainEntry, fullFlavorEntry))
+    fun `Given minimal flavor when reading state then only entries of other flavors and emptied sections are dropped`() = runTest {
+        val changelog = Changelog(new = listOf(fullFlavorEntry), fixed = listOf(plainEntry, fullFlavorEntry, minimalFlavorEntry))
 
         val state = resolvedState(createViewModel(flavor = MINIMAL_FLAVOR, changelog = changelog))
 
-        assertEquals(Changelog(fixed = listOf(plainEntry)).toSections(), state.sections)
+        assertEquals(Changelog(fixed = listOf(plainEntry, minimalFlavorEntry)).toSections(), state.sections)
     }
 
     private fun TestScope.createViewModel(
