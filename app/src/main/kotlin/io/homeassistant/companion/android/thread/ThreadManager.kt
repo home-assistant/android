@@ -90,12 +90,14 @@ interface ThreadManager {
      */
     sealed interface PreflightOutcome {
         /** The credential being inspected is already this device's preferred Thread credential. */
-        object AlreadyPreferred : PreflightOutcome
+        data object AlreadyPreferred : PreflightOutcome
 
         /**
          * A different credential owned by this app is already this device's preferred Thread
          * network. The device typically keeps preferring it; adding a new credential is unlikely
          * to change which network is preferred.
+         *
+         * @param networkName Name of the network the device currently prefers.
          */
         data class AppCredentialPreferred(val networkName: String) : PreflightOutcome
 
@@ -108,14 +110,14 @@ interface ThreadManager {
          * system from a border router set up with the user's account — is invisible here and
          * would win over the credential being added.
          */
-        object LikelyToBecomePreferred : PreflightOutcome
+        data object LikelyToBecomePreferred : PreflightOutcome
 
         /**
          * This app has credentials stored on the device but none of them is preferred, or the
          * stored credentials could not be read. Another app may own the preferred credential;
          * the outcome of adding one more is ambiguous.
          */
-        object Unknown : PreflightOutcome
+        data object Unknown : PreflightOutcome
     }
 
     /**
@@ -124,13 +126,13 @@ interface ThreadManager {
      */
     sealed interface AddCredentialResult {
         /** The added credential is now the device's preferred Thread credential. */
-        object Preferred : AddCredentialResult
+        data object Preferred : AddCredentialResult
 
         /** The device kept preferring a different Thread credential. */
-        object NotPreferred : AddCredentialResult
+        data object NotPreferred : AddCredentialResult
 
         /** The credential was added but the post-add preferred state could not be determined. */
-        object PreferredUnknown : AddCredentialResult
+        data object PreferredUnknown : AddCredentialResult
     }
 
     /**

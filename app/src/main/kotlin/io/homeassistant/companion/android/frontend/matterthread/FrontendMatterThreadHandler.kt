@@ -250,7 +250,6 @@ internal class FrontendMatterThreadHandler @Inject constructor(
                 is InFlight.Matter -> handleMatterIntentResult(result)
                 is InFlight.MatterShare -> handleMatterShareIntentResult(result, current.messageId)
                 is InFlight.Thread -> handleThreadIntentResult(result, current.serverId)
-                is InFlight.ThreadStore -> Unit // Returned above before entering the try block.
             }
         } finally {
             inFlight.set(null)
@@ -270,9 +269,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
      *  4. result information dialog reporting whether the device prefers the just-added
      *     credential.
      *
-     * The result is always reported via [FrontendDialogManager.showInformation] (not a terminal
-     * dialog/snackbar) because every message references the network name, which the
-     * @StringRes-only [MatterThreadTerminal] cannot interpolate.
+     * The result is always reported via [FrontendDialogManager.showInformation].
      *
      * No-op if another flow is already in-flight.
      */
@@ -291,7 +288,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             if (networkName == null) {
                 showThreadInformation(commonR.string.thread_store_invalid_payload)
             } else {
-                reportStoreFailure(networkName, e)
+                reportThreadAddCredentialFailure(networkName, e)
             }
         } finally {
             inFlight.set(null)
@@ -309,8 +306,8 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             return
         }
         val outcome = withProgress { threadManager.predictPreferredOutcome(tlv) }
-        if (confirmPreflight(outcome, networkName)) {
-            addCredentialAndReport(
+        if (confirmThreadPreflight(outcome, networkName)) {
+            addThreadCredentialAndReport(
                 serverId = serverId,
                 borderAgentId = borderAgentId,
                 tlv = tlv,
@@ -320,12 +317,12 @@ internal class FrontendMatterThreadHandler @Inject constructor(
     }
 
     /**
-     * Surface the [outcome] of the preflight check to the user.
+     * Surface the [outcome] of the Thread store credentials preflight check to the user.
      *
      * @return `true` if the add should proceed, `false` if the user declined or there is nothing
      *   to do.
      */
-    private suspend fun confirmPreflight(outcome: ThreadManager.PreflightOutcome, networkName: String): Boolean =
+    private suspend fun confirmThreadPreflight(outcome: ThreadManager.PreflightOutcome, networkName: String): Boolean =
         when (outcome) {
             ThreadManager.PreflightOutcome.AlreadyPreferred -> {
                 showThreadInformation(commonR.string.thread_store_already_preferred, networkName)
@@ -358,8 +355,8 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         dialogManager.showInformation(messageRes, *formatArgs, moreInfoUrl = THREAD_DOCS_URL.toUri())
     }
 
-    /** Add the credential to the device and report the outcome with an information dialog. */
-    private suspend fun addCredentialAndReport(
+    /** Add the Thread credential to the device and report the outcome with an information dialog. */
+    private suspend fun addThreadCredentialAndReport(
         serverId: Int,
         borderAgentId: String,
         tlv: ByteArray,
@@ -382,12 +379,12 @@ internal class FrontendMatterThreadHandler @Inject constructor(
             throw e
         } catch (e: Exception) {
             Timber.w(e, "Thread store: failed to add credential '${sensitive(networkName)}'")
-            reportStoreFailure(networkName, e)
+            reportThreadAddCredentialFailure(networkName, e)
         }
     }
 
     /** Tell the user that storing [networkName] failed, with the reason taken from [error]. */
-    private suspend fun reportStoreFailure(networkName: String, error: Exception) {
+    private suspend fun reportThreadAddCredentialFailure(networkName: String, error: Exception) {
         showThreadInformation(
             commonR.string.thread_store_failed,
             networkName,

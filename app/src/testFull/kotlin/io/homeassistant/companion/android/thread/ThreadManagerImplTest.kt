@@ -691,8 +691,10 @@ class ThreadManagerImplTest {
                 listOf("existing-id", borderAgentId),
             )
 
-            runCatching {
+            try {
                 createManager().addCredentialToDevice(serverId = 1, tlv = byteArrayOf(1), borderAgentId = borderAgentId)
+                fail { "Should have failed" }
+            } catch (_: IllegalStateException) {
             }
 
             coVerifyOrder {

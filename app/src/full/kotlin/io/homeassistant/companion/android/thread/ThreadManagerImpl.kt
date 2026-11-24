@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
+import io.homeassistant.companion.android.util.sensitive
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
@@ -149,14 +150,15 @@ class ThreadManagerImpl @Inject constructor(
                                     coreThreadDataset.preferredBorderAgentId,
                                     serverId,
                                 )
+                                val preferredBorderAgentId = coreThreadDataset.preferredBorderAgentId
                                 serverManager.servers().forEach {
                                     // Keep tracking IDs whose deletion failed so the orphan
                                     // cleanup can retry them later.
                                     val repository = serverManager.integrationRepository(it.id)
                                     val kept = repository.getThreadBorderAgentIds() - deleted
                                     repository.setThreadBorderAgentIds(
-                                        if (it.id == serverId && coreThreadDataset.preferredBorderAgentId != null) {
-                                            (kept + coreThreadDataset.preferredBorderAgentId!!).distinct()
+                                        if (it.id == serverId && preferredBorderAgentId != null) {
+                                            (kept + preferredBorderAgentId).distinct()
                                         } else {
                                             kept
                                         },
@@ -268,20 +270,20 @@ class ThreadManagerImpl @Inject constructor(
     }
 
     /**
-     * The credential stored by this app that the device currently prefers, or `null` if the
-     * device prefers none of them. A preferred credential owned by another app is not visible
-     * to this app and also yields `null`.
+     * Retrieves the credential the device currently prefers and returns
+     * - the credential the device currently prefers, if it was stored by this app
+     * - `null` if the device doesn't prefer any credential stored by the app
+     * - `null` if the preferred credential is owned by another app
      */
     private suspend fun appOwnedPreferredCredential(): ThreadNetworkCredentials? =
         preferredCredentialAmong(getAllCredentials())
 
-    @OptIn(ExperimentalStdlibApi::class)
     private suspend fun preferredCredentialAmong(
         credentials: List<ThreadNetworkCredentials>?,
     ): ThreadNetworkCredentials? = try {
         credentials?.firstOrNull { isPreferredCredentials(it) }?.also {
             Timber.d(
-                "Thread device prefers app added dataset: ${it.networkName} (PAN ${it.panId}, EXTPAN ${
+                "Thread device prefers app added dataset: ${sensitive(it.networkName)} (PAN ${it.panId}, EXTPAN ${
                     it.extendedPanId.toHexString(HexFormat.UpperCase)
                 })",
             )
