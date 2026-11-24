@@ -23,7 +23,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.home.HomeActivity
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
@@ -110,9 +109,13 @@ class ThermostatTile : TileService() {
                 } else {
                     try {
                         val lastId = requestParams.currentState.lastClickableId
-                        val isTap = lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN || lastId == TAP_ACTION_TOGGLE
                         val entity = tileConfig.entityId?.let {
-                            fetchEntity(tileId, it, tileConfig.showEntityName == true, isTap)
+                            entitiesForDisplayManager.snapshot(
+                                ServerManager.SERVER_ID_ACTIVE,
+                                EntityFilter(entityIds = setOf(it)),
+                            )
+                                .awaitLoadedOrNull()
+                                ?.entity(it)
                         }
                         checkNotNull(entity)
                         val climateControls = entity.climateControls
@@ -145,7 +148,7 @@ class ThermostatTile : TileService() {
                             thermostatTileDao.add(updated)
                         }
 
-                        var shownEntity = entity
+                        var shownEntity: EntityDisplay = entity
                         if (lastId == TAP_ACTION_TOGGLE) {
                             serverManager.integrationRepository().callAction(
                                 entity.domain,
@@ -191,27 +194,6 @@ class ThermostatTile : TileService() {
                 }
             }
         }
-
-    /**
-     * Fetches [entityId] for display. A tap only needs the entity itself, so it skips the entity
-     * registry the display snapshot fetches, using the name cached by the last full fetch.
-     */
-    private suspend fun fetchEntity(tileId: Int, entityId: String, showName: Boolean, isTap: Boolean): EntityDisplay? {
-        val cachedName = entityNames[tileId]?.takeIf { it.first == entityId }?.second
-        if (isTap && (!showName || cachedName != null)) {
-            val entity = serverManager.integrationRepository().getEntity(entityId)
-            if (entity != null) return EntityDisplayWithoutContext(entity = entity, name = cachedName.orEmpty())
-        }
-
-        val display = entitiesForDisplayManager.snapshot(
-            ServerManager.SERVER_ID_ACTIVE,
-            EntityFilter(entityIds = setOf(entityId)),
-        )
-            .awaitLoadedOrNull()
-            ?.entity(entityId)
-        if (display != null) entityNames[tileId] = entityId to display.name
-        return display
-    }
 
     /** The [entity] as it is expected to look once a power toggle went through, until the server confirms it. */
     private fun presumedAfterToggle(entity: EntityDisplay): EntityDisplay {
@@ -285,7 +267,6 @@ class ThermostatTile : TileService() {
 
     override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
         withContext(Dispatchers.IO) {
-            entityNames.remove(requestParams.tileId)
             thermostatTileDao.delete(requestParams.tileId)
         }
     }
@@ -304,8 +285,5 @@ class ThermostatTile : TileService() {
 
         /** Outlives the service, which is destroyed as soon as it answered a tile request. */
         private val confirmationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-        /** Entity id and name per tile, as of the last full fetch, so a tap doesn't fetch the registry. */
-        private val entityNames = ConcurrentHashMap<Int, Pair<String, String>>()
     }
 }
