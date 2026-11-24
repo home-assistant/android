@@ -55,6 +55,9 @@ class SettingsActivity : BaseActivity() {
     private lateinit var blurView: BlurView
 
     private var authenticating = false
+
+    /** How often the settings left the foreground: a lock check that ends after they left must not unblock them. */
+    private var pauses = 0
     private var externalAuthCallback: ((AuthenticationResult) -> Boolean)? = null
 
     companion object {
@@ -101,6 +104,9 @@ class SettingsActivity : BaseActivity() {
             .setFrameClearDrawable(window.decorView.background)
             .setBlurRadius(8f)
             .setBlurEnabled(false)
+        // Takes the touches meant for the settings while the app is locked and until the lock was checked: the blur
+        // alone lets them through
+        blurView.isClickable = true
 
         authenticator = Authenticator(this, ::settingsActivityAuthenticationResult)
 
@@ -167,13 +173,20 @@ class SettingsActivity : BaseActivity() {
     override fun onPause() {
         super.onPause()
         setAppActive(false)
+        pauses++
+        // Until the lock is checked again
+        blurView.isClickable = true
     }
 
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
+            val pausesBefore = pauses
             setRecentsScreenshotProtection(isAppLockEnabled())
-            blurView.setBlurEnabled(isAppLocked())
+            val locked = isAppLocked()
+            if (!locked && pauses != pausesBefore) return@launch
+            blurView.setBlurEnabled(locked)
+            blurView.isClickable = locked
         }
     }
 
@@ -181,14 +194,18 @@ class SettingsActivity : BaseActivity() {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
+                val pausesBefore = pauses
                 setRecentsScreenshotProtection(isAppLockEnabled())
                 if (isAppLocked()) {
                     authenticating = true
                     authenticator.authenticate(getString(commonR.string.biometric_title))
                     blurView.setBlurEnabled(true)
+                    blurView.isClickable = true
                 } else {
                     setAppActive(true)
+                    if (pauses != pausesBefore) return@launch
                     blurView.setBlurEnabled(false)
+                    blurView.isClickable = false
                 }
             }
         }
@@ -210,6 +227,7 @@ class SettingsActivity : BaseActivity() {
                 AuthenticationResult.SUCCESS -> {
                     Timber.d("Authentication successful, unlocking app")
                     blurView.setBlurEnabled(false)
+                    blurView.isClickable = false
                     setAppActive(true)
                 }
                 AuthenticationResult.CANCELED -> {
