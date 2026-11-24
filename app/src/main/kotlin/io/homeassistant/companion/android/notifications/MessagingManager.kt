@@ -170,109 +170,109 @@ class MessagingManager @Inject constructor(
     private val clock: Clock,
 ) {
     companion object {
-        const val APP_PREFIX = "app://"
-        const val DEEP_LINK_PREFIX = "deep-link://"
-        const val INTENT_PREFIX = "intent:"
-        const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
-        const val SETTINGS_PREFIX = "settings://"
-        const val NOTIFICATION_HISTORY = "notification_history"
-        const val NO_ACTION = "noAction"
+        private const val APP_PREFIX = "app://"
+        private const val DEEP_LINK_PREFIX = "deep-link://"
+        private const val INTENT_PREFIX = "intent:"
+        private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
+        private const val SETTINGS_PREFIX = "settings://"
+        private const val NOTIFICATION_HISTORY = "notification_history"
+        private const val NO_ACTION = "noAction"
 
-        const val SUBJECT = "subject"
-        const val TIMEOUT = "timeout"
-        const val IMAGE_URL = "image"
-        const val ICON_URL = "icon_url"
-        const val VIDEO_URL = "video"
-        const val VISIBILITY = "visibility"
-        const val PERSISTENT = "persistent"
-        const val CHRONOMETER = "chronometer"
-        const val WHEN = "when"
-        const val WHEN_RELATIVE = "when_relative"
-        const val PROGRESS = "progress"
-        const val PROGRESS_MAX = "progress_max"
-        const val PROGRESS_INDETERMINATE = "progress_indeterminate"
-        const val PROGRESS_SEGMENTS = "progress_segments"
-        const val PROGRESS_SEGMENTS_LENGTH = "length"
-        const val PROGRESS_SEGMENTS_COLOR = "color"
-        const val PROGRESS_POINTS = "progress_points"
-        const val PROGRESS_POINTS_POSITION = "position"
-        const val PROGRESS_POINTS_COLOR = "color"
-        const val PROGRESS_TRACKER_ICON = "progress_tracker_icon"
-        const val PROGRESS_TRACKER_COLOR = "progress_tracker_color"
-        const val PROGRESS_START_ICON = "progress_start_icon"
-        const val PROGRESS_START_COLOR = "progress_start_color"
-        const val PROGRESS_END_ICON = "progress_end_icon"
-        const val PROGRESS_END_COLOR = "progress_end_color"
-        const val LIVE_UPDATE = "live_update"
-        const val CRITICAL_TEXT = "critical_text"
-        const val CAR_UI = "car_ui"
+        private const val SUBJECT = "subject"
+        private const val TIMEOUT = "timeout"
+        private const val IMAGE_URL = "image"
+        private const val ICON_URL = "icon_url"
+        private const val VIDEO_URL = "video"
+        private const val VISIBILITY = "visibility"
+        private const val PERSISTENT = "persistent"
+        private const val CHRONOMETER = "chronometer"
+        private const val WHEN = "when"
+        private const val WHEN_RELATIVE = "when_relative"
+        private const val PROGRESS = "progress"
+        private const val PROGRESS_MAX = "progress_max"
+        private const val PROGRESS_INDETERMINATE = "progress_indeterminate"
+        private const val PROGRESS_SEGMENTS = "progress_segments"
+        private const val PROGRESS_SEGMENTS_LENGTH = "length"
+        private const val PROGRESS_SEGMENTS_COLOR = "color"
+        private const val PROGRESS_POINTS = "progress_points"
+        private const val PROGRESS_POINTS_POSITION = "position"
+        private const val PROGRESS_POINTS_COLOR = "color"
+        private const val PROGRESS_TRACKER_ICON = "progress_tracker_icon"
+        private const val PROGRESS_TRACKER_COLOR = "progress_tracker_color"
+        private const val PROGRESS_START_ICON = "progress_start_icon"
+        private const val PROGRESS_START_COLOR = "progress_start_color"
+        private const val PROGRESS_END_ICON = "progress_end_icon"
+        private const val PROGRESS_END_COLOR = "progress_end_color"
+        private const val LIVE_UPDATE = "live_update"
+        private const val CRITICAL_TEXT = "critical_text"
+        private const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
-        const val INTENT_CLASS_NAME = "intent_class_name"
-        const val URI = "URI"
-        const val REPLY = "REPLY"
-        const val TEXT_INPUT = "textinput"
-        const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
-        const val PACKAGE_NAME = "package_name"
-        const val CONFIRMATION = "confirmation"
+        private const val INTENT_CLASS_NAME = "intent_class_name"
+        private const val URI = "URI"
+        private const val REPLY = "REPLY"
+        private const val TEXT_INPUT = "textinput"
+        private const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
+        private const val PACKAGE_NAME = "package_name"
+        private const val CONFIRMATION = "confirmation"
 
         // special intent constants
-        const val INTENT_PACKAGE_NAME = "intent_package_name"
-        const val INTENT_ACTION = "intent_action"
-        const val INTENT_EXTRAS = "intent_extras"
-        const val INTENT_URI = "intent_uri"
-        const val INTENT_TYPE = "intent_type"
+        private const val INTENT_PACKAGE_NAME = "intent_package_name"
+        private const val INTENT_ACTION = "intent_action"
+        private const val INTENT_EXTRAS = "intent_extras"
+        private const val INTENT_URI = "intent_uri"
+        private const val INTENT_TYPE = "intent_type"
 
         // special action constants
-        const val REQUEST_LOCATION_UPDATE = "request_location_update"
-        const val REMOVE_CHANNEL = "remove_channel"
-        const val COMMAND_DND = "command_dnd"
-        const val COMMAND_RINGER_MODE = "command_ringer_mode"
-        const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
-        const val COMMAND_VOLUME_LEVEL = "command_volume_level"
-        const val COMMAND_BLUETOOTH = "command_bluetooth"
-        const val COMMAND_SCREEN_ON = "command_screen_on"
-        const val COMMAND_MEDIA = "command_media"
-        const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
-        const val COMMAND_ACTIVITY = "command_activity"
-        const val COMMAND_WEBVIEW = "command_webview"
-        const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
-        const val COMMAND_LAUNCH_APP = "command_launch_app"
-        const val COMMAND_APP_LOCK = "command_app_lock"
-        const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
-        const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
-        const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
-        const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
-        const val COMMAND_FLASHLIGHT = "command_flashlight"
+        private const val REQUEST_LOCATION_UPDATE = "request_location_update"
+        private const val REMOVE_CHANNEL = "remove_channel"
+        private const val COMMAND_DND = "command_dnd"
+        private const val COMMAND_RINGER_MODE = "command_ringer_mode"
+        private const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
+        private const val COMMAND_VOLUME_LEVEL = "command_volume_level"
+        private const val COMMAND_BLUETOOTH = "command_bluetooth"
+        private const val COMMAND_SCREEN_ON = "command_screen_on"
+        private const val COMMAND_MEDIA = "command_media"
+        private const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
+        private const val COMMAND_ACTIVITY = "command_activity"
+        private const val COMMAND_WEBVIEW = "command_webview"
+        private const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
+        private const val COMMAND_LAUNCH_APP = "command_launch_app"
+        private const val COMMAND_APP_LOCK = "command_app_lock"
+        private const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
+        private const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
+        private const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
+        private const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
+        private const val COMMAND_FLASHLIGHT = "command_flashlight"
 
-        const val COMMAND_WAKE_WORD_DETECTION = "command_wake_word_detection"
+        private const val COMMAND_WAKE_WORD_DETECTION = "command_wake_word_detection"
 
         // DND commands
-        const val DND_PRIORITY_ONLY = "priority_only"
-        const val DND_ALARMS_ONLY = "alarms_only"
-        const val DND_ALL = "off"
-        const val DND_NONE = "total_silence"
+        private const val DND_PRIORITY_ONLY = "priority_only"
+        private const val DND_ALARMS_ONLY = "alarms_only"
+        private const val DND_ALL = "off"
+        private const val DND_NONE = "total_silence"
 
         // Ringer mode commands
-        const val RM_NORMAL = "normal"
-        const val RM_SILENT = "silent"
-        const val RM_VIBRATE = "vibrate"
+        private const val RM_NORMAL = "normal"
+        private const val RM_SILENT = "silent"
+        private const val RM_VIBRATE = "vibrate"
 
         // Media Commands
-        const val MEDIA_FAST_FORWARD = "fast_forward"
-        const val MEDIA_NEXT = "next"
-        const val MEDIA_PAUSE = "pause"
-        const val MEDIA_PLAY = "play"
-        const val MEDIA_PLAY_PAUSE = "play_pause"
-        const val MEDIA_PREVIOUS = "previous"
-        const val MEDIA_REWIND = "rewind"
-        const val MEDIA_STOP = "stop"
-        const val MEDIA_PACKAGE_NAME = "media_package_name"
-        const val MEDIA_COMMAND = "media_command"
+        private const val MEDIA_FAST_FORWARD = "fast_forward"
+        private const val MEDIA_NEXT = "next"
+        private const val MEDIA_PAUSE = "pause"
+        private const val MEDIA_PLAY = "play"
+        private const val MEDIA_PLAY_PAUSE = "play_pause"
+        private const val MEDIA_PREVIOUS = "previous"
+        private const val MEDIA_REWIND = "rewind"
+        private const val MEDIA_STOP = "stop"
+        private const val MEDIA_PACKAGE_NAME = "media_package_name"
+        private const val MEDIA_COMMAND = "media_command"
 
         // App-lock command parameters:
-        const val APP_LOCK_ENABLED = "app_lock_enabled"
-        const val APP_LOCK_TIMEOUT = "app_lock_timeout"
-        const val HOME_BYPASS_ENABLED = "home_bypass_enabled"
+        private const val APP_LOCK_ENABLED = "app_lock_enabled"
+        private const val APP_LOCK_TIMEOUT = "app_lock_timeout"
+        private const val HOME_BYPASS_ENABLED = "home_bypass_enabled"
 
         // High accuracy commands
         const val HIGH_ACCURACY_SET_UPDATE_INTERVAL = "high_accuracy_set_update_interval"
@@ -280,7 +280,7 @@ class MessagingManager @Inject constructor(
         const val FORCE_OFF = "force_off"
 
         // Command groups
-        val DEVICE_COMMANDS = listOf(
+        private val DEVICE_COMMANDS = listOf(
             COMMAND_DND,
             COMMAND_RINGER_MODE,
             COMMAND_BROADCAST_INTENT,
@@ -303,9 +303,9 @@ class MessagingManager @Inject constructor(
             COMMAND_FLASHLIGHT,
             COMMAND_WAKE_WORD_DETECTION,
         )
-        val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
-        val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
-        val CHANNEL_VOLUME_STREAM = listOf(
+        private val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
+        private val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
+        private val CHANNEL_VOLUME_STREAM = listOf(
             NotificationData.ALARM_STREAM,
             NotificationData.MUSIC_STREAM,
             NotificationData.NOTIFICATION_STREAM,
@@ -315,8 +315,8 @@ class MessagingManager @Inject constructor(
             NotificationData.DTMF_STREAM,
             NotificationData.ASSISTANT_STREAM,
         )
-        val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
-        val MEDIA_COMMANDS = listOf(
+        private val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
+        private val MEDIA_COMMANDS = listOf(
             MEDIA_FAST_FORWARD,
             MEDIA_NEXT,
             MEDIA_PAUSE,
@@ -328,16 +328,16 @@ class MessagingManager @Inject constructor(
         )
 
         // Video Values
-        const val VIDEO_START_MICROSECONDS = 100000L
-        const val VIDEO_INCREMENT_MICROSECONDS = 750000L
-        const val VIDEO_GUESS_MILLISECONDS = 7000L
+        private const val VIDEO_START_MICROSECONDS = 100000L
+        private const val VIDEO_INCREMENT_MICROSECONDS = 750000L
+        private const val VIDEO_GUESS_MILLISECONDS = 7000L
 
         // Values for a notification that has been replied to
         const val SOURCE_REPLY = "REPLY_"
         const val SOURCE_REPLY_HISTORY = "reply_history_"
 
         // Values for temporarily added keys
-        const val THIS_SERVER_ID = "server_id"
+        private const val THIS_SERVER_ID = "server_id"
 
         private const val HEADER_AUTHORIZATION = "Authorization"
         private const val MIME_TYPE_GIF = "image/gif"
