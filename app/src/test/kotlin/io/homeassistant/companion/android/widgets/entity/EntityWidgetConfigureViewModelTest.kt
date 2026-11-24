@@ -65,7 +65,7 @@ class EntityWidgetConfigureViewModelTest {
         coEvery { serverManager.getServer() } returns server
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { dao.get(any()) } returns null
-        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns flowOf(displayStateOf(entity.toDisplayItem("Office light")))
+        every { entitiesForDisplayManager.snapshotInContext(any(), any()) } returns flowOf(displayStateOf(entity.toDisplayItem("Office light")))
     }
 
     @Test
@@ -139,7 +139,7 @@ class EntityWidgetConfigureViewModelTest {
     fun `Given a generated label when entity changes then label follows the selected entity`() = runTest {
         val secondEntity = createEntity(entityId = "switch.fan", attributes = emptyMap())
         coEvery { integrationRepository.getEntity(secondEntity.entityId) } returns secondEntity
-        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns
+        every { entitiesForDisplayManager.snapshotInContext(any(), any()) } returns
             flowOf(displayStateOf(entity.toDisplayItem("Office light"), secondEntity.toDisplayItem("Fan")))
         val viewModel = createViewModel()
         advanceUntilIdle()

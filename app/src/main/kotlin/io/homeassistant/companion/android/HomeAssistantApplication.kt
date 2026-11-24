@@ -34,6 +34,7 @@ import io.homeassistant.companion.android.common.util.di.SuspendProvider
 import io.homeassistant.companion.android.common.util.isAutomotive
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.database.settings.SettingsDao
+import io.homeassistant.companion.android.sensors.FoldableSensorManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.settings.shortcuts.HaShortcutManager
@@ -83,6 +84,9 @@ open class HomeAssistantApplication : Application() {
 
     @Inject
     internal lateinit var shortcutManager: HaShortcutManager
+
+    @Inject
+    internal lateinit var foldableSensorManager: FoldableSensorManager
 
     override fun onCreate() {
         // We should initialize the logger as early as possible in the lifecycle of the application
@@ -344,6 +348,9 @@ open class HomeAssistantApplication : Application() {
             IntentFilter(Intent.ACTION_CONFIGURATION_CHANGED),
             ContextCompat.RECEIVER_EXPORTED,
         )
+
+        // Update the foldable screen sensor as soon as the device is folded or unfolded
+        ioScope.launch { foldableSensorManager.updateOnFoldChange() }
 
         if (!isAutomotive()) {
             // Update widgets when the screen turns on, updates are skipped if widgets were not added

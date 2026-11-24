@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.configure
 import android.content.Context
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -16,7 +17,6 @@ import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Exten
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,8 +24,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -58,7 +56,7 @@ class BaseEntityWidgetConfigureViewModelTest {
         coEvery { serverManager.getServer() } returns server
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { dao.get(any()) } returns null
-        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns
+        every { entitiesForDisplayManager.snapshotInContext(any(), any()) } returns
             flowOf(displayStateOf(light.toDisplayItem()))
     }
 
@@ -86,15 +84,14 @@ class BaseEntityWidgetConfigureViewModelTest {
 
     @Test
     fun `Given an entity filter when entities are loaded then it is forwarded to the manager`() = runTest {
-        val filterSlot = slot<(Entity) -> Boolean>()
-        every { entitiesForDisplayManager.snapshotInContext(any(), capture(filterSlot)) } returns
-            flowOf(displayStateOf(light.toDisplayItem(), switch.toDisplayItem()))
+        val entityFilter = EntityFilter(domains = setOf("light"))
+        every { entitiesForDisplayManager.snapshotInContext(any(), any()) } returns
+            flowOf(displayStateOf(light.toDisplayItem()))
 
-        createViewModel(entityFilter = { it.domain == "light" })
+        createViewModel(entityFilter = entityFilter)
         advanceUntilIdle()
 
-        assertTrue(filterSlot.captured(light))
-        assertFalse(filterSlot.captured(switch))
+        verify { entitiesForDisplayManager.snapshotInContext(serverId, entityFilter) }
     }
 
     @Test
@@ -106,10 +103,10 @@ class BaseEntityWidgetConfigureViewModelTest {
         viewModel.onServerSelected(newServerId)
         advanceUntilIdle()
 
-        verify { entitiesForDisplayManager.snapshotInContext(newServerId, any<(Entity) -> Boolean>()) }
+        verify { entitiesForDisplayManager.snapshotInContext(newServerId, any()) }
     }
 
-    private fun createViewModel(entityFilter: (Entity) -> Boolean = { true }) = FakeEntityConfigureViewModel(
+    private fun createViewModel(entityFilter: EntityFilter = EntityFilter()) = FakeEntityConfigureViewModel(
         serverManager = serverManager,
         widgetId = widgetId,
         dao = dao,
@@ -153,7 +150,7 @@ private class FakeEntityConfigureViewModel(
     widgetId: Int,
     dao: WidgetDao<CameraWidgetEntity>,
     entitiesForDisplayManager: EntitiesForDisplayManager,
-    entityFilter: (Entity) -> Boolean,
+    entityFilter: EntityFilter,
 ) : BaseEntityWidgetConfigureViewModel<FakeEntityConfigureState, CameraWidgetEntity>(
     serverManager = serverManager,
     widgetId = widgetId,
