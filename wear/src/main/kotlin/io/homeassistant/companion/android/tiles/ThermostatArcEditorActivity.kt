@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.wear.compose.material3.Button
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -66,7 +67,7 @@ class ThermostatArcEditorActivity : ComponentActivity() {
                 finish()
                 return@launch
             }
-            val entity = entities.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(entityId))
+            val entity = entities.snapshot(ServerManager.SERVER_ID_ACTIVE, EntityFilter(entityIds = setOf(entityId)))
                 .awaitLoadedOrNull()?.entity(entityId)
             val climate = entity?.climateControls
             if (climate == null || entity.rawState in listOf("unavailable", "unknown", "off")) {
