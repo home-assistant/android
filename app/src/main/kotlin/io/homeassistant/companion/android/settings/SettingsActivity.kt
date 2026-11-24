@@ -43,6 +43,15 @@ import timber.log.Timber
 
 private const val EXTRA_FRAGMENT = "fragment"
 
+/** Hides the settings from accessibility services while [hidden]: they act on views without touches. */
+private fun View.hideFromAccessibility(hidden: Boolean) {
+    importantForAccessibility = if (hidden) {
+        View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+    } else {
+        View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
+    }
+}
+
 @AndroidEntryPoint
 class SettingsActivity : BaseActivity() {
 
@@ -53,6 +62,7 @@ class SettingsActivity : BaseActivity() {
 
     private lateinit var authenticator: Authenticator
     private lateinit var blurView: BlurView
+    private lateinit var blurTarget: BlurTarget
 
     private var authenticating = false
 
@@ -98,7 +108,7 @@ class SettingsActivity : BaseActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        val blurTarget = findViewById<BlurTarget>(R.id.blurTarget)
+        blurTarget = findViewById(R.id.blurTarget)
         blurView = findViewById(R.id.blurView)
         blurView.setupWith(blurTarget)
             .setFrameClearDrawable(window.decorView.background)
@@ -107,6 +117,7 @@ class SettingsActivity : BaseActivity() {
         // Takes the touches meant for the settings while the app is locked and until the lock was checked: the blur
         // alone lets them through
         blurView.isClickable = true
+        blurTarget.hideFromAccessibility(true)
 
         authenticator = Authenticator(this, ::settingsActivityAuthenticationResult)
 
@@ -176,6 +187,7 @@ class SettingsActivity : BaseActivity() {
         pauses++
         // Until the lock is checked again
         blurView.isClickable = true
+        blurTarget.hideFromAccessibility(true)
     }
 
     override fun onResume() {
@@ -187,6 +199,7 @@ class SettingsActivity : BaseActivity() {
             if (!locked && pauses != pausesBefore) return@launch
             blurView.setBlurEnabled(locked)
             blurView.isClickable = locked
+            blurTarget.hideFromAccessibility(locked)
         }
     }
 
@@ -201,11 +214,13 @@ class SettingsActivity : BaseActivity() {
                     authenticator.authenticate(getString(commonR.string.biometric_title))
                     blurView.setBlurEnabled(true)
                     blurView.isClickable = true
+                    blurTarget.hideFromAccessibility(true)
                 } else {
                     setAppActive(true)
                     if (pauses != pausesBefore) return@launch
                     blurView.setBlurEnabled(false)
                     blurView.isClickable = false
+                    blurTarget.hideFromAccessibility(false)
                 }
             }
         }
@@ -228,6 +243,7 @@ class SettingsActivity : BaseActivity() {
                     Timber.d("Authentication successful, unlocking app")
                     blurView.setBlurEnabled(false)
                     blurView.isClickable = false
+                    blurTarget.hideFromAccessibility(false)
                     setAppActive(true)
                 }
                 AuthenticationResult.CANCELED -> {

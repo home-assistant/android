@@ -88,6 +88,23 @@ class SettingsActivityTest {
         return touched
     }
 
+    /** @return whether accessibility services, which act without touches, see a view of the settings */
+    private fun accessibilityReachesSettings(activity: SettingsActivity): Boolean {
+        val setting = View(activity).apply { contentDescription = "A setting" }
+        activity.findViewById<ViewGroup>(R.id.content_full_screen).addView(setting)
+        shadowOf(Looper.getMainLooper()).idle()
+        return setting.isImportantForAccessibility
+    }
+
+    @Test
+    fun `Given the app locked or not when accessibility services look at the settings then they only see them unlocked`() {
+        appLocked = true
+        assertFalse(accessibilityReachesSettings(launch().get()))
+
+        appLocked = false
+        assertTrue(accessibilityReachesSettings(launch().get()))
+    }
+
     @Test
     fun `Given the app locked when touching the settings then the touch does not reach them`() {
         appLocked = true
