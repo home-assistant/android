@@ -378,6 +378,11 @@ data class ClimateControls(
     val temperatureUnit: String?,
     val hvacModes: List<String>,
     val supportsTargetTemperature: Boolean,
+    val targetTemperatureLow: Float? = null,
+    val targetTemperatureHigh: Float? = null,
+    val supportsTargetTemperatureRange: Boolean = false,
+    val fanMode: String? = null,
+    val fanModes: List<String> = emptyList(),
 )
 
 /** Value range of a number entity, resolved from its state and attributes. */
@@ -794,6 +799,11 @@ fun Entity.getClimateControls(): ClimateControls? {
         supportsTargetTemperature = supportsFeature(
             EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE or EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE_RANGE,
         ),
+        targetTemperatureLow = numberAttributeOrNull("target_temp_low"),
+        targetTemperatureHigh = numberAttributeOrNull("target_temp_high"),
+        supportsTargetTemperatureRange = supportsFeature(EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE_RANGE),
+        fanMode = attributes["fan_mode"]?.toString(),
+        fanModes = (attributes["fan_modes"] as? List<*>)?.filterIsInstance<String>().orEmpty(),
     )
 }
 

@@ -5,6 +5,7 @@ import androidx.wear.protolayout.ColorBuilders
 import androidx.wear.protolayout.DimensionBuilders
 import androidx.wear.protolayout.LayoutElementBuilders
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
+import androidx.wear.protolayout.ModifiersBuilders
 import androidx.wear.protolayout.ModifiersBuilders.Clickable
 import androidx.wear.protolayout.ResourceBuilders
 import androidx.wear.protolayout.ResourceBuilders.Resources
@@ -30,6 +31,7 @@ import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +41,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -47,8 +50,18 @@ class ThermostatTile : TileService() {
     companion object {
         private const val TAG = "ThermostatTile"
         const val DEFAULT_REFRESH_INTERVAL = 600L
-        const val TAP_ACTION_UP = "Up"
-        const val TAP_ACTION_DOWN = "Down"
+        private const val TAP_ACTION_UP = "Up"
+        private const val TAP_ACTION_DOWN = "Down"
+        private const val TAP_MODE_PREFIX = "Mode:"
+        private const val TAP_FAN = "CycleFan"
+
+        // Stable ProtoLayout resource IDs; the tile's resource version changes only when icons change.
+        private const val ICON_HEAT = "thermostat_heat_v1"
+        private const val ICON_COOL = "thermostat_cool_v1"
+        private const val ICON_AUTO_HEAT = "thermostat_auto_heat_v1"
+        private const val ICON_AUTO_COOL = "thermostat_auto_cool_v1"
+        private const val ICON_FAN = "thermostat_fan_v1"
+        private const val ICON_POWER = "thermostat_power_v1"
     }
 
     private val serviceJob = Job()
@@ -66,6 +79,9 @@ class ThermostatTile : TileService() {
     @Inject
     lateinit var entitiesForDisplayManager: EntitiesForDisplayManager
 
+    @Inject
+    lateinit var commandCoordinator: ThermostatCommandCoordinator
+
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val tileId = requestParams.tileId
@@ -81,9 +97,10 @@ class ThermostatTile : TileService() {
                 else -> DEFAULT_REFRESH_INTERVAL
             }
 
+            val effectiveFreshness = if (commandCoordinator.get(tileId) != null) minOf(freshness, 5L) else freshness
             val tile = Tile.Builder()
-                .setResourcesVersion("$TAG$tileId.${System.currentTimeMillis()}")
-                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
+                .setResourcesVersion("$TAG.resources.v2")
+                .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(effectiveFreshness))
 
             if (!serverManager.isRegistered()) {
                 tile.setTileTimeline(
@@ -106,54 +123,111 @@ class ThermostatTile : TileService() {
                     ).build()
                 } else {
                     try {
-                        val entity = tileConfig.entityId?.let {
-                            entitiesForDisplayManager.snapshot(
-                                ServerManager.SERVER_ID_ACTIVE,
-                                EntityFilter(entityIds = setOf(it)),
-                            )
-                                .awaitLoadedOrNull()
-                                ?.entity(it)
-                        }
-                        checkNotNull(entity)
+                        val entityId = checkNotNull(tileConfig.entityId)
+                        // Render warm tiles without waiting for a network request. On a cache miss,
+                        // use upstream's filtered snapshot to resolve state and display metadata.
+                        val entity = commandCoordinator.cachedEntity(entityId)
+                            ?: withTimeoutOrNull(6_000L) {
+                                entitiesForDisplayManager.snapshot(
+                                    ServerManager.SERVER_ID_ACTIVE,
+                                    EntityFilter(entityIds = setOf(entityId)),
+                                )
+                                    .awaitLoadedOrNull()
+                                    ?.entity(entityId)
+                                    ?.also(commandCoordinator::rememberEntity)
+                            }
+                        checkNotNull(entity) { "Thermostat state not yet available: $entityId" }
                         val climateControls = entity.climateControls
 
                         val lastId = requestParams.currentState.lastClickableId
-                        var targetTemp = tileConfig.targetTemperature ?: climateControls?.targetTemperature
-
-                        val config = serverManager.webSocketRepository().getConfig()
-                        val temperatureUnit = config?.unitSystem?.getValue("temperature").toString()
-
-                        if (targetTemp != null && (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN)) {
-                            val stepSize = climateControls?.targetTemperatureStep
-                                ?: if (temperatureUnit == "°F") 1.0f else 0.5f
-                            val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
-
-                            serverManager.integrationRepository().callAction(
-                                entity.domain,
-                                "set_temperature",
-                                hashMapOf(
-                                    "entity_id" to entity.entityId,
-                                    "temperature" to updatedTargetTemp,
-                                ),
-                            )
-                            val updated = tileConfig.copy(targetTemperature = updatedTargetTemp)
-                            thermostatTileDao.add(updated)
-                            targetTemp = updatedTargetTemp
-                        } else {
-                            val updated = tileConfig.copy(targetTemperature = null)
-                            thermostatTileDao.add(updated)
+                        val controls = climateControls
+                        if (controls != null && entity.rawState !in listOf("unavailable", "unknown")) {
+                            val step = controls.targetTemperatureStep?.takeIf { it > 0 } ?: 1f
+                            val min = controls.minTemperature ?: 7f
+                            val max = controls.maxTemperature ?: 35f
+                            when {
+                                // Preserve the Classic tile's original +/- buttons, but dispatch
+                                // asynchronously through the same fast coordinator as Enhanced.
+                                tileConfig.layoutStyle == "classic" &&
+                                    lastId in listOf(TAP_ACTION_DOWN, TAP_ACTION_UP) &&
+                                    entity.rawState != "off" && controls.targetTemperature != null -> {
+                                    val delta = if (lastId == TAP_ACTION_UP) step else -step
+                                    val baseline = commandCoordinator.get(tileId)?.single
+                                        ?: controls.targetTemperature!!
+                                    val proposed = ThermostatTemperatureLogic.snap(
+                                        baseline + delta, step, min, max,
+                                    )
+                                    commandCoordinator.submitTemperature(
+                                        tileId, entity.entityId, false, null, null, proposed,
+                                    )
+                                }
+                                lastId.startsWith(TAP_MODE_PREFIX) -> {
+                                    val mode = lastId.removePrefix(TAP_MODE_PREFIX)
+                                    if (mode in controls.hvacModes) {
+                                        commandCoordinator.submitHvac(tileId, entity.entityId, mode)
+                                    }
+                                }
+                                lastId == TAP_FAN && controls.fanModes.isNotEmpty() -> {
+                                    val modes = controls.fanModes
+                                    // WearDash uses fan on/auto. Prefer that pair if both are offered.
+                                    val nextMode = if ("on" in modes && "auto" in modes) {
+                                        if (controls.fanMode == "on") "auto" else "on"
+                                    } else {
+                                        modes[(modes.indexOf(controls.fanMode) + 1) % modes.size]
+                                    }
+                                    commandCoordinator.submitFan(tileId, entity.entityId, nextMode)
+                                }
+                                lastId.startsWith("Temp:") && entity.rawState != "off" -> {
+                                    val items = lastId.split(":")
+                                    val slot = items.getOrNull(1)
+                                    val amount = items.getOrNull(2)?.toFloatOrNull()
+                                    if (amount != null && slot in listOf("single", "heat", "cool")) {
+                                        val range = entity.rawState == "heat_cool" &&
+                                            controls.targetTemperatureLow != null && controls.targetTemperatureHigh != null
+                                        if (range) {
+                                            val inFlight = commandCoordinator.get(tileId)
+                                            val currentLow = inFlight?.low ?: controls.targetTemperatureLow!!
+                                            val currentHigh = inFlight?.high ?: controls.targetTemperatureHigh!!
+                                            val revised = ThermostatTemperatureLogic.adjustRange(
+                                                if (slot == "heat") currentLow + amount else currentHigh + amount,
+                                                slot == "cool", currentLow, currentHigh, min, max, step,
+                                            )
+                                            commandCoordinator.submitTemperature(
+                                                tileId, entity.entityId, true, revised.first, revised.second, null,
+                                            )
+                                        } else if (slot == "single" && controls.targetTemperature != null) {
+                                            val baseline = commandCoordinator.get(tileId)?.single
+                                                ?: controls.targetTemperature!!
+                                            val proposed = ThermostatTemperatureLogic.snap(
+                                                baseline + amount, step, min, max,
+                                            )
+                                            commandCoordinator.submitTemperature(
+                                                tileId, entity.entityId, false, null, null, proposed,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
 
-                        val name = if (tileConfig.showEntityName == true) entity.name else ""
-
+                        // State refresh happens in the background, never before dispatching a tap.
+                        // A pending command also polls for acknowledgment without registry fetches.
+                        commandCoordinator.refreshEntityIfStale(
+                            entityId,
+                            if (commandCoordinator.get(tileId) != null) 3_000L else 20_000L,
+                        )
+                        val temperatureUnit = controls?.temperatureUnit ?: "°"
+                        val pending = commandCoordinator.get(tileId)
                         tile.setTileTimeline(
-                            timeline(
-                                tileConfig,
-                                entity,
-                                name,
-                                targetTemp,
-                                temperatureUnit,
-                            ),
+                            if (tileConfig.layoutStyle == "classic") {
+                                classicTimeline(tileConfig, entity, temperatureUnit, pending)
+                            } else {
+                                timeline(
+                                    tileConfig, entity, temperatureUnit, pending,
+                                    requestParams.deviceConfiguration.screenWidthDp,
+                                    requestParams.deviceConfiguration.screenHeightDp,
+                                )
+                            },
                         ).build()
                     } catch (e: CancellationException) {
                         throw e
@@ -177,18 +251,26 @@ class ThermostatTile : TileService() {
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
-            Resources.Builder()
-                .setVersion(requestParams.version)
-                .addIdToImageMapping(
-                    RESOURCE_REFRESH,
+            val resources = Resources.Builder().setVersion(requestParams.version)
+            fun addDrawable(id: String, drawableId: Int) {
+                resources.addIdToImageMapping(
+                    id,
                     ResourceBuilders.ImageResource.Builder()
                         .setAndroidResourceByResId(
                             ResourceBuilders.AndroidImageResourceByResId.Builder()
-                                .setResourceId(R.drawable.ic_refresh)
+                                .setResourceId(drawableId)
                                 .build(),
                         ).build(),
                 )
-                .build()
+            }
+            addDrawable(RESOURCE_REFRESH, R.drawable.ic_refresh)
+            addDrawable(ICON_HEAT, R.drawable.ic_thermostat_heat)
+            addDrawable(ICON_COOL, R.drawable.ic_thermostat_cool)
+            addDrawable(ICON_AUTO_HEAT, R.drawable.ic_thermostat_auto_heat)
+            addDrawable(ICON_AUTO_COOL, R.drawable.ic_thermostat_auto_cool)
+            addDrawable(ICON_FAN, R.drawable.ic_thermostat_fan)
+            addDrawable(ICON_POWER, R.drawable.ic_thermostat_power)
+            resources.build()
         }
 
     override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) = runBlocking {
@@ -210,13 +292,23 @@ class ThermostatTile : TileService() {
         serviceScope.cancel()
     }
 
-    private fun timeline(
+
+    /**
+     * Original Home Assistant thermostat layout, retained as the Classic appearance.
+     * It uses the shared fast v9 entity cache and command coordinator, so switching
+     * appearance does not require reconfiguring the selected entity.
+     */
+    private fun classicTimeline(
         tileConfig: ThermostatTile,
         entity: EntityDisplay,
-        entityName: String,
-        targetTemperature: Float?,
         temperatureUnit: String,
-    ): Timeline = Timeline.fromLayoutElement(
+        pending: ThermostatCommandCoordinator.Pending?,
+    ): Timeline {
+        val entityName = if (tileConfig.showEntityName == true) entity.name else ""
+        val targetTemperature = pending?.single
+            ?.takeIf { pending.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
+            ?: entity.climateControls?.targetTemperature
+        return Timeline.fromLayoutElement(
         LayoutElementBuilders.Box.Builder().apply {
             val currentTemperature = entity.climateControls?.currentTemperature
             val hvacAction = entity.climateControls?.hvacAction.toString()
@@ -332,6 +424,8 @@ class ThermostatTile : TileService() {
         }.build(),
     )
 
+    }
+
     private fun getTempButton(enabled: Boolean, action: String): LayoutElement {
         val clickable = Clickable.Builder()
         if (enabled) {
@@ -351,4 +445,305 @@ class ThermostatTile : TileService() {
             )
             .build()
     }
+
+    /**
+     * WearDash-inspired direct controls. All actions are handled with LoadAction on the tile;
+     * nothing launches the old arc editor or waits for a separate Activity to appear.
+     *
+     * Two setpoint rows are shown only in heat_cool. Secondary adjustments share each row
+     * with the primary +/-1 controls, but the mode and utility actions have their own rows
+     * so they cannot run off the edges of a circular display.
+     */
+    private fun timeline(
+        config: ThermostatTile,
+        entity: EntityDisplay,
+        temperatureUnit: String,
+        pending: ThermostatCommandCoordinator.Pending?,
+        screenWidthDp: Int,
+        screenHeightDp: Int,
+    ): Timeline {
+        val controls = entity.climateControls
+        val state = entity.rawState
+        val active = state !in listOf("off", "unavailable", "unknown")
+        val range = state == "heat_cool" &&
+            controls?.targetTemperatureLow != null && controls.targetTemperatureHigh != null
+        val current = controls?.currentTemperature?.let { nice(it) } ?: "--"
+        val hvacAction = controls?.hvacAction?.takeIf { it.isNotBlank() } ?: "idle"
+        val waiting = pending?.status == ThermostatCommandCoordinator.Pending.Status.WAITING
+        // Compact circular watches must not crop rows at the upper/lower edges.
+        val compact = screenWidthDp < 220 || screenHeightDp < 225
+        val modeHeight = if (compact) 29f else 34f
+        val utilityHeight = if (compact) 29f else 33f
+        val targetRowHeight = if (compact) 32f else 36f
+
+        val column = LayoutElementBuilders.Column.Builder()
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+
+        // Hide the name only in compact Auto mode where the two temperature rows need the space.
+        if (config.showEntityName == true && !(compact && range)) {
+            column.addContent(
+                temperatureText(entity.name.take(if (compact) 12 else 21), 10f, 0xFFCBD5E1.toInt()),
+            )
+        }
+        column.addContent(temperatureText("$current $temperatureUnit", if (compact) 27f else 30f, 0xFFFFFFFF.toInt()))
+        if (config.showActivity || pending != null) {
+            val displayState = when (state) {
+                "heat" -> "HEAT"
+                "cool" -> "COOL"
+                "heat_cool", "auto" -> "AUTO"
+                "off" -> "OFF"
+                else -> state.uppercase()
+            }
+            val modeColor = when (state) {
+                "heat" -> 0xFFFFA19A.toInt()
+                "cool" -> 0xFF8DCBFF.toInt()
+                "heat_cool", "auto" -> 0xFFD9C4FF.toInt()
+                else -> 0xFFBFC9D7.toInt()
+            }
+            val activity = when (pending?.status) {
+                ThermostatCommandCoordinator.Pending.Status.WAITING -> "Awaiting thermostat reply"
+                ThermostatCommandCoordinator.Pending.Status.FAILED -> "Thermostat did not confirm"
+                null -> if (active) "$displayState · $hvacAction" else displayState
+            }
+            val activityColor = when (pending?.status) {
+                ThermostatCommandCoordinator.Pending.Status.WAITING -> 0xFFFFD778.toInt()
+                ThermostatCommandCoordinator.Pending.Status.FAILED -> 0xFFFF9797.toInt()
+                null -> modeColor
+            }
+            column.addContent(temperatureText(activity, if (compact) 10f else 11f, activityColor))
+        }
+
+        column.addContent(verticalGap(if (compact) 2f else 3f))
+        if (active && controls != null) {
+            if (range) {
+                column.addContent(
+                    temperatureRow(
+                        "heat", pending?.low?.takeIf { waiting } ?: controls.targetTemperatureLow,
+                        "H", 0xFFFFA19A.toInt(), config.quickAdjustOne, compact, targetRowHeight,
+                    ),
+                )
+                column.addContent(verticalGap(2f))
+                column.addContent(
+                    temperatureRow(
+                        "cool", pending?.high?.takeIf { waiting } ?: controls.targetTemperatureHigh,
+                        "C", 0xFF8DCBFF.toInt(), config.quickAdjustOne, compact, targetRowHeight,
+                    ),
+                )
+            } else if (controls.targetTemperature != null) {
+                val accent = if (state == "cool") 0xFF8DCBFF.toInt() else 0xFFFFA19A.toInt()
+                column.addContent(
+                    temperatureRow(
+                        "single", pending?.single?.takeIf { waiting } ?: controls.targetTemperature,
+                        "", accent, config.quickAdjustOne, compact, targetRowHeight,
+                    ),
+                )
+            }
+        }
+
+        if (controls != null && (config.showHvacModes || config.showFanControl)) {
+            column.addContent(verticalGap(if (compact) 2f else 5f))
+            val available = controls.hvacModes
+            val modeRow = LayoutElementBuilders.Row.Builder()
+                .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+            var hasMode = false
+            fun addMode(mode: String, iconId: String, description: String, color: Int, secondIconId: String? = null) {
+                if (mode !in available) return
+                if (hasMode) modeRow.addContent(horizontalGap(if (compact) 4f else 5f))
+                modeRow.addContent(
+                    iconButton(
+                        iconId, TAP_MODE_PREFIX + mode, state == mode,
+                        if (compact) 37f else 39f, modeHeight, color, description, secondIconId,
+                    ),
+                )
+                hasMode = true
+            }
+            if (config.showHvacModes) {
+                addMode("heat", ICON_HEAT, "Heat mode", 0xFF9A3D40.toInt())
+                addMode("cool", ICON_COOL, "Cool mode", 0xFF286FAD.toInt())
+                addMode(
+                    if ("heat_cool" in available) "heat_cool" else "auto",
+                    ICON_AUTO_HEAT, "Auto heat and cool mode", 0xFF6961A6.toInt(), ICON_AUTO_COOL,
+                )
+            }
+            if (hasMode) column.addContent(modeRow.build())
+
+            val utilityRow = LayoutElementBuilders.Row.Builder()
+                .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+            if (config.showFanControl && controls.fanModes.isNotEmpty()) {
+                val on = controls.fanMode != null && controls.fanMode != "auto"
+                utilityRow.addContent(
+                    iconButton(
+                        ICON_FAN, TAP_FAN, on, if (compact) 56f else 65f, utilityHeight,
+                        0xFF277766.toInt(), if (on) "Fan on; tap to change" else "Fan auto; tap to change",
+                    ),
+                )
+                utilityRow.addContent(horizontalGap(if (compact) 6f else 8f))
+            }
+            if (config.showHvacModes && "off" in available) {
+                utilityRow.addContent(
+                    iconButton(
+                        ICON_POWER, TAP_MODE_PREFIX + "off", state == "off",
+                        if (compact) 45f else 54f, utilityHeight, 0xFF7A4355.toInt(), "Turn thermostat off",
+                    ),
+                )
+            }
+            if ((config.showFanControl && controls.fanModes.isNotEmpty()) ||
+                (config.showHvacModes && "off" in available)
+            ) {
+                column.addContent(verticalGap(if (compact) 2f else 3f))
+                column.addContent(utilityRow.build())
+            }
+        }
+
+        return Timeline.fromLayoutElement(
+            LayoutElementBuilders.Box.Builder()
+                .setWidth(DimensionBuilders.expand())
+                .setHeight(DimensionBuilders.expand())
+                .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+                .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+                .addContent(column.build())
+                .build(),
+        )
+    }
+
+    /** One row per setpoint: -3, -1, value, +1, +3. No overflowing 7-button row. */
+    private fun temperatureRow(
+        slot: String,
+        target: Float?,
+        prefix: String,
+        accent: Int,
+        secondaryStep: Int,
+        compact: Boolean,
+        height: Float,
+    ): LayoutElementBuilders.LayoutElement {
+        val extra = secondaryStep.coerceIn(2, 10)
+        val outerWidth = if (compact) 29f else 32f
+        val primaryWidth = if (compact) 33f else 37f
+        val valueWidth = if (compact) 42f else 48f
+        val gap = if (compact) 1f else 2f
+        val row = LayoutElementBuilders.Row.Builder()
+            .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+        row.addContent(button("−$extra", "Temp:$slot:${-extra}", false, outerWidth, height))
+        row.addContent(horizontalGap(gap))
+        row.addContent(button("−", "Temp:$slot:-1", false, primaryWidth, height))
+        row.addContent(horizontalGap(gap))
+        val value = target?.let { nice(it) } ?: "--"
+        val shown = if (prefix.isEmpty()) value else "$prefix$value"
+        row.addContent(
+            LayoutElementBuilders.Box.Builder()
+                .setWidth(DimensionBuilders.dp(valueWidth))
+                .setHeight(DimensionBuilders.dp(height))
+                .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+                .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+                .addContent(temperatureText("$shown°", 16f, accent))
+                .build(),
+        )
+        row.addContent(horizontalGap(gap))
+        row.addContent(button("+", "Temp:$slot:1", false, primaryWidth, height))
+        row.addContent(horizontalGap(gap))
+        row.addContent(button("+$extra", "Temp:$slot:$extra", false, outerWidth, height))
+        return row.build()
+    }
+
+    private fun button(
+        label: String,
+        action: String,
+        selected: Boolean,
+        width: Float,
+        height: Float,
+        activeColor: Int = 0xFF35445C.toInt(),
+    ): LayoutElementBuilders.LayoutElement =
+        LayoutElementBuilders.Box.Builder()
+            .setWidth(DimensionBuilders.dp(width))
+            .setHeight(DimensionBuilders.dp(height))
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+            .addContent(temperatureText(label, if (label.length > 4) 10f else 14f, 0xFFFFFFFF.toInt()))
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setBackground(
+                        ModifiersBuilders.Background.Builder()
+                            .setColor(ColorBuilders.argb(if (selected) activeColor else 0xFF293447.toInt()))
+                            .setCorner(ModifiersBuilders.Corner.Builder().setRadius(DimensionBuilders.dp(14f)).build())
+                            .build(),
+                    )
+                    .setClickable(
+                        Clickable.Builder().setId(action).setOnClick(ActionBuilders.LoadAction.Builder().build()).build(),
+                    ).build(),
+            ).build()
+
+    /** The five mode/utility buttons use drawables, not font-dependent symbols. */
+    private fun iconButton(
+        iconId: String,
+        action: String,
+        selected: Boolean,
+        width: Float,
+        height: Float,
+        activeColor: Int,
+        description: String,
+        secondIconId: String? = null,
+    ): LayoutElementBuilders.LayoutElement {
+        val content: LayoutElementBuilders.LayoutElement = if (secondIconId == null) {
+            tileIcon(iconId, 25f)
+        } else {
+            // Auto is two readable symbols: coral heat and blue cool.
+            LayoutElementBuilders.Row.Builder()
+                .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+                .addContent(tileIcon(iconId, 17f))
+                .addContent(horizontalGap(1f))
+                .addContent(tileIcon(secondIconId, 17f))
+                .build()
+        }
+        return LayoutElementBuilders.Box.Builder()
+            .setWidth(DimensionBuilders.dp(width))
+            .setHeight(DimensionBuilders.dp(height))
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+            .addContent(content)
+            .setModifiers(
+                ModifiersBuilders.Modifiers.Builder()
+                    .setBackground(
+                        ModifiersBuilders.Background.Builder()
+                            .setColor(ColorBuilders.argb(if (selected) activeColor else 0xFF293447.toInt()))
+                            .setCorner(ModifiersBuilders.Corner.Builder().setRadius(DimensionBuilders.dp(14f)).build())
+                            .build(),
+                    )
+                    .setClickable(
+                        Clickable.Builder().setId(action).setOnClick(ActionBuilders.LoadAction.Builder().build()).build(),
+                    )
+                    .setSemantics(
+                        ModifiersBuilders.Semantics.Builder()
+                            .setContentDescription(if (selected) "$description, selected" else description)
+                            .build(),
+                    )
+                    .build(),
+            )
+            .build()
+    }
+
+    private fun tileIcon(id: String, size: Float): LayoutElementBuilders.Image =
+        LayoutElementBuilders.Image.Builder()
+            .setResourceId(id)
+            .setWidth(DimensionBuilders.dp(size))
+            .setHeight(DimensionBuilders.dp(size))
+            .build()
+
+    private fun horizontalGap(width: Float): LayoutElementBuilders.Spacer = LayoutElementBuilders.Spacer.Builder()
+        .setWidth(DimensionBuilders.dp(width)).build()
+
+    private fun verticalGap(height: Float): LayoutElementBuilders.Spacer = LayoutElementBuilders.Spacer.Builder()
+        .setHeight(DimensionBuilders.dp(height)).build()
+
+    private fun temperatureText(text: String, size: Float, color: Int): LayoutElementBuilders.Text =
+        LayoutElementBuilders.Text.Builder()
+            .setText(text)
+            .setFontStyle(
+                LayoutElementBuilders.FontStyle.Builder()
+                    .setSize(DimensionBuilders.sp(size))
+                    .setColor(ColorBuilders.argb(color))
+                    .build(),
+            ).build()
+
+    private fun nice(value: Float): String =
+        if (value % 1f == 0f) value.roundToInt().toString() else "%.1f".format(java.util.Locale.US, value)
 }

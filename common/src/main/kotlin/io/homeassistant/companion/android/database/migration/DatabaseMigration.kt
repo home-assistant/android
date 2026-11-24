@@ -41,6 +41,7 @@ internal fun migrationPath(context: Context): Array<Migration> = arrayOf(
     Migration37to38(context),
     Migration40to41(context),
     MIGRATION_55_56,
+    MIGRATION_57_58,
 )
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -824,6 +825,15 @@ private val MIGRATION_55_56 = object : Migration(55, 56) {
                 "'true', 'toggle', 1, '' " +
                 "WHERE EXISTS (SELECT 1 FROM `sensors` " +
                 "WHERE `id` = 'active_notification_count' AND `enabled` = 1)",
+        )
+    }
+}
+
+/** Preserve all existing thermostat tile IDs, entities and preferences. */
+private val MIGRATION_57_58 = object : Migration(57, 58) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "ALTER TABLE `thermostat_tiles` ADD COLUMN `layout_style` TEXT NOT NULL DEFAULT 'classic'",
         )
     }
 }

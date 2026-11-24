@@ -534,6 +534,10 @@ class MainViewModel @Inject constructor(
         thermostatTileDao.add(updated)
     }
 
+    fun setThermostatTilePreferences(tile: ThermostatTile) = viewModelScope.launch {
+        thermostatTileDao.add(tile)
+    }
+
     fun setThermostatTileShowName(tileId: Int, showName: Boolean) = viewModelScope.launch {
         val current = thermostatTileDao.get(tileId)
         val updated = current?.copy(showEntityName = showName) ?: ThermostatTile(id = tileId, showEntityName = showName)

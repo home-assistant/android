@@ -36,6 +36,7 @@ fun SetThermostatTileView(
     onSelectEntity: () -> Unit,
     onSelectRefreshInterval: () -> Unit,
     onNameEnabled: (Int, Boolean) -> Unit,
+    onPreferencesChanged: (ThermostatTile) -> Unit,
 ) {
     WearAppTheme {
         ThemeLazyColumn {
@@ -93,6 +94,73 @@ fun SetThermostatTileView(
                     onClick = onSelectRefreshInterval,
                 )
             }
+            item {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = getFilledTonalButtonColors(),
+                    label = { Text("Tile appearance") },
+                    secondaryLabel = {
+                        Text(
+                            if (tile?.layoutStyle == "enhanced") {
+                                "Enhanced: direct temperature and mode controls"
+                            } else {
+                                "Classic: original Home Assistant tile"
+                            },
+                        )
+                    },
+                    onClick = {
+                        tile?.let {
+                            onPreferencesChanged(
+                                it.copy(layoutStyle = if (it.layoutStyle == "enhanced") "classic" else "enhanced"),
+                            )
+                        }
+                    },
+                )
+            }
+            if (tile?.layoutStyle == "enhanced") {
+            item {
+                SwitchButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = tile?.showHvacModes == true,
+                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.copy(showHvacModes = enabled)) } },
+                    label = { Text("Show HVAC mode buttons") },
+                    colors = getSwitchButtonColors(),
+                )
+            }
+            item {
+                SwitchButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = tile?.showFanControl == true,
+                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.copy(showFanControl = enabled)) } },
+                    label = { Text("Show fan button if supported") },
+                    colors = getSwitchButtonColors(),
+                )
+            }
+            item {
+                SwitchButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = tile?.showActivity == true,
+                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.copy(showActivity = enabled)) } },
+                    label = { Text("Show HVAC activity") },
+                    colors = getSwitchButtonColors(),
+                )
+            }
+            item {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = getFilledTonalButtonColors(),
+                    label = { Text("Secondary temperature step") },
+                    secondaryLabel = { Text("±${tile?.quickAdjustOne ?: 3}° next to ±1°; tap to change") },
+                    onClick = {
+                        tile?.let {
+                            val choices = listOf(3, 5, 2, 10)
+                            val next = choices[(choices.indexOf(it.quickAdjustOne) + 1) % choices.size]
+                            onPreferencesChanged(it.copy(quickAdjustOne = next))
+                        }
+                    },
+                )
+            }
+            } // Enhanced-specific settings
             item {
                 SwitchButton(
                     modifier = Modifier.fillMaxWidth(),
