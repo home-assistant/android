@@ -43,67 +43,83 @@ class ThermostatCommandCoordinator @Inject constructor(
         enum class Status { WAITING, FAILED }
     }
 
+    data class Target(val serverId: Int, val entityId: String) {
+        init {
+            require(serverId != ServerManager.SERVER_ID_ACTIVE)
+        }
+
+        // Bind clickable IDs to the rendered target, including across server switches.
+        val actionPrefix: String get() = "$serverId|$entityId|"
+    }
+
+    private data class PendingKey(val tileId: Int, val target: Target) {
+        val prefix: String get() = "v2.${target.serverId}.${target.entityId}.$tileId"
+    }
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val prefs = context.getSharedPreferences("thermostat_tile_commands", Context.MODE_PRIVATE)
-    private val latest = mutableMapOf<Int, Long>()
+    private val latest = mutableMapOf<PendingKey, Long>()
     private val lock = Any()
     private var nextToken = 0L
     // Queue service dispatches in submission order for the same entity. The next
     // service call need not wait for the previous entity-state acknowledgment.
-    private val dispatchTails = mutableMapOf<String, CompletableDeferred<Unit>>()
+    private val dispatchTails = mutableMapOf<Target, CompletableDeferred<Unit>>()
 
     private data class CachedEntity(val item: EntityDisplayWithoutContext, val receivedAt: Long)
-    private val entityCache = ConcurrentHashMap<String, CachedEntity>()
-    private val refreshInFlight = ConcurrentHashMap<String, AtomicBoolean>()
-    private val refreshAttemptAt = ConcurrentHashMap<String, Long>()
+    private val entityCache = ConcurrentHashMap<Target, CachedEntity>()
+    private val refreshInFlight = ConcurrentHashMap<Target, AtomicBoolean>()
+    private val refreshAttemptAt = ConcurrentHashMap<Target, Long>()
 
-    fun cachedEntity(entityId: String): EntityDisplayWithoutContext? =
-        entityCache[entityId]?.takeIf { System.currentTimeMillis() - it.receivedAt < 120_000L }?.item
+    fun cachedEntity(target: Target): EntityDisplayWithoutContext? =
+        entityCache[target]?.takeIf { System.currentTimeMillis() - it.receivedAt < 120_000L }?.item
 
-    fun rememberEntity(entity: EntityDisplayWithoutContext) {
-        val previous = entityCache.put(entity.entityId, CachedEntity(entity, System.currentTimeMillis()))
+    fun rememberEntity(target: Target, entity: EntityDisplayWithoutContext) {
+        if (entity.entityId != target.entityId) return
+        val previous = entityCache.put(target, CachedEntity(entity, System.currentTimeMillis()))
         // A state change should appear without waiting for the tile's long periodic interval.
         if (previous != null && previous.item != entity) refresh()
     }
 
-    fun refreshEntityIfStale(entityId: String, maxAgeMillis: Long) {
+    fun refreshEntityIfStale(target: Target, maxAgeMillis: Long) {
         val now = System.currentTimeMillis()
-        val entry = entityCache[entityId]
+        val entry = entityCache[target]
         if (entry != null && now - entry.receivedAt < maxAgeMillis) return
         // Limit retries when offline and coalesce simultaneous tile requests.
-        val previousAttempt = refreshAttemptAt[entityId] ?: 0L
+        val previousAttempt = refreshAttemptAt[target] ?: 0L
         if (now - previousAttempt < maxAgeMillis) return
-        val gate = refreshInFlight.getOrPut(entityId) { AtomicBoolean(false) }
+        val gate = refreshInFlight.getOrPut(target) { AtomicBoolean(false) }
         if (!gate.compareAndSet(false, true)) return
-        refreshAttemptAt[entityId] = now
+        refreshAttemptAt[target] = now
         scope.launch {
             try {
-                serverManager.integrationRepository().getEntity(entityId)?.let {
-                    rememberEntity(EntityDisplayWithoutContext(it))
+                serverManager.integrationRepository(target.serverId).getEntity(target.entityId)?.let {
+                    rememberEntity(target, EntityDisplayWithoutContext(it))
                 }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
-                Timber.w(error, "Thermostat background refresh failed: %s", entityId)
+                Timber.w(error, "Thermostat background refresh failed: %s", target.entityId)
             } finally {
                 gate.set(false)
             }
         }
     }
 
-    fun get(tileId: Int): Pending? = synchronized(lock) {
-        val time = prefs.getLong("$tileId.time", 0L)
+    fun get(tileId: Int, target: Target): Pending? = synchronized(lock) {
+        val key = PendingKey(tileId, target)
+        val prefix = key.prefix
+        val time = prefs.getLong("$prefix.time", 0L)
         if (time == 0L) return null
-        val failed = prefs.getBoolean("$tileId.failed", false)
+        val failed = prefs.getBoolean("$prefix.failed", false)
         val maxAge = if (failed) 15_000 else 45_000
         if (System.currentTimeMillis() - time > maxAge) {
-            clear(tileId)
+            clear(key)
             return null
         }
         fun floatOrNull(key: String) =
-            if (prefs.contains("$tileId.$key")) prefs.getFloat("$tileId.$key", 0f) else null
+            if (prefs.contains("$prefix.$key")) prefs.getFloat("$prefix.$key", 0f) else null
         return Pending(
-            value = prefs.getString("$tileId.value", "") ?: "",
+            value = prefs.getString("$prefix.value", "") ?: "",
             status = if (failed) Pending.Status.FAILED else Pending.Status.WAITING,
             single = floatOrNull("single"),
             low = floatOrNull("low"),
@@ -113,35 +129,37 @@ class ThermostatCommandCoordinator @Inject constructor(
 
     // Called under lock, so a newer request cannot be overwritten by an older reply.
     private fun store(
-        tileId: Int,
+        key: PendingKey,
         value: String,
         failed: Boolean = false,
         single: Float? = null,
         low: Float? = null,
         high: Float? = null,
     ) {
-        val edit = prefs.edit().putLong("$tileId.time", System.currentTimeMillis())
-            .putString("$tileId.value", value).putBoolean("$tileId.failed", failed)
+        val prefix = key.prefix
+        val edit = prefs.edit().putLong("$prefix.time", System.currentTimeMillis())
+            .putString("$prefix.value", value).putBoolean("$prefix.failed", failed)
         if (!failed) {
-            edit.remove("$tileId.single").remove("$tileId.low").remove("$tileId.high")
-            if (single != null) edit.putFloat("$tileId.single", single)
-            if (low != null) edit.putFloat("$tileId.low", low)
-            if (high != null) edit.putFloat("$tileId.high", high)
+            edit.remove("$prefix.single").remove("$prefix.low").remove("$prefix.high")
+            if (single != null) edit.putFloat("$prefix.single", single)
+            if (low != null) edit.putFloat("$prefix.low", low)
+            if (high != null) edit.putFloat("$prefix.high", high)
         }
         edit.apply()
         refresh()
     }
 
-    private fun clear(tileId: Int) {
-        prefs.edit().remove("$tileId.time").remove("$tileId.value")
-            .remove("$tileId.failed").remove("$tileId.single")
-            .remove("$tileId.low").remove("$tileId.high").apply()
+    private fun clear(key: PendingKey) {
+        val prefix = key.prefix
+        prefs.edit().remove("$prefix.time").remove("$prefix.value")
+            .remove("$prefix.failed").remove("$prefix.single")
+            .remove("$prefix.low").remove("$prefix.high").apply()
         refresh()
     }
 
     fun submitTemperature(
         tileId: Int,
-        entityId: String,
+        target: Target,
         isRange: Boolean,
         low: Float?,
         high: Float?,
@@ -149,15 +167,15 @@ class ThermostatCommandCoordinator @Inject constructor(
     ) {
         val data: Map<String, Any?> = when {
             isRange && low != null && high != null -> mapOf(
-                "entity_id" to entityId,
+                "entity_id" to target.entityId,
                 "target_temp_low" to low,
                 "target_temp_high" to high,
             )
-            !isRange && single != null -> mapOf("entity_id" to entityId, "temperature" to single)
+            !isRange && single != null -> mapOf("entity_id" to target.entityId, "temperature" to single)
             else -> return
         }
         val displayValue = if (isRange) "$low–$high°" else "$single°"
-        submit(tileId, entityId, "set_temperature", data, displayValue, single, low, high) { entity ->
+        submit(tileId, target, "set_temperature", data, displayValue, single, low, high) { entity ->
             val state = entity.climateControls ?: return@submit false
             if (isRange) {
                 approximately(state.targetTemperatureLow, low) && approximately(state.targetTemperatureHigh, high)
@@ -167,19 +185,19 @@ class ThermostatCommandCoordinator @Inject constructor(
         }
     }
 
-    fun submitHvac(tileId: Int, entityId: String, mode: String) = submit(
-        tileId, entityId, "set_hvac_mode", mapOf("entity_id" to entityId, "hvac_mode" to mode), mode,
+    fun submitHvac(tileId: Int, target: Target, mode: String) = submit(
+        tileId, target, "set_hvac_mode", mapOf("entity_id" to target.entityId, "hvac_mode" to mode), mode,
     ) { entity -> entity.rawState == mode }
 
-    fun submitFan(tileId: Int, entityId: String, mode: String) = submit(
-        tileId, entityId, "set_fan_mode", mapOf("entity_id" to entityId, "fan_mode" to mode), mode,
+    fun submitFan(tileId: Int, target: Target, mode: String) = submit(
+        tileId, target, "set_fan_mode", mapOf("entity_id" to target.entityId, "fan_mode" to mode), mode,
     ) { entity -> entity.climateControls?.fanMode == mode }
 
     private fun approximately(a: Float?, b: Float?): Boolean = a != null && b != null && kotlin.math.abs(a - b) < 0.051f
 
     private fun submit(
         tileId: Int,
-        entityId: String,
+        target: Target,
         action: String,
         data: Map<String, Any?>,
         value: String,
@@ -188,23 +206,24 @@ class ThermostatCommandCoordinator @Inject constructor(
         high: Float? = null,
         confirmed: (EntityDisplay) -> Boolean,
     ) {
+        val key = PendingKey(tileId, target)
         val dispatched = CompletableDeferred<Unit>()
         val (token, predecessor) = synchronized(lock) {
             val token = ++nextToken
-            latest[tileId] = token
-            store(tileId, value, single = single, low = low, high = high)
-            token to dispatchTails.put(entityId, dispatched)
+            latest[key] = token
+            store(key, value, single = single, low = low, high = high)
+            token to dispatchTails.put(target, dispatched)
         }
         scope.launch {
             val started = SystemClock.elapsedRealtime()
             try {
                 try {
                     predecessor?.await()
-                    serverManager.integrationRepository().callAction("climate", action, data)
+                    serverManager.integrationRepository(target.serverId).callAction("climate", action, data)
                 } finally {
                     // Always release the following command, including after a failed service call.
                     synchronized(lock) {
-                        if (dispatchTails[entityId] === dispatched) dispatchTails.remove(entityId)
+                        if (dispatchTails[target] === dispatched) dispatchTails.remove(target)
                         dispatched.complete(Unit)
                     }
                 }
@@ -212,16 +231,16 @@ class ThermostatCommandCoordinator @Inject constructor(
                 // Request only the climate entity, not ALL HA states and the entire
                 // entity registry. Acknowledgment polling must be cheap on a watch.
                 repeat(12) {
-                    if (!isLatest(tileId, token)) return@launch
-                    val current = serverManager.integrationRepository().getEntity(entityId)
+                    if (!isLatest(key, token)) return@launch
+                    val current = serverManager.integrationRepository(target.serverId).getEntity(target.entityId)
                         ?.let { EntityDisplayWithoutContext(it) }
                     synchronized(lock) {
-                        if (latest[tileId] != token) return@launch
+                        if (latest[key] != token) return@launch
                         if (current != null) {
-                            rememberEntity(current)
+                            rememberEntity(target, current)
                             if (confirmed(current)) {
                                 Timber.i("Thermostat %s state confirmed after %d ms", action, SystemClock.elapsedRealtime() - started)
-                                clear(tileId)
+                                clear(key)
                                 return@launch
                             }
                         }
@@ -230,20 +249,20 @@ class ThermostatCommandCoordinator @Inject constructor(
                 }
                 Timber.w("Thermostat %s unconfirmed after %d ms", action, SystemClock.elapsedRealtime() - started)
                 synchronized(lock) {
-                    if (latest[tileId] == token) store(tileId, value, failed = true)
+                    if (latest[key] == token) store(key, value, failed = true)
                 }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
                 Timber.e(error, "Thermostat tile command failed: %s", action)
                 synchronized(lock) {
-                    if (latest[tileId] == token) store(tileId, value, failed = true)
+                    if (latest[key] == token) store(key, value, failed = true)
                 }
             }
         }
     }
 
-    private fun isLatest(tileId: Int, token: Long): Boolean = synchronized(lock) { latest[tileId] == token }
+    private fun isLatest(key: PendingKey, token: Long): Boolean = synchronized(lock) { latest[key] == token }
 
     private fun refresh() {
         TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java)
