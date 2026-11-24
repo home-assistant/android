@@ -31,6 +31,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import java.time.LocalDateTime
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -1212,6 +1213,71 @@ class EntitiesForDisplayManagerTest {
                 coVerify(exactly = 2) { webSocketRepository.getFloorRegistry() }
                 coVerify(exactly = 1) { webSocketRepository.getEntityRegistryDisplay() }
                 coVerify(exactly = 1) { webSocketRepository.getDeviceRegistry() }
+            }
+
+            @Test
+            fun `Given an entity registry refetch in flight when a state changes then it is emitted without waiting for the refetch`() = runTest {
+                val refetchStarted = CompletableDeferred<Unit>()
+                val refetch = CompletableDeferred<EntityRegistryDisplayResponse>()
+                coEvery { webSocketRepository.getEntityRegistryDisplay() } returns
+                    EntityRegistryDisplayResponse() coAndThen {
+                        refetchStarted.complete(Unit)
+                        refetch.await()
+                    }
+
+                manager.observeInContext(serverId).test {
+                    assertEquals("Bed Light", awaitInitialLoad().single().name)
+                    entityChanges.awaitSubscribed()
+                    entityRegistryUpdates.awaitSubscribed()
+
+                    entityRegistryUpdates.emit(EntityRegistryUpdatedEvent("update", "light.bed"))
+                    refetchStarted.await()
+
+                    entityChanges.emit(EntityChange.StateChanged(entity("light.bed", "Bed Light changed")))
+                    assertEquals("Bed Light changed", awaitLoaded().single().name)
+
+                    refetch.complete(
+                        EntityRegistryDisplayResponse(
+                            entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed renamed")),
+                        ),
+                    )
+                    assertEquals("Bed renamed", awaitLoaded().single().name)
+                    cancelAndIgnoreRemainingEvents()
+                }
+            }
+
+            @Test
+            fun `Given entity registry updates during a refetch when observing then a single refetch answers them`() = runTest {
+                val refetchStarted = CompletableDeferred<Unit>()
+                val refetch = CompletableDeferred<EntityRegistryDisplayResponse>()
+                coEvery { webSocketRepository.getEntityRegistryDisplay() } returns
+                    EntityRegistryDisplayResponse() coAndThen {
+                        refetchStarted.complete(Unit)
+                        refetch.await()
+                    } andThen
+                    EntityRegistryDisplayResponse(
+                        entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed renamed twice")),
+                    )
+
+                manager.observeInContext(serverId).test {
+                    awaitInitialLoad()
+                    entityRegistryUpdates.awaitSubscribed()
+
+                    entityRegistryUpdates.emit(EntityRegistryUpdatedEvent("update", "light.bed"))
+                    refetchStarted.await()
+                    repeat(3) { entityRegistryUpdates.emit(EntityRegistryUpdatedEvent("update", "light.bed")) }
+
+                    refetch.complete(
+                        EntityRegistryDisplayResponse(
+                            entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed renamed")),
+                        ),
+                    )
+                    assertEquals("Bed renamed", awaitLoaded().single().name)
+                    assertEquals("Bed renamed twice", awaitLoaded().single().name)
+                    cancelAndIgnoreRemainingEvents()
+                }
+                // The initial fetch, the refetch in flight, and one for the three updates received meanwhile
+                coVerify(exactly = 3) { webSocketRepository.getEntityRegistryDisplay() }
             }
 
             @Test
