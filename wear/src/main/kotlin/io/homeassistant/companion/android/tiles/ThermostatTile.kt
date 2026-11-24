@@ -221,7 +221,7 @@ class ThermostatTile : TileService() {
                         }
 
                         // State refresh happens in the background, never before dispatching a tap.
-                        // A pending command also polls for acknowledgment without registry fetches.
+                        // Pending commands monitor acknowledgment; the coordinator suppresses redundant reads.
                         commandCoordinator.refreshEntityIfStale(
                             target,
                             if (commandCoordinator.get(tileId, target) != null) 3_000L else 20_000L,
