@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.changelog
 
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -22,6 +21,8 @@ import org.junit.jupiter.params.provider.EnumSource
 
 private const val CURRENT_VERSION_CODE = 42
 private const val SENSOR_ID = "test_sensor"
+private const val FULL_FLAVOR = "full"
+private const val MINIMAL_FLAVOR = "minimal"
 
 private val sensorEntry = ChangelogEntry(
     contentRes = commonR.string.changelog_entry_bug_fixes,
@@ -32,6 +33,8 @@ private val plainEntry = ChangelogEntry(
     contentRes = commonR.string.changelog_entry_bug_fixes,
     platforms = setOf(ChangelogPlatform.APP),
 )
+private val fullFlavorEntry = plainEntry.copy(requiresFlavor = ChangelogFlavor.FULL)
+private val minimalFlavorEntry = plainEntry.copy(requiresFlavor = ChangelogFlavor.MINIMAL)
 
 /** A fixed changelog so release-note edits never change what these tests exercise. */
 private val fixtureChangelog = Changelog(new = listOf(sensorEntry), fixed = listOf(plainEntry))
@@ -60,6 +63,15 @@ class ChangelogViewModelTest {
 
         assertEquals("2026.7.6", state.versionName)
         assertEquals("https://github.com/home-assistant/android/releases/tag/2026.7.6", state.releaseUrl)
+    }
+
+    @Test
+    fun `Given version with the suffix of another flavor when reading state then version name is unchanged`() = runTest {
+        val appVersion = AppVersion("2026.7.6-$MINIMAL_FLAVOR", CURRENT_VERSION_CODE)
+
+        val state = resolvedState(createViewModel(flavor = FULL_FLAVOR, appVersion = appVersion))
+
+        assertEquals("2026.7.6-$MINIMAL_FLAVOR", state.versionName)
     }
 
     @Test
@@ -106,14 +118,34 @@ class ChangelogViewModelTest {
         coVerify(exactly = 0) { sensorManager.hasBasicSensor(any()) }
     }
 
+    @Test
+    fun `Given full flavor when reading state then only entries of other flavors and emptied sections are dropped`() = runTest {
+        val changelog = Changelog(new = listOf(minimalFlavorEntry), fixed = listOf(plainEntry, fullFlavorEntry, minimalFlavorEntry))
+
+        val state = resolvedState(createViewModel(flavor = FULL_FLAVOR, changelog = changelog))
+
+        assertEquals(Changelog(fixed = listOf(plainEntry, fullFlavorEntry)).toSections(), state.sections)
+    }
+
+    @Test
+    fun `Given minimal flavor when reading state then only entries of other flavors and emptied sections are dropped`() = runTest {
+        val changelog = Changelog(new = listOf(fullFlavorEntry), fixed = listOf(plainEntry, fullFlavorEntry, minimalFlavorEntry))
+
+        val state = resolvedState(createViewModel(flavor = MINIMAL_FLAVOR, changelog = changelog))
+
+        assertEquals(Changelog(fixed = listOf(plainEntry, minimalFlavorEntry)).toSections(), state.sections)
+    }
+
     private fun TestScope.createViewModel(
         isAutomotive: Boolean = false,
-        appVersion: AppVersion = AppVersion("2026.7.6-${BuildConfig.FLAVOR}", CURRENT_VERSION_CODE),
+        flavor: String = FULL_FLAVOR,
+        appVersion: AppVersion = AppVersion("2026.7.6-$flavor", CURRENT_VERSION_CODE),
         sensorManagers: Set<SensorManager> = setOf(sensorManager(hasSensor = true)),
         changelog: Changelog = fixtureChangelog,
     ) = ChangelogViewModel(
         prefsRepository = prefsRepository,
         isAutomotive = isAutomotive,
+        flavor = flavor,
         appVersion = appVersion,
         sensorManagers = sensorManagers,
         changelog = changelog,

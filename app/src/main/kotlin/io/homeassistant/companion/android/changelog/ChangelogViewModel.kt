@@ -48,6 +48,7 @@ sealed interface ChangelogUiState {
 class ChangelogViewModel @VisibleForTesting constructor(
     prefsRepository: PrefsRepository,
     isAutomotive: Boolean,
+    flavor: String,
     appVersion: AppVersion,
     private val sensorManagers: Set<SensorManager>,
     changelog: Changelog,
@@ -60,15 +61,23 @@ class ChangelogViewModel @VisibleForTesting constructor(
         @IsAutomotive isAutomotive: Boolean,
         appVersion: AppVersion,
         sensorManagers: Set<@JvmSuppressWildcards SensorManager>,
-    ) : this(prefsRepository, isAutomotive, appVersion, sensorManagers, currentChangelog, Dispatchers.Default)
+    ) : this(
+        prefsRepository = prefsRepository,
+        isAutomotive = isAutomotive,
+        flavor = BuildConfig.FLAVOR,
+        appVersion = appVersion,
+        sensorManagers = sensorManagers,
+        changelog = currentChangelog,
+        backgroundDispatcher = Dispatchers.Default,
+    )
 
     private val _uiState = MutableStateFlow<ChangelogUiState>(ChangelogUiState.Loading)
     val uiState: StateFlow<ChangelogUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            val versionWithoutFlavor = appVersion.name.removeSuffix("-${BuildConfig.FLAVOR}")
-            val sections = changelog.toSections()
+            val versionWithoutFlavor = appVersion.name.removeSuffix("-$flavor")
+            val sections = changelog.toSections().withEntriesAvailableOn(flavor)
             _uiState.value = ChangelogUiState.Content(
                 versionName = versionWithoutFlavor,
                 releaseUrl = RELEASE_TAG_URL_PREFIX + versionWithoutFlavor,
@@ -92,6 +101,14 @@ class ChangelogViewModel @VisibleForTesting constructor(
         }
     }
 }
+
+/** Drops the entries that require another flavor than [flavor], and the sections left empty. */
+private fun List<ChangelogSection>.withEntriesAvailableOn(flavor: String): List<ChangelogSection> =
+    map { section -> section.copy(entries = section.entries.filter { it.isAvailableOn(flavor) }) }
+        .filter { it.entries.isNotEmpty() }
+
+private fun ChangelogEntry.isAvailableOn(flavor: String): Boolean =
+    requiresFlavor == ChangelogFlavor.NONE || requiresFlavor.flavorName == flavor
 
 /** Ids of the sensors targeted by a [ChangelogAction.OpenSensor]. */
 private fun List<ChangelogSection>.sensorIds(): Set<String> = flatMap { it.entries }
