@@ -119,12 +119,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Full-screen drag editor launched from the tap-only thermostat tile. -->
-        <activity
-            android:name=".tiles.ThermostatArcEditorActivity"
-            android:exported="true"
-            android:excludeFromRecents="true" />
-
         <!-- To show confirmations and failures -->
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
 
