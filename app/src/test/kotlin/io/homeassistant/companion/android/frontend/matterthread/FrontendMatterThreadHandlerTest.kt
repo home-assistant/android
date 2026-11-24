@@ -516,6 +516,19 @@ class FrontendMatterThreadHandlerTest {
         }
 
         @Test
+        fun `Given no border agent ID when storing then informs and does not predict or add`() = runTest {
+            givenStoreReady(ThreadManager.PreflightOutcome.LikelyToBecomePreferred)
+
+            createHandler().onStoreThreadCredentialsInPlatformKeychain(serverId = 1, borderAgentId = null, tlv = tlv)
+
+            coVerify {
+                dialogManager.showInformation(commonR.string.thread_store_no_border_agent_id, moreInfoUrl = any())
+            }
+            coVerify(exactly = 0) { threadManager.predictPreferredOutcome(any()) }
+            coVerify(exactly = 0) { threadManager.addCredentialToDevice(any(), any(), any()) }
+        }
+
+        @Test
         fun `Given credential already preferred when storing then informs and does not add`() = runTest {
             givenStoreReady(ThreadManager.PreflightOutcome.AlreadyPreferred)
 

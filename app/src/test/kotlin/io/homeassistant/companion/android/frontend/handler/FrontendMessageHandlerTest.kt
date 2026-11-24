@@ -469,10 +469,12 @@ class FrontendMessageHandlerTest {
     }
 
     @Test
-    fun `Given Thread store_in_platform_keychain message without border agent ID when messageResults then emits UnknownMessage`() = runTest {
+    fun `Given Thread store_in_platform_keychain message without border agent ID when messageResults then emits store event without ID`() = runTest {
         val message = ThreadStoreInPlatformKeychainMessage(
             id = 62,
             payload = ThreadStoreInPlatformKeychainPayload(
+                macExtendedAddress = "aabbccddeeff0011",
+                borderAgentId = "",
                 activeOperationalDataset = "0e08",
                 extendedPanId = "1111111122222222",
             ),
@@ -480,7 +482,11 @@ class FrontendMessageHandlerTest {
         every { externalBusRepository.incomingMessages() } returns flowOf(message)
 
         handler.messageResults().test {
-            assertInstanceOf(FrontendHandlerEvent.UnknownMessage::class.java, awaitItem())
+            val event = assertInstanceOf(
+                FrontendHandlerEvent.StoreThreadCredentialsInPlatformKeychain::class.java,
+                awaitItem(),
+            )
+            assertNull(event.borderAgentId)
             expectNoEvents()
         }
     }

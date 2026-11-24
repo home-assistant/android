@@ -316,12 +316,11 @@ class FrontendMessageHandler @Inject constructor(
                     Timber.w(e, "thread/store_in_platform_keychain: cannot decode TLV hex")
                     null
                 }
-                val borderAgentId = message.payload.borderAgentId
-                if (tlv == null || borderAgentId.isNullOrBlank()) {
+                if (tlv == null) {
                     FrontendHandlerEvent.UnknownMessage
                 } else {
                     FrontendHandlerEvent.StoreThreadCredentialsInPlatformKeychain(
-                        borderAgentId = borderAgentId,
+                        borderAgentId = message.payload.borderAgentId?.takeIf { it.isNotBlank() },
                         tlv = tlv,
                     )
                 }

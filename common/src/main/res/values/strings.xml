@@ -1251,6 +1251,7 @@
     <string name="thread_export_unavailable">Thread is currently unavailable</string>
     <string name="thread_store_unsupported">Thread credential management isn\'t supported on this version of the app.</string>
     <string name="thread_store_invalid_payload">Home Assistant didn\'t send a usable Thread credential.</string>
+    <string name="thread_store_no_border_agent_id">This border router doesn\'t report an ID, so its Thread credentials can\'t be stored on this device.</string>
     <string name="thread_store_already_preferred">\"%1$s\" is already this device\'s preferred Thread network. Nothing to do.</string>
     <string name="thread_store_different_preferred">This device currently prefers \"%2$s\". Adding \"%1$s\" will store the credential, but the device will probably keep preferring \"%2$s\" — the Android system decides which Thread network is preferred and the app cannot change that. Add anyway?</string>
     <string name="thread_store_likely_preferred">Home Assistant doesn\'t have any Thread credentials stored on this device yet. Unless another app (such as Google Home or IKEA Home smart) has already set a preferred Thread network, adding \"%1$s\" will likely make it the preferred network — used when commissioning new Matter over Thread devices from this device. Preferred status can\'t be changed afterwards. Continue?</string>

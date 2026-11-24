@@ -273,7 +273,7 @@ internal class FrontendMatterThreadHandler @Inject constructor(
      *
      * No-op if another flow is already in-flight.
      */
-    suspend fun onStoreThreadCredentialsInPlatformKeychain(serverId: Int, borderAgentId: String, tlv: ByteArray) {
+    suspend fun onStoreThreadCredentialsInPlatformKeychain(serverId: Int, borderAgentId: String?, tlv: ByteArray) {
         if (!inFlight.compareAndSet(null, InFlight.ThreadStore)) {
             Timber.w("thread/store_in_platform_keychain ignored: another flow is in-flight")
             return
@@ -295,24 +295,28 @@ internal class FrontendMatterThreadHandler @Inject constructor(
         }
     }
 
-    private suspend fun storeThreadCredentials(serverId: Int, borderAgentId: String, tlv: ByteArray) {
-        if (!threadManager.appSupportsThread()) {
-            showThreadInformation(commonR.string.thread_store_unsupported)
-            return
-        }
+    private suspend fun storeThreadCredentials(serverId: Int, borderAgentId: String?, tlv: ByteArray) {
         val networkName = threadManager.networkNameFromTlv(tlv)
-        if (networkName == null) {
-            showThreadInformation(commonR.string.thread_store_invalid_payload)
-            return
-        }
-        val outcome = withProgress { threadManager.predictPreferredOutcome(tlv) }
-        if (confirmThreadPreflight(outcome, networkName)) {
-            addThreadCredentialAndReport(
-                serverId = serverId,
-                borderAgentId = borderAgentId,
-                tlv = tlv,
-                networkName = networkName,
-            )
+        when {
+            !threadManager.appSupportsThread() -> showThreadInformation(commonR.string.thread_store_unsupported)
+
+            networkName == null -> showThreadInformation(commonR.string.thread_store_invalid_payload)
+
+            // The device stores credentials per border agent ID, so there is nothing to store
+            // them under when the border router doesn't report one.
+            borderAgentId == null -> showThreadInformation(commonR.string.thread_store_no_border_agent_id)
+
+            else -> {
+                val outcome = withProgress { threadManager.predictPreferredOutcome(tlv) }
+                if (confirmThreadPreflight(outcome, networkName)) {
+                    addThreadCredentialAndReport(
+                        serverId = serverId,
+                        borderAgentId = borderAgentId,
+                        tlv = tlv,
+                        networkName = networkName,
+                    )
+                }
+            }
         }
     }
 

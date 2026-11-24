@@ -135,10 +135,11 @@ sealed interface FrontendHandlerEvent {
      *
      * @param borderAgentId Hex string identifying the preferred border router that owns the
      *   network on the server side; the credential should be added under this BA so it can be
-     *   removed later if the server is removed.
+     *   removed later if the server is removed. `null` when the border router doesn't report
+     *   one, in which case the credential cannot be stored.
      * @param tlv Decoded raw Thread Active Operational Dataset bytes.
      */
-    data class StoreThreadCredentialsInPlatformKeychain(val borderAgentId: String, val tlv: ByteArray) :
+    data class StoreThreadCredentialsInPlatformKeychain(val borderAgentId: String?, val tlv: ByteArray) :
         FrontendHandlerEvent
 
     /**
