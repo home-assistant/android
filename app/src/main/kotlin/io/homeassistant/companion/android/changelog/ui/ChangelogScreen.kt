@@ -55,6 +55,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.ButtonSize
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
 import io.homeassistant.companion.android.common.compose.composable.HALabel
+import io.homeassistant.companion.android.common.compose.composable.HALoading
 import io.homeassistant.companion.android.common.compose.composable.HAPlainButton
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.composable.HAVerticalDivider
@@ -116,11 +117,36 @@ internal fun ChangelogScreenContent(
 
 /**
  * The changelog content with its "Got it" button, without any top bar, so it can also be hosted
- * where a toolbar already exists (like the settings).
+ * where a toolbar already exists (like the settings). Shows a loading indicator until the content
+ * is resolved.
  */
 @Composable
 internal fun ChangelogContent(
     uiState: ChangelogUiState,
+    onGotItClick: () -> Unit,
+    onActionClick: (ChangelogAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    when (uiState) {
+        ChangelogUiState.Loading -> Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            HALoading()
+        }
+
+        is ChangelogUiState.Content -> ChangelogLoadedContent(
+            uiState = uiState,
+            onGotItClick = onGotItClick,
+            onActionClick = onActionClick,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun ChangelogLoadedContent(
+    uiState: ChangelogUiState.Content,
     onGotItClick: () -> Unit,
     onActionClick: (ChangelogAction) -> Unit,
     modifier: Modifier = Modifier,
@@ -327,7 +353,7 @@ private fun PlatformTag(platform: ChangelogPlatform, isCurrent: Boolean) {
 private fun ChangelogScreenPreview() {
     HAThemeForPreview {
         ChangelogScreenContent(
-            uiState = ChangelogUiState(
+            uiState = ChangelogUiState.Content(
                 versionName = "2026.7.6",
                 releaseUrl = "https://github.com/home-assistant/android/releases/tag/2026.7.6",
                 currentPlatform = ChangelogPlatform.APP,
