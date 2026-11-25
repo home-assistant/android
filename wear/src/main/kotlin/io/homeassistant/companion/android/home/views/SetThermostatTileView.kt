@@ -111,7 +111,15 @@ fun SetThermostatTileView(
                     onClick = {
                         tile?.let {
                             onPreferencesChanged(it.id) { current ->
-                                current.copy(layoutStyle = if (current.layoutStyle == "enhanced") "classic" else "enhanced")
+                                current.copy(
+                                    layoutStyle = if (current.layoutStyle ==
+                                        "enhanced"
+                                    ) {
+                                        "classic"
+                                    } else {
+                                        "enhanced"
+                                    },
+                                )
                             }
                         }
                     },
@@ -131,50 +139,69 @@ fun SetThermostatTileView(
                 }
             }
             if (tile?.layoutStyle == "enhanced") {
-            item {
-                SwitchButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    checked = tile?.showHvacModes == true,
-                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.id) { current -> current.copy(showHvacModes = enabled) } } },
-                    label = { Text(stringResource(commonR.string.setting_thermostat_hvac_modes)) },
-                    colors = getSwitchButtonColors(),
-                )
-            }
-            item {
-                SwitchButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    checked = tile?.showFanControl == true,
-                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.id) { current -> current.copy(showFanControl = enabled) } } },
-                    label = { Text(stringResource(commonR.string.setting_thermostat_fan_control)) },
-                    colors = getSwitchButtonColors(),
-                )
-            }
-            item {
-                SwitchButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    checked = tile?.showActivity == true,
-                    onCheckedChange = { enabled -> tile?.let { onPreferencesChanged(it.id) { current -> current.copy(showActivity = enabled) } } },
-                    label = { Text(stringResource(commonR.string.setting_thermostat_activity)) },
-                    colors = getSwitchButtonColors(),
-                )
-            }
-            item {
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = getFilledTonalButtonColors(),
-                    label = { Text(stringResource(commonR.string.setting_thermostat_secondary_step)) },
-                    secondaryLabel = { Text(stringResource(commonR.string.setting_thermostat_secondary_step_summary, tile?.quickAdjustOne ?: 3)) },
-                    onClick = {
-                        tile?.let {
-                            onPreferencesChanged(it.id) { current ->
-                                val choices = listOf(3, 5, 2, 10)
-                                val next = choices[(choices.indexOf(current.quickAdjustOne) + 1) % choices.size]
-                                current.copy(quickAdjustOne = next)
+                item {
+                    SwitchButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        checked = tile?.showHvacModes == true,
+                        onCheckedChange = { enabled ->
+                            tile?.let {
+                                onPreferencesChanged(it.id) { current -> current.copy(showHvacModes = enabled) }
                             }
-                        }
-                    },
-                )
-            }
+                        },
+                        label = { Text(stringResource(commonR.string.setting_thermostat_hvac_modes)) },
+                        colors = getSwitchButtonColors(),
+                    )
+                }
+                item {
+                    SwitchButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        checked = tile?.showFanControl == true,
+                        onCheckedChange = { enabled ->
+                            tile?.let {
+                                onPreferencesChanged(it.id) { current -> current.copy(showFanControl = enabled) }
+                            }
+                        },
+                        label = { Text(stringResource(commonR.string.setting_thermostat_fan_control)) },
+                        colors = getSwitchButtonColors(),
+                    )
+                }
+                item {
+                    SwitchButton(
+                        modifier = Modifier.fillMaxWidth(),
+                        checked = tile?.showActivity == true,
+                        onCheckedChange = { enabled ->
+                            tile?.let {
+                                onPreferencesChanged(it.id) { current -> current.copy(showActivity = enabled) }
+                            }
+                        },
+                        label = { Text(stringResource(commonR.string.setting_thermostat_activity)) },
+                        colors = getSwitchButtonColors(),
+                    )
+                }
+                item {
+                    Button(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = getFilledTonalButtonColors(),
+                        label = { Text(stringResource(commonR.string.setting_thermostat_secondary_step)) },
+                        secondaryLabel = {
+                            Text(
+                                stringResource(
+                                    commonR.string.setting_thermostat_secondary_step_summary,
+                                    tile?.quickAdjustOne ?: 3,
+                                ),
+                            )
+                        },
+                        onClick = {
+                            tile?.let {
+                                onPreferencesChanged(it.id) { current ->
+                                    val choices = listOf(3, 5, 2, 10)
+                                    val next = choices[(choices.indexOf(current.quickAdjustOne) + 1) % choices.size]
+                                    current.copy(quickAdjustOne = next)
+                                }
+                            }
+                        },
+                    )
+                }
             } // Enhanced-specific settings
             item {
                 SwitchButton(

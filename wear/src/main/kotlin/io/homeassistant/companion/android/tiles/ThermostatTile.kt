@@ -122,9 +122,20 @@ class ThermostatTile : TileService() {
                         val climateControls = entity.climateControls
 
                         val clickedId = requestParams.currentState.lastClickableId
-                        val lastId = if (clickedId.startsWith(actionPrefix)) clickedId.removePrefix(actionPrefix) else ""
+                        val lastId = if (clickedId.startsWith(
+                                actionPrefix,
+                            )
+                        ) {
+                            clickedId.removePrefix(actionPrefix)
+                        } else {
+                            ""
+                        }
                         if (clickedId.isNotEmpty()) {
-                            Timber.i("Thermostat tile action resolved after %d ms; valid=%s", android.os.SystemClock.elapsedRealtime() - requestStarted, lastId.isNotEmpty())
+                            Timber.i(
+                                "Thermostat tile action resolved after %d ms; valid=%s",
+                                android.os.SystemClock.elapsedRealtime() - requestStarted,
+                                lastId.isNotEmpty(),
+                            )
                         }
                         val controls = climateControls
                         if (controls != null && entity.rawState !in listOf("unavailable", "unknown")) {
@@ -139,37 +150,55 @@ class ThermostatTile : TileService() {
                                 // asynchronously through the same fast coordinator as Enhanced.
                                 tileConfig.layoutStyle == "classic" &&
                                     lastId in listOf(TAP_ACTION_DOWN, TAP_ACTION_UP) &&
-                                    entity.rawState != "off" && controls.targetTemperature != null &&
+                                    entity.rawState != "off" &&
+                                    controls.targetTemperature != null &&
                                     waitingCommand?.value !in listOf("on", "off") -> {
                                     val delta = if (lastId == TAP_ACTION_UP) step else -step
                                     val baseline = waitingCommand?.single
                                         ?: controls.targetTemperature!!
                                     val proposed = ThermostatTemperatureLogic.snap(
-                                        baseline + delta, step, min, max,
+                                        baseline + delta,
+                                        step,
+                                        min,
+                                        max,
                                     )
                                     commandCoordinator.submitTemperature(
-                                        tileId, target, false, null, null, proposed,
+                                        tileId,
+                                        target,
+                                        false,
+                                        null,
+                                        null,
+                                        proposed,
                                     )
                                 }
-                                tileConfig.layoutStyle == "classic" && tileConfig.showPowerButton &&
-                                    waitingCommand == null && lastId == TAP_POWER_ON &&
-                                    entity.rawState == "off" && controls.supportsTurnOn -> {
+                                tileConfig.layoutStyle == "classic" &&
+                                    tileConfig.showPowerButton &&
+                                    waitingCommand == null &&
+                                    lastId == TAP_POWER_ON &&
+                                    entity.rawState == "off" &&
+                                    controls.supportsTurnOn -> {
                                     commandCoordinator.submitPower(tileId, target, true)
                                 }
-                                tileConfig.layoutStyle == "classic" && tileConfig.showPowerButton &&
-                                    waitingCommand == null && lastId == TAP_POWER_OFF &&
-                                    entity.rawState != "off" && controls.supportsTurnOff -> {
+                                tileConfig.layoutStyle == "classic" &&
+                                    tileConfig.showPowerButton &&
+                                    waitingCommand == null &&
+                                    lastId == TAP_POWER_OFF &&
+                                    entity.rawState != "off" &&
+                                    controls.supportsTurnOff -> {
                                     commandCoordinator.submitPower(tileId, target, false)
                                 }
-                                tileConfig.layoutStyle != "classic" && tileConfig.showHvacModes &&
+                                tileConfig.layoutStyle != "classic" &&
+                                    tileConfig.showHvacModes &&
                                     lastId.startsWith(TAP_MODE_PREFIX) -> {
                                     val mode = lastId.removePrefix(TAP_MODE_PREFIX)
                                     if (mode in controls.hvacModes) {
                                         commandCoordinator.submitHvac(tileId, target, mode)
                                     }
                                 }
-                                tileConfig.layoutStyle != "classic" && tileConfig.showFanControl &&
-                                    lastId == TAP_FAN && controls.fanModes.isNotEmpty() -> {
+                                tileConfig.layoutStyle != "classic" &&
+                                    tileConfig.showFanControl &&
+                                    lastId == TAP_FAN &&
+                                    controls.fanModes.isNotEmpty() -> {
                                     val modes = controls.fanModes
                                     // WearDash uses fan on/auto. Prefer that pair if both are offered.
                                     val nextMode = if ("on" in modes && "auto" in modes) {
@@ -180,32 +209,55 @@ class ThermostatTile : TileService() {
                                     commandCoordinator.submitFan(tileId, target, nextMode)
                                 }
                                 tileConfig.layoutStyle != "classic" &&
-                                    lastId.startsWith("Temp:") && entity.rawState != "off" -> {
+                                    lastId.startsWith("Temp:") &&
+                                    entity.rawState != "off" -> {
                                     val items = lastId.split(":")
                                     val slot = items.getOrNull(1)
                                     val amount = items.getOrNull(2)?.toFloatOrNull()
-                                    if (amount != null && amount.isFinite() && slot in listOf("single", "heat", "cool")) {
+                                    if (amount != null &&
+                                        amount.isFinite() &&
+                                        slot in listOf("single", "heat", "cool")
+                                    ) {
                                         val range = entity.rawState == "heat_cool" &&
-                                            controls.targetTemperatureLow != null && controls.targetTemperatureHigh != null
+                                            controls.targetTemperatureLow != null &&
+                                            controls.targetTemperatureHigh != null
                                         // Ignore a tap from an outdated layout after a mode change.
                                         if (range && (slot == "heat" || slot == "cool")) {
                                             val currentLow = waitingCommand?.low ?: controls.targetTemperatureLow!!
                                             val currentHigh = waitingCommand?.high ?: controls.targetTemperatureHigh!!
                                             val revised = ThermostatTemperatureLogic.adjustRange(
                                                 if (slot == "heat") currentLow + amount else currentHigh + amount,
-                                                slot == "cool", currentLow, currentHigh, min, max, step,
+                                                slot == "cool",
+                                                currentLow,
+                                                currentHigh,
+                                                min,
+                                                max,
+                                                step,
                                             )
                                             commandCoordinator.submitTemperature(
-                                                tileId, target, true, revised.first, revised.second, null,
+                                                tileId,
+                                                target,
+                                                true,
+                                                revised.first,
+                                                revised.second,
+                                                null,
                                             )
                                         } else if (!range && slot == "single" && controls.targetTemperature != null) {
                                             val baseline = waitingCommand?.single
                                                 ?: controls.targetTemperature!!
                                             val proposed = ThermostatTemperatureLogic.snap(
-                                                baseline + amount, step, min, max,
+                                                baseline + amount,
+                                                step,
+                                                min,
+                                                max,
                                             )
                                             commandCoordinator.submitTemperature(
-                                                tileId, target, false, null, null, proposed,
+                                                tileId,
+                                                target,
+                                                false,
+                                                null,
+                                                null,
+                                                proposed,
                                             )
                                         }
                                     }
@@ -236,7 +288,11 @@ class ThermostatTile : TileService() {
                         )
                         val temperatureUnit = controls?.temperatureUnit ?: "°"
                         if (clickedId.isNotEmpty()) {
-                            Timber.i("Thermostat tile action processed after %d ms; pending=%s", android.os.SystemClock.elapsedRealtime() - requestStarted, pending != null)
+                            Timber.i(
+                                "Thermostat tile action processed after %d ms; pending=%s",
+                                android.os.SystemClock.elapsedRealtime() - requestStarted,
+                                pending != null,
+                            )
                         }
                         val views = ThermostatTileViews(this@ThermostatTile)
                         tile.setTileTimeline(
@@ -244,7 +300,11 @@ class ThermostatTile : TileService() {
                                 views.classicTimeline(tileConfig, entity, temperatureUnit, pending, actionPrefix)
                             } else {
                                 views.enhancedTimeline(
-                                    tileConfig, entity, temperatureUnit, pending, actionPrefix,
+                                    tileConfig,
+                                    entity,
+                                    temperatureUnit,
+                                    pending,
+                                    actionPrefix,
                                     requestParams.deviceConfiguration.screenWidthDp,
                                     requestParams.deviceConfiguration.screenHeightDp,
                                 )

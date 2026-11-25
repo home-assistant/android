@@ -38,13 +38,12 @@ internal object ThermostatTemperatureLogic {
     fun fractionFromTopArc(x: Float, y: Float, centerX: Float, centerY: Float): Float {
         val degrees = Math.toDegrees(kotlin.math.atan2((y - centerY).toDouble(), (x - centerX).toDouble()))
         val topAngle = if (degrees < 0) degrees + 360 else degrees
-        return ((topAngle - START_DEGREES) /
-            SWEEP_DEGREES).toFloat().coerceIn(0f, 1f)
+        return (
+            (topAngle - START_DEGREES) /
+                SWEEP_DEGREES
+            ).toFloat().coerceIn(0f, 1f)
     }
 
-    fun chooseHighMarker(
-        touchFraction: Float,
-        lowFraction: Float,
-        highFraction: Float,
-    ): Boolean = kotlin.math.abs(touchFraction - highFraction) < kotlin.math.abs(touchFraction - lowFraction)
+    fun chooseHighMarker(touchFraction: Float, lowFraction: Float, highFraction: Float): Boolean =
+        kotlin.math.abs(touchFraction - highFraction) < kotlin.math.abs(touchFraction - lowFraction)
 }

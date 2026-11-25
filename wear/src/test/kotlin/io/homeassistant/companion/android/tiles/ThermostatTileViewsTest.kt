@@ -74,8 +74,7 @@ class ThermostatTileViewsTest {
         .map { it.removePrefix(prefix) }
         .toSet()
 
-    private fun classic(state: String = "heat", showPower: Boolean = true, supportsPower: Boolean = true) =
-        views.classicTimeline(config.copy(showPowerButton = showPower), thermostat(state, supportsPower), "°C", null, prefix)
+    private fun classic(state: String = "heat", showPower: Boolean = true, supportsPower: Boolean = true) = views.classicTimeline(config.copy(showPowerButton = showPower), thermostat(state, supportsPower), "°C", null, prefix)
 
     @Test
     fun `classic retains the two original controls when power is hidden or unsupported`() {
@@ -105,7 +104,13 @@ class ThermostatTileViewsTest {
         val enhanced = config.copy(layoutStyle = "enhanced")
         val waiting = ThermostatCommandCoordinator.Pending("21°", ThermostatCommandCoordinator.Pending.Status.WAITING, single = 21f)
         fun texts(pending: ThermostatCommandCoordinator.Pending) = views.enhancedTimeline(
-            enhanced, thermostat(), "°C", pending, prefix, 192, 192,
+            enhanced,
+            thermostat(),
+            "°C",
+            pending,
+            prefix,
+            192,
+            192,
         ).elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
         val waitingTexts = texts(waiting)
         assertTrue(context.getString(commonR.string.thermostat_tile_waiting) in waitingTexts)

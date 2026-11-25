@@ -11,11 +11,15 @@ import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.CoroutineScope
+import kotlin.concurrent.withLock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -27,10 +31,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import timber.log.Timber
 
 /**
@@ -85,6 +85,7 @@ class ThermostatCommandCoordinator internal constructor(
     private val latest = mutableMapOf<PendingKey, Long>()
     private val lock = ReentrantLock()
     private var nextToken = 0L
+
     // Queue service dispatches in submission order for the same entity. The next
     // service call need not wait for the previous entity-state acknowledgment.
     private val dispatchTails = mutableMapOf<Target, CompletableDeferred<Unit>>()
@@ -191,8 +192,10 @@ class ThermostatCommandCoordinator internal constructor(
                     val updated = entity.lastUpdated
                     if (previousUpdated != null && updated != null && updated < previousUpdated) return
                     entityCache[target] = CachedEntity(entity, System.currentTimeMillis())
-                    if (previous == null || previous.rawState != entity.rawState ||
-                        previous.name != entity.name || previous.climateControls != entity.climateControls
+                    if (previous == null ||
+                        previous.rawState != entity.rawState ||
+                        previous.name != entity.name ||
+                        previous.climateControls != entity.climateControls
                     ) {
                         Timber.i("Thermostat live state changed: %s", target.entityId)
                         refresh()
@@ -241,7 +244,8 @@ class ThermostatCommandCoordinator internal constructor(
                 serverManager.integrationRepository(target.serverId).getEntity(target.entityId)?.let {
                     lock.withLock {
                         // Discard a read started before a newer command was submitted.
-                        if (nextToken == refreshToken && entityCache[target] === entry &&
+                        if (nextToken == refreshToken &&
+                            entityCache[target] === entry &&
                             latest.keys.none { key -> key.target == target }
                         ) {
                             rememberEntity(target, EntityDisplayWithoutContext(it))
@@ -270,8 +274,7 @@ class ThermostatCommandCoordinator internal constructor(
             clear(key)
             return null
         }
-        fun floatOrNull(key: String) =
-            if (prefs.contains("$prefix.$key")) prefs.getFloat("$prefix.$key", 0f) else null
+        fun floatOrNull(key: String) = if (prefs.contains("$prefix.$key")) prefs.getFloat("$prefix.$key", 0f) else null
         return Pending(
             value = prefs.getString("$prefix.value", "") ?: "",
             status = if (failed) Pending.Status.FAILED else Pending.Status.WAITING,
@@ -314,14 +317,7 @@ class ThermostatCommandCoordinator internal constructor(
     }
 
     @WorkerThread
-    fun submitTemperature(
-        tileId: Int,
-        target: Target,
-        isRange: Boolean,
-        low: Float?,
-        high: Float?,
-        single: Float?,
-    ) {
+    fun submitTemperature(tileId: Int, target: Target, isRange: Boolean, low: Float?, high: Float?, single: Float?) {
         val data: Map<String, Any?> = when {
             isRange && low != null && high != null -> mapOf(
                 "entity_id" to target.entityId,
@@ -344,20 +340,31 @@ class ThermostatCommandCoordinator internal constructor(
 
     @WorkerThread
     fun submitHvac(tileId: Int, target: Target, mode: String) = submit(
-        tileId, target, "set_hvac_mode", mapOf("entity_id" to target.entityId, "hvac_mode" to mode), mode,
+        tileId,
+        target,
+        "set_hvac_mode",
+        mapOf("entity_id" to target.entityId, "hvac_mode" to mode),
+        mode,
     ) { entity -> entity.rawState == mode }
 
     @WorkerThread
     fun submitPower(tileId: Int, target: Target, turnOn: Boolean) = submit(
-        tileId, target, if (turnOn) "turn_on" else "turn_off",
-        mapOf("entity_id" to target.entityId), if (turnOn) "on" else "off",
+        tileId,
+        target,
+        if (turnOn) "turn_on" else "turn_off",
+        mapOf("entity_id" to target.entityId),
+        if (turnOn) "on" else "off",
     ) { entity ->
         if (turnOn) entity.rawState !in listOf("off", "unavailable", "unknown") else entity.rawState == "off"
     }
 
     @WorkerThread
     fun submitFan(tileId: Int, target: Target, mode: String) = submit(
-        tileId, target, "set_fan_mode", mapOf("entity_id" to target.entityId, "fan_mode" to mode), mode,
+        tileId,
+        target,
+        "set_fan_mode",
+        mapOf("entity_id" to target.entityId, "fan_mode" to mode),
+        mode,
     ) { entity -> entity.climateControls?.fanMode == mode }
 
     private fun approximately(a: Float?, b: Float?): Boolean = a != null && b != null && kotlin.math.abs(a - b) < 0.051f
@@ -389,7 +396,11 @@ class ThermostatCommandCoordinator internal constructor(
             try {
                 try {
                     predecessor?.await()
-                    Timber.i("Thermostat %s dispatch starting after %d ms", action, SystemClock.elapsedRealtime() - started)
+                    Timber.i(
+                        "Thermostat %s dispatch starting after %d ms",
+                        action,
+                        SystemClock.elapsedRealtime() - started,
+                    )
                     serverManager.integrationRepository(target.serverId).callAction("climate", action, data)
                 } finally {
                     // Always release the following command, including after a failed service call.
@@ -411,10 +422,18 @@ class ThermostatCommandCoordinator internal constructor(
                     lock.withLock {
                         if (latest[key] != token) return@launch
                         if (acknowledged) {
-                            Timber.i("Thermostat %s state confirmed after %d ms", action, SystemClock.elapsedRealtime() - started)
+                            Timber.i(
+                                "Thermostat %s state confirmed after %d ms",
+                                action,
+                                SystemClock.elapsedRealtime() - started,
+                            )
                             clear(key)
                         } else {
-                            Timber.w("Thermostat %s unconfirmed after %d ms", action, SystemClock.elapsedRealtime() - started)
+                            Timber.w(
+                                "Thermostat %s unconfirmed after %d ms",
+                                action,
+                                SystemClock.elapsedRealtime() - started,
+                            )
                             store(key, value, failed = true)
                             latest.remove(key)
                         }
