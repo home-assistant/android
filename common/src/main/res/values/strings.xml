@@ -1465,6 +1465,10 @@
     <string name="thermostat_tile_turn_on">Turn thermostat on</string>
     <string name="thermostat_tile_turn_off">Turn thermostat off</string>
     <string name="setting_thermostat_tile_appearance">Tile appearance</string>
+    <string name="setting_thermostat_temperature_unit">Temperature unit</string>
+    <string name="setting_thermostat_temperature_unit_default">Home Assistant default</string>
+    <string name="setting_thermostat_temperature_unit_celsius">Celsius (°C)</string>
+    <string name="setting_thermostat_temperature_unit_fahrenheit">Fahrenheit (°F)</string>
     <string name="setting_thermostat_enhanced">Enhanced: direct temperature and mode controls</string>
     <string name="setting_thermostat_classic">Classic: original Home Assistant tile</string>
     <string name="setting_thermostat_hvac_modes">Show HVAC mode buttons</string>

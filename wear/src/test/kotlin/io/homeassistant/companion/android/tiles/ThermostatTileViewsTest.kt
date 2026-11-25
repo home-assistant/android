@@ -100,6 +100,26 @@ class ThermostatTileViewsTest {
     }
 
     @Test
+    fun `both layouts display converted temperatures while enhanced attaches the degree symbol`() {
+        val fahrenheit = config.copy(temperatureUnit = "F")
+        val classicTexts = views.classicTimeline(fahrenheit, thermostat(), "°C", null, prefix)
+            .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        assertTrue("67.1 °F" in classicTexts)
+        assertTrue("66.9 °F" in classicTexts)
+        val enhancedTexts = views.enhancedTimeline(fahrenheit, thermostat(), "°C", null, prefix, 240, 240)
+            .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        assertTrue("66.9° F" in enhancedTexts)
+        assertTrue("67.1°" in enhancedTexts)
+        val rangeTexts = views.enhancedTimeline(fahrenheit, thermostat("heat_cool"), "°C", null, prefix, 240, 240)
+            .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        assertTrue("H64.4°" in rangeTexts)
+        assertTrue("C71.6°" in rangeTexts)
+        val defaultTexts = views.enhancedTimeline(config, thermostat(), "°C", null, prefix, 240, 240)
+            .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        assertTrue("19.4° C" in defaultTexts)
+    }
+
+    @Test
     fun `enhanced displays pending feedback and proposed setpoint without displaying failed values`() {
         val enhanced = config.copy(layoutStyle = "enhanced")
         val waiting = ThermostatCommandCoordinator.Pending("21°", ThermostatCommandCoordinator.Pending.Status.WAITING, single = 21f)

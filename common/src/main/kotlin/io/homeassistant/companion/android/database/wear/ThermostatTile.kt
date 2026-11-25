@@ -47,4 +47,7 @@ data class ThermostatTile(
     /** Existing tiles keep their original appearance; new tiles offer the power control. */
     @ColumnInfo(name = "show_power_button", defaultValue = "0")
     val showPowerButton: Boolean = true,
+    /** Temperature units for this tile; default preserves the server unit and original controls. */
+    @ColumnInfo(name = "temperature_unit", defaultValue = "'default'")
+    val temperatureUnit: String = "default",
 )

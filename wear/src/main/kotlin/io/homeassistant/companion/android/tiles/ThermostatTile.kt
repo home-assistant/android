@@ -111,7 +111,6 @@ class ThermostatTile : TileService() {
                         val entityId = checkNotNull(tileConfig.entityId)
                         val serverId = checkNotNull(serverManager.getServer()) { "No active server" }.id
                         val target = ThermostatCommandCoordinator.Target(serverId, entityId)
-                        val actionPrefix = target.actionPrefix
                         val requestStarted = android.os.SystemClock.elapsedRealtime()
                         // Render warm tiles immediately; fetch only the selected entity on a cache miss.
                         val entity = commandCoordinator.cachedEntity(target)
@@ -122,6 +121,8 @@ class ThermostatTile : TileService() {
                             }
                         checkNotNull(entity) { "Thermostat state not yet available: $entityId" }
                         val climateControls = entity.climateControls
+                        val units = ThermostatDisplayUnits(climateControls?.temperatureUnit, tileConfig.temperatureUnit)
+                        val actionPrefix = units.actionPrefix(target.actionPrefix)
 
                         val clickedId = requestParams.currentState.lastClickableId
                         val lastId = if (clickedId.startsWith(
@@ -142,8 +143,8 @@ class ThermostatTile : TileService() {
                         val controls = climateControls
                         if (controls != null && entity.rawState !in listOf("unavailable", "unknown")) {
                             val step = controls.targetTemperatureStep?.takeIf { it > 0 } ?: 1f
-                            val min = controls.minTemperature ?: 7f
-                            val max = controls.maxTemperature ?: 35f
+                            val min = controls.minTemperature ?: units.minimum()
+                            val max = controls.maxTemperature ?: units.maximum()
                             // A failed command is not an authoritative temperature baseline.
                             val waitingCommand = commandCoordinator.get(tileId, target)
                                 ?.takeIf { it.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
@@ -155,7 +156,8 @@ class ThermostatTile : TileService() {
                                     entity.rawState != "off" &&
                                     controls.targetTemperature != null &&
                                     waitingCommand?.value !in listOf("on", "off") -> {
-                                    val delta = if (lastId == TAP_ACTION_UP) step else -step
+                                    val displayStep = if (units.hasOverride) units.adjustment(1f, step) else step
+                                    val delta = if (lastId == TAP_ACTION_UP) displayStep else -displayStep
                                     val baseline = waitingCommand?.single
                                         ?: checkNotNull(controls.targetTemperature)
                                     val proposed = ThermostatTemperatureLogic.snap(
@@ -220,6 +222,7 @@ class ThermostatTile : TileService() {
                                         amount.isFinite() &&
                                         slot in listOf("single", "heat", "cool")
                                     ) {
+                                        val delta = units.adjustment(amount, step)
                                         val range = entity.rawState == "heat_cool" &&
                                             controls.targetTemperatureLow != null &&
                                             controls.targetTemperatureHigh != null
@@ -230,7 +233,7 @@ class ThermostatTile : TileService() {
                                             val currentHigh = waitingCommand?.high
                                                 ?: checkNotNull(controls.targetTemperatureHigh)
                                             val revised = ThermostatTemperatureLogic.adjustRange(
-                                                if (slot == "heat") currentLow + amount else currentHigh + amount,
+                                                if (slot == "heat") currentLow + delta else currentHigh + delta,
                                                 slot == "cool",
                                                 currentLow,
                                                 currentHigh,
@@ -250,7 +253,7 @@ class ThermostatTile : TileService() {
                                             val baseline = waitingCommand?.single
                                                 ?: checkNotNull(controls.targetTemperature)
                                             val proposed = ThermostatTemperatureLogic.snap(
-                                                baseline + amount,
+                                                baseline + delta,
                                                 step,
                                                 min,
                                                 max,

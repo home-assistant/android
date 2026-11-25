@@ -117,6 +117,29 @@ class AppDatabaseMigrationTest {
     }
 
     @Test
+    fun thermostatUnitMigrationPreservesExistingTiles() = runTest {
+        helper.createDatabase(59).use { connection ->
+            connection.execSQL(
+                "INSERT INTO thermostat_tiles (id, entity_id, layout_style, quick_adjust_one, show_power_button) " +
+                    "VALUES (9, 'climate.test', 'enhanced', 5, 1)",
+            )
+        }
+        helper.runMigrationsAndValidate(DATABASE_VERSION, migrationPath(context).toList()).use { connection ->
+            connection.prepare(
+                "SELECT entity_id, layout_style, quick_adjust_one, show_power_button, temperature_unit " +
+                    "FROM thermostat_tiles WHERE id = 9",
+            ).use {
+                assertTrue(it.step())
+                assertEquals("climate.test", it.getText(0))
+                assertEquals("enhanced", it.getText(1))
+                assertEquals(5, it.getInt(2))
+                assertEquals(1, it.getInt(3))
+                assertEquals("default", it.getText(4))
+            }
+        }
+    }
+
+    @Test
     fun migration5to6_restructuresStaticWidgetAndKeepsData() = runTest {
         val connection = openDirectDb()
         connection.use { connection ->

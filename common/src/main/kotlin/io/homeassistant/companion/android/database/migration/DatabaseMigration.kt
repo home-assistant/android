@@ -43,6 +43,7 @@ internal fun migrationPath(context: Context): Array<Migration> = arrayOf(
     MIGRATION_55_56,
     MIGRATION_57_58,
     MIGRATION_58_59,
+    MIGRATION_59_60,
 )
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -844,6 +845,15 @@ private val MIGRATION_58_59 = object : Migration(58, 59) {
     override suspend fun migrate(connection: SQLiteConnection) {
         connection.execSQL(
             "ALTER TABLE `thermostat_tiles` ADD COLUMN `show_power_button` INTEGER NOT NULL DEFAULT 0",
+        )
+    }
+}
+
+/** Existing thermostat tiles continue to use the Home Assistant temperature unit. */
+private val MIGRATION_59_60 = object : Migration(59, 60) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+        connection.execSQL(
+            "ALTER TABLE `thermostat_tiles` ADD COLUMN `temperature_unit` TEXT NOT NULL DEFAULT 'default'",
         )
     }
 }

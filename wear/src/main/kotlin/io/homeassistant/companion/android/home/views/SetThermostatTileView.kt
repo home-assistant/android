@@ -126,6 +126,7 @@ fun SetThermostatTileView(
                     },
                 )
             }
+            temperatureUnitSetting(tile, onPreferencesChanged)
             if (tile != null && tile.layoutStyle == "classic") {
                 item {
                     SwitchButton(
@@ -169,6 +170,42 @@ fun SetThermostatTileView(
                 )
             }
         }
+    }
+}
+
+private fun ScalingLazyListScope.temperatureUnitSetting(
+    tile: ThermostatTile?,
+    onPreferencesChanged: (Int, (ThermostatTile) -> ThermostatTile) -> Unit,
+) {
+    item {
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            colors = getFilledTonalButtonColors(),
+            label = { Text(stringResource(commonR.string.setting_thermostat_temperature_unit)) },
+            secondaryLabel = {
+                Text(
+                    stringResource(
+                        when (tile?.temperatureUnit) {
+                            "C" -> commonR.string.setting_thermostat_temperature_unit_celsius
+                            "F" -> commonR.string.setting_thermostat_temperature_unit_fahrenheit
+                            else -> commonR.string.setting_thermostat_temperature_unit_default
+                        },
+                    ),
+                )
+            },
+            onClick = {
+                tile?.let {
+                    onPreferencesChanged(it.id) { current ->
+                        val next = when (current.temperatureUnit) {
+                            "C" -> "F"
+                            "F" -> "default"
+                            else -> "C"
+                        }
+                        current.copy(temperatureUnit = next)
+                    }
+                }
+            },
+        )
     }
 }
 

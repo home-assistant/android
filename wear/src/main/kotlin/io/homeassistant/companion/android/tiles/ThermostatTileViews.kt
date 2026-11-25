@@ -99,6 +99,7 @@ internal class ThermostatTileViews(private val context: Context) {
     ): Timeline {
         val entityName = if (tileConfig.showEntityName == true) entity.name else ""
         val controls = entity.climateControls
+        val units = ThermostatDisplayUnits(temperatureUnit, tileConfig.temperatureUnit)
         val showPower = tileConfig.showPowerButton &&
             (controls?.supportsTurnOn == true || controls?.supportsTurnOff == true)
         val available = entity.rawState !in listOf("unavailable", "unknown")
@@ -113,12 +114,13 @@ internal class ThermostatTileViews(private val context: Context) {
                 pending?.status == ThermostatCommandCoordinator.Pending.Status.WAITING &&
                     pending.value in listOf("on", "off")
                 )
-        val targetTemperature = pending?.single
-            ?.takeIf { pending.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
-            ?: entity.climateControls?.targetTemperature
+        val targetTemperature = units.display(
+            pending?.single?.takeIf { pending.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
+                ?: controls?.targetTemperature,
+        )
         return Timeline.fromLayoutElement(
             LayoutElementBuilders.Box.Builder().apply {
-                val currentTemperature = entity.climateControls?.currentTemperature
+                val currentTemperature = units.display(controls?.currentTemperature)
                 val hvacAction = controls?.hvacAction.orEmpty()
 
                 val hvacActionColor = when (hvacAction) {
@@ -142,9 +144,9 @@ internal class ThermostatTileViews(private val context: Context) {
                                     if (targetTemperature ==
                                         null
                                     ) {
-                                        "-- $temperatureUnit"
+                                        "-- ${units.symbol}"
                                     } else {
-                                        "$targetTemperature $temperatureUnit"
+                                        "$targetTemperature ${units.symbol}"
                                     },
                                 )
                                 .setFontStyle(
@@ -160,9 +162,9 @@ internal class ThermostatTileViews(private val context: Context) {
                                     if (currentTemperature ==
                                         null
                                     ) {
-                                        "-- $temperatureUnit"
+                                        "-- ${units.symbol}"
                                     } else {
-                                        "$currentTemperature $temperatureUnit"
+                                        "$currentTemperature ${units.symbol}"
                                     },
                                 )
                                 .build(),
@@ -318,10 +320,11 @@ internal class ThermostatTileViews(private val context: Context) {
         val range = state == "heat_cool" &&
             controls?.targetTemperatureLow != null &&
             controls.targetTemperatureHigh != null
-        val current = controls?.currentTemperature?.let { nice(it) } ?: "--"
+        val units = ThermostatDisplayUnits(temperatureUnit, config.temperatureUnit)
+        val current = units.display(controls?.currentTemperature)?.let { nice(it) } ?: "--"
         // Compact circular watches must not crop rows at the upper/lower edges.
         val compact = screenWidthDp < 220 || screenHeightDp < 225
-        val layout = EnhancedLayout(config, entity, pending, actionPrefix, compact)
+        val layout = EnhancedLayout(config, entity, pending, actionPrefix, compact, units)
         val column = LayoutElementBuilders.Column.Builder()
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
         val showName = config.showEntityName == true && !(compact && range)
@@ -330,7 +333,7 @@ internal class ThermostatTileViews(private val context: Context) {
         }
         column.addContent(
             temperatureText(
-                "$current $temperatureUnit",
+                units.enhancedText(current),
                 if (compact) COMPACT_CURRENT_TEXT_SP else CURRENT_TEXT_SP,
                 0xFFFFFFFF.toInt(),
             ),
@@ -404,6 +407,7 @@ internal class ThermostatTileViews(private val context: Context) {
         val pending: ThermostatCommandCoordinator.Pending?,
         val actionPrefix: String,
         val compact: Boolean,
+        val units: ThermostatDisplayUnits,
     ) {
         val modeHeight: Float get() = if (compact) COMPACT_MODE_HEIGHT_DP else MODE_HEIGHT_DP
         val modeWidth: Float get() = if (compact) COMPACT_MODE_WIDTH_DP else MODE_WIDTH_DP
@@ -477,7 +481,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 column.addContent(
                     temperatureRow(
                         "heat",
-                        pending?.low ?: controls.targetTemperatureLow,
+                        layout.units.display(pending?.low ?: controls.targetTemperatureLow),
                         context.getString(commonR.string.thermostat_tile_heat_short),
                         0xFFFFA19A.toInt(),
                         config.quickAdjustOne,
@@ -490,7 +494,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 column.addContent(
                     temperatureRow(
                         "cool",
-                        pending?.high ?: controls.targetTemperatureHigh,
+                        layout.units.display(pending?.high ?: controls.targetTemperatureHigh),
                         context.getString(commonR.string.thermostat_tile_cool_short),
                         0xFF8DCBFF.toInt(),
                         config.quickAdjustOne,
@@ -504,7 +508,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 column.addContent(
                     temperatureRow(
                         "single",
-                        pending?.single ?: controls.targetTemperature,
+                        layout.units.display(pending?.single ?: controls.targetTemperature),
                         "",
                         accent,
                         config.quickAdjustOne,
