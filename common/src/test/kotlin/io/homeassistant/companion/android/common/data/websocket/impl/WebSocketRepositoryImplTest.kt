@@ -300,6 +300,7 @@ class WebSocketRepositoryImplTest {
                     type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
                     data = capture(dataSlot),
                     timeout = any(),
+                    reconnectPolicy = SubscriptionReconnectPolicy.Complete,
                 )
             } returns emptyFlow()
             coEvery { webSocketCore.server() } returns server
@@ -323,6 +324,7 @@ class WebSocketRepositoryImplTest {
                     type = SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
                     data = any(),
                     timeout = any(),
+                    reconnectPolicy = SubscriptionReconnectPolicy.Complete,
                 )
             }
 
