@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.util.getAttribute
 import io.homeassistant.companion.android.widgets.ACTION_APPWIDGET_CREATED
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider.Companion.UPDATE_WIDGETS
 import io.homeassistant.companion.android.widgets.EXTRA_WIDGET_ENTITY
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -39,14 +40,16 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+/** The [template] a widget follows the updates of, and the [job] following them. */
+private data class TemplateSubscription(val template: String, val job: Job)
+
 @AndroidEntryPoint
 class TemplateWidget : AppWidgetProvider() {
     companion object {
         const val UPDATE_VIEW =
             "io.homeassistant.companion.android.widgets.template.TemplateWidget.UPDATE_VIEW"
         private var widgetScope: CoroutineScope = newCoroutineScopeProvider()
-        private val widgetTemplates = mutableMapOf<Int, String>()
-        private val widgetJobs = mutableMapOf<Int, Job>()
+        private val widgetSubscriptions = ConcurrentHashMap<Int, TemplateSubscription>()
 
         private fun newCoroutineScopeProvider(): CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
@@ -84,9 +87,7 @@ class TemplateWidget : AppWidgetProvider() {
         widgetScope.launch {
             templateWidgetDao.deleteAll(appWidgetIds)
             appWidgetIds.forEach {
-                widgetTemplates.remove(it)
-                widgetJobs[it]?.cancel()
-                widgetJobs.remove(it)
+                widgetSubscriptions.remove(it)?.job?.cancel()
             }
         }
     }
@@ -130,10 +131,10 @@ class TemplateWidget : AppWidgetProvider() {
         updateAllWidgets(context)
 
         val allWidgets = templateWidgetDao.getAll()
-        val widgetsWithDifferentTemplate = allWidgets.filter { it.template != widgetTemplates[it.id] }
+        val widgetsWithDifferentTemplate = allWidgets.filter { it.template != widgetSubscriptions[it.id]?.template }
         if (widgetsWithDifferentTemplate.isNotEmpty()) {
             widgetsWithDifferentTemplate.forEach { widget ->
-                widgetJobs[widget.id]?.cancel()
+                widgetSubscriptions[widget.id]?.job?.cancel()
 
                 val templateUpdates =
                     if (serverManager.getServer(widget.serverId) != null) {
@@ -142,22 +143,21 @@ class TemplateWidget : AppWidgetProvider() {
                         null
                     }
                 if (templateUpdates != null) {
-                    widgetTemplates[widget.id] = widget.template
                     val job = widgetScope.launch(start = CoroutineStart.LAZY) {
                         templateUpdates.collect {
                             onTemplateChanged(context, widget.id, it)
                         }
                         // Only completes when the updates cannot be followed, remove data to make it
                         // retry on the next update, unless a newer job already replaced this one
-                        if (widgetJobs.remove(widget.id, coroutineContext.job)) {
-                            widgetTemplates.remove(widget.id)
-                        }
+                        widgetSubscriptions.remove(
+                            widget.id,
+                            TemplateSubscription(widget.template, coroutineContext.job),
+                        )
                     }
-                    widgetJobs[widget.id] = job
+                    widgetSubscriptions[widget.id] = TemplateSubscription(widget.template, job)
                     job.start()
                 } else { // Remove data to make it retry on the next update
-                    widgetTemplates.remove(widget.id)
-                    widgetJobs.remove(widget.id)
+                    widgetSubscriptions.remove(widget.id)
                 }
             }
         }
@@ -169,8 +169,7 @@ class TemplateWidget : AppWidgetProvider() {
         } catch (e: IllegalStateException) {
             Timber.w(e, "Calling onScreenOff without any job started")
         }
-        widgetTemplates.clear()
-        widgetJobs.clear()
+        widgetSubscriptions.clear()
     }
 
     private suspend fun updateAllWidgets(context: Context) {

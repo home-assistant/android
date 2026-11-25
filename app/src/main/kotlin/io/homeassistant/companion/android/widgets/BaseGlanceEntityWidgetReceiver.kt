@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetEntity
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -117,7 +118,7 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
 
     private var widgetScope: CoroutineScope = widgetScopeProvider()
 
-    private val widgetJobs = mutableMapOf<Int, Job>()
+    private val widgetJobs = ConcurrentHashMap<Int, Job>()
 
     // Helper to identify the widget in the logs
     private val widgetClassName by lazy { glanceAppWidget.javaClass.name }
