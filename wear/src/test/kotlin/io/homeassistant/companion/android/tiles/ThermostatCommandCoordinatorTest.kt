@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.tiles
 
 import android.content.Context
+import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.data.HomeAssistantVersion
@@ -19,7 +20,9 @@ import io.mockk.verify
 import java.time.LocalDateTime
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -62,12 +65,25 @@ class ThermostatCommandCoordinatorTest {
         verify(exactly = 1) { deferredContext.getSharedPreferences(any(), any()) }
     }
 
-    private fun state(temperature: Float) = Entity(
+    private fun observationContext(interactive: () -> Boolean = { true }): Context {
+        val powerManager = mockk<PowerManager>()
+        every { powerManager.isInteractive } answers { interactive() }
+        val preferences = context.getSharedPreferences("thermostat_tile_commands", Context.MODE_PRIVATE)
+        return mockk<Context>().also {
+            every { it.getSystemService(PowerManager::class.java) } returns powerManager
+            every { it.getSharedPreferences(any(), any()) } returns preferences
+        }
+    }
+
+    private fun state(
+        temperature: Float,
+        updated: LocalDateTime = LocalDateTime.of(2026, 1, 1, 0, 0),
+    ) = Entity(
         entityId = target.entityId,
         state = "heat",
         attributes = mapOf("temperature" to temperature, "supported_features" to 1),
         lastChanged = LocalDateTime.of(2026, 1, 1, 0, 0),
-        lastUpdated = LocalDateTime.of(2026, 1, 1, 0, 0),
+        lastUpdated = updated,
     )
 
     @Test
@@ -164,6 +180,155 @@ class ThermostatCommandCoordinatorTest {
         coVerify(exactly = 0) { otherRepository.getEntityChanges(any()) }
         assertNull(coordinator.get(10, target))
         assertNull(coordinator.get(10, other))
+    }
+
+    @Test
+    fun `live external state updates cache and redraw without dispatching commands`() = runTest {
+        var refreshes = 0
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) { refreshes++ }
+        val changes = MutableSharedFlow<EntityChange>(extraBufferCapacity = 8)
+        val initial = state(70f)
+        val newer = state(72f, LocalDateTime.of(2026, 1, 1, 0, 0, 2))
+        coEvery { repository.getEntity(target.entityId) } returns initial
+        coEvery { repository.getEntityChanges(any()) } returns changes
+        coordinator.rememberEntity(target, EntityDisplayWithoutContext(initial))
+
+        coordinator.observeVisibleTile(10, target, System.currentTimeMillis())
+        runCurrent()
+        assertEquals(1, changes.subscriptionCount.value)
+        val initialRefreshes = refreshes
+
+        check(changes.tryEmit(EntityChange.StateChanged(newer)))
+        runCurrent()
+        assertEquals(EntityDisplayWithoutContext(newer), coordinator.cachedEntity(target))
+        assertEquals(initialRefreshes + 1, refreshes)
+
+        // Identical and older snapshots must not redraw or roll back confirmed state.
+        check(changes.tryEmit(EntityChange.StateChanged(newer)))
+        check(changes.tryEmit(EntityChange.StateChanged(initial)))
+        runCurrent()
+        assertEquals(EntityDisplayWithoutContext(newer), coordinator.cachedEntity(target))
+        assertEquals(initialRefreshes + 1, refreshes)
+        coVerify(exactly = 0) { repository.callAction(any(), any(), any()) }
+    }
+
+    @Test
+    fun `duplicate visibility does not create a second subscription and leave cancels it`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) {}
+        val changes = MutableSharedFlow<EntityChange>()
+        coEvery { repository.getEntity(target.entityId) } returns state(70f)
+        coEvery { repository.getEntityChanges(any()) } returns changes
+        val enteredAt = System.currentTimeMillis() - 100L
+
+        coordinator.observeVisibleTile(10, target, enteredAt)
+        runCurrent()
+        coordinator.observeVisibleTile(10, target, enteredAt)
+        coordinator.observeVisibleTile(10, target, enteredAt + 1L)
+        runCurrent()
+        assertEquals(1, changes.subscriptionCount.value)
+        coVerify(exactly = 1) { repository.getEntityChanges(EntityFilter(entityIds = setOf(target.entityId))) }
+
+        coordinator.stopObservingTile(11, enteredAt + 2L)
+        coordinator.stopObservingTile(10, enteredAt)
+        runCurrent()
+        assertEquals(1, changes.subscriptionCount.value)
+
+        coordinator.stopObservingTile(10, enteredAt + 2L)
+        runCurrent()
+        assertEquals(0, changes.subscriptionCount.value)
+    }
+
+    @Test
+    fun `screen going to sleep cancels live subscription`() = runTest {
+        var interactive = true
+        val coordinator = ThermostatCommandCoordinator(observationContext { interactive }, servers, backgroundScope) {}
+        val changes = MutableSharedFlow<EntityChange>()
+        coEvery { repository.getEntity(target.entityId) } returns state(70f)
+        coEvery { repository.getEntityChanges(any()) } returns changes
+
+        coordinator.observeVisibleTile(10, target, System.currentTimeMillis())
+        runCurrent()
+        assertEquals(1, changes.subscriptionCount.value)
+
+        interactive = false
+        advanceTimeBy(1_000L)
+        runCurrent()
+        assertEquals(0, changes.subscriptionCount.value)
+    }
+
+    @Test
+    fun `observation expires and stale visibility cannot restart it`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) {}
+        val changes = MutableSharedFlow<EntityChange>()
+        coEvery { repository.getEntity(target.entityId) } returns state(70f)
+        coEvery { repository.getEntityChanges(any()) } returns changes
+        val enteredAt = System.currentTimeMillis()
+
+        coordinator.observeVisibleTile(10, target, enteredAt)
+        runCurrent()
+        assertEquals(1, changes.subscriptionCount.value)
+
+        advanceTimeBy(90_000L)
+        runCurrent()
+        assertEquals(0, changes.subscriptionCount.value)
+
+        coordinator.observeVisibleTile(10, target, enteredAt)
+        coordinator.observeVisibleTile(10, target, System.currentTimeMillis() - 20_000L)
+        runCurrent()
+        assertEquals(0, changes.subscriptionCount.value)
+        coVerify(exactly = 1) { repository.getEntityChanges(any()) }
+    }
+
+    @Test
+    fun `unavailable subscription retries within observation window`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) {}
+        val changes = MutableSharedFlow<EntityChange>()
+        coEvery { repository.getEntity(target.entityId) } returns state(70f)
+        coEvery { repository.getEntityChanges(any()) } returnsMany listOf(null, changes)
+
+        coordinator.observeVisibleTile(10, target, System.currentTimeMillis())
+        runCurrent()
+        assertEquals(0, changes.subscriptionCount.value)
+        coVerify(exactly = 1) { repository.getEntityChanges(any()) }
+
+        advanceTimeBy(3_000L)
+        runCurrent()
+        assertEquals(1, changes.subscriptionCount.value)
+        coVerify(exactly = 2) { repository.getEntityChanges(any()) }
+    }
+
+    @Test
+    fun `live events cannot overwrite a command in flight`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) {}
+        val changes = MutableSharedFlow<EntityChange>(extraBufferCapacity = 8)
+        val initial = state(70f)
+        val intermediate = state(71f, LocalDateTime.of(2026, 1, 1, 0, 0, 1))
+        val confirmed = state(72f, LocalDateTime.of(2026, 1, 1, 0, 0, 2))
+        val gate = CompletableDeferred<Unit>()
+        coEvery { repository.getEntity(target.entityId) } returns initial
+        coEvery { repository.getEntityChanges(any()) } returns changes
+        coEvery { repository.callAction("climate", "set_temperature", any()) } coAnswers { gate.await() }
+        coordinator.rememberEntity(target, EntityDisplayWithoutContext(initial))
+
+        coordinator.observeVisibleTile(10, target, System.currentTimeMillis())
+        runCurrent()
+        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        runCurrent()
+        check(changes.tryEmit(EntityChange.StateChanged(intermediate)))
+        runCurrent()
+        assertEquals(72f, coordinator.get(10, target)?.single)
+        assertEquals(EntityDisplayWithoutContext(initial), coordinator.cachedEntity(target))
+
+        coEvery { repository.getEntity(target.entityId) } returns confirmed
+        gate.complete(Unit)
+        runCurrent()
+        assertNull(coordinator.get(10, target))
+        assertEquals(EntityDisplayWithoutContext(confirmed), coordinator.cachedEntity(target))
+
+        check(changes.tryEmit(EntityChange.StateChanged(intermediate)))
+        runCurrent()
+        assertEquals(EntityDisplayWithoutContext(confirmed), coordinator.cachedEntity(target))
+        coVerify(exactly = 1) { repository.callAction("climate", "set_temperature", any()) }
     }
 
     @Test
