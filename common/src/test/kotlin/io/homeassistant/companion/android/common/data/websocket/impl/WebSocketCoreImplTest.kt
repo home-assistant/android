@@ -1025,6 +1025,127 @@ class WebSocketCoreImplTest {
             assertTrue(webSocketCore.activeMessages.isEmpty())
         }
 
+        @Test
+        fun `Given a shared subscription When its last collector left Then it is no longer kept`() = runTest {
+            setupServer()
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+            // The subscription and its unsubscribe
+            mockResultSuccessForId(2)
+            mockResultSuccessForId(3)
+
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ).test {
+                establishSubscription()
+                assertEquals(1, webSocketCore.activeMessages.size)
+            }
+            runCurrent()
+
+            assertTrue(webSocketCore.activeMessages.isEmpty())
+        }
+
+        @Test
+        fun `Given a shared subscription kept alive When collected again in time Then it is joined and only ends after its keep alive`() = runTest {
+            setupServer()
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+            mockResultSuccessForId(2)
+            mockResultSuccessForId(3)
+
+            fun subscribe() = webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+                timeout = 10.seconds,
+            )
+
+            subscribe().test {
+                establishSubscription()
+            }
+            advanceTimeBy(5.seconds)
+            assertEquals(1, webSocketCore.activeMessages.size)
+
+            subscribe().test {
+                establishSubscription()
+                sendStateChangedEvent(subscriptionId = 2, entityId = "light.bed_light")
+                assertEquals("light.bed_light", awaitItem().entityId)
+            }
+            verify(exactly = 1) { mockConnection.send(match<String> { it.contains(SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS) }) }
+
+            runCurrent()
+            advanceTimeBy(10.seconds)
+            runCurrent()
+            assertTrue(webSocketCore.activeMessages.isEmpty())
+            verify { mockConnection.send(match<String> { it.contains("unsubscribe_events") && it.contains(""""subscription":2""") }) }
+        }
+
+        @Test
+        fun `Given a shared subscription whose last collector just left When collected again before it ended Then it is joined`() = runTest {
+            setupServer()
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+            mockResultSuccessForId(2)
+
+            fun subscribe() = webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            )
+
+            subscribe().test {
+                establishSubscription()
+            }
+            // Collected again before the background had a chance to end the subscription without collector
+            subscribe().test {
+                establishSubscription()
+                sendStateChangedEvent(subscriptionId = 2, entityId = "light.bed_light")
+                assertEquals("light.bed_light", awaitItem().entityId)
+
+                verify(exactly = 1) { mockConnection.send(match<String> { it.contains(SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS) }) }
+                verify(exactly = 0) { mockConnection.send(match<String> { it.contains("unsubscribe_events") }) }
+            }
+        }
+
+        @Test
+        fun `Given a shared subscription When its collector leaves before it started Then it is not kept and nothing is subscribed`() = runTest {
+            setupServer()
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ).test {
+                // Left before the sharing in the background had a chance to start
+                cancel()
+            }
+            advanceUntilIdle()
+
+            assertTrue(webSocketCore.activeMessages.isEmpty())
+            verify(exactly = 0) { mockConnection.send(match<String> { it.contains(SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS) }) }
+        }
+
+        @Test
+        fun `Given a failed shared subscription When its collectors left Then it is no longer kept`() = runTest {
+            setupServer()
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+            every { mockConnection.send(match<String> { it.contains(""""id":2""") }) } answers {
+                webSocketListener.onMessage(mockConnection, """{"id":2,"type":"result","success":false,"result":{}}""")
+                true
+            }
+
+            webSocketCore.subscribeTo<StateChangedEvent>(
+                SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                mapOf("event_type" to "state_changed"),
+            ).test {
+                awaitComplete()
+            }
+            runCurrent()
+
+            assertTrue(webSocketCore.activeMessages.isEmpty())
+        }
+
         @ParameterizedTest
         @ValueSource(longs = [0, 10])
         fun `Given a failed shared subscription When its flow is collected again Then it completes and a new attempt is made`(keepAliveSeconds: Long) = runTest {
@@ -1214,11 +1335,10 @@ class WebSocketCoreImplTest {
             assertTrue(webSocketCore.connect())
 
             // Dummy request to create a fake active message
-            webSocketCore.activeMessages[42] = ActiveMessage.Subscription(
+            webSocketCore.activeMessages[42] = ActiveMessage.Subscription.Completing(
                 onEvent = mockk(),
                 responseDeferred = CompletableDeferred(),
                 request = WebSocketRequest(emptyMap<String, String>()),
-                reconnectPolicy = SubscriptionReconnectPolicy.Resubscribe,
             )
 
             // Message sent by subscribeTo to request for events
@@ -1680,6 +1800,23 @@ class WebSocketCoreImplTest {
                 cancelAndIgnoreRemainingEvents()
             }
             verify(exactly = 0) { mockConnection.cancel() }
+        }
+
+        @Test
+        fun `Given a subscription not sent yet When its collector leaves Then it is never sent`() = runTest {
+            setupServer()
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+
+            webSocketCore.subscribeTo<String>("test_subscription", emptyMap()).test {
+                // Left while the command still waits in the send queue, which runs in the background
+                cancel()
+            }
+            advanceUntilIdle()
+            runCurrent()
+
+            verify(exactly = 0) { mockConnection.send(match<String> { it.contains("test_subscription") }) }
+            assertTrue(webSocketCore.activeMessages.isEmpty())
         }
 
         @Test

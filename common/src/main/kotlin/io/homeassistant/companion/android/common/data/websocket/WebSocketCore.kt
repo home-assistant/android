@@ -66,7 +66,7 @@ internal interface WebSocketCore {
     /**
      * Get a Flow for listening to the events of a subscription on the websocket connection. The
      * subscription starts when the Flow is collected, and is cancelled using `unsubscribe_events`
-     * when there are no more listeners. Identical subscriptions share the same Flow, unless
+     * when there are no more listeners. Identical subscriptions share one subscription, unless
      * [reconnectPolicy] is [SubscriptionReconnectPolicy.Complete], which always starts a
      * subscription of its own.
      *

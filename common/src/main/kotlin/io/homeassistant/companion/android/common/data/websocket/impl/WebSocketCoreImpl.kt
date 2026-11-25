@@ -69,29 +69,30 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.channels.onFailure
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -141,7 +142,7 @@ private val MAX_DELAY_BEFORE_RECONNECT = 2.minutes
  * #### Threading:
  * - Connection lifecycle (creation, authentication, closure) is protected by [connectedMutex].
  * - Outbound messages are serialized through a dedicated channel to ensure ordering.
- * - Identical subscriptions share one Flow, which subscribes on the server when its first collector arrives and unsubscribes after its last one left.
+ * - The [eventSubscriptionMutex] ensures that only one subscription is created for multiple invocations with the same parameters.
  * - The implementation uses coroutines extensively for asynchronous operations, ensuring non-blocking behavior.
  *
  * @param okHttpClient The HTTP client used to establish the WebSocket connection.
@@ -237,15 +238,12 @@ internal class WebSocketCoreImpl(
      */
     private val connectedMutex = Mutex()
 
-    /** Guards ending a subscription against the promotion of its resubscription after a reconnection. */
-    private val subscriptionTrackingMutex = Mutex()
-
     /**
-     * The shared Flow of each subscription message requested with [SubscriptionReconnectPolicy.Resubscribe],
-     * so identical requests join a single server subscription. Entries are kept: a Flow without
-     * collector holds no server subscription and starts one again when it is collected.
+     * Protects subscription operations to ensure only one subscription is created
+     * for multiple invocations with the same parameters. Also guards unsubscription
+     * during flow cancellation.
      */
-    private val sharedSubscriptionFlows = ConcurrentHashMap<Map<String, Any?>, Flow<Any>>()
+    private val eventSubscriptionMutex = Mutex()
 
     /**
      * Queue for processing incoming WebSocket messages sequentially.
@@ -292,6 +290,8 @@ internal class WebSocketCoreImpl(
         }
         when (command) {
             is Command.WithAnswer -> {
+                // Its sender left before it got its turn, nothing waits for the answer
+                if (command.sendCompleted.isCancelled) return
                 val id = id.getAndIncrement()
                 val outbound = command.request.message.plus("id" to id)
                 Timber.d("Sending message $id: ${sensitive { outbound.toString() }}")
@@ -303,8 +303,13 @@ internal class WebSocketCoreImpl(
                     Timber.e("Failed to send message $id")
                     activeMessages.remove(id)
                     command.sendCompleted.completeExceptionally(HAWebSocketException("Failed to send message"))
-                } else {
-                    command.sendCompleted.complete(id)
+                } else if (!command.sendCompleted.complete(id)) {
+                    // Its sender left while it was being sent: nothing tracks it, and the server
+                    // may accept a subscription that has no collector
+                    activeMessages.remove(id)
+                    if (command is Command.WithAnswer.Subscription) {
+                        wsScope.launch { unsubscribeEvents(id) }
+                    }
                 }
             }
 
@@ -606,6 +611,10 @@ internal class WebSocketCoreImpl(
         } catch (e: HAWebSocketException) {
             Timber.e(e, "Failed to send message ${sensitive { command.request.toString() }}")
             return null
+        } finally {
+            // Tells the send queue the sender left before the command was sent, so it is skipped or
+            // cleaned up. Does nothing once the command was sent or failed to be
+            command.sendCompleted.cancel()
         }
 
         // Wait for response with timeout
@@ -684,11 +693,9 @@ internal class WebSocketCoreImpl(
         }
 
         val events = when (reconnectPolicy) {
-            SubscriptionReconnectPolicy.Resubscribe -> sharedSubscriptionFlows.computeIfAbsent(subscribeMessage) {
-                sharedSubscriptionFlow(subscribeMessage, timeout)
-            }
+            SubscriptionReconnectPolicy.Resubscribe -> sharedSubscriptionEvents(subscribeMessage, timeout)
             // Its Flow is collected once, so the subscription is never one that already exists
-            SubscriptionReconnectPolicy.Complete -> subscriptionEvents(subscribeMessage, reconnectPolicy)
+            SubscriptionReconnectPolicy.Complete -> completingSubscriptionEvents(subscribeMessage)
         }
         // The events are decoded from the type of the subscription, which the caller knows the events of
         @Suppress("UNCHECKED_CAST")
@@ -819,49 +826,70 @@ internal class WebSocketCoreImpl(
     }
 
     /**
-     * Shares one subscription between the collectors of the returned Flow, keeping it for [timeout]
-     * after the last one left. The Flow completes without any event when the subscription cannot
-     * be established.
+     * Emits the events of the subscription shared by every collector asking for [subscribeMessage],
+     * which is kept for [timeout] after the last one left. The Flow completes without any event when
+     * the subscription cannot be established.
      */
-    private fun sharedSubscriptionFlow(subscribeMessage: Map<String, Any?>, timeout: Duration): Flow<Any> {
-        // A shared Flow never completes, so its collectors are told the subscription failed through this state
-        val failed = MutableStateFlow(false)
-        val shared = flow {
-            try {
-                // Only completes when the subscription could not be established
-                emitAll(subscriptionEvents(subscribeMessage, SubscriptionReconnectPolicy.Resubscribe))
-                failed.value = true
-                // Stays failed until the last collector left, so each of them sees it
-                awaitCancellation()
-            } finally {
-                failed.value = false
+    private fun sharedSubscriptionEvents(subscribeMessage: Map<String, Any?>, timeout: Duration): Flow<Any> =
+        channelFlow {
+            eventSubscriptionMutex.withLock {
+                val events = findSharedSubscription(subscribeMessage)
+                    ?: MutableSharedFlow<Any>().takeIf { startSharedSubscription(subscribeMessage, it, timeout) }
+                    ?: return@channelFlow
+                // The collection must start before the mutex is released, hence UNDISPATCHED:
+                // shareUntilUnused waits for the mutex to end a subscription without collector, and
+                // would otherwise end this one before its first collector is collecting
+                launch(start = CoroutineStart.UNDISPATCHED) { events.collect(::send) }
             }
-        }.shareIn(backgroundScope, SharingStarted.WhileSubscribed(timeout.inWholeMilliseconds, 0))
-
-        return channelFlow {
-            // An attempt that failed is over once its last collector left: waiting for it before
-            // collecting makes this collector start an attempt of its own
-            failed.first { !it }
-            val events = launch { shared.collect(::send) }
-            failed.first { it }
-            events.cancel()
         }
+
+    /**
+     * Subscribes to [subscribeMessage] on the server and shares its events through [events] until
+     * they stayed without collector for [timeout].
+     *
+     * Must be called while holding [eventSubscriptionMutex], which is kept until the server answered,
+     * so no other collector starts the same subscription meanwhile.
+     *
+     * @return whether the subscription is established
+     */
+    @GuardedBy("eventSubscriptionMutex")
+    private suspend fun startSharedSubscription(
+        subscribeMessage: Map<String, Any?>,
+        events: MutableSharedFlow<Any>,
+        timeout: Duration,
+    ): Boolean {
+        // Unlimited so that delivering an event never suspends the inbound message queue, see handleEvent
+        val onEvent = Channel<Any>(capacity = Channel.UNLIMITED)
+        var established = false
+        try {
+            established = startSubscription(
+                Command.WithAnswer.Subscription.Shared(WebSocketRequest(subscribeMessage), onEvent, events),
+            )
+        } finally {
+            if (!established) {
+                // The collector may have left while the server already accepted the subscription
+                withContext(NonCancellable) {
+                    if (endTrackedSubscription(subscribeMessage, onEvent)) closeIfIdle()
+                }
+            }
+        }
+        if (established) {
+            backgroundScope.launch { shareUntilUnused(subscribeMessage, onEvent, events, timeout) }
+        }
+        return established
     }
 
     /**
-     * Subscribes on the server with each collection and emits the events of that subscription,
-     * until the collector leaves or, with [SubscriptionReconnectPolicy.Complete], the connection is
-     * lost. Completes without any event when the subscription cannot be established.
+     * Subscribes on the server with each collection, with [SubscriptionReconnectPolicy.Complete], and
+     * emits the events of that subscription until the collector leaves or the connection is lost.
+     * Completes without any event when the subscription cannot be established.
      */
-    private fun subscriptionEvents(
-        subscribeMessage: Map<String, Any?>,
-        reconnectPolicy: SubscriptionReconnectPolicy,
-    ): Flow<Any> = channelFlow {
-        // One channel per collection, so a shared Flow can start again after its last collector left.
+    private fun completingSubscriptionEvents(subscribeMessage: Map<String, Any?>): Flow<Any> = channelFlow {
         // Unlimited so that delivering an event never suspends the inbound message queue, see handleEvent
         val channel = Channel<Any>(capacity = Channel.UNLIMITED)
         try {
-            if (startSubscription(subscribeMessage, channel, reconnectPolicy)) {
+            val subscription = Command.WithAnswer.Subscription.Completing(WebSocketRequest(subscribeMessage), channel)
+            if (startSubscription(subscription)) {
                 // Only returns for a completing subscription, once cleanupClosingSocket closed its channel
                 channel.consumeAsFlow().collect(::send)
             }
@@ -871,58 +899,116 @@ internal class WebSocketCoreImpl(
     }
 
     /**
-     * Subscribes on the server, delivering the events to [onEvent].
+     * Shares an established subscription between its collectors, and ends it once nobody uses it.
+     * It does what `shareIn` with `SharingStarted.WhileSubscribed` does, with two differences that
+     * the tracking in [activeMessages] needs:
+     * - The subscription only ends while holding [eventSubscriptionMutex], after checking again
+     *   that it has no collector. A collector joins under the same lock, so it can never join a
+     *   subscription that is ending.
+     * - Once ended it is not started again and this function returns, where `shareIn` keeps its
+     *   coroutine for a later collector. A later collector starts a new subscription.
+     *
+     * The events are forwarded from the first collector on, the ones received before it wait in
+     * [onEvent]. A collector joining later only receives the events that follow, and the events
+     * received while there is no collector during [timeout] are dropped.
+     *
+     * Ending the subscription unsubscribes it on the server, stops tracking it, and closes the
+     * connection when nothing else uses it.
+     *
+     * @param subscribeMessage the message the subscription was started with
+     * @param onEvent the channel the events of the subscription are delivered to
+     * @param events the Flow the collectors of the subscription collect
+     * @param timeout how long the subscription is kept once its last collector left, so a collector
+     * coming back in time joins it instead of subscribing again
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun shareUntilUnused(
+        subscribeMessage: Map<String, Any?>,
+        onEvent: Channel<Any>,
+        events: MutableSharedFlow<Any>,
+        timeout: Duration,
+    ) = coroutineScope {
+        val forwarding = launch {
+            // The events wait in the channel for the first collector, so it misses none
+            events.subscriptionCount.first { it > 0 }
+            onEvent.consumeAsFlow().collect(events::emit)
+        }
+        events.subscriptionCount
+            .mapLatest { collectors ->
+                if (collectors > 0) return@mapLatest false
+                delay(timeout)
+                eventSubscriptionMutex.withLock {
+                    // Collectors only join while holding the lock, so none can come now
+                    val unused = events.subscriptionCount.value == 0
+                    if (unused) endTrackedSubscription(subscribeMessage, onEvent)
+                    unused
+                }
+            }
+            .first { ended -> ended }
+        forwarding.cancel()
+        closeIfIdle()
+    }
+
+    /**
+     * Sends [subscription] to subscribe on the server.
      *
      * @return whether the subscription is established
      */
-    private suspend fun startSubscription(
-        subscribeMessage: Map<String, Any?>,
-        onEvent: Channel<Any>,
-        reconnectPolicy: SubscriptionReconnectPolicy,
-    ): Boolean {
-        val response = sendMessage(
-            Command.WithAnswer.Subscription(
-                request = WebSocketRequest(message = subscribeMessage),
-                onEvent = onEvent,
-                reconnectPolicy = reconnectPolicy,
-            ),
-        )
+    private suspend fun startSubscription(subscription: Command.WithAnswer.Subscription): Boolean {
+        val response = sendMessage(subscription)
         if (response?.success == true) return true
 
-        Timber.e("Unable to subscribe to ${sensitive { subscribeMessage.toString() }}")
-        findSubscription(onEvent)?.let { (subscriptionId, _) -> activeMessages.remove(subscriptionId) }
+        Timber.e("Unable to subscribe to ${sensitive { subscription.request.message.toString() }}")
+        // Still tracked when the server rejected it; without answer sendMessage already dropped it
+        response?.id?.let { activeMessages.remove(it) }
         return false
     }
 
     /**
      * Unsubscribes the subscription delivering its events to [onEvent] when it is still tracked,
-     * and closes the connection once nothing else uses it.
+     * and closes the connection once nothing else uses it. Takes [eventSubscriptionMutex] itself,
+     * so it must not be called while holding it.
      */
     private suspend fun endSubscription(subscribeMessage: Map<String, Any?>, onEvent: Channel<*>) {
-        val ended = subscriptionTrackingMutex.withLock {
-            // Found by its channel: an identical subscription that isn't shared ends its own
-            val tracked = findSubscription(onEvent)
-            tracked?.let { (subscriptionId, subscription) ->
-                Timber.d("Unsubscribing from ${sensitive { subscribeMessage.toString() }}")
-                // Unsubscribe must happen before removing from activeMessages to ensure
-                // the server acknowledges before we stop handling events for this subscription
-                unsubscribeEvents(subscriptionId)
-                activeMessages.remove(subscriptionId)
-                // Drop any resubscription attempt still in flight for this subscription:
-                // its acknowledgement must not resurrect the closed subscription, and the
-                // server may already have accepted it, so its pending id is unsubscribed
-                // rather than left to linger
-                activeMessages.entries
-                    .filter { (it.value as? ActiveMessage.Reconnecting)?.original === subscription }
-                    .forEach {
-                        unsubscribeEvents(it.key)
-                        activeMessages.remove(it.key)
-                    }
-            }
-            onEvent.close()
-            tracked != null
+        val ended = eventSubscriptionMutex.withLock { endTrackedSubscription(subscribeMessage, onEvent) }
+        if (ended) closeIfIdle()
+    }
+
+    /**
+     * Unsubscribes the subscription delivering its events to [onEvent] and stops tracking it.
+     *
+     * Must be called while holding [eventSubscriptionMutex], so no collector joins the subscription
+     * while it ends. Use [endSubscription] when the mutex isn't held.
+     *
+     * @return whether it was still tracked
+     */
+    @GuardedBy("eventSubscriptionMutex")
+    private suspend fun endTrackedSubscription(subscribeMessage: Map<String, Any?>, onEvent: Channel<*>): Boolean {
+        // Found by its channel: an identical subscription that isn't shared ends its own
+        val tracked = findSubscription(onEvent)
+        tracked?.let { (subscriptionId, subscription) ->
+            Timber.d("Unsubscribing from ${sensitive { subscribeMessage.toString() }}")
+            // Unsubscribe must happen before removing from activeMessages to ensure
+            // the server acknowledges before we stop handling events for this subscription
+            unsubscribeEvents(subscriptionId)
+            activeMessages.remove(subscriptionId)
+            // Drop any resubscription attempt still in flight for this subscription:
+            // its acknowledgement must not resurrect the closed subscription, and the
+            // server may already have accepted it, so its pending id is unsubscribed
+            // rather than left to linger
+            activeMessages.entries
+                .filter { (it.value as? ActiveMessage.Reconnecting)?.original === subscription }
+                .forEach {
+                    unsubscribeEvents(it.key)
+                    activeMessages.remove(it.key)
+                }
         }
-        if (!ended) return
+        onEvent.close()
+        return tracked != null
+    }
+
+    /** Closes the connection when no message nor subscription uses it anymore. */
+    private fun closeIfIdle() {
         if (activeMessages.isEmpty()) {
             Timber.i("No more subscriptions, closing connection.")
             close(1001, "Done listening to subscriptions.")
@@ -931,7 +1017,25 @@ internal class WebSocketCoreImpl(
         }
     }
 
-    /** Finds the [ActiveMessage.Subscription] entry delivering its events to [onEvent], and its ID. */
+    /**
+     * Finds the events of the shared subscription to [subscribeMessage], the one new collectors join.
+     *
+     * The lookup is safe on its own. Hold [eventSubscriptionMutex] until the events found are
+     * collected, since the subscription can end in between otherwise.
+     */
+    private fun findSharedSubscription(subscribeMessage: Map<String, Any?>): SharedFlow<Any>? =
+        activeMessages.values.firstNotNullOfOrNull { message ->
+            (message as? ActiveMessage.Subscription.Shared)
+                ?.takeIf { it.request.message == subscribeMessage }
+                ?.eventFlow
+        }
+
+    /**
+     * Finds the [ActiveMessage.Subscription] entry delivering its events to [onEvent], and its ID.
+     *
+     * The lookup is safe on its own. Hold [eventSubscriptionMutex] when acting on the ID found,
+     * since the restoration of the subscription can replace it.
+     */
     private fun findSubscription(onEvent: Channel<*>): Pair<Long, ActiveMessage.Subscription>? =
         activeMessages.firstNotNullOfOrNull { (id, message) ->
             (message as? ActiveMessage.Subscription)?.takeIf { it.onEvent === onEvent }?.let { id to it }
@@ -952,16 +1056,17 @@ internal class WebSocketCoreImpl(
     private fun handleMessage(response: RawMessageSocketResponse) {
         val id = checkNotNull(response.id) { "Response without ID" }
         activeMessages[id]?.let { request ->
+            // Simple messages are done once answered; Subscription entries keep receiving
+            // events and Reconnecting entries are resolved by the restore loop once it
+            // observes this answer. Removed before the sender resumes, so it never sees its own
+            // answered message as still pending
+            if (request is ActiveMessage.Simple) {
+                activeMessages.remove(id)
+            }
             // Complete the deferred - this is safe to call multiple times (idempotent)
             val completed = request.responseDeferred.complete(response)
             if (!completed) {
                 Timber.w("Response deferred was already completed for ${response.id}")
-            }
-            // Simple messages are done once answered; Subscription entries keep receiving
-            // events and Reconnecting entries are resolved by the restore loop once it
-            // observes this answer
-            if (request is ActiveMessage.Simple) {
-                activeMessages.remove(id)
             }
         } ?: run { Timber.w("Response for message not in activeMessage id($id) skipping") }
     }
@@ -1160,9 +1265,7 @@ internal class WebSocketCoreImpl(
     private fun completeNonReplayableSubscriptions() {
         activeMessages
             .mapNotNull { (key, activeMessage) ->
-                (activeMessage as? ActiveMessage.Subscription)
-                    ?.takeIf { it.reconnectPolicy is SubscriptionReconnectPolicy.Complete }
-                    ?.let { key to it }
+                (activeMessage as? ActiveMessage.Subscription.Completing)?.let { key to it }
             }
             .forEach { (key, subscription) ->
                 activeMessages.remove(key)
@@ -1339,7 +1442,7 @@ internal class WebSocketCoreImpl(
 
                 else -> {
                     val newId = checkNotNull(response.id) { "Response without ID" }
-                    subscriptionTrackingMutex.withLock {
+                    eventSubscriptionMutex.withLock {
                         if (activeMessages.remove(oldId, original)) {
                             // Use the server's new id for the original subscription, flow and channel
                             activeMessages[newId] = original
@@ -1405,14 +1508,35 @@ internal sealed interface ActiveMessage {
      * @param responseDeferred Completes with the initial subscription confirmation response
      * @param onEvent The channel used to send events into the flow
      * @param request The original request, retained for resubscription after reconnection
-     * @param reconnectPolicy Whether the subscription is restored or ended when the connection is lost
      */
-    class Subscription(
+    sealed class Subscription(
         override val responseDeferred: CompletableDeferred<RawMessageSocketResponse>,
         val onEvent: Channel<Any>,
         val request: WebSocketRequest,
-        val reconnectPolicy: SubscriptionReconnectPolicy,
-    ) : ActiveMessage
+    ) : ActiveMessage {
+        /**
+         * A subscription shared between its collectors and restored after a reconnection, see
+         * [SubscriptionReconnectPolicy.Resubscribe].
+         *
+         * @param eventFlow The events its collectors share
+         */
+        class Shared(
+            responseDeferred: CompletableDeferred<RawMessageSocketResponse>,
+            onEvent: Channel<Any>,
+            request: WebSocketRequest,
+            val eventFlow: SharedFlow<Any>,
+        ) : Subscription(responseDeferred, onEvent, request)
+
+        /**
+         * A subscription that belongs to one collector and completes when the connection is lost,
+         * see [SubscriptionReconnectPolicy.Complete].
+         */
+        class Completing(
+            responseDeferred: CompletableDeferred<RawMessageSocketResponse>,
+            onEvent: Channel<Any>,
+            request: WebSocketRequest,
+        ) : Subscription(responseDeferred, onEvent, request)
+    }
 
     /**
      * A resubscription attempt in flight after a reconnection.
@@ -1461,21 +1585,23 @@ private sealed interface Command<T> {
          * A subscription message that receives multiple events over time.
          *
          * @param onEvent The channel used internally to send events to the flow
-         * @param reconnectPolicy Whether the subscription is restored or ended when the connection is lost
          */
-        class Subscription(
-            request: WebSocketRequest,
-            val onEvent: Channel<Any>,
-            val reconnectPolicy: SubscriptionReconnectPolicy,
-        ) : WithAnswer(request) {
+        sealed class Subscription(request: WebSocketRequest, val onEvent: Channel<Any>) : WithAnswer(request) {
+            /**
+             * A subscription tracked as an [ActiveMessage.Subscription.Shared].
+             *
+             * @param eventFlow The events its collectors share
+             */
+            class Shared(request: WebSocketRequest, onEvent: Channel<Any>, private val eventFlow: SharedFlow<Any>) :
+                Subscription(request, onEvent) {
+                override fun toActiveMessage(): ActiveMessage =
+                    ActiveMessage.Subscription.Shared(responseDeferred, onEvent, request, eventFlow)
+            }
 
-            override fun toActiveMessage(): ActiveMessage {
-                return ActiveMessage.Subscription(
-                    responseDeferred,
-                    onEvent,
-                    request,
-                    reconnectPolicy,
-                )
+            /** A subscription tracked as an [ActiveMessage.Subscription.Completing]. */
+            class Completing(request: WebSocketRequest, onEvent: Channel<Any>) : Subscription(request, onEvent) {
+                override fun toActiveMessage(): ActiveMessage =
+                    ActiveMessage.Subscription.Completing(responseDeferred, onEvent, request)
             }
         }
 
