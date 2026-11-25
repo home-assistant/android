@@ -6,6 +6,7 @@ import kotlin.math.round
 internal object ThermostatTemperatureLogic {
     const val START_DEGREES = 205f
     const val SWEEP_DEGREES = 130f
+    private const val MIDPOINT_FRACTION = 0.5f
     fun snap(value: Float, step: Float, minimum: Float, maximum: Float): Float {
         require(step > 0f && minimum <= maximum)
         val bounded = value.coerceIn(minimum, maximum)
@@ -13,6 +14,8 @@ internal object ThermostatTemperatureLogic {
     }
 
     /** Invalid range proposals are rejected, never silently swapped. */
+    // Explicit bounds and setpoints keep the pure calculation independent of tile state.
+    @Suppress("LongParameterList")
     fun adjustRange(
         proposed: Float,
         adjustingHigh: Boolean,
@@ -32,7 +35,7 @@ internal object ThermostatTemperatureLogic {
     }
 
     fun normalized(value: Float, minimum: Float, maximum: Float): Float =
-        if (maximum <= minimum) 0.5f else ((value - minimum) / (maximum - minimum)).coerceIn(0f, 1f)
+        if (maximum <= minimum) MIDPOINT_FRACTION else ((value - minimum) / (maximum - minimum)).coerceIn(0f, 1f)
 
     /** Normalizes clockwise top semicircle: 0=left side, 1=right side. */
     fun fractionFromTopArc(x: Float, y: Float, centerX: Float, centerY: Float): Float {

@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.wear.compose.foundation.lazy.ScalingLazyListScope
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
@@ -139,70 +140,8 @@ fun SetThermostatTileView(
                 }
             }
             if (tile?.layoutStyle == "enhanced") {
-                item {
-                    SwitchButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        checked = tile?.showHvacModes == true,
-                        onCheckedChange = { enabled ->
-                            tile?.let {
-                                onPreferencesChanged(it.id) { current -> current.copy(showHvacModes = enabled) }
-                            }
-                        },
-                        label = { Text(stringResource(commonR.string.setting_thermostat_hvac_modes)) },
-                        colors = getSwitchButtonColors(),
-                    )
-                }
-                item {
-                    SwitchButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        checked = tile?.showFanControl == true,
-                        onCheckedChange = { enabled ->
-                            tile?.let {
-                                onPreferencesChanged(it.id) { current -> current.copy(showFanControl = enabled) }
-                            }
-                        },
-                        label = { Text(stringResource(commonR.string.setting_thermostat_fan_control)) },
-                        colors = getSwitchButtonColors(),
-                    )
-                }
-                item {
-                    SwitchButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        checked = tile?.showActivity == true,
-                        onCheckedChange = { enabled ->
-                            tile?.let {
-                                onPreferencesChanged(it.id) { current -> current.copy(showActivity = enabled) }
-                            }
-                        },
-                        label = { Text(stringResource(commonR.string.setting_thermostat_activity)) },
-                        colors = getSwitchButtonColors(),
-                    )
-                }
-                item {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = getFilledTonalButtonColors(),
-                        label = { Text(stringResource(commonR.string.setting_thermostat_secondary_step)) },
-                        secondaryLabel = {
-                            Text(
-                                stringResource(
-                                    commonR.string.setting_thermostat_secondary_step_summary,
-                                    tile?.quickAdjustOne ?: 3,
-                                ),
-                            )
-                        },
-                        onClick = {
-                            tile?.let {
-                                onPreferencesChanged(it.id) { current ->
-                                    val choices = listOf(3, 5, 2, 10)
-                                    val next = choices[(choices.indexOf(current.quickAdjustOne) + 1) % choices.size]
-                                    current.copy(quickAdjustOne = next)
-                                }
-                            }
-                        },
-                    )
-                }
-            } // Enhanced-specific settings
+                enhancedSettings(tile, onPreferencesChanged)
+            }
             item {
                 SwitchButton(
                     modifier = Modifier.fillMaxWidth(),
@@ -230,5 +169,66 @@ fun SetThermostatTileView(
                 )
             }
         }
+    }
+}
+
+private fun ScalingLazyListScope.enhancedSettings(
+    tile: ThermostatTile,
+    onPreferencesChanged: (Int, (ThermostatTile) -> ThermostatTile) -> Unit,
+) {
+    item {
+        SwitchButton(
+            modifier = Modifier.fillMaxWidth(),
+            checked = tile.showHvacModes,
+            onCheckedChange = { enabled ->
+                onPreferencesChanged(tile.id) { current -> current.copy(showHvacModes = enabled) }
+            },
+            label = { Text(stringResource(commonR.string.setting_thermostat_hvac_modes)) },
+            colors = getSwitchButtonColors(),
+        )
+    }
+    item {
+        SwitchButton(
+            modifier = Modifier.fillMaxWidth(),
+            checked = tile.showFanControl,
+            onCheckedChange = { enabled ->
+                onPreferencesChanged(tile.id) { current -> current.copy(showFanControl = enabled) }
+            },
+            label = { Text(stringResource(commonR.string.setting_thermostat_fan_control)) },
+            colors = getSwitchButtonColors(),
+        )
+    }
+    item {
+        SwitchButton(
+            modifier = Modifier.fillMaxWidth(),
+            checked = tile.showActivity,
+            onCheckedChange = { enabled ->
+                onPreferencesChanged(tile.id) { current -> current.copy(showActivity = enabled) }
+            },
+            label = { Text(stringResource(commonR.string.setting_thermostat_activity)) },
+            colors = getSwitchButtonColors(),
+        )
+    }
+    item {
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            colors = getFilledTonalButtonColors(),
+            label = { Text(stringResource(commonR.string.setting_thermostat_secondary_step)) },
+            secondaryLabel = {
+                Text(
+                    stringResource(
+                        commonR.string.setting_thermostat_secondary_step_summary,
+                        tile.quickAdjustOne,
+                    ),
+                )
+            },
+            onClick = {
+                onPreferencesChanged(tile.id) { current ->
+                    val choices = listOf(3, 5, 2, 10)
+                    val next = choices[(choices.indexOf(current.quickAdjustOne) + 1) % choices.size]
+                    current.copy(quickAdjustOne = next)
+                }
+            },
+        )
     }
 }

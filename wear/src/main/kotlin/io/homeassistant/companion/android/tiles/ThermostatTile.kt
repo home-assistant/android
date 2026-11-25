@@ -49,6 +49,8 @@ class ThermostatTile : TileService() {
     companion object {
         private const val TAG = "ThermostatTile"
         const val DEFAULT_REFRESH_INTERVAL = 600L
+        private const val PENDING_CACHE_MAX_AGE_MS = 3_000L
+        private const val CACHE_MAX_AGE_MS = 5_000L
     }
 
     private val serviceJob = Job()
@@ -155,7 +157,7 @@ class ThermostatTile : TileService() {
                                     waitingCommand?.value !in listOf("on", "off") -> {
                                     val delta = if (lastId == TAP_ACTION_UP) step else -step
                                     val baseline = waitingCommand?.single
-                                        ?: controls.targetTemperature!!
+                                        ?: checkNotNull(controls.targetTemperature)
                                     val proposed = ThermostatTemperatureLogic.snap(
                                         baseline + delta,
                                         step,
@@ -223,8 +225,10 @@ class ThermostatTile : TileService() {
                                             controls.targetTemperatureHigh != null
                                         // Ignore a tap from an outdated layout after a mode change.
                                         if (range && (slot == "heat" || slot == "cool")) {
-                                            val currentLow = waitingCommand?.low ?: controls.targetTemperatureLow!!
-                                            val currentHigh = waitingCommand?.high ?: controls.targetTemperatureHigh!!
+                                            val currentLow = waitingCommand?.low
+                                                ?: checkNotNull(controls.targetTemperatureLow)
+                                            val currentHigh = waitingCommand?.high
+                                                ?: checkNotNull(controls.targetTemperatureHigh)
                                             val revised = ThermostatTemperatureLogic.adjustRange(
                                                 if (slot == "heat") currentLow + amount else currentHigh + amount,
                                                 slot == "cool",
@@ -244,7 +248,7 @@ class ThermostatTile : TileService() {
                                             )
                                         } else if (!range && slot == "single" && controls.targetTemperature != null) {
                                             val baseline = waitingCommand?.single
-                                                ?: controls.targetTemperature!!
+                                                ?: checkNotNull(controls.targetTemperature)
                                             val proposed = ThermostatTemperatureLogic.snap(
                                                 baseline + amount,
                                                 step,
@@ -284,7 +288,7 @@ class ThermostatTile : TileService() {
                         }
                         commandCoordinator.refreshEntityIfStale(
                             target,
-                            if (pending != null) 3_000L else 5_000L,
+                            if (pending != null) PENDING_CACHE_MAX_AGE_MS else CACHE_MAX_AGE_MS,
                         )
                         val temperatureUnit = controls?.temperatureUnit ?: "°"
                         if (clickedId.isNotEmpty()) {
@@ -369,31 +373,38 @@ class ThermostatTile : TileService() {
         }
     }
 
+    // TileService declares a Java Void future, not a Kotlin Unit future.
+    @Suppress("ForbiddenVoid")
     override fun onRecentInteractionEventsAsync(
         events: List<EventBuilders.TileInteractionEvent>,
     ): ListenableFuture<Void?> = serviceScope.future {
         // Wear OS 6+ can batch ENTER and LEAVE, so process in time order and ignore stale enters.
         for (event in events.sortedBy { it.timestamp }) {
             when (event.eventType) {
-                EventBuilders.TileInteractionEvent.ENTER -> {
-                    val config = thermostatTileDao.get(event.tileId) ?: continue
-                    val entityId = config.entityId?.takeIf { it.isNotBlank() } ?: continue
-                    if (config.refreshInterval == 0L || !serverManager.isRegistered()) continue
-                    val serverId = serverManager.getServer()?.id ?: continue
-                    commandCoordinator.observeVisibleTile(
-                        event.tileId,
-                        ThermostatCommandCoordinator.Target(serverId, entityId),
-                        event.timestamp.toEpochMilli(),
-                    )
-                }
+                EventBuilders.TileInteractionEvent.ENTER -> observeEnteredTile(event)
                 EventBuilders.TileInteractionEvent.LEAVE ->
                     commandCoordinator.stopObservingTile(event.tileId, event.timestamp.toEpochMilli())
+                EventBuilders.TileInteractionEvent.UNKNOWN -> Unit
             }
         }
         if (isRefreshOnViewedSupported()) {
             requestUpdateOnEnter(events) { tileId -> (thermostatTileDao.get(tileId)?.refreshInterval ?: 0L) >= 1L }
         }
         null
+    }
+
+    private suspend fun observeEnteredTile(event: EventBuilders.TileInteractionEvent) {
+        val config = thermostatTileDao.get(event.tileId)
+        val entityId = config?.entityId?.takeIf { it.isNotBlank() }
+        if (config == null || entityId == null || config.refreshInterval == 0L) return
+        val serverId = if (serverManager.isRegistered()) serverManager.getServer()?.id else null
+        if (serverId != null) {
+            commandCoordinator.observeVisibleTile(
+                event.tileId,
+                ThermostatCommandCoordinator.Target(serverId, entityId),
+                event.timestamp.toEpochMilli(),
+            )
+        }
     }
 
     override fun onDestroy() {

@@ -1486,8 +1486,14 @@
     <string name="thermostat_tile_target">Target temperature</string>
     <string name="thermostat_tile_heat_target">Heating target temperature</string>
     <string name="thermostat_tile_cool_target">Cooling target temperature</string>
-    <string name="thermostat_tile_increase">Increase %1$s by %2$d degrees</string>
-    <string name="thermostat_tile_decrease">Decrease %1$s by %2$d degrees</string>
+    <plurals name="thermostat_tile_increase">
+        <item quantity="one">Increase %1$s by %2$d degree</item>
+        <item quantity="other">Increase %1$s by %2$d degrees</item>
+    </plurals>
+    <plurals name="thermostat_tile_decrease">
+        <item quantity="one">Decrease %1$s by %2$d degree</item>
+        <item quantity="other">Decrease %1$s by %2$d degrees</item>
+    </plurals>
     <string name="thermostat_tile_increase_target">Increase target temperature</string>
     <string name="thermostat_tile_decrease_target">Decrease target temperature</string>
     <string name="thermostat_tile_target_value">%1$s: %2$s</string>

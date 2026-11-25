@@ -4,10 +4,12 @@ import android.content.Context
 import android.os.PowerManager
 import android.os.SystemClock
 import androidx.annotation.WorkerThread
+import androidx.core.content.edit
 import androidx.wear.tiles.TileService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.EntityFilter
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
@@ -33,6 +35,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
+private const val VISIBILITY_MAX_AGE_MS = 10_000L
+private const val LIVE_INITIAL_CACHE_AGE_MS = 1_000L
+private const val LIVE_OBSERVATION_TIMEOUT_MS = 90_000L
+private const val SCREEN_CHECK_INTERVAL_MS = 1_000L
+private const val ENTITY_CACHE_TTL_MS = 120_000L
+private const val TEMPERATURE_CONFIRMATION_TOLERANCE = 0.051f
+private const val ACK_POLL_ATTEMPTS = 12
+private const val ACK_POLL_INTERVAL_MS = 1_500L
+private const val FILTERED_ENTITY_SUBSCRIPTION_YEAR = 2022
+private const val FILTERED_ENTITY_SUBSCRIPTION_MONTH = 4
+private const val LIVE_RETRY_INTERVAL_MS = 3_000L
+private const val INITIAL_CONFIRMATION_TIMEOUT_MS = 3_000L
+private const val SUBSCRIPTION_CONFIRMATION_TIMEOUT_MS = 4_000L
+private const val COMMAND_CONFIRMATION_TIMEOUT_MS = 18_000L
+
 /**
  * Keeps slow thermostat acknowledgments out of the gesture path. A pending request is stored
  * independently of Room tile configuration so a view doesn't accidentally present a proposed
@@ -41,6 +58,8 @@ import timber.log.Timber
  * Confirmation means that Home Assistant's entity state reflects the request, not proof that
  * the thermostat's physical relay has already changed state.
  */
+// One lock owns the cache, visibility generation, and ordered command lifecycle.
+@Suppress("TooManyFunctions")
 @Singleton
 class ThermostatCommandCoordinator internal constructor(
     context: Context,
@@ -105,9 +124,11 @@ class ThermostatCommandCoordinator internal constructor(
     private var liveGeneration = 0L
     private var lastVisibilityAt = 0L
 
+    // Early exits keep visibility checks and lock ownership explicit.
+    @Suppress("ReturnCount")
     fun observeVisibleTile(tileId: Int, target: Target, visibleAt: Long) {
         val age = System.currentTimeMillis() - visibleAt
-        if (age !in 0L..10_000L || powerManager?.isInteractive != true) return
+        if (age !in 0L..VISIBILITY_MAX_AGE_MS || powerManager?.isInteractive != true) return
         lock.withLock {
             if (visibleAt <= lastVisibilityAt) return
             lastVisibilityAt = visibleAt
@@ -116,54 +137,69 @@ class ThermostatCommandCoordinator internal constructor(
             val generation = ++liveGeneration
             liveTileId = tileId
             liveTarget = target
-            liveJob = scope.launch {
-                try {
-                    if (serverManager.getServer(target.serverId)?.version?.isAtLeast(2022, 4, 0) != true) return@launch
-                    Timber.i("Thermostat live observation started: %s", target.entityId)
-                    refreshEntityIfStale(target, 1_000L)
-                    // Leave events can be delayed on Wear OS 6+. Never keep a socket collector
-                    // alive indefinitely based on uncertain visibility.
-                    withTimeoutOrNull(90_000L) {
-                        coroutineScope {
-                            val collector = launch {
-                                while (isActive) {
-                                    try {
-                                        serverManager.integrationRepository(target.serverId)
-                                            .getEntityChanges(EntityFilter(entityIds = setOf(target.entityId)))
-                                            ?.collect { change -> applyLiveChange(target, generation, change) }
-                                    } catch (error: CancellationException) {
-                                        throw error
-                                    } catch (error: Exception) {
-                                        Timber.w(error, "Thermostat live subscription failed: %s", target.entityId)
-                                    }
-                                    // Retry a disconnected or unavailable subscription only within
-                                    // the same short observation window.
-                                    delay(3_000L)
-                                }
-                            }
-                            try {
-                                // Local screen-state check only; this is not network polling.
-                                while (collector.isActive && powerManager?.isInteractive == true) delay(1_000L)
-                            } finally {
-                                collector.cancel()
-                            }
-                        }
+            liveJob = scope.launch { runLiveObservation(target, generation) }
+        }
+    }
+
+    private suspend fun supportsFilteredSubscription(target: Target): Boolean =
+        serverManager.getServer(target.serverId)?.version?.isAtLeast(
+            FILTERED_ENTITY_SUBSCRIPTION_YEAR,
+            FILTERED_ENTITY_SUBSCRIPTION_MONTH,
+            0,
+        ) == true
+
+    private suspend fun runLiveObservation(target: Target, generation: Long) {
+        try {
+            if (!supportsFilteredSubscription(target)) return
+            Timber.i("Thermostat live observation started: %s", target.entityId)
+            refreshEntityIfStale(target, LIVE_INITIAL_CACHE_AGE_MS)
+            // Leave events can be delayed on Wear OS 6+. Never keep a socket collector
+            // alive indefinitely based on uncertain visibility.
+            withTimeoutOrNull(LIVE_OBSERVATION_TIMEOUT_MS) {
+                coroutineScope {
+                    val collector = launch {
+                        collectLiveChanges(target, generation)
                     }
-                } catch (error: CancellationException) {
-                    throw error
-                } catch (error: Exception) {
-                    Timber.w(error, "Thermostat live observation failed: %s", target.entityId)
-                } finally {
-                    lock.withLock {
-                        if (liveGeneration == generation) {
-                            liveJob = null
-                            liveTileId = null
-                            liveTarget = null
+                    try {
+                        // Local screen-state check only; this is not network polling.
+                        while (collector.isActive && powerManager?.isInteractive == true) {
+                            delay(SCREEN_CHECK_INTERVAL_MS)
                         }
+                    } finally {
+                        collector.cancel()
                     }
-                    Timber.i("Thermostat live observation stopped: %s", target.entityId)
                 }
             }
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Timber.w(error, "Thermostat live observation failed: %s", target.entityId)
+        } finally {
+            lock.withLock {
+                if (liveGeneration == generation) {
+                    liveJob = null
+                    liveTileId = null
+                    liveTarget = null
+                }
+            }
+            Timber.i("Thermostat live observation stopped: %s", target.entityId)
+        }
+    }
+
+    private suspend fun CoroutineScope.collectLiveChanges(target: Target, generation: Long) {
+        while (isActive) {
+            try {
+                serverManager.integrationRepository(target.serverId)
+                    .getEntityChanges(EntityFilter(entityIds = setOf(target.entityId)))
+                    ?.collect { change -> applyLiveChange(target, generation, change) }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Timber.w(error, "Thermostat live subscription failed: %s", target.entityId)
+            }
+            // Retry a disconnected or unavailable subscription only within
+            // the same short observation window.
+            delay(LIVE_RETRY_INTERVAL_MS)
         }
     }
 
@@ -184,23 +220,7 @@ class ThermostatCommandCoordinator internal constructor(
             // The command acknowledgement path owns state during an in-flight command.
             if (liveGeneration != generation || latest.keys.any { it.target == target }) return
             when (change) {
-                is EntityChange.StateChanged -> {
-                    val entity = EntityDisplayWithoutContext(change.entity)
-                    if (entity.entityId != target.entityId) return
-                    val previous = entityCache[target]?.item
-                    val previousUpdated = previous?.lastUpdated
-                    val updated = entity.lastUpdated
-                    if (previousUpdated != null && updated != null && updated < previousUpdated) return
-                    entityCache[target] = CachedEntity(entity, System.currentTimeMillis())
-                    if (previous == null ||
-                        previous.rawState != entity.rawState ||
-                        previous.name != entity.name ||
-                        previous.climateControls != entity.climateControls
-                    ) {
-                        Timber.i("Thermostat live state changed: %s", target.entityId)
-                        refresh()
-                    }
-                }
+                is EntityChange.StateChanged -> applyObservedState(target, EntityDisplayWithoutContext(change.entity))
                 is EntityChange.Removed -> if (change.entityId == target.entityId) {
                     if (entityCache.remove(target) != null) refresh()
                 }
@@ -208,8 +228,27 @@ class ThermostatCommandCoordinator internal constructor(
         }
     }
 
+    // Caller holds lock; reject events older than the current cached state.
+    private fun applyObservedState(target: Target, entity: EntityDisplayWithoutContext) {
+        if (entity.entityId != target.entityId) return
+        val previous = entityCache[target]?.item
+        val previousUpdated = previous?.lastUpdated
+        val updated = entity.lastUpdated
+        if (previousUpdated != null && updated != null && updated < previousUpdated) return
+        entityCache[target] = CachedEntity(entity, System.currentTimeMillis())
+        if (previous == null || displayChanged(previous, entity)) {
+            Timber.i("Thermostat live state changed: %s", target.entityId)
+            refresh()
+        }
+    }
+
+    private fun displayChanged(previous: EntityDisplayWithoutContext, entity: EntityDisplayWithoutContext): Boolean =
+        previous.rawState != entity.rawState ||
+            previous.name != entity.name ||
+            previous.climateControls != entity.climateControls
+
     fun cachedEntity(target: Target): EntityDisplayWithoutContext? =
-        entityCache[target]?.takeIf { System.currentTimeMillis() - it.receivedAt < 120_000L }?.item
+        entityCache[target]?.takeIf { System.currentTimeMillis() - it.receivedAt < ENTITY_CACHE_TTL_MS }?.item
 
     fun rememberEntity(target: Target, entity: EntityDisplayWithoutContext) {
         if (entity.entityId != target.entityId) return
@@ -224,6 +263,8 @@ class ThermostatCommandCoordinator internal constructor(
         }
     }
 
+    // Independent early exits avoid unnecessary reads and preserve the in-flight gate.
+    @Suppress("ReturnCount")
     fun refreshEntityIfStale(target: Target, maxAgeMillis: Long) {
         // A command already provides state updates. Avoid a second request from tile rendering.
         val refreshToken = lock.withLock {
@@ -276,7 +317,7 @@ class ThermostatCommandCoordinator internal constructor(
         }
         fun floatOrNull(key: String) = if (prefs.contains("$prefix.$key")) prefs.getFloat("$prefix.$key", 0f) else null
         return Pending(
-            value = prefs.getString("$prefix.value", "") ?: "",
+            value = prefs.getString("$prefix.value", "").orEmpty(),
             status = if (failed) Pending.Status.FAILED else Pending.Status.WAITING,
             single = floatOrNull("single"),
             low = floatOrNull("low"),
@@ -285,37 +326,41 @@ class ThermostatCommandCoordinator internal constructor(
     }
 
     // Called under lock, so a newer request cannot be overwritten by an older reply.
-    private fun store(
-        key: PendingKey,
-        value: String,
-        failed: Boolean = false,
-        single: Float? = null,
-        low: Float? = null,
-        high: Float? = null,
-        updateTile: Boolean = true,
-    ) {
+    private fun store(key: PendingKey, pending: Pending, updateTile: Boolean = true) {
+        val failed = pending.status == Pending.Status.FAILED
         val prefix = key.prefix
-        val edit = prefs.edit().putLong("$prefix.time", System.currentTimeMillis())
-            .putString("$prefix.value", value).putBoolean("$prefix.failed", failed)
-        if (!failed) {
-            edit.remove("$prefix.single").remove("$prefix.low").remove("$prefix.high")
-            if (single != null) edit.putFloat("$prefix.single", single)
-            if (low != null) edit.putFloat("$prefix.low", low)
-            if (high != null) edit.putFloat("$prefix.high", high)
+        prefs.edit {
+            putLong("$prefix.time", System.currentTimeMillis())
+            putString("$prefix.value", pending.value)
+            putBoolean("$prefix.failed", failed)
+            if (!failed) {
+                remove("$prefix.single")
+                remove("$prefix.low")
+                remove("$prefix.high")
+                pending.single?.let { putFloat("$prefix.single", it) }
+                pending.low?.let { putFloat("$prefix.low", it) }
+                pending.high?.let { putFloat("$prefix.high", it) }
+            }
         }
-        edit.apply()
         if (updateTile) refresh()
     }
 
     private fun clear(key: PendingKey) {
         latest.remove(key)
         val prefix = key.prefix
-        prefs.edit().remove("$prefix.time").remove("$prefix.value")
-            .remove("$prefix.failed").remove("$prefix.single")
-            .remove("$prefix.low").remove("$prefix.high").apply()
+        prefs.edit {
+            remove("$prefix.time")
+            remove("$prefix.value")
+            remove("$prefix.failed")
+            remove("$prefix.single")
+            remove("$prefix.low")
+            remove("$prefix.high")
+        }
         refresh()
     }
 
+    // Nullable single/range values match the existing tile and test call sites.
+    @Suppress("LongParameterList")
     @WorkerThread
     fun submitTemperature(tileId: Int, target: Target, isRange: Boolean, low: Float?, high: Float?, single: Float?) {
         val data: Map<String, Any?> = when {
@@ -367,8 +412,11 @@ class ThermostatCommandCoordinator internal constructor(
         mode,
     ) { entity -> entity.climateControls?.fanMode == mode }
 
-    private fun approximately(a: Float?, b: Float?): Boolean = a != null && b != null && kotlin.math.abs(a - b) < 0.051f
+    private fun approximately(a: Float?, b: Float?): Boolean =
+        a != null && b != null && kotlin.math.abs(a - b) < TEMPERATURE_CONFIRMATION_TOLERANCE
 
+    // Keep dispatch, acknowledgement ownership and failure cleanup together in one coroutine.
+    @Suppress("LongParameterList", "LongMethod")
     private fun submit(
         tileId: Int,
         target: Target,
@@ -388,7 +436,7 @@ class ThermostatCommandCoordinator internal constructor(
             latest[key] = token
             // Only registered after dispatch; never cancel a queued or in-flight service call.
             acknowledgementJobs.remove(key)?.cancel()
-            store(key, value, single = single, low = low, high = high, updateTile = false)
+            store(key, Pending(value, Pending.Status.WAITING, single, low, high), updateTile = false)
             token to dispatchTails.put(target, dispatched)
         }
         scope.launch {
@@ -416,7 +464,7 @@ class ThermostatCommandCoordinator internal constructor(
                     acknowledgementJobs[key] = monitor
                 }
                 try {
-                    val acknowledged = withTimeoutOrNull(18_000L) {
+                    val acknowledged = withTimeoutOrNull(COMMAND_CONFIRMATION_TIMEOUT_MS) {
                         awaitAcknowledgement(key, token, confirmed)
                     } == true
                     lock.withLock {
@@ -434,7 +482,7 @@ class ThermostatCommandCoordinator internal constructor(
                                 action,
                                 SystemClock.elapsedRealtime() - started,
                             )
-                            store(key, value, failed = true)
+                            store(key, Pending(value, Pending.Status.FAILED))
                             latest.remove(key)
                         }
                     }
@@ -449,7 +497,7 @@ class ThermostatCommandCoordinator internal constructor(
                 Timber.e(error, "Thermostat tile command failed: %s", action)
                 lock.withLock {
                     if (latest[key] == token) {
-                        store(key, value, failed = true)
+                        store(key, Pending(value, Pending.Status.FAILED))
                         latest.remove(key)
                     }
                 }
@@ -470,50 +518,80 @@ class ThermostatCommandCoordinator internal constructor(
             rememberEntity(target, entity)
             confirmed(entity)
         }
+        return readConfirmation(target, repository, ::checkState) ||
+            subscribeForConfirmation(key, token, repository, ::checkState) ||
+            pollForConfirmation(key, token, repository, ::checkState)
+    }
+
+    private suspend fun readConfirmation(
+        target: Target,
+        repository: IntegrationRepository,
+        checkState: (EntityDisplayWithoutContext) -> Boolean,
+    ): Boolean {
         // Check the requested entity immediately before waiting for subscription events.
         try {
-            val current = withTimeoutOrNull(3_000L) {
+            val current = withTimeoutOrNull(INITIAL_CONFIRMATION_TIMEOUT_MS) {
                 repository.getEntity(target.entityId)?.let { EntityDisplayWithoutContext(it) }
             }
-            if (current != null && checkState(current)) return true
+            return current != null && checkState(current)
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
             Timber.w(error, "Thermostat initial confirmation read failed: %s", target.entityId)
+            return false
         }
+    }
 
+    private suspend fun subscribeForConfirmation(
+        key: PendingKey,
+        token: Long,
+        repository: IntegrationRepository,
+        checkState: (EntityDisplayWithoutContext) -> Boolean,
+    ): Boolean {
+        val target = key.target
         // Unknown and pre-2022.4 servers may send all entity states on subscription.
         // Prefer a targeted read instead on those servers.
-        if (serverManager.getServer(target.serverId)?.version?.isAtLeast(2022, 4, 0) == true) {
-            try {
-                val change = withTimeoutOrNull(4_000L) {
-                    repository.getEntityChanges(EntityFilter(entityIds = setOf(target.entityId)))
-                        ?.firstOrNull { change ->
-                            when (change) {
-                                is EntityChange.StateChanged -> checkState(EntityDisplayWithoutContext(change.entity))
-                                is EntityChange.Removed -> {
-                                    lock.withLock {
-                                        if (latest[key] == token && change.entityId == target.entityId) {
-                                            entityCache.remove(target)
-                                            refresh()
-                                        }
+        if (!supportsFilteredSubscription(target)) return false
+        return try {
+            val change = withTimeoutOrNull(SUBSCRIPTION_CONFIRMATION_TIMEOUT_MS) {
+                repository.getEntityChanges(EntityFilter(entityIds = setOf(target.entityId)))
+                    ?.firstOrNull { change ->
+                        when (change) {
+                            is EntityChange.StateChanged -> checkState(EntityDisplayWithoutContext(change.entity))
+                            is EntityChange.Removed -> {
+                                lock.withLock {
+                                    if (latest[key] == token && change.entityId == target.entityId) {
+                                        entityCache.remove(target)
+                                        refresh()
                                     }
-                                    false
                                 }
+                                false
                             }
                         }
-                }
-                if (change != null) return true
-            } catch (error: CancellationException) {
-                throw error
-            } catch (error: Exception) {
-                Timber.w(error, "Thermostat state subscription failed: %s", target.entityId)
+                    }
             }
+            change != null
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Timber.w(error, "Thermostat state subscription failed: %s", target.entityId)
+            false
         }
+    }
+
+    // Stop polling immediately when superseded, including after each delay.
+    @Suppress("ReturnCount")
+    private suspend fun pollForConfirmation(
+        key: PendingKey,
+        token: Long,
+        repository: IntegrationRepository,
+        checkState: (EntityDisplayWithoutContext) -> Boolean,
+    ): Boolean {
+        val target = key.target
         // The outer timeout bounds both subscription and fallback polling, including slow reads.
-        repeat(12) { attempt ->
+        repeat(ACK_POLL_ATTEMPTS) { attempt ->
             if (!isLatest(key, token)) return false
-            if (attempt > 0) delay(1_500L)
+            if (attempt > 0) delay(ACK_POLL_INTERVAL_MS)
             if (!isLatest(key, token)) return false
             val current = repository.getEntity(target.entityId)?.let { EntityDisplayWithoutContext(it) }
             if (current != null && checkState(current)) return true
