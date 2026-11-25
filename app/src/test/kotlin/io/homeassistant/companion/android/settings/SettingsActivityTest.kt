@@ -4,9 +4,11 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Looper
 import android.os.SystemClock
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Switch
 import androidx.test.core.app.ApplicationProvider
 import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -15,7 +17,9 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.applock.AppLockStateManager
 import io.homeassistant.companion.android.testing.unit.seedFakeAndroidId
+import io.mockk.clearMocks
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.After
@@ -99,7 +103,9 @@ class SettingsActivityTest {
     @Test
     fun `Given the app locked or not when accessibility services look at the settings then they only see them unlocked`() {
         appLocked = true
-        assertFalse(accessibilityReachesSettings(launch().get()))
+        val locked = launch().get()
+        assertFalse(accessibilityReachesSettings(locked))
+        assertFalse(locked.findViewById<View>(R.id.blurView).isImportantForAccessibility)
 
         appLocked = false
         assertTrue(accessibilityReachesSettings(launch().get()))
@@ -151,5 +157,66 @@ class SettingsActivityTest {
         settings.resume()
 
         assertFalse(touchReachesSettings(settings.get()))
+    }
+
+    /** Presses Enter, which acts on the view that has the focus, like a keyboard or a D-pad does. */
+    private fun pressEnter(activity: SettingsActivity) {
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
+        activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    @Test
+    fun `Given a focused setting when the settings come back locked then a key reaches it only once unlocked`() {
+        appLocked = false
+        val settings = launch()
+        val setting = Switch(settings.get()).apply { isFocusableInTouchMode = true }
+        settings.get().findViewById<ViewGroup>(R.id.content_full_screen).addView(setting)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(setting.requestFocus())
+
+        appLocked = true
+        settings.pause().resume()
+        pressEnter(settings.get())
+        assertFalse(setting.isChecked)
+
+        appLocked = false
+        settings.windowFocusChanged(true)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(setting.requestFocus())
+        pressEnter(settings.get())
+        assertTrue(setting.isChecked)
+    }
+
+    @Test
+    fun `Given the settings left while the focus check runs when it ends then the app is not marked active`() {
+        appLocked = false
+        val settings = launch()
+        clearMocks(appLockStateManager, answers = false)
+        val lockChecked = CompletableDeferred<Boolean>()
+        coEvery { appLockStateManager.isAppLocked(any()) } coAnswers { lockChecked.await() }
+
+        settings.windowFocusChanged(true)
+        shadowOf(Looper.getMainLooper()).idle()
+        settings.pause()
+        lockChecked.complete(false)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        coVerify(exactly = 0) { appLockStateManager.setAppActive(any(), true) }
+    }
+
+    @Test
+    fun `Given a focused setting when the settings come back unlocked then it has the focus again`() {
+        appLocked = false
+        val settings = launch()
+        val setting = Switch(settings.get()).apply { isFocusableInTouchMode = true }
+        settings.get().findViewById<ViewGroup>(R.id.content_full_screen).addView(setting)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(setting.requestFocus())
+
+        settings.pause().resume()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(setting.isFocused)
     }
 }
